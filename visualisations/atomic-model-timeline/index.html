@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development of the Model of the Atom — AQA GCSE Chemistry (Higher Tier)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap">
+<style>
+:root{
+  --font:'Roboto','Segoe UI',Arial,Helvetica,sans-serif;
+  --bg:#05080e;
+  --bg2:#0a111c;
+  --panel:#0b1320;
+  --panel2:#101b2b;
+  --line:#1c2a3c;
+  --txt:#e2ecf7;
+  --dim:#8ea4bd;
+  --accent:#3ddcff;
+  --accent2:#8b6bff;
+  --gold:#f2c14e;
+  --pos:#ff5f6d;
+  --neg:#4da6ff;
+  --neut:#9fb0c2;
+  --ok:#3ddc97;
+  --warn:#ffb454;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:radial-gradient(1200px 700px at 15% -10%,#0e1a2b 0%,var(--bg) 60%);
+  color:var(--txt);
+  font-family:var(--font);
+  font-size:15px;line-height:1.55;
+  display:grid;grid-template-rows:auto auto 1fr;height:100vh;overflow:hidden;
+}
+h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1e2c3e;border-radius:20px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#2c405a;background-clip:content-box}
+
+/* ---------- HEADER ---------- */
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:12px 22px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(13,22,36,.95),rgba(8,13,22,.85));
+}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.atom-mark{width:38px;height:38px;flex:0 0 38px;position:relative}
+.atom-mark b,.atom-mark s{position:absolute;inset:5px 0;border:1.6px solid var(--accent);border-radius:50%;opacity:.75}
+.atom-mark b{transform:rotate(60deg)}
+.atom-mark s{transform:rotate(-60deg);border-color:var(--accent2)}
+.atom-mark i{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+  border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.app-header h1{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-header .sub{margin:1px 0 0;font-size:12.5px;color:var(--dim);letter-spacing:.02em}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;vertical-align:1px}
+.tag.ht{background:rgba(139,107,255,.16);color:#b9a4ff;border:1px solid rgba(139,107,255,.4)}
+.header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hint{font-size:12px;color:var(--dim);white-space:nowrap}
+.btn{
+  background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+  padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:.18s border-color,.18s background,.1s transform;
+}
+.btn:hover{border-color:#33506e;background:#14233a}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(180deg,#17475f,#102b3a);border-color:#2b7a99;color:#c9f4ff}
+.btn.primary:hover{border-color:var(--accent)}
+.btn.on{background:linear-gradient(180deg,#3b2b70,#241a48);border-color:var(--accent2);color:#d9cfff}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ---------- TIMELINE ---------- */
+.timeline{position:relative;padding:16px 26px 14px;border-bottom:1px solid var(--line);background:rgba(7,12,20,.6)}
+.tl-line{position:absolute;left:8%;right:8%;top:32px;height:2px;background:#1a2636;border-radius:2px}
+.tl-fill{position:absolute;left:8%;top:32px;height:2px;border-radius:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  box-shadow:0 0 12px rgba(61,220,255,.5);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.tl-nodes{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tl-node{
+  background:none;border:0;padding:0;cursor:pointer;color:var(--dim);
+  display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;transition:.2s color;
+}
+.tl-dot{width:16px;height:16px;border-radius:50%;background:#0b1420;border:2px solid #2a3d52;
+  transition:.25s all;position:relative;z-index:2}
+.tl-node:hover .tl-dot{border-color:var(--accent);transform:scale(1.15)}
+.tl-year{font-size:11.5px;font-weight:700;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+.tl-name{font-size:13px;font-weight:600;color:#b6c7dc;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%}
+.tl-model{font-size:11px;color:#63788f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tl-node.done .tl-dot{border-color:#2f6f88;background:#123040}
+.tl-node.active .tl-dot{border-color:var(--accent);background:var(--accent);
+  box-shadow:0 0 0 5px rgba(61,220,255,.14),0 0 18px rgba(61,220,255,.75)}
+.tl-node.active .tl-name{color:#fff}
+.tl-node.active .tl-year{color:var(--accent)}
+.tl-node.active .tl-model{color:#8fa8c2}
+
+/* ---------- MAIN / STAGE ---------- */
+main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
+.stage{position:relative;min-height:0;overflow:hidden;border-right:1px solid var(--line);
+  background:radial-gradient(900px 600px at 50% 45%,rgba(20,40,66,.5),rgba(4,7,12,0) 70%),#04070c}
+#scene{display:block;width:100%;height:100%}
+.stage-top{position:absolute;left:20px;top:18px;right:20px;display:flex;gap:12px;
+  align-items:flex-start;justify-content:space-between;pointer-events:none}
+.model-caption{max-width:58%}
+.mc-model{font-size:20px;font-weight:700;letter-spacing:-.02em;text-shadow:0 2px 18px rgba(0,0,0,.85)}
+.mc-sci{font-size:12.5px;color:var(--dim);margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:6px;background:rgba(9,16,26,.72);
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;min-width:152px}
+.lg-row{display:flex;align-items:center;gap:8px;color:#b9cadd}
+.swatch{width:11px;height:11px;border-radius:50%;flex:0 0 11px;box-shadow:0 0 8px currentColor}
+.stage-bottom{position:absolute;left:0;right:0;bottom:0;padding:14px 20px;display:flex;
+  align-items:center;justify-content:space-between;gap:14px;
+  background:linear-gradient(0deg,rgba(4,7,12,.92),rgba(4,7,12,0))}
+.stage-controls{display:flex;gap:8px;flex-wrap:wrap}
+.stage-note{font-size:11.5px;color:#5f7b96}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;background:#04070c;z-index:9;font-size:13px;color:var(--dim);transition:opacity .5s}
+.loading .spin{width:34px;height:34px;border:2px solid #1d2c3e;border-top-color:var(--accent);
+  border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- 2D EXAM DIAGRAM ---------- */
+.seg{display:inline-flex;background:#0b1320;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg-btn{background:none;border:0;color:#8ea4bd;font-size:12px;font-weight:600;padding:5px 11px;
+  border-radius:7px;cursor:pointer;font-family:inherit;transition:.15s color,.15s background}
+.seg-btn:hover{color:var(--txt)}
+.seg-btn.on{background:linear-gradient(180deg,#17475f,#102b3a);color:#c9f4ff;
+  box-shadow:inset 0 0 0 1px #2b7a99}
+.flat{position:absolute;inset:0;display:none;flex-direction:column;padding:64px 20px 54px;
+  background:radial-gradient(900px 600px at 50% 45%,rgba(20,40,66,.5),rgba(4,7,12,0) 70%),#04070c}
+.flat.show{display:flex}
+.flat-svg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.flat-svg svg{width:100%;height:100%;max-width:100%;max-height:100%}
+.flat-tip{flex:0 0 auto;text-align:center;font-size:12.5px;color:#9db1c7;padding:8px 12px 0;
+  border-top:1px solid var(--line);margin-top:6px}
+.flat-tip b{color:#a8e8cd}
+
+/* ---------- SCATTERING HUD ---------- */
+.scatter-hud{position:absolute;left:20px;top:92px;display:none;flex-direction:column;gap:8px;
+  background:rgba(9,16,26,.8);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;min-width:250px;max-width:280px}
+.scatter-hud.show{display:flex}
+.hud-title{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);font-weight:700}
+.hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12.5px}
+.hud-row b{font-variant-numeric:tabular-nums;font-size:14px}
+.lbl{color:#9db1c7}
+.hud-bar{height:4px;border-radius:4px;background:#16222f;overflow:hidden;margin-top:3px}
+.hud-bar i{display:block;height:100%;border-radius:4px;transition:width .4s}
+.c-pass{color:var(--ok)}.c-def{color:var(--warn)}.c-back{color:var(--pos)}
+.hud-concl{font-size:11.5px;color:#93a8bf;border-top:1px solid var(--line);padding-top:8px;line-height:1.45}
+.hud-concl b{color:#cfe0f2}
+
+/* ---------- SIDE PANEL ---------- */
+.panel{background:linear-gradient(180deg,var(--panel),#080e18);overflow-y:auto;overflow-x:hidden;
+  min-height:0;padding-bottom:36px}
+.panel-inner{padding:22px 24px;opacity:1;transform:translateY(0);
+  transition:opacity .26s ease,transform .26s ease}
+.panel-inner.swap{opacity:0;transform:translateY(10px)}
+.p-head{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}
+.p-eyebrow{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--dim);
+  letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.p-eyebrow .num{width:22px;height:22px;border-radius:6px;background:rgba(61,220,255,.12);
+  color:var(--accent);display:grid;place-items:center;font-size:11px;border:1px solid rgba(61,220,255,.3)}
+.p-title{font-size:24px;margin-top:8px;letter-spacing:-.025em}
+.p-sub{color:var(--accent);font-size:13.5px;font-weight:600;margin-top:3px}
+.p-lede{color:#a9bdd3;font-size:13.5px;margin-top:10px}
+
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:14px}
+.card h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--dim);
+  display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.card h3 .ic{width:19px;height:19px;display:grid;place-items:center;border-radius:5px;font-size:11px}
+.card p{margin:0 0 9px;font-size:13.5px;color:#cddced}
+.card p:last-child{margin-bottom:0}
+.card ul{margin:0;padding-left:18px}
+.card li{font-size:13.5px;color:#cddced;margin-bottom:6px}
+.card li:last-child{margin-bottom:0}
+.card li::marker{color:var(--accent)}
+.card.evidence{border-left:3px solid var(--gold)}
+.card.evidence h3 .ic{background:rgba(242,193,78,.14);color:var(--gold)}
+.card.replaced{border-left:3px solid var(--pos)}
+.card.replaced h3 .ic{background:rgba(255,95,109,.14);color:var(--pos)}
+.card.concept{border-left:3px solid var(--accent)}
+.card.concept h3 .ic{background:rgba(61,220,255,.14);color:var(--accent)}
+.card.keywords{border-left:3px solid var(--accent2)}
+.card.keywords h3 .ic{background:rgba(139,107,255,.16);color:#b9a4ff}
+
+.obs{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;align-items:start;font-size:13px;margin-top:2px}
+.o-dot{width:9px;height:9px;border-radius:50%;margin-top:6px;box-shadow:0 0 8px currentColor}
+.o-txt strong{color:#fff}
+.o-txt em{font-style:normal;color:var(--accent);font-weight:600}
+
+.kw{margin:0}
+.kw dt{font-weight:700;color:#fff;font-size:13px;margin-top:10px}
+.kw dt:first-child{margin-top:0}
+.kw dt span{background:linear-gradient(180deg,transparent 58%,rgba(139,107,255,.38) 58%);padding:0 2px}
+.kw dd{margin:2px 0 0;font-size:13px;color:#a9bdd3}
+
+.tip{background:linear-gradient(135deg,rgba(139,107,255,.14),rgba(61,220,255,.06));
+  border:1px solid rgba(139,107,255,.35);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.tip h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:#c3b2ff;
+  display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.tip ul{margin:0;padding-left:18px}
+.tip li{font-size:13.5px;color:#dbe6f5;margin-bottom:8px}
+.tip li:last-child{margin-bottom:0}
+.tip li::marker{color:#b9a4ff}
+.ms{display:block;margin-top:6px;padding:7px 10px;border-radius:8px;background:rgba(4,8,14,.55);
+  border-left:2px solid var(--ok);font-size:12.5px;color:#a8e8cd;font-style:italic}
+
+.spec{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:#93a8bf;
+  background:rgba(61,220,255,.05);border:1px dashed rgba(61,220,255,.28);
+  border-radius:12px;padding:11px 13px;margin-bottom:16px}
+.sp-tag{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--accent);
+  text-transform:uppercase;background:rgba(61,220,255,.1);border-radius:5px;padding:3px 6px;margin-top:1px}
+.spec q{font-style:italic;color:#b8cde2}
+
+.pfoot{display:flex;gap:10px;margin-top:18px}
+.pfoot .btn{flex:1;text-align:center}
+
+/* ---------- PRESENTATION MODE ----------
+   Everything scales with the viewport (vw) so the same file is readable
+   from the back of a classroom on a projector or a large display.        */
+.present-pane{display:none;flex-direction:column;min-height:0;cursor:pointer;
+  background:linear-gradient(180deg,#0c1524,#070d17);
+  padding:clamp(18px,2.2vw,40px) clamp(20px,2.4vw,44px) clamp(14px,1.4vw,24px)}
+body.present .present-pane{display:flex}
+body.present .panel{display:none}
+body.present main{grid-template-columns:minmax(0,1fr) 46%}
+.pr-eyebrow{font-size:clamp(12px,1.05vw,19px);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);font-weight:700}
+.pr-h{font-size:clamp(23px,2.45vw,46px);font-weight:700;line-height:1.14;margin:.3em 0 .6em;
+  letter-spacing:-.02em}
+.pr-list{list-style:none;margin:0;padding:0 4px 0 0;flex:1 1 auto;min-height:0;overflow-y:auto}
+.pr-list li{font-size:clamp(17px,1.62vw,32px);line-height:1.42;margin:0 0 .75em;color:#d5e3f2;
+  position:relative;padding-left:1.15em;opacity:0;transform:translateY(16px);
+  transition:opacity .4s ease,transform .4s cubic-bezier(.2,.7,.3,1)}
+.pr-list li.in{opacity:1;transform:none}
+.pr-list li::before{content:'';position:absolute;left:0;top:.56em;width:.42em;height:.42em;
+  border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(61,220,255,.55)}
+.pr-list li.ms-item::before{background:var(--ok);box-shadow:0 0 10px rgba(61,220,151,.55)}
+.pr-list li.ms-item{color:#a8e8cd}
+.pr-list b,.pr-list strong{color:#fff;font-weight:700}
+.pr-list em,.pr-list i{color:var(--accent);font-style:normal;font-weight:500}
+.pr-foot{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);
+  padding-top:clamp(8px,.8vw,14px);margin-top:8px;font-size:clamp(11px,.85vw,15px);color:var(--dim)}
+.pr-dots{display:flex;gap:7px;flex:0 0 auto}
+.pr-dot{width:9px;height:9px;border-radius:50%;background:#22344a;transition:.25s}
+.pr-dot.on{background:var(--accent);box-shadow:0 0 10px rgba(61,220,255,.7)}
+.pr-keys{margin-left:auto;opacity:.75;white-space:nowrap}
+
+body.present .app-header h1{font-size:clamp(17px,1.4vw,26px)}
+body.present .app-header .sub{font-size:clamp(12px,1vw,18px)}
+body.present .hint{display:none}
+body.present .tl-year{font-size:clamp(11px,.85vw,16px)}
+body.present .tl-name{font-size:clamp(13px,1.05vw,20px)}
+body.present .tl-model{font-size:clamp(11px,.85vw,16px)}
+body.present .mc-model{font-size:clamp(20px,2.1vw,40px)}
+body.present .mc-sci{font-size:clamp(12px,1vw,19px)}
+body.present .legend{font-size:clamp(12px,1vw,18px)}
+body.present .legend .swatch{width:14px;height:14px;flex-basis:14px}
+body.present .btn,body.present .seg-btn{font-size:clamp(12px,.95vw,17px);padding:7px 14px}
+body.present .flat-tip{font-size:clamp(13px,1.15vw,22px)}
+body.present .hud-title{font-size:clamp(11px,.85vw,15px)}
+body.present .hud-row{font-size:clamp(12px,1vw,18px)}
+body.present .hud-row b{font-size:clamp(14px,1.2vw,22px)}
+body.present .hud-concl{font-size:clamp(11px,.92vw,17px)}
+body.present .scatter-hud{min-width:clamp(250px,22vw,400px);max-width:26vw;top:clamp(104px,10vh,150px)}
+body.present .model-caption{max-width:72%}
+body.present .stage-note{display:none}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:1180px){main{grid-template-columns:minmax(0,1fr) 390px}}
+@media (max-width:1000px){
+  body{overflow:auto;height:auto;grid-template-rows:auto auto auto}
+  main{grid-template-columns:1fr}
+  .stage{height:58vh;min-height:430px;border-right:0;border-bottom:1px solid var(--line)}
+  .panel{overflow:visible}
+  .tl-model{display:none}
+  .hint{display:none}
+  .tl-name{font-size:12px}
+  .app-header h1{font-size:16px}
+}
+@media (max-width:680px){
+  .tl-nodes{gap:2px}
+  .tl-name{font-size:11px}
+  .hint,.stage-note{display:none}
+  .app-header{padding:10px 14px}
+  .timeline{padding:14px 12px 12px}
+  .legend{display:none}
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">
+    <div class="atom-mark"><b></b><s></s><i></i></div>
+    <div>
+      <h1>Development of the Model of the Atom</h1>
+      <p class="sub">AQA GCSE Chemistry 8462 &middot; Topic 4.1.1.3 &middot; <span class="tag ht">Higher Tier</span></p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span class="hint">Drag to rotate &middot; Scroll to zoom &middot; &larr; &rarr; to move through time</span>
+    <button class="btn" id="resetViewBtn">Reset view</button>
+    <button class="btn primary" id="presentBtn">▶ Present</button>
+  </div>
+</header>
+
+<nav class="timeline" aria-label="Timeline of atomic models">
+  <div class="tl-line"></div>
+  <div class="tl-fill" id="tlFill"></div>
+  <div class="tl-nodes" id="tlNodes"></div>
+</nav>
+
+<main>
+  <section class="stage" id="stage">
+    <canvas id="scene"></canvas>
+
+    <div class="flat" id="flat">
+      <div class="flat-svg" id="flatSvg"></div>
+      <div class="flat-tip" id="flatTip"></div>
+    </div>
+
+    <div class="stage-top">
+      <div class="model-caption">
+        <div class="mc-model" id="mcModel">&nbsp;</div>
+        <div class="mc-sci" id="mcSci">&nbsp;</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="scatter-hud" id="scatterHud">
+      <div class="hud-title">Alpha scattering &mdash; live tally</div>
+      <div>
+        <div class="hud-row"><span class="lbl c-pass">Passed straight through</span><b class="c-pass" id="cPass">0</b></div>
+        <div class="hud-bar"><i id="bPass" style="background:var(--ok);width:0%"></i></div>
+      </div>
+      <div>
+        <div class="hud-row"><span class="lbl c-def">Deflected through a small angle</span><b class="c-def" id="cDef">0</b></div>
+        <div class="hud-bar"><i id="bDef" style="background:var(--warn);width:0%"></i></div>
+      </div>
+      <div>
+        <div class="hud-row"><span class="lbl c-back">Bounced back (&gt;90&deg;)</span><b class="c-back" id="cBack">0</b></div>
+        <div class="hud-bar"><i id="bBack" style="background:var(--pos);width:0%"></i></div>
+      </div>
+      <div class="hud-concl" id="hudConcl"></div>
+    </div>
+
+    <div class="stage-bottom">
+      <div class="stage-controls" id="stageControls">
+        <div class="seg" id="viewSeg">
+          <button class="seg-btn on" data-view="model" type="button">3D model</button>
+          <button class="seg-btn" data-view="flat" type="button">2D diagram</button>
+          <button class="seg-btn" data-view="scatter" type="button">Alpha scattering</button>
+        </div>
+        <button class="btn sm" id="spinBtn">Pause motion</button>
+        <button class="btn sm" id="ppBtn" style="display:none">Plum pudding prediction</button>
+        <button class="btn sm" id="slowBtn" style="display:none">Slow motion</button>
+        <button class="btn sm" id="restartBtn" style="display:none">Restart</button>
+      </div>
+      <div class="stage-note" id="stageNote">Left-drag rotate &middot; right-drag pan &middot; scroll zoom</div>
+    </div>
+
+    <div class="loading" id="loading"><div class="spin"></div><div>Loading 3D engine&hellip;</div></div>
+  </section>
+
+  <aside class="panel" id="panel">
+    <div class="panel-inner" id="panelInner"></div>
+  </aside>
+
+  <aside class="present-pane" id="presentPane" title="Click, or press Space, for the next point">
+    <div class="pr-eyebrow" id="prEyebrow"></div>
+    <h2 class="pr-h" id="prHead"></h2>
+    <ul class="pr-list" id="prList"></ul>
+    <div class="pr-foot">
+      <span class="pr-dots" id="prDots"></span>
+      <span id="prCount"></span>
+      <span class="pr-keys">Space / → next &middot; ← back &middot; Esc exit</span>
+    </div>
+  </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =====================================================================
+   AQA GCSE Chemistry 8462 — 4.1.1.3 Development of the model of the atom
+   Single-file interactive revision tool. Content mapped to the AQA
+   specification statements and mark-scheme wording (Higher Tier).
+   ===================================================================== */
+
+const DATA = [
+  {
+    id:'democritus',
+    year:'~400 BC',
+    name:'Democritus',
+    model:'The Indivisible Sphere',
+    sci:'Democritus of Abdera, ~400 BC — philosophical idea, no experiment',
+    lede:'The first recorded idea that matter is not infinitely divisible: cut something enough times and you reach a particle that cannot be cut. Democritus called it <em>atomos</em> — "uncuttable".',
+    spec:'Before the discovery of the electron, atoms were thought to be tiny spheres that could not be divided.',
+    concept:{
+      title:'Key concept',
+      icon:'◍',
+      html:`<p>All matter is made of tiny, <strong>indivisible</strong> particles called <em>atomos</em>, separated by empty space. Different substances were said to have differently shaped atoms.</p>
+            <p>The atom is treated as a <strong>solid sphere with no internal structure</strong> — nothing smaller inside it, and nothing that can be taken out of it.</p>`
+    },
+    evidence:{
+      title:'Evidence used',
+      icon:'✎',
+      html:`<p><strong>None — this was philosophy, not science.</strong> It came from logical argument alone; there was no experiment that could be repeated or tested.</p>
+            <p>This is the key contrast AQA wants: a scientific model must be supported by <em>experimental evidence</em>, and is changed or replaced when new evidence appears.</p>`
+    },
+    replaced:{
+      title:'Why it did not last',
+      icon:'✕',
+      html:`<p>With no evidence and no way to test it, the idea could not be developed, measured or used to make predictions. It was largely ignored for over 2000 years until Dalton gave it experimental backing.</p>`
+    },
+    keywords:[
+      ['Atom','The smallest part of an element that can exist.'],
+      ['Indivisible','Cannot be split into anything smaller — the belief held before the electron was discovered.'],
+      ['Model','A simplified description of something we cannot see directly, used to explain observations and make predictions.']
+    ],
+    tip:{
+      bullets:[
+        'Democritus is <strong>background context</strong> — AQA will not ask you to name him. What <em>is</em> examinable is the wording of the idea itself.',
+        'If asked "describe the model of the atom before the discovery of the electron", the mark is for the AQA phrase:',
+      ],
+      ms:'"Atoms were thought to be tiny spheres that could not be divided."'
+    },
+    legend:[['#8fb6d9','Solid, indivisible atom']],
+    cam:[0,1.6,9]
+  },
+
+  {
+    id:'dalton',
+    year:'1803',
+    name:'John Dalton',
+    model:'Solid Sphere Model',
+    sci:'John Dalton, 1803 — atomic theory from the laws of chemical combination',
+    lede:'Dalton turned the atom from a philosophical idea into a <em>scientific</em> one: atoms as tiny, solid, indivisible spheres — the chemical building blocks that explain how elements combine in fixed ratios.',
+    spec:'Before the discovery of the electron, atoms were thought to be tiny spheres that could not be divided.',
+    concept:{
+      title:'Key concept',
+      icon:'◍',
+      html:`<ul>
+        <li>All matter is made of atoms — <strong>tiny solid spheres that cannot be divided</strong>.</li>
+        <li>All atoms of a given element are <strong>identical</strong>, and have the same mass; atoms of different elements have different masses.</li>
+        <li>Compounds form when atoms of different elements join in <strong>fixed, whole-number ratios</strong>.</li>
+        <li>In a chemical reaction atoms are <strong>rearranged, never created or destroyed</strong> — which is why mass is conserved.</li>
+      </ul>`
+    },
+    evidence:{
+      title:'Evidence used',
+      icon:'✎',
+      html:`<p>Quantitative <strong>measurements of masses in chemical reactions</strong>: elements always combine in the same fixed proportions by mass, and the total mass before a reaction equals the total mass after it.</p>
+            <p>This is genuine experimental evidence — the difference between Dalton and Democritus.</p>`
+    },
+    replaced:{
+      title:'Why it was replaced',
+      icon:'✕',
+      html:`<p>Dalton's atom had <strong>no charge and no internal parts</strong>, so it could not explain how substances become charged, why gases conduct electricity in a discharge tube, or the cathode rays Thomson observed.</p>
+            <p>In 1897 Thomson identified a particle <em>much lighter than the lightest atom</em> coming out of atoms — so the atom was not indivisible after all.</p>`
+    },
+    keywords:[
+      ['Element','A substance made of only one type of atom.'],
+      ['Compound','A substance made of two or more elements chemically combined in a fixed ratio.'],
+      ['Atomic theory','A model of matter based on atoms that is supported by experimental evidence.'],
+      ['Conservation of mass','No atoms are lost or made in a reaction, so total mass is unchanged.']
+    ],
+    tip:{
+      bullets:[
+        'A very common 2-mark question is "how did Dalton\'s model differ from the model that replaced it?" — the answer is about <strong>internal structure and charge</strong>, not about size.',
+        'Do not write that Dalton "discovered" the atom. He produced a <em>theory</em> supported by evidence.',
+        'Mark-scheme style answer:'
+      ],
+      ms:'"Dalton described atoms as solid spheres that could not be divided; Thomson\'s model had negative electrons inside a ball of positive charge, so atoms could be divided."'
+    },
+    legend:[['#9dc7f0','Atom of element A'],['#f2c14e','Atom of element B'],['#8b6bff','Atom of element C']],
+    cam:[0,1.8,10]
+  },
+
+  {
+    id:'thomson',
+    year:'1897',
+    name:'J.J. Thomson',
+    model:'Plum Pudding Model',
+    sci:'J.J. Thomson, 1897 — discovery of the electron using cathode rays',
+    lede:'Thomson discovered the <em>electron</em> — a negatively charged particle far lighter than any atom. The atom therefore had to contain smaller parts, so he pictured it as a ball of positive charge with electrons embedded in it.',
+    spec:'The discovery of the electron led to the plum pudding model of the atom. The plum pudding model suggested that the atom is a ball of positive charge with negative electrons embedded in it.',
+    concept:{
+      title:'Key concept',
+      icon:'◍',
+      html:`<p>The atom is a <strong>ball of positive charge</strong> with <strong>negative electrons embedded in it</strong> — like plums in a pudding.</p>
+            <p>The positive charge is <strong>spread out evenly through the whole atom</strong>, and the mass is spread out with it. The amount of negative charge exactly balances the positive charge, so the atom overall is <strong>neutral</strong>.</p>`
+    },
+    evidence:{
+      title:'Crucial experiment — cathode rays',
+      icon:'⚡',
+      html:`<p>Thomson passed a high voltage through a gas at low pressure in a <strong>discharge (cathode ray) tube</strong> and studied the rays produced.</p>
+            <div class="obs">
+              <span class="o-dot" style="color:#4da6ff;background:#4da6ff"></span>
+              <span class="o-txt">The rays were <strong>deflected by electric and magnetic fields</strong> towards the positive plate &rarr; <em>the particles are negatively charged</em>.</span>
+              <span class="o-dot" style="color:#3ddc97;background:#3ddc97"></span>
+              <span class="o-txt">The charge-to-mass ratio showed they were <strong>about 2000&times; lighter than a hydrogen atom</strong> &rarr; <em>they are sub-atomic particles</em>.</span>
+              <span class="o-dot" style="color:#f2c14e;background:#f2c14e"></span>
+              <span class="o-txt">The same particles came from <strong>every element tried</strong> &rarr; <em>electrons are present in all atoms</em>.</span>
+            </div>`
+    },
+    replaced:{
+      title:'Why the previous model was replaced',
+      icon:'✕',
+      html:`<p>Dalton's spheres were supposed to be <strong>indivisible</strong>. Thomson had taken something <em>out</em> of an atom that was much smaller and lighter than the atom itself.</p>
+            <p>So the atom must be <strong>divisible</strong> and must contain sub-atomic particles — and because atoms are neutral, there had to be positive charge in there too, to cancel the electrons.</p>`
+    },
+    keywords:[
+      ['Electron','A sub-atomic particle with a relative charge of −1 and a very small relative mass (about 1/2000).'],
+      ['Sub-atomic particle','A particle smaller than an atom, i.e. a proton, neutron or electron.'],
+      ['Plum pudding model','A ball of positive charge with negative electrons embedded in it.'],
+      ['Embedded','Stuck inside the positive charge — the electrons are <em>not</em> orbiting in this model.']
+    ],
+    tip:{
+      bullets:[
+        'Learn the AQA definition word-for-word. Examiners accept "ball/sphere/cloud of positive charge with negative electrons embedded/stuck in it".',
+        'Do <strong>not</strong> say the electrons "orbit" or are "in shells" in the plum pudding model — that is Bohr\'s model and it loses the mark.',
+        'Do <strong>not</strong> say the atom is "made of positive and negative bits stuck together randomly" — the whole sphere <em>is</em> the positive charge.',
+        'A classic trap: "what did Thomson discover?" The answer is <em>the electron</em>, not the plum pudding model (that was his interpretation of the discovery).'
+      ],
+      ms:'"A ball of positive charge with negative electrons embedded in it."'
+    },
+    legend:[['#ff5f6d','Ball of positive charge'],['#4da6ff','Embedded electrons (−)']],
+    cam:[0,2,11.6]
+  },
+
+  {
+    id:'rutherford',
+    year:'1911',
+    name:'Ernest Rutherford',
+    model:'Nuclear Model',
+    sci:'Rutherford, Geiger &amp; Marsden, 1909–1911 — alpha particle scattering',
+    lede:'Alpha particles fired at gold foil should all have passed straight through if the plum pudding model were right. A tiny fraction bounced back — so the mass and positive charge of an atom must be concentrated in a minute central <em>nucleus</em>.',
+    spec:'The results from the alpha particle scattering experiment led to the conclusion that the mass of an atom was concentrated at the centre (nucleus) and that the nucleus was charged. This nuclear model replaced the plum pudding model.',
+    concept:{
+      title:'Key concept',
+      icon:'◍',
+      html:`<ul>
+        <li>Almost all of the <strong>mass</strong> of an atom is concentrated in a very small <strong>nucleus</strong> at the centre.</li>
+        <li>The nucleus is <strong>positively charged</strong>.</li>
+        <li>The rest of the atom is mostly <strong>empty space</strong>, with the negative electrons somewhere out in it.</li>
+        <li>The nucleus is around <strong>10,000&times; smaller</strong> than the atom (radius ~1&times;10<sup>−14</sup> m vs ~1&times;10<sup>−10</sup> m).</li>
+      </ul>`
+    },
+    evidence:{
+      title:'Crucial experiment — alpha scattering',
+      icon:'⚡',
+      html:`<p>A beam of positively charged <strong>alpha particles</strong> was fired at a piece of <strong>very thin gold foil</strong>. A fluorescent screen showed where each particle went. <em>Use the "Alpha scattering experiment" button on the model to watch it.</em></p>
+            <div class="obs">
+              <span class="o-dot" style="color:#3ddc97;background:#3ddc97"></span>
+              <span class="o-txt"><strong>Most passed straight through</strong> undeflected &rarr; <em>the atom is mostly empty space</em>.</span>
+              <span class="o-dot" style="color:#ffb454;background:#ffb454"></span>
+              <span class="o-txt"><strong>Some were deflected</strong> through small angles &rarr; <em>the centre has the same (positive) charge as the alpha particles, so it repels them</em>.</span>
+              <span class="o-dot" style="color:#ff5f6d;background:#ff5f6d"></span>
+              <span class="o-txt"><strong>A very few (about 1 in 8000) bounced back</strong> through more than 90° &rarr; <em>the centre is tiny but extremely dense — nearly all the mass is there</em>.</span>
+            </div>`
+    },
+    replaced:{
+      title:'Why the plum pudding model was replaced',
+      icon:'✕',
+      html:`<p>In the plum pudding model the positive charge and mass are <strong>spread thinly through the whole atom</strong>. Such a weak, spread-out charge could only nudge a fast, heavy alpha particle, so the model <strong>predicted that every alpha particle would pass through with only a tiny deflection</strong>.</p>
+            <p>Large-angle deflections and back-scattering are <strong>impossible</strong> under that prediction. The only way to explain them is a <strong>concentrated positive charge with a large mass in a very small volume</strong> — a nucleus. New evidence therefore replaced the model.</p>`
+    },
+    keywords:[
+      ['Alpha particle','A positively charged particle (helium nucleus, 2 protons + 2 neutrons) with relative charge +2.'],
+      ['Nucleus','The tiny, dense, positively charged centre of an atom containing almost all of its mass.'],
+      ['Deflected','Made to change direction — here because two positive charges repel.'],
+      ['Empty space','The volume of the atom outside the nucleus, where the electrons are.'],
+      ['Nuclear model','Atom = small positive nucleus surrounded by electrons, mostly empty space.']
+    ],
+    tip:{
+      bullets:[
+        'This is the most-asked 4–6 mark question in the topic. Always pair <strong>each observation with its own conclusion</strong> — marks are given for the link, not for the observation alone.',
+        'Straight through &rarr; mostly empty space. Deflected &rarr; nucleus is positively charged. Bounced back &rarr; nucleus is very dense / contains most of the mass and is very small. Mixing these up is the single biggest mark-loser.',
+        'Say <strong>"most"</strong> passed through and <strong>"a very small number"</strong> bounced back — vague words like "some" and "a few" can cost the mark.',
+        'Rutherford did not discover the proton in this experiment, and the neutron was still 21 years away. Do not put neutrons in the 1911 model.',
+        'The <em>foil must be thin</em> so that particles pass through only a few layers of atoms — a stock 1-mark answer.'
+      ],
+      ms:'"Most alpha particles passed straight through, so the atom is mostly empty space; a small number were deflected, so the nucleus is positively charged; a very small number were deflected by more than 90°, so the mass of the atom is concentrated in a very small nucleus."'
+    },
+    legend:[['#ff5f6d','Nucleus (+, holds the mass)'],['#4da6ff','Electron (−)'],['#3b5570','Empty space']],
+    cam:[0,3,15]
+  },
+
+  {
+    id:'bohr',
+    year:'1913',
+    name:'Niels Bohr',
+    model:'Bohr / Planetary Model',
+    sci:'Niels Bohr, 1913 — electrons in fixed energy levels; protons identified later',
+    lede:'Bohr <em>adapted</em> the nuclear model: electrons are not just anywhere in the empty space — they orbit the nucleus at <em>specific distances</em> in fixed energy levels (shells). His theoretical calculations agreed with experimental observations.',
+    spec:'Niels Bohr adapted the nuclear model by suggesting that electrons orbit the nucleus at specific distances. The theoretical calculations of Bohr agreed with experimental observations.',
+    concept:{
+      title:'Key concept',
+      icon:'◍',
+      html:`<ul>
+        <li>Electrons orbit the nucleus at <strong>specific (fixed) distances</strong>, in energy levels called <strong>shells</strong>.</li>
+        <li>Electrons cannot exist <em>between</em> shells; each shell holds a limited number of electrons (2, 8, 8&hellip;).</li>
+        <li>An electron only changes shell by absorbing or emitting a fixed amount of energy.</li>
+        <li>Slightly later work showed the nucleus's positive charge is made of a whole number of identical particles — named <strong>protons</strong>, each with charge +1.</li>
+      </ul>`
+    },
+    evidence:{
+      title:'Evidence — theory matching observation',
+      icon:'⚡',
+      html:`<p>Bohr's evidence was <strong>calculation compared with measurement</strong>. Hot gases only emit certain fixed colours (wavelengths) of light rather than a continuous spread.</p>
+            <div class="obs">
+              <span class="o-dot" style="color:#3ddcff;background:#3ddcff"></span>
+              <span class="o-txt">If electrons sit at <strong>fixed energy levels</strong>, the light they emit can only have <em>fixed energies</em> — exactly the pattern that is observed.</span>
+              <span class="o-dot" style="color:#3ddc97;background:#3ddc97"></span>
+              <span class="o-txt">Bohr's <strong>theoretical calculations agreed with the experimental observations</strong> &rarr; <em>the adapted model was accepted</em>.</span>
+            </div>`
+    },
+    replaced:{
+      title:'Why Rutherford\'s model needed adapting',
+      icon:'✕',
+      html:`<p>Rutherford's model did not say <em>where</em> the electrons were. Under the physics of the time, an electron moving in any orbit would continuously lose energy and <strong>spiral into the nucleus</strong> — so atoms would collapse, which clearly does not happen.</p>
+            <p>It also could not explain why elements emit only <strong>specific wavelengths of light</strong>. Fixing electrons at specific distances solved both problems.</p>
+            <p><strong>Note the wording:</strong> Bohr <em>adapted</em> the nuclear model — he did not replace it. The nucleus stayed exactly as Rutherford described it.</p>`
+    },
+    keywords:[
+      ['Energy level (shell)','A fixed distance from the nucleus at which electrons orbit; each holds a set maximum number of electrons.'],
+      ['Specific distances','AQA\'s wording for the orbits in Bohr\'s model — not "anywhere" and not "random".'],
+      ['Proton','A sub-atomic particle in the nucleus with relative charge +1 and relative mass 1.'],
+      ['Adapted','Changed part of an existing model rather than replacing the whole thing.'],
+      ['Electronic structure','How the electrons are arranged in the shells, e.g. sodium 2,8,1.']
+    ],
+    tip:{
+      bullets:[
+        'The single most-repeated mark point in this topic: <em>Bohr suggested that electrons orbit the nucleus at specific distances.</em> Learn that sentence exactly.',
+        'The second mark point is about <strong>how science works</strong>: his <em>theoretical calculations agreed with experimental observations</em>, which is why the model was accepted.',
+        'Use "adapted", not "replaced", for Bohr. Reserve "replaced" for plum pudding &rarr; nuclear.',
+        'Higher tier extension: the positive charge of a nucleus can be subdivided into a whole number of identical particles, each with the same positive charge — these are protons.'
+      ],
+      ms:'"Bohr adapted the nuclear model by suggesting electrons orbit the nucleus at specific distances / in fixed energy levels, and his theoretical calculations agreed with experimental observations."'
+    },
+    legend:[['#ff5f6d','Nucleus (protons +)'],['#4da6ff','Electrons in fixed shells'],['#3ddcff','Energy level n = 1, 2, 3']],
+    cam:[0,4,20]
+  },
+
+  {
+    id:'chadwick',
+    year:'1932',
+    name:'James Chadwick',
+    model:'Discovery of the Neutron',
+    sci:'James Chadwick, 1932 — evidence for the neutron, ~20 years after the nucleus was accepted',
+    lede:'Nuclei were about twice as heavy as their charge suggested. Chadwick\'s experimental work provided the evidence for a neutral particle of about the same mass as a proton inside the nucleus — the <em>neutron</em>.',
+    spec:'The experimental work of James Chadwick provided the evidence to show the existence of neutrons within the nucleus. This was about 20 years after the nucleus became an accepted scientific idea.',
+    concept:{
+      title:'Key concept — the modern picture',
+      icon:'◍',
+      html:`<p>The nucleus contains <strong>protons and neutrons</strong>; electrons orbit in shells at specific distances. This is the model you use for the rest of GCSE Chemistry.</p>
+            <ul>
+              <li><strong>Proton:</strong> relative charge +1, relative mass 1, in the nucleus.</li>
+              <li><strong>Neutron:</strong> relative charge <strong>0</strong>, relative mass 1, in the nucleus.</li>
+              <li><strong>Electron:</strong> relative charge −1, relative mass very small (~1/2000), in shells.</li>
+              <li>Atomic number = number of protons; mass number = protons + neutrons.</li>
+            </ul>
+            <p><em>The 3D model shows carbon-12: 6 protons, 6 neutrons, 6 electrons arranged 2,4.</em></p>`
+    },
+    evidence:{
+      title:'Evidence — the missing mass',
+      icon:'⚡',
+      html:`<p>The mass of a nucleus was roughly <strong>double</strong> what you would get by counting its protons — e.g. helium has charge +2 but a relative mass of 4. Some of the mass was unaccounted for.</p>
+            <div class="obs">
+              <span class="o-dot" style="color:#9fb0c2;background:#9fb0c2"></span>
+              <span class="o-txt">Chadwick showed the radiation emitted from beryllium was <strong>not deflected by electric or magnetic fields</strong> &rarr; <em>the particles have no charge</em>.</span>
+              <span class="o-dot" style="color:#f2c14e;background:#f2c14e"></span>
+              <span class="o-txt">The particles knocked protons out of paraffin wax at high speed &rarr; <em>they must have roughly the same mass as a proton</em>.</span>
+              <span class="o-dot" style="color:#3ddc97;background:#3ddc97"></span>
+              <span class="o-txt">A neutral particle of mass 1 in the nucleus explains the extra mass <strong>and</strong> the existence of <em>isotopes</em>.</span>
+            </div>`
+    },
+    replaced:{
+      title:'What this changed',
+      icon:'✕',
+      html:`<p>Nothing was replaced — the neutron <strong>completed</strong> the nuclear model. It explained why atoms of the same element can have different masses (<strong>isotopes</strong>: same number of protons, different number of neutrons) and why nuclei do not fly apart from proton repulsion alone.</p>
+            <p>Note the timing AQA states: this was about <strong>20 years after the nucleus became an accepted scientific idea</strong> (1911 &rarr; 1932).</p>`
+    },
+    keywords:[
+      ['Neutron','A sub-atomic particle in the nucleus with no charge and a relative mass of 1.'],
+      ['Relative mass','The mass of a particle compared with a proton: proton 1, neutron 1, electron very small (1/2000).'],
+      ['Mass number','Total number of protons and neutrons in the nucleus.'],
+      ['Atomic number','The number of protons in the nucleus — it defines the element.'],
+      ['Isotope','Atoms of the same element with the same number of protons but a different number of neutrons.']
+    ],
+    tip:{
+      bullets:[
+        'Chadwick <strong>provided the evidence for</strong> the neutron — that is AQA\'s phrasing. Do not write that he "invented" or "made" it.',
+        'A neutron is <strong>neutral</strong>, not "slightly negative". Its relative mass is <strong>1</strong>, the same as a proton.',
+        'Relative charge of an electron is −1 even though its mass is tiny; a common error is writing its mass as 0 — use "very small" or 1/2000.',
+        'Isotopes questions: same atomic number, different mass number, <strong>identical chemical properties</strong> (same electronic structure), different physical properties such as density.',
+        'For the whole 6-mark "development of the atom" question, work in date order and always link <strong>evidence &rarr; change to the model</strong>.'
+      ],
+      ms:'"The experimental work of James Chadwick provided evidence for the existence of neutrons within the nucleus, about 20 years after the nucleus became an accepted idea."'
+    },
+    legend:[['#ff5f6d','Proton (+1, mass 1)'],['#9fb0c2','Neutron (0, mass 1)'],['#4da6ff','Electron (−1, tiny mass)']],
+    cam:[0,3.6,17.5]
+  }
+];
+
+/* =====================================================================
+   1. DOM references + small helpers
+   ===================================================================== */
+const $  = id => document.getElementById(id);
+const stage = $('stage'), canvas = $('scene');
+const COL = { pos:'#ff5f6d', neg:'#4da6ff', neut:'#9fb0c2', gold:'#f2c14e',
+              accent:'#3ddcff', ok:'#3ddc97', warn:'#ffb454' };
+
+function hexA(hex,a){
+  const h = hex.replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+const rand  = (a,b) => a + Math.random()*(b-a);
+const ease  = t => t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+
+/* =====================================================================
+   2. Three.js scaffolding
+   ===================================================================== */
+let renderer, clock;
+let scene, camera, controls;        // atomic-model view
+let sScene, sCamera, sControls;     // alpha-scattering view
+
+let currentGroup = null, outgoingGroup = null;
+let fadeIn = 1, fadeOut = 0;
+let camTween = null;
+let spinAngle = 0, spin = true, animTime = 0;
+let idx = 0, mode = 'model';
+let LABEL_SCALE = 1;
+
+function makeMaterial(p){
+  const o = Object.assign({ roughness:.45, metalness:.12 }, p);
+  const opacity = o.opacity === undefined ? 1 : o.opacity;
+  const m = new THREE.MeshStandardMaterial(o);
+  m.transparent = true; m.opacity = opacity;
+  m.userData.baseOpacity = opacity;
+  return m;
+}
+function basicMat(p){
+  const o = Object.assign({}, p);
+  const opacity = o.opacity === undefined ? 1 : o.opacity;
+  const m = new THREE.MeshBasicMaterial(o);
+  m.transparent = true; m.opacity = opacity;
+  m.userData.baseOpacity = opacity;
+  return m;
+}
+function lineMat(color, opacity){
+  const m = new THREE.LineBasicMaterial({ color, transparent:true, opacity });
+  m.userData.baseOpacity = opacity;
+  return m;
+}
+function ball(r, seg, mat){ return new THREE.Mesh(new THREE.SphereGeometry(r, seg, Math.round(seg*0.7)), mat); }
+
+function setGroupOpacity(g, k){
+  g.traverse(o=>{
+    const m = o.material; if(!m) return;
+    (Array.isArray(m)?m:[m]).forEach(mm=>{
+      if(mm.userData.baseOpacity === undefined) mm.userData.baseOpacity = mm.opacity;
+      mm.transparent = true;
+      mm.opacity = mm.userData.baseOpacity * k;
+    });
+  });
+}
+function clearOutgoing(){
+  if(outgoingGroup){ scene.remove(outgoingGroup); disposeGroup(outgoingGroup); outgoingGroup = null; }
+}
+function finishTransition(){
+  clearOutgoing();
+  if(currentGroup){ fadeIn = 1; setGroupOpacity(currentGroup, 1); currentGroup.scale.setScalar(1); }
+  if(camTween){ camera.position.copy(camTween.to); camera.lookAt(0,0,0); camTween = null; }
+}
+function disposeGroup(g){
+  g.traverse(o=>{
+    if(o.geometry) o.geometry.dispose();
+    const m = o.material; if(!m) return;
+    (Array.isArray(m)?m:[m]).forEach(mm=>{
+      if(mm.map && !mm.map.__shared) mm.map.dispose();
+      mm.dispose();
+    });
+  });
+}
+
+/* --- procedural textures ------------------------------------------- */
+function grainTexture(base, light){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0,0,256,256);
+  g.addColorStop(0, light); g.addColorStop(1, base);
+  x.fillStyle = g; x.fillRect(0,0,256,256);
+  for(let i=0;i<2600;i++){
+    x.fillStyle = `rgba(255,255,255,${Math.random()*0.05})`;
+    x.beginPath(); x.arc(Math.random()*256, Math.random()*256, Math.random()*2.4, 0, 7); x.fill();
+  }
+  for(let i=0;i<900;i++){
+    x.fillStyle = `rgba(0,0,0,${Math.random()*0.07})`;
+    x.beginPath(); x.arc(Math.random()*256, Math.random()*256, Math.random()*3.2, 0, 7); x.fill();
+  }
+  return new THREE.CanvasTexture(c);
+}
+function latticeTexture(base, line){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = base; x.fillRect(0,0,256,256);
+  x.strokeStyle = line; x.lineWidth = 1.1; x.globalAlpha = .35;
+  for(let i=0;i<=256;i+=16){ x.beginPath(); x.moveTo(i,0); x.lineTo(i,256); x.stroke();
+                             x.beginPath(); x.moveTo(0,i); x.lineTo(256,i); x.stroke(); }
+  x.globalAlpha = 1;
+  for(let i=0;i<1400;i++){
+    x.fillStyle = `rgba(255,255,255,${Math.random()*0.06})`;
+    x.fillRect(Math.random()*256, Math.random()*256, 2, 2);
+  }
+  return new THREE.CanvasTexture(c);
+}
+/* Charge symbols are painted into the sphere's own texture, repeated around
+   the equator and at two latitudes, so a + or − faces the camera from almost
+   any viewing angle and is correctly hidden when a particle is behind another. */
+function chargeTexture(base, symbol, symCol, dense){
+  const W = 1024, H = 512;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, base); g.addColorStop(.5, base); g.addColorStop(1, base);
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = symCol;
+  /* symbols are drawn as bars, not glyphs — they stay crisp and unambiguous
+     even when a particle is only a dozen pixels across on screen */
+  const bar = (px, py, s)=>{
+    const t = Math.max(4, s*0.28);
+    x.fillRect(px - s/2, py - t/2, s, t);
+    if(symbol === '+') x.fillRect(px - t/2, py - s/2, t, s);
+  };
+  const cols = dense ? 8 : 4;
+  const rows = dense ? [[H*0.5, 84],[H*0.2, 62],[H*0.8, 62]]
+                     : [[H*0.5, 190],[H*0.22, 130],[H*0.78, 130]];
+  rows.forEach(([py, size], ri)=>{
+    for(let i=0;i<cols;i++) bar(((i + (ri ? 1 : .5)) * (W/cols)) % W, py, size);
+  });
+  const t = new THREE.CanvasTexture(c);
+  t.__shared = true;                 /* cached + reused: never dispose */
+  return t;
+}
+const TEX = {};
+function chargeTex(kind){
+  if(TEX[kind]) return TEX[kind];
+  if(kind === 'p')      TEX[kind] = chargeTexture('#e84d5b', '+', '#fff1f2');
+  else if(kind === 'e') TEX[kind] = chargeTexture('#3f9cf0', '–', '#ffffff');
+  else if(kind === 'ball') TEX[kind] = chargeTexture('#ff5f6d', '+', '#ffd2d6', true);
+  return TEX[kind];
+}
+
+function glowSprite(color, size, opacity){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,   hexA(color,.95));
+  g.addColorStop(.35, hexA(color,.35));
+  g.addColorStop(1,   hexA(color,0));
+  x.fillStyle = g; x.fillRect(0,0,128,128);
+  const mat = new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true,
+                                         depthWrite:false, blending:THREE.AdditiveBlending });
+  mat.opacity = opacity === undefined ? .9 : opacity;
+  mat.userData.baseOpacity = mat.opacity;
+  const s = new THREE.Sprite(mat); s.scale.set(size,size,1);
+  return s;
+}
+function label(text, color, scale){
+  color = color || '#d6e8fa';
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  const font = "600 44px Roboto, 'Segoe UI', Arial, sans-serif";
+  ctx.font = font;
+  const w = Math.ceil(ctx.measureText(text).width) + 44;
+  c.width = w; c.height = 76;
+  const x = c.getContext('2d');
+  x.font = font; x.textBaseline = 'middle';
+  x.fillStyle = 'rgba(6,12,20,.72)';
+  x.strokeStyle = 'rgba(120,160,200,.35)'; x.lineWidth = 2;
+  const r = 20;
+  x.beginPath();
+  x.moveTo(r,6); x.lineTo(w-r,6); x.quadraticCurveTo(w-6,6,w-6,r+6);
+  x.lineTo(w-6,70-r); x.quadraticCurveTo(w-6,70,w-r,70);
+  x.lineTo(r,70); x.quadraticCurveTo(6,70,6,70-r);
+  x.lineTo(6,r+6); x.quadraticCurveTo(6,6,r,6); x.closePath();
+  x.fill(); x.stroke();
+  x.fillStyle = color; x.fillText(text, 22, 40);
+  const mat = new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false });
+  mat.userData.baseOpacity = .96; mat.opacity = .96;
+  const s = new THREE.Sprite(mat);
+  const h = 0.34 * (scale || 1);
+  s.scale.set(h * w / 76, h, 1);
+  s.userData.baseScale = [h * w / 76, h];   /* so present mode can enlarge it */
+  s.scale.set(s.userData.baseScale[0] * LABEL_SCALE, s.userData.baseScale[1] * LABEL_SCALE, 1);
+  return s;
+}
+/* enlarge every text label in a scene/group without rebuilding it */
+function applyLabelScale(root, k){
+  if(!root) return;
+  root.traverse(o=>{
+    const b = o.userData && o.userData.baseScale;
+    if(b) o.scale.set(b[0]*k, b[1]*k, 1);
+  });
+}
+/* Labels hold a constant size on screen: scaling each one by its distance from
+   the camera means they stay readable whether the atom is framed whole or you
+   have zoomed right into the nucleus.                                        */
+const LABEL_REF = 12, _lv = new THREE.Vector3();
+function updateLabelSizes(root, cam){
+  if(!root) return;
+  root.traverse(o=>{
+    const b = o.userData && o.userData.baseScale;
+    if(!b) return;
+    o.getWorldPosition(_lv);
+    const k = LABEL_SCALE * Math.max(.2, Math.min(2.6, _lv.distanceTo(cam.position) / LABEL_REF));
+    o.scale.set(b[0]*k, b[1]*k, 1);
+  });
+}
+function labelAt(text, x, y, z, color, scale){ const s = label(text,color,scale); s.position.set(x,y,z); return s; }
+
+function ringLine(radius, color, opacity, tiltX, tiltZ){
+  const pts = [];
+  for(let i=0;i<=160;i++){
+    const a = i/160 * Math.PI*2;
+    pts.push(new THREE.Vector3(Math.cos(a)*radius, 0, Math.sin(a)*radius));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const l = new THREE.LineLoop(geo, lineMat(color, opacity));
+  l.rotation.x = tiltX || 0; l.rotation.z = tiltZ || 0;
+  return l;
+}
+/* random non-overlapping points inside a sphere (nucleon packing) */
+function packPoints(n, radius, minDist){
+  const out = [];
+  let guard = 0;
+  while(out.length < n && guard++ < 6000){
+    const v = new THREE.Vector3(rand(-1,1), rand(-1,1), rand(-1,1));
+    if(v.length() > 1) continue;
+    v.multiplyScalar(radius);
+    if(out.every(p => p.distanceTo(v) > minDist)) out.push(v);
+  }
+  while(out.length < n) out.push(new THREE.Vector3(rand(-.2,.2),rand(-.2,.2),rand(-.2,.2)));
+  return out;
+}
+
+/* =====================================================================
+   3. Model builders — one per timeline node
+   ===================================================================== */
+const BUILDERS = {};
+/* Bohr and Chadwick put every shell in one shared plane, like planets round
+   a star. Tilting that plane towards the camera keeps it readable as a set of
+   concentric circles rather than collapsing to a line edge-on.              */
+const PLANE_TILT = 0.34;
+
+/* --- Democritus: one solid, featureless, indivisible sphere --------- */
+BUILDERS.democritus = () => {
+  const g = new THREE.Group();
+  const tex = grainTexture('#5c86ad', '#bcd8ef');
+  const core = ball(2.6, 72, makeMaterial({ color:0xffffff, map:tex, roughness:.66, metalness:.05 }));
+  g.add(core);
+  const aura = ball(2.78, 48, basicMat({ color:0x3ddcff, opacity:.05, side:THREE.BackSide }));
+  g.add(aura);
+  g.add(labelAt('atomos — "indivisible"', 0, 3.35, 0, '#cfe9ff'));
+  g.userData.update = (t, dt) => { g.rotation.y = spinAngle; core.rotation.x = Math.sin(t*.15)*.08; };
+  return g;
+};
+
+/* --- Dalton: solid spheres, different elements = different atoms ---- */
+BUILDERS.dalton = () => {
+  const g = new THREE.Group();
+  const main = ball(2.0, 72, makeMaterial({ color:0xffffff, map:latticeTexture('#3f6f9c','#9dc7f0'),
+                                            roughness:.5, metalness:.18 }));
+  main.position.set(0, .2, 0);
+  g.add(main, labelAt('Element A', 0, 2.55, 0, '#9dc7f0'));
+
+  const sats = [
+    { c:0xf2c14e, r:1.35, p:[3.5,-.5,-1.2], t:['#f2c14e','#fbe6b0'], n:'Element B' },
+    { c:0x8b6bff, r:1.05, p:[-3.4,-.9,1.0], t:['#5a45a8','#c9b9ff'], n:'Element C' }
+  ];
+  sats.forEach(s=>{
+    const m = ball(s.r, 56, makeMaterial({ color:0xffffff, map:latticeTexture(s.t[0], s.t[1]),
+                                           roughness:.55, metalness:.15 }));
+    m.position.set(...s.p);
+    const lb = labelAt(s.n, s.p[0], s.p[1] + s.r + .55, s.p[2], '#c3d6e8');
+    g.add(m, lb);
+  });
+  g.add(labelAt('Solid spheres · cannot be divided', 0, -3.1, 0, '#8ea4bd'));
+  g.userData.update = () => { g.rotation.y = spinAngle * .8; };
+  return g;
+};
+
+/* --- Thomson: ball of positive charge, electrons embedded ---------- */
+BUILDERS.thomson = () => {
+  const g = new THREE.Group();
+  const R = 3.0;
+  /* depthWrite:false on the shell — otherwise the translucent sphere writes to
+     the depth buffer and hides embedded electrons as the model turns.        */
+  const inner = ball(R, 64, makeMaterial({ color:0xffffff, map:chargeTex('ball'), opacity:.30,
+                                           roughness:.2, metalness:0, side:THREE.BackSide,
+                                           depthWrite:false }));
+  const outer = ball(R, 64, makeMaterial({ color:0xffffff, map:chargeTex('ball'), opacity:.20,
+                                           roughness:.15, metalness:0, side:THREE.FrontSide,
+                                           depthWrite:false }));
+  const wire  = new THREE.Mesh(new THREE.SphereGeometry(R*1.005, 26, 18),
+                               basicMat({ color:0xff9aa2, wireframe:true, opacity:.08,
+                                          depthWrite:false }));
+  inner.renderOrder = 1; outer.renderOrder = 3; wire.renderOrder = 3;
+  g.add(inner, outer, wire, glowSprite(COL.pos, R*2.9, .16));
+
+  const eMat = makeMaterial({ color:0xffffff, map:chargeTex('e'), emissiveMap:chargeTex('e'),
+                              emissive:0x2a6fb5, emissiveIntensity:.75, roughness:.3 });
+  const electrons = [];
+  const seeds = packPoints(6, R*0.72, 1.25);   /* 6 electrons — carbon, as in every other model */
+  seeds.forEach(p=>{
+    const e = ball(.30, 32, eMat);
+    e.position.copy(p);
+    e.renderOrder = 2;                 /* inside the shell, but never hidden by it */
+    e.add(glowSprite(COL.neg, 1.5, .5));
+    electrons.push({ mesh:e, base:p.clone() });
+    g.add(e);
+  });
+  g.add(labelAt('Ball of positive charge', 0, R + .85, 0, '#ffb3b9'));
+  g.add(labelAt('6 negative electrons embedded in it', 0, -R - .85, 0, '#9ecbff'));
+  g.add(labelAt('Positive charge balances the electrons — the atom is neutral',
+                0, -R - 1.45, 0, '#8ea4bd', .85));
+
+  /* The electrons are EMBEDDED: they hold fixed positions in the ball of
+     positive charge. Only the whole model turns, so students can see round it. */
+  g.userData.update = () => { g.rotation.y = spinAngle * .7; };
+  return g;
+};
+
+/* --- Rutherford: tiny dense nucleus, electrons far out in empty space --- */
+BUILDERS.rutherford = () => {
+  const g = new THREE.Group();
+
+  /* nucleus: a very small dense cluster of positive charge */
+  const nuc = new THREE.Group();
+  const pMat = makeMaterial({ color:0xffffff, map:chargeTex('p'), emissiveMap:chargeTex('p'),
+                              emissive:0x7a1420, emissiveIntensity:.5, roughness:.35 });
+  packPoints(6, .20, .145).forEach(p=>{ const m = ball(.12, 28, pMat); m.position.copy(p); nuc.add(m); });
+  nuc.add(glowSprite(COL.pos, 1.5, .5));
+  g.add(nuc, labelAt('Nucleus — 6 protons (+), tiny but holds the mass', 0, .95, 0, '#ffb3b9', .85));
+
+  /* boundary of the atom: mostly empty space */
+  const R = 4.6;
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(R, 30, 20),
+        basicMat({ color:0x4f7ba6, wireframe:true, opacity:.055 })));
+  g.add(labelAt('Mostly empty space', 0, -R - .7, 0, '#8ea4bd'));
+  g.add(labelAt('Carbon · 6 protons, 6 electrons', 0, -R - 1.35, 0, '#7f93a9', .9));
+
+  /* electrons somewhere out in the empty space */
+  const eMat = makeMaterial({ color:0xffffff, map:chargeTex('e'), emissiveMap:chargeTex('e'),
+                              emissive:0x2a6fb5, emissiveIntensity:.8, roughness:.3 });
+  const orbits = [
+    { r:3.2, tx: .35, tz: .25, sp:.75, ph:0 },
+    { r:3.9, tx:-1.1, tz: .45, sp:.55, ph:2.1 },
+    { r:4.3, tx: 1.25, tz:-.6, sp:.42, ph:4.3 }
+  ];
+  const els = [];
+  orbits.forEach(o=>{
+    g.add(ringLine(o.r, 0x2f6f9c, .16, o.tx, o.tz));
+    for(let k=0;k<2;k++){                 /* 2 per path = 6 electrons, matching 6 protons */
+      const e = ball(.15, 24, eMat);
+      e.add(glowSprite(COL.neg, .8, .5));
+      g.add(e);
+      els.push({ mesh:e, o, ph:o.ph + k*Math.PI });
+    }
+  });
+  g.add(labelAt('Electron', 0, 0, 0, '#9ecbff'));
+  const eLabel = g.children[g.children.length-1];
+
+  g.userData.update = (t) => {
+    g.rotation.y = spinAngle * .5;
+    els.forEach((e,i)=>{
+      const a = t*e.o.sp + e.ph;
+      const v = new THREE.Vector3(Math.cos(a)*e.o.r, 0, Math.sin(a)*e.o.r);
+      v.applyAxisAngle(new THREE.Vector3(1,0,0), e.o.tx);
+      v.applyAxisAngle(new THREE.Vector3(0,0,1), e.o.tz);
+      e.mesh.position.copy(v);
+      if(i===0) eLabel.position.set(v.x, v.y + .55, v.z);
+    });
+  };
+  return g;
+};
+
+/* --- Bohr: electrons in fixed shells at specific distances --------- */
+BUILDERS.bohr = () => {
+  const g = new THREE.Group();
+  /* All shells share ONE plane — the "planetary" arrangement, and the same
+     picture as the 2D exam diagram seen at an angle. `sys` carries the tilt
+     and the spin; labels stay outside it so they don't swing round with it. */
+  const sys = new THREE.Group();
+  g.add(sys);
+
+  const nuc = new THREE.Group();
+  const pMat = makeMaterial({ color:0xffffff, map:chargeTex('p'), emissiveMap:chargeTex('p'),
+                              emissive:0x7a1420, emissiveIntensity:.5, roughness:.35 });
+  packPoints(6, .18, .13).forEach(p=>{ const m = ball(.11, 28, pMat); m.position.copy(p); nuc.add(m); });
+  nuc.add(glowSprite(COL.pos, 1.3, .45));
+  sys.add(nuc);
+  g.add(labelAt('Nucleus — 6 protons (+)  ·  zoom in to see them', 0, -.62, 0, '#ffb3b9', .82));
+
+  const eMat = makeMaterial({ color:0xffffff, map:chargeTex('e'), emissiveMap:chargeTex('e'),
+                              emissive:0x2a6fb5, emissiveIntensity:.85, roughness:.25 });
+  const shells = [
+    { r:2.6, n:2, sp: .95, name:'n = 1  (2 electrons)' },
+    { r:4.0, n:4, sp: .62, name:'n = 2  (4 electrons)' },
+    { r:5.4, n:0, sp: .44, name:'n = 3  (empty in carbon)' }
+  ];
+  const els = [];
+  shells.forEach((s,si)=>{
+    sys.add(ringLine(s.r, 0x3ddcff, s.n ? .3 : .13, 0, 0));
+    sys.add(new THREE.Mesh(new THREE.SphereGeometry(s.r, 26, 18),
+            basicMat({ color:0x3ddcff, wireframe:true, opacity:.025 })));
+    const lb = labelAt(s.name, 0, 0, 0, '#a8e4ff', .9);
+    lb.position.set(-s.r*0.72, s.r*0.72, 0);
+    g.add(lb);
+    for(let i=0;i<s.n;i++){
+      const e = ball(.15, 24, eMat);
+      e.add(glowSprite(COL.neg, .8, .5));
+      sys.add(e);
+      els.push({ mesh:e, s, ph: i/s.n * Math.PI*2 });
+    }
+  });
+  g.add(labelAt('Electrons orbit at specific distances', 0, -6.3, 0, '#8ea4bd'));
+  g.add(labelAt('Carbon · 6 protons, 6 electrons · 2,4', 0, -7.2, 0, '#7f93a9', .9));
+  g.add(labelAt('Still not to scale — a real nucleus is ~10 000× smaller than the atom',
+                0, -8.05, 0, '#5f7b96', .78));
+
+  g.userData.update = (t) => {
+    sys.rotation.set(PLANE_TILT, spinAngle * .45, 0);
+    els.forEach(e=>{
+      const a = t*e.s.sp + e.ph;
+      e.mesh.position.set(Math.cos(a)*e.s.r, 0, Math.sin(a)*e.s.r);
+    });
+  };
+  return g;
+};
+
+/* --- Chadwick: protons + neutrons in the nucleus (carbon-12) ------- */
+BUILDERS.chadwick = () => {
+  const g = new THREE.Group();
+  const sys = new THREE.Group();      /* one shared orbital plane, as in Bohr */
+  g.add(sys);
+
+  const nuc = new THREE.Group();
+  const pMat = makeMaterial({ color:0xffffff, map:chargeTex('p'), emissiveMap:chargeTex('p'),
+                              emissive:0x7a1420, emissiveIntensity:.4, roughness:.4 });
+  const nMat = makeMaterial({ color:0x9fb0c2, emissive:0x2c3a49, emissiveIntensity:.45, roughness:.5 });
+  const pts = packPoints(12, .34, .215);
+  pts.forEach((p,i)=>{
+    const m = ball(.15, 28, i % 2 ? nMat : pMat);
+    m.position.copy(p); nuc.add(m);
+  });
+  nuc.add(glowSprite(COL.pos, 1.7, .3));
+  sys.add(nuc);
+  g.add(labelAt('Nucleus — 6 protons + 6 neutrons  ·  zoom in', 0, -.78, 0, '#ffc9ce', .82));
+
+  const eMat = makeMaterial({ color:0xffffff, map:chargeTex('e'), emissiveMap:chargeTex('e'),
+                              emissive:0x2a6fb5, emissiveIntensity:.85, roughness:.25 });
+  const shells = [ { r:3.0, n:2, sp:.9 }, { r:4.8, n:4, sp:.55 } ];
+  const els = [];
+  shells.forEach(s=>{
+    sys.add(ringLine(s.r, 0x3ddcff, .28, 0, 0));
+    for(let i=0;i<s.n;i++){
+      const e = ball(.15, 24, eMat);
+      e.add(glowSprite(COL.neg, .8, .5));
+      sys.add(e);
+      els.push({ mesh:e, s, ph:i/s.n*Math.PI*2 });
+    }
+  });
+  g.add(labelAt('Carbon-12 · electronic structure 2,4', 0, -5.9, 0, '#8ea4bd'));
+  g.add(labelAt('Still not to scale — a real nucleus is ~10 000× smaller than the atom',
+                0, -6.8, 0, '#5f7b96', .78));
+
+  g.userData.update = (t) => {
+    sys.rotation.set(PLANE_TILT, spinAngle * .45, 0);
+    nuc.rotation.y = -spinAngle * .25;
+    nuc.children.forEach((m,i)=>{
+      if(!m.isMesh) return;
+      const b = pts[i]; if(!b) return;
+      const w = t*1.4 + i;
+      m.position.set(b.x + Math.sin(w)*.018, b.y + Math.cos(w*1.1)*.018, b.z + Math.sin(w*.9)*.018);
+    });
+    els.forEach(e=>{
+      const a = t*e.s.sp + e.ph;
+      e.mesh.position.set(Math.cos(a)*e.s.r, 0, Math.sin(a)*e.s.r);
+    });
+  };
+  return g;
+};
+
+/* =====================================================================
+   4. Alpha-scattering scene
+   ===================================================================== */
+const SC = {
+  parts:[], flashes:[], foilY:[], beamNuc:[], beamHalf:2.0, t:0, spawnT:0,
+  speed:1, slow:false, pp:false, running:true,
+  counts:{ pass:0, def:0, back:0 }, hudT:0
+};
+const TRAIL = 70;
+
+function buildScatterScene(){
+  sScene = new THREE.Scene();
+  sCamera = new THREE.PerspectiveCamera(42, 1, .1, 400);
+  sCamera.position.set(0.5, 3.5, 34);
+
+  sScene.add(new THREE.HemisphereLight(0x8fbfff, 0x0a1018, .75));
+  const d = new THREE.DirectionalLight(0xffffff, .8); d.position.set(6,10,14); sScene.add(d);
+
+  /* --- gold foil: a row of gold nuclei seen edge-on --------------- */
+  const foil = new THREE.Group();
+  const nucMat = makeMaterial({ color:0xf2c14e, emissive:0x6a4d0d, emissiveIntensity:.9, roughness:.3, metalness:.5 });
+  for(let y=-9; y<=9; y+=1.8){
+    SC.foilY.push(y);
+    const n = ball(.17, 20, nucMat); n.position.set(0, y, 0);
+    n.add(glowSprite(COL.gold, 1.5, .75));
+    foil.add(n);
+    const cloud = ringLine(.82, 0xf2c14e, .13, Math.PI/2, 0);
+    cloud.position.set(0, y, 0);
+    foil.add(cloud);
+  }
+  const slab = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 19.6),
+                              basicMat({ color:0xf2c14e, opacity:.055, side:THREE.DoubleSide }));
+  slab.rotation.y = Math.PI/2;
+  foil.add(slab);
+  sScene.add(foil);
+  sScene.add(labelAt('Thin gold foil', 0, 10.8, 0, '#f7d992', 2.1));
+  sScene.add(labelAt('Gold nucleus (+)', 4.2, -10.6, 0, '#f7d992', 2.1));
+
+  /* --- alpha source: a narrow, collimated beam -------------------- */
+  SC.beamNuc = SC.foilY.filter(y => Math.abs(y) <= SC.beamHalf);
+  const src = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.15, 1.15),
+                             makeMaterial({ color:0x2a3a4d, roughness:.7, metalness:.3 }));
+  src.position.set(-19, 0, 0);
+  sScene.add(src);
+  const leadMat = makeMaterial({ color:0x1a2635, roughness:.85 });
+  [1,-1].forEach(s=>{
+    const jaw = new THREE.Mesh(new THREE.BoxGeometry(.5, 2.4, 1.4), leadMat);
+    jaw.position.set(-17.0, s * 4.0, 0);
+    sScene.add(jaw);
+  });
+  sScene.add(labelAt('Alpha particle source (α²⁺)', -19.4, 2.2, 0, '#cfe9ff', 2.0));
+  sScene.add(labelAt('Lead collimator', -17.0, -6.0, 0, '#8ea4bd', 1.7));
+
+  /* --- zinc sulfide (phosphor) screen: a full 360° ring ----------- */
+  const RING = 15.5, GAP = 0.30;
+  const band = new THREE.Mesh(
+      new THREE.TorusGeometry(RING, .42, 10, 170, Math.PI*2 - GAP),
+      makeMaterial({ color:0x1d5744, emissive:0x0c3527, emissiveIntensity:.7,
+                     roughness:.6, metalness:.1, opacity:.92 }));
+  band.rotation.z = Math.PI + GAP/2;      /* leaves the gap where the beam enters */
+  sScene.add(band);
+  sScene.add(ringLine(RING - .45, 0x3ddc97, .32, Math.PI/2, 0));
+
+  const ticks = [];
+  for(let a=0; a<360; a+=15){
+    if(a > 171 && a < 189) continue;      /* skip the beam-entry gap */
+    const r = a * Math.PI/180, long = a % 45 === 0;
+    ticks.push(new THREE.Vector3(Math.cos(r)*(RING-.55), Math.sin(r)*(RING-.55), 0));
+    ticks.push(new THREE.Vector3(Math.cos(r)*(RING-(long?1.6:1.0)), Math.sin(r)*(RING-(long?1.6:1.0)), 0));
+  }
+  sScene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(ticks),
+                                    lineMat(0x3ddc97, .3)));
+  [[0,'0°'],[45,'45°'],[90,'90°'],[135,'135°'],[180,'180°']].forEach(([a,txt])=>{
+    const r = a * Math.PI/180;
+    sScene.add(labelAt(txt, Math.cos(r)*(RING+2.0), Math.sin(r)*(RING+2.0), 0, '#9de8c4', 1.6));
+  });
+  sScene.add(labelAt('Zinc sulfide (phosphor) screen — a flash of light marks every alpha particle',
+                     0, -RING - 2.2, 0, '#9de8c4', 2.0));
+
+  /* --- particle pool ---------------------------------------------- */
+  const aMat = makeMaterial({ color:0xfff2b0, emissive:0xffc94d, emissiveIntensity:1.6, roughness:.3 });
+  for(let i=0;i<52;i++){
+    const mesh = ball(.15, 16, aMat.clone());
+    mesh.add(glowSprite('#ffd76e', .8, .7));
+    mesh.visible = false;
+    const pos = new Float32Array(TRAIL*3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setDrawRange(0,0);
+    const line = new THREE.Line(geo, lineMat(0xffd76e, .55));
+    line.frustumCulled = false;
+    sScene.add(mesh, line);
+    SC.parts.push({ mesh, line, pos, count:0, alive:false,
+                    p:new THREE.Vector3(), v:new THREE.Vector3(),
+                    ang:0, kind:'pass', turned:false, counted:false });
+  }
+  /* --- flash pool on the screen ----------------------------------- */
+  for(let i=0;i<48;i++){
+    const s = glowSprite('#ffffff', 1.6, 0);
+    s.visible = false;
+    sScene.add(s);
+    SC.flashes.push({ s, life:0, size:1.6 });
+  }
+}
+
+function spawnAlpha(){
+  const p = SC.parts.find(q => !q.alive);
+  if(!p) return;
+  const roll = Math.random();
+  let y, ang, kind;
+
+  const beam = SC.beamNuc.length ? SC.beamNuc : SC.foilY;
+  if(SC.pp){                                   /* plum-pudding prediction */
+    kind = 'pass';
+    y = rand(-SC.beamHalf, SC.beamHalf);
+    ang = rand(-0.02, 0.02);
+  } else if(roll < 0.90){                      /* most: straight through */
+    kind = 'pass';
+    y = rand(-SC.beamHalf, SC.beamHalf);
+    ang = rand(-0.008, 0.008);
+  } else if(roll < 0.985){                     /* some: deflected */
+    kind = 'def';
+    const nucY = beam[Math.floor(Math.random()*beam.length)];
+    const s = Math.random() < .5 ? -1 : 1;
+    y = nucY + s * rand(.26, .70);
+    ang = s * rand(Math.PI/9, Math.PI/2.6);
+  } else {                                     /* very few: bounced back */
+    kind = 'back';
+    const nucY = beam[Math.floor(Math.random()*beam.length)];
+    const s = Math.random() < .5 ? -1 : 1;
+    y = nucY + s * rand(.02, .10);
+    ang = s * rand(Math.PI*0.62, Math.PI*0.93);
+  }
+
+  p.alive = true; p.turned = false; p.counted = false;
+  p.kind = kind; p.ang = ang; p.count = 0;
+  p.p.set(-15.2, y, 0);
+  p.v.set(9.5, 0, 0);
+  p.mesh.visible = true;
+  p.mesh.scale.setScalar(1);
+  p.mesh.position.copy(p.p);
+  p.line.material.color.set(0xffd76e);
+  p.line.material.opacity = .55;
+  p.line.geometry.setDrawRange(0,0);
+}
+
+function pushTrail(p){
+  if(p.count < TRAIL){
+    p.pos[p.count*3]   = p.p.x;
+    p.pos[p.count*3+1] = p.p.y;
+    p.pos[p.count*3+2] = p.p.z;
+    p.count++;
+  } else {
+    p.pos.copyWithin(0, 3);
+    p.pos[(TRAIL-1)*3]   = p.p.x;
+    p.pos[(TRAIL-1)*3+1] = p.p.y;
+    p.pos[(TRAIL-1)*3+2] = p.p.z;
+  }
+  p.line.geometry.setDrawRange(0, p.count);
+  p.line.geometry.attributes.position.needsUpdate = true;
+}
+
+function fireFlash(v, color, size){
+  const f = SC.flashes.find(q => q.life <= 0);
+  if(!f) return;
+  f.life = 1;
+  f.size = size || 1.6;
+  f.s.visible = true;
+  f.s.position.copy(v);
+  f.s.material.color.set(color);
+}
+
+function updateScatter(dt){
+  if(!SC.running) return;
+  const sp = SC.slow ? .28 : 1;
+  SC.t += dt;
+  SC.spawnT += dt;
+  const interval = SC.slow ? .30 : .085;
+  while(SC.spawnT > interval){ SC.spawnT -= interval; spawnAlpha(); }
+
+  SC.parts.forEach(p=>{
+    if(!p.alive) return;
+    const before = p.p.x;
+    p.p.addScaledVector(p.v, dt*sp);
+
+    if(!p.turned && before < 0 && p.p.x >= 0){
+      p.turned = true;
+      p.v.applyAxisAngle(new THREE.Vector3(0,0,1), p.ang);
+      if(p.kind === 'def'){                       /* make the rare events stand out */
+        p.line.material.color.set(0xffb454); p.line.material.opacity = .95;
+        p.mesh.scale.setScalar(1.4);
+      } else if(p.kind === 'back'){
+        p.line.material.color.set(0xff5f6d); p.line.material.opacity = 1;
+        p.mesh.scale.setScalar(1.8);
+      } else {
+        p.line.material.color.set(0x3ddc97); p.line.material.opacity = .45;
+      }
+      if(!p.counted){ SC.counts[p.kind]++; p.counted = true; }
+    }
+    p.mesh.position.copy(p.p);
+    pushTrail(p);
+
+    if((p.turned && p.p.length() > 15.05) || Math.abs(p.p.x) > 22 || Math.abs(p.p.y) > 18){
+      if(p.turned){
+        const hit = p.p.clone().setLength(15.05);
+        if(p.kind === 'pass')      fireFlash(hit, 0x8effc8, 1.15);
+        else if(p.kind === 'def')  fireFlash(hit, 0xffb454, 2.1);
+        else                       fireFlash(hit, 0xff5f6d, 2.6);
+      }
+      p.alive = false;
+      p.mesh.visible = false;
+      p.line.geometry.setDrawRange(0,0);
+    }
+  });
+
+  SC.flashes.forEach(f=>{
+    if(f.life <= 0) return;
+    f.life -= dt*1.6;
+    f.s.material.opacity = Math.max(0, f.life) * .9;
+    f.s.scale.setScalar(f.size + (1-f.life)*f.size*0.8);
+    if(f.life <= 0) f.s.visible = false;
+  });
+
+  SC.hudT += dt;
+  if(SC.hudT > .2){ SC.hudT = 0; updateHud(); }
+}
+
+function updateHud(){
+  const c = SC.counts, total = c.pass + c.def + c.back || 1;
+  $('cPass').textContent = c.pass;
+  $('cDef').textContent  = c.def;
+  $('cBack').textContent = c.back;
+  $('bPass').style.width = (c.pass/total*100).toFixed(1) + '%';
+  $('bDef').style.width  = (c.def/total*100).toFixed(1) + '%';
+  $('bBack').style.width = (c.back/total*100).toFixed(1) + '%';
+  $('hudConcl').innerHTML = SC.pp
+    ? '<b>Plum pudding prediction:</b> the positive charge is spread thinly through the whole atom, so <b>every</b> alpha particle should pass through almost undeflected. This is <b>not</b> what Geiger and Marsden observed.'
+    : '<b>Observed:</b> most pass straight through &rarr; atom is <b>mostly empty space</b>. Some deflect &rarr; the centre is <b>positively charged</b>. About <b>1 in ' +
+      (c.back ? Math.round(total/c.back) : '—') + '</b> bounces back &rarr; the nucleus is <b>tiny but holds almost all the mass</b>.';
+}
+function resetScatter(){
+  SC.counts = { pass:0, def:0, back:0 };
+  SC.parts.forEach(p=>{ p.alive = false; p.mesh.visible = false; p.line.geometry.setDrawRange(0,0); });
+  SC.flashes.forEach(f=>{ f.life = 0; f.s.visible = false; });
+  updateHud();
+}
+
+/* =====================================================================
+   5. Scene init, transitions and render loop
+   ===================================================================== */
+function initThree(){
+  renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x04070c, 1);
+  clock = new THREE.Clock();
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x04070c, 0.018);
+  camera = new THREE.PerspectiveCamera(45, 1, .1, 400);
+  camera.position.set(0, 2, 11);
+
+  scene.add(new THREE.HemisphereLight(0x8fbfff, 0x0a1018, .85));
+  const key = new THREE.DirectionalLight(0xffffff, .95); key.position.set(5, 8, 10);
+  const rim = new THREE.PointLight(0x6ea8ff, .8, 60); rim.position.set(-9, -4, -8);
+  const warm = new THREE.PointLight(0xff9d7a, .45, 60); warm.position.set(8, -6, 4);
+  scene.add(key, rim, warm);
+
+  /* faint star field for depth */
+  const starGeo = new THREE.BufferGeometry();
+  const sp = new Float32Array(700*3);
+  for(let i=0;i<700;i++){
+    const v = new THREE.Vector3(rand(-1,1), rand(-1,1), rand(-1,1)).normalize()
+              .multiplyScalar(rand(28, 70));
+    sp[i*3]=v.x; sp[i*3+1]=v.y; sp[i*3+2]=v.z;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(sp,3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    color:0x6f92b8, size:.28, transparent:true, opacity:.5, sizeAttenuation:true }));
+  stars.material.userData.baseOpacity = .5;
+  scene.add(stars);
+
+  controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = .07;
+  controls.minDistance = 0.9; controls.maxDistance = 48;
+
+  buildScatterScene();
+  sControls = new THREE.OrbitControls(sCamera, canvas);
+  sControls.enableDamping = true; sControls.dampingFactor = .07;
+  sControls.minDistance = 12; sControls.maxDistance = 160;
+  sControls.enabled = false;
+
+  resize();
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+  renderer.setAnimationLoop(tick);
+}
+
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if(!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h;  camera.updateProjectionMatrix();
+  sCamera.aspect = w/h; sCamera.updateProjectionMatrix();
+  if(mode === "scatter" || !sControls) fitScatterCamera();
+}
+
+function fitScatterCamera(){
+  if(!sCamera) return;
+  const half = Math.tan(sCamera.fov * Math.PI / 360);
+  const z = Math.max(18.8 / half, 23.0 / (half * Math.max(sCamera.aspect, .35)));
+  sCamera.position.set(0, 0.6, z);
+  if(sControls){ sControls.target.set(0,0,0); sControls.update(); }
+}
+
+function flyTo(pos, instant){
+  const to = new THREE.Vector3(pos[0], pos[1], pos[2]);
+  if(instant){ camera.position.copy(to); controls.target.set(0,0,0); controls.update(); return; }
+  camTween = { from:camera.position.clone(), to, t:0, dur:.75 };
+  controls.enabled = false;
+}
+
+function buildModel(i, instant){
+  const d = DATA[i];
+  clearOutgoing();
+  if(currentGroup){ outgoingGroup = currentGroup; fadeOut = 1; }
+  currentGroup = BUILDERS[d.id]();
+  setGroupOpacity(currentGroup, 0);
+  currentGroup.scale.setScalar(.88);
+  scene.add(currentGroup);
+  fadeIn = 0;
+  flyTo(d.cam, instant);
+}
+
+function tick(){
+  const dt = Math.min(clock.getDelta(), .05);
+  /* animTime freezes with the pause button, so ALL motion stops, not just the spin */
+  if(spin){ spinAngle += dt * .18; animTime += dt; }
+  const t = animTime;
+
+  if(mode === 'model'){
+    if(camTween){
+      camTween.t += dt;
+      const k = Math.min(1, camTween.t / camTween.dur);
+      camera.position.lerpVectors(camTween.from, camTween.to, ease(k));
+      camera.lookAt(0,0,0);
+      if(k >= 1){ camTween = null; controls.enabled = (mode === 'model'); controls.target.set(0,0,0); }
+    }
+    if(fadeIn < 1){
+      fadeIn = Math.min(1, fadeIn + dt*2.6);
+      const k = ease(fadeIn);
+      setGroupOpacity(currentGroup, k);
+      currentGroup.scale.setScalar(.88 + .12*k);
+    }
+    if(outgoingGroup){
+      fadeOut -= dt*3.4;
+      if(fadeOut <= 0){
+        scene.remove(outgoingGroup); disposeGroup(outgoingGroup); outgoingGroup = null;
+      } else {
+        setGroupOpacity(outgoingGroup, ease(Math.max(0,fadeOut)));
+        outgoingGroup.scale.setScalar(1 + (1-fadeOut)*.14);
+      }
+    }
+    if(currentGroup && currentGroup.userData.update) currentGroup.userData.update(t, dt);
+    updateLabelSizes(currentGroup, camera);
+    controls.update();
+    renderer.render(scene, camera);
+  } else if(mode === 'scatter'){
+    updateScatter(dt);
+    sControls.update();
+    renderer.render(sScene, sCamera);
+  }
+  /* mode === 'flat': the SVG overlay covers the canvas, so nothing to draw */
+}
+
+/* =====================================================================
+   5b. 2D exam-style diagrams (inline SVG)
+   This is the representation students actually have to DRAW in the exam,
+   so it follows GCSE drawing conventions: concentric shells, electrons
+   placed singly at N/E/S/W before pairing, everything labelled. Particle
+   counts are the same carbon atom as the 3D models.
+   ===================================================================== */
+const F = { W:780, H:540, cx:300, cy:250 };
+
+/* one particle, drawn with its charge symbol */
+function sym(x, y, r, kind){
+  const col = kind === 'p' ? '#ff5f6d' : kind === 'n' ? '#9fb0c2' : '#4da6ff';
+  const bar = r, t = Math.max(2.2, r*0.3);
+  let s = `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" stroke="rgba(255,255,255,.45)" stroke-width="1"/>`;
+  if(kind !== 'n'){
+    s += `<rect x="${x-bar/2}" y="${y-t/2}" width="${bar}" height="${t}" rx="${t/2}" fill="#fff"/>`;
+    if(kind === 'p') s += `<rect x="${x-t/2}" y="${y-bar/2}" width="${t}" height="${bar}" rx="${t/2}" fill="#fff"/>`;
+  }
+  return s;
+}
+function plusMark(x, y, s){
+  const t = Math.max(2, s*0.28);
+  return `<g opacity=".55" fill="#ff9aa2">`
+       + `<rect x="${x-s/2}" y="${y-t/2}" width="${s}" height="${t}" rx="${t/2}"/>`
+       + `<rect x="${x-t/2}" y="${y-s/2}" width="${t}" height="${s}" rx="${t/2}"/></g>`;
+}
+/* GCSE convention: fill N, E, S, W first, then pair alongside */
+function shellDots(cx, cy, r, n){
+  const slots = n === 2 ? [-90, 90] : [-90, 0, 90, 180];
+  let s = '';
+  for(let i=0;i<n;i++){
+    const off = i < slots.length ? 0 : (i % 2 ? 15 : -15);
+    const a = (slots[i % slots.length] + off) * Math.PI/180;
+    s += sym(cx + Math.cos(a)*r, cy + Math.sin(a)*r, 11, 'e');
+  }
+  return s;
+}
+function shell(cx, cy, r, empty){
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#3ddcff"
+           stroke-width="${empty ? 1 : 1.6}" opacity="${empty ? .22 : .5}"
+           ${empty ? 'stroke-dasharray="6 6"' : ''}/>`;
+}
+function txt(x, y, t, cls, anchor){
+  return `<text x="${x}" y="${y}" class="${cls||'lbl'}" text-anchor="${anchor||'start'}">${t}</text>`;
+}
+function lead(x1,y1,x2,y2){ return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="lead"/>`; }
+function notes(x, y, title, items){
+  let s = txt(x, y, title, 'note-h');
+  items.forEach((it,i)=> s += txt(x, y + 25 + i*20, '·  ' + it, 'sm'));
+  return s;
+}
+
+const FLAT = {};
+
+FLAT.democritus = () => `
+  <circle cx="${F.cx}" cy="${F.cy}" r="126" fill="url(#gA)" stroke="#6f9ec4" stroke-width="2"/>
+  <line x1="120" y1="${F.cy}" x2="480" y2="${F.cy}" stroke="#ff5f6d" stroke-width="2"
+        stroke-dasharray="7 6" opacity=".7"/>
+  <g stroke="#ff5f6d" stroke-width="3.4" stroke-linecap="round">
+    <line x1="446" y1="${F.cy-17}" x2="480" y2="${F.cy+17}"/>
+    <line x1="480" y1="${F.cy-17}" x2="446" y2="${F.cy+17}"/>
+  </g>
+  ${txt(F.cx, F.cy+9, 'atomos', 'big', 'middle')}
+  ${txt(F.cx, 425, 'A solid sphere that cannot be divided', 'dim', 'middle')}
+  ${notes(548, 150, 'WHAT THE MODEL SAYS', ['Matter is made of tiny particles',
+     'They cannot be cut into anything smaller','No internal structure','No charges inside'])}
+  ${notes(548, 320, 'EVIDENCE', ['None — reasoning only, no experiment'])}`;
+
+FLAT.dalton = () => `
+  <circle cx="185" cy="215" r="74" fill="url(#gA)" stroke="#6f9ec4" stroke-width="2"/>
+  <circle cx="330" cy="252" r="56" fill="url(#gB)" stroke="#c79a3a" stroke-width="2"/>
+  <circle cx="440" cy="203" r="42" fill="url(#gC)" stroke="#7d68c9" stroke-width="2"/>
+  ${txt(185, 315, 'Element A', 'lbl', 'middle')}
+  ${txt(330, 332, 'Element B', 'lbl', 'middle')}
+  ${txt(440, 268, 'Element C', 'lbl', 'middle')}
+  ${txt(300, 378, 'Different elements → atoms with different masses', 'dim', 'middle')}
+  <circle cx="256" cy="450" r="25" fill="url(#gA)" stroke="#6f9ec4" stroke-width="1.6"/>
+  <circle cx="302" cy="450" r="19" fill="url(#gB)" stroke="#c79a3a" stroke-width="1.6"/>
+  ${txt(340, 455, 'compound — joined in a fixed ratio', 'sm')}
+  ${notes(548, 150, 'WHAT THE MODEL SAYS', ['Atoms are solid spheres','They cannot be divided',
+     'Atoms of one element are identical','Atoms are rearranged in reactions'])}
+  ${notes(548, 330, 'EVIDENCE', ['Fixed masses combining in reactions','Mass is conserved'])}`;
+
+FLAT.thomson = () => {
+  const pluses = [[-105,10],[-58,-102],[4,-128],[72,-46],[118,-28],[-122,-46],
+                  [-96,78],[-22,56],[38,108],[104,72],[128,18],[-44,-38]];
+  const es = [[-70,-58],[56,-82],[96,26],[8,-8],[-42,72],[62,88]];
+  return `
+  <circle cx="${F.cx}" cy="${F.cy}" r="150" fill="rgba(255,95,109,.13)"
+          stroke="#ff5f6d" stroke-width="2"/>
+  ${pluses.map(([x,y]) => plusMark(F.cx+x, F.cy+y, 17)).join('')}
+  ${es.map(([x,y]) => sym(F.cx+x, F.cy+y, 12, 'e')).join('')}
+  ${lead(F.cx+118, F.cy-118, 470, 96)}
+  ${txt(474, 100, 'ball of positive charge', 'lbl')}
+  ${lead(F.cx-42, F.cy+84, 74, 424)}
+  ${txt(70, 441, 'electron, embedded (–)', 'lbl')}
+  ${txt(F.cx, 492, '6 electrons · the atom is neutral overall', 'dim', 'middle')}
+  ${notes(548, 175, 'WHAT THE MODEL SAYS', ['A ball of positive charge','Negative electrons embedded in it',
+     'Charge spread evenly through it','Mass spread through the whole atom'])}
+  ${notes(548, 350, 'DO NOT DRAW', ['Shells','Orbits','A nucleus'])}`;
+};
+
+FLAT.rutherford = () => {
+  const es = [[-118,-56],[92,-104],[146,42],[-58,132],[-152,44],[46,146]];
+  return `
+  <circle cx="${F.cx}" cy="${F.cy}" r="172" fill="rgba(79,123,166,.05)" stroke="#4f7ba6"
+          stroke-width="1.6" stroke-dasharray="7 7" opacity=".7"/>
+  ${es.map(([x,y]) => sym(F.cx+x, F.cy+y, 11, 'e')).join('')}
+  <circle cx="${F.cx}" cy="${F.cy}" r="30" fill="rgba(255,95,109,.16)"/>
+  ${sym(F.cx, F.cy, 15, 'p')}
+  ${lead(F.cx+16, F.cy-8, 470, 176)}
+  ${txt(474, 181, 'nucleus (+)', 'lbl')}
+  ${txt(474, 202, 'all the mass, tiny volume', 'sm')}
+  ${txt(F.cx, F.cy+86, 'mostly empty space', 'dim', 'middle')}
+  ${txt(F.cx, 452, 'Nucleus drawn far too big — the atom is about 10 000× wider', 'sm', 'middle')}
+  ${notes(548, 250, 'WHAT THE MODEL SAYS', ['Mass concentrated at the centre','The nucleus is positively charged',
+     'Electrons out in the empty space','6 protons, 6 electrons (carbon)'])}
+  ${notes(548, 392, 'DO NOT DRAW', ['Neutrons — not found until 1932','Fixed shells — that is Bohr'])}`;
+};
+
+FLAT.bohr = () => {
+  const R = [72, 124, 176], N = [2, 4, 0];
+  const lab = ['n = 1   (2 electrons)', 'n = 2   (4 electrons)', 'n = 3   (empty in carbon)'];
+  let s = '';
+  R.forEach((r,i)=>{
+    s += shell(F.cx, F.cy, r, !N[i]);
+    const lx = F.cx - r*0.707 - 8, ly = F.cy - r*0.707 - 5;
+    s += lead(F.cx - r*0.707, F.cy - r*0.707, lx, ly) + txt(lx - 3, ly, lab[i], 'sm', 'end');
+  });
+  R.forEach((r,i)=> s += shellDots(F.cx, F.cy, r, N[i]));
+  return `
+  ${s}
+  <circle cx="${F.cx}" cy="${F.cy}" r="25" fill="#ff5f6d" stroke="rgba(255,255,255,.4)" stroke-width="1.2"/>
+  ${txt(F.cx, F.cy+6, '6p+', 'nuc', 'middle')}
+  ${lead(F.cx+24, F.cy+16, 470, 300)}
+  ${txt(474, 305, 'nucleus — 6 protons (+)', 'lbl')}
+  ${txt(F.cx, 470, 'Carbon 2,4 — electrons at fixed distances in shells', 'dim', 'middle')}
+  ${notes(548, 130, 'WHAT THE MODEL SAYS', ['Electrons orbit at specific distances',
+     'Each shell holds a set number: 2, 8, 8','Electrons cannot sit between shells',
+     'Bohr adapted the nuclear model'])}`;
+};
+
+FLAT.chadwick = () => {
+  const rows = [[-28.5,[-19,0,19]], [-9.5,[-28.5,-9.5,9.5,28.5]], [9.5,[-19,0,19]], [28.5,[-9.5,9.5]]];
+  let nucleons = '', k = 0;
+  rows.forEach(([y, xs])=> xs.forEach(x=>{
+    nucleons += sym(F.cx + x, F.cy + y, 9, (k++ % 2) ? 'n' : 'p');
+  }));
+  const R = [98, 152], N = [2, 4];
+  let s = '';
+  R.forEach((r,i)=> s += shell(F.cx, F.cy, r, false) + shellDots(F.cx, F.cy, r, N[i]));
+  return `
+  ${s}
+  <circle cx="${F.cx}" cy="${F.cy}" r="50" fill="rgba(255,95,109,.10)" stroke="rgba(255,154,162,.35)" stroke-width="1"/>
+  ${nucleons}
+  ${lead(F.cx+44, F.cy-34, 470, 150)}
+  ${txt(474, 155, 'nucleus: 6 protons + 6 neutrons', 'lbl')}
+  ${lead(F.cx, F.cy-152, 470, 96)}
+  ${txt(474, 101, 'electron shells 2,4', 'lbl')}
+  ${txt(F.cx, 460, 'Carbon-12  ·  atomic number 6  ·  mass number 12', 'dim', 'middle')}
+  ${txt(548, 236, 'KEY', 'note-h')}
+  ${sym(557, 258, 8, 'p')}${txt(574, 263, 'Proton   +1 charge, mass 1', 'sm')}
+  ${sym(557, 284, 8, 'n')}${txt(574, 289, 'Neutron   0 charge, mass 1', 'sm')}
+  ${sym(557, 310, 8, 'e')}${txt(574, 315, 'Electron   –1, mass ~1/2000', 'sm')}
+  ${notes(548, 366, 'REMEMBER', ['Atomic number = protons','Mass number = protons + neutrons',
+     'Isotopes: same p, different n'])}`;
+};
+
+const FLAT_TIP = {
+  democritus:'<b>In the exam:</b> "before the discovery of the electron, atoms were thought to be tiny spheres that could not be divided".',
+  dalton:'<b>In the exam:</b> describe Dalton\'s atom as a solid sphere that cannot be divided — the difference from Thomson is <i>internal structure and charge</i>.',
+  thomson:'<b>In the exam:</b> draw a circle of positive charge with electrons inside it. Drawing shells or orbits here loses the mark.',
+  rutherford:'<b>In the exam:</b> label the nucleus (+) and state the rest is empty space. No neutrons in the 1911 model.',
+  bohr:'<b>In the exam:</b> shells are circles at fixed distances; put electrons on the shells and label the electronic structure (carbon = 2,4).',
+  chadwick:'<b>In the exam:</b> label protons, neutrons and electrons with their charges. Mass number 12 = 6 protons + 6 neutrons.'
+};
+
+function renderFlat(d){
+  const body = FLAT[d.id] ? FLAT[d.id]() : '';
+  $('flatSvg').innerHTML =
+   `<svg viewBox="0 0 ${F.W} ${F.H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <style>
+        text{font-family:'Roboto','Segoe UI',Arial,Helvetica,sans-serif}
+        .lbl{fill:#dfe9f5;font-size:15px;font-weight:600}
+        .big{fill:#eaf3fb;font-size:23px;font-weight:700}
+        .nuc{fill:#fff;font-size:13px;font-weight:700}
+        .dim{fill:#8ea4bd;font-size:13.5px}
+        .sm{fill:#8296ab;font-size:12.5px}
+        .note-h{fill:#3ddcff;font-size:11.5px;font-weight:700;letter-spacing:.09em}
+        .lead{stroke:#4a6480;stroke-width:1.2;stroke-dasharray:4 4}
+      </style>
+      <defs>
+        <radialGradient id="gA" cx="34%" cy="30%">
+          <stop offset="0" stop-color="#cfe4f6"/><stop offset="1" stop-color="#3c6b98"/></radialGradient>
+        <radialGradient id="gB" cx="34%" cy="30%">
+          <stop offset="0" stop-color="#fbe6b0"/><stop offset="1" stop-color="#b8892c"/></radialGradient>
+        <radialGradient id="gC" cx="34%" cy="30%">
+          <stop offset="0" stop-color="#d8cbff"/><stop offset="1" stop-color="#5a45a8"/></radialGradient>
+      </defs>
+      ${body}
+    </svg>`;
+  $('flatTip').innerHTML = FLAT_TIP[d.id] || '';
+}
+
+/* =====================================================================
+   5c. Presentation mode — PowerPoint-style builds for teaching to a class
+   Content is derived from the same DATA the side panel uses, so the slides
+   can never say something different from the revision notes.
+   ===================================================================== */
+const PRES = { on:false, card:0, shown:1, cards:[] };
+
+/* pull the bullet points out of a panel HTML block, keeping the emphasis */
+function toBullets(html){
+  const box = document.createElement('div');
+  box.innerHTML = html;
+  const els = [...box.querySelectorAll('p, li, .o-txt')];
+  return els.map(e => e.innerHTML.trim()).filter(Boolean);
+}
+function buildCards(d){
+  return [
+    { eyebrow:d.year + ' · ' + d.name, head:d.model,
+      items:[d.lede, '<em>AQA 4.1.1.3:</em> “' + d.spec + '”'] },
+    { eyebrow:'Key concept', head:'What the model says', items:toBullets(d.concept.html) },
+    { eyebrow:'Evidence',    head:d.evidence.title,      items:toBullets(d.evidence.html) },
+    { eyebrow:'How science works', head:d.replaced.title, items:toBullets(d.replaced.html) },
+    { eyebrow:'Higher tier', head:'Getting the marks',
+      items:d.tip.bullets.concat(d.tip.ms ? ['<b>Mark scheme:</b> ' + d.tip.ms] : []) }
+  ].filter(c => c.items.length);
+}
+function presRender(){
+  const c = PRES.cards[PRES.card];
+  if(!c) return;
+  $('prEyebrow').textContent = c.eyebrow;
+  $('prHead').innerHTML = c.head;
+  $('prList').innerHTML = c.items.map((t,i) =>
+    `<li class="${/^<b>Mark scheme/.test(t) ? 'ms-item' : ''}" data-i="${i}">${t}</li>`).join('');
+  $('prDots').innerHTML = PRES.cards.map((_,i) =>
+    `<span class="pr-dot ${i === PRES.card ? 'on' : ''}"></span>`).join('');
+  presPaint();
+}
+function presPaint(){
+  const c = PRES.cards[PRES.card];
+  [...$('prList').children].forEach((li,i) => li.classList.toggle('in', i < PRES.shown));
+  $('prCount').textContent = `${PRES.card+1} / ${PRES.cards.length}`;
+}
+function presNext(){
+  const c = PRES.cards[PRES.card];
+  if(PRES.shown < c.items.length){ PRES.shown++; presPaint(); }
+  else if(PRES.card < PRES.cards.length - 1){ PRES.card++; PRES.shown = 1; presRender(); }
+  else if(idx < DATA.length - 1){ select(idx + 1); }
+}
+function presPrev(){
+  if(PRES.shown > 1){ PRES.shown--; presPaint(); }
+  else if(PRES.card > 0){
+    PRES.card--; PRES.shown = PRES.cards[PRES.card].items.length; presRender();
+  }
+  else if(idx > 0){ select(idx - 1); }
+}
+function presLoad(d){
+  PRES.cards = buildCards(d); PRES.card = 0; PRES.shown = 1; presRender();
+}
+function setPresent(on){
+  PRES.on = !!on;
+  document.body.classList.toggle('present', PRES.on);
+  $('presentBtn').textContent = PRES.on ? '✕ Exit present' : '▶ Present';
+  $('presentBtn').classList.toggle('on', PRES.on);
+  LABEL_SCALE = PRES.on ? 1.28 : 1;      /* in-scene labels readable at distance too */
+  applyLabelScale(currentGroup, LABEL_SCALE);
+  applyLabelScale(sScene, LABEL_SCALE);
+  const fs = p => { if(p && p.catch) p.catch(()=>{}); };   /* fullscreen may be blocked */
+  if(PRES.on){
+    presLoad(DATA[idx]);
+    if(!document.fullscreenElement){
+      try{ fs(document.documentElement.requestFullscreen()); }catch(e){}
+    }
+  } else if(document.fullscreenElement){
+    try{ fs(document.exitFullscreen()); }catch(e){}
+  }
+  resize();
+}
+
+/* =====================================================================
+   6. Panel + timeline rendering
+   ===================================================================== */
+function renderTimeline(){
+  const wrap = $('tlNodes');
+  wrap.innerHTML = DATA.map((d,i)=>`
+    <button class="tl-node" data-i="${i}" type="button">
+      <span class="tl-dot"></span>
+      <span class="tl-year">${d.year}</span>
+      <span class="tl-name">${d.name}</span>
+      <span class="tl-model">${d.model}</span>
+    </button>`).join('');
+  wrap.querySelectorAll('.tl-node').forEach(b=>{
+    b.addEventListener('click', ()=> select(+b.dataset.i));
+  });
+}
+function paintTimeline(){
+  const nodes = $('tlNodes').querySelectorAll('.tl-node');
+  nodes.forEach((n,i)=>{
+    n.classList.toggle('active', i === idx);
+    n.classList.toggle('done', i < idx);
+  });
+  $('tlFill').style.width = (idx / (DATA.length-1) * 84) + '%';
+}
+
+function renderPanel(d, i){
+  const kw = d.keywords.map(([term,def]) =>
+    `<dt><span>${term}</span></dt><dd>${def}</dd>`).join('');
+  const tips = d.tip.bullets.map(b=>`<li>${b}</li>`).join('');
+  return `
+    <div class="p-head">
+      <div class="p-eyebrow"><span class="num">${i+1}</span> ${d.year} &middot; ${d.name}</div>
+      <h2 class="p-title">${d.model}</h2>
+      <div class="p-sub">${d.sci}</div>
+      <p class="p-lede">${d.lede}</p>
+    </div>
+
+    <div class="spec">
+      <span class="sp-tag">AQA 4.1.1.3</span>
+      <q>${d.spec}</q>
+    </div>
+
+    <div class="card concept">
+      <h3><span class="ic">${d.concept.icon}</span>${d.concept.title}</h3>
+      ${d.concept.html}
+    </div>
+
+    <div class="card evidence">
+      <h3><span class="ic">${d.evidence.icon}</span>${d.evidence.title}</h3>
+      ${d.evidence.html}
+    </div>
+
+    <div class="card replaced">
+      <h3><span class="ic">${d.replaced.icon}</span>${d.replaced.title}</h3>
+      ${d.replaced.html}
+    </div>
+
+    <div class="card keywords">
+      <h3><span class="ic">A</span>AQA exam keywords</h3>
+      <dl class="kw">${kw}</dl>
+    </div>
+
+    <div class="tip">
+      <h3><span>★</span>Higher tier exam tip</h3>
+      <ul>${tips}</ul>
+      ${d.tip.ms ? `<span class="ms">Mark-scheme wording: ${d.tip.ms}</span>` : ''}
+    </div>
+
+    <div class="pfoot">
+      <button class="btn" id="prevBtn" ${i===0?'disabled':''}>&larr; ${i>0?DATA[i-1].name:'Start'}</button>
+      <button class="btn primary" id="nextBtn" ${i===DATA.length-1?'disabled':''}>${i<DATA.length-1?DATA[i+1].name:'End'} &rarr;</button>
+    </div>`;
+}
+
+function renderLegend(d){
+  $('legend').innerHTML = d.legend.map(([c,txt]) =>
+    `<div class="lg-row"><span class="swatch" style="color:${c};background:${c}"></span>${txt}</div>`).join('');
+}
+
+function select(i, instant){
+  idx = Math.max(0, Math.min(DATA.length-1, i));
+  const d = DATA[idx];
+  paintTimeline();
+
+  const inner = $('panelInner');
+  inner.classList.add('swap');
+  setTimeout(()=>{
+    inner.innerHTML = renderPanel(d, idx);
+    inner.classList.remove('swap');
+    $('panel').scrollTop = 0;
+    const pb = $('prevBtn'), nb = $('nextBtn');
+    if(pb) pb.onclick = ()=> select(idx-1);
+    if(nb) nb.onclick = ()=> select(idx+1);
+  }, instant ? 0 : 180);
+
+  renderLegend(d);
+  /* the scattering view belongs to Rutherford only; 2D follows the node */
+  setMode(mode === 'scatter' ? 'model' : mode);
+  buildModel(idx, instant);
+  if(PRES.on) presLoad(d);
+}
+
+/* =====================================================================
+   7. Mode switching + controls
+   ===================================================================== */
+/* Plum-pudding "prediction mode" sends every alpha particle straight
+   through on purpose. It must never be left switched on silently, or the
+   experiment looks as though it produces no deflections at all.        */
+function setPrediction(on){
+  SC.pp = !!on;
+  const b = $('ppBtn');
+  b.classList.toggle('on', SC.pp);
+  b.textContent = SC.pp ? 'Show the real results' : 'Plum pudding prediction';
+  $('mcModel').innerHTML = SC.pp
+    ? 'Plum Pudding <span style="color:#ffb454">Prediction</span>'
+    : 'Alpha Particle Scattering Experiment';
+  $('mcSci').innerHTML = SC.pp
+    ? '<span style="color:#ffb454">Prediction mode — what the plum pudding model says <em>should</em> happen</span>'
+    : '1909–1911 &middot; Geiger &amp; Marsden, interpreted by Rutherford';
+  resetScatter();
+}
+
+function setMode(m){
+  mode = m;
+  const scatter = m === 'scatter', flat = m === 'flat';
+  $('flat').classList.toggle('show', flat);
+  $('scatterHud').classList.toggle('show', scatter);
+  $('legend').style.display = (scatter || flat) ? 'none' : 'flex';
+  $('ppBtn').style.display = scatter ? '' : 'none';
+  $('slowBtn').style.display = scatter ? '' : 'none';
+  $('restartBtn').style.display = scatter ? '' : 'none';
+  $('spinBtn').style.display = m === 'model' ? '' : 'none';
+  $('stageNote').style.display = flat ? 'none' : '';
+  document.querySelectorAll('.seg-btn').forEach(b=> b.classList.toggle('on', b.dataset.view === m));
+  controls.enabled = (m === 'model') && !camTween;
+  sControls.enabled = scatter;
+
+  if(scatter){
+    finishTransition();
+    setPrediction(false);          /* always open on the real results */
+    resetScatter();
+    fitScatterCamera();
+    sControls.target.set(0,0,0); sControls.update();
+  } else {
+    const d = DATA[idx];
+    $('mcModel').innerHTML = flat
+      ? d.model + ' <span style="color:#8ea4bd;font-weight:500">· exam diagram</span>'
+      : d.model;
+    $('mcSci').innerHTML = d.year + ' &middot; ' + d.name;
+    if(flat) renderFlat(d);
+  }
+}
+
+function bindUI(){
+  document.querySelectorAll('.seg-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const v = b.dataset.view;
+      if(v === 'scatter' && idx !== 3) select(3, true);   /* scattering belongs to Rutherford */
+      setMode(v);
+    });
+  });
+  $('spinBtn').addEventListener('click', e=>{
+    spin = !spin;                       /* freezes the whole model, orbits included */
+    e.target.textContent = spin ? 'Pause motion' : 'Resume motion';
+    e.target.classList.toggle('on', !spin);
+  });
+  $('ppBtn').addEventListener('click', ()=> setPrediction(!SC.pp));
+  $('slowBtn').addEventListener('click', e=>{
+    SC.slow = !SC.slow;
+    e.target.classList.toggle('on', SC.slow);
+    e.target.textContent = SC.slow ? 'Normal speed' : 'Slow motion';
+  });
+  $('restartBtn').addEventListener('click', resetScatter);
+  $('resetViewBtn').addEventListener('click', ()=>{
+    if(mode === 'scatter'){ fitScatterCamera(); }
+    else flyTo(DATA[idx].cam);
+  });
+  $('presentBtn').addEventListener('click', ()=> setPresent(!PRES.on));
+  $('presentPane').addEventListener('click', presNext);
+
+  window.addEventListener('keydown', e=>{
+    if(PRES.on && (e.key === ' ' || e.key === 'PageDown' || e.key === 'ArrowRight')){
+      e.preventDefault(); presNext(); return;                 /* PowerPoint-style build */
+    }
+    if(PRES.on && (e.key === 'PageUp' || e.key === 'ArrowLeft')){
+      e.preventDefault(); presPrev(); return;
+    }
+    if(e.key === 'ArrowRight'){ select(idx+1); }
+    else if(e.key === 'ArrowLeft'){ select(idx-1); }
+    else if(e.key === 'Escape'){
+      if(PRES.on) setPresent(false); else if(mode !== 'model') setMode('model');
+    }
+    else if(e.key === '2'){ setMode(mode === 'flat' ? 'model' : 'flat'); }
+    else if(e.key === 'p' || e.key === 'P'){ setPresent(!PRES.on); }
+  });
+  document.addEventListener('fullscreenchange', ()=>{
+    if(!document.fullscreenElement && PRES.on) setPresent(false);
+  });
+}
+
+/* =====================================================================
+   8. Boot
+   ===================================================================== */
+function boot(){
+  if(typeof THREE === 'undefined' || !THREE.OrbitControls){
+    $('loading').innerHTML =
+      '<div style="max-width:420px;text-align:center;line-height:1.6">' +
+      '<b style="color:#ff5f6d">3D engine could not load.</b><br>' +
+      'This page needs an internet connection the first time it runs, so it can fetch ' +
+      'Three.js from the CDN. The revision notes on the right still work offline.</div>';
+    renderTimeline(); bindUI();
+    idx = 0; paintTimeline();
+    $('panelInner').innerHTML = renderPanel(DATA[0], 0);
+    $('prevBtn').onclick = ()=> select(idx-1);
+    $('nextBtn').onclick = ()=> select(idx+1);
+    return;
+  }
+  renderTimeline();
+  initThree();
+  bindUI();
+  select(0, true);
+  updateHud();
+  const l = $('loading');
+  l.style.opacity = 0;
+  setTimeout(()=> l.style.display = 'none', 500);
+}
+window.addEventListener('load', boot);
+</script>
+</body>
+</html>

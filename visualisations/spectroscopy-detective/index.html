@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Spectroscopy Detective</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#141b24;
+    --panel-border:#26323f;
+    --text:#e6edf3;
+    --muted:#8b98a5;
+    --accent:#4fd1c5;
+    --accent2:#f0b429;
+    --danger:#f87171;
+    --success:#4ade80;
+    --input-bg:#0f1620;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 20px;
+    border-bottom:1px solid var(--panel-border);
+    background:linear-gradient(180deg, #131b24, #0d131a);
+  }
+  header h1{
+    font-size:20px;
+    margin:0;
+    letter-spacing:0.5px;
+  }
+  header h1 span{color:var(--accent);}
+  #caseCounter{color:var(--muted); font-size:13px; margin-top:2px;}
+  .btn{
+    background:var(--accent);
+    color:#04201d;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .btn:hover{filter:brightness(1.1);}
+  .btn.secondary{
+    background:transparent;
+    border:1px solid var(--panel-border);
+    color:var(--text);
+  }
+  .dashboard{
+    display:grid;
+    grid-template-columns: 300px 1fr 340px;
+    gap:16px;
+    padding:16px;
+    align-items:start;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:16px;
+  }
+  .panel h2{
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--accent2);
+    margin:0 0 10px 0;
+  }
+  .scenario-box{
+    background:var(--input-bg);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:12px;
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--text);
+    margin-bottom:12px;
+  }
+  .formula-badge{
+    display:inline-block;
+    background:#1c2733;
+    border:1px solid var(--accent);
+    color:var(--accent);
+    padding:4px 10px;
+    border-radius:6px;
+    font-family:'Consolas', monospace;
+    font-size:14px;
+    margin-bottom:14px;
+  }
+  .instrument-group{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .instrument-btn{
+    background:var(--input-bg);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13.5px;
+    text-align:left;
+    transition:all 0.15s;
+  }
+  .instrument-btn:hover{border-color:var(--accent);}
+  .instrument-btn.active{
+    background:rgba(79,209,197,0.12);
+    border-color:var(--accent);
+    color:var(--accent);
+    font-weight:600;
+  }
+  #chartTitle{
+    font-size:15px;
+    color:var(--text);
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  #chart{
+    width:100%;
+    height:380px;
+  }
+  .peak-rows{
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .peak-row{
+    background:var(--input-bg);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:10px 12px;
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    gap:10px;
+    align-items:center;
+  }
+  .peak-row.correct{border-color:var(--success);}
+  .peak-row .peak-num{
+    background:#1c2733;
+    color:var(--accent2);
+    font-weight:700;
+    width:24px; height:24px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px;
+  }
+  .peak-desc{font-size:13px; color:var(--text);}
+  .peak-select{
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    border-radius:6px;
+    padding:6px 8px;
+    font-size:12.5px;
+    width:100%;
+  }
+  .peak-controls{
+    grid-column: 1 / -1;
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .peak-feedback{
+    grid-column: 1 / -1;
+    font-size:12.5px;
+    padding:6px 8px;
+    border-radius:6px;
+    display:none;
+  }
+  .peak-feedback.show{display:block;}
+  .peak-feedback.correct{background:rgba(74,222,128,0.12); color:var(--success);}
+  .peak-feedback.incorrect{background:rgba(248,113,113,0.12); color:var(--danger);}
+  #clueList{
+    list-style:none;
+    margin:0; padding:0;
+    display:flex; flex-direction:column; gap:8px;
+    max-height:220px;
+    overflow-y:auto;
+  }
+  #clueList li{
+    background:var(--input-bg);
+    border:1px solid var(--success);
+    border-left:4px solid var(--success);
+    border-radius:6px;
+    padding:8px 10px;
+    font-size:12.5px;
+  }
+  #clueList li .tag{
+    display:block;
+    color:var(--muted);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:2px;
+  }
+  .empty-state{
+    color:var(--muted);
+    font-size:12.5px;
+    font-style:italic;
+  }
+  .divider{
+    height:1px;
+    background:var(--panel-border);
+    margin:16px 0;
+  }
+  select#finalGuess{
+    width:100%;
+    background:var(--input-bg);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:13.5px;
+    margin-bottom:10px;
+  }
+  #finalFeedback{
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:13px;
+    line-height:1.5;
+    display:none;
+  }
+  #finalFeedback.show{display:block;}
+  #finalFeedback.success{background:rgba(74,222,128,0.12); border:1px solid var(--success); color:var(--success);}
+  #finalFeedback.fail{background:rgba(248,113,113,0.12); border:1px solid var(--danger); color:var(--danger);}
+  #finalFeedback.warn{background:rgba(240,180,41,0.12); border:1px solid var(--accent2); color:var(--accent2);}
+  #clueCount{color:var(--muted); font-size:12px; margin-bottom:8px;}
+  @media (max-width: 1100px){
+    .dashboard{grid-template-columns: 1fr;}
+  }
+  .menu-wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  .menu-intro{
+    color:var(--muted);
+    font-size:14px;
+    margin:0 0 22px 0;
+    line-height:1.6;
+  }
+  .menu-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap:16px;
+  }
+  .case-card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:16px;
+    cursor:pointer;
+    text-align:left;
+    color:var(--text);
+    font-family:inherit;
+    transition:all 0.15s;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .case-card:hover{
+    border-color:var(--accent);
+    transform:translateY(-2px);
+  }
+  .case-card.solved{border-color:var(--success);}
+  .case-card .case-num{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-weight:700;
+    color:var(--accent2);
+    font-size:14px;
+    letter-spacing:0.5px;
+  }
+  .case-card .solved-badge{
+    color:var(--success);
+    font-size:12px;
+    font-weight:700;
+  }
+  .case-card .case-scenario{
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>The <span>Spectroscopy</span> Detective</h1>
+    <div id="caseCounter">Choose a case</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button class="btn secondary" id="allCasesBtn">📋 All Cases</button>
+    <button class="btn secondary" id="newCaseBtn">🎲 Random Case</button>
+  </div>
+</header>
+
+<div class="menu-wrap" id="menuView">
+  <p class="menu-intro">Select a case file below to investigate that mystery molecule. Each one uses IR, Mass Spectrometry, ¹H NMR and ¹³C NMR evidence — log your clues and make a final deduction to solve it.</p>
+  <div class="menu-grid" id="menuGrid"></div>
+</div>
+
+<div class="dashboard" id="dashboardView" style="display:none;">
+
+  <!-- LEFT PANEL: The Lab Bench -->
+  <div class="panel">
+    <h2>The Lab Bench</h2>
+    <div class="scenario-box" id="scenarioText"></div>
+    <div class="formula-badge" id="formulaBadge"></div>
+    <h2 style="margin-top:6px;">Choose Instrument</h2>
+    <div class="instrument-group" id="instrumentGroup">
+      <button class="instrument-btn" data-instr="ir">🌈 Infrared (IR)</button>
+      <button class="instrument-btn" data-instr="ms">⚛️ Mass Spectrometry</button>
+      <button class="instrument-btn" data-instr="nmr1h">🧲 ¹H NMR</button>
+      <button class="instrument-btn" data-instr="nmr13c">🧲 ¹³C NMR</button>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL: Interactive Evidence Viewer -->
+  <div class="panel">
+    <h2>Interactive Evidence Viewer</h2>
+    <div id="chartTitle"></div>
+    <div id="chart"></div>
+    <div class="peak-rows" id="peakRows"></div>
+  </div>
+
+  <!-- RIGHT PANEL: Deduction Pad -->
+  <div class="panel">
+    <h2>Clue Inventory</h2>
+    <div id="clueCount"></div>
+    <ul id="clueList"></ul>
+    <div class="divider"></div>
+    <h2>Final Deduction</h2>
+    <select id="finalGuess"></select>
+    <button class="btn" id="submitGuessBtn" style="width:100%;">Submit Final Answer</button>
+    <div id="finalFeedback"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   1. DATA: Feature banks + Mystery Molecules
+   ========================================================= */
+
+const IR_FEATURES = {
+  oh_alcohol:  'O-H stretch (alcohol) – broad, 3200-3550 cm⁻¹',
+  oh_acid:     'O-H stretch (carboxylic acid) – very broad, 2500-3300 cm⁻¹',
+  co_carbonyl: 'C=O stretch (carbonyl) – sharp & strong, 1680-1750 cm⁻¹',
+  ch_alkane:   'C-H stretch (alkane) – 2850-2970 cm⁻¹',
+  ch_aldehyde: 'C-H stretch (aldehyde H-C=O) – weak doublet ~2720 & 2820 cm⁻¹',
+  cc_alkene:   'C=C stretch (alkene) – weak, 1620-1680 cm⁻¹',
+  chalkene:    '=C-H stretch (alkene) – just above 3000 cm⁻¹',
+  co_single:   'C-O stretch (ester/alcohol, single bond) – 1000-1300 cm⁻¹'
+};
+
+const MS_FEATURES = {
+  mplus:        'Molecular ion, M⁺ (mass of the whole molecule)',
+  loss_ch3:     'Loss of •CH3 (fragment from loss of a methyl radical)',
+  acylium:      'Acylium ion, CH3CO⁺ (m/z 43)',
+  ethyl_cho:    'C2H5⁺ or CHO⁺ fragment (m/z 29)',
+  methyl_cation:'CH3⁺ fragment (m/z 15)',
+  cooh_fragment:'COOH⁺ fragment (m/z 45, from loss of alkyl group)',
+  loss_ome:     'Loss of •OCH3 (methoxy radical, common in methyl esters)',
+  allyl:        'Allyl cation, C3H5⁺ (m/z 41)',
+  loss_water:   'Loss of H2O (dehydration, common in alcohols)',
+  loss_oh:      'Loss of •OH (hydroxyl radical, common in alcohols)',
+  ch2oh_ms:     'CH2=OH⁺ fragment (m/z 31, loss of an alkyl radical)'
+};
+
+const NMR1H_FEATURES = {
+  oh_variable: 'O-H proton (alcohol) – singlet, variable shift, no coupling',
+  cooh_proton: 'O-H proton (carboxylic acid) – singlet, ~11-12 ppm',
+  cho_proton:  'CHO aldehyde proton – ~9.5-10 ppm',
+  ch2oh:       'CH2 next to O-H – triplet, ~3.3-3.7 ppm',
+  choh:        'CH next to O-H (secondary alcohol) – multiplet, ~3.5-4.5 ppm',
+  ochx_ester:  'O-CH2/O-CH3 of an ester – ~3.6-4.2 ppm',
+  ch3_co:      'CH3 directly bonded to C=O – singlet, ~2.0-2.2 ppm',
+  ch2_co:      'CH2 directly bonded to C=O – quartet, ~2.2-2.5 ppm',
+  vinyl_ch2:   '=CH2 (terminal alkene) – multiplet, ~4.9-5.1 ppm',
+  vinyl_ch:    '=CH- (alkene) – multiplet, ~5.7-5.9 ppm',
+  ch2_chain:   'CH2 in an alkyl chain (not next to O or C=O) – multiplet, ~1.4-1.7 ppm',
+  ch3_chain:   'CH3 (terminal, coupled to adjacent CH2) – triplet, ~0.9-1.1 ppm',
+  ch3_choh:    'CH3 adjacent to CH-OH – doublet, ~1.1-1.2 ppm'
+};
+
+const NMR13C_FEATURES = {
+  c_carbonyl_ketone_ald: 'C=O carbon (ketone/aldehyde) – 190-220 ppm',
+  c_carbonyl_acid_ester: 'C=O carbon (acid/ester) – 160-185 ppm',
+  c_o_alcohol:           'C-O carbon (alcohol) – 50-90 ppm',
+  c_o_ester:             'O-CH2/O-CH3 carbon (ester) – 50-65 ppm',
+  c_alkyl:               'C-H alkyl carbon, not next to O or C=O – 5-40 ppm',
+  c_vinyl:               'C=C alkene carbon – 100-150 ppm'
+};
+
+const FEATURE_BANKS = { ir: IR_FEATURES, ms: MS_FEATURES, nmr1h: NMR1H_FEATURES, nmr13c: NMR13C_FEATURES };
+
+const HINTS = {
+  'oh_alcohol|oh_acid': "Check the breadth of the peak — this one is broad but not extreme enough for a carboxylic acid O-H, which typically spans 2500-3300 cm⁻¹ and swallows the C-H peaks nearby.",
+  'oh_acid|oh_alcohol': "Look how wide this absorption is — it stretches right down into the C-H region (2500-3300 cm⁻¹), far broader than a typical alcohol O-H.",
+  'co_carbonyl|cc_alkene': "This peak is much sharper and stronger than a C=C stretch, and sits higher (1680-1750 cm⁻¹) rather than 1620-1680 cm⁻¹.",
+  'cc_alkene|co_carbonyl': "This peak is weak and sits lower (1620-1680 cm⁻¹) — carbonyls are strong, sharp peaks nearer 1700-1750 cm⁻¹.",
+  'ch3_co|ch3_chain': "A CH3 bonded directly to a carbonyl carbon has no neighbouring H, so it's a singlet — a terminal chain CH3 next to a CH2 would show splitting instead.",
+  'ch3_chain|ch3_co': "This signal is split, not a singlet — that tells you it has neighbouring protons, whereas a CH3 attached directly to C=O wouldn't couple with anything.",
+  'ch2_co|ch2_chain': "This CH2 is deshielded further downfield because it sits directly next to the carbonyl carbon, rather than being buried in the alkyl chain.",
+  'ch2_chain|ch2_co': "This CH2 is too far upfield to be next to a C=O — carbonyl-adjacent CH2 groups resonate further downfield, around 2.2-2.5 ppm.",
+  'oh_variable|cooh_proton': "Carboxylic acid O-H protons resonate much further downfield (~11-12 ppm) than alcohol O-H protons.",
+  'cooh_proton|oh_variable': "This proton is too far downfield for an alcohol O-H — a shift of ~11-12 ppm is characteristic of a carboxylic acid.",
+  'c_carbonyl_ketone_ald|c_carbonyl_acid_ester': "Ketone/aldehyde carbonyls resonate further downfield (190-220 ppm) than acid/ester carbonyls (160-185 ppm), which are shielded slightly by the extra oxygen.",
+  'c_carbonyl_acid_ester|c_carbonyl_ketone_ald': "This carbon is a little too upfield for a ketone/aldehyde carbonyl — the extra oxygen in an acid/ester shields it down to 160-185 ppm.",
+  'c_o_alcohol|c_o_ester': "An alcohol C-O carbon isn't attached to a carbonyl group — check whether there's also a C=O peak elsewhere before assuming it's an ester carbon.",
+  'c_o_ester|c_o_alcohol': "This carbon belongs to a molecule with a nearby carbonyl — in an ester, the O-CH2/O-CH3 carbon sits in a similar region to an alcohol C-O carbon, so check the rest of the spectrum for a C=O peak.",
+  'mplus|loss_ch3': "This is the highest-mass peak in the whole spectrum — that makes it the molecular ion (M⁺), not a fragment.",
+  'vinyl_ch|vinyl_ch2': "This signal integrates for one proton, not two — that fits the single =CH- proton rather than the =CH2 pair.",
+  'vinyl_ch2|vinyl_ch': "This signal integrates for two protons — that fits =CH2, not the single =CH- proton."
+};
+
+const HINT_FALLBACK = {
+  ir: "Compare the position, sharpness and width of this peak with the reference ranges: alcohols/acids are broad, carbonyls are sharp and strong, C=C is weak.",
+  ms: "Think about which bonds break most easily, and remember the molecular ion is always the highest-mass peak present.",
+  nmr1h: "Consider the shift (how deshielded), the splitting pattern, and the integration (relative number of H) together.",
+  nmr13c: "Consider the shift region — carbonyls are far downfield, carbons bonded to oxygen sit in the middle, and plain alkyl carbons are furthest upfield."
+};
+
+function getHint(instrument, correctCode, chosenCode){
+  return HINTS[correctCode+'|'+chosenCode] || HINTS[chosenCode+'|'+correctCode] || HINT_FALLBACK[instrument];
+}
+
+const MOLECULES = [
+  {
+    id:'propan1ol', name:'Propan-1-ol', formula:'C3H8O', group:'Alcohol (primary)',
+    scenario:'Case File: A colourless, flammable liquid was recovered from a spillage in the prep room. It has a faint alcoholic smell and mixes completely with water.',
+    ir:{ peaks:[
+      {x:3330, label:'~3330 cm⁻¹ (broad)', feature:'oh_alcohol'},
+      {x:2950, label:'~2950 cm⁻¹', feature:'ch_alkane'},
+      {x:1060, label:'~1060 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:60, intensity:35}, peaks:[
+      {mz:60, label:'m/z = 60', feature:'mplus', intensity:35},
+      {mz:31, label:'m/z = 31', feature:'ch2oh_ms', intensity:100},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:55}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:3.6, integration:2, splitting:'t', label:'δ 3.6 ppm, 2H, triplet', feature:'ch2oh'},
+      {delta:2.5, integration:1, splitting:'broad', label:'δ ~2.5 ppm (variable), 1H, broad', feature:'oh_variable'},
+      {delta:1.55, integration:2, splitting:'m', label:'δ 1.55 ppm, 2H, multiplet', feature:'ch2_chain'},
+      {delta:0.92, integration:3, splitting:'t', label:'δ 0.92 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:64, label:'δ 64 ppm', feature:'c_o_alcohol'},
+      {delta:26, label:'δ 26 ppm', feature:'c_alkyl'},
+      {delta:10, label:'δ 10 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'propan2ol', name:'Propan-2-ol', formula:'C3H8O', group:'Alcohol (secondary)',
+    scenario:"Case File: A volatile, colourless liquid was found in a technician's cupboard labelled only 'surgical spirit'. It smells sharply of alcohol.",
+    ir:{ peaks:[
+      {x:3330, label:'~3330 cm⁻¹ (broad)', feature:'oh_alcohol'},
+      {x:2970, label:'~2970 cm⁻¹', feature:'ch_alkane'},
+      {x:1100, label:'~1100 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:60, intensity:20}, peaks:[
+      {mz:60, label:'m/z = 60', feature:'mplus', intensity:20},
+      {mz:45, label:'m/z = 45', feature:'loss_ch3', intensity:100},
+      {mz:43, label:'m/z = 43', feature:'loss_oh', intensity:70}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:4.0, integration:1, splitting:'m', label:'δ 4.0 ppm, 1H, multiplet (septet)', feature:'choh'},
+      {delta:2.4, integration:1, splitting:'broad', label:'δ ~2.4 ppm (variable), 1H, broad', feature:'oh_variable'},
+      {delta:1.15, integration:6, splitting:'d', label:'δ 1.15 ppm, 6H, doublet', feature:'ch3_choh'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:64, label:'δ 64 ppm', feature:'c_o_alcohol'},
+      {delta:25, label:'δ 25 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'propanone', name:'Propanone', formula:'C3H6O', group:'Ketone',
+    scenario:'Case File: A fast-evaporating, sweet-smelling colourless liquid was found in an unlabelled nail-varnish-remover bottle.',
+    ir:{ peaks:[
+      {x:1715, label:'~1715 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:2950, label:'~2950 cm⁻¹', feature:'ch_alkane'}
+    ]},
+    ms:{ mplus:{mz:58, intensity:45}, peaks:[
+      {mz:58, label:'m/z = 58', feature:'mplus', intensity:45},
+      {mz:43, label:'m/z = 43', feature:'acylium', intensity:100},
+      {mz:15, label:'m/z = 15', feature:'methyl_cation', intensity:30}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:2.1, integration:6, splitting:'s', label:'δ 2.1 ppm, 6H, singlet', feature:'ch3_co'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:206, label:'δ 206 ppm', feature:'c_carbonyl_ketone_ald'},
+      {delta:30, label:'δ 30 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'propanal', name:'Propanal', formula:'C3H6O', group:'Aldehyde',
+    scenario:"Case File: A colourless liquid with a sharp, slightly fruity odour was found in an unlabelled vial — it turns Tollens' reagent into a silver mirror.",
+    ir:{ peaks:[
+      {x:1725, label:'~1725 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:2720, label:'~2720 & 2820 cm⁻¹ (weak pair)', feature:'ch_aldehyde'},
+      {x:2970, label:'~2970 cm⁻¹', feature:'ch_alkane'}
+    ]},
+    ms:{ mplus:{mz:58, intensity:40}, peaks:[
+      {mz:58, label:'m/z = 58', feature:'mplus', intensity:40},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:100},
+      {mz:15, label:'m/z = 15', feature:'methyl_cation', intensity:25}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:9.7, integration:1, splitting:'t', label:'δ 9.7 ppm, 1H, triplet', feature:'cho_proton'},
+      {delta:2.42, integration:2, splitting:'m', label:'δ 2.42 ppm, 2H, multiplet', feature:'ch2_co'},
+      {delta:1.1, integration:3, splitting:'t', label:'δ 1.1 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:202, label:'δ 202 ppm', feature:'c_carbonyl_ketone_ald'},
+      {delta:36, label:'δ 36 ppm', feature:'c_alkyl'},
+      {delta:7, label:'δ 7 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'propanoicacid', name:'Propanoic acid', formula:'C3H6O2', group:'Carboxylic acid',
+    scenario:'Case File: A pungent, slightly sour-smelling colourless liquid was found; it turns blue litmus red and fizzes with sodium carbonate solution.',
+    ir:{ peaks:[
+      {x:3000, label:'~2500-3300 cm⁻¹ (very broad)', feature:'oh_acid'},
+      {x:1710, label:'~1710 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:1210, label:'~1210 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:74, intensity:25}, peaks:[
+      {mz:74, label:'m/z = 74', feature:'mplus', intensity:25},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:100},
+      {mz:45, label:'m/z = 45', feature:'cooh_fragment', intensity:60}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:11.7, integration:1, splitting:'s', label:'δ 11.7 ppm, 1H, singlet', feature:'cooh_proton'},
+      {delta:2.4, integration:2, splitting:'q', label:'δ 2.4 ppm, 2H, quartet', feature:'ch2_co'},
+      {delta:1.12, integration:3, splitting:'t', label:'δ 1.12 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:180, label:'δ 180 ppm', feature:'c_carbonyl_acid_ester'},
+      {delta:27, label:'δ 27 ppm', feature:'c_alkyl'},
+      {delta:9, label:'δ 9 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'ethylethanoate', name:'Ethyl ethanoate', formula:'C4H8O2', group:'Ester',
+    scenario:'Case File: A sweet, fruity-smelling colourless liquid was recovered from a flavourings sample; it does not react with sodium carbonate solution.',
+    ir:{ peaks:[
+      {x:1740, label:'~1740 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:1240, label:'~1240 cm⁻¹', feature:'co_single'},
+      {x:1050, label:'~1050 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:88, intensity:20}, peaks:[
+      {mz:88, label:'m/z = 88', feature:'mplus', intensity:20},
+      {mz:43, label:'m/z = 43', feature:'acylium', intensity:100},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:65}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:4.12, integration:2, splitting:'q', label:'δ 4.12 ppm, 2H, quartet', feature:'ochx_ester'},
+      {delta:2.05, integration:3, splitting:'s', label:'δ 2.05 ppm, 3H, singlet', feature:'ch3_co'},
+      {delta:1.25, integration:3, splitting:'t', label:'δ 1.25 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:171, label:'δ 171 ppm', feature:'c_carbonyl_acid_ester'},
+      {delta:60, label:'δ 60 ppm', feature:'c_o_ester'},
+      {delta:21, label:'δ 21 ppm', feature:'c_alkyl'},
+      {delta:14, label:'δ 14 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'butan2one', name:'Butan-2-one', formula:'C4H8O', group:'Ketone',
+    scenario:'Case File: A colourless, sweet-smelling solvent was found in an unmarked flask; it does not decolourise bromine water.',
+    ir:{ peaks:[
+      {x:1715, label:'~1715 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:2970, label:'~2970 cm⁻¹', feature:'ch_alkane'}
+    ]},
+    ms:{ mplus:{mz:72, intensity:30}, peaks:[
+      {mz:72, label:'m/z = 72', feature:'mplus', intensity:30},
+      {mz:43, label:'m/z = 43', feature:'acylium', intensity:100},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:45}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:2.45, integration:2, splitting:'q', label:'δ 2.45 ppm, 2H, quartet', feature:'ch2_co'},
+      {delta:2.13, integration:3, splitting:'s', label:'δ 2.13 ppm, 3H, singlet', feature:'ch3_co'},
+      {delta:1.05, integration:3, splitting:'t', label:'δ 1.05 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:209, label:'δ 209 ppm', feature:'c_carbonyl_ketone_ald'},
+      {delta:36, label:'δ 36 ppm', feature:'c_alkyl'},
+      {delta:29, label:'δ 29 ppm', feature:'c_alkyl'},
+      {delta:8, label:'δ 8 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'butan1ol', name:'Butan-1-ol', formula:'C4H10O', group:'Alcohol (primary)',
+    scenario:'Case File: A colourless liquid with a mild, banana-like odour was recovered from a fermentation experiment gone wrong.',
+    ir:{ peaks:[
+      {x:3330, label:'~3330 cm⁻¹ (broad)', feature:'oh_alcohol'},
+      {x:2950, label:'~2950 cm⁻¹', feature:'ch_alkane'},
+      {x:1060, label:'~1060 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:74, intensity:15}, peaks:[
+      {mz:74, label:'m/z = 74', feature:'mplus', intensity:15},
+      {mz:31, label:'m/z = 31', feature:'ch2oh_ms', intensity:100},
+      {mz:56, label:'m/z = 56', feature:'loss_water', intensity:35}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:3.62, integration:2, splitting:'t', label:'δ 3.62 ppm, 2H, triplet', feature:'ch2oh'},
+      {delta:2.3, integration:1, splitting:'broad', label:'δ ~2.3 ppm (variable), 1H, broad', feature:'oh_variable'},
+      {delta:1.5, integration:4, splitting:'m', label:'δ 1.4-1.6 ppm, 4H, multiplet', feature:'ch2_chain'},
+      {delta:0.92, integration:3, splitting:'t', label:'δ 0.92 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:62, label:'δ 62 ppm', feature:'c_o_alcohol'},
+      {delta:35, label:'δ 35 ppm', feature:'c_alkyl'},
+      {delta:19, label:'δ 19 ppm', feature:'c_alkyl'},
+      {delta:14, label:'δ 14 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'but1ene', name:'But-1-ene', formula:'C4H8', group:'Alkene',
+    scenario:'Case File: A colourless gas collected over water rapidly decolourises orange bromine water.',
+    ir:{ peaks:[
+      {x:1642, label:'~1642 cm⁻¹ (weak)', feature:'cc_alkene'},
+      {x:3080, label:'~3080 cm⁻¹', feature:'chalkene'},
+      {x:2950, label:'~2950 cm⁻¹', feature:'ch_alkane'}
+    ]},
+    ms:{ mplus:{mz:56, intensity:40}, peaks:[
+      {mz:56, label:'m/z = 56', feature:'mplus', intensity:40},
+      {mz:41, label:'m/z = 41', feature:'allyl', intensity:100},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:35}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:5.8, integration:1, splitting:'m', label:'δ 5.8 ppm, 1H, multiplet', feature:'vinyl_ch'},
+      {delta:5.0, integration:2, splitting:'m', label:'δ 5.0 ppm, 2H, multiplet', feature:'vinyl_ch2'},
+      {delta:2.05, integration:2, splitting:'m', label:'δ 2.05 ppm, 2H, multiplet', feature:'ch2_chain'},
+      {delta:1.0, integration:3, splitting:'t', label:'δ 1.0 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:140, label:'δ 140 ppm', feature:'c_vinyl'},
+      {delta:113, label:'δ 113 ppm', feature:'c_vinyl'},
+      {delta:23, label:'δ 23 ppm', feature:'c_alkyl'},
+      {delta:13, label:'δ 13 ppm', feature:'c_alkyl'}
+    ]}
+  },
+  {
+    id:'methylpropanoate', name:'Methyl propanoate', formula:'C4H8O2', group:'Ester',
+    scenario:'Case File: A sweet-smelling colourless liquid was found in a flavourings kit; hydrolysis with NaOH releases an alcohol and a salt.',
+    ir:{ peaks:[
+      {x:1740, label:'~1740 cm⁻¹ (sharp)', feature:'co_carbonyl'},
+      {x:1190, label:'~1190 cm⁻¹', feature:'co_single'},
+      {x:1050, label:'~1050 cm⁻¹', feature:'co_single'}
+    ]},
+    ms:{ mplus:{mz:88, intensity:25}, peaks:[
+      {mz:88, label:'m/z = 88', feature:'mplus', intensity:25},
+      {mz:57, label:'m/z = 57', feature:'loss_ome', intensity:100},
+      {mz:29, label:'m/z = 29', feature:'ethyl_cho', intensity:40}
+    ]},
+    nmr1h:{ peaks:[
+      {delta:3.65, integration:3, splitting:'s', label:'δ 3.65 ppm, 3H, singlet', feature:'ochx_ester'},
+      {delta:2.32, integration:2, splitting:'q', label:'δ 2.32 ppm, 2H, quartet', feature:'ch2_co'},
+      {delta:1.12, integration:3, splitting:'t', label:'δ 1.12 ppm, 3H, triplet', feature:'ch3_chain'}
+    ]},
+    nmr13c:{ peaks:[
+      {delta:174, label:'δ 174 ppm', feature:'c_carbonyl_acid_ester'},
+      {delta:51, label:'δ 51 ppm', feature:'c_o_ester'},
+      {delta:27, label:'δ 27 ppm', feature:'c_alkyl'},
+      {delta:9, label:'δ 9 ppm', feature:'c_alkyl'}
+    ]}
+  }
+];
+
+const IR_STYLE = {
+  oh_alcohol:{width:190, depth:60}, oh_acid:{width:260, depth:65},
+  co_carbonyl:{width:18, depth:70}, ch_alkane:{width:25, depth:25},
+  ch_aldehyde:{width:15, depth:12}, cc_alkene:{width:25, depth:18},
+  chalkene:{width:20, depth:15}, co_single:{width:30, depth:35}
+};
+
+const SPLIT_PATTERN = {
+  s:[1], d:[1,1], t:[1,2,1], q:[1,3,3,1], m:[1,2,3,2,1], broad:[1]
+};
+
+const INSTRUMENT_META = {
+  ir:    { title:'Infrared Spectrum (IR)', xlabel:'Wavenumber / cm⁻¹', bank:IR_FEATURES },
+  ms:    { title:'Mass Spectrum', xlabel:'m/z', bank:MS_FEATURES },
+  nmr1h: { title:'¹H NMR Spectrum', xlabel:'Chemical shift, δ / ppm', bank:NMR1H_FEATURES },
+  nmr13c:{ title:'¹³C NMR Spectrum', xlabel:'Chemical shift, δ / ppm', bank:NMR13C_FEATURES }
+};
+
+/* =========================================================
+   2. STATE
+   ========================================================= */
+const state = {
+  view: 'menu',      // 'menu' | 'case'
+  moleculeIdx: 0,
+  instrument: 'ir',
+  peakStatus: {},   // key: `${instrument}_${peakIdx}` -> {status:'correct'|'incorrect', chosen}
+  clueLog: [],       // [{instrument, label, feature}]
+  solvedIds: new Set()
+};
+
+function currentMolecule(){ return MOLECULES[state.moleculeIdx]; }
+
+const SUBSCRIPT_DIGITS = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+function formatFormula(formula){
+  return formula.replace(/[0-9]/g, d => SUBSCRIPT_DIGITS[d]);
+}
+
+/* =========================================================
+   3. RENDERING
+   ========================================================= */
+
+function gaussianArray(xs, center, height, width){
+  return xs.map(x => height*Math.exp(-((x-center)*(x-center))/(2*width*width)));
+}
+
+function buildIRTrace(peaks){
+  const xs = [];
+  for(let x=4000; x>=400; x-=4) xs.push(x);
+  let y = xs.map(()=>100);
+  peaks.forEach(p=>{
+    const style = IR_STYLE[p.feature] || {width:25, depth:30};
+    const dip = gaussianArray(xs, p.x, style.depth, style.width);
+    y = y.map((v,i)=> v - dip[i]);
+  });
+  return {xs, y};
+}
+
+function buildNeedleTrace(components){
+  const x = [], y = [];
+  components.forEach(c=>{
+    x.push(c.x, c.x, null);
+    y.push(0, c.height, null);
+  });
+  return {x, y};
+}
+
+function build1HTrace(peaks){
+  const needleComponents = [];
+  const broadXs = [];
+  for(let x=12.5; x>=-0.5; x-=0.01) broadXs.push(Math.round(x*100)/100);
+  let broadY = broadXs.map(()=>0);
+  let hasBroad = false;
+
+  peaks.forEach(p=>{
+    const totalHeight = 20 + p.integration*10;
+    if(p.splitting === 'broad'){
+      hasBroad = true;
+      const g = gaussianArray(broadXs, p.delta, totalHeight, 0.35);
+      broadY = broadY.map((v,i)=> v + g[i]);
+    } else {
+      const pattern = SPLIT_PATTERN[p.splitting] || [1];
+      const n = pattern.length;
+      const totalWeight = pattern.reduce((a,b)=>a+b,0);
+      const spacing = 0.045;
+      const offsetStart = -((n-1)/2)*spacing;
+      pattern.forEach((w,i)=>{
+        needleComponents.push({x: p.delta + offsetStart + i*spacing, height: totalHeight*(w/totalWeight)});
+      });
+    }
+  });
+
+  const needle = buildNeedleTrace(needleComponents);
+  return { needle, broad: hasBroad ? {x:broadXs, y:broadY} : null };
+}
+
+function build13CTrace(peaks){
+  return buildNeedleTrace(peaks.map(p=>({x:p.delta, height:75})));
+}
+
+function renderChart(){
+  const mol = currentMolecule();
+  const instr = state.instrument;
+  document.getElementById('chartTitle').textContent = INSTRUMENT_META[instr].title + ' — ' + mol.name + ' (' + formatFormula(mol.formula) + ')';
+
+  let traces = [];
+  let layoutExtra = {};
+  let shapes = [];
+  let annotations = [];
+
+  if(instr === 'ir'){
+    const {xs,y} = buildIRTrace(mol.ir.peaks);
+    traces.push({x:xs, y:y, mode:'lines', line:{color:'#38bdf8', width:2}, fill:'tozeroy', fillcolor:'rgba(56,189,248,0.08)', hoverinfo:'skip'});
+    mol.ir.peaks.forEach((p,i)=>{
+      shapes.push({type:'line', x0:p.x, x1:p.x, y0:0, y1:100, line:{color:'#f0b429', width:1, dash:'dot'}});
+      annotations.push({x:p.x, y:104, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+    });
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ir.xlabel, autorange:'reversed', range:[4000,400], gridcolor:'#1f2933'}, yaxis:{title:'Transmittance / %', range:[0,110], gridcolor:'#1f2933'} };
+  } else if(instr === 'ms'){
+    const xVals = mol.ms.peaks.map(p=>p.mz);
+    const stickX = [], stickY = [];
+    mol.ms.peaks.forEach(p=>{
+      stickX.push(p.mz, p.mz, null);
+      stickY.push(0, p.intensity, null);
+    });
+    traces.push({x:stickX, y:stickY, mode:'lines', line:{color:'#fbbf24', width:2.5}, hoverinfo:'skip'});
+    mol.ms.peaks.forEach((p,i)=>{
+      annotations.push({x:p.mz, y:p.intensity+6, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+    });
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ms.xlabel, range:[0, Math.max(...xVals)+15], gridcolor:'#1f2933'}, yaxis:{title:'Relative intensity / %', range:[0,115], gridcolor:'#1f2933'} };
+  } else if(instr === 'nmr1h'){
+    const {needle, broad} = build1HTrace(mol.nmr1h.peaks);
+    if(broad){
+      traces.push({x:broad.x, y:broad.y, mode:'lines', line:{color:'#a78bfa', width:2}, hoverinfo:'skip'});
+    }
+    traces.push({x:needle.x, y:needle.y, mode:'lines', line:{color:'#a78bfa', width:2.5}, hoverinfo:'skip'});
+    mol.nmr1h.peaks.forEach((p,i)=>{
+      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:95, line:{color:'#4fd1c5', width:1, dash:'dot'}});
+      annotations.push({x:p.delta, y:99, text:String(i+1), showarrow:false, font:{color:'#4fd1c5', size:12, weight:700}});
+    });
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr1h.xlabel, autorange:'reversed', range:[12.5,-0.5], gridcolor:'#1f2933'}, yaxis:{title:'Intensity', range:[0,105], gridcolor:'#1f2933', showticklabels:false} };
+  } else if(instr === 'nmr13c'){
+    const {x,y} = build13CTrace(mol.nmr13c.peaks);
+    traces.push({x:x, y:y, mode:'lines', line:{color:'#34d399', width:2.5}, hoverinfo:'skip'});
+    mol.nmr13c.peaks.forEach((p,i)=>{
+      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:80, line:{color:'#f0b429', width:1, dash:'dot'}});
+      annotations.push({x:p.delta, y:85, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+    });
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr13c.xlabel, autorange:'reversed', range:[225,-5], gridcolor:'#1f2933'}, yaxis:{title:'Intensity', range:[0,95], gridcolor:'#1f2933', showticklabels:false} };
+  }
+
+  const layout = Object.assign({
+    paper_bgcolor:'#141b24', plot_bgcolor:'#0f1620',
+    font:{color:'#e6edf3', size:12},
+    margin:{l:55,r:20,t:20,b:45},
+    shapes:shapes, annotations:annotations,
+    showlegend:false
+  }, layoutExtra);
+
+  Plotly.newPlot('chart', traces, layout, {displayModeBar:false, responsive:true, scrollZoom:true});
+}
+
+function getPeaksForInstrument(mol, instr){
+  if(instr === 'ir') return mol.ir.peaks;
+  if(instr === 'ms') return mol.ms.peaks;
+  if(instr === 'nmr1h') return mol.nmr1h.peaks;
+  if(instr === 'nmr13c') return mol.nmr13c.peaks;
+}
+
+function renderPeakRows(){
+  const mol = currentMolecule();
+  const instr = state.instrument;
+  const peaks = getPeaksForInstrument(mol, instr);
+  const bank = INSTRUMENT_META[instr].bank;
+  const container = document.getElementById('peakRows');
+  container.innerHTML = '';
+
+  peaks.forEach((p,i)=>{
+    const key = instr + '_' + i;
+    const status = state.peakStatus[key];
+
+    const row = document.createElement('div');
+    row.className = 'peak-row' + (status && status.status === 'correct' ? ' correct' : '');
+
+    const num = document.createElement('div');
+    num.className = 'peak-num';
+    num.textContent = i+1;
+    row.appendChild(num);
+
+    const desc = document.createElement('div');
+    desc.className = 'peak-desc';
+    desc.textContent = p.label;
+    row.appendChild(desc);
+
+    const select = document.createElement('select');
+    select.className = 'peak-select';
+    select.disabled = !!(status && status.status === 'correct');
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Assign structural feature --';
+    select.appendChild(defaultOpt);
+    Object.keys(bank).forEach(code=>{
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = bank[code];
+      if(status && status.chosen === code) opt.selected = true;
+      select.appendChild(opt);
+    });
+    row.appendChild(select);
+
+    const controls = document.createElement('div');
+    controls.className = 'peak-controls';
+    const checkBtn = document.createElement('button');
+    checkBtn.className = 'btn secondary';
+    checkBtn.textContent = status && status.status === 'correct' ? '✓ Logged' : 'Check';
+    checkBtn.disabled = !!(status && status.status === 'correct');
+    checkBtn.addEventListener('click', ()=> handleCheckPeak(instr, i, p, select));
+    controls.appendChild(checkBtn);
+    row.appendChild(controls);
+
+    const feedback = document.createElement('div');
+    feedback.className = 'peak-feedback';
+    if(status && status.message){
+      feedback.classList.add('show', status.status === 'correct' ? 'correct' : 'incorrect');
+      feedback.textContent = status.message;
+    }
+    row.appendChild(feedback);
+
+    container.appendChild(row);
+  });
+}
+
+function handleCheckPeak(instr, idx, peak, selectEl){
+  const key = instr + '_' + idx;
+  const chosen = selectEl.value;
+  if(!chosen){
+    alert('Please choose a structural feature to assign to this peak first.');
+    return;
+  }
+  const bank = INSTRUMENT_META[instr].bank;
+
+  if(chosen === peak.feature){
+    const message = '✓ Correct — logged to Clue Inventory.';
+    state.peakStatus[key] = {status:'correct', chosen, message};
+    const clueLabel = bank[peak.feature] + ' (' + peak.label + ')';
+    if(!state.clueLog.some(c=>c.instrument===instr && c.idx===idx)){
+      state.clueLog.push({instrument:instr, idx, label:clueLabel});
+    }
+  } else {
+    const hint = getHint(instr, peak.feature, chosen);
+    state.peakStatus[key] = {status:'incorrect', chosen, message:'✗ Not quite. ' + hint};
+  }
+  renderPeakRows();
+  renderRightPanel();
+}
+
+function renderLeftPanel(){
+  const mol = currentMolecule();
+  document.getElementById('caseCounter').textContent = 'Case File #' + (state.moleculeIdx + 1);
+  document.getElementById('scenarioText').textContent = mol.scenario;
+  document.getElementById('formulaBadge').textContent = 'Molecular formula: ' + formatFormula(mol.formula);
+
+  document.querySelectorAll('.instrument-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.instr === state.instrument);
+  });
+}
+
+function renderRightPanel(){
+  const listEl = document.getElementById('clueList');
+  const countEl = document.getElementById('clueCount');
+  listEl.innerHTML = '';
+
+  if(state.clueLog.length === 0){
+    countEl.textContent = '0 clues logged';
+    const li = document.createElement('li');
+    li.style.border = 'none';
+    li.style.borderLeft = 'none';
+    li.style.background = 'transparent';
+    li.innerHTML = '<span class="empty-state">No clues logged yet — investigate the instruments to build your case.</span>';
+    listEl.appendChild(li);
+  } else {
+    countEl.textContent = state.clueLog.length + ' clue' + (state.clueLog.length===1?'':'s') + ' logged';
+    state.clueLog.forEach(c=>{
+      const li = document.createElement('li');
+      const tagText = { ir:'Infrared', ms:'Mass Spec', nmr1h:'1H NMR', nmr13c:'13C NMR' }[c.instrument];
+      li.innerHTML = '<span class="tag">' + tagText + '</span>' + c.label;
+      listEl.appendChild(li);
+    });
+  }
+}
+
+function populateFinalGuessDropdown(){
+  const select = document.getElementById('finalGuess');
+  select.innerHTML = '';
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = '-- Select the mystery molecule --';
+  select.appendChild(defaultOpt);
+  const sorted = [...MOLECULES].sort((a,b)=> a.name.localeCompare(b.name));
+  sorted.forEach(m=>{
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name + ' (' + formatFormula(m.formula) + ')';
+    select.appendChild(opt);
+  });
+}
+
+function handleFinalSubmit(){
+  const select = document.getElementById('finalGuess');
+  const feedbackEl = document.getElementById('finalFeedback');
+  const guessId = select.value;
+
+  if(!guessId){
+    feedbackEl.className = 'show warn';
+    feedbackEl.textContent = 'Please select a molecule before submitting your final answer.';
+    return;
+  }
+
+  const MIN_CLUES = 3;
+  if(state.clueLog.length < MIN_CLUES){
+    feedbackEl.className = 'show warn';
+    feedbackEl.textContent = 'You need at least ' + MIN_CLUES + ' confirmed clues before making a final deduction — you currently have ' + state.clueLog.length + '. Investigate more instruments.';
+    return;
+  }
+
+  const mol = currentMolecule();
+  if(guessId === mol.id){
+    feedbackEl.className = 'show success';
+    state.solvedIds.add(mol.id);
+    const clueSummary = state.clueLog.map(c=>c.label).join('; ');
+    feedbackEl.textContent = '✓ Correct! The sample was ' + mol.name + ' (' + formatFormula(mol.formula) + ', ' + mol.group + '). Your evidence — ' + clueSummary + ' — correctly supports this structure. Head back to "All Cases" to try another.';
+  } else {
+    feedbackEl.className = 'show fail';
+    feedbackEl.textContent = '✗ Not quite. Review your logged clues — do they really point to that molecule? Try investigating an instrument you haven\'t checked yet before guessing again.';
+  }
+}
+
+/* =========================================================
+   4. EVENTS & INIT
+   ========================================================= */
+
+function renderAll(){
+  renderLeftPanel();
+  renderChart();
+  renderPeakRows();
+  renderRightPanel();
+}
+
+function showView(){
+  document.getElementById('menuView').style.display = state.view === 'menu' ? 'block' : 'none';
+  document.getElementById('dashboardView').style.display = state.view === 'case' ? 'grid' : 'none';
+  document.getElementById('allCasesBtn').style.display = state.view === 'case' ? 'inline-block' : 'none';
+  document.getElementById('newCaseBtn').style.display = state.view === 'case' ? 'inline-block' : 'none';
+  document.getElementById('caseCounter').textContent = state.view === 'case' ? 'Case File #' + (state.moleculeIdx + 1) : 'Choose a case';
+}
+
+function renderMenu(){
+  const grid = document.getElementById('menuGrid');
+  grid.innerHTML = '';
+  MOLECULES.forEach((mol, idx)=>{
+    const solved = state.solvedIds.has(mol.id);
+    const card = document.createElement('button');
+    card.className = 'case-card' + (solved ? ' solved' : '');
+    card.innerHTML = '<div class="case-num"><span>Case File #' + (idx+1) + '</span>' + (solved ? '<span class="solved-badge">✓ Solved</span>' : '') + '</div>' +
+      '<div class="case-scenario">' + mol.scenario + '</div>';
+    card.addEventListener('click', ()=> selectCase(idx));
+    grid.appendChild(card);
+  });
+}
+
+function resetCaseState(){
+  state.instrument = 'ir';
+  state.peakStatus = {};
+  state.clueLog = [];
+  document.getElementById('finalGuess').value = '';
+  const feedbackEl = document.getElementById('finalFeedback');
+  feedbackEl.className = '';
+  feedbackEl.textContent = '';
+}
+
+function selectCase(idx){
+  state.moleculeIdx = idx;
+  state.view = 'case';
+  resetCaseState();
+  showView();
+  renderAll();
+}
+
+function startRandomCase(){
+  let idx = Math.floor(Math.random()*MOLECULES.length);
+  if(MOLECULES.length > 1 && state.view === 'case'){
+    while(idx === state.moleculeIdx) idx = Math.floor(Math.random()*MOLECULES.length);
+  }
+  selectCase(idx);
+}
+
+function goToMenu(){
+  state.view = 'menu';
+  renderMenu();
+  showView();
+}
+
+document.querySelectorAll('.instrument-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.instrument = btn.dataset.instr;
+    renderLeftPanel();
+    renderChart();
+    renderPeakRows();
+  });
+});
+
+document.getElementById('newCaseBtn').addEventListener('click', startRandomCase);
+document.getElementById('allCasesBtn').addEventListener('click', goToMenu);
+document.getElementById('submitGuessBtn').addEventListener('click', handleFinalSubmit);
+
+populateFinalGuessDropdown();
+renderMenu();
+showView();
+
+</script>
+</body>
+</html>

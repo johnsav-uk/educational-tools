@@ -3,222 +3,464 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mr. Savage's House of Games</title>
+<title>Savage Science Tools — Games &amp; 3D Visualisations</title>
+<meta name="description" content="Revision games for low-stakes retrieval, and 3D models for the ideas a whiteboard can't hold still. Free for classroom use, no sign-in required.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Rubik+Mono+One&display=swap" rel="stylesheet">
 <style>
 :root{
-  --stage1:#0b3070; --stage2:#061f47; --stage3:#0a2456;
-  --yellow:#ffd21e; --yellow-edge:#b88a00; --yellow-glow:rgba(255,210,30,.5);
-  --amber:#ff9426;
-  --text:#eaf2ff; --muted:#9fb6df;
-  --panel:#0c2453; --panel-edge:#1c3f7e;
-  --display:'Archivo Black','Arial Black',system-ui,sans-serif;
-  --body:'Space Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
-
-  --quiz:#e8a020; --quiz-edge:#a66f10;
-  --lang:#1ba8a0; --lang-edge:#0e6b66;
-  --practical:#8a5cf5; --practical-edge:#5535a3;
-  --revise:#3ec7ea; --revise-edge:#1c6f8f;
+  --paper:#efe9dd;
+  --card-paper:#f7f4ec;
+  --ink:#14120f;
+  --ink-72:rgba(20,18,15,.72);
+  --ink-65:rgba(20,18,15,.65);
+  --ink-60:rgba(20,18,15,.6);
+  --ink-55:rgba(20,18,15,.55);
+  --ink-50:rgba(20,18,15,.5);
+  --ink-45:rgba(20,18,15,.45);
+  --ink-20:rgba(20,18,15,.2);
+  --ultra:oklch(0.5 0.2 265);
+  --ultra-dark:oklch(0.45 0.2 265);
+  --ultra-light:oklch(0.72 0.16 265);
+  --coral:oklch(0.66 0.19 25);
+  --games:#14120f;
+  --games-hover:#1c1a15;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;color:var(--text);
-  font-family:var(--body);
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(120,180,255,.2), transparent 60%),
-    radial-gradient(90% 70% at 50% 120%, rgba(0,0,0,.45), transparent 55%),
-    linear-gradient(180deg,var(--stage1) 0%, var(--stage2) 55%, var(--stage3) 100%);
-  padding:44px 16px 64px;display:flex;flex-direction:column;align-items:center;
-}
-body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px);
-  mix-blend-mode:overlay;opacity:.5;
-}
-.wrap{position:relative;z-index:1;width:100%;max-width:1000px;display:flex;flex-direction:column;align-items:center}
+html,body{margin:0;padding:0;background:var(--paper)}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration:none}
+input{font-family:inherit}
+button{font-family:inherit}
+::placeholder{color:var(--ink-45)}
+::selection{background:var(--coral);color:#fff}
+:focus-visible{outline:2px solid var(--ultra);outline-offset:2px}
 
-/* ---- marquee title ---- */
-.marquee{
-  position:relative;text-align:center;margin-bottom:8px;padding:34px 40px 30px;border-radius:20px;
-  background:radial-gradient(70% 140% at 50% 50%, #1a4fb0 0%, #0c2e73 55%, #071b47 100%);
-  box-shadow:0 18px 50px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.08);
-  overflow:hidden;
-}
-.bulbs{position:absolute;inset:0;border-radius:20px;pointer-events:none}
-.bulbs span{
-  position:absolute;width:8px;height:8px;border-radius:50%;background:var(--yellow);
-  box-shadow:0 0 8px 2px var(--yellow-glow);animation:blink 1.6s infinite ease-in-out;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-.marquee h1{
-  font-family:var(--display);font-size:clamp(28px,5.6vw,48px);margin:0;line-height:1.15;
-  color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.55);letter-spacing:.5px;position:relative;
-}
-.marquee h1 .savage{color:#fff}
-.marquee .sub{
-  margin-top:12px;font-size:12.5px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);
-  font-weight:500;position:relative;
-}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
 
-.hostline{
-  display:flex;align-items:center;gap:10px;margin:22px 0 30px;color:var(--muted);
-  font-size:13px;letter-spacing:1px;text-transform:uppercase;
-}
-.hostline .dash{width:36px;height:1.5px;background:var(--panel-edge)}
+/* ---------- 1. Header ---------- */
+.site-header{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:2px solid var(--ink)}
+.site-header .container{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 22px 16px 0;border-right:2px solid var(--ink);margin-right:22px}
+.brand-badge{width:34px;height:34px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:-.02em}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:-.03em;text-transform:uppercase}
+.site-nav{margin-left:auto;display:flex;align-items:center;gap:0;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;text-transform:uppercase}
+.site-nav a{padding:10px 16px}
+.site-nav a:hover{background:var(--ink);color:var(--paper)}
 
-/* ---- section labels ---- */
-.section{width:100%;margin-top:8px}
-.section-label{
-  font-family:var(--display);font-size:13px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;
-  margin:0 0 14px;display:flex;align-items:center;gap:10px;
-}
-.section-label .dash{flex:1;height:1.5px;background:var(--panel-edge)}
+/* ---------- 2. Credentials ticker ---------- */
+.ticker{border-bottom:1px solid var(--ink);overflow:hidden;background:var(--ink);color:var(--paper)}
+.ticker .container{padding:9px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;display:flex;gap:34px;white-space:nowrap;overflow:hidden}
+.ticker .coral{color:var(--coral)}
+.ticker .ultra{color:var(--ultra-light)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;width:100%;margin-bottom:30px}
-.card{
-  position:relative;background:linear-gradient(180deg,var(--panel),#0a1f49);
-  border:1.5px solid var(--panel-edge);border-radius:14px;padding:22px 20px 20px;
-  text-decoration:none;color:var(--text);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
-  overflow:hidden;
-}
-.card::after{
-  content:"";position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--tint,var(--amber)),transparent);
-}
-.card:hover{transform:translateY(-4px);border-color:var(--tint,var(--amber));box-shadow:0 12px 30px rgba(0,0,0,.35)}
-.card .tag{
-  display:inline-block;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--tint-ink,#231100);background:var(--tint,var(--amber));
-  padding:3px 9px;border-radius:20px;margin-bottom:12px;font-weight:700;
-}
-.card h2{margin:0 0 7px;font-size:19px;font-family:var(--body);font-weight:700}
-.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.card .play{
-  margin-top:14px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--tint,var(--amber));
-  font-weight:700;display:flex;align-items:center;gap:6px;
-}
-.card:hover .play{gap:9px}
-.card .play svg{transition:transform .15s ease}
-.card:hover .play svg{transform:translateX(2px)}
+/* ---------- Main ---------- */
+main{max-width:1200px;margin:0 auto;padding:0 20px 90px}
 
-footer{margin-top:10px;color:var(--muted);font-size:11.5px;letter-spacing:1px;text-align:center}
+/* ---------- 3. Hero split ---------- */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0;border-left:1px solid var(--ink);border-right:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.hero-left{padding:54px 40px 48px;border-right:1px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 20px;color:var(--ink-60)}
+.hero h1{font-weight:800;font-size:clamp(38px,5.6vw,64px);line-height:.94;letter-spacing:-.045em;text-transform:uppercase;margin:0}
+.hero h1 .u{color:var(--ultra)}
+.hero h1 .c{color:var(--coral)}
+.hero-right{padding:54px 40px 48px;display:flex;flex-direction:column;justify-content:flex-end;gap:22px}
+.lede{font-size:clamp(17px,2vw,20px);line-height:1.45;margin:0;max-width:34ch;text-wrap:pretty}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px}
+.btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;padding:12px 18px;border:1.5px solid var(--ink);cursor:pointer;background:transparent;color:var(--ink)}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--coral);border-color:var(--coral);color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* ---------- 4. Entry panels ---------- */
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:0;border-left:1px solid var(--ink);border-right:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.panel{position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:400px;padding:34px 36px;transition:background 180ms linear}
+.panel-texture{position:absolute;inset:0;pointer-events:none}
+.panel-inner{position:relative;display:flex;flex-direction:column;height:100%}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding-bottom:22px}
+.panel-body{font-size:16px;line-height:1.5;margin:20px 0 0;max-width:36ch}
+.panel-tags{margin-top:auto;padding-top:30px;display:flex;flex-wrap:wrap;gap:0}
+.panel-tags span{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;padding:7px 12px;border:1px solid currentColor}
+.panel-tags span+span{border-left:0}
+.panel-cta{margin-top:26px;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+
+.panel-games{background:var(--games);color:var(--paper);border-right:1px solid var(--ink)}
+.panel-games:hover{background:var(--games-hover);color:var(--paper)}
+.panel-games .panel-texture{opacity:.5;background-image:radial-gradient(rgba(239,233,221,.35) 1px,transparent 1.2px);background-size:11px 11px}
+.panel-games .panel-head{border-bottom:1px solid rgba(239,233,221,.3)}
+.panel-games h2{font-family:'Rubik Mono One',sans-serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);line-height:1;letter-spacing:-.03em;text-transform:uppercase;margin:30px 0 0}
+.panel-games .panel-body{color:rgba(239,233,221,.8)}
+.panel-games .panel-tags span{border-color:rgba(239,233,221,.4)}
+.panel-games .coral{color:var(--coral)}
+
+.panel-3d{background:var(--ultra);color:#f4f2ef}
+.panel-3d:hover{background:var(--ultra-dark);color:#f4f2ef}
+.panel-3d .panel-texture{opacity:.35;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:26px 26px}
+.panel-3d .panel-head{border-bottom:1px solid rgba(255,255,255,.4)}
+.panel-3d h2{font-weight:800;font-size:clamp(30px,4vw,46px);line-height:.95;letter-spacing:-.045em;text-transform:uppercase;margin:30px 0 0}
+.panel-3d .panel-body{color:rgba(255,255,255,.86)}
+.panel-3d .panel-tags span{border-color:rgba(255,255,255,.5)}
+
+/* ---------- 5. Catalogue ---------- */
+.catalog{padding-top:72px}
+.catalog-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.catalog-head h2{font-weight:800;font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;text-transform:uppercase;margin:0}
+.count{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase}
+
+.controls{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--ink)}
+/* min-width holds the designed 300px basis so the chip row wraps below
+   the search field rather than squeezing it shut on mid-width screens. */
+.find{flex:1 1 300px;min-width:300px;display:flex;align-items:center;gap:12px;padding:14px 4px}
+.find-label{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-55)}
+#search{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);font-size:17px;letter-spacing:-.01em}
+#reset{border:1px solid var(--ink);background:transparent;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;cursor:pointer;color:var(--ink)}
+#reset:hover{background:var(--ink);color:var(--paper)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:10px 0}
+.chip{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink)}
+.chip+.chip{border-left:0}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:22px;padding-top:30px}
+.card{display:flex;flex-direction:column;padding:22px;background:var(--card-paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);transition:transform 140ms linear,box-shadow 140ms linear}
+.card:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);color:var(--ink)}
+.card-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.card-kind{font-weight:600;padding-bottom:2px;border-bottom:2px solid currentColor}
+.kind-game{color:var(--coral)}
+.kind-3d{color:var(--ultra)}
+.kind-interactive{color:var(--ink)}
+.card-level{color:var(--ink-50)}
+.card h3{font-weight:700;font-size:20px;line-height:1.15;letter-spacing:-.035em;text-transform:uppercase;margin:18px 0 10px}
+.card p{margin:0 0 20px;font-size:14.5px;line-height:1.5;color:var(--ink-72);text-wrap:pretty}
+.card-tags{margin-top:auto;padding-top:14px;border-top:1px solid var(--ink-20);display:flex;flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-60)}
+
+.empty{margin-top:30px;padding:54px 24px;text-align:center;border:1.5px dashed var(--ink)}
+.empty p:first-child{margin:0 0 6px;font-weight:700;font-size:19px;letter-spacing:-.03em;text-transform:uppercase}
+.empty p:last-child{margin:0;font-family:var(--mono);font-size:13px;color:var(--ink-65)}
+
+/* ---------- 6. Footer ---------- */
+.site-footer{border-top:2px solid var(--ink);background:var(--ink);color:var(--paper)}
+.site-footer .container{padding:26px 20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.site-footer a{color:var(--paper)}
+.footer-links{display:flex;gap:22px}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="marquee">
-    <div class="bulbs" id="bulbs"></div>
-    <h1>MR. <span class="savage">SAVAGE'S</span><br>HOUSE OF GAMES</h1>
-    <div class="sub">Step right up — pick your challenge</div>
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="#top">
+      <span class="brand-badge">SST</span>
+      <span class="brand-name">Savage Science Tools</span>
+    </a>
+    <nav class="site-nav">
+      <a href="#games">01 / Games</a>
+      <a href="#visualisations">02 / 3D</a>
+      <a href="#catalog">03 / Catalogue</a>
+    </nav>
   </div>
+</header>
 
-  <div class="hostline"><span class="dash"></span> Live from the classroom <span class="dash"></span></div>
-
-  <div class="section">
-    <p class="section-label">Quiz Round <span class="dash"></span></p>
-    <div class="grid">
-      <a class="card" style="--tint:var(--quiz);--tint-ink:#241606" href="games/science-jeopardy.html">
-        <span class="tag">Quiz</span>
-        <h2>Science Jeopardy</h2>
-        <p>Board-style science quiz with categories and point values.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--quiz);--tint-ink:#241606" href="games/science-blockbusters.html">
-        <span class="tag">Quiz</span>
-        <h2>Science Blockbusters</h2>
-        <p>Blockbusters-style hexagon board science quiz.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--quiz);--tint-ink:#241606" href="games/tenable-science.html">
-        <span class="tag">Quiz</span>
-        <h2>Tenable Science</h2>
-        <p>Tenable-style science recall challenge.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--quiz);--tint-ink:#241606" href="games/who-dares-wins-science.html">
-        <span class="tag">Quiz</span>
-        <h2>Who Dares Wins: Science</h2>
-        <p>Bid, dare and bank the winnings — a science version of the ITV/BBC list-naming game show.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-    </div>
+<div id="top" class="ticker">
+  <div class="container">
+    <span>AQA &middot; OCR &middot; Edexcel</span>
+    <span class="coral">Free for classroom use</span>
+    <span>KS4 &rarr; A-Level</span>
+    <span class="ultra">No sign-in required</span>
   </div>
-
-  <div class="section">
-    <p class="section-label">Language Round <span class="dash"></span></p>
-    <div class="grid">
-      <a class="card" style="--tint:var(--lang);--tint-ink:#04211f" href="games/french-connect4.html">
-        <span class="tag">Language</span>
-        <h2>French Connect 4</h2>
-        <p>Puissance 4 — classic Connect 4 with French vocabulary questions.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--lang);--tint-ink:#04211f" href="games/german-connect4.html">
-        <span class="tag">Language</span>
-        <h2>German Connect 4</h2>
-        <p>Vier Gewinnt — classic Connect 4 with German vocabulary questions.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--lang);--tint-ink:#04211f" href="games/spanish-connect4.html">
-        <span class="tag">Language</span>
-        <h2>Spanish Connect 4</h2>
-        <p>Conecta 4 — classic Connect 4 with Spanish vocabulary questions.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-    </div>
-  </div>
-
-  <div class="section">
-    <p class="section-label">Investigation Round <span class="dash"></span></p>
-    <div class="grid">
-      <a class="card" style="--tint:var(--practical);--tint-ink:#1c0f3d" href="https://johnsav-uk.github.io/spectroscopy-detective/" target="_blank" rel="noopener">
-        <span class="tag">Investigation</span>
-        <h2>The Spectroscopy Detective</h2>
-        <p>Analyse IR, Mass Spec and NMR evidence to identify a mystery A-Level Chemistry molecule.</p>
-        <div class="play">Play now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-    </div>
-  </div>
-
-  <div class="section">
-    <p class="section-label">Revision Round <span class="dash"></span></p>
-    <div class="grid">
-      <a class="card" style="--tint:var(--revise);--tint-ink:#04222e" href="https://johnsav-uk.github.io/atomic-model-timeline/" target="_blank" rel="noopener">
-        <span class="tag">Revision</span>
-        <h2>Development of the Atom</h2>
-        <p>Rotatable 3D models, exam-style diagrams and a live alpha scattering experiment &mdash; AQA GCSE Chemistry 4.1.1.3.</p>
-        <div class="play">Open now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-      <a class="card" style="--tint:var(--revise);--tint-ink:#04222e" href="https://johnsav-uk.github.io/fractional-distillation-column/" target="_blank" rel="noopener">
-        <span class="tag">Revision</span>
-        <h2>The Fractionating Column</h2>
-        <p>Watch crude oil separate in a 3D refinery or an exam schematic, and follow a fraction up the column as it condenses &mdash; AQA GCSE Chemistry 4.7.1.2.</p>
-        <div class="play">Open now <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </a>
-    </div>
-  </div>
-
-  <footer>Mr. Savage's House of Games &mdash; classroom edition</footer>
 </div>
 
+<main>
+
+  <section class="hero">
+    <div class="hero-left">
+      <p class="eyebrow">Index &mdash; 12 tools</p>
+      <h1>Two<br>ways in.<br><span class="u">Play</span> or<br><span class="c">dissect</span>.</h1>
+    </div>
+    <div class="hero-right">
+      <p class="lede">Revision games for low-stakes retrieval, and 3D models for the ideas a whiteboard can&rsquo;t hold still.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="#games">Start playing</a>
+        <a class="btn btn-ghost" href="#catalog">Search catalogue</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panels">
+
+    <!-- Panel A drops into the catalogue pre-filtered to Revision Game.
+         Point href at a standalone games index instead if one is ever built. -->
+    <a id="games" class="panel panel-games" href="#catalog" data-panel-filter="Revision Game">
+      <div class="panel-texture"></div>
+      <div class="panel-inner">
+        <div class="panel-head">
+          <span>01 / Play &amp; retrieve</span>
+          <span class="coral">&#9679;</span>
+        </div>
+        <h2>Mr Savage&rsquo;s<br><span class="coral">House of<br>Games</span></h2>
+        <p class="panel-body">Quiz shows, retrieval grids and beat-the-clock rounds. Built for starters, plenaries and last-minute recall.</p>
+        <div class="panel-tags">
+          <span>Quiz shows</span><span>Retrieval</span><span>Timed</span>
+        </div>
+        <span class="panel-cta coral">Enter &rarr;</span>
+      </div>
+    </a>
+
+    <!-- Panel B drops into the catalogue pre-filtered to 3D Model. -->
+    <a id="visualisations" class="panel panel-3d" href="#catalog" data-panel-filter="3D Model">
+      <div class="panel-texture"></div>
+      <div class="panel-inner">
+        <div class="panel-head">
+          <span>02 / Explore in space</span>
+          <span>&#9677;</span>
+        </div>
+        <h2>3D Visual&shy;isations<br>&amp; Demos</h2>
+        <p class="panel-body">Rotate, section and slow down: time of flight spectrometry, fractionating columns and the atom through time.</p>
+        <div class="panel-tags">
+          <span>Time of flight</span><span>Distillation</span><span>Spectroscopy</span>
+        </div>
+        <span class="panel-cta">Open the lab &rarr;</span>
+      </div>
+    </a>
+
+  </section>
+
+  <section id="catalog" class="catalog">
+    <div class="catalog-head">
+      <h2>03 / Catalogue</h2>
+      <span class="count" id="count" role="status" aria-live="polite">12 / 12 shown</span>
+    </div>
+
+    <div class="controls">
+      <div class="find">
+        <span class="find-label" aria-hidden="true">Find</span>
+        <input id="search" type="text" autocomplete="off" placeholder="electrolysis, distillation, mass spec&hellip;" aria-label="Search the catalogue">
+        <button id="reset" type="button" hidden>Reset</button>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
+    </div>
+
+    <div class="card-grid" id="grid"></div>
+
+    <div class="empty" id="empty" hidden>
+      <p>No matches</p>
+      <p>Try a broader term or reset the filters.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>Savage Science Tools</span>
+    <span class="footer-links">
+      <a href="#games">Games</a>
+      <a href="#visualisations">3D</a>
+      <a href="#catalog">Catalogue</a>
+    </span>
+  </div>
+</footer>
+
 <script>
-const bulbs=document.getElementById('bulbs');
-const n=28;
-for(let i=0;i<n;i++){
-  const s=document.createElement('span');
-  const t=i/n;
-  const angle=t*Math.PI;
-  const x=6+t*88;
-  const yTop = 6 + Math.sin(angle)*3;
-  const onTop = i%2===0;
-  s.style.left=x+'%';
-  s.style.top = onTop ? '10px' : 'calc(100% - 16px)';
-  s.style.animationDelay=(i*0.09)+'s';
-  bulbs.appendChild(s);
-}
+(function () {
+  'use strict';
+
+  // kind:  "Revision Game" | "3D Model" | "Interactive"  — drives the card's accent colour
+  // level: "GCSE" | "A-Level"
+  // keywords: hidden synonym string, never rendered — it is what makes exam-language
+  //           searches land ("mass spec", "crude oil", "plum pudding"). Extend it as tools are added.
+  var RESOURCES = [
+    { title: "The Flight Tube", url: "visualisations/time-of-flight-mass-spectrometer/",
+      blurb: "Fire ions down the drift tube, change the accelerating voltage and read the detector trace.",
+      kind: "3D Model", level: "A-Level", tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
+      keywords: "mass spec mass spectrometry tof time of flight isotopes relative atomic mass m/z ions drift tube 3.1.1.2" },
+
+    { title: "The Fractionating Column", url: "visualisations/fractional-distillation-column/",
+      blurb: "Orbit the column, follow a single tray and watch the fractions separate by boiling point.",
+      kind: "3D Model", level: "GCSE", tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
+      keywords: "fractional distillation crude oil fractions hydrocarbons alkanes petrol diesel bitumen boiling point trays 4.7.1.2" },
+
+    { title: "Development of the Model of the Atom", url: "visualisations/atomic-model-timeline/",
+      blurb: "Move through time from the solid sphere to the nuclear model, rotating each one as you go.",
+      kind: "3D Model", level: "GCSE", tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
+      keywords: "atomic model timeline dalton thomson plum pudding rutherford alpha scattering bohr chadwick nucleus higher tier 4.1.1.3" },
+
+    { title: "The Spectroscopy Detective", url: "visualisations/spectroscopy-detective/",
+      blurb: "Work case files of mystery molecules, logging IR, mass spec and NMR evidence to a final deduction.",
+      kind: "Interactive", level: "A-Level", tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+      keywords: "spectroscopy organic analysis infrared ir mass spectrometry nmr proton carbon 13 fingerprint structure determination 3.3.6" },
+
+    { title: "Rate of Reaction & Collision Theory", url: "visualisations/rate-of-reaction-simulator/",
+      blurb: "Set temperature, concentration and surface area, then watch the collisions and the graph respond.",
+      kind: "Interactive", level: "GCSE", tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+      keywords: "rates of reaction collision theory activation energy catalyst concentration temperature surface area particles 4.6.1" },
+
+    { title: "Science Jeopardy", url: "games/science/science-jeopardy.html",
+      blurb: "Board-style quiz across six categories, from cell biology to waves, electricity and space.",
+      kind: "Revision Game", level: "GCSE", tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
+      keywords: "jeopardy board quiz categories points starter plenary retrieval team game" },
+
+    { title: "Science Blockbusters", url: "games/science/science-blockbusters.html",
+      blurb: "Hexagon board head-to-head: answer to claim tiles and build a path across the grid.",
+      kind: "Revision Game", level: "GCSE", tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
+      keywords: "blockbusters hexagons letters board team game retrieval head to head" },
+
+    { title: "Tenable Science", url: "games/science/tenable-science.html",
+      blurb: "Name the top ten. List-based recall rounds that reward breadth over speed.",
+      kind: "Revision Game", level: "GCSE", tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
+      keywords: "tenable top ten list naming recall retrieval whole class reactivity series" },
+
+    { title: "Who Dares Wins: Science", url: "games/science/who-dares-wins-science.html",
+      blurb: "Bid, dare and bank the winnings in a list-naming game show for the whole class.",
+      kind: "Revision Game", level: "GCSE", tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
+      keywords: "who dares wins bidding list naming game show bank risk" },
+
+    { title: "French Connect 4", url: "games/languages/french-connect4.html",
+      blurb: "Puissance 4 — drop a counter by answering a French vocabulary question correctly.",
+      kind: "Revision Game", level: "GCSE", tags: ["Languages", "Revision Game", "Interactive"],
+      keywords: "french francais puissance 4 connect four vocabulary mfl languages modern foreign" },
+
+    { title: "German Connect 4", url: "games/languages/german-connect4.html",
+      blurb: "Vier Gewinnt — drop a counter by answering a German vocabulary question correctly.",
+      kind: "Revision Game", level: "GCSE", tags: ["Languages", "Revision Game", "Interactive"],
+      keywords: "german deutsch vier gewinnt connect four vocabulary mfl languages modern foreign" },
+
+    { title: "Spanish Connect 4", url: "games/languages/spanish-connect4.html",
+      blurb: "Conecta 4 — drop a counter by answering a Spanish vocabulary question correctly.",
+      kind: "Revision Game", level: "GCSE", tags: ["Languages", "Revision Game", "Interactive"],
+      keywords: "spanish espanol conecta 4 connect four vocabulary mfl languages modern foreign" }
+  ];
+
+  var FILTERS = ["All", "AQA Chemistry", "Chemistry", "Physics", "Biology", "Languages", "Revision Game", "3D Model", "Interactive"];
+
+  var KIND_CLASS = { "Revision Game": "kind-game", "3D Model": "kind-3d", "Interactive": "kind-interactive" };
+
+  var state = { query: "", filter: "All" };
+
+  var grid = document.getElementById('grid');
+  var chipsHost = document.getElementById('chips');
+  var countEl = document.getElementById('count');
+  var emptyEl = document.getElementById('empty');
+  var searchEl = document.getElementById('search');
+  var resetEl = document.getElementById('reset');
+
+  RESOURCES.forEach(function (r) {
+    r.hay = (r.title + " " + r.blurb + " " + r.tags.join(" ") + " " + r.level + " " + (r.keywords || "")).toLowerCase();
+  });
+
+  function matches() {
+    var q = state.query.trim().toLowerCase();
+    var f = state.filter;
+    return RESOURCES.filter(function (r) {
+      if (!(f === "All" || r.tags.indexOf(f) !== -1)) return false;
+      if (!q) return true;
+      return q.split(/\s+/).every(function (term) {
+        if (r.hay.indexOf(term) !== -1) return true;
+        var stem = term.replace(/(ies|es|s)$/, "");
+        return stem.length > 2 && r.hay.indexOf(stem) !== -1;
+      });
+    });
+  }
+
+  function buildChips() {
+    FILTERS.forEach(function (label) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = label;
+      b.dataset.filter = label;
+      b.setAttribute('aria-pressed', String(label === state.filter));
+      b.addEventListener('click', function () { state.filter = label; render(); });
+      chipsHost.appendChild(b);
+    });
+  }
+
+  function buildCard(r) {
+    var a = document.createElement('a');
+    a.className = 'card';
+    a.href = r.url;
+
+    var meta = document.createElement('div');
+    meta.className = 'card-meta';
+
+    var kind = document.createElement('span');
+    kind.className = 'card-kind ' + (KIND_CLASS[r.kind] || 'kind-interactive');
+    kind.textContent = r.kind;
+
+    var level = document.createElement('span');
+    level.className = 'card-level';
+    level.textContent = r.level;
+
+    meta.appendChild(kind);
+    meta.appendChild(level);
+
+    var h3 = document.createElement('h3');
+    h3.textContent = r.title;
+
+    var p = document.createElement('p');
+    p.textContent = r.blurb;
+
+    var tags = document.createElement('div');
+    tags.className = 'card-tags';
+    r.tags.forEach(function (t) {
+      var s = document.createElement('span');
+      s.textContent = t;
+      tags.appendChild(s);
+    });
+
+    a.appendChild(meta);
+    a.appendChild(h3);
+    a.appendChild(p);
+    a.appendChild(tags);
+    return a;
+  }
+
+  function render() {
+    var list = matches();
+
+    grid.textContent = '';
+    list.forEach(function (r) { grid.appendChild(buildCard(r)); });
+
+    countEl.textContent = list.length + ' / ' + RESOURCES.length + ' shown';
+    emptyEl.hidden = list.length !== 0;
+    resetEl.hidden = state.query.trim().length === 0;
+
+    Array.prototype.forEach.call(chipsHost.children, function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.filter === state.filter));
+    });
+  }
+
+  searchEl.addEventListener('input', function (e) { state.query = e.target.value; render(); });
+
+  resetEl.addEventListener('click', function () {
+    state.query = '';
+    state.filter = 'All';
+    searchEl.value = '';
+    render();
+    searchEl.focus();
+  });
+
+  // The two hero panels drop into the catalogue with their kind pre-selected.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-panel-filter]'), function (panel) {
+    panel.addEventListener('click', function () {
+      state.filter = panel.dataset.panelFilter;
+      state.query = '';
+      searchEl.value = '';
+      render();
+    });
+  });
+
+  buildChips();
+  render();
+})();
 </script>
 </body>
 </html>

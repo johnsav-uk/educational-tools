@@ -1,0 +1,1799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Flight Tube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: {
+    display: ['"Archivo Narrow"', 'Arial Narrow', 'sans-serif'],
+    body: ['"Source Sans 3"', 'Segoe UI', 'system-ui', 'sans-serif'],
+    mono: ['"JetBrains Mono"', 'ui-monospace', 'Consolas', 'monospace']
+  } } } };
+</script>
+<style>
+/* ── Tokens ─────────────────────────────────────────────────────────────
+   Light is the bare :root set. prefers-color-scheme redefines tokens only,
+   guarded so an explicit light choice beats a dark OS. The page's own
+   toggle lives on <body> so a host restamping data-theme can't undo it. */
+:root{
+  --ground:#E2E7EA; --ground-2:#CED6DC; --surface:#FAFBFC; --surface-2:#EFF3F5;
+  --line:#C3CCD2;   --line-soft:#DCE3E7; --ink:#101A21; --ink-2:#33444F; --muted:#647380;
+  --accent:#D6480E; --accent-text:#A83708; --accent-ink:#FFF6F2; --accent-soft:rgba(214,72,14,.11);
+  --good:#1F7A5C;   --warn:#B26A00;
+  --scene-a:#DFE6EA; --scene-b:#B4C0C9;
+  --metal:#9AA7B0;  --metal-dark:#6E7C86; --glass:#8DA4B3; --edge:#4A5A66; --plate:#B8862F;
+  --ion-a:#0E93B8;  --ion-b:#6B4FD6; --ion-c:#D62E5C;
+  --beam:#1FA0C4;
+  --shadow: 0 1px 0 rgba(16,26,33,.04), 0 12px 28px -20px rgba(16,26,33,.5);
+  --f-display:"Archivo Narrow","Arial Narrow",Helvetica,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
+    --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
+    --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
+    --good:#3ECFA0;   --warn:#E8A33D;
+    --scene-a:#101C24; --scene-b:#05090C;
+    --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
+    --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
+    --beam:#42D7FF;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
+  --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
+  --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
+  --good:#3ECFA0;   --warn:#E8A33D;
+  --scene-a:#101C24; --scene-b:#05090C;
+  --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
+  --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
+  --beam:#42D7FF;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
+}
+body.theme-dark{
+  --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
+  --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
+  --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
+  --good:#3ECFA0;   --warn:#E8A33D;
+  --scene-a:#101C24; --scene-b:#05090C;
+  --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
+  --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
+  --beam:#42D7FF;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
+}
+body.theme-light{
+  --ground:#E2E7EA; --ground-2:#CED6DC; --surface:#FAFBFC; --surface-2:#EFF3F5;
+  --line:#C3CCD2;   --line-soft:#DCE3E7; --ink:#101A21; --ink-2:#33444F; --muted:#647380;
+  --accent:#D6480E; --accent-text:#A83708; --accent-ink:#FFF6F2; --accent-soft:rgba(214,72,14,.11);
+  --good:#1F7A5C;   --warn:#B26A00;
+  --scene-a:#DFE6EA; --scene-b:#B4C0C9;
+  --metal:#9AA7B0;  --metal-dark:#6E7C86; --glass:#8DA4B3; --edge:#4A5A66; --plate:#B8862F;
+  --ion-a:#0E93B8;  --ion-b:#6B4FD6; --ion-c:#D62E5C;
+  --beam:#1FA0C4;
+  --shadow: 0 1px 0 rgba(16,26,33,.04), 0 12px 28px -20px rgba(16,26,33,.5);
+}
+
+html,body{ height:100%; }
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-body); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{ font-family:var(--f-display); font-weight:700; text-wrap:balance; margin:0; letter-spacing:.005em; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+.app{ display:grid; grid-template-rows:auto 1fr; height:100dvh; }
+.console{
+  display:grid; grid-template-columns:296px minmax(0,1fr) 344px;
+  gap:12px; padding:12px; min-height:0;
+}
+.col{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+.panel{ background:var(--surface); border:1px solid var(--line); border-radius:12px; }
+.panel-head{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:9px 12px; border-bottom:1px solid var(--line-soft);
+}
+.eyebrow{
+  font-family:var(--f-display); font-size:.7rem; font-weight:700;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--muted);
+}
+.scroll{ overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.scroll::-webkit-scrollbar{ width:8px; }
+.scroll::-webkit-scrollbar-thumb{ background:var(--line); border-radius:8px; }
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+header.bar{
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:10px 14px; background:var(--surface); border-bottom:1px solid var(--line);
+}
+.wordmark{ display:flex; align-items:baseline; gap:9px; }
+.wordmark h1{ font-size:1.32rem; line-height:1; }
+.spec-ref{
+  font-family:var(--f-mono); font-size:.68rem; color:var(--accent-text);
+  background:var(--accent-soft); padding:2px 7px; border-radius:5px; white-space:nowrap;
+}
+.subtle{ color:var(--muted); font-size:.78rem; }
+
+/* ── Controls ──────────────────────────────────────────────────────────── */
+.btn{
+  font-family:var(--f-body); font-size:.83rem; font-weight:600; color:var(--ink-2);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:8px;
+  padding:6px 11px; cursor:pointer; transition:background .14s, color .14s, border-color .14s;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.btn:hover{ background:var(--ground-2); color:var(--ink); }
+.btn-accent{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.btn-accent:hover{ background:var(--accent); filter:brightness(1.08); color:var(--accent-ink); }
+.btn[disabled]{ opacity:.42; cursor:not-allowed; }
+.seg{ display:inline-flex; background:var(--surface-2); border:1px solid var(--line); border-radius:9px; padding:2px; gap:2px; }
+.seg button{
+  font-family:var(--f-body); font-size:.78rem; font-weight:600; color:var(--muted);
+  background:transparent; border:0; border-radius:7px; padding:5px 10px; cursor:pointer; white-space:nowrap;
+}
+.seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow); }
+.seg.accent button[aria-pressed="true"]{ background:var(--accent); color:var(--accent-ink); }
+select.field, input.field{
+  width:100%; font-family:var(--f-body); font-size:.85rem; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:7px 9px;
+}
+input[type=range]{ width:100%; accent-color:var(--accent); }
+
+/* ── Stage stepper ─────────────────────────────────────────────────────── */
+.steps{ display:flex; flex-direction:column; }
+.step{
+  display:grid; grid-template-columns:26px 1fr; align-items:center; gap:10px;
+  padding:9px 12px; background:transparent; border:0; border-left:3px solid transparent;
+  text-align:left; cursor:pointer; color:var(--ink-2); font-family:var(--f-body); position:relative;
+}
+.step + .step{ box-shadow:inset 0 1px 0 var(--line-soft); }
+.step:hover{ background:var(--surface-2); }
+.step[aria-current="true"]{ background:var(--accent-soft); border-left-color:var(--accent); color:var(--ink); }
+.step .num{
+  font-family:var(--f-mono); font-size:.76rem; font-weight:500; display:grid; place-items:center;
+  width:26px; height:26px; border-radius:50%; border:1px solid var(--line); color:var(--muted);
+}
+.step[aria-current="true"] .num{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+.step .nm{ font-family:var(--f-display); font-weight:700; font-size:1.02rem; line-height:1.15; }
+.step .ds{ font-size:.75rem; color:var(--muted); line-height:1.25; }
+
+/* ── Viewport ──────────────────────────────────────────────────────────── */
+.viewport{
+  position:relative; overflow:hidden; border-radius:12px; border:1px solid var(--line);
+  background:radial-gradient(120% 100% at 50% 0%, var(--scene-a) 0%, var(--scene-b) 100%);
+  min-height:240px; flex:1;
+}
+#gl{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab; }
+#gl.dragging{ cursor:grabbing; }
+.overlay{ position:absolute; inset:0; pointer-events:none; }
+.pin{
+  position:absolute; transform:translate(-50%,-100%); pointer-events:auto; cursor:pointer;
+  background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:4px 9px 5px; box-shadow:var(--shadow); white-space:nowrap;
+  display:flex; align-items:center; gap:7px; transition:border-color .14s, background .14s;
+}
+.pin:hover{ border-color:var(--accent); }
+.pin[data-active="true"]{ background:var(--accent); border-color:var(--accent); }
+.pin[data-active="true"] .pin-n, .pin[data-active="true"] .pin-t{ color:var(--accent-ink); }
+.pin-n{ font-family:var(--f-mono); font-size:.68rem; color:var(--accent-text); }
+.pin-t{ font-family:var(--f-display); font-weight:700; font-size:.84rem; color:var(--ink); letter-spacing:.01em; }
+.pin::after{
+  content:""; position:absolute; left:50%; top:100%; width:1px; height:var(--leader,16px);
+  background:var(--line); transform:translateX(-50%);
+}
+.tag{
+  position:absolute; transform:translate(-50%,-50%); pointer-events:none;
+  font-family:var(--f-mono); font-size:.64rem; color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--line-soft); border-radius:5px; padding:1px 6px;
+  opacity:.92; white-space:nowrap;
+}
+.hud{
+  position:absolute; left:12px; bottom:12px; pointer-events:none;
+  display:flex; gap:6px; flex-wrap:wrap; max-width:70%;
+}
+.hud .chip{
+  font-family:var(--f-mono); font-size:.68rem; color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:3px 8px;
+}
+.hud .chip b{ color:var(--ink); font-weight:500; }
+.vp-tools{ position:absolute; right:12px; top:12px; display:flex; gap:6px; pointer-events:auto; }
+
+/* ── Spectrum ──────────────────────────────────────────────────────────── */
+.spectrum-wrap{ position:relative; height:186px; }
+#spectrum{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.readouts{ display:flex; gap:14px; flex-wrap:wrap; align-items:baseline; padding:7px 12px; border-top:1px solid var(--line-soft); }
+.ro{ display:flex; align-items:baseline; gap:6px; }
+.ro .k{ font-family:var(--f-display); font-size:.68rem; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); }
+.ro .v{ font-family:var(--f-mono); font-size:.92rem; font-variant-numeric:tabular-nums; color:var(--ink); }
+.ro .v.hi{ color:var(--accent-text); }
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+.card-body{ padding:12px 14px 16px; display:flex; flex-direction:column; gap:12px; }
+.card-title{ font-size:1.28rem; line-height:1.1; }
+.card-lede{ color:var(--ink-2); font-size:.92rem; }
+.blk{ display:flex; flex-direction:column; gap:6px; }
+.blk h4{ font-size:.78rem; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+ul.facts{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:7px; }
+ul.facts li{ position:relative; padding-left:15px; font-size:.88rem; color:var(--ink-2); }
+ul.facts li::before{ content:""; position:absolute; left:2px; top:.55em; width:5px; height:5px; background:var(--accent); border-radius:1px; }
+ul.facts li b{ color:var(--ink); font-weight:600; }
+.eq{
+  font-family:var(--f-mono); font-size:.88rem; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line-soft); border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0; padding:8px 11px; overflow-x:auto; white-space:nowrap;
+}
+.eq .why{ display:block; font-family:var(--f-body); font-size:.76rem; color:var(--muted); white-space:normal; margin-top:3px; }
+.tip{
+  font-size:.82rem; color:var(--ink-2); background:var(--accent-soft);
+  border-radius:8px; padding:8px 11px;
+}
+.tip b{ font-family:var(--f-display); letter-spacing:.06em; text-transform:uppercase; font-size:.7rem; color:var(--accent-text); display:block; margin-bottom:2px; }
+
+/* ── Data table ────────────────────────────────────────────────────────── */
+table.data{ width:100%; border-collapse:collapse; font-family:var(--f-mono); font-size:.75rem; font-variant-numeric:tabular-nums; }
+table.data th{
+  font-family:var(--f-display); font-size:.66rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; text-align:right; padding:4px 6px; border-bottom:1px solid var(--line);
+}
+table.data th:first-child, table.data td:first-child{ text-align:left; }
+table.data td{ text-align:right; padding:4px 6px; border-bottom:1px solid var(--line-soft); color:var(--ink-2); }
+table.data tr:last-child td{ border-bottom:0; }
+.swatch{ display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; vertical-align:baseline; }
+
+/* ── Quiz ──────────────────────────────────────────────────────────────── */
+.q-opt{
+  display:block; width:100%; text-align:left; font-family:var(--f-body); font-size:.86rem;
+  color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line);
+  border-radius:9px; padding:8px 11px; cursor:pointer;
+}
+.q-opt:hover{ border-color:var(--accent); color:var(--ink); }
+.q-opt[data-state="right"]{ border-color:var(--good); background:color-mix(in srgb, var(--good) 12%, transparent); color:var(--ink); }
+.q-opt[data-state="wrong"]{ border-color:var(--ion-c); background:color-mix(in srgb, var(--ion-c) 12%, transparent); color:var(--ink); }
+.q-opt[disabled]{ cursor:default; }
+.verdict{ font-size:.85rem; padding:9px 11px; border-radius:9px; background:var(--surface-2); border:1px solid var(--line-soft); color:var(--ink-2); }
+.verdict b{ display:block; font-family:var(--f-display); text-transform:uppercase; letter-spacing:.08em; font-size:.7rem; margin-bottom:3px; }
+.verdict[data-ok="1"] b{ color:var(--good); }
+.verdict[data-ok="0"] b{ color:var(--ion-c); }
+.dots{ display:flex; gap:4px; }
+.dots i{ width:7px; height:7px; border-radius:50%; background:var(--line); display:block; }
+.dots i[data-s="right"]{ background:var(--good); }
+.dots i[data-s="wrong"]{ background:var(--ion-c); }
+.dots i[data-s="now"]{ background:var(--accent); }
+
+.flash{ animation:flash .5s ease-out; }
+@keyframes flash{ from{ background:var(--accent-soft); } to{ background:transparent; } }
+
+@media (max-width:1180px){
+  .console{ grid-template-columns:1fr; height:auto; overflow-y:auto; }
+  .app{ height:auto; min-height:100dvh; }
+  .viewport{ height:52vh; min-height:380px; }
+  .col{ min-height:0; }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="bar">
+    <div class="wordmark">
+      <h1>The Flight Tube</h1>
+      <span class="spec-ref">AQA A-level · 3.1.1.2</span>
+    </div>
+    <span class="subtle" style="flex:1 1 200px">Time of flight mass spectrometry — drag to orbit, scroll to zoom, shift-drag to pan.</span>
+    <div class="seg accent" role="group" aria-label="Teaching mode">
+      <button id="mode-demo" aria-pressed="true">Demo mode</button>
+      <button id="mode-quiz" aria-pressed="false">Quiz &amp; annotation</button>
+    </div>
+    <button class="btn" id="theme-btn" title="Switch light / dark">Dark</button>
+  </header>
+
+  <div class="console">
+
+    <!-- ── Left rail ──────────────────────────────────────────────────── -->
+    <div class="col scroll">
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">The four stages</span></div>
+        <div class="steps" id="steps"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">Instrument setup</span></div>
+        <div style="padding:11px 12px; display:flex; flex-direction:column; gap:11px;">
+          <div>
+            <label class="eyebrow" for="sample" style="display:block; margin-bottom:5px;">Sample</label>
+            <select class="field" id="sample"></select>
+            <p class="subtle" id="sample-note" style="margin:6px 0 0; line-height:1.35;"></p>
+          </div>
+          <div>
+            <span class="eyebrow" style="display:block; margin-bottom:5px;">Ionisation method</span>
+            <div class="seg" role="group" aria-label="Ionisation method" style="width:100%">
+              <button id="ion-ei"  aria-pressed="true"  style="flex:1">Electron impact</button>
+              <button id="ion-es"  aria-pressed="false" style="flex:1">Electrospray</button>
+            </div>
+          </div>
+          <div>
+            <label class="eyebrow" for="speed" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Animation speed</span><span class="ro"><span class="v" id="speed-v">1.0&times;</span></span>
+            </label>
+            <input type="range" id="speed" min="0.25" max="3" step="0.05" value="1">
+          </div>
+          <div style="display:flex; gap:7px;">
+            <button class="btn btn-accent" id="run" style="flex:1; justify-content:center;">Run spectrometer</button>
+            <button class="btn" id="reset" title="Clear the accumulated spectrum">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <span class="eyebrow">Flight data</span>
+          <span class="subtle" style="font-family:var(--f-mono); font-size:.66rem;">d = 1.00 m</span>
+        </div>
+        <div style="padding:9px 10px 11px;">
+          <table class="data" id="flight-table"></table>
+          <p class="subtle" style="margin:8px 2px 0; line-height:1.35; font-size:.72rem;">
+            Calculated for every ion at a constant kinetic energy of
+            <span style="font-family:var(--f-mono)">4.34 &times; 10<sup>&minus;16</sup> J</span>
+            over a 1.00 m drift region — the order of magnitude a real ToF instrument works at.
+          </p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── Centre: 3D + spectrum ──────────────────────────────────────── -->
+    <div class="col">
+      <div class="viewport" id="viewport">
+        <canvas id="gl"></canvas>
+        <div class="overlay" id="overlay"></div>
+        <div class="vp-tools">
+          <button class="btn" id="view-reset">Whole instrument</button>
+        </div>
+        <div class="hud" id="hud"></div>
+      </div>
+
+      <section class="panel" style="flex:0 0 auto;">
+        <div class="panel-head">
+          <span class="eyebrow">Mass spectrum — relative abundance vs m/z</span>
+          <span class="subtle" id="spectrum-state">idle</span>
+        </div>
+        <div class="spectrum-wrap"><canvas id="spectrum"></canvas></div>
+        <div class="readouts" id="readouts"></div>
+      </section>
+    </div>
+
+    <!-- ── Right: stage card / quiz ───────────────────────────────────── -->
+    <div class="col">
+      <section class="panel scroll" style="flex:1 1 auto;" id="card-panel">
+        <div class="panel-head">
+          <span class="eyebrow" id="card-eyebrow">Stage detail</span>
+          <div class="dots" id="quiz-dots" hidden></div>
+        </div>
+        <div id="card"></div>
+      </section>
+    </div>
+
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   1. CONTENT — AQA 3.1.1.2
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const NA = 6.022e23;          // mol^-1
+const KE_J = 4.34e-16;        // J, constant kinetic energy after acceleration
+const DRIFT_D = 1.00;         // m, length of the drift region
+
+const STAGES = [
+  {
+    key: "ionisation", name: "Ionisation", short: "Sample &rarr; gaseous 1+ ions",
+    cam: { target:[-11,0.4,0], r:9.5, theta:0.62, phi:1.16 },
+    lede: "Every particle must be given a charge, because only charged particles can be accelerated by an electric field and detected as a current.",
+    methods: {
+      ei: {
+        name: "Electron impact (electron ionisation)",
+        facts: [
+          "The sample is <b>vaporised</b>, then an <b>electron gun</b> — a hot wire filament with a current running through it — fires <b>high energy electrons</b> at it.",
+          "Each particle loses <b>one electron</b>, forming a <b>1+ ion</b>.",
+          "Used for <b>elements</b> and substances with a <b>low M<sub>r</sub></b>.",
+          "The electrons carry enough energy to <b>fragment</b> some molecular ions, so extra peaks appear below the molecular ion peak."
+        ],
+        eq: ["X(g) + e&minus; &rarr; X&#8314;(g) + 2e&minus;", "One electron in, two electrons out — the incoming electron plus the knocked-out electron."]
+      },
+      es: {
+        name: "Electrospray ionisation",
+        facts: [
+          "The sample is dissolved in a <b>volatile, polar solvent</b> and pushed through a <b>fine hypodermic needle</b> held at a <b>high positive voltage</b>.",
+          "This produces a <b>fine mist (aerosol)</b> of charged droplets; the solvent evaporates away.",
+          "Each molecule is <b>protonated</b> — it gains an H&#8314; ion from the solvent — so the ion detected is <b>MH&#8314;</b>.",
+          "A <b>soft</b> technique: used for <b>larger molecules with a high M<sub>r</sub></b> because it causes <b>little or no fragmentation</b>."
+        ],
+        eq: ["M(g) + H&#8314; &rarr; MH&#8314;(g)", "The peak is at M<sub>r</sub> + 1, so M<sub>r</sub> = (m/z) &minus; 1. Forgetting to subtract the proton is the classic dropped mark."]
+      }
+    },
+    tip: ["Exam point", "The whole instrument is under a <b>vacuum</b>. Without it, ions would <b>collide with air molecules</b> and never reach the detector."]
+  },
+  {
+    key: "acceleration", name: "Acceleration", short: "Constant kinetic energy",
+    cam: { target:[-7,0.4,0], r:8.6, theta:0.48, phi:1.10 },
+    lede: "The positive ions are attracted towards a negatively charged plate. All ions of the same charge are accelerated to the same kinetic energy — not the same speed.",
+    facts: [
+      "Positive ions are accelerated by an <b>electric field</b> so that they all have the <b>same kinetic energy</b>.",
+      "Because KE is fixed, the <b>speed depends only on the mass</b> of the ion.",
+      "<b>Lighter ions travel faster</b>; heavier ions travel more slowly.",
+      "The work done on each 1+ ion by the field is the same, which is why the kinetic energy is constant."
+    ],
+    eqs: [
+      ["KE = &frac12; m v&sup2;", "KE in J, m in kg (not g mol&minus;&sup1;), v in m s&minus;&sup1;."],
+      ["v = &radic;(2 KE / m)", "Rearranged for speed — the form you need before calculating a flight time."]
+    ],
+    tip: ["Watch the units", "m is the mass of <b>one ion in kilograms</b>: m = (m/z in g mol&minus;&sup1;) &divide; (1000 &times; 6.022 &times; 10&sup2;&sup3;)."]
+  },
+  {
+    key: "drift", name: "Ion drift", short: "Separation by m/z",
+    cam: { target:[2,0.6,0], r:16, theta:0.20, phi:1.22 },
+    lede: "The ions leave the accelerating field and drift down the flight tube at constant speed. Nothing pushes them here — this field-free region is where separation actually happens.",
+    facts: [
+      "The ions enter a <b>flight tube</b> and travel at <b>constant speed</b> along a fixed distance <b>d</b>.",
+      "Ions are separated by their <b>mass-to-charge ratio, m/z</b>.",
+      "Time of flight is <b>proportional to &radic;m</b>: heavier ions take longer to reach the detector.",
+      "For 1+ ions, z = 1, so <b>m/z is numerically the mass</b> of the ion."
+    ],
+    eqs: [
+      ["t = d / v", "Distance over speed — constant velocity, so no acceleration terms."],
+      ["t = d &radic;(m / 2KE)", "Substituting v = &radic;(2KE/m). Since d and KE are constant, t &prop; &radic;m."]
+    ],
+    tip: ["Exam point", "If asked to compare two ions, form a <b>ratio</b>: t&#8321;/t&#8322; = &radic;(m&#8321;/m&#8322;). Everything else cancels."]
+  },
+  {
+    key: "detection", name: "Detection", short: "Current &prop; abundance",
+    cam: { target:[9.4,0.4,0], r:8.4, theta:0.95, phi:1.14 },
+    lede: "Arriving ions are discharged at the detector plate. Every ion that lands adds to a current, and the size of that current is what the spectrum plots.",
+    facts: [
+      "Positive ions <b>hit the detector and gain an electron</b> from it.",
+      "This causes a <b>current to flow</b> — the more ions of that m/z arrive, the <b>bigger the current</b>.",
+      "The <b>size of the current is proportional to the abundance</b> of that species.",
+      "Flight times are converted to m/z values, giving a spectrum of <b>relative abundance against m/z</b>."
+    ],
+    eqs: [
+      ["A<sub>r</sub> = &Sigma;(isotope mass &times; % abundance) &divide; &Sigma;(% abundance)", "The weighted mean — read the abundances straight off the spectrum."]
+    ],
+    tip: ["Exam point", "For a molecular sample, the <b>peak at the highest m/z is the molecular ion peak</b> — it gives M<sub>r</sub> directly for electron impact, or M<sub>r</sub> + 1 for electrospray."]
+  }
+];
+
+const SAMPLES = [
+  {
+    id: "mg", name: "Magnesium (Mg)", method: "ei", kind: "element",
+    note: "Three isotopes. Read the abundances off the spectrum to calculate Aᵣ.",
+    species: [
+      { mz:24, ab:78.99, label:"²⁴Mg⁺" },
+      { mz:25, ab:10.00, label:"²⁵Mg⁺" },
+      { mz:26, ab:11.01, label:"²⁶Mg⁺" }
+    ],
+    ar: 24.3
+  },
+  {
+    id: "b", name: "Boron (B)", method: "ei", kind: "element",
+    note: "Two isotopes with a lopsided split — Aᵣ sits close to the heavier one.",
+    species: [
+      { mz:10, ab:19.9, label:"¹⁰B⁺" },
+      { mz:11, ab:80.1, label:"¹¹B⁺" }
+    ],
+    ar: 10.8
+  },
+  {
+    id: "cl2", name: "Chlorine (Cl₂)", method: "ei", kind: "molecule",
+    note: "Molecular ion peaks at 70, 72, 74 in a 9:6:1 ratio, plus Cl⁺ fragments at 35 and 37.",
+    species: [
+      { mz:35, ab:23.0, label:"³⁵Cl⁺" },
+      { mz:37, ab:7.4,  label:"³⁷Cl⁺" },
+      { mz:70, ab:56.8, label:"³⁵Cl₂⁺" },
+      { mz:72, ab:36.4, label:"³⁵Cl³⁷Cl⁺" },
+      { mz:74, ab:5.8,  label:"³⁷Cl₂⁺" }
+    ],
+    mr: 70.9
+  },
+  {
+    id: "etoh", name: "Ethanol (C₂H₅OH)", method: "ei", kind: "molecule",
+    note: "Electron impact fragments this molecular ion — the base peak is a fragment, not M⁺·.",
+    species: [
+      { mz:31, ab:100, label:"CH₂OH⁺" },
+      { mz:45, ab:40,  label:"[M−H]⁺" },
+      { mz:46, ab:24,  label:"M⁺·" }
+    ],
+    mr: 46.0
+  },
+  {
+    id: "vitc", name: "Vitamin C (C₆H₈O₆)", method: "es", kind: "large",
+    note: "Too fragile for electron impact. Electrospray gives one clean MH⁺ peak at Mᵣ + 1.",
+    species: [
+      { mz:177, ab:100, label:"MH⁺" }
+    ],
+    mr: 176.0
+  }
+];
+
+const QUESTIONS = [
+  { stage:0, type:"pick", prompt:"Click the part of the instrument where the sample is turned into positive ions.", answer:0,
+    explain:"The ionisation chamber. Whichever method is used, the sample must leave here as gaseous 1+ ions before anything else can happen." },
+  { stage:0, type:"mcq", prompt:"Which statement about electrospray ionisation is correct?",
+    options:["The molecule loses one electron to form M⁺·","The molecule gains a proton to form MH⁺","The molecule is hit by high energy electrons from a filament","The molecule is vaporised and then fragmented"],
+    answer:1, explain:"Electrospray protonates the molecule: M(g) + H⁺ → MH⁺(g). So the peak appears at Mᵣ + 1 and you subtract 1 to get Mᵣ." },
+  { stage:0, type:"mcq", prompt:"Why must the whole instrument be kept under a vacuum?",
+    options:["To lower the boiling point of the sample","To stop the ions being deflected by a magnetic field","To stop ions colliding with air molecules","To keep the detector cool"],
+    answer:2, explain:"Ions that collide with air molecules are deflected or discharged and never reach the detector." },
+  { stage:1, type:"pick", prompt:"Click the region where the ions are given a constant kinetic energy.", answer:1,
+    explain:"The accelerating plates. The electric field between them does the same work on every 1+ ion, so they all end up with the same kinetic energy." },
+  { stage:1, type:"mcq", prompt:"Two 1+ ions, m/z 24 and m/z 26, leave the accelerating plates. Which quantity is the same for both?",
+    options:["Their speed","Their kinetic energy","Their time of flight","Their momentum"],
+    answer:1, explain:"Acceleration gives constant kinetic energy, not constant speed. The heavier ion is therefore slower — that is the whole basis of the separation." },
+  { stage:2, type:"num", prompt:"An ion of mass 3.99 × 10⁻²⁶ kg has a kinetic energy of 4.34 × 10⁻¹⁶ J. Calculate its speed, in m s⁻¹. Give your answer to 3 significant figures.",
+    answer:147600, tol:0.03, unit:"m s⁻¹", hint:"v = √(2KE / m)",
+    explain:"v = √(2 × 4.34 × 10⁻¹⁶ ÷ 3.99 × 10⁻²⁶) = √(2.176 × 10¹⁰) = 1.48 × 10⁵ m s⁻¹." },
+  { stage:2, type:"num", prompt:"That same ion crosses a 1.00 m drift region. Calculate its time of flight, in microseconds (µs).",
+    answer:6.78, tol:0.03, unit:"µs", hint:"t = d / v, then × 10⁶ to convert s to µs",
+    explain:"t = 1.00 ÷ 1.476 × 10⁵ = 6.78 × 10⁻⁶ s = 6.78 µs. Real ToF flight times are a few microseconds." },
+  { stage:2, type:"mcq", prompt:"Ion A has m/z 16 and ion B has m/z 64. Both are 1+ and have the same kinetic energy. How does B's flight time compare with A's?",
+    options:["Half as long","The same","Twice as long","Four times as long"],
+    answer:2, explain:"t ∝ √m, so t_B/t_A = √(64/16) = √4 = 2. The mass is four times greater but the time only doubles." },
+  { stage:3, type:"pick", prompt:"Click the part where ions gain an electron and generate a current.", answer:3,
+    explain:"The detector. Positive ions are discharged on the plate, and the resulting current is proportional to the abundance of that species." },
+  { stage:3, type:"mcq", prompt:"What is the size of the current at the detector proportional to?",
+    options:["The mass of the ion","The charge on the ion","The abundance of that isotope","The speed of the ion"],
+    answer:2, explain:"Each arriving ion picks up one electron, so more ions of a given m/z means a bigger current — that is what sets the height of each peak." },
+  { stage:3, type:"num", prompt:"A sample of boron gives peaks at m/z 10 (19.9%) and m/z 11 (80.1%). Calculate its relative atomic mass to 1 decimal place.",
+    answer:10.8, tol:0.012, unit:"", hint:"Aᵣ = Σ(mass × %) ÷ Σ(%)",
+    explain:"Aᵣ = [(10 × 19.9) + (11 × 80.1)] ÷ 100 = (199 + 881.1) ÷ 100 = 10.8." }
+];
+
+/* ═══════════════════════════════════════════════════════════════════════
+   2. STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const state = {
+  stage: -1,                 // -1 = whole instrument
+  sampleId: "mg",
+  method: "ei",
+  speed: 1,
+  running: false,
+  mode: "demo",
+  counts: {},                // mz -> detected count
+  detected: 0,
+  quizIndex: 0,
+  quizResults: [],           // "right" | "wrong"
+  quizAnswered: false,
+  awaitingPick: false
+};
+
+const sample = () => SAMPLES.find(s => s.id === state.sampleId);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* Ion mass in kg from an m/z value (1+ ions). */
+const ionMassKg = mz => mz / (1000 * NA);
+const ionSpeed  = mz => Math.sqrt(2 * KE_J / ionMassKg(mz));
+const flightTime = mz => DRIFT_D / ionSpeed(mz);   // seconds
+
+/* Species colour: hue ramp keyed to mass order within the sample. */
+function speciesColour(i, n){
+  const css = getComputedStyle(document.body);
+  const a = css.getPropertyValue("--ion-a").trim();
+  const b = css.getPropertyValue("--ion-b").trim();
+  const c = css.getPropertyValue("--ion-c").trim();
+  if (n <= 1) return b;
+  const t = i / (n - 1);
+  return t < 0.5 ? mixHex(a, b, t * 2) : mixHex(b, c, (t - 0.5) * 2);
+}
+function hexToRgb(h){
+  h = h.replace("#","").trim();
+  if (h.length === 3) h = h.split("").map(x => x + x).join("");
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixHex(h1, h2, t){
+  const a = hexToRgb(h1), b = hexToRgb(h2);
+  const m = a.map((v,i) => Math.round(v + (b[i] - v) * t));
+  return "#" + m.map(v => v.toString(16).padStart(2,"0")).join("");
+}
+function cssVar(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   3. THREE.JS SCENE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const GEO = {
+  inletX:   -13.6,
+  chamberX: -11.0,
+  accStart:  -8.6,
+  accEnd:    -5.4,
+  tubeStart: -5.4,
+  tubeEnd:    9.0,
+  detectX:    9.3,
+  tubeR:      1.5
+};
+
+let renderer, scene, camera, raycaster;
+let glCanvas, overlayEl;
+let matRefs = {};            // materials that follow the theme
+let groups = {};             // named scene groups
+let ionPool = [];
+let liveIons = [];
+let detectorGlow = 0;
+let glowTexture = null;
+
+const cam = { target: new THREE.Vector3(-1, 0.6, 0), r: 27, theta: 0.34, phi: 1.14 };
+const camTween = { active:false, t:0, dur:0.75, from:null, to:null };
+const OVERVIEW = { target:[-1,0.6,0], r:27, theta:0.34, phi:1.14 };
+
+function makeGlowTexture(){
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d").createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,   "rgba(255,255,255,1)");
+  g.addColorStop(0.28,"rgba(255,255,255,0.55)");
+  g.addColorStop(1,   "rgba(255,255,255,0)");
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
+}
+
+function metalMat(shade){
+  const m = new THREE.MeshPhongMaterial({ color: 0x9aa7b0, shininess: 48, specular: 0x2a3238, flatShading:false });
+  matRefs[shade] = matRefs[shade] || [];
+  matRefs[shade].push(m);
+  return m;
+}
+function edgeLines(geometry, parent){
+  const eg = new THREE.EdgesGeometry(geometry, 24);
+  const lm = new THREE.LineBasicMaterial({ color: 0x4a5a66, transparent:true, opacity:0.5 });
+  (matRefs.edge = matRefs.edge || []).push(lm);
+  const l = new THREE.LineSegments(eg, lm);
+  parent.add(l);
+  return l;
+}
+function cylX(rTop, rBot, len, seg, mat){
+  const g = new THREE.CylinderGeometry(rTop, rBot, len, seg);
+  const m = new THREE.Mesh(g, mat);
+  m.rotation.z = Math.PI / 2;
+  return m;
+}
+function ringX(inner, outer, mat){
+  const g = new THREE.RingGeometry(inner, outer, 48);
+  const m = new THREE.Mesh(g, mat);
+  m.rotation.y = Math.PI / 2;
+  m.material.side = THREE.DoubleSide;
+  return m;
+}
+function torusX(radius, tube, mat){
+  const m = new THREE.Mesh(new THREE.TorusGeometry(radius, tube, 10, 40), mat);
+  m.rotation.y = Math.PI / 2;
+  return m;
+}
+
+function initScene(){
+  glCanvas = document.getElementById("gl");
+  overlayEl = document.getElementById("overlay");
+
+  renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(42, 1, 0.1, 400);
+  raycaster = new THREE.Raycaster();
+  glowTexture = makeGlowTexture();
+
+  scene.add(new THREE.HemisphereLight(0xdfe9f0, 0x2a343c, 0.85));
+  const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(-8, 16, 14); scene.add(key);
+  const fill = new THREE.DirectionalLight(0xbfd6e6, 0.34); fill.position.set(14, 6, -12); scene.add(fill);
+
+  buildInstrument();
+  buildIonPool();
+  applySceneTheme();
+  resize3D();
+  window.addEventListener("resize", () => { resize3D(); resizeSpectrum(); });
+}
+
+function buildInstrument(){
+  const G = GEO;
+
+  /* Bench rail — grounds the instrument so it isn't floating in space. */
+  const rail = new THREE.Group();
+  const railMat = metalMat("dark");
+  [-1.9, 1.9].forEach(z => {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(26.5, 0.28, 0.42), railMat);
+    beam.position.set(-2.3, -2.55, z);
+    rail.add(beam);
+  });
+  [-12.4, -7.6, -1.5, 4.5, 8.9].forEach(x => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 4.2), railMat);
+    leg.position.set(x, -2.15, 0);
+    rail.add(leg);
+  });
+  scene.add(rail);
+
+  /* ── Stage 1: sample inlet + ionisation chamber ─────────────────────── */
+  const g1 = new THREE.Group();
+  const bodyMat = metalMat("body");
+
+  const vial = cylX(0.42, 0.42, 1.0, 20, metalMat("body"));
+  vial.rotation.z = 0; vial.position.set(G.inletX - 0.9, 1.6, 0);
+  g1.add(vial);
+  const capMat = metalMat("dark");
+  const cap = cylX(0.16, 0.16, 2.4, 12, capMat);
+  cap.position.set(G.inletX + 0.2, 0.95, 0);
+  cap.rotation.z = Math.PI / 2 - 0.55;
+  g1.add(cap);
+
+  const chamber = cylX(1.75, 1.75, 3.4, 40, bodyMat);
+  chamber.position.set(G.chamberX, 0, 0);
+  g1.add(chamber);
+  edgeLines(chamber.geometry, chamber);
+  [-1.7, 1.7].forEach(dx => {
+    const flange = torusX(1.82, 0.14, metalMat("dark"));
+    flange.position.set(G.chamberX + dx, 0, 0);
+    g1.add(flange);
+  });
+
+  /* Electron impact internals: filament + electron beam + trap */
+  const ei = new THREE.Group();
+  const filMat = new THREE.MeshBasicMaterial({ color: 0xffb066 });
+  (matRefs.filament = []).push(filMat);
+  const filament = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.055, 8, 24), filMat);
+  filament.position.set(G.chamberX, 1.15, 0);
+  filament.rotation.x = Math.PI / 2;
+  ei.add(filament);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0x42d7ff, transparent:true, opacity:0.55 });
+  (matRefs.beam = []).push(beamMat);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 2.3, 10), beamMat);
+  beam.position.set(G.chamberX, 0, 0);
+  ei.add(beam);
+  const trap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.9), metalMat("dark"));
+  trap.position.set(G.chamberX, -1.2, 0);
+  ei.add(trap);
+  g1.add(ei);
+
+  /* Electrospray internals: needle + spray cone */
+  const es = new THREE.Group();
+  const needle = cylX(0.06, 0.11, 1.7, 10, metalMat("dark"));
+  needle.position.set(G.chamberX - 0.95, 0.75, 0);
+  needle.rotation.z = Math.PI / 2 - 0.5;
+  es.add(needle);
+  const sprayMat = new THREE.MeshBasicMaterial({ color: 0x42d7ff, transparent:true, opacity:0.20, side:THREE.DoubleSide });
+  (matRefs.beam).push(sprayMat);
+  const spray = new THREE.Mesh(new THREE.ConeGeometry(0.85, 2.2, 22, 1, true), sprayMat);
+  spray.position.set(G.chamberX + 0.35, 0.18, 0);
+  spray.rotation.z = -Math.PI / 2 + 0.28;
+  es.add(spray);
+  for (let i = 0; i < 14; i++){
+    const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0x8fd8f0, transparent:true, opacity:0.5, depthWrite:false }));
+    const t = i / 14;
+    d.position.set(G.chamberX - 0.5 + t * 1.9, 0.55 - t * 0.5 + (Math.random()-0.5)*0.4, (Math.random()-0.5) * (0.3 + t));
+    d.scale.setScalar(0.28 + t * 0.2);
+    es.add(d);
+  }
+  es.visible = false;
+  g1.add(es);
+  groups.ei = ei; groups.es = es;
+
+  g1.userData.stage = 0;
+  scene.add(g1); groups.s1 = g1;
+
+  /* ── Stage 2: accelerating plates ───────────────────────────────────── */
+  const g2 = new THREE.Group();
+  const plateMat = new THREE.MeshPhongMaterial({ color: 0xb8862f, shininess: 70, specular: 0x554422, side: THREE.DoubleSide });
+  (matRefs.plate = []).push(plateMat);
+  [G.accStart, (G.accStart + G.accEnd)/2, G.accEnd].forEach((x, i) => {
+    const p = ringX(0.42 + i * 0.05, 1.55, plateMat);
+    p.position.set(x, 0, 0);
+    g2.add(p);
+    const rim = torusX(1.55, 0.07, metalMat("dark"));
+    rim.position.set(x, 0, 0);
+    g2.add(rim);
+    /* insulating stand-off post */
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.1, 8), metalMat("dark"));
+    post.position.set(x, -2.05, 0);
+    g2.add(post);
+  });
+  g2.userData.stage = 1;
+  scene.add(g2); groups.s2 = g2;
+
+  /* ── Stage 3: flight tube ───────────────────────────────────────────── */
+  const g3 = new THREE.Group();
+  const tubeLen = G.tubeEnd - G.tubeStart;
+  const glassMat = new THREE.MeshPhongMaterial({
+    color: 0x8da4b3, transparent:true, opacity:0.17, shininess:90,
+    specular:0xffffff, side:THREE.DoubleSide, depthWrite:false
+  });
+  (matRefs.glass = []).push(glassMat);
+  const tube = cylX(G.tubeR, G.tubeR, tubeLen, 44, glassMat);
+  tube.position.set((G.tubeStart + G.tubeEnd)/2, 0, 0);
+  g3.add(tube);
+  for (let x = G.tubeStart + 1.4; x < G.tubeEnd; x += 2.9){
+    const collar = torusX(G.tubeR + 0.06, 0.11, metalMat("dark"));
+    collar.position.set(x, 0, 0);
+    g3.add(collar);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.0, 0.34), metalMat("dark"));
+    foot.position.set(x, -2.05, 0);
+    g3.add(foot);
+  }
+  /* vacuum pump stub */
+  const stub = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.5, 16), metalMat("dark"));
+  stub.position.set(2.2, -2.1, 0.0);
+  g3.add(stub);
+  const pump = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.1, 1.4), metalMat("body"));
+  pump.position.set(2.2, -3.3, 0);
+  g3.add(pump);
+  edgeLines(pump.geometry, pump);
+  g3.userData.stage = 2;
+  scene.add(g3); groups.s3 = g3;
+
+  /* ── Stage 4: detector ──────────────────────────────────────────────── */
+  const g4 = new THREE.Group();
+  const housing = cylX(1.72, 1.72, 1.5, 32, metalMat("body"));
+  housing.position.set(G.detectX + 0.55, 0, 0);
+  g4.add(housing);
+  edgeLines(housing.geometry, housing);
+  const detMat = new THREE.MeshPhongMaterial({ color: 0x35505f, shininess: 60, specular: 0x88aabb, side: THREE.DoubleSide });
+  (matRefs.detector = []).push(detMat);
+  const plate = ringX(0.0, 1.35, detMat);
+  plate.position.set(G.detectX, 0, 0);
+  g4.add(plate);
+  groups.detectorPlate = plate;
+  const flare = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0xffffff, transparent:true, opacity:0, depthWrite:false, blending: THREE.AdditiveBlending }));
+  flare.position.set(G.detectX - 0.15, 0, 0);
+  flare.scale.setScalar(4.4);
+  g4.add(flare);
+  groups.detectorFlare = flare;
+  /* signal cable to the amplifier */
+  const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.1, 8), metalMat("dark"));
+  cable.position.set(G.detectX + 1.35, -1.3, 0.5);
+  cable.rotation.z = 0.5;
+  g4.add(cable);
+  const amp = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1, 1.5), metalMat("body"));
+  amp.position.set(G.detectX + 2.3, -2.1, 0.7);
+  g4.add(amp);
+  edgeLines(amp.geometry, amp);
+  g4.userData.stage = 3;
+  scene.add(g4); groups.s4 = g4;
+}
+
+function buildIonPool(){
+  const pool = new THREE.Group();
+  scene.add(pool);
+  for (let i = 0; i < 220; i++){
+    const g = new THREE.Group();
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.17, 10, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture, color: 0xffffff, transparent:true, opacity:0.75,
+      depthWrite:false, blending: THREE.AdditiveBlending
+    }));
+    halo.scale.setScalar(0.95);
+    g.add(core); g.add(halo);
+    g.visible = false;
+    pool.add(g);
+    ionPool.push({ obj:g, core, halo, busy:false });
+  }
+}
+
+function applySceneTheme(){
+  const metal = new THREE.Color(cssVar("--metal"));
+  const dark  = new THREE.Color(cssVar("--metal-dark"));
+  const glass = new THREE.Color(cssVar("--glass"));
+  const edge  = new THREE.Color(cssVar("--edge"));
+  const plate = new THREE.Color(cssVar("--plate"));
+  const beam  = new THREE.Color(cssVar("--beam"));
+  (matRefs.body || []).forEach(m => m.color.copy(metal));
+  (matRefs.dark || []).forEach(m => m.color.copy(dark));
+  (matRefs.glass || []).forEach(m => m.color.copy(glass));
+  (matRefs.edge || []).forEach(m => m.color.copy(edge));
+  (matRefs.plate || []).forEach(m => m.color.copy(plate));
+  (matRefs.beam || []).forEach(m => m.color.copy(beam));
+  (matRefs.detector || []).forEach(m => m.color.copy(new THREE.Color(cssVar("--glass")).multiplyScalar(0.7)));
+}
+
+function resize3D(){
+  const vp = document.getElementById("viewport");
+  const w = vp.clientWidth, h = vp.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+function updateCamera(){
+  const p = cam;
+  camera.position.set(
+    p.target.x + p.r * Math.sin(p.phi) * Math.sin(p.theta),
+    p.target.y + p.r * Math.cos(p.phi),
+    p.target.z + p.r * Math.sin(p.phi) * Math.cos(p.theta)
+  );
+  camera.lookAt(p.target);
+}
+
+function flyTo(preset){
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const to = {
+    target: new THREE.Vector3(preset.target[0], preset.target[1], preset.target[2]),
+    r: preset.r, theta: preset.theta, phi: preset.phi
+  };
+  if (reduce){
+    cam.target.copy(to.target); cam.r = to.r; cam.theta = to.theta; cam.phi = to.phi;
+    camTween.active = false; return;
+  }
+  camTween.from = { target: cam.target.clone(), r: cam.r, theta: cam.theta, phi: cam.phi };
+  camTween.to = to; camTween.t = 0; camTween.active = true;
+}
+
+function stepCameraTween(dt){
+  if (!camTween.active) return;
+  camTween.t = Math.min(1, camTween.t + dt / camTween.dur);
+  const e = camTween.t < 0.5
+    ? 4 * camTween.t ** 3
+    : 1 - Math.pow(-2 * camTween.t + 2, 3) / 2;
+  const f = camTween.from, t = camTween.to;
+  cam.target.lerpVectors(f.target, t.target, e);
+  cam.r = f.r + (t.r - f.r) * e;
+  /* take the short way round the azimuth */
+  let dTheta = t.theta - f.theta;
+  while (dTheta > Math.PI) dTheta -= Math.PI * 2;
+  while (dTheta < -Math.PI) dTheta += Math.PI * 2;
+  cam.theta = f.theta + dTheta * e;
+  cam.phi = f.phi + (t.phi - f.phi) * e;
+  if (camTween.t >= 1) camTween.active = false;
+}
+
+/* ── Orbit / zoom / pan, hand-rolled so nothing extra has to load ─────── */
+function initControls(){
+  let dragging = false, panning = false, moved = 0, lx = 0, ly = 0;
+
+  glCanvas.addEventListener("pointerdown", e => {
+    dragging = true; moved = 0; lx = e.clientX; ly = e.clientY;
+    panning = e.shiftKey || e.button === 1 || e.button === 2;
+    camTween.active = false;
+    glCanvas.setPointerCapture(e.pointerId);
+    glCanvas.classList.add("dragging");
+  });
+  glCanvas.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    moved += Math.abs(dx) + Math.abs(dy);
+    if (panning){
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      const k = cam.r * 0.0016;
+      cam.target.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+      cam.target.x = clamp(cam.target.x, -22, 20);
+      cam.target.y = clamp(cam.target.y, -8, 10);
+    } else {
+      cam.theta -= dx * 0.006;
+      cam.phi = clamp(cam.phi - dy * 0.006, 0.22, Math.PI - 0.22);
+    }
+  });
+  const end = e => {
+    if (!dragging) return;
+    dragging = false;
+    glCanvas.classList.remove("dragging");
+    if (moved < 5) pickAt(e);
+  };
+  glCanvas.addEventListener("pointerup", end);
+  glCanvas.addEventListener("pointercancel", () => { dragging = false; glCanvas.classList.remove("dragging"); });
+  glCanvas.addEventListener("contextmenu", e => e.preventDefault());
+  glCanvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    camTween.active = false;
+    cam.r = clamp(cam.r * (1 + Math.sign(e.deltaY) * 0.11), 5, 60);
+  }, { passive:false });
+}
+
+function pickAt(e){
+  const rect = glCanvas.getBoundingClientRect();
+  const pt = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1
+  );
+  raycaster.setFromCamera(pt, camera);
+  const hits = raycaster.intersectObjects(
+    [groups.s1, groups.s2, groups.s3, groups.s4], true
+  );
+  if (!hits.length) return;
+  let o = hits[0].object;
+  while (o && o.userData.stage === undefined) o = o.parent;
+  if (o && o.userData.stage !== undefined) selectStage(o.userData.stage);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. ION PHYSICS & ANIMATION
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const run = { pulseTimer: 0, K: 1, mzMin: 1, mzMax: 1 };
+
+function recomputeRun(){
+  const sp = sample().species;
+  run.mzMin = Math.min(...sp.map(s => s.mz));
+  run.mzMax = Math.max(...sp.map(s => s.mz));
+  /* the lightest ion should cross the drift region in about 1.5 s at 1x */
+  const tubeLen = GEO.detectX - GEO.tubeStart;
+  run.K = (tubeLen / 1.5) * Math.sqrt(run.mzMin);
+  run.pulseTimer = 0;
+}
+
+function driftSpeed(mz){ return (run.K / Math.sqrt(mz)) * state.speed; }
+
+function takeIon(){
+  for (const p of ionPool) if (!p.busy) { p.busy = true; return p; }
+  return null;
+}
+
+function emitPulse(){
+  const sp = sample().species;
+  const total = sp.reduce((a, s) => a + s.ab, 0);
+  const n = 13;
+  for (let i = 0; i < n; i++){
+    let r = Math.random() * total, idx = 0;
+    for (let k = 0; k < sp.length; k++){ r -= sp[k].ab; if (r <= 0) { idx = k; break; } }
+    const s = sp[idx];
+    const slot = takeIon();
+    if (!slot) continue;
+    const colour = new THREE.Color(speciesColour(idx, sp.length));
+    slot.core.material.color.copy(colour);
+    slot.halo.material.color.copy(colour);
+    slot.obj.visible = true;
+    const a = Math.random() * Math.PI * 2, rad = Math.sqrt(Math.random()) * 0.85;
+    liveIons.push({
+      slot, mz: s.mz, idx,
+      phase: "ionise",
+      timer: 0.10 + Math.random() * 0.28,
+      x: GEO.chamberX + (Math.random() - 0.5) * 1.6,
+      y: Math.cos(a) * rad, z: Math.sin(a) * rad,
+      v: 0, vFinal: driftSpeed(s.mz),
+      wob: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function stepIons(dt){
+  const accLen = GEO.accEnd - GEO.accStart;
+  for (let i = liveIons.length - 1; i >= 0; i--){
+    const ion = liveIons[i];
+    ion.wob += dt * 3;
+
+    if (ion.phase === "ionise"){
+      ion.timer -= dt * state.speed;
+      ion.x += Math.sin(ion.wob * 1.7) * dt * 0.6;
+      ion.y += Math.cos(ion.wob * 2.1) * dt * 0.5;
+      if (ion.timer <= 0){
+        ion.phase = "accelerate";
+        ion.x = GEO.accStart;
+        ion.v = ion.vFinal * 0.06;
+        ion.y *= 0.55; ion.z *= 0.55;
+      }
+    } else if (ion.phase === "accelerate"){
+      const a = (ion.vFinal * ion.vFinal) / (2 * accLen);
+      ion.v = Math.min(ion.vFinal, ion.v + a * dt);
+      ion.x += ion.v * dt;
+      if (ion.x >= GEO.accEnd){ ion.x = GEO.accEnd; ion.v = ion.vFinal; ion.phase = "drift"; }
+    } else if (ion.phase === "drift"){
+      ion.x += ion.v * dt;
+      if (ion.x >= GEO.detectX){
+        recordHit(ion.mz);
+        ion.slot.obj.visible = false;
+        ion.slot.busy = false;
+        liveIons.splice(i, 1);
+        continue;
+      }
+    }
+
+    const wobble = ion.phase === "ionise" ? 0.12 : 0.045;
+    ion.slot.obj.position.set(
+      ion.x,
+      ion.y + Math.sin(ion.wob) * wobble,
+      ion.z + Math.cos(ion.wob * 1.3) * wobble
+    );
+    const glow = ion.phase === "drift" ? 1.05 : 0.85;
+    ion.slot.halo.scale.setScalar(glow);
+  }
+}
+
+function recordHit(mz){
+  state.counts[mz] = (state.counts[mz] || 0) + 1;
+  state.detected++;
+  detectorGlow = 1;
+  drawSpectrum();
+  updateReadouts();
+}
+
+function clearIons(){
+  liveIons.forEach(ion => { ion.slot.obj.visible = false; ion.slot.busy = false; });
+  liveIons.length = 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5. MASS SPECTRUM (canvas)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+let specCanvas, specCtx;
+
+function resizeSpectrum(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = specCanvas.clientWidth, h = specCanvas.clientHeight;
+  if (!w || !h) return;
+  specCanvas.width = Math.round(w * dpr);
+  specCanvas.height = Math.round(h * dpr);
+  specCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawSpectrum();
+}
+
+function drawSpectrum(){
+  if (!specCtx) return;
+  const w = specCanvas.clientWidth, h = specCanvas.clientHeight;
+  const ctx = specCtx;
+  ctx.clearRect(0, 0, w, h);
+
+  const sp = sample().species;
+  const pad = { l: 44, r: 16, t: 24, b: 34 };
+  const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
+  if (plotW < 60 || plotH < 40) return;
+
+  const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), muted = cssVar("--muted");
+  const line = cssVar("--line"), lineSoft = cssVar("--line-soft");
+  const mono = '11px "JetBrains Mono", monospace';
+  const disp = '600 10px "Archivo Narrow", sans-serif';
+
+  /* domain padded so end sticks and their labels stay inside the plot */
+  const mzLo = run.mzMin - Math.max(1.5, (run.mzMax - run.mzMin) * 0.10 + 1.2);
+  const mzHi = run.mzMax + Math.max(1.5, (run.mzMax - run.mzMin) * 0.10 + 1.2);
+  const X = mz => pad.l + ((mz - mzLo) / (mzHi - mzLo)) * plotW;
+  const Y = pct => pad.t + plotH - (pct / 100) * plotH;
+
+  /* grid + y axis */
+  ctx.strokeStyle = lineSoft; ctx.lineWidth = 1;
+  ctx.fillStyle = muted; ctx.font = mono; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let p = 0; p <= 100; p += 25){
+    const y = Math.round(Y(p)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+    ctx.fillText(String(p), pad.l - 8, y);
+  }
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(pad.l + 0.5, pad.t); ctx.lineTo(pad.l + 0.5, pad.t + plotH + 0.5);
+  ctx.lineTo(w - pad.r, pad.t + plotH + 0.5); ctx.stroke();
+
+  /* axis titles */
+  ctx.save();
+  ctx.translate(13, pad.t + plotH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = muted; ctx.font = disp;
+  ctx.fillText("RELATIVE ABUNDANCE / %", 0, 0);
+  ctx.restore();
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = muted; ctx.font = disp;
+  ctx.fillText("m/z", pad.l + plotW / 2, h - 6);
+
+  /* Detector trace: one continuous line running along the baseline and rising
+     to a sharp peak at each m/z — the way a mass spectrum is printed on an
+     exam paper, rather than a bar chart. */
+  const maxAb = Math.max(...sp.map(s => s.ab));
+  const maxCount = Math.max(1, ...Object.values(state.counts));
+  const yBase = pad.t + plotH;
+  const sigma = clamp(plotW * 0.0055, 2.0, 5.0);
+
+  const peaks = sp.map((s, i) => ({
+    mz: s.mz,
+    x: X(s.mz),
+    h: ((state.counts[s.mz] || 0) / maxCount) * 100,
+    exp: (s.ab / maxAb) * 100,
+    colour: speciesColour(i, sp.length)
+  }));
+
+  /* true abundances, dashed, so the trace can be seen converging on them */
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = muted; ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+  peaks.forEach(p => {
+    ctx.beginPath(); ctx.moveTo(p.x - 11, Y(p.exp)); ctx.lineTo(p.x + 11, Y(p.exp)); ctx.stroke();
+  });
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+  /* hue still encodes mass — carried along the single trace as a gradient */
+  const grad = ctx.createLinearGradient(pad.l, 0, w - pad.r, 0);
+  if (peaks.length === 1){
+    grad.addColorStop(0, peaks[0].colour);
+    grad.addColorStop(1, peaks[0].colour);
+  } else {
+    peaks.forEach(p => grad.addColorStop(clamp((p.x - pad.l) / plotW, 0, 1), p.colour));
+  }
+
+  /* sample the peak envelope a pixel at a time; take the tallest contributing
+     peak rather than a sum, so neighbouring isotopes stay resolved */
+  const pts = [];
+  for (let px = pad.l; px <= w - pad.r; px += 1){
+    let v = 0;
+    for (const p of peaks){
+      if (p.h <= 0) continue;
+      const d = (px - p.x) / sigma;
+      if (Math.abs(d) > 4.5) continue;
+      const g = p.h * Math.exp(-0.5 * d * d);
+      if (g > v) v = g;
+    }
+    pts.push([px, Y(v)]);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], yBase);
+  pts.forEach(pt => ctx.lineTo(pt[0], pt[1]));
+  ctx.lineTo(pts[pts.length - 1][0], yBase);
+  ctx.closePath();
+  ctx.globalAlpha = 0.12; ctx.fillStyle = grad; ctx.fill(); ctx.globalAlpha = 1;
+
+  ctx.beginPath();
+  pts.forEach((pt, i) => i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]));
+  ctx.strokeStyle = grad; ctx.lineWidth = 1.8; ctx.lineJoin = "round"; ctx.stroke();
+
+  /* peak height and m/z, with a dotted guide down to the axis for reading off */
+  peaks.forEach(p => {
+    if (p.h > 0.5){
+      ctx.setLineDash([2, 3]); ctx.strokeStyle = p.colour; ctx.globalAlpha = 0.42; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x, Y(p.h) + 3); ctx.lineTo(p.x, yBase); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.fillStyle = ink; ctx.font = mono; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(p.h.toFixed(0), p.x, Y(p.h) - 7);
+    }
+    ctx.fillStyle = p.h > 0 ? ink2 : muted;
+    ctx.font = mono; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText(String(p.mz), p.x, yBase + 6);
+    ctx.textBaseline = "alphabetic";
+  });
+
+  /* legend for the ghost line */
+  ctx.font = disp; ctx.fillStyle = muted; ctx.textAlign = "right";
+  ctx.fillText("DASHED = TRUE ABUNDANCE", w - pad.r, pad.t - 4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   6. UI RENDERING
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function renderSteps(){
+  const host = document.getElementById("steps");
+  host.innerHTML = "";
+  STAGES.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "step";
+    b.setAttribute("aria-current", state.stage === i ? "true" : "false");
+    b.innerHTML = '<span class="num">' + (i + 1) + '</span>' +
+      '<span><span class="nm">' + s.name + '</span><br>' +
+      '<span class="ds">' + s.short + '</span></span>';
+    b.addEventListener("click", () => selectStage(i));
+    host.appendChild(b);
+  });
+}
+
+function renderPins(){
+  overlayEl.innerHTML = "";
+  const pins = [
+    { stage:0, pos:[GEO.chamberX, 4.30, 0],                      anchor:[GEO.chamberX, 1.80, 0] },
+    { stage:1, pos:[(GEO.accStart + GEO.accEnd)/2, 2.30, 0],     anchor:[(GEO.accStart + GEO.accEnd)/2, 1.60, 0] },
+    { stage:2, pos:[1.8, 4.10, 0],                               anchor:[1.8, 1.55, 0] },
+    { stage:3, pos:[GEO.detectX + 0.3, 2.30, 0],                 anchor:[GEO.detectX + 0.3, 1.72, 0] }
+  ];
+  overlayEl._pins = pins.map(p => {
+    const el = document.createElement("button");
+    el.className = "pin";
+    el.dataset.stage = p.stage;
+    el.innerHTML = '<span class="pin-n"></span><span class="pin-t"></span>';
+    el.addEventListener("click", () => {
+      if (state.mode === "quiz" && state.awaitingPick) answerPick(p.stage);
+      else selectStage(p.stage);
+    });
+    overlayEl.appendChild(el);
+    return {
+      el,
+      v: new THREE.Vector3(p.pos[0], p.pos[1], p.pos[2]),
+      anchor: new THREE.Vector3(p.anchor[0], p.anchor[1], p.anchor[2]),
+      stage: p.stage
+    };
+  });
+
+  const tags = [
+    { text:"+4000 V", pos:[GEO.accStart, -1.05, 0] },
+    { text:"+2000 V", pos:[(GEO.accStart + GEO.accEnd)/2, -1.05, 0] },
+    { text:"0 V",     pos:[GEO.accEnd, -1.05, 0] },
+    { text:"vacuum pump", pos:[2.2, -4.15, 0] },
+    { text:"d = 1.00 m",  pos:[1.8, -1.95, 0] }
+  ];
+  overlayEl._tags = tags.map(t => {
+    const el = document.createElement("span");
+    el.className = "tag";
+    el.textContent = t.text;
+    overlayEl.appendChild(el);
+    return { el, v: new THREE.Vector3(t.pos[0], t.pos[1], t.pos[2]) };
+  });
+  updatePinLabels();
+}
+
+function updatePinLabels(){
+  if (!overlayEl._pins) return;
+  const quiz = state.mode === "quiz";
+  overlayEl._pins.forEach(p => {
+    const s = STAGES[p.stage];
+    p.el.querySelector(".pin-n").textContent = quiz ? "" : String(p.stage + 1);
+    p.el.querySelector(".pin-t").textContent = quiz ? "ABCD"[p.stage] : s.name;
+    p.el.dataset.active = (state.stage === p.stage) ? "true" : "false";
+  });
+}
+
+const projected = new THREE.Vector3();
+function positionOverlay(){
+  if (!overlayEl._pins) return;
+  const w = overlayEl.clientWidth, h = overlayEl.clientHeight;
+  const place = item => {
+    projected.copy(item.v).project(camera);
+    const vis = projected.z < 1;
+    item.el.style.display = vis ? "" : "none";
+    if (!vis) return;
+    item.el.style.left = ((projected.x * 0.5 + 0.5) * w) + "px";
+    item.el.style.top  = ((-projected.y * 0.5 + 0.5) * h) + "px";
+  };
+  overlayEl._pins.forEach(p => {
+    place(p);
+    /* the leader line has to reach back down to the component it names */
+    projected.copy(p.anchor).project(camera);
+    const ay = (-projected.y * 0.5 + 0.5) * h;
+    const py = parseFloat(p.el.style.top) || 0;
+    p.el.style.setProperty("--leader", Math.max(6, Math.min(160, ay - py)) + "px");
+  });
+  overlayEl._tags.forEach(place);
+}
+
+function renderSampleControls(){
+  const sel = document.getElementById("sample");
+  sel.innerHTML = "";
+  SAMPLES.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.id; o.textContent = s.name;
+    sel.appendChild(o);
+  });
+  sel.value = state.sampleId;
+  document.getElementById("sample-note").textContent = sample().note;
+}
+
+function renderFlightTable(){
+  const sp = sample().species;
+  const rows = sp.map((s, i) => {
+    const v = ionSpeed(s.mz), t = flightTime(s.mz) * 1e6;
+    return '<tr>' +
+      '<td><span class="swatch" style="background:' + speciesColour(i, sp.length) + '"></span>' + s.mz + '</td>' +
+      '<td>' + (v / 1000).toFixed(1) + '</td>' +
+      '<td>' + t.toFixed(2) + '</td>' +
+      '<td>' + s.ab.toFixed(1) + '</td></tr>';
+  }).join("");
+  document.getElementById("flight-table").innerHTML =
+    '<thead><tr><th>m/z</th><th>v / km s⁻¹</th><th>t / µs</th><th>true %</th></tr></thead><tbody>' +
+    rows + '</tbody>';
+}
+
+function updateReadouts(){
+  const sp = sample().species;
+  const counts = state.counts;
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const maxCount = Math.max(1, ...Object.values(counts));
+  let base = "—";
+  for (const s of sp) if ((counts[s.mz] || 0) === maxCount && total > 0) { base = s.mz; break; }
+
+  let arTxt = "—";
+  if (total >= 12){
+    const s = sample();
+    /* For elements: weighted mean over all detected peaks (an A_r).
+       For molecules: quote the molecular ion peak instead. */
+    if (s.kind === "element"){
+      let num = 0, den = 0;
+      sp.forEach(x => { const n = counts[x.mz] || 0; num += x.mz * n; den += n; });
+      if (den > 0) arTxt = (num / den).toFixed(1);
+    } else {
+      const heaviest = sp[sp.length - 1];
+      if (counts[heaviest.mz]) {
+        arTxt = s.method === "es" || state.method === "es"
+          ? (heaviest.mz - 1).toFixed(1)
+          : heaviest.mz.toFixed(1);
+      }
+    }
+  }
+  const label = sample().kind === "element" ? "Aᵣ from spectrum" : "Mᵣ from spectrum";
+
+  document.getElementById("readouts").innerHTML =
+    '<span class="ro"><span class="k">Ions detected</span><span class="v">' + total + '</span></span>' +
+    '<span class="ro"><span class="k">Base peak</span><span class="v">m/z ' + base + '</span></span>' +
+    '<span class="ro"><span class="k">' + label + '</span><span class="v hi">' + arTxt + '</span></span>' +
+    '<span class="ro"><span class="k">Method</span><span class="v">' + (state.method === "ei" ? "EI" : "ESI") + '</span></span>';
+}
+
+function updateHud(){
+  const sp = sample().species;
+  const slow = sp.reduce((a, b) => a.mz > b.mz ? a : b);
+  const fast = sp.reduce((a, b) => a.mz < b.mz ? a : b);
+  const ratio = Math.sqrt(slow.mz / fast.mz);
+  document.getElementById("hud").innerHTML =
+    '<span class="chip">In flight <b>' + liveIons.length + '</b></span>' +
+    '<span class="chip">Fastest <b>m/z ' + fast.mz + '</b> · ' + (flightTime(fast.mz) * 1e6).toFixed(2) + ' µs</span>' +
+    '<span class="chip">Slowest <b>m/z ' + slow.mz + '</b> · ' + (flightTime(slow.mz) * 1e6).toFixed(2) + ' µs</span>' +
+    (sp.length > 1 ? '<span class="chip">t ratio <b>√(' + slow.mz + '/' + fast.mz + ') = ' + ratio.toFixed(2) + '</b></span>' : '');
+}
+
+/* ── Stage card ───────────────────────────────────────────────────────── */
+function renderCard(){
+  const card = document.getElementById("card");
+  const eyebrow = document.getElementById("card-eyebrow");
+
+  if (state.mode === "quiz"){ renderQuiz(); return; }
+  document.getElementById("quiz-dots").hidden = true;
+
+  if (state.stage < 0){
+    eyebrow.textContent = "The instrument";
+    card.innerHTML =
+      '<div class="card-body">' +
+        '<h2 class="card-title">Time of flight mass spectrometry</h2>' +
+        '<p class="card-lede">A ToF mass spectrometer measures how long each ion takes to fly a fixed distance. ' +
+        'Since every ion is given the same kinetic energy, that time depends only on mass — so the instrument separates a sample by <b>m/z</b>.</p>' +
+        '<div class="blk"><h4>How to use this</h4><ul class="facts">' +
+          '<li>Pick a stage on the left, or <b>click a part of the instrument</b>, to focus the camera and read the specification points.</li>' +
+          '<li>Press <b>Run spectrometer</b> to fire pulses of ions. Watch a packet leave the plates together and <b>fan out</b> along the flight tube.</li>' +
+          '<li>The spectrum builds up underneath as ions land. Dashed lines mark the true abundances the peaks should converge on.</li>' +
+          '<li>Switch to <b>Quiz &amp; annotation</b> to hide the labels and work through exam questions.</li>' +
+        '</ul></div>' +
+        '<div class="eq">t &prop; &radic;m<span class="why">The single relationship the whole technique rests on: constant kinetic energy over a fixed distance means flight time depends only on the square root of the mass.</span></div>' +
+        '<div class="tip"><b>Specification</b>AQA A-level Chemistry 3.1.1.2 — mass number and isotopes: the operation of a time of flight mass spectrometer, and its use in determining relative atomic masses and relative molecular masses.</div>' +
+      '</div>';
+    return;
+  }
+
+  const s = STAGES[state.stage];
+  eyebrow.textContent = "Stage " + (state.stage + 1) + " of 4";
+
+  let html = '<div class="card-body">';
+  html += '<h2 class="card-title">' + s.name + '</h2>';
+  html += '<p class="card-lede">' + s.lede + '</p>';
+
+  if (s.methods){
+    const m = s.methods[state.method];
+    html += '<div class="seg" role="group" aria-label="Ionisation method" style="width:100%">' +
+      '<button data-m="ei" aria-pressed="' + (state.method === "ei") + '" style="flex:1">Electron impact</button>' +
+      '<button data-m="es" aria-pressed="' + (state.method === "es") + '" style="flex:1">Electrospray</button></div>';
+    html += '<div class="blk"><h4>' + m.name + '</h4><ul class="facts">' +
+      m.facts.map(f => '<li>' + f + '</li>').join("") + '</ul></div>';
+    html += '<div class="eq">' + m.eq[0] + '<span class="why">' + m.eq[1] + '</span></div>';
+  } else {
+    html += '<div class="blk"><h4>Key points</h4><ul class="facts">' +
+      s.facts.map(f => '<li>' + f + '</li>').join("") + '</ul></div>';
+    html += s.eqs.map(e => '<div class="eq">' + e[0] + '<span class="why">' + e[1] + '</span></div>').join("");
+  }
+
+  /* live numbers from the sample currently loaded */
+  const sp = sample().species;
+  if (state.stage === 1 || state.stage === 2){
+    const fast = sp.reduce((a, b) => a.mz < b.mz ? a : b);
+    const slow = sp.reduce((a, b) => a.mz > b.mz ? a : b);
+    html += '<div class="blk"><h4>For the sample loaded now</h4><table class="data"><tbody>' +
+      '<tr><td>m/z ' + fast.mz + '</td><td>' + (ionSpeed(fast.mz) / 1000).toFixed(1) + ' km s⁻¹</td><td>' + (flightTime(fast.mz) * 1e6).toFixed(2) + ' µs</td></tr>' +
+      (slow.mz !== fast.mz
+        ? '<tr><td>m/z ' + slow.mz + '</td><td>' + (ionSpeed(slow.mz) / 1000).toFixed(1) + ' km s⁻¹</td><td>' + (flightTime(slow.mz) * 1e6).toFixed(2) + ' µs</td></tr>'
+        : '') +
+      '</tbody></table></div>';
+  }
+
+  html += '<div class="tip"><b>' + s.tip[0] + '</b>' + s.tip[1] + '</div>';
+  html += '</div>';
+  card.innerHTML = html;
+
+  card.querySelectorAll("[data-m]").forEach(b => {
+    b.addEventListener("click", () => setMethod(b.dataset.m));
+  });
+}
+
+/* ── Quiz ─────────────────────────────────────────────────────────────── */
+function renderQuiz(){
+  const card = document.getElementById("card");
+  const eyebrow = document.getElementById("card-eyebrow");
+  const dots = document.getElementById("quiz-dots");
+  eyebrow.textContent = "Question " + (state.quizIndex + 1) + " of " + QUESTIONS.length;
+  dots.hidden = false;
+  dots.innerHTML = QUESTIONS.map((q, i) =>
+    '<i data-s="' + (i === state.quizIndex && !state.quizAnswered ? "now" : (state.quizResults[i] || "")) + '"></i>'
+  ).join("");
+
+  const q = QUESTIONS[state.quizIndex];
+  state.awaitingPick = (q.type === "pick" && !state.quizAnswered);
+
+  let html = '<div class="card-body">';
+  html += '<span class="eyebrow">Stage ' + (q.stage + 1) + ' &middot; ' + STAGES[q.stage].name + '</span>';
+  html += '<h2 class="card-title" style="font-size:1.06rem; line-height:1.28;">' + q.prompt + '</h2>';
+
+  if (q.type === "mcq"){
+    html += '<div style="display:flex; flex-direction:column; gap:7px;" id="q-opts">' +
+      q.options.map((o, i) => '<button class="q-opt" data-i="' + i + '">' + o + '</button>').join("") +
+      '</div>';
+  } else if (q.type === "num"){
+    html += '<div class="eq" style="border-left-color:var(--muted)">' + q.hint + '</div>';
+    html += '<div style="display:flex; gap:7px; align-items:center;">' +
+      '<input class="field" id="q-num" inputmode="decimal" placeholder="your answer" style="flex:1" ' +
+      (state.quizAnswered ? "disabled" : "") + '>' +
+      (q.unit ? '<span class="subtle" style="font-family:var(--f-mono)">' + q.unit + '</span>' : '') +
+      '</div>' +
+      '<button class="btn btn-accent" id="q-check" style="justify-content:center" ' +
+      (state.quizAnswered ? "disabled" : "") + '>Check answer</button>';
+  } else {
+    html += '<div class="tip"><b>Annotate the model</b>The labels are hidden. Click the lettered marker on the instrument that answers the question.</div>';
+  }
+
+  if (state.quizAnswered){
+    const ok = state.quizResults[state.quizIndex] === "right";
+    html += '<div class="verdict" data-ok="' + (ok ? 1 : 0) + '"><b>' + (ok ? "Correct" : "Not quite") + '</b>' + q.explain + '</div>';
+    html += '<div style="display:flex; gap:7px;">' +
+      (state.quizIndex < QUESTIONS.length - 1
+        ? '<button class="btn btn-accent" id="q-next" style="flex:1; justify-content:center;">Next question</button>'
+        : '<button class="btn btn-accent" id="q-restart" style="flex:1; justify-content:center;">Start again</button>') +
+      '</div>';
+  }
+
+  const done = state.quizResults.filter(Boolean).length;
+  const right = state.quizResults.filter(r => r === "right").length;
+  html += '<div class="readouts" style="border-top:1px solid var(--line-soft); border-bottom:0; padding:8px 0 0; margin-top:2px;">' +
+    '<span class="ro"><span class="k">Score</span><span class="v hi">' + right + ' / ' + done + '</span></span>' +
+    '<span class="ro"><span class="k">Answered</span><span class="v">' + done + ' of ' + QUESTIONS.length + '</span></span>' +
+    '</div>';
+  html += '</div>';
+  card.innerHTML = html;
+
+  card.querySelectorAll(".q-opt").forEach(b => {
+    if (state.quizAnswered) b.disabled = true;
+    b.addEventListener("click", () => answerMcq(parseInt(b.dataset.i, 10)));
+  });
+  const chk = card.querySelector("#q-check");
+  if (chk) chk.addEventListener("click", answerNum);
+  const numIn = card.querySelector("#q-num");
+  if (numIn) numIn.addEventListener("keydown", e => { if (e.key === "Enter") answerNum(); });
+  const nxt = card.querySelector("#q-next");
+  if (nxt) nxt.addEventListener("click", () => {
+    state.quizIndex++; state.quizAnswered = false; renderQuiz(); focusQuizStage();
+  });
+  const rst = card.querySelector("#q-restart");
+  if (rst) rst.addEventListener("click", () => {
+    state.quizIndex = 0; state.quizAnswered = false; state.quizResults = []; renderQuiz(); focusQuizStage();
+  });
+}
+
+function focusQuizStage(){
+  const q = QUESTIONS[state.quizIndex];
+  if (q.type === "pick"){ selectStage(-1, true); }
+  else { selectStage(q.stage, true); }
+}
+
+function settleQuiz(correct){
+  state.quizResults[state.quizIndex] = correct ? "right" : "wrong";
+  state.quizAnswered = true;
+  state.awaitingPick = false;
+  renderQuiz();
+  document.getElementById("card-panel").classList.add("flash");
+  setTimeout(() => document.getElementById("card-panel").classList.remove("flash"), 500);
+}
+function answerMcq(i){
+  if (state.quizAnswered) return;
+  const q = QUESTIONS[state.quizIndex];
+  const correct = i === q.answer;
+  settleQuiz(correct);
+  const opts = document.querySelectorAll(".q-opt");
+  if (opts[q.answer]) opts[q.answer].dataset.state = "right";
+  if (!correct && opts[i]) opts[i].dataset.state = "wrong";
+}
+function answerNum(){
+  if (state.quizAnswered) return;
+  const q = QUESTIONS[state.quizIndex];
+  const raw = (document.getElementById("q-num").value || "").trim().replace(/\s/g, "").replace(/[×x]10\^?/i, "e").replace(/×/g, "e");
+  const val = parseFloat(raw);
+  if (!isFinite(val)) return;
+  settleQuiz(Math.abs(val - q.answer) <= Math.abs(q.answer) * q.tol);
+}
+function answerPick(stage){
+  if (state.quizAnswered) return;
+  const q = QUESTIONS[state.quizIndex];
+  if (q.type !== "pick") return;
+  selectStage(stage, true);
+  settleQuiz(stage === q.answer);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   7. ACTIONS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function selectStage(i, quiet){
+  state.stage = i;
+  flyTo(i < 0 ? OVERVIEW : STAGES[i].cam);
+  renderSteps();
+  updatePinLabels();
+  if (!quiet) renderCard();
+}
+
+function setMethod(m){
+  state.method = m;
+  document.getElementById("ion-ei").setAttribute("aria-pressed", String(m === "ei"));
+  document.getElementById("ion-es").setAttribute("aria-pressed", String(m === "es"));
+  groups.ei.visible = (m === "ei");
+  groups.es.visible = (m === "es");
+  const s = sample();
+  const note = document.getElementById("sample-note");
+  if (m === "es" && s.kind !== "large"){
+    note.innerHTML = s.note + ' <b style="color:var(--warn)">Electrospray is used for larger molecules — electron impact is the appropriate method for this sample.</b>';
+  } else if (m === "ei" && s.kind === "large"){
+    note.innerHTML = s.note + ' <b style="color:var(--warn)">Electron impact would fragment a molecule this size — electrospray is the appropriate method here.</b>';
+  } else {
+    note.textContent = s.note;
+  }
+  updateReadouts();
+  renderCard();
+}
+
+function setSample(id){
+  state.sampleId = id;
+  resetRun();
+  recomputeRun();
+  document.getElementById("sample-note").textContent = sample().note;
+  setMethod(sample().method);
+  renderFlightTable();
+  updateHud();
+  drawSpectrum();
+  updateReadouts();
+}
+
+function resetRun(){
+  state.counts = {}; state.detected = 0;
+  clearIons();
+  drawSpectrum();
+  updateReadouts();
+  document.getElementById("spectrum-state").textContent = state.running ? "acquiring" : "idle";
+}
+
+function setRunning(on){
+  state.running = on;
+  const b = document.getElementById("run");
+  b.textContent = on ? "Pause" : "Run spectrometer";
+  b.classList.toggle("btn-accent", !on);
+  document.getElementById("spectrum-state").textContent = on ? "acquiring" : (state.detected ? "paused" : "idle");
+  if (on) run.pulseTimer = 0;
+}
+
+function setMode(m){
+  state.mode = m;
+  document.getElementById("mode-demo").setAttribute("aria-pressed", String(m === "demo"));
+  document.getElementById("mode-quiz").setAttribute("aria-pressed", String(m === "quiz"));
+  updatePinLabels();
+  if (m === "quiz"){ state.quizAnswered = false; renderQuiz(); focusQuizStage(); }
+  else { state.awaitingPick = false; renderCard(); }
+}
+
+function setTheme(t){
+  document.body.classList.toggle("theme-dark", t === "dark");
+  document.body.classList.toggle("theme-light", t === "light");
+  document.getElementById("theme-btn").textContent = t === "dark" ? "Light" : "Dark";
+  applySceneTheme();
+  renderFlightTable();
+  drawSpectrum();
+  try { localStorage.setItem("tof-theme", t); } catch (err) { /* sandboxed storage */ }
+}
+function currentTheme(){
+  if (document.body.classList.contains("theme-dark")) return "dark";
+  if (document.body.classList.contains("theme-light")) return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   8. LOOP + BOOT
+   ═══════════════════════════════════════════════════════════════════════ */
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+
+  stepCameraTween(dt);
+  updateCamera();
+
+  if (state.running){
+    run.pulseTimer -= dt;
+    if (run.pulseTimer <= 0){
+      emitPulse();
+      const slowest = driftSpeed(run.mzMax);
+      const flight = (GEO.detectX - GEO.accStart) / slowest;
+      run.pulseTimer = Math.max(0.8, flight * 0.85);
+    }
+  }
+  stepIons(dt);
+
+  if (detectorGlow > 0){
+    detectorGlow = Math.max(0, detectorGlow - dt * 2.6);
+    groups.detectorFlare.material.opacity = detectorGlow * 0.55;
+  }
+  if (groups.ei.visible && matRefs.beam){
+    matRefs.beam[0].opacity = 0.42 + Math.abs(Math.sin(now / 260)) * 0.3;
+  }
+
+  positionOverlay();
+  updateHud();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+function boot(){
+  specCanvas = document.getElementById("spectrum");
+  specCtx = specCanvas.getContext("2d");
+
+  let saved = null;
+  try { saved = localStorage.getItem("tof-theme"); } catch (err) { /* sandboxed storage */ }
+  if (saved) setTheme(saved); else document.getElementById("theme-btn").textContent = currentTheme() === "dark" ? "Light" : "Dark";
+
+  initScene();
+  initControls();
+  renderSteps();
+  renderPins();
+  renderSampleControls();
+  recomputeRun();
+  setMethod(sample().method);
+  renderFlightTable();
+  updateReadouts();
+  renderCard();
+  resizeSpectrum();
+  updateCamera();
+
+  /* wiring */
+  document.getElementById("sample").addEventListener("change", e => setSample(e.target.value));
+  document.getElementById("ion-ei").addEventListener("click", () => setMethod("ei"));
+  document.getElementById("ion-es").addEventListener("click", () => setMethod("es"));
+  document.getElementById("speed").addEventListener("input", e => {
+    state.speed = parseFloat(e.target.value);
+    document.getElementById("speed-v").textContent = state.speed.toFixed(2).replace(/0$/, "") + "×";
+    liveIons.forEach(ion => {
+      const nv = driftSpeed(ion.mz);
+      if (ion.phase === "drift") ion.v = nv;
+      ion.vFinal = nv;
+    });
+  });
+  document.getElementById("run").addEventListener("click", () => setRunning(!state.running));
+  document.getElementById("reset").addEventListener("click", () => { resetRun(); });
+  document.getElementById("view-reset").addEventListener("click", () => selectStage(-1));
+  document.getElementById("mode-demo").addEventListener("click", () => setMode("demo"));
+  document.getElementById("mode-quiz").addEventListener("click", () => setMode("quiz"));
+  document.getElementById("theme-btn").addEventListener("click", () => setTheme(currentTheme() === "dark" ? "light" : "dark"));
+
+  new ResizeObserver(() => { resize3D(); resizeSpectrum(); }).observe(document.querySelector(".console"));
+
+  /* open with ions already flying, so the first frame shows what this does */
+  setRunning(true);
+  requestAnimationFrame(loop);
+}
+
+if (window.THREE) boot();
+else window.addEventListener("load", () => {
+  if (window.THREE) boot();
+  else document.getElementById("viewport").insertAdjacentHTML("beforeend",
+    '<div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted);font-family:var(--f-body)">' +
+    'The 3D library could not be loaded. The spectrum, stage notes and quiz still work.</div>');
+});
+</script>
+</body>
+</html>

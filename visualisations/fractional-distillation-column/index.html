@@ -1,0 +1,2385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Fractionating Column</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* ── Tokens ────────────────────────────────────────────────────────────── */
+:root{
+  --ui: 1;
+
+  --ground:      #E4E9ED;
+  --ground-2:    #D3DBE2;
+  --surface:     #FBFCFD;
+  --surface-2:   #EEF2F5;
+  --line:        #C0CAD3;
+  --line-soft:   #DBE2E8;
+  --ink:         #0F1A21;
+  --ink-2:       #34434E;
+  --muted:       #62727D;
+
+  --accent:      #F2C200;
+  --accent-ink:  #17222A;
+  --accent-text: #7E6300;
+  --accent-soft: rgba(242,194,0,.16);
+
+  --scene-a:     #DDE5EB;
+  --scene-b:     #AFBFCB;
+
+  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
+  --stroke-shift: -0.22;   /* darken fraction hues for strokes on light ground */
+
+  --f-display: "Saira Condensed", "Arial Narrow", Helvetica, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  font-size: calc(17px * var(--ui));
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
+    --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
+    --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
+    --scene-a:#0E1A24; --scene-b:#04080C;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+    --stroke-shift: 0.10;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
+  --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
+  --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
+  --scene-a:#0E1A24; --scene-b:#04080C;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+  --stroke-shift: 0.10;
+}
+
+/* The page's own theme choice. It lives on <body> rather than :root so that a
+   host restamping data-theme on the root element cannot undo the viewer's
+   pick here; with no class set, the :root rules above still decide.        */
+body.theme-dark{
+  --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
+  --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
+  --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
+  --scene-a:#0E1A24; --scene-b:#04080C;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+}
+body.theme-light{
+  --ground:#E4E9ED; --ground-2:#D3DBE2; --surface:#FBFCFD; --surface-2:#EEF2F5;
+  --line:#C0CAD3; --line-soft:#DBE2E8; --ink:#0F1A21; --ink-2:#34434E; --muted:#62727D;
+  --accent:#F2C200; --accent-ink:#17222A; --accent-text:#7E6300; --accent-soft:rgba(242,194,0,.16);
+  --scene-a:#DDE5EB; --scene-b:#AFBFCB;
+  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-body); line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font:inherit; color:inherit; }
+:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; border-radius:2px; }
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+.app{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) var(--panel, min(40vw, 21rem));
+  grid-template-rows: auto minmax(0,1fr) auto;
+  grid-template-areas: "top top" "main aside" "trans aside";
+  height:100dvh; min-height:34rem;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────── */
+.topbar{
+  grid-area:top; display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap;
+  padding:.62rem 1rem; background:var(--surface);
+  border-bottom:1px solid var(--line);
+}
+.lockup{ display:flex; align-items:center; gap:.7rem; margin-right:auto; min-width:0; }
+.mark{
+  width:2.35rem; height:2.35rem; flex:none; border-radius:3px;
+  background:
+    linear-gradient(180deg,#EDF4F8 0 16%, #F2E6A8 16% 32%, #E4D384 32% 48%,
+                    #D9A94A 48% 64%, #B0702A 64% 78%, #5A3A20 78% 91%, #14100D 91% 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.28);
+}
+.lockup h1{
+  margin:0; font-family:var(--f-display); font-weight:700; font-size:1.32rem;
+  letter-spacing:.012em; line-height:1.05; text-wrap:balance;
+}
+.eyebrow{
+  margin:.12rem 0 0; font-family:var(--f-mono); font-size:.66rem;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+}
+.topbar-actions{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; gap:.42rem;
+  padding:.42rem .78rem; background:var(--surface-2); border:1px solid var(--line);
+  border-radius:3px; cursor:pointer; font-size:.85rem; font-weight:500;
+  white-space:nowrap; transition:background .13s, border-color .13s, color .13s;
+}
+.btn:hover{ background:var(--ground-2); border-color:var(--muted); }
+.btn[aria-pressed="true"]{
+  background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;
+}
+.btn .ico{ width:1.05em; height:1.05em; flex:none; display:block; }
+
+.segmented{ display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:var(--surface-2); }
+.segmented button{
+  border:0; background:transparent; padding:.42rem .8rem; cursor:pointer;
+  font-family:var(--f-display); font-size:.92rem; font-weight:600; letter-spacing:.05em;
+  transition:background .13s, color .13s;
+}
+.segmented button + button{ border-left:1px solid var(--line); }
+.segmented button:hover{ background:var(--ground-2); }
+.segmented button[aria-pressed="true"]{ background:var(--accent); color:var(--accent-ink); }
+.segmented button:disabled{ opacity:.4; cursor:not-allowed; }
+
+/* ── Main stage ────────────────────────────────────────────────────────── */
+.main{
+  grid-area:main; display:grid; grid-template-columns:auto minmax(0,1fr);
+  min-height:0; background:var(--ground);
+}
+
+/* Thermal gutter — the temperature gradient, and the height scrubber */
+.thermo{
+  width:calc(5.6rem + .4vw); flex:none; padding:.85rem .55rem .85rem .8rem;
+  display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:.4rem;
+  border-right:1px solid var(--line); background:var(--surface);
+  touch-action:none; cursor:ns-resize; user-select:none;
+}
+.thermo-cap{
+  font-family:var(--f-mono); font-size:.6rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); text-align:center; line-height:1.3;
+}
+.thermo-cap b{ display:block; font-family:var(--f-display); font-size:.98rem; letter-spacing:.03em; color:var(--ink); }
+.thermo-track{ position:relative; min-height:0; }
+.thermo-bar{
+  position:absolute; left:0; top:0; bottom:0; width:.85rem; border-radius:2px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,#7FD8F5 0%, #58D2A4 18%, #A8CF4A 32%, #F59F2B 52%, #E2683A 68%, #C43D3D 84%, #8E4E3C 100%);
+}
+.tick{ position:absolute; left:1.05rem; right:0; transform:translateY(-50%); pointer-events:none; }
+.tick i{ position:absolute; left:-.75rem; top:50%; width:.6rem; height:1px; background:var(--line); }
+.tick span{ font-family:var(--f-mono); font-size:.62rem; color:var(--muted); white-space:nowrap; }
+.thermo-marker{
+  position:absolute; left:-.18rem; right:0; height:0; transform:translateY(-50%);
+  pointer-events:none; z-index:2;
+}
+.thermo-marker::before{
+  content:""; position:absolute; left:0; top:-.28rem; width:1.2rem; height:.56rem;
+  background:var(--accent); border:1px solid var(--accent-ink); border-radius:1px;
+}
+.thermo-marker::after{
+  content:""; position:absolute; left:1.2rem; right:0; top:0; height:2px; background:var(--accent);
+}
+
+/* Viewport */
+.stage{ position:relative; min-width:0; min-height:0; overflow:hidden; }
+.stage canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.stage canvas[hidden]{ display:none; }
+.stage-fail{
+  position:absolute; inset:auto 1rem 1rem 1rem; padding:.6rem .8rem; z-index:4;
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid #C43D3D;
+  border-radius:3px; font-size:.8rem; color:var(--ink-2);
+}
+
+.readout{
+  position:absolute; top:.8rem; left:.8rem; z-index:3; display:flex; align-items:stretch;
+  background:var(--surface); border:1px solid var(--line); border-radius:3px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.readout .cell{ padding:.4rem .72rem; display:grid; align-content:center; gap:.05rem; }
+.readout .cell + .cell{ border-left:1px solid var(--line-soft); }
+.readout .k{
+  font-family:var(--f-mono); font-size:.58rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted);
+}
+.readout .v{ font-family:var(--f-display); font-size:1.12rem; font-weight:600; line-height:1.1; letter-spacing:.02em; }
+.readout .v small{ font-size:.62em; font-weight:500; color:var(--muted); }
+
+.follow-bar{
+  position:absolute; top:.8rem; left:50%; transform:translateX(-50%); z-index:3;
+  display:flex; align-items:center; gap:.6rem; padding:.36rem .42rem .36rem .7rem;
+  background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow);
+  font-size:.82rem; max-width:calc(100% - 1.6rem);
+}
+.follow-bar .dot{ width:.62rem; height:.62rem; border-radius:50%; flex:none; box-shadow:0 0 0 1px var(--line); }
+.follow-bar b{ font-weight:600; }
+.follow-bar[hidden]{ display:none; }
+
+.hint{
+  position:absolute; top:4.05rem; left:.8rem; z-index:3;
+  font-family:var(--f-mono); font-size:.62rem; letter-spacing:.05em; color:var(--muted);
+  background:color-mix(in srgb, var(--ground) 78%, transparent); padding:.2rem .4rem; border-radius:2px;
+}
+
+/* ── Transport ─────────────────────────────────────────────────────────── */
+.transport{
+  grid-area:trans; display:flex; align-items:center; gap:.55rem; flex-wrap:wrap;
+  padding:.55rem 1rem; background:var(--surface); border-top:1px solid var(--line);
+}
+.transport .label{
+  font-family:var(--f-mono); font-size:.6rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); margin-left:.35rem;
+}
+.transport .spacer{ flex:1 1 1rem; }
+.btn-play{ min-width:6.6rem; justify-content:center; }
+
+/* ── Inspector ─────────────────────────────────────────────────────────── */
+.inspector{
+  grid-area:aside; display:grid; grid-template-rows:auto minmax(0,1fr); min-height:0;
+  background:var(--surface); border-left:1px solid var(--line);
+}
+.tabs{ display:flex; border-bottom:1px solid var(--line); }
+.tabs button{
+  flex:1; border:0; background:transparent; cursor:pointer; padding:.62rem .5rem;
+  font-family:var(--f-display); font-weight:600; font-size:.98rem; letter-spacing:.04em;
+  border-bottom:3px solid transparent; margin-bottom:-1px; color:var(--muted);
+  transition:color .13s, border-color .13s, background .13s;
+}
+.tabs button:hover{ background:var(--surface-2); color:var(--ink); }
+.tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+.panel{ overflow-y:auto; padding:.9rem; display:grid; gap:.9rem; align-content:start; }
+.panel[hidden]{ display:none; }
+
+.sec-title{
+  margin:0; font-family:var(--f-mono); font-size:.6rem; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+/* Fraction list — one object, repeated */
+.flist{ display:grid; gap:2px; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:var(--line-soft); }
+.frow{
+  display:grid; grid-template-columns:.42rem auto auto minmax(0,1fr) auto; align-items:center;
+  gap:0 .6rem; border:0; background:var(--surface); padding:.5rem .6rem .5rem 0;
+  text-align:left; cursor:pointer; transition:background .13s;
+}
+.frow:hover{ background:var(--surface-2); }
+.frow .swatch{
+  grid-column:1; grid-row:1/3; width:.42rem; align-self:stretch;
+  outline:1px solid var(--line); outline-offset:-1px;
+}
+.frow .idx{
+  grid-column:2; grid-row:1/3; font-family:var(--f-mono); font-size:.66rem; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.frow .uicon{ grid-column:3; grid-row:1/3; display:block; color:var(--ink-2); }
+.frow[aria-current="true"] .uicon{ color:var(--ink); }
+.frow .nm{
+  grid-column:4; grid-row:1;
+  font-family:var(--f-display); font-size:1.02rem; font-weight:600; letter-spacing:.02em; line-height:1.15;
+}
+.frow .nm em{ font-style:normal; color:var(--muted); font-weight:500; font-size:.82em; }
+.frow .sub{
+  grid-column:4; grid-row:2; font-family:var(--f-mono); font-size:.66rem; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.frow .cbn{
+  grid-column:5; grid-row:1/3; font-family:var(--f-mono); font-size:.72rem; color:var(--ink-2);
+  font-variant-numeric:tabular-nums; text-align:right;
+}
+.frow[aria-current="true"]{ background:var(--accent-soft); }
+.frow[aria-current="true"] .nm{ text-decoration:underline; text-decoration-color:var(--accent); text-underline-offset:3px; text-decoration-thickness:2px; }
+
+/* Detail */
+.detail{ display:grid; gap:.75rem; }
+.detail-head{ display:flex; align-items:flex-start; gap:.6rem; }
+.detail-head .bigswatch{
+  width:.55rem; align-self:stretch; border-radius:1px; flex:none;
+  outline:1px solid var(--line); outline-offset:-1px;
+}
+.detail-head h2{
+  margin:0; font-family:var(--f-display); font-weight:700; font-size:1.5rem;
+  letter-spacing:.015em; line-height:1.05; text-wrap:balance;
+}
+.detail-head p{ margin:.1rem 0 0; font-size:.82rem; color:var(--muted); }
+.chips{ display:flex; flex-wrap:wrap; gap:.3rem; }
+.chip{
+  font-family:var(--f-mono); font-size:.7rem; padding:.22rem .46rem;
+  border:1px solid var(--line); border-radius:2px; background:var(--surface-2);
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.chip b{ color:var(--muted); font-weight:500; }
+
+.bars{ display:grid; gap:.5rem; }
+.bar-row{ display:grid; grid-template-columns:1fr auto; gap:.15rem .5rem; }
+.bar-row .bl{ font-size:.78rem; font-weight:500; }
+.bar-row .bv{ font-family:var(--f-mono); font-size:.7rem; color:var(--muted); align-self:center; }
+.bar{ grid-column:1/3; height:.52rem; background:var(--surface-2); border:1px solid var(--line-soft); border-radius:1px; overflow:hidden; }
+.bar > i{ display:block; height:100%; transition:width .35s cubic-bezier(.22,.61,.36,1); }
+
+.usebox{
+  border-left:3px solid var(--accent); background:var(--surface-2);
+  padding:.55rem .7rem; border-radius:0 3px 3px 0;
+}
+.usebox .sec-title{ margin-bottom:.15rem; }
+.usebox p{ margin:0; font-size:.86rem; }
+.usebox .use-row{ display:flex; gap:.6rem; align-items:flex-start; }
+.usebox .uicon-lg{ flex:none; color:var(--ink-2); margin-top:.1rem; }
+.narr{ font-size:.86rem; color:var(--ink-2); margin:0; }
+.narr b{ font-family:var(--f-mono); font-weight:500; font-size:.94em; color:var(--ink); }
+
+/* Trend strip */
+.trend{ border:1px solid var(--line); border-radius:3px; overflow:hidden; }
+.trend-head{
+  display:flex; align-items:center; gap:.4rem; padding:.4rem .6rem;
+  background:var(--surface-2); border-bottom:1px solid var(--line);
+  font-family:var(--f-display); font-size:.95rem; font-weight:600; letter-spacing:.03em;
+}
+.trend ul{ margin:0; padding:0; list-style:none; }
+.trend li{
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:.5rem;
+  padding:.34rem .6rem; font-size:.82rem;
+}
+.trend li + li{ border-top:1px solid var(--line-soft); }
+.arrow{ font-family:var(--f-mono); font-size:.76rem; font-weight:600; letter-spacing:.02em; }
+.arrow.up{ color:#C43D3D; }
+.arrow.dn{ color:#2E8C6A; }
+.arrow.neutral{ color:var(--ink-2); }
+:root[data-theme="dark"] .arrow.dn{ color:#58D2A4; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .arrow.dn{ color:#58D2A4; } }
+body.theme-dark .arrow.dn{ color:#58D2A4; }
+body.theme-light .arrow.dn{ color:#2E8C6A; }
+
+/* Exam cards */
+.markcard{
+  border:1px solid var(--line); border-radius:3px; background:var(--surface); overflow:hidden;
+}
+.markcard > button{
+  width:100%; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.55rem;
+  align-items:start; text-align:left; border:0; background:transparent; cursor:pointer;
+  padding:.6rem .65rem;
+}
+.markcard > button:hover{ background:var(--surface-2); }
+.markcard .mk-n{
+  font-family:var(--f-mono); font-size:.66rem; color:var(--accent-text);
+  border:1px solid var(--line); border-radius:2px; padding:.05rem .3rem; margin-top:.12rem;
+  font-variant-numeric:tabular-nums;
+}
+.markcard .mk-q{ font-family:var(--f-display); font-size:1.05rem; font-weight:600; letter-spacing:.015em; line-height:1.2; }
+.markcard .mk-tag{
+  display:block; margin-top:.15rem; font-family:var(--f-mono); font-size:.6rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+}
+.markcard .mk-caret{ font-family:var(--f-mono); font-size:.8rem; color:var(--muted); margin-top:.15rem; }
+.markcard .mk-a{
+  padding:0 .65rem .6rem calc(.65rem + 1.6rem); font-size:.88rem; color:var(--ink-2);
+  border-top:1px solid var(--line-soft); margin-top:0; padding-top:.55rem;
+}
+.markcard .mk-a[hidden]{ display:none; }
+.markcard .mk-a b{ color:var(--ink); font-weight:600; }
+.markcard[data-open="true"]{ border-color:var(--accent); }
+
+.note{
+  font-size:.72rem; color:var(--muted); border-top:1px solid var(--line-soft);
+  padding-top:.6rem; margin:0;
+}
+.note b{ color:var(--ink-2); font-weight:600; }
+.note em{ font-style:normal; color:var(--ink-2); font-weight:600; }
+.note code{ font-family:var(--f-mono); font-size:.95em; }
+
+/* ── Presentation mode ─────────────────────────────────────────────────── */
+body.present{ --ui:1.9; --panel: min(42vw, 27rem); }
+body.present .hint,
+body.present .note,
+body.present .eyebrow{ display:none; }
+body.present .topbar{ padding:.4rem .8rem; }
+body.present .lockup h1{ font-size:1.12rem; }
+body.present .mark{ width:1.7rem; height:1.7rem; }
+body.present .markcard .mk-q{ font-size:1.12rem; }
+body.present .readout .v{ font-size:1.3rem; }
+body.present .flist .sub{ display:none; }
+body.present #theme-txt{ display:none; }
+
+@media (max-width:900px){
+  .app{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(16rem,1fr) auto auto;
+    grid-template-areas:"top" "main" "trans" "aside";
+    height:auto; min-height:100dvh;
+  }
+  .inspector{ border-left:0; border-top:1px solid var(--line); }
+  .panel{ max-height:none; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="lockup">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>The Fractionating Column</h1>
+        <p class="eyebrow">AQA GCSE Chemistry 8462 &middot; 4.7.1.2</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="segmented" role="group" aria-label="Rendering mode">
+        <button id="mode-3d" aria-pressed="true">3D</button>
+        <button id="mode-2d" aria-pressed="false">2D</button>
+      </div>
+      <button class="btn" id="btn-theme" title="Colour theme">
+        <svg class="ico" id="theme-ico" viewBox="0 0 16 16" aria-hidden="true"></svg>
+        <span id="theme-txt">Auto</span>
+      </button>
+      <button class="btn" id="btn-marks" aria-pressed="false">Exam points</button>
+      <button class="btn" id="btn-present" aria-pressed="false">Presentation</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <div class="thermo" id="thermo" role="slider" tabindex="0"
+         aria-label="Inspect column height" aria-valuemin="0" aria-valuemax="100" aria-valuenow="52"
+         aria-valuetext="52 percent up the column, 250 degrees Celsius">
+      <div class="thermo-cap">Cooler<b>20&nbsp;&deg;C</b></div>
+      <div class="thermo-track" id="thermo-track">
+        <div class="thermo-bar" aria-hidden="true"></div>
+        <div class="thermo-marker" id="thermo-marker" style="top:48%"></div>
+      </div>
+      <div class="thermo-cap"><b>350&nbsp;&deg;C</b>Hotter</div>
+    </div>
+
+    <div class="stage" id="stage">
+      <canvas id="c3d"></canvas>
+      <canvas id="c2d" hidden></canvas>
+
+      <div class="readout" aria-live="polite">
+        <div class="cell"><span class="k">Height</span><span class="v" id="ro-h">52<small>%</small></span></div>
+        <div class="cell"><span class="k">Temperature</span><span class="v" id="ro-t">250<small>&nbsp;&deg;C</small></span></div>
+        <div class="cell"><span class="k">Condenses here</span><span class="v" id="ro-f">Kerosene</span></div>
+      </div>
+
+      <div class="follow-bar" id="follow-bar" hidden>
+        <span class="dot" id="follow-dot"></span>
+        <span>Following <b id="follow-name">Kerosene</b> vapour</span>
+        <button class="btn" id="btn-unfollow">Show whole column</button>
+      </div>
+
+      <p class="hint" id="hint">Drag to orbit &middot; scroll to zoom &middot; click a tray to follow it</p>
+    </div>
+  </div>
+
+  <footer class="transport">
+    <button class="btn btn-play" id="btn-play" aria-pressed="true">
+      <svg class="ico" viewBox="0 0 16 16" aria-hidden="true" id="play-ico"><rect x="3" y="2.5" width="3.4" height="11" fill="currentColor"/><rect x="9.6" y="2.5" width="3.4" height="11" fill="currentColor"/></svg>
+      <span id="play-txt">Pause</span>
+    </button>
+    <span class="label">Flow speed</span>
+    <div class="segmented" role="group" aria-label="Flow speed">
+      <button data-speed="0.25" aria-pressed="false">0.25&times;</button>
+      <button data-speed="0.5" aria-pressed="false">0.5&times;</button>
+      <button data-speed="1" aria-pressed="true">1&times;</button>
+    </div>
+    <button class="btn" id="btn-reset">Restart flow</button>
+    <button class="btn" id="btn-view">Reset view</button>
+    <span class="spacer"></span>
+    <button class="btn" id="btn-labels" aria-pressed="true">Labels</button>
+    <button class="btn" id="btn-reveal" aria-pressed="false">Reveal all answers</button>
+  </footer>
+
+  <aside class="inspector">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-frac" aria-selected="true" aria-controls="panel-frac">Fractions</button>
+      <button role="tab" id="tab-exam" aria-selected="false" aria-controls="panel-exam">Exam points</button>
+    </div>
+
+    <div class="panel" id="panel-frac" role="tabpanel" aria-labelledby="tab-frac">
+      <div>
+        <p class="sec-title" style="margin-bottom:.4rem">Fractions, top of column first</p>
+        <div class="flist" id="flist"></div>
+      </div>
+      <div class="detail" id="detail"></div>
+      <div class="trend">
+        <div class="trend-head">Going down the column</div>
+        <ul>
+          <li>Number of carbon atoms <span class="arrow up">increases &uarr;</span></li>
+          <li>Boiling point <span class="arrow up">increases &uarr;</span></li>
+          <li>Viscosity &mdash; how thick it is <span class="arrow up">increases &uarr;</span></li>
+          <li>Flammability &mdash; how easily it burns <span class="arrow dn">decreases &darr;</span></li>
+          <li>Volatility &mdash; how easily it evaporates <span class="arrow dn">decreases &darr;</span></li>
+          <li>Colour <span class="arrow neutral">colourless &rarr; black</span></li>
+        </ul>
+      </div>
+      <p class="note"><b>Inside a tray.</b> The capped spouts are the way <em>up</em> — vapour rises
+        through them and is pushed out sideways under the cap, so it has to bubble through the liquid
+        already lying there. The gap at the wall is the way <em>down</em> — liquid runs across the
+        plate, spills over the weir into the channel at the wall, and the product pipe is fed from it.
+        That channel has a <em>solid floor</em>: it is a draw-off sump, so the liquid it catches is
+        piped away rather than draining on down to the tray below. Two flows, two separate paths,
+        which is why a tray needs both.</p>
+      <p class="note">Each fraction is drawn in the colour of the real product &mdash; colourless refinery
+        gases at the top, through pale straw and amber, to black bitumen at the base. Boiling ranges and
+        carbon numbers are typical industrial values, shown to make the gradient concrete. AQA does not
+        require students to recall specific temperatures or colour &mdash; only the order of the
+        fractions and the trends in boiling point, viscosity and flammability.</p>
+    </div>
+
+    <div class="panel" id="panel-exam" role="tabpanel" aria-labelledby="tab-exam" hidden>
+      <p class="sec-title">Tap a question to reveal the marking points</p>
+      <div id="marklist" style="display:grid; gap:.55rem"></div>
+      <p class="note">Specification requirement 4.7.1.2: students should be able to
+        <em>explain how fractional distillation works in terms of evaporation and condensation</em>.</p>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+"use strict";
+
+/* ════════════════════════════════════════════════════════════════════════
+   1. DATA — the column, as AQA teaches it
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* h = height up the column (0 = flash zone, 1 = top).
+   condT = the temperature at that tray, i.e. the temperature at which this
+   fraction condenses. Trays are ordered top → bottom.                      */
+const FRACTIONS = [
+  { id:"gases", name:"Refinery gases", alt:"LPG", carbons:"C₁–C₄", carbonN:"1–4",
+    bp:"below 25 °C", condT:25, tempLabel:"25 °C", h:0.955, color:"#EDF4F8", inkLight:"#6E828F", inkDark:"#D6E6EF", mix:7, exitsAsGas:true,
+    formula:"CH₄ → C₄H₁₀",
+    use:"Bottled gas for heating and cooking (liquefied petroleum gases).", useShort:"Heating and cooking",
+    props:{ chain:5, boil:4, visc:3, flam:98 } },
+
+  { id:"petrol", name:"Petrol", alt:"Gasoline", carbons:"C₅–C₁₀", carbonN:"5–10",
+    bp:"25–100 °C", condT:100, tempLabel:"100 °C", h:0.80, color:"#F2E6A8", inkLight:"#9C8420", inkDark:"#EFE3A4", mix:16,
+    formula:"C₈H₁₈",
+    use:"Fuel for cars.", useShort:"Fuel for cars",
+    props:{ chain:17, boil:19, visc:12, flam:86 } },
+
+  { id:"naphtha", name:"Naphtha", alt:null, carbons:"C₆–C₁₁", carbonN:"6–11",
+    bp:"100–150 °C", condT:150, tempLabel:"150 °C", h:0.66, color:"#E4D384", inkLight:"#8A7318", inkDark:"#E0CE79", mix:11,
+    formula:"C₉H₂₀",
+    use:"Feedstock for the petrochemical industry — cracked and used to make polymers, solvents, lubricants and detergents.", useShort:"Feedstock for petrochemicals",
+    props:{ chain:25, boil:30, visc:19, flam:74 } },
+
+  { id:"kerosene", name:"Kerosene", alt:"Paraffin", carbons:"C₁₁–C₁₅", carbonN:"11–15",
+    bp:"150–250 °C", condT:250, tempLabel:"250 °C", h:0.51, color:"#D9A94A", inkLight:"#8A6110", inkDark:"#E3BA6A", mix:14,
+    formula:"C₁₂H₂₆",
+    use:"Fuel for aircraft.", useShort:"Fuel for aircraft",
+    props:{ chain:38, boil:52, visc:35, flam:57 } },
+
+  { id:"diesel", name:"Diesel oil", alt:"Gas oil", carbons:"C₁₅–C₁₉", carbonN:"15–19",
+    bp:"250–300 °C", condT:300, tempLabel:"300 °C", h:0.36, color:"#B0702A", inkLight:"#8A5416", inkDark:"#D89552", mix:20,
+    formula:"C₁₆H₃₄",
+    use:"Fuel for diesel engines — lorries, buses and trains.", useShort:"Fuel for diesel engines",
+    props:{ chain:50, boil:67, visc:53, flam:41 } },
+
+  { id:"fueloil", name:"Heavy fuel oil", alt:null, carbons:"C₂₀–C₄₀", carbonN:"20–40",
+    bp:"300–350 °C", condT:340, tempLabel:"340 °C", h:0.21, color:"#5A3A20", inkLight:"#5A3A20", inkDark:"#B98457", mix:22,
+    formula:"C₂₅H₅₂",
+    use:"Fuel for ships and power stations.", useShort:"Ships and power stations",
+    props:{ chain:74, boil:85, visc:78, flam:21 } },
+
+  { id:"bitumen", name:"Bitumen", alt:"Residue", carbons:"C₄₀₊", carbonN:"over 40",
+    bp:"above 350 °C", condT:400, tempLabel:"350 °C+", h:0.06, color:"#14100D", inkLight:"#241D17", inkDark:"#9C8878", mix:10, neverVaporises:true,
+    formula:"C₅₀H₁₀₂",
+    use:"Surfacing roads and roofs.", useShort:"Surfacing roads and roofs",
+    props:{ chain:96, boil:97, visc:97, flam:5 } }
+];
+const byId = Object.fromEntries(FRACTIONS.map(f => [f.id, f]));
+
+/* A fraction's section is the space between its tray and the tray above.
+   Vapour rising through it keeps cooling, so it is progressively further
+   below its boiling point the higher it goes — which is why most of the
+   condensation happens near the top of the section and rains back down.  */
+FRACTIONS.forEach((f, i) => { f.sectionTop = i === 0 ? 1.0 : FRACTIONS[i - 1].h; });
+
+/* Temperature profile: linear interpolation through the tray anchors, so the
+   column really is hot at the bottom and cool at the top, and every fraction
+   condenses exactly where the temperature falls to its boiling point.       */
+const TEMP_ANCHORS = [
+  { h:1.00, t:20 },  { h:0.955, t:25 }, { h:0.80, t:100 }, { h:0.66, t:150 },
+  { h:0.51, t:250 }, { h:0.36, t:300 }, { h:0.21, t:340 }, { h:0.06, t:350 },
+  { h:0.00, t:350 }
+];
+function tempAt(h){
+  h = Math.max(0, Math.min(1, h));
+  for (let i = 0; i < TEMP_ANCHORS.length - 1; i++){
+    const a = TEMP_ANCHORS[i], b = TEMP_ANCHORS[i+1];
+    if (h <= a.h && h >= b.h){
+      const k = (a.h - b.h) < 1e-6 ? 0 : (a.h - h) / (a.h - b.h);
+      return a.t + (b.t - a.t) * k;
+    }
+  }
+  return 350;
+}
+/* Which fraction is collected at this height? */
+function fractionAt(h){
+  let best = FRACTIONS[FRACTIONS.length - 1];
+  for (const f of FRACTIONS) if (h >= f.h - 0.075) { best = f; break; }
+  return best;
+}
+
+/* ── What each fraction is used for, as an icon ────────────────────────────
+   Described with primitives rather than path data, so one definition draws
+   to the 2D canvas, to the 3D label sprites, and to inline SVG in the panel.
+   ["rr",x,y,w,h,r]  ["c",cx,cy,r]  ["p",[[x,y],…]]   trailing true = knockout */
+const USE_ICONS = {
+  gases: [                                              /* LPG cylinder */
+    ["rr", 8, 5.4, 8, 15.6, 2], ["rr", 10.4, 1.8, 3.2, 3.4, .7], ["rr", 8.8, 4, 6.4, 1.8, .7]
+  ],
+  petrol: [                                             /* car */
+    ["rr", 2.4, 12.4, 19.2, 5.2, 1.4], ["rr", 6.4, 7.6, 10.4, 5.2, 1.6],
+    ["c", 7, 18.8, 2.3], ["c", 17, 18.8, 2.3]
+  ],
+  naphtha: [                                            /* conical flask */
+    ["p", [[9.4,3.2],[14.6,3.2],[14.6,8.6],[19.8,19.4],[4.2,19.4],[9.4,8.6]]],
+    ["rr", 8.4, 1.4, 7.2, 2, .6]
+  ],
+  kerosene: [                                           /* aircraft, from above */
+    ["rr", 10.5, 1.8, 3, 19, 1.5],
+    ["p", [[1.8,14.8],[12,8.2],[22.2,14.8],[22.2,16.4],[12,12],[1.8,16.4]]],
+    ["p", [[7.6,21],[16.4,21],[12,17.4]]]
+  ],
+  diesel: [                                             /* lorry */
+    ["rr", 1.4, 8.8, 12.6, 8.2, 1],
+    ["p", [[14.6,10.6],[18.8,10.6],[22.2,14.4],[22.2,17],[14.6,17]]],
+    ["c", 6, 18.8, 2.2], ["c", 18.4, 18.8, 2.2]
+  ],
+  fueloil: [                                            /* ship */
+    ["p", [[1.8,14.6],[22.2,14.6],[19.2,20.2],[4.8,20.2]]],
+    ["rr", 7.8, 8.6, 8.4, 6, .8], ["rr", 11.3, 4.4, 1.9, 4.4, .6]
+  ],
+  bitumen: [                                            /* road, with markings */
+    ["p", [[5.4,2.6],[18.6,2.6],[22,21.4],[2,21.4]]],
+    ["rr", 11.3, 4.4, 1.4, 3.2, .4, true],
+    ["rr", 11.2, 9.4, 1.6, 3.6, .4, true],
+    ["rr", 11.05, 15, 1.9, 4.2, .4, true]
+  ]
+};
+const isKnockout = pr => pr[pr.length - 1] === true;
+
+/* Draw one to a canvas: (x, y) is the top-left of the icon's box */
+function drawIcon(g, id, x, y, size, col, bg){
+  const spec = USE_ICONS[id];
+  if (!spec) return;
+  const k = size / 24;
+  g.save();
+  g.translate(x, y); g.scale(k, k);
+  spec.forEach(pr => {
+    g.fillStyle = isKnockout(pr) ? bg : col;
+    if (pr[0] === "rr"){ roundRect(g, pr[1], pr[2], pr[3], pr[4], pr[5]); g.fill(); }
+    else if (pr[0] === "c"){ g.beginPath(); g.arc(pr[1], pr[2], pr[3], 0, 6.2832); g.fill(); }
+    else {
+      g.beginPath();
+      pr[1].forEach((pt, i) => i ? g.lineTo(pt[0], pt[1]) : g.moveTo(pt[0], pt[1]));
+      g.closePath(); g.fill();
+    }
+  });
+  g.restore();
+}
+
+/* …and the same definition as inline SVG for the panel */
+function iconSVG(id, size, cls){
+  const spec = USE_ICONS[id];
+  if (!spec) return "";
+  const body = spec.map(pr => {
+    const fill = isKnockout(pr) ? "var(--surface)" : "currentColor";
+    if (pr[0] === "rr")
+      return '<rect x="' + pr[1] + '" y="' + pr[2] + '" width="' + pr[3] + '" height="' + pr[4] +
+             '" rx="' + pr[5] + '" fill="' + fill + '"/>';
+    if (pr[0] === "c")
+      return '<circle cx="' + pr[1] + '" cy="' + pr[2] + '" r="' + pr[3] + '" fill="' + fill + '"/>';
+    return '<polygon points="' + pr[1].map(q => q.join(",")).join(" ") + '" fill="' + fill + '"/>';
+  }).join("");
+  return '<svg class="' + cls + '" viewBox="0 0 24 24" width="' + size + '" height="' + size +
+         '" aria-hidden="true">' + body + '</svg>';
+}
+
+const MARK_POINTS = [
+  { q:"What is crude oil?", tag:"Recall",
+    a:"A <b>finite resource</b> found in rocks. It is a <b>mixture</b> of a very large number of compounds, most of which are <b>hydrocarbons</b> — molecules made of hydrogen and carbon <b>only</b>. Most are <b>alkanes</b>." },
+  { q:"Why is the crude oil heated first?", tag:"Evaporation",
+    a:"The crude oil is heated in a furnace until it <b>evaporates (vaporises)</b>. Only the vapour can rise up the fractionating column, so this is the first step of the separation." },
+  { q:"Describe the temperature inside the column.", tag:"Temperature gradient",
+    a:"There is a <b>temperature gradient</b>: it is <b>hot at the bottom</b> (about 350&nbsp;°C) and <b>cooler at the top</b> (about 20&nbsp;°C)." },
+  { q:"How are the fractions separated?", tag:"Condensation",
+    a:"The vapours <b>rise up the column</b> and cool as they go. Each fraction <b>condenses</b> back to a liquid when the temperature falls to its <b>boiling point</b>, so different fractions condense at <b>different heights</b> and are collected on trays as separate liquids." },
+  { q:"What do the molecules in one fraction have in common?", tag:"Definition of a fraction",
+    a:"They are hydrocarbons with a <b>similar number of carbon atoms</b>, so they have <b>similar boiling points</b> and condense together." },
+  { q:"Why do the long-chain hydrocarbons condense near the bottom?", tag:"Extension",
+    a:"Larger molecules have <b>stronger intermolecular forces</b> between them, so more energy is needed to separate them — they have <b>higher boiling points</b>. They therefore condense first, low down where the column is hottest." },
+  { q:"How do the properties change as the chains get longer?", tag:"Property trends",
+    a:"<b>Boiling point increases</b>, <b>viscosity increases</b> (it flows less easily), <b>flammability decreases</b> and <b>volatility decreases</b> (it evaporates less easily)." },
+  { q:"What are the fractions used for?", tag:"Uses",
+    a:"As <b>fuels</b> — liquefied petroleum gases, petrol, kerosene, diesel oil and heavy fuel oil — and as <b>feedstock</b> for the petrochemical industry, to make solvents, lubricants, polymers and detergents." },
+  { q:"Why is fractional distillation a physical process, not a chemical one?", tag:"Common exam trap",
+    a:"<b>No new substances are made.</b> The compounds already present in the crude oil are only <b>separated</b>, using the difference in their boiling points. The hydrocarbon molecules themselves are unchanged." }
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. STATE
+   ════════════════════════════════════════════════════════════════════════ */
+
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const state = {
+  mode: "3d",
+  playing: !reduceMotion,
+  speed: 1,
+  selected: "kerosene",
+  following: null,
+  inspectH: 0.51,
+  labels: true,
+  revealAll: false,
+  present: false
+};
+
+/* ── Colour helpers ─────────────────────────────────────────────────────── */
+function hexToRgb(hex){
+  const n = parseInt(hex.slice(1), 16);
+  return { r:(n >> 16) & 255, g:(n >> 8) & 255, b:n & 255 };
+}
+function rgbToHex(c){
+  const q = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+  return "#" + q(c.r) + q(c.g) + q(c.b);
+}
+/* shift < 0 darkens toward black, > 0 lightens toward white */
+function shift(hex, amt){
+  const c = hexToRgb(hex), t = amt < 0 ? 0 : 255, k = Math.abs(amt);
+  return rgbToHex({ r:c.r + (t - c.r) * k, g:c.g + (t - c.g) * k, b:c.b + (t - c.b) * k });
+}
+function rgba(hex, a){
+  const c = hexToRgb(hex);
+  return "rgba(" + c.r + "," + c.g + "," + c.b + "," + a + ")";
+}
+function isDark(){
+  const b = document.body;
+  if (b && b.classList.contains("theme-dark")) return true;
+  if (b && b.classList.contains("theme-light")) return false;
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t === "dark") return true;
+  if (t === "light") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function tok(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+/* Each fraction carries its true product colour — colourless gas at the top,
+   through straw and amber, to black bitumen at the base. Bulk liquid (pools,
+   drums, swatches) is drawn in that colour; diagram lines use the companion
+   ink below, so a near-colourless or a black fraction still reads.           */
+function legible(f){
+  return isDark() ? (f.inkDark || shift(f.color, 0.34))
+                  : (f.inkLight || shift(f.color, -0.34));
+}
+function strokeOf(f){ return legible(f); }
+
+function lum(hex){
+  const c = hexToRgb(hex);
+  const ch = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+}
+function mixHex(a, b, t){
+  const x = hexToRgb(a), y = hexToRgb(b);
+  return rgbToHex({ r:x.r + (y.r - x.r) * t, g:x.g + (y.g - x.g) * t, b:x.b + (y.b - x.b) * t });
+}
+/* Keeps the real colour wherever it reads against the ground, and blends it
+   toward the ink only as far as it has to when it doesn't.                   */
+function contrastSafe(f, groundHex){
+  const d = Math.abs(lum(f.color) - lum(groundHex));
+  if (d > 0.20) return f.color;
+  return mixHex(f.color, legible(f), Math.min(1, (0.20 - d) / 0.20) * 0.9);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. SIMULATION — one particle model, drawn by either renderer
+   ════════════════════════════════════════════════════════════════════════ */
+
+const MAX_PARTICLES = 720;
+const FALL_ACCEL = 0.55;      /* droplets accelerate as they fall to the tray */
+const particles = [];
+let spawnAccumulator = 0;
+
+/* Weighted spawn pool matching a plausible crude oil cut */
+const SPAWN_POOL = [];
+FRACTIONS.forEach(f => { for (let i = 0; i < f.mix; i++) SPAWN_POOL.push(f.id); });
+
+function makeParticle(seedProgress){
+  const fid = SPAWN_POOL[(Math.random() * SPAWN_POOL.length) | 0];
+  const f = byId[fid];
+  const p = {
+    fid: fid,
+    h: 0.02,
+    xr: (Math.random() * 2 - 1) * 0.72,      /* radial offset, −1 … 1 */
+    ang: Math.random() * Math.PI * 2,        /* used only by the 3D renderer */
+    wob: Math.random() * Math.PI * 2,
+    wobSpeed: 1.4 + Math.random() * 1.6,
+    vy: 0.115 + 0.20 * (1 - f.props.chain / 100) + Math.random() * 0.03,
+    phase: "rise",              /* rise | condense | pool | drain | out */
+    liquid: false,
+    flash: 0,                   /* brief sparkle at the moment of condensation */
+    poolT: 0,
+    poolWait: 1.5 + Math.random() * 1.6,      /* dwell time on the tray */
+    fallV: 0,
+    condH: 0,                   /* set below — where this droplet forms */
+    op: 0,                                    /* progress along the outlet 0…1 */
+    outSpeed: 0.42 + Math.random() * 0.22
+  };
+  /* Spread condensation through the section, biased toward the cool ceiling */
+  const lo = f.h + 0.020;
+  const hi = Math.max(lo + 0.012, f.sectionTop - 0.028);
+  p.condH = lo + (hi - lo) * Math.pow(Math.random(), 0.5);
+
+  if (f.neverVaporises){                      /* bitumen never boils — it drains */
+    p.phase = "drain"; p.liquid = true; p.h = 0.14 + Math.random() * 0.06;
+  }
+  if (seedProgress !== undefined) advance(p, seedProgress);
+  return p;
+}
+
+/* Fast-forward a particle so the column is already full on first paint */
+function advance(p, seconds){
+  let t = seconds;
+  while (t > 0){
+    if (stepParticle(p, Math.min(0.05, t)) === false){
+      p.phase = byId[p.fid].neverVaporises ? "drain" : "rise";
+      p.h = byId[p.fid].neverVaporises ? 0.16 : 0.02;
+      p.liquid = !!byId[p.fid].neverVaporises;
+      p.op = 0; p.poolT = 0; p.flash = 0; p.fallV = 0;
+    }
+    t -= 0.05;
+  }
+}
+
+function stepParticle(p, dt){
+  const f = byId[p.fid];
+  p.wob += dt * p.wobSpeed;
+  if (p.flash > 0) p.flash = Math.max(0, p.flash - dt * 1.6);
+
+  if (p.phase === "rise"){
+    p.h += p.vy * dt;
+    const top = f.exitsAsGas ? f.h : p.condH;
+    if (p.h >= top){
+      p.h = top;
+      if (f.exitsAsGas){ p.phase = "out"; p.op = 0; }     /* LPG leaves as a gas */
+      else { p.phase = "condense"; p.liquid = true; p.flash = 1; p.fallV = 0.015; }
+    }
+  } else if (p.phase === "condense"){
+    p.fallV = Math.min(0.30, p.fallV + FALL_ACCEL * dt);   /* the droplet falls */
+    p.h -= p.fallV * dt;
+    p.xr += (p.xr * 0.9 - p.xr) * Math.min(1, dt * 1.2);
+    if (p.h <= f.h + 0.008){ p.h = f.h + 0.008; p.phase = "pool"; p.poolT = 0; }
+  } else if (p.phase === "pool"){
+    p.poolT += dt;
+    p.h = f.h + 0.006 + 0.010 * (0.5 + 0.5 * Math.sin(p.wob * 0.6));  /* lying in the pool */
+    /* Runs across the plate to the weir at the downcomer, which is on the
+       same side as the draw-off pipe — the product is taken from there.   */
+    p.xr += (0.88 - p.xr) * Math.min(1, dt * 1.05);
+    const a = ((p.ang + Math.PI) % (Math.PI * 2)) - Math.PI;   /* shortest way round */
+    p.ang = a * (1 - Math.min(1, dt * 1.25));
+    if (p.poolT > p.poolWait){ p.phase = "out"; p.op = 0; }
+  } else if (p.phase === "drain"){
+    p.h -= p.vy * 0.6 * dt;                                /* bitumen never boils */
+    if (p.h <= f.h + 0.008){ p.h = f.h + 0.008; p.phase = "pool"; p.poolT = 0; }
+  } else if (p.phase === "out"){
+    p.op += p.outSpeed * dt;
+    if (p.op >= 1) return false;                           /* recycle */
+  }
+  return true;
+}
+
+/* How much liquid is standing on each tray, smoothed so it doesn't flicker */
+const poolLevel = {};
+FRACTIONS.forEach(f => { poolLevel[f.id] = 0; });
+
+function syncPools(dt){
+  const counts = {};
+  for (let i = 0; i < particles.length; i++){
+    const p = particles[i];
+    if (p.phase === "pool") counts[p.fid] = (counts[p.fid] || 0) + 1;
+  }
+  const k = dt === null ? 1 : Math.min(1, dt * 2.5);
+  FRACTIONS.forEach(f => {
+    const target = Math.min(1, (counts[f.id] || 0) / 22);
+    poolLevel[f.id] += (target - poolLevel[f.id]) * k;
+  });
+}
+
+function simulate(dt){
+  for (let i = particles.length - 1; i >= 0; i--){
+    if (stepParticle(particles[i], dt) === false) particles.splice(i, 1);
+  }
+  spawnAccumulator += dt * 56;
+  while (spawnAccumulator >= 1){
+    spawnAccumulator -= 1;
+    if (particles.length < MAX_PARTICLES) particles.push(makeParticle());
+  }
+  syncPools(dt);
+}
+
+function seedColumn(){
+  particles.length = 0;
+  spawnAccumulator = 0;
+  for (let i = 0; i < 360; i++) particles.push(makeParticle(Math.random() * 6));
+  syncPools(null);
+}
+seedColumn();
+
+/* ════════════════════════════════════════════════════════════════════════
+   4. 3D RENDERER
+   ════════════════════════════════════════════════════════════════════════ */
+
+const c3d = document.getElementById("c3d");
+const c2d = document.getElementById("c2d");
+const stageEl = document.getElementById("stage");
+
+const COL_H = 9;          /* column height in world units */
+const COL_R = 1.15;       /* column radius */
+const PIPE_LEN = 3.5;     /* outlet pipe length */
+
+const three = { ok: false };
+
+function initThree(){
+  if (typeof THREE === "undefined") return false;
+  try {
+    const renderer = new THREE.WebGLRenderer({ canvas:c3d, antialias:true, alpha:false });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    if ("outputEncoding" in renderer && THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+
+    /* Lighting: cool sky, warm furnace bounce */
+    const hemi = new THREE.HemisphereLight(0xdfeaf2, 0x2a1a12, 0.85);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xffffff, 0.75);
+    key.position.set(9, 12, 8); scene.add(key);
+    const rim = new THREE.DirectionalLight(0x9fd8ff, 0.35);
+    rim.position.set(-8, 5, -6); scene.add(rim);
+    const ember = new THREE.PointLight(0xff7a2c, 2.2, 14, 2);
+    ember.position.set(-5.6, 0.6, 0); scene.add(ember);
+
+    /* ── Ground pad ── */
+    const pad = new THREE.Mesh(
+      new THREE.CircleGeometry(17, 56),
+      new THREE.MeshStandardMaterial({ color:0x2c3740, roughness:.96, metalness:.02 })
+    );
+    pad.rotation.x = -Math.PI / 2; pad.position.y = -0.02; scene.add(pad);
+
+    /* ── The tower ── */
+    const towerGroup = new THREE.Group(); scene.add(towerGroup);
+
+    const shellMat = new THREE.MeshStandardMaterial({
+      color:0xa9b8c4, metalness:.72, roughness:.32,
+      transparent:true, opacity:.17, side:THREE.DoubleSide, depthWrite:false
+    });
+    const shell = new THREE.Mesh(new THREE.CylinderGeometry(COL_R, COL_R, COL_H, 56, 1, true), shellMat);
+    shell.position.y = COL_H / 2; towerGroup.add(shell);
+
+    const domeMat = shellMat.clone();
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(COL_R, 40, 18, 0, Math.PI * 2, 0, Math.PI / 2), domeMat);
+    dome.position.y = COL_H; towerGroup.add(dome);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(COL_R * 1.22, COL_R * 1.34, 0.55, 40),
+      new THREE.MeshStandardMaterial({ color:0x55636e, metalness:.6, roughness:.5 }));
+    base.position.y = 0.27; towerGroup.add(base);
+
+    /* Structural bands — a real tower is welded in courses */
+    const bandMat = new THREE.MeshStandardMaterial({ color:0x8d9daa, metalness:.8, roughness:.4 });
+    for (let i = 1; i <= 11; i++){
+      const band = new THREE.Mesh(new THREE.TorusGeometry(COL_R + 0.015, 0.028, 8, 44), bandMat);
+      band.rotation.x = Math.PI / 2; band.position.y = (COL_H / 12) * i; towerGroup.add(band);
+    }
+
+    /* ── Trays, outlet pipes, drums, labels ── */
+    const pickables = [];
+    const labelSprites = [];
+    const trayMeshes = {};
+    const poolMeshes = {};
+    const themedMats = [];    /* materials that must be restyled on a theme change */
+
+    FRACTIONS.forEach((f, i) => {
+      const y = f.h * COL_H;
+      const col = new THREE.Color(f.color);          /* the product's real colour */
+      const ink = new THREE.Color(legible(f));       /* its companion for structure */
+
+      /* The downcomer takes a sector out of the tray at the wall, and swaps
+         side each level — which also moves the ring of caps round.         */
+      const dcMid = 0;                       /* the draw-off side, where pipes leave */
+      const DC_ARC = Math.PI * 0.34;
+      const actStart = dcMid + DC_ARC / 2, actArc = Math.PI * 2 - DC_ARC;
+      /* Particles are placed with x = cos(a), z = sin(a), measuring from +X.
+         CylinderGeometry measures theta from +Z instead (x = r·sinθ,
+         z = r·cosθ), so every sector handed to it needs converting or the
+         sump ends up 90° round from the pipe it is meant to feed.        */
+      const cylTheta = a => Math.PI / 2 - a;
+      const trayStart = cylTheta(actStart + actArc);
+
+      const tray = new THREE.Mesh(
+        new THREE.CylinderGeometry(COL_R * 0.94, COL_R * 0.94, 0.075, 40, 1, false, trayStart, actArc),
+        new THREE.MeshStandardMaterial({ color:ink, emissive:ink, emissiveIntensity:.28, metalness:.35, roughness:.45 })
+      );
+      themedMats.push({ mat:tray.material, f:f });
+      tray.position.y = y; tray.userData.fid = f.id;
+      towerGroup.add(tray); pickables.push(tray); trayMeshes[f.id] = tray;
+
+      /* The liquid that collects on the tray — scaled in Y by how much is there */
+      if (!f.exitsAsGas){
+        const pool = new THREE.Mesh(
+          new THREE.CylinderGeometry(COL_R * 0.9, COL_R * 0.9, 1, 36, 1, false, trayStart, actArc),
+          new THREE.MeshStandardMaterial({
+            color:col, emissive:col, emissiveIntensity:.14,
+            metalness:.15, roughness:.12, transparent:true, opacity:.92
+          })
+        );
+        pool.scale.y = 0.001; pool.position.y = y + 0.04;
+        pool.userData.fid = f.id; pool.userData.lvl = 0;
+        towerGroup.add(pool); pickables.push(pool); poolMeshes[f.id] = pool;
+      }
+
+      /* Bubble caps sitting on the tray */
+      const capMat = new THREE.MeshStandardMaterial({ color:ink, metalness:.4, roughness:.5 });
+      themedMats.push({ mat:capMat, f:f });
+      if (!f.exitsAsGas){
+        /* the downcomer wall, holding the falling liquid off the tray plate */
+        const dcWall = new THREE.Mesh(
+          new THREE.CylinderGeometry(COL_R * 0.7, COL_R * 0.7, 0.45, 18, 1, true,
+                                     cylTheta(dcMid + DC_ARC / 2), DC_ARC),
+          capMat
+        );
+        dcWall.position.y = y - 0.20;
+        towerGroup.add(dcWall);
+        /* solid floor — the sump holds the liquid for the draw-off pipe */
+        const dcFloor = new THREE.Mesh(
+          new THREE.CylinderGeometry(COL_R * 0.92, COL_R * 0.92, 0.06, 24, 1, false,
+                                     cylTheta(dcMid + DC_ARC / 2), DC_ARC),
+          capMat
+        );
+        dcFloor.position.y = y - 0.42;
+        towerGroup.add(dcFloor);
+
+        for (let k = 0; k < 6; k++){
+          const a = actStart + actArc * (k + (i % 2 ? 0.25 : 0.72)) / 6;
+          const px = Math.cos(a) * 0.6, pz = Math.sin(a) * 0.6;
+          const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.34, 8), capMat);
+          riser.position.set(px, y + 0.13, pz);
+          towerGroup.add(riser);
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.18, 14), capMat);
+          cap.position.set(px, y + 0.26, pz);
+          towerGroup.add(cap);
+        }
+      }
+
+      /* Outlet: gases leave over the top, liquids leave sideways */
+      const pipeMat = new THREE.MeshStandardMaterial({ color:ink, metalness:.65, roughness:.4 });
+      themedMats.push({ mat:pipeMat, f:f });
+      if (f.exitsAsGas){
+        const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, COL_H * 0.09 + 0.7, 14), pipeMat);
+        riser.position.set(0, COL_H + 0.45, 0); towerGroup.add(riser);
+        const run = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, PIPE_LEN, 14), pipeMat);
+        run.rotation.z = -Math.PI / 2;
+        run.position.set(PIPE_LEN / 2, COL_H + 0.8, 0); towerGroup.add(run);
+      } else {
+        const run = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, PIPE_LEN, 14), pipeMat);
+        run.rotation.z = -Math.PI / 2;
+        run.position.set(COL_R + PIPE_LEN / 2, y, 0); towerGroup.add(run);
+      }
+
+      /* Collection drum */
+      const dy = f.exitsAsGas ? COL_H + 0.8 : y;
+      const dx = f.exitsAsGas ? PIPE_LEN + 0.55 : COL_R + PIPE_LEN + 0.55;
+      const drum = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.46, 0.46, 0.78, 22),
+        new THREE.MeshStandardMaterial({ color:col, emissive:col, emissiveIntensity:.16, metalness:.4, roughness:.42 })
+      );
+      drum.position.set(dx, dy, 0); drum.userData.fid = f.id;
+      towerGroup.add(drum); pickables.push(drum);
+
+      const label = makeSprite(f);
+      label.position.set(dx + 2.35, dy + 0.16, 0);
+      towerGroup.add(label); labelSprites.push({ sprite:label, kind:"fraction", f:f });
+
+      const temp = makeTempSprite(f);
+      temp.position.set(-COL_R - 1.5, y, 0);
+      towerGroup.add(temp); labelSprites.push({ sprite:temp, kind:"temp", f:f });
+    });
+
+    /* Top and bottom temperature callouts */
+    const topT = makeTempSprite({ condT:20, color:"#7FD8F5" }, "COOLER");
+    topT.position.set(-COL_R - 1.5, COL_H + 0.15, 0); towerGroup.add(topT);
+    labelSprites.push({ sprite:topT, kind:"tempEdge", f:{ condT:20, color:"#7FD8F5" }, tag:"COOLER" });
+    const botT = makeTempSprite({ condT:350, color:"#E2683A" }, "HOTTER");
+    botT.position.set(-COL_R - 1.5, 0.5, 0); towerGroup.add(botT);
+    labelSprites.push({ sprite:botT, kind:"tempEdge", f:{ condT:350, color:"#E2683A" }, tag:"HOTTER" });
+
+    /* ── Furnace and feed pipe ── */
+    const furnace = new THREE.Group();
+    furnace.position.set(-5.6, 0, 0); scene.add(furnace);
+
+    /* Cut-away casing, so the tube coil inside can be seen */
+    const caseGeo = new THREE.BoxGeometry(2.5, 2.4, 2.5);
+    const caseMesh = new THREE.Mesh(caseGeo, new THREE.MeshStandardMaterial({
+      color:0x4a545e, metalness:.5, roughness:.62,
+      transparent:true, opacity:.24, side:THREE.DoubleSide, depthWrite:false
+    }));
+    caseMesh.position.y = 1.2; furnace.add(caseMesh);
+    const caseEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(caseGeo),
+      new THREE.LineBasicMaterial({ color:0x8d9daa })
+    );
+    caseEdges.position.y = 1.2; furnace.add(caseEdges);
+
+    furnace.add(new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 0.14, 2.3),
+      new THREE.MeshStandardMaterial({ color:0x39424b, roughness:.9 })
+    ).translateY(0.12));
+
+    /* Burners firing up at the tubes — they never reach them */
+    const flameMat = new THREE.MeshStandardMaterial({
+      color:0xff8c2e, emissive:0xff5a12, emissiveIntensity:1.7, roughness:1
+    });
+    for (let i = 0; i < 4; i++){
+      for (let k = 0; k < 2; k++){
+        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.72, 12), flameMat);
+        flame.position.set(-0.86 + i * 0.57, 0.55, -0.45 + k * 0.9);
+        furnace.add(flame);
+      }
+    }
+
+    const stack = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.36, 2.6, 16),
+      new THREE.MeshStandardMaterial({ color:0x5b6672, metalness:.6, roughness:.5 })
+    );
+    stack.position.set(-0.7, 3.6, 0); furnace.add(stack);
+
+    /* The coil the crude oil actually flows through, in world coordinates so
+       the inlet and the pipe to the column meet its two ends exactly.       */
+    const coilPts = [];
+    const cy = [2.02, 1.66, 1.30], cxA = -6.45, cxB = -4.75;
+    cy.forEach((yy, i) => {
+      const l2r = i % 2 === 0;
+      const a = l2r ? cxA : cxB, b = l2r ? cxB : cxA;
+      coilPts.push(new THREE.Vector3(a, yy, 0));
+      coilPts.push(new THREE.Vector3(b, yy, 0));
+      if (i < cy.length - 1){
+        coilPts.push(new THREE.Vector3(l2r ? b + 0.26 : b - 0.26, (yy + cy[i + 1]) / 2, 0));
+      }
+    });
+    scene.add(new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(coilPts), 150, 0.085, 10, false),
+      new THREE.MeshStandardMaterial({ color:0x9aa7b3, metalness:.8, roughness:.28 })
+    ));
+
+    const feedCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-4.75, 1.30, 0), new THREE.Vector3(-3.4, 1.22, 0),
+      new THREE.Vector3(-2.4, 1.02, 0), new THREE.Vector3(-COL_R + 0.1, 0.85, 0)
+    ]);
+    const feed = new THREE.Mesh(
+      new THREE.TubeGeometry(feedCurve, 34, 0.16, 12, false),
+      new THREE.MeshStandardMaterial({ color:0x77838f, metalness:.7, roughness:.38 })
+    );
+    scene.add(feed);
+
+    const inCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-9.6, 2.02, 0), new THREE.Vector3(-8.2, 2.02, 0), new THREE.Vector3(-6.45, 2.02, 0)
+    ]);
+    scene.add(new THREE.Mesh(
+      new THREE.TubeGeometry(inCurve, 20, 0.16, 12, false),
+      new THREE.MeshStandardMaterial({ color:0x77838f, metalness:.7, roughness:.38 })
+    ));
+
+    const furnaceLabel = makeSprite({ name:"Furnace", alt:"heated inside tubes", color:"#FF8C2E", carbons:"≈ 350 °C" });
+    furnaceLabel.position.set(-5.6, 3.35, 1.9); scene.add(furnaceLabel);
+    labelSprites.push({ sprite:furnaceLabel, kind:"furnace" });
+
+    const feedLabel = makeSprite({ name:"Crude oil in", alt:"a mixture of hydrocarbons", color:"#8E4E3C", carbons:"mostly alkanes" });
+    feedLabel.position.set(-10.2, 1.25, 0); scene.add(feedLabel);
+    labelSprites.push({ sprite:feedLabel, kind:"feed" });
+
+    /* ── Particles: two point clouds, gas and liquid ── */
+    const softDot = new THREE.CanvasTexture(makeDotCanvas("soft"));
+    const hardDot = new THREE.CanvasTexture(makeDotCanvas("hard"));
+    const gasGeo = new THREE.BufferGeometry();
+    const liqGeo = new THREE.BufferGeometry();
+    const conGeo = new THREE.BufferGeometry();
+    const gasPos = new Float32Array(MAX_PARTICLES * 3), gasCol = new Float32Array(MAX_PARTICLES * 3);
+    const liqPos = new Float32Array(MAX_PARTICLES * 3), liqCol = new Float32Array(MAX_PARTICLES * 3);
+    const conPos = new Float32Array(MAX_PARTICLES * 3), conCol = new Float32Array(MAX_PARTICLES * 3);
+    gasGeo.setAttribute("position", new THREE.BufferAttribute(gasPos, 3));
+    gasGeo.setAttribute("color", new THREE.BufferAttribute(gasCol, 3));
+    liqGeo.setAttribute("position", new THREE.BufferAttribute(liqPos, 3));
+    liqGeo.setAttribute("color", new THREE.BufferAttribute(liqCol, 3));
+    conGeo.setAttribute("position", new THREE.BufferAttribute(conPos, 3));
+    conGeo.setAttribute("color", new THREE.BufferAttribute(conCol, 3));
+
+    /* Gas is large, soft and see-through; liquid is small, hard and opaque */
+    const gasMat = new THREE.PointsMaterial({
+      size:0.48, map:softDot, vertexColors:true, transparent:true, opacity:.55,
+      depthWrite:false, sizeAttenuation:true
+    });
+    const liqMat = new THREE.PointsMaterial({
+      size:0.27, map:hardDot, vertexColors:true, transparent:true, opacity:1,
+      depthWrite:false, sizeAttenuation:true
+    });
+    const conMat = new THREE.PointsMaterial({
+      size:0.60, map:softDot, vertexColors:true, transparent:true, opacity:.95,
+      depthWrite:false, sizeAttenuation:true
+    });
+    const gasPts = new THREE.Points(gasGeo, gasMat);
+    const liqPts = new THREE.Points(liqGeo, liqMat);
+    const conPts = new THREE.Points(conGeo, conMat);
+    gasPts.frustumCulled = false; liqPts.frustumCulled = false; conPts.frustumCulled = false;
+    scene.add(gasPts); scene.add(liqPts); scene.add(conPts);
+
+    Object.assign(three, {
+      ok:true, renderer, scene, camera, pickables, labelSprites, trayMeshes, poolMeshes, themedMats,
+      gasGeo, liqGeo, conGeo, gasPos, gasCol, liqPos, liqCol, conPos, conCol,
+      gasMat, liqMat, conMat, gasPts, liqPts, conPts,
+      shellMat, domeMat, pad, ember, hemi
+    });
+    applySceneTheme();
+    return true;
+  } catch (err){
+    console.error("3D initialisation failed:", err);
+    return false;
+  }
+}
+
+function makeDotCanvas(kind){
+  const s = 64, cv = document.createElement("canvas");
+  cv.width = cv.height = s;
+  const g = cv.getContext("2d");
+  if (kind === "hard"){
+    /* A droplet of liquid: opaque, crisp-edged, with a specular highlight.
+       The body is below full white so the highlight still reads once the
+       point is tinted with the fraction's colour.                          */
+    g.fillStyle = "rgba(206,206,206,1)";
+    g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 4, 0, 6.2832); g.fill();
+    g.fillStyle = "rgba(255,255,255,1)";
+    g.beginPath(); g.arc(s * 0.38, s * 0.36, s * 0.14, 0, 6.2832); g.fill();
+  } else {
+    /* Vapour: no core at all, just a soft falloff */
+    const grad = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+    grad.addColorStop(0,   "rgba(255,255,255,.85)");
+    grad.addColorStop(.35, "rgba(255,255,255,.45)");
+    grad.addColorStop(.70, "rgba(255,255,255,.14)");
+    grad.addColorStop(1,   "rgba(255,255,255,0)");
+    g.fillStyle = grad; g.fillRect(0, 0, s, s);
+  }
+  return cv;
+}
+
+function roundRect(g, x, y, w, h, r){
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
+
+function spriteFromCanvas(cv, wUnits){
+  const tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false });
+  const sp = new THREE.Sprite(mat);
+  sp.scale.set(wUnits, wUnits * (cv.height / cv.width), 1);
+  sp.renderOrder = 10;
+  return sp;
+}
+
+function makeSprite(f){
+  const W = 660, H = 210, cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  const dark = isDark();
+  const plate = dark ? "rgba(10,16,22,.90)" : "rgba(251,252,253,.94)";
+  const ink = dark ? "#E9F1F6" : "#0F1A21";
+  const mut = dark ? "#8CA0AE" : "#62727D";
+
+  g.fillStyle = plate; roundRect(g, 12, 12, W - 24, H - 24, 10); g.fill();
+  g.strokeStyle = rgba(legible(f), dark ? .85 : .95); g.lineWidth = 4;
+  roundRect(g, 12, 12, W - 24, H - 24, 10); g.stroke();
+  g.fillStyle = f.color; g.fillRect(12, 12, 16, H - 24);
+  g.strokeStyle = rgba(legible(f), .9); g.lineWidth = 2;
+  g.beginPath(); g.moveTo(28, 14); g.lineTo(28, H - 14); g.stroke();
+
+  g.textBaseline = "top";
+  g.fillStyle = ink;
+  g.font = '600 60px "Saira Condensed", "Arial Narrow", sans-serif';
+  g.fillText(f.name, 48, 34);
+  g.fillStyle = mut;
+  g.font = '400 34px "IBM Plex Mono", monospace';
+  g.fillText(f.carbons || "", 48, 106);
+  if (f.alt){
+    g.font = '400 32px "IBM Plex Sans", sans-serif';
+    g.fillText(f.alt, 48, 150);
+  }
+  drawIcon(g, f.id, 486, 45, 120, dark ? "#C8D6E0" : "#3D4C57", plate);
+  return spriteFromCanvas(cv, 3.0);
+}
+
+function makeTempSprite(f, tag){
+  const W = 420, H = tag ? 190 : 130, cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  const dark = isDark();
+  g.fillStyle = dark ? "rgba(10,16,22,.88)" : "rgba(251,252,253,.94)";
+  roundRect(g, 8, 8, W - 16, H - 16, 8); g.fill();
+  g.strokeStyle = rgba(legible(f), .9); g.lineWidth = 4;
+  roundRect(g, 8, 8, W - 16, H - 16, 8); g.stroke();
+
+  g.textBaseline = "top";
+  g.fillStyle = dark ? "#E9F1F6" : "#0F1A21";
+  g.font = '500 62px "IBM Plex Mono", monospace';
+  g.textAlign = "right";
+  g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), W - 34, tag ? 26 : 30);
+  if (tag){
+    g.font = '600 40px "Saira Condensed", sans-serif';
+    g.fillStyle = legible(f);
+    g.fillText(tag, W - 34, 106);
+  }
+  return spriteFromCanvas(cv, tag ? 2.0 : 1.85);
+}
+
+function rebuildLabels(){
+  if (!three.ok) return;
+  three.labelSprites.forEach(entry => {
+    let cv;
+    if (entry.kind === "fraction") cv = makeSprite(entry.f).material.map.image;
+    else if (entry.kind === "temp") cv = makeTempSprite(entry.f).material.map.image;
+    else if (entry.kind === "tempEdge") cv = makeTempSprite(entry.f, entry.tag).material.map.image;
+    else if (entry.kind === "furnace")
+      cv = makeSprite({ name:"Furnace", alt:"heated inside tubes", color:"#FF8C2E", carbons:"≈ 350 °C" }).material.map.image;
+    else cv = makeSprite({ name:"Crude oil in", alt:"a mixture of hydrocarbons", color:"#8E4E3C", carbons:"mostly alkanes" }).material.map.image;
+    entry.sprite.material.map.dispose();
+    const tex = new THREE.CanvasTexture(cv);
+    tex.minFilter = THREE.LinearFilter;
+    entry.sprite.material.map = tex;
+    entry.sprite.material.needsUpdate = true;
+  });
+}
+
+/* Trays, caps and pipes are drawn in the companion ink, which flips with the
+   theme; the pools and drums keep the product's own colour either way.       */
+function restyleFractionMaterials(){
+  if (!three.ok) return;
+  three.themedMats.forEach(e => {
+    const c = new THREE.Color(legible(e.f));
+    e.mat.color.set(c);
+    if (e.mat.emissive) e.mat.emissive.set(c);
+    e.mat.needsUpdate = true;
+  });
+}
+
+function applySceneTheme(){
+  if (!three.ok) return;
+  const dark = isDark();
+  three.scene.background = new THREE.Color(dark ? 0x070C11 : 0xC8D3DC);
+  three.scene.fog = new THREE.Fog(dark ? 0x070C11 : 0xC8D3DC, 24, 56);
+  three.pad.material.color.set(dark ? 0x1B242C : 0x93A2AE);
+  three.shellMat.opacity = dark ? 0.17 : 0.22;
+  three.domeMat.opacity = dark ? 0.17 : 0.22;
+  three.shellMat.color.set(dark ? 0xa9b8c4 : 0x8b9aa7);
+  three.domeMat.color.set(dark ? 0xa9b8c4 : 0x8b9aa7);
+  three.gasMat.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+  three.gasMat.opacity = dark ? 0.52 : 0.62;
+  three.gasMat.needsUpdate = true;
+  three.conMat.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+  three.conMat.needsUpdate = true;
+  three.ember.intensity = dark ? 2.4 : 1.2;
+  three.hemi.intensity = dark ? 0.7 : 1.0;
+}
+
+/* ── Orbit camera ───────────────────────────────────────────────────────── */
+const cam = {
+  theta: 0.62, phi: 1.16, radius: 17,
+  wantTheta: 0.62, wantPhi: 1.16, wantRadius: 17,
+  target: null, wantTarget: null
+};
+if (typeof THREE !== "undefined"){
+  cam.target = new THREE.Vector3(1.8, 4.9, 0);
+  cam.wantTarget = new THREE.Vector3(1.8, 4.9, 0);
+}
+
+function updateCamera(dt){
+  const k = reduceMotion ? 1 : Math.min(1, dt * 4.2);
+  cam.theta  += (cam.wantTheta  - cam.theta)  * k;
+  cam.phi    += (cam.wantPhi    - cam.phi)    * k;
+  cam.radius += (cam.wantRadius - cam.radius) * k;
+  cam.target.lerp(cam.wantTarget, k);
+
+  const p = Math.max(0.25, Math.min(Math.PI - 0.25, cam.phi));
+  three.camera.position.set(
+    cam.target.x + cam.radius * Math.sin(p) * Math.sin(cam.theta),
+    cam.target.y + cam.radius * Math.cos(p),
+    cam.target.z + cam.radius * Math.sin(p) * Math.cos(cam.theta)
+  );
+  three.camera.lookAt(cam.target);
+}
+
+function setCameraFocus(f){
+  if (!three.ok) return;
+  if (!f){
+    cam.wantTarget.set(1.8, 4.9, 0); cam.wantRadius = 17;
+    cam.wantPhi = 1.16; cam.wantTheta = 0.62;
+  } else {
+    const y = f.exitsAsGas ? COL_H + 0.8 : f.h * COL_H;
+    cam.wantTarget.set(2.2, y, 0);
+    cam.wantRadius = 11.5; cam.wantPhi = 1.42; cam.wantTheta = 0.42;
+  }
+}
+
+/* Where a particle sits, in 3D world space */
+function pos3(p, out){
+  const f = byId[p.fid];
+  const wob = Math.sin(p.wob) * 0.1;
+  if (p.phase === "out"){
+    if (f.exitsAsGas){
+      const rise = Math.min(1, p.op / 0.34);
+      const run  = Math.max(0, (p.op - 0.34) / 0.66);
+      out.y = f.h * COL_H + (COL_H + 0.8 - f.h * COL_H) * rise;
+      out.x = run * (PIPE_LEN + 0.9);
+      out.z = Math.cos(p.ang) * 0.1;
+    } else {
+      out.y = f.h * COL_H;
+      out.x = COL_R * 0.6 + p.op * (PIPE_LEN + 0.9);
+      out.z = Math.sin(p.ang) * 0.08;
+    }
+    return out;
+  }
+  const r = (Math.abs(p.xr) + wob * 0.4) * COL_R * 0.86;
+  out.x = Math.cos(p.ang) * r;
+  out.z = Math.sin(p.ang) * r;
+  out.y = p.h * COL_H;
+  return out;
+}
+
+function render3D(){
+  const dimmed = state.following;
+  const dark = isDark();
+  const ground = dark ? "#070C11" : "#C8D3DC";
+  const pcol = {};
+  FRACTIONS.forEach(f => { pcol[f.id] = contrastSafe(f, ground); });
+  let gn = 0, ln = 0, cn = 0;
+  const v = { x:0, y:0, z:0 };
+  const tmp = new THREE.Color();
+
+  for (let i = 0; i < particles.length; i++){
+    const p = particles[i];
+    const f = byId[p.fid];
+    pos3(p, v);
+    const faded = dimmed && p.fid !== dimmed;
+    tmp.set(pcol[p.fid]);
+    if (faded) tmp.multiplyScalar(dark ? 0.18 : 0.30);
+    else if (p.flash > 0.04) tmp.multiplyScalar(0.75 + p.flash * 0.85);
+    else if (p.liquid) tmp.multiplyScalar(dark ? 0.92 : 0.72);
+    else tmp.multiplyScalar(dark ? 1.25 : 1.0);
+
+    if (p.flash > 0.04 && !faded){ conWrite(cn, v, tmp); cn++; }
+    else if (p.liquid){ liqPosWrite(ln, v, tmp); ln++; }
+    else { gasPosWrite(gn, v, tmp); gn++; }
+  }
+  three.gasGeo.setDrawRange(0, gn);
+  three.liqGeo.setDrawRange(0, ln);
+  three.conGeo.setDrawRange(0, cn);
+  three.gasGeo.attributes.position.needsUpdate = true;
+  three.gasGeo.attributes.color.needsUpdate = true;
+  three.liqGeo.attributes.position.needsUpdate = true;
+  three.liqGeo.attributes.color.needsUpdate = true;
+  three.conGeo.attributes.position.needsUpdate = true;
+  three.conGeo.attributes.color.needsUpdate = true;
+
+  /* Liquid standing on each tray */
+  FRACTIONS.forEach(f => {
+    const m = three.poolMeshes[f.id];
+    if (!m) return;
+    const lvl = Math.max(0.004, (poolLevel[f.id] || 0) * 0.19);
+    m.scale.y = lvl;
+    m.position.y = f.h * COL_H + 0.045 + lvl / 2;
+    m.material.opacity = (!dimmed || dimmed === f.id) ? 0.85 : 0.16;
+  });
+
+  /* Emphasise the tray being followed */
+  FRACTIONS.forEach(f => {
+    const m = three.trayMeshes[f.id];
+    if (!m) return;
+    const on = !dimmed || dimmed === f.id;
+    m.material.emissiveIntensity = on ? (dimmed === f.id ? 0.75 : 0.28) : 0.05;
+    m.material.opacity = 1;
+  });
+  three.labelSprites.forEach(e => {
+    const relevant = !dimmed || !e.f || e.f.id === dimmed || e.kind === "tempEdge";
+    e.sprite.visible = state.labels && relevant;
+  });
+
+  three.renderer.render(three.scene, three.camera);
+}
+function gasPosWrite(i, v, c){
+  three.gasPos[i*3] = v.x; three.gasPos[i*3+1] = v.y; three.gasPos[i*3+2] = v.z;
+  three.gasCol[i*3] = c.r; three.gasCol[i*3+1] = c.g; three.gasCol[i*3+2] = c.b;
+}
+function liqPosWrite(i, v, c){
+  three.liqPos[i*3] = v.x; three.liqPos[i*3+1] = v.y; three.liqPos[i*3+2] = v.z;
+  three.liqCol[i*3] = c.r; three.liqCol[i*3+1] = c.g; three.liqCol[i*3+2] = c.b;
+}
+function conWrite(i, v, c){
+  three.conPos[i*3] = v.x; three.conPos[i*3+1] = v.y; three.conPos[i*3+2] = v.z;
+  three.conCol[i*3] = c.r; three.conCol[i*3+1] = c.g; three.conCol[i*3+2] = c.b;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   5. 2D RENDERER — a schematic, drawn in a fixed 1200 × 760 space
+   ════════════════════════════════════════════════════════════════════════ */
+
+const VW = 1200, VH = 760;
+const TX0 = 468, TX1 = 700, TY0 = 66, TY1 = 690;   /* tower box */
+const TW = TX1 - TX0, TH = TY1 - TY0;
+const OUT_X = 828;                                  /* label pill left edge */
+
+const view2 = { zoom:1, cx:VW/2, cy:VH/2, wantZoom:1, wantCx:VW/2, wantCy:VH/2 };
+
+/* Vapour is drawn as a pre-rendered soft blob — one small sprite per fraction,
+   rebuilt only when the theme changes, so it costs nothing per frame.       */
+const puffCache = { key:"", sprites:{} };
+function buildPuffs(pcolOf, dark){
+  const key = dark ? "d" : "l";
+  if (puffCache.key === key) return;
+  puffCache.key = key;
+  puffCache.sprites = {};
+  FRACTIONS.forEach(f => {
+    const S = 44, cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const gg = cv.getContext("2d");
+    const col = pcolOf[f.id];
+    const grad = gg.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+    grad.addColorStop(0,   rgba(col, dark ? .60 : .52));
+    grad.addColorStop(.42, rgba(col, dark ? .26 : .22));
+    grad.addColorStop(1,   rgba(col, 0));
+    gg.fillStyle = grad; gg.fillRect(0, 0, S, S);
+    puffCache.sprites[f.id] = cv;
+  });
+}
+
+function hToY(h){ return TY1 - h * TH; }
+
+function render2D(){
+  const g = c2d.getContext("2d");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = c2d.width / dpr, h = c2d.height / dpr;
+  const dark = isDark();
+
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = dark ? "#070C11" : "#F4F7F9";
+  g.fillRect(0, 0, w, h);
+
+  const s = Math.min(w / VW, h / VH) * view2.zoom;
+  g.setTransform(s * dpr, 0, 0, s * dpr, (w/2 - view2.cx * s) * dpr, (h/2 - view2.cy * s) * dpr);
+
+  const ink   = dark ? "#E9F1F6" : "#0F1A21";
+  const mut   = dark ? "#7C919F" : "#62727D";
+  const line  = dark ? "#334755" : "#A9B7C2";
+  const panel = dark ? "#0E1821" : "#FFFFFF";
+  const dim   = state.following;
+
+  g.lineJoin = "round"; g.lineCap = "round";
+
+  const ground2 = dark ? "#070C11" : "#F4F7F9";
+  const pcolOf = {};
+  FRACTIONS.forEach(f => { pcolOf[f.id] = contrastSafe(f, ground2); });
+  buildPuffs(pcolOf, dark);
+
+  /* ── Furnace: a fired heater. The crude oil runs through a coil of tubes and
+     the burners heat the tubes by radiation. Flame must never touch the oil —
+     it would crack and coke it — so the flame tips stop short of the coil.  */
+  const fx = 140, fy = 520, fw = 195, fh = 170;
+  const fRight = fx + fw, fBot = fy + fh;
+  const coilY = [548, 580, 612], cx0 = 160, cx1 = 315, bendOut = 15;
+  const crude = dark ? "#5C4633" : "#332619";
+  g.globalAlpha = dim ? 0.35 : 1;
+
+  /* casing */
+  g.fillStyle = panel; g.strokeStyle = ink; g.lineWidth = 4;
+  g.fillRect(fx, fy, fw, fh); g.strokeRect(fx, fy, fw, fh);
+
+  /* radiant heat filling the firebox */
+  const heat = g.createLinearGradient(0, fBot, 0, fy + 26);
+  heat.addColorStop(0, rgba("#E2683A", dark ? .42 : .28));
+  heat.addColorStop(1, rgba("#E2683A", 0));
+  g.fillStyle = heat; g.fillRect(fx + 3, fy + 26, fw - 6, fh - 29);
+
+  /* burners along the floor — every flame stays inside the casing */
+  const bBase = fBot - 10, bTip = fBot - 64;
+  for (let i = 0; i < 5; i++){
+    const bx = fx + 24 + i * 37;
+    g.fillStyle = mut; g.fillRect(bx - 8, fBot - 9, 16, 7);
+    const fg = g.createLinearGradient(0, bBase, 0, bTip);
+    fg.addColorStop(0, "#B5342B"); fg.addColorStop(.45, "#E2683A"); fg.addColorStop(1, "#F7C948");
+    g.fillStyle = fg;
+    g.beginPath();
+    g.moveTo(bx - 12, bBase);
+    g.bezierCurveTo(bx - 14, bBase - 24, bx - 6, bBase - 34, bx, bTip);
+    g.bezierCurveTo(bx + 6, bBase - 34, bx + 14, bBase - 24, bx + 12, bBase);
+    g.closePath(); g.fill();
+    g.fillStyle = rgba("#FFE9A8", .85);            /* the hotter inner cone */
+    g.beginPath();
+    g.moveTo(bx - 4.5, bBase);
+    g.bezierCurveTo(bx - 6, bBase - 14, bx - 2, bBase - 19, bx, bBase - 28);
+    g.bezierCurveTo(bx + 2, bBase - 19, bx + 6, bBase - 14, bx + 4.5, bBase);
+    g.closePath(); g.fill();
+  }
+
+  /* the tube coil the oil actually flows through, drawn as a steel wall with
+     the oil visible inside it */
+  const coilPath = () => {
+    g.beginPath();
+    g.moveTo(40, coilY[0]);
+    coilY.forEach((y, i) => {
+      const l2r = i % 2 === 0;
+      const a = l2r ? cx0 : cx1, b = l2r ? cx1 : cx0;
+      g.lineTo(a, y); g.lineTo(b, y);
+      if (i < coilY.length - 1){
+        const ox = l2r ? b + bendOut : b - bendOut;
+        g.quadraticCurveTo(ox, (y + coilY[i + 1]) / 2, b, coilY[i + 1]);
+      }
+    });
+  };
+  g.strokeStyle = mut;   g.lineWidth = 12;  coilPath(); g.stroke();
+  g.strokeStyle = crude; g.lineWidth = 5.5; coilPath(); g.stroke();
+
+  /* hot vapour leaving the coil for the column */
+  const outY = coilY[coilY.length - 1];
+  const outPath = () => { g.beginPath(); g.moveTo(cx1, outY); g.lineTo(TX0, outY); };
+  g.strokeStyle = mut;       g.lineWidth = 12;  outPath(); g.stroke();
+  g.strokeStyle = "#D9752F"; g.lineWidth = 5.5; outPath(); g.stroke();
+
+  /* direction of flow */
+  g.strokeStyle = ink; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(104, coilY[0] - 8); g.lineTo(114, coilY[0]); g.lineTo(104, coilY[0] + 8); g.stroke();
+  g.beginPath(); g.moveTo(406, outY - 8); g.lineTo(416, outY); g.lineTo(406, outY + 8); g.stroke();
+
+  /* labels */
+  g.fillStyle = ink;
+  g.font = '600 25px "Saira Condensed", sans-serif'; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillText("FURNACE", fx + fw / 2, fy - 34);
+  g.textAlign = "left";
+  g.font = '600 22px "Saira Condensed", sans-serif';
+  g.fillText("CRUDE OIL IN", 40, fy - 34);
+  g.fillStyle = mut; g.font = '400 17px "IBM Plex Sans", sans-serif';
+  g.fillText("a mixture of hydrocarbons", 40, fy - 12);
+  g.textAlign = "center";
+  fitText(g, "the burners heat the tubes, not the oil", fx + fw / 2, fBot + 26, 320, 17,
+          '400 %Spx "IBM Plex Sans", sans-serif');
+  fitText(g, "crude oil vaporises at about 350 °C", fx + fw / 2, fBot + 48, 320, 17,
+          '400 %Spx "IBM Plex Sans", sans-serif');
+  g.globalAlpha = 1;
+
+  /* ── Tower shell ── */
+  g.fillStyle = dark ? "#0C141C" : "#FBFCFD";
+  g.strokeStyle = ink; g.lineWidth = 5;
+  g.beginPath();
+  g.moveTo(TX0, TY1);
+  g.lineTo(TX0, TY0 + 40);
+  g.quadraticCurveTo(TX0, TY0, TX0 + TW/2, TY0);
+  g.quadraticCurveTo(TX1, TY0, TX1, TY0 + 40);
+  g.lineTo(TX1, TY1);
+  g.closePath();
+  g.fill(); g.stroke();
+
+  /* flash zone shading at the base */
+  const flash = g.createLinearGradient(0, TY1, 0, TY1 - 120);
+  flash.addColorStop(0, rgba("#E2683A", dark ? .32 : .20));
+  flash.addColorStop(1, rgba("#E2683A", 0));
+  g.fillStyle = flash; g.fillRect(TX0 + 3, TY1 - 120, TW - 6, 117);
+
+  /* ── Trays, pipes, labels ── */
+  FRACTIONS.forEach((f, i) => {
+    const y = hToY(f.h);
+    const on = !dim || dim === f.id;
+    const sc = strokeOf(f);
+    g.globalAlpha = on ? 1 : 0.22;
+
+    /* A tray carries two flows in opposite directions and keeps them apart.
+       Vapour goes UP through the capped spouts, which are on a regular pitch
+       so it rises evenly across the plate. Liquid goes DOWN through the
+       downcomer — a gap at the wall, not mid-plate — which swaps side from
+       one tray to the next, so the caps sit in different places each level. */
+    const DC_W = 32;
+    const actL = TX0 + 5, actR = TX1 - 5 - DC_W;
+
+    const lvl = poolLevel[f.id] || 0;
+    if (!f.exitsAsGas && lvl > 0.015){
+      const ph = 3 + lvl * 13;
+      g.fillStyle = rgba(f.color, .93);
+      g.fillRect(actL, y - ph, actR - actL, ph);
+      g.strokeStyle = rgba(legible(f), .95);
+      g.lineWidth = 2.5;
+      g.beginPath(); g.moveTo(actL, y - ph); g.lineTo(actR, y - ph); g.stroke();
+    }
+
+    /* the tray plate, stopping short of the wall on the downcomer side */
+    g.strokeStyle = sc; g.lineWidth = on && dim ? 8 : 6;
+    g.beginPath(); g.moveTo(actL, y); g.lineTo(actR, y); g.stroke();
+
+    if (!f.exitsAsGas){
+      /* The draw-off sump. Liquid spills over the weir into the channel at
+         the wall and is piped away as the product — so unlike a plain
+         downcomer its floor is solid, or it would simply drain onto the
+         tray below instead of being collected.                           */
+      const sumpT = y - 12, sumpB = y + 24, sumpR = TX1 - 5;
+      g.fillStyle = rgba(f.color, .55);
+      g.fillRect(actR, sumpT, sumpR - actR, sumpB - sumpT);
+      g.strokeStyle = sc; g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(actR, sumpT); g.lineTo(actR, sumpB); g.lineTo(sumpR, sumpB);
+      g.stroke();
+
+      /* capped spouts — even pitch across the plate, inset differently on
+         alternate trays so they do not stack up in vertical columns       */
+      const n = 4, inset = 18 + (i % 2 ? 15 : 0);
+      const span = (actR - actL) - 2 * inset;
+      g.lineWidth = 2.6;
+      for (let k = 0; k < n; k++){
+        const cxp = actL + inset + (span * k) / (n - 1);
+        g.beginPath();                                   /* riser through the tray */
+        g.moveTo(cxp, y + 4); g.lineTo(cxp, y - 14);
+        g.stroke();
+        g.beginPath();                                   /* the cap over it */
+        g.moveTo(cxp - 9, y - 6);
+        g.lineTo(cxp - 9, y - 21);
+        g.lineTo(cxp + 9, y - 21);
+        g.lineTo(cxp + 9, y - 6);
+        g.stroke();
+      }
+    }
+
+    /* temperature on the left */
+    g.fillStyle = on ? ink : mut;
+    g.font = '500 23px "IBM Plex Mono", monospace';
+    g.textAlign = "right"; g.textBaseline = "middle";
+    g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), TX0 - 22, y);
+
+    /* outlet pipe */
+    g.strokeStyle = sc; g.lineWidth = 7;
+    g.beginPath();
+    if (f.exitsAsGas){
+      g.moveTo(TX0 + TW/2, TY0); g.lineTo(TX0 + TW/2, TY0 - 34);
+      g.lineTo(OUT_X - 34, TY0 - 34); g.lineTo(OUT_X - 34, y - 4);
+      g.lineTo(OUT_X - 6, y - 4);
+    } else {
+      g.moveTo(TX1, y); g.lineTo(OUT_X - 6, y);
+    }
+    g.stroke();
+
+    /* label pill */
+    const pw = 270, ph = 62, px = OUT_X, py = y - ph/2;
+    g.fillStyle = panel; g.strokeStyle = sc; g.lineWidth = on && dim ? 5 : 3;
+    roundRect(g, px, py, pw, ph, 4); g.fill(); g.stroke();
+    g.fillStyle = f.color; g.fillRect(px, py, 11, ph);
+    g.strokeStyle = rgba(sc, .9); g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(px + 11, py); g.lineTo(px + 11, py + ph); g.stroke();
+
+    g.textAlign = "left";
+    g.fillStyle = on ? ink : mut;
+    g.font = '600 27px "Saira Condensed", sans-serif'; g.textBaseline = "alphabetic";
+    g.fillText(f.name.toUpperCase(), px + 24, py + 27);
+    g.fillStyle = mut;
+    fitText(g, f.useShort, px + 24, py + 50, pw - 44, 17, '400 %Spx "IBM Plex Sans", sans-serif');
+    g.fillStyle = on ? ink : mut;
+    g.font = '500 19px "IBM Plex Mono", monospace'; g.textAlign = "right";
+    g.fillText(f.carbons, px + pw - 14, py + 27);
+
+    /* what it is used for, as an icon beside the label */
+    drawIcon(g, f.id, px + pw + 18, y - 19, 38, on ? sc : mut, panel);
+    g.globalAlpha = 1;
+  });
+
+  /* ── Particles ── */
+  for (let i = 0; i < particles.length; i++){
+    const p = particles[i];
+    const f = byId[p.fid];
+    const faded = dim && p.fid !== dim;
+    const pt = pos2(p);
+    const pc = pcolOf[p.fid];
+
+    if (!p.liquid){
+      /* Vapour: a diffuse puff with no hard edge and no core */
+      g.globalAlpha = faded ? (dark ? .22 : .28) : 1;
+      g.drawImage(puffCache.sprites[p.fid], pt.x - 11, pt.y - 11, 22, 22);
+      g.globalAlpha = 1;
+    }
+
+    if (p.flash > 0.04 && !faded){                  /* the instant it condenses */
+      g.strokeStyle = rgba(pc, p.flash * .85);
+      g.lineWidth = 2.5;
+      g.beginPath(); g.arc(pt.x, pt.y, 6 + (1 - p.flash) * 13, 0, 6.2832); g.stroke();
+    }
+
+    if (p.liquid){
+      /* Liquid: a small, solid, crisp-edged droplet with a highlight on it */
+      g.fillStyle = faded ? rgba(pc, dark ? .22 : .28) : pc;
+      g.beginPath(); g.arc(pt.x, pt.y, 4.4, 0, 6.2832); g.fill();
+      if (!faded){
+        g.strokeStyle = rgba(shift(pc, -.34), .6); g.lineWidth = 1;
+        g.stroke();
+        g.fillStyle = rgba(shift(pc, .5), .8);
+        g.beginPath(); g.arc(pt.x - 1.3, pt.y - 1.3, 1.5, 0, 6.2832); g.fill();
+      }
+    }
+  }
+
+  /* ── Direction of travel ── */
+  g.globalAlpha = dim ? 0.3 : 0.75;
+  g.strokeStyle = mut; g.lineWidth = 3; g.setLineDash([9, 8]);
+  g.beginPath(); g.moveTo(TX0 - 118, TY1 - 100); g.lineTo(TX0 - 118, TY0 + 40); g.stroke();
+  g.setLineDash([]);
+  g.fillStyle = mut;
+  g.beginPath(); g.moveTo(TX0 - 118, TY0 + 24); g.lineTo(TX0 - 126, TY0 + 44); g.lineTo(TX0 - 110, TY0 + 44); g.closePath(); g.fill();
+  g.save();
+  g.translate(TX0 - 130, (TY0 + TY1) / 2 - 30); g.rotate(-Math.PI/2);
+  g.textAlign = "center"; g.font = '600 21px "Saira Condensed", sans-serif';
+  g.fillText("VAPOURS RISE AND COOL", 0, 0);
+  g.restore();
+  g.globalAlpha = 1;
+
+  /* inspect-height marker */
+  const iy = hToY(state.inspectH);
+  g.strokeStyle = tok("--accent") || "#F2C200"; g.lineWidth = 3;
+  g.setLineDash([6, 6]);
+  g.beginPath(); g.moveTo(TX0 - 100, iy); g.lineTo(TX1 + 20, iy); g.stroke();
+  g.setLineDash([]);
+}
+
+/* Draws text at the largest size that still fits the width it is given */
+function fitText(g, text, x, y, maxW, size, fontTpl){
+  let px = size;
+  do {
+    g.font = fontTpl.replace("%S", px);
+    if (g.measureText(text).width <= maxW) break;
+    px -= 0.5;
+  } while (px > 10);
+  g.fillText(text, x, y);
+}
+
+function pos2(p){
+  const f = byId[p.fid];
+  if (p.phase === "out"){
+    if (f.exitsAsGas){
+      const y0 = hToY(f.h), yTop = TY0 - 34, yEnd = hToY(f.h) - 4;
+      const a = Math.min(1, p.op / 0.28);
+      const b = Math.max(0, Math.min(1, (p.op - 0.28) / 0.42));
+      const c = Math.max(0, (p.op - 0.70) / 0.30);
+      if (p.op < 0.28) return { x:TX0 + TW/2, y:y0 + (yTop - y0) * a };
+      if (p.op < 0.70) return { x:TX0 + TW/2 + (OUT_X - 34 - TX0 - TW/2) * b, y:yTop };
+      return { x:OUT_X - 34, y:yTop + (yEnd - yTop) * c };
+    }
+    return { x:TX1 - 20 + p.op * (OUT_X - TX1 + 26), y:hToY(f.h) };
+  }
+  const wob = Math.sin(p.wob) * 0.07;
+  return { x:TX0 + TW/2 + (p.xr + wob) * (TW/2 - 16), y:hToY(p.h) };
+}
+
+function setView2Focus(f){
+  if (!f){ view2.wantZoom = 1; view2.wantCx = VW/2; view2.wantCy = VH/2; }
+  else {
+    view2.wantZoom = 1.7;
+    view2.wantCx = 730;
+    view2.wantCy = f.exitsAsGas ? TY0 + 10 : hToY(f.h);
+  }
+}
+function updateView2(dt){
+  const k = reduceMotion ? 1 : Math.min(1, dt * 4.2);
+  view2.zoom += (view2.wantZoom - view2.zoom) * k;
+  view2.cx   += (view2.wantCx   - view2.cx)   * k;
+  view2.cy   += (view2.wantCy   - view2.cy)   * k;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6. SIZING + MAIN LOOP
+   ════════════════════════════════════════════════════════════════════════ */
+
+function resize(){
+  const r = stageEl.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(1, Math.floor(r.width)), h = Math.max(1, Math.floor(r.height));
+  c2d.width = Math.floor(w * dpr); c2d.height = Math.floor(h * dpr);
+  if (three.ok){
+    three.renderer.setSize(w, h, false);
+    three.camera.aspect = w / h;
+    three.camera.updateProjectionMatrix();
+  }
+}
+
+let last = performance.now();
+function frame(now){
+  const raw = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (state.playing) simulate(raw * state.speed);
+
+  if (state.mode === "3d" && three.ok){
+    updateCamera(raw);
+    render3D();
+  } else {
+    updateView2(raw);
+    render2D();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   7. UI
+   ════════════════════════════════════════════════════════════════════════ */
+
+const $ = sel => document.querySelector(sel);
+
+/* ── Fraction list ── */
+const flistEl = $("#flist");
+FRACTIONS.forEach((f, i) => {
+  const b = document.createElement("button");
+  b.className = "frow";
+  b.dataset.fid = f.id;
+  b.type = "button";
+  b.innerHTML =
+    '<span class="swatch" style="background:' + f.color + '"></span>' +
+    '<span class="idx">' + (i + 1) + '</span>' +
+    iconSVG(f.id, 26, "uicon") +
+    '<span class="nm">' + f.name + (f.alt ? ' <em>' + f.alt + '</em>' : '') + '</span>' +
+    '<span class="cbn">' + f.carbons + '</span>' +
+    '<span class="sub">' + f.bp + '</span>';
+  b.addEventListener("click", () => selectFraction(f.id, true));
+  flistEl.appendChild(b);
+});
+
+function renderDetail(){
+  const f = byId[state.selected];
+  const pct = Math.round(f.h * 100);
+  const narrative = f.neverVaporises
+    ? "Too involatile to boil at 350 °C, so it never vaporises. It stays liquid and drains from the very bottom of the column as residue."
+    : f.exitsAsGas
+      ? "Stays a gas all the way up. It reaches the top of the column, where the temperature is only about 25 °C — still above its boiling point — so it leaves as a gas."
+      : "Rises to about " + pct + "% of the column height. There the vapour has cooled to " +
+        (f.tempLabel || Math.round(f.condT) + " °C") + ", which is its boiling point, so it condenses and is collected as a liquid.";
+
+  const bar = (label, value, unitText) =>
+    '<div class="bar-row">' +
+      '<span class="bl">' + label + '</span>' +
+      '<span class="bv">' + unitText + '</span>' +
+      '<span class="bar"><i style="width:' + value + '%; background:' + legible(f) + '"></i></span>' +
+    '</div>';
+
+  $("#detail").innerHTML =
+    '<div class="detail-head">' +
+      '<span class="bigswatch" style="background:' + f.color + '"></span>' +
+      '<div><h2>' + f.name + '</h2>' +
+      '<p>' + (f.alt ? f.alt + " · " : "") + 'collected ' + pct + '% up the column</p></div>' +
+    '</div>' +
+    '<div class="chips">' +
+      '<span class="chip"><b>chain</b> ' + f.carbons + '</span>' +
+      '<span class="chip"><b>boils</b> ' + f.bp + '</span>' +
+      '<span class="chip"><b>e.g.</b> ' + f.formula + '</span>' +
+    '</div>' +
+    '<p class="narr">' + narrative + '</p>' +
+    '<div class="bars">' +
+      bar("Boiling point", f.props.boil, f.bp) +
+      bar("Viscosity", f.props.visc, f.props.visc < 20 ? "runny" : f.props.visc < 60 ? "medium" : "very thick") +
+      bar("Flammability", f.props.flam, f.props.flam > 70 ? "ignites easily" : f.props.flam > 35 ? "moderate" : "hard to ignite") +
+      bar("Carbon atoms per molecule", f.props.chain, f.carbonN) +
+    '</div>' +
+    '<div class="usebox"><p class="sec-title">Used for</p>' +
+      '<div class="use-row">' + iconSVG(f.id, 34, "uicon-lg") + '<p>' + f.use + '</p></div></div>';
+
+  document.querySelectorAll(".frow").forEach(r =>
+    r.setAttribute("aria-current", r.dataset.fid === state.selected ? "true" : "false"));
+}
+
+function selectFraction(fid, follow){
+  state.selected = fid;
+  if (follow) state.following = fid;
+  const f = byId[fid];
+  setCameraFocus(state.following ? f : null);
+  setView2Focus(state.following ? f : null);
+  setInspectHeight(f.h, false);
+  renderDetail();
+  renderFollowBar();
+  switchTab("frac");
+}
+
+function renderFollowBar(){
+  const bar = $("#follow-bar");
+  if (!state.following){ bar.hidden = true; return; }
+  const f = byId[state.following];
+  bar.hidden = false;
+  $("#follow-dot").style.background = f.color;
+  $("#follow-name").textContent = f.name;
+}
+
+$("#btn-unfollow").addEventListener("click", () => {
+  state.following = null;
+  setCameraFocus(null);
+  setView2Focus(null);
+  renderFollowBar();
+});
+
+/* ── Exam points ── */
+const markListEl = $("#marklist");
+MARK_POINTS.forEach((m, i) => {
+  const card = document.createElement("div");
+  card.className = "markcard";
+  card.dataset.open = "false";
+  const aid = "mk-a-" + i;
+  card.innerHTML =
+    '<button type="button" aria-expanded="false" aria-controls="' + aid + '">' +
+      '<span class="mk-n">' + (i + 1) + '</span>' +
+      '<span><span class="mk-q">' + m.q + '</span><span class="mk-tag">' + m.tag + '</span></span>' +
+      '<span class="mk-caret">+</span>' +
+    '</button>' +
+    '<div class="mk-a" id="' + aid + '" hidden>' + m.a + '</div>';
+  const btn = card.querySelector("button");
+  btn.addEventListener("click", () => setCard(card, card.dataset.open !== "true"));
+  markListEl.appendChild(card);
+});
+function setCard(card, open){
+  card.dataset.open = open ? "true" : "false";
+  card.querySelector("button").setAttribute("aria-expanded", open ? "true" : "false");
+  card.querySelector(".mk-a").hidden = !open;
+  card.querySelector(".mk-caret").textContent = open ? "−" : "+";
+}
+$("#btn-reveal").addEventListener("click", () => {
+  state.revealAll = !state.revealAll;
+  const b = $("#btn-reveal");
+  b.setAttribute("aria-pressed", String(state.revealAll));
+  b.textContent = state.revealAll ? "Hide all answers" : "Reveal all answers";
+  document.querySelectorAll(".markcard").forEach(c => setCard(c, state.revealAll));
+  if (state.revealAll) switchTab("exam");
+});
+
+/* ── Tabs ── */
+function switchTab(which){
+  const frac = which === "frac";
+  $("#tab-frac").setAttribute("aria-selected", String(frac));
+  $("#tab-exam").setAttribute("aria-selected", String(!frac));
+  $("#panel-frac").hidden = !frac;
+  $("#panel-exam").hidden = frac;
+  $("#btn-marks").setAttribute("aria-pressed", String(!frac));
+}
+$("#tab-frac").addEventListener("click", () => switchTab("frac"));
+$("#tab-exam").addEventListener("click", () => switchTab("exam"));
+$("#btn-marks").addEventListener("click", () =>
+  switchTab($("#tab-exam").getAttribute("aria-selected") === "true" ? "frac" : "exam"));
+
+/* ── Mode toggle ── */
+function setMode(mode){
+  if (mode === "3d" && !three.ok) return;
+  state.mode = mode;
+  $("#mode-3d").setAttribute("aria-pressed", String(mode === "3d"));
+  $("#mode-2d").setAttribute("aria-pressed", String(mode === "2d"));
+  c3d.hidden = mode !== "3d";
+  c2d.hidden = mode !== "2d";
+  $("#hint").textContent = mode === "3d"
+    ? "Drag to orbit · scroll to zoom · click a tray to follow it"
+    : "Click a tray or a label to follow that fraction";
+  resize();
+}
+$("#mode-3d").addEventListener("click", () => setMode("3d"));
+$("#mode-2d").addEventListener("click", () => setMode("2d"));
+
+/* ── Transport ── */
+function setPlaying(on){
+  state.playing = on;
+  const b = $("#btn-play");
+  b.setAttribute("aria-pressed", String(on));
+  $("#play-txt").textContent = on ? "Pause" : "Play";
+  $("#play-ico").innerHTML = on
+    ? '<rect x="3" y="2.5" width="3.4" height="11" fill="currentColor"/><rect x="9.6" y="2.5" width="3.4" height="11" fill="currentColor"/>'
+    : '<path d="M3.5 2.2 L13.4 8 L3.5 13.8 Z" fill="currentColor"/>';
+}
+$("#btn-play").addEventListener("click", () => setPlaying(!state.playing));
+document.querySelectorAll("[data-speed]").forEach(b => {
+  b.addEventListener("click", () => {
+    state.speed = parseFloat(b.dataset.speed);
+    document.querySelectorAll("[data-speed]").forEach(o =>
+      o.setAttribute("aria-pressed", String(o === b)));
+    if (!state.playing) setPlaying(true);
+  });
+});
+$("#btn-reset").addEventListener("click", () => { seedColumn(); setPlaying(true); });
+
+/* Put the camera back where it started — zoom, angle, pan and follow */
+function resetView(){
+  state.following = null;
+  setCameraFocus(null);
+  setView2Focus(null);
+  renderFollowBar();
+}
+$("#btn-view").addEventListener("click", resetView);
+$("#btn-labels").addEventListener("click", () => {
+  state.labels = !state.labels;
+  $("#btn-labels").setAttribute("aria-pressed", String(state.labels));
+});
+
+/* ── Colour theme: follow the viewer, or pin it light or dark ──────────── */
+const THEME_KEY = "fdc-theme";
+const THEME_ICONS = {
+  auto:  '<circle cx="8" cy="8" r="5.3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+         '<path d="M8 2.7a5.3 5.3 0 0 0 0 10.6Z" fill="currentColor"/>',
+  light: '<circle cx="8" cy="8" r="3.1" fill="currentColor"/>' +
+         '<g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
+         '<path d="M8 1v1.7M8 13.3V15M1 8h1.7M13.3 8H15M3 3l1.2 1.2M11.8 11.8 13 13M13 3l-1.2 1.2M4.2 11.8 3 13"/></g>',
+  dark:  '<path d="M13.1 10.4A5.6 5.6 0 0 1 5.6 2.9a5.8 5.8 0 1 0 7.5 7.5Z" fill="currentColor"/>'
+};
+const THEME_LABEL = { auto:"Auto", light:"Light", dark:"Dark" };
+const THEME_HINT  = {
+  auto:"Colour theme: following your device. Click for light.",
+  light:"Colour theme: light. Click for dark.",
+  dark:"Colour theme: dark. Click to follow your device."
+};
+
+/* Read the mode from the document itself, so the button stays truthful even
+   if the viewer changes their theme outside the page.                       */
+function currentThemeMode(){
+  const c = document.body.classList;
+  return c.contains("theme-dark") ? "dark" : c.contains("theme-light") ? "light" : "auto";
+}
+function syncThemeButton(){
+  const mode = currentThemeMode();
+  document.getElementById("theme-ico").innerHTML = THEME_ICONS[mode];
+  document.getElementById("theme-txt").textContent = THEME_LABEL[mode];
+  const b = document.getElementById("btn-theme");
+  b.title = THEME_HINT[mode];
+  b.setAttribute("aria-label", THEME_HINT[mode]);
+}
+function setThemeMode(mode, remember){
+  document.body.classList.toggle("theme-dark", mode === "dark");
+  document.body.classList.toggle("theme-light", mode === "light");
+  if (remember){
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) { /* private mode */ }
+  }
+  syncThemeButton();
+  onThemeChange();
+}
+document.getElementById("btn-theme").addEventListener("click", () => {
+  const next = { auto:"light", light:"dark", dark:"auto" }[currentThemeMode()];
+  setThemeMode(next, true);
+});
+
+/* Restore a remembered choice before anything is drawn */
+(function restoreTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch (e) { /* private mode */ }
+  if (saved === "light" || saved === "dark") setThemeMode(saved, false);
+  syncThemeButton();
+})();
+
+/* ── Presentation mode ── */
+function setPresent(on){
+  state.present = on;
+  document.body.classList.toggle("present", on);
+  $("#btn-present").setAttribute("aria-pressed", String(on));
+  $("#btn-present").textContent = on ? "Exit presentation" : "Presentation";
+  if (on && document.documentElement.requestFullscreen)
+    document.documentElement.requestFullscreen().catch(() => {});
+  else if (!on && document.fullscreenElement && document.exitFullscreen)
+    document.exitFullscreen().catch(() => {});
+  requestAnimationFrame(resize);
+  setTimeout(resize, 260);
+}
+$("#btn-present").addEventListener("click", () => setPresent(!state.present));
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && state.present) setPresent(false);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && state.present) setPresent(false);
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === " " || e.code === "Space"){
+    if (document.activeElement && document.activeElement.tagName === "BUTTON") return;
+    e.preventDefault(); setPlaying(!state.playing);
+  }
+});
+
+/* ── Thermal gutter / height scrubber ── */
+const thermoEl = $("#thermo"), trackEl = $("#thermo-track"), markerEl = $("#thermo-marker");
+
+/* Ticks, positioned by height so they line up with the gradient */
+[{h:1,t:20},{h:0.80,t:100},{h:0.66,t:150},{h:0.51,t:250},{h:0.36,t:300},{h:0.21,t:340},{h:0.06,t:350}]
+  .forEach(a => {
+    const d = document.createElement("div");
+    d.className = "tick";
+    d.style.top = ((1 - a.h) * 100) + "%";
+    d.innerHTML = '<i></i><span>' + a.t + ' °C</span>';
+    trackEl.appendChild(d);
+  });
+
+function setInspectHeight(h, fromUser){
+  state.inspectH = Math.max(0, Math.min(1, h));
+  const t = Math.round(tempAt(state.inspectH));
+  const f = fractionAt(state.inspectH);
+  markerEl.style.top = ((1 - state.inspectH) * 100) + "%";
+  $("#ro-h").innerHTML = Math.round(state.inspectH * 100) + "<small>%</small>";
+  $("#ro-t").innerHTML = t + "<small>&nbsp;&deg;C</small>";
+  $("#ro-f").textContent = f.name;
+  thermoEl.setAttribute("aria-valuenow", String(Math.round(state.inspectH * 100)));
+  thermoEl.setAttribute("aria-valuetext",
+    Math.round(state.inspectH * 100) + " percent up the column, " + t + " degrees Celsius, " + f.name);
+  if (fromUser && f.id !== state.selected){ state.selected = f.id; renderDetail(); }
+}
+
+let scrubbing = false;
+function scrubFrom(clientY){
+  const r = trackEl.getBoundingClientRect();
+  setInspectHeight(1 - (clientY - r.top) / r.height, true);
+}
+thermoEl.addEventListener("pointerdown", e => {
+  scrubbing = true; thermoEl.setPointerCapture(e.pointerId); scrubFrom(e.clientY);
+});
+thermoEl.addEventListener("pointermove", e => { if (scrubbing) scrubFrom(e.clientY); });
+thermoEl.addEventListener("pointerup", () => { scrubbing = false; });
+thermoEl.addEventListener("pointercancel", () => { scrubbing = false; });
+thermoEl.addEventListener("keydown", e => {
+  const step = e.shiftKey ? 0.1 : 0.02;
+  if (e.key === "ArrowUp" || e.key === "ArrowRight"){ e.preventDefault(); setInspectHeight(state.inspectH + step, true); }
+  if (e.key === "ArrowDown" || e.key === "ArrowLeft"){ e.preventDefault(); setInspectHeight(state.inspectH - step, true); }
+  if (e.key === "Home"){ e.preventDefault(); setInspectHeight(1, true); }
+  if (e.key === "End"){ e.preventDefault(); setInspectHeight(0, true); }
+});
+
+/* ── Stage interaction: orbit, zoom, pick ── */
+const pointers = new Map();
+let downAt = null, pinchStart = 0, pinchRadius = 0;
+
+stageEl.addEventListener("pointerdown", e => {
+  if (e.target.closest(".readout, .follow-bar, .hint")) return;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  stageEl.setPointerCapture(e.pointerId);
+  downAt = { x:e.clientX, y:e.clientY, t:performance.now() };
+  if (pointers.size === 2){
+    const p = [...pointers.values()];
+    pinchStart = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+    pinchRadius = state.mode === "3d" ? cam.wantRadius : view2.wantZoom;
+  }
+});
+stageEl.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+  if (pointers.size === 2 && pinchStart > 0){
+    const p = [...pointers.values()];
+    const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+    if (state.mode === "3d") cam.wantRadius = clamp(pinchRadius * (pinchStart / d), 6, 34);
+    else view2.wantZoom = clamp(pinchRadius * (d / pinchStart), 0.7, 3);
+    return;
+  }
+  if (pointers.size !== 1) return;
+
+  if (state.mode === "3d" && three.ok){
+    cam.wantTheta -= dx * 0.0062;
+    cam.wantPhi = clamp(cam.wantPhi - dy * 0.0052, 0.28, Math.PI - 0.28);
+    cam.theta = cam.wantTheta; cam.phi = cam.wantPhi;   /* direct feel while dragging */
+  } else {
+    const r = stageEl.getBoundingClientRect();
+    const s = Math.min(r.width / VW, r.height / VH) * view2.zoom;
+    view2.wantCx = clamp(view2.wantCx - dx / s, 120, VW - 120);
+    view2.wantCy = clamp(view2.wantCy - dy / s, 100, VH - 100);
+    view2.cx = view2.wantCx; view2.cy = view2.wantCy;
+  }
+});
+function endPointer(e){
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchStart = 0;
+  if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 7 &&
+      performance.now() - downAt.t < 420){
+    pickAt(e.clientX, e.clientY);
+  }
+  downAt = null;
+}
+stageEl.addEventListener("pointerup", endPointer);
+stageEl.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); downAt = null; });
+stageEl.addEventListener("wheel", e => {
+  if (window.matchMedia("(max-width: 900px)").matches) return;   /* let the page scroll */
+  e.preventDefault();
+  if (state.mode === "3d") cam.wantRadius = clamp(cam.wantRadius * (1 + Math.sign(e.deltaY) * 0.1), 6, 34);
+  else view2.wantZoom = clamp(view2.wantZoom * (1 - Math.sign(e.deltaY) * 0.1), 0.7, 3);
+}, { passive:false });
+
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+function pickAt(clientX, clientY){
+  const r = stageEl.getBoundingClientRect();
+  if (state.mode === "3d" && three.ok){
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(
+      ((clientX - r.left) / r.width) * 2 - 1,
+      -((clientY - r.top) / r.height) * 2 + 1
+    ), three.camera);
+    const hits = ray.intersectObjects(three.pickables, false);
+    if (hits.length && hits[0].object.userData.fid){
+      selectFraction(hits[0].object.userData.fid, true);
+      return;
+    }
+  } else {
+    /* Map the click back into the 1200 × 760 schematic space */
+    const s = Math.min(r.width / VW, r.height / VH) * view2.zoom;
+    const vx = (clientX - r.left - r.width / 2) / s + view2.cx;
+    const vy = (clientY - r.top - r.height / 2) / s + view2.cy;
+    for (const f of FRACTIONS){
+      const y = hToY(f.h);
+      const inTower = vx > TX0 - 90 && vx < TX1 + 30 && Math.abs(vy - y) < 22;
+      const inPill  = vx > OUT_X - 40 && vx < OUT_X + 280 && Math.abs(vy - y) < 34;
+      if (inTower || inPill){ selectFraction(f.id, true); return; }
+    }
+  }
+  /* Clicking empty space releases the follow camera */
+  if (state.following){
+    state.following = null; setCameraFocus(null); setView2Focus(null); renderFollowBar();
+  }
+}
+
+/* ── Theme reactions ── */
+function onThemeChange(){
+  syncThemeButton();
+  applySceneTheme();
+  restyleFractionMaterials();
+  rebuildLabels();
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onThemeChange);
+new MutationObserver(onThemeChange).observe(document.documentElement, {
+  attributes:true, attributeFilter:["data-theme"]
+});
+
+/* ── Boot ─────────────────────────────────────────────────────────────── */
+const started = initThree();
+if (!started){
+  setMode("2d");
+  $("#mode-3d").disabled = true;
+  const warn = document.createElement("p");
+  warn.className = "stage-fail";
+  warn.textContent = "3D view unavailable on this device — the 2D schematic below shows the same simulation.";
+  stageEl.appendChild(warn);
+}
+
+renderDetail();
+renderFollowBar();
+setInspectHeight(0.51, false);
+setPlaying(state.playing);
+resize();
+new ResizeObserver(resize).observe(stageEl);
+window.addEventListener("resize", resize);
+
+if (document.fonts && document.fonts.ready){
+  document.fonts.ready.then(() => { rebuildLabels(); });
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
