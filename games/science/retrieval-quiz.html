@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Science Retrieval Presenter — AQA GCSE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   ARCADE CARTRIDGE — neubrutalist 8-bit skin
+   Visual layer only. Every ID, class and toggle name is
+   preserved exactly as the game logic expects them.
+   ════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* — arcade palette — */
+  --ink:#141414;
+  --paper:#fff6e5;
+  --dot:rgba(20,20,20,.07);
+  --blue:#2d5bff;
+  --pink:#ff2e88;
+  --lime:#c6ff00;
+  --gold:#ffc800;
+  --purple:#7b2ff7;
+  --teal:#00b884;
+  --navy:#12103a;
+  /* — legacy names kept: inline style attrs in the markup use these — */
+  --blue-light:#dde6ff;
+  --purple-light:#ece0ff;
+  --border:#141414;
+  --text:#141414;
+  --muted:#5b5344;
+  /* — tokens — */
+  --shadow:4px 4px 0 var(--ink);
+  --shadow-lg:9px 9px 0 var(--ink);
+  --display:'Bungee','Space Grotesk',system-ui,sans-serif;
+  --body:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+  --pixel:'Press Start 2P','Courier New',monospace;
+}
+
+@keyframes wa-pop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes wa-wobble{0%,100%{transform:rotate(-.5deg)}50%{transform:rotate(.5deg)}}
+@keyframes wa-tick{0%,100%{transform:scale(1)}55%{transform:scale(1.07)}}
+@keyframes wa-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wa-blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+html,body{height:100%;font-family:var(--body);color:var(--text);
+  background-color:var(--paper);
+  background-image:radial-gradient(var(--dot) 1.6px,transparent 1.6px);
+  background-size:26px 26px}
+
+#wa-outer{max-width:1060px;margin:0 auto;padding:16px;min-height:100vh;display:flex;flex-direction:column;gap:12px}
+
+/* ── Header ───────────────────────────────────────────────── */
+#wa-header{display:flex;align-items:center;gap:14px;padding:12px 18px;min-height:82px;color:#fff;
+  position:relative;overflow:hidden;
+  background:linear-gradient(120deg,var(--navy) 0%,#2a1b5e 55%,#3d1450 100%);
+  border:4px solid var(--ink);border-radius:16px;box-shadow:var(--shadow-lg)}
+#wa-header::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 4px)}
+#wa-header>*{position:relative;z-index:1}
+#wa-logo{height:54px;width:auto;flex-shrink:0;display:block;border-radius:6px;border:3px solid var(--ink);background:#fff}
+#wa-title-block{flex:1;min-width:0}
+#wa-title{font-family:var(--display);font-size:clamp(14px,1.55vw,17px);font-weight:400;line-height:1.15;letter-spacing:.3px;
+  color:var(--lime);text-shadow:2px 2px 0 var(--ink),0 0 18px rgba(198,255,0,.45)}
+.subtitle{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.8;margin-top:5px}
+#wa-joke-toggle,#wa-sound-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:7px 11px;flex-shrink:0;
+  font-size:17px;background:var(--gold);border:3px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);
+  transition:transform .1s,box-shadow .1s,background .15s}
+#wa-joke-toggle:hover,#wa-sound-toggle:hover{transform:rotate(-2deg)}
+#wa-joke-toggle:active,#wa-sound-toggle:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+#wa-sound-toggle{background:var(--lime)}
+#wa-sound-toggle.muted{background:#cfc9bd}
+#wa-sound-toggle.muted span{opacity:.55}
+#chk-joke,#chk-sound{accent-color:var(--pink);width:15px;height:15px;cursor:pointer}
+
+/* ── Mode toggle ──────────────────────────────────────────── */
+#mode-bar{display:flex;align-items:center;background:#fff;border:3px solid var(--ink);border-radius:12px;
+  overflow:hidden;flex-shrink:0;box-shadow:3px 3px 0 var(--ink)}
+.mode-btn{flex:1;padding:9px 16px;font:400 12px/1 var(--display);letter-spacing:.4px;border:none;
+  background:transparent;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .14s,color .14s}
+.mode-btn:hover{background:var(--blue-light);color:var(--ink)}
+.mode-btn.active{background:var(--lime);color:var(--ink)}
+
+/* ── Toolbars ─────────────────────────────────────────────── */
+#wa-toolbar{display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:10px}
+#wa-toolbar2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#wa-toolbar3,#wa-subtopic-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#wa-subtopic-row label{font-family:var(--display);font-size:11px;letter-spacing:.5px;color:var(--ink);white-space:nowrap;
+  background:var(--lime);border:3px solid var(--ink);border-radius:8px;padding:5px 10px;box-shadow:2px 2px 0 var(--ink)}
+#sel-subtopic{flex:1}
+.hidden{display:none!important}
+
+select,.wbtn{font:600 13px var(--body);height:44px;border:3px solid var(--ink);border-radius:10px;
+  background:#fff;color:var(--text);box-shadow:var(--shadow);transition:transform .09s,box-shadow .09s,background .14s}
+select{width:100%;cursor:pointer;padding:6px 34px 6px 12px;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%23141414' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:13px}
+select:hover{background-color:var(--blue-light)}
+select:active,.wbtn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+option,optgroup{background:#fff;color:var(--ink);font-family:var(--body)}
+
+.wbtn{padding:6px 20px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.4px}
+.wbtn:hover{transform:rotate(-1.5deg)}
+.wbtn:active{transform:translate(4px,4px) rotate(0deg);box-shadow:0 0 0 var(--ink)}
+.wbtn.primary{background:var(--pink);color:#fff}
+.wbtn.reveal{background:var(--blue);color:#fff}
+#wa-bank-stats{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;white-space:nowrap;letter-spacing:.02em}
+
+/* ── Stage (arcade cabinet) ───────────────────────────────── */
+#wa-stage{--mode:var(--blue);
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:34px 38px 30px;text-align:center;min-height:400px;position:relative;cursor:pointer;
+  background:#fff;border:5px solid var(--ink);border-radius:20px;
+  box-shadow:10px 10px 0 var(--mode),10px 10px 0 5px var(--ink);
+  transition:box-shadow .2s ease}
+#wa-stage::before{content:"";position:absolute;inset:0;border-radius:15px;pointer-events:none;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--mode) 12%,transparent) 0,transparent 130px)}
+#wa-stage>*{position:relative;z-index:1}
+#wa-stage.dadjoke{--mode:var(--gold);background:repeating-linear-gradient(45deg,#fff9e8 0 16px,#fff2cf 16px 32px);
+  animation:wa-wobble 1.6s ease-in-out infinite}
+#wa-stage.rp-mode{--mode:var(--purple)}
+#wa-stage.paper-mode{--mode:var(--navy)}
+#wa-stage.answered:not(.dadjoke){--mode:var(--teal)}
+
+#wa-topic-badge{font-family:var(--display);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:#fff;background:var(--mode);border:3px solid var(--ink);border-radius:999px;
+  padding:7px 16px;margin-bottom:22px;box-shadow:3px 3px 0 var(--ink);transform:rotate(-1deg)}
+#wa-q-text{font-weight:700;line-height:1.3;max-width:800px;width:100%;letter-spacing:-.01em}
+.cmd{display:inline-block;color:#fff;background:var(--pink);font-weight:700;
+  padding:0 .16em;border-radius:5px;transform:rotate(-1.2deg);box-shadow:3px 3px 0 var(--ink)}
+
+#wa-answer{display:none;margin-top:26px;padding:18px 24px;max-width:760px;width:100%;text-align:left;
+  background:var(--blue-light);background:color-mix(in srgb,var(--mode) 14%,#fff);
+  border:4px solid var(--ink);border-left:12px solid var(--mode);
+  border-radius:12px;box-shadow:6px 6px 0 var(--ink)}
+#wa-answer.shown{display:block;animation:wa-pop .28s cubic-bezier(.34,1.56,.64,1) both}
+#wa-ans-label{font-family:var(--display);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);margin-bottom:9px}
+#wa-ans-text{font-size:18px;line-height:1.6;font-weight:500}
+#wa-click-hint{position:absolute;bottom:14px;font-size:11px;font-weight:700;letter-spacing:.05em;
+  color:var(--muted);text-transform:uppercase;z-index:1}
+#wa-click-hint kbd{font-family:var(--pixel)!important;font-size:8px!important;padding:5px 7px!important;
+  border:2px solid var(--ink)!important;border-radius:4px!important;background:var(--gold)!important;
+  color:var(--ink)!important;box-shadow:2px 2px 0 var(--ink)}
+
+/* ── Board / matrix layout ────────────────────────────────── */
+#wa-multi-stage{display:none;flex:1;flex-direction:column;gap:12px;width:100%}
+.multi-card{--accent:var(--blue);background:#fff;border:4px solid var(--ink);border-left:12px solid var(--accent);
+  border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;
+  box-shadow:6px 6px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.multi-card:hover{transform:translate(-2px,-2px) rotate(-.4deg);box-shadow:9px 9px 0 var(--ink)}
+.multi-card:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.card-topic{--accent:var(--blue)}
+.card-mixed{--accent:var(--pink)}
+.card-revision{--accent:var(--navy)}
+.card-rp{--accent:var(--purple)}
+.multi-card-header{display:flex;justify-content:space-between;gap:12px;align-items:center;
+  font:400 11px/1.3 var(--display);text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.multi-q-text{font-size:17px;line-height:1.4;font-weight:700}
+.multi-a-box{display:none;padding:12px 16px;font-size:14px;line-height:1.55;margin-top:4px;font-weight:500;
+  background:var(--blue-light);background:color-mix(in srgb,var(--accent) 14%,#fff);
+  border:3px solid var(--ink);border-left:8px solid var(--accent);border-radius:10px}
+.multi-a-box.shown{display:block;animation:wa-pop .22s cubic-bezier(.34,1.56,.64,1) both}
+
+/* ── Timer ────────────────────────────────────────────────── */
+#wa-timer-section{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:22px;width:100%;max-width:600px}
+#wa-timer-section.active{display:flex}
+/* Steady digits: tabular figures so the number never jitters as it
+   counts down, and no idle animation — stillness is the point. */
+#wa-countdown{font-family:var(--body);font-weight:700;font-size:clamp(42px,7vw,72px);line-height:1;
+  color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1;text-shadow:3px 3px 0 var(--mode);transition:color .3s}
+#wa-timer-bar-wrap{width:100%;height:22px;background:#efe9dc;border:3px solid var(--ink);border-radius:999px;
+  overflow:hidden;box-shadow:3px 3px 0 var(--ink)}
+/* The gradient is pinned to a fixed width, so as the bar drains it
+   uncovers the colours right-to-left: healthy green gives way to
+   amber, and the final sliver left standing is red. */
+#wa-timer-bar{height:100%;width:100%;transition:width 1s linear;
+  background-image:linear-gradient(90deg,#e01b24 0,#e01b24 4%,#f5a623 15%,#8bc72b 38%,#3fb950 100%);
+  background-size:594px 100%;background-repeat:no-repeat}
+
+/* Final five seconds. `urgent` is added by the countdown observer and
+   is wiped automatically whenever the game reassigns className. */
+#wa-timer-section.urgent #wa-countdown{color:#d81020;text-shadow:3px 3px 0 var(--ink);
+  animation:wa-tick 1s ease-in-out infinite}
+
+/* ── Footer / progress ────────────────────────────────────── */
+#wa-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 2px;
+  font-size:12px;font-weight:600;color:var(--muted)}
+#wa-progress{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.prog-dot{width:15px;height:15px;border-radius:3px;border:3px solid var(--ink);background:#fff}
+.prog-dot.current{animation:wa-bob .7s ease-in-out infinite}
+.prog-dot.topic.current,.prog-dot.topic.done{background:var(--blue)}
+.prog-dot.mixed.current,.prog-dot.mixed.done{background:var(--pink)}
+.prog-dot.revision.current,.prog-dot.revision.done{background:var(--navy)}
+.prog-dot.rp.current,.prog-dot.rp.done{background:var(--purple)}
+.prog-dot.joke.current,.prog-dot.joke.done{background:var(--gold)}
+.wa-tier{font-family:var(--pixel);font-size:9px;padding:8px 11px;border:3px solid var(--ink);border-radius:8px;
+  box-shadow:3px 3px 0 var(--ink);white-space:nowrap}
+.tier-F{background:var(--blue);color:#fff}
+.tier-H{background:var(--pink);color:#fff}
+.tier-joke{background:var(--gold);color:var(--ink)}
+#wa-mixed-note{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);text-align:center}
+.icon{display:inline-block;width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;
+  stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Panels ───────────────────────────────────────────────── */
+#editor-panel{display:none;flex-direction:column;gap:12px;flex:1}
+#editor-panel.visible{display:flex}
+#presenter-panel{display:flex;flex-direction:column;gap:12px;flex:1}
+
+/* ── Editor (same palette, dialled down) ──────────────────── */
+#editor-topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#editor-topbar h2{font:400 14px var(--display);letter-spacing:.4px;color:var(--ink);margin-right:4px;
+  background:var(--gold);border:3px solid var(--ink);border-radius:9px;padding:6px 12px;box-shadow:3px 3px 0 var(--ink)}
+.ed-save-status{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;letter-spacing:.04em}
+.ed-save-status.saved{color:#00764f}
+.ed-save-status.unsaved{color:#9a5c00;animation:wa-blink 1.1s ease-in-out infinite}
+#ed-tabs{display:flex;border:3px solid var(--ink);border-radius:11px;overflow:hidden;background:#fff;
+  width:fit-content;box-shadow:3px 3px 0 var(--ink)}
+.ed-tab{padding:9px 16px;font:400 11px/1 var(--display);letter-spacing:.3px;border:none;background:transparent;
+  cursor:pointer;color:var(--muted);transition:background .12s,color .12s}
+.ed-tab:hover{background:var(--blue-light);color:var(--ink)}
+.ed-tab.active{background:var(--navy);color:#fff}
+#ed-filterbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+#ed-search,#ed-filter-topic{height:38px;font:600 13px var(--body);border:3px solid var(--ink);border-radius:9px;
+  background-color:#fff;color:var(--text);box-shadow:2px 2px 0 var(--ink)}
+#ed-search{flex:1;min-width:150px;padding:0 12px;background-image:none}
+#ed-filter-topic{padding:0 30px 0 10px;cursor:pointer;width:auto}
+.wbtn-sm{height:38px;padding:0 14px;font:400 11px/1 var(--display);letter-spacing:.3px;border:3px solid var(--ink);
+  border-radius:9px;background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  box-shadow:3px 3px 0 var(--ink);transition:transform .09s,box-shadow .09s}
+.wbtn-sm:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.wbtn-sm.green{background:#00a86b;color:#fff}
+.wbtn-sm.gold{background:var(--gold);color:var(--ink)}
+.wbtn-sm.blue{background:var(--blue);color:#fff}
+.wbtn-sm.red{background:#e0212b;color:#fff}
+#ed-table-wrap{overflow:auto;max-height:calc(100vh - 400px);border:4px solid var(--ink);border-radius:12px;
+  background:#fff;box-shadow:6px 6px 0 var(--ink)}
+table#ed-table{width:100%;border-collapse:collapse;font-size:12px}
+#ed-table th{position:sticky;top:0;background:var(--navy);color:#fff;padding:10px 8px;text-align:left;
+  font:400 10px/1.3 var(--display);letter-spacing:.05em;white-space:nowrap;z-index:2;cursor:default}
+#ed-table td{padding:5px;border-bottom:2px solid #ece7dc;vertical-align:top}
+#ed-table tr:hover td{background:#fffbf0}
+#ed-table tr.row-sep td{background:#e6fbef}
+#ed-table tr.row-ht td{background:#ffe9f3}
+#ed-table tr.row-sep.row-ht td{background:#fff0e2}
+.ed-cell{width:100%;min-height:30px;padding:4px 6px;font:500 12px/1.45 var(--body);border:2px solid transparent;
+  border-radius:6px;background:transparent;resize:none;overflow:hidden;box-sizing:border-box;color:var(--text)}
+.ed-cell:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(45,91,255,.22)}
+textarea.ed-cell{min-height:46px;resize:vertical}
+select.ed-cell{cursor:pointer;height:30px;appearance:auto;-webkit-appearance:auto;background-image:none;
+  padding:4px 6px;box-shadow:none;border-radius:6px;font:500 12px var(--body)}
+select.ed-cell:active{transform:none}
+.ed-cell-cmd{width:100px}
+.ed-cell-sub{width:80px}
+.ed-cell-q{min-width:240px}
+.ed-cell-a{min-width:200px}
+.ed-cell-tier{width:58px}
+.ed-cell-sep{width:54px}
+.ed-cell-rp{width:56px}
+.ed-cell-joke-q{min-width:260px}
+.ed-cell-joke-a{min-width:200px}
+.del-btn{background:none;border:none;cursor:pointer;color:#c11119;font-size:15px;font-weight:700;
+  padding:3px 5px;border-radius:5px;line-height:1}
+.del-btn:hover{background:#ffd9db}
+td.col-del{width:30px;text-align:center}
+.count-badge{display:inline-block;background:var(--lime);color:var(--ink);font:400 9px/1 var(--display);
+  padding:4px 8px;border:2px solid var(--ink);border-radius:999px;margin-left:6px;vertical-align:middle}
+#ed-export-banner{background:var(--blue-light);border:3px solid var(--ink);border-radius:11px;padding:12px 16px;
+  font-size:12px;font-weight:600;display:none;align-items:center;gap:10px;box-shadow:4px 4px 0 var(--ink)}
+#ed-export-banner.visible{display:flex}
+
+/* ── Accessibility ────────────────────────────────────────── */
+:focus-visible{outline:4px solid var(--pink);outline-offset:3px;border-radius:4px}
+#wa-stage:focus-visible{outline-offset:8px}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media(max-width:900px){
+  #wa-header{flex-wrap:wrap;gap:10px}
+  #wa-title{font-size:15px}
+  #wa-bank-stats{margin-left:0;white-space:normal}
+}
+@media(max-width:760px){
+  #wa-toolbar{grid-template-columns:1fr 1fr}
+  #wa-toolbar2{grid-template-columns:1fr}
+  #wa-stage{padding:22px 18px 26px;box-shadow:6px 6px 0 var(--mode),6px 6px 0 4px var(--ink)}
+  #wa-q-text{font-size:30px!important}
+  #wa-footer{flex-wrap:wrap;gap:8px}
+  #wa-logo{height:42px}
+  #wa-timer-bar{background-size:320px 100%}   /* refit the drain gradient to a phone-width bar */
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important}
+  #wa-stage.dadjoke{animation:none}
+  #wa-timer-bar{transition:width 1s linear!important}
+}
+</style>
+</head>
+<body>
+<div id="wa-outer">
+
+<div id="wa-header">
+  <img id="wa-logo" src="data:image/png;base64,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" alt="Workington Academy">
+  <div id="wa-title-block"><div id="wa-title">GCSE Science Retrieval Presenter</div><div class="subtitle">Biology · Chemistry · Physics — AQA GCSE</div></div>
+  <div id="mode-bar"><button class="mode-btn active" data-mode="presenter" onclick="setMode('presenter')">&#127941; Presenter</button><button class="mode-btn" data-mode="editor" onclick="setMode('editor')">&#9998; Edit Questions</button></div>
+  <label id="wa-joke-toggle" title="Easter-egg jokes"><input type="checkbox" id="chk-joke" checked><span>🥚</span></label>
+  <label id="wa-sound-toggle" title="Sound on/off (press M)"><input type="checkbox" id="chk-sound" checked><span id="wa-sound-icon">🔊</span></label>
+</div>
+
+<div id="presenter-panel" style="display:flex;flex-direction:column;gap:10px;">
+<div id="wa-toolbar"><select id="sel-subject"></select><select id="sel-course"><option value="combined">Combined Science</option><option value="separates">Separate Science</option></select><select id="sel-year"><option value="all">All Topics (Full Course)</option><option value="10">Year 10 Only</option><option value="11">Year 11 Only</option></select><select id="sel-topic"></select></div>
+<div id="wa-subtopic-row"><label for="sel-subtopic">Subtopic:</label><select id="sel-subtopic"></select></div>
+<div id="wa-toolbar2"><select id="sel-tier"><option value="F">Foundation Tier</option><option value="H">Higher Tier</option></select><select id="sel-layout"><option value="flashcard">Flashcard Mode (1-by-1)</option><option value="matrix">5-Question Board</option></select></div>
+<div id="wa-toolbar3"><select id="sel-timer" style="width:auto;min-width:120px"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">2 minutes</option></select><button class="wbtn primary" id="btn-start"><svg class="icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Start Session</button><button class="wbtn reveal" id="btn-reveal"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal</button><button class="wbtn" id="btn-next"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>Next</button><span id="wa-bank-stats"></span></div>
+<div id="wa-stage" onclick="handleStageClick()"><div id="wa-topic-badge">Choose settings and click start</div><div id="wa-q-text" style="font-size:32px">Ready when you are</div><div id="wa-answer"><div id="wa-ans-label">Answer</div><div id="wa-ans-text"></div></div><div id="wa-timer-section"><div id="wa-countdown">60</div><div id="wa-timer-bar-wrap"><div id="wa-timer-bar"></div></div></div><div id="wa-click-hint">click anywhere or press <kbd style="font-family:'Roboto Mono',monospace;font-size:10px;padding:1px 5px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#555">Space</kbd> to reveal answer</div></div>
+<div id="wa-multi-stage"></div>
+<div id="wa-footer"><div id="wa-progress"></div><div id="wa-mixed-note">Safe timeline recall tracking</div><span class="wa-tier tier-F" id="wa-tier-badge">Foundation</span></div>
+</div>
+
+<div id="editor-panel">
+  <div id="editor-topbar"><h2>Question Bank Editor</h2>
+  <div id="ed-tabs"><button class="ed-tab active" onclick="edSelectTab('bio')">🧬 Biology <span class="count-badge" id="cnt-bio">–</span></button><button class="ed-tab" onclick="edSelectTab('chem')">⚗️ Chemistry <span class="count-badge" id="cnt-chem">–</span></button><button class="ed-tab" onclick="edSelectTab('phys')">⚛️ Physics <span class="count-badge" id="cnt-phys">–</span></button><button class="ed-tab" onclick="edSelectTab('jokes')">🥚 Jokes <span class="count-badge" id="cnt-jokes">–</span></button></div>
+  <span class="ed-save-status" id="ed-save-status">All changes saved</span></div>
+  <div id="ed-filterbar"><input type="search" id="ed-search" placeholder="Search questions…" oninput="edRender()"><select id="ed-filter-topic" onchange="edRender()"><option value="">All topics</option></select><button class="wbtn-sm green" onclick="edAddRow()">+ Add row</button><button class="wbtn-sm gold" onclick="edExport()">⬇ Export HTML</button><button class="wbtn-sm red" onclick="edClearStorage()" title="Reset to built-in questions">↺ Reset</button></div>
+  <div id="ed-export-banner"><span>💾 Exported file includes all edits and works standalone.</span><a id="ed-export-link" style="font-weight:700;color:var(--blue);text-decoration:none">Download</a></div>
+  <div id="ed-table-wrap"><table id="ed-table"><thead id="ed-thead"></thead><tbody id="ed-tbody"></tbody></table></div>
+  <div style="font-size:11px;color:var(--muted);padding:2px 4px">🟢 = Separate only    🟠 = Higher only    🔴 = Both. Click any cell to edit. Changes auto-save to browser storage.</div>
+</div>
+
+</div>
+<script>
+const DATA={
+  subjects:{
+
+    biology:{
+      label:"🧬 Biology",
+      sequence:["cell","organisation","infection","bioenergetics","homeostasis","inheritance","ecology"],
+      paper1:["cell","organisation","infection","bioenergetics"],
+      paper2:["homeostasis","inheritance","ecology"],
+      topics:{"cell":"Cell biology","organisation":"Organisation","infection":"Infection and response","bioenergetics":"Bioenergetics","homeostasis":"Homeostasis and response","inheritance":"Inheritance, variation and evolution","ecology":"Ecology"},
+      short:{"cell":"Cell biology","organisation":"Organisation","infection":"Infection","bioenergetics":"Bioenergetics","homeostasis":"Homeostasis","inheritance":"Inheritance","ecology":"Ecology"},
+      subtopics:{"cell": [{"id": "ce1", "label": "Cell structure: eukaryotes, prokaryotes & organelles"}, {"id": "ce2", "label": "Microscopy, magnification & required practical"}, {"id": "ce3", "label": "Cell specialisation and differentiation"}, {"id": "ce4", "label": "Cell cycle, mitosis & stem cells"}, {"id": "ce5", "label": "Diffusion"}, {"id": "ce6", "label": "Osmosis & required practical"}, {"id": "ce7", "label": "Active transport"}], "organisation": [{"id": "or1", "label": "Levels of organisation and digestion"}, {"id": "or2", "label": "Enzymes and required practical"}, {"id": "or3", "label": "Food tests required practical"}, {"id": "or4", "label": "Heart, blood vessels and blood"}, {"id": "or5", "label": "Coronary heart disease and treatments"}, {"id": "or6", "label": "Health, disease and risk factors"}, {"id": "or7", "label": "Cancer"}, {"id": "or8", "label": "Plant tissues and organs"}, {"id": "or9", "label": "Transpiration and translocation"}], "infection": [{"id": "in1", "label": "Pathogens and communicable disease"}, {"id": "in2", "label": "Viral, bacterial, fungal and protist diseases"}, {"id": "in3", "label": "Human defence systems"}, {"id": "in4", "label": "Vaccination"}, {"id": "in5", "label": "Antibiotics, painkillers and drug development"}, {"id": "in6", "label": "Culturing microorganisms required practical (Separate)"}, {"id": "in7", "label": "Monoclonal antibodies (Separate)"}, {"id": "in8", "label": "Plant disease and plant defences (Separate)"}], "bioenergetics": [{"id": "be1", "label": "Photosynthesis equation and uses of glucose"}, {"id": "be2", "label": "Limiting factors and photosynthesis graphs"}, {"id": "be3", "label": "Photosynthesis required practical"}, {"id": "be4", "label": "Aerobic respiration"}, {"id": "be5", "label": "Anaerobic respiration and oxygen debt"}, {"id": "be6", "label": "Response to exercise"}, {"id": "be7", "label": "Metabolism"}], "homeostasis": [{"id": "ho1", "label": "Homeostasis and control systems"}, {"id": "ho2", "label": "Nervous system and reflex arcs"}, {"id": "ho3", "label": "Reaction time required practical"}, {"id": "ho4", "label": "Brain and eye (Separate)"}, {"id": "ho5", "label": "Hormones and endocrine system"}, {"id": "ho6", "label": "Blood glucose and diabetes"}, {"id": "ho7", "label": "Water, nitrogen and temperature control (Separate)"}, {"id": "ho8", "label": "Reproduction, contraception and fertility"}, {"id": "ho9", "label": "Plant hormones and responses (Separate)"}, {"id": "ho10", "label": "Plant responses required practical (Separate)"}], "inheritance": [{"id": "iv1", "label": "DNA, genome, chromosomes and genes"}, {"id": "iv2", "label": "Protein synthesis (Separate)"}, {"id": "iv3", "label": "Meiosis and gametes"}, {"id": "iv4", "label": "Sexual and asexual reproduction"}, {"id": "iv5", "label": "Genetic inheritance and Punnett squares"}, {"id": "iv6", "label": "Inherited disorders and screening"}, {"id": "iv7", "label": "Variation and evolution"}, {"id": "iv8", "label": "Selective breeding and genetic engineering"}, {"id": "iv9", "label": "Cloning (Separate)"}, {"id": "iv10", "label": "Classification, fossils and extinction"}, {"id": "iv11", "label": "Antibiotic resistance"}], "ecology": [{"id": "ec1", "label": "Communities, ecosystems and interdependence"}, {"id": "ec2", "label": "Abiotic and biotic factors"}, {"id": "ec3", "label": "Sampling, quadrats and transects required practical"}, {"id": "ec4", "label": "Adaptations and competition"}, {"id": "ec5", "label": "Carbon and water cycles"}, {"id": "ec6", "label": "Decomposition and decay required practical (Separate)"}, {"id": "ec7", "label": "Biodiversity, waste and land use"}, {"id": "ec8", "label": "Deforestation, peat bogs and global warming"}, {"id": "ec9", "label": "Trophic levels and biomass (Separate)"}, {"id": "ec10", "label": "Food security and biotechnology (Separate)"}]},
+      rpMeta:{"rp1": {"label": "RP1 \u00b7 Microscopy", "paper": 1, "sep": false, "topic": "cell"}, "rp2": {"label": "RP2 \u00b7 Microbiology", "paper": 1, "sep": true, "topic": "infection"}, "rp3": {"label": "RP3 \u00b7 Osmosis", "paper": 1, "sep": false, "topic": "cell"}, "rp4": {"label": "RP4 \u00b7 Food tests", "paper": 1, "sep": false, "topic": "organisation"}, "rp5": {"label": "RP5 \u00b7 Enzymes", "paper": 1, "sep": false, "topic": "organisation"}, "rp6": {"label": "RP6 \u00b7 Photosynthesis", "paper": 1, "sep": false, "topic": "bioenergetics"}, "rp7": {"label": "RP7 \u00b7 Reaction time", "paper": 2, "sep": false, "topic": "homeostasis"}, "rp8": {"label": "RP8 \u00b7 Plant responses", "paper": 2, "sep": true, "topic": "homeostasis"}, "rp9": {"label": "RP9 \u00b7 Field investigations", "paper": 2, "sep": false, "topic": "ecology"}, "rp10": {"label": "RP10 \u00b7 Decay", "paper": 2, "sep": true, "topic": "ecology"}},
+      questions:{"cell": [{"tier": "F", "sep": false, "sub": "ce1", "q": "STATE the main structures in an animal cell.", "a": "Nucleus, cytoplasm, cell membrane, mitochondria and ribosomes."}, {"tier": "F", "sep": false, "sub": "ce1", "q": "STATE the extra structures often found in plant cells.", "a": "Cell wall, chloroplasts and a permanent vacuole."}, {"tier": "F", "sep": false, "sub": "ce1", "q": "COMPARE eukaryotic and prokaryotic cells.", "a": "Eukaryotic cells have DNA enclosed in a nucleus; prokaryotic cells are smaller and have DNA free in the cytoplasm, often with plasmids."}, {"tier": "H", "sep": false, "sub": "ce1", "q": "EXPLAIN the role of mitochondria and ribosomes.", "a": "Mitochondria are the site of aerobic respiration; ribosomes are the site of protein synthesis."}, {"tier": "F", "sep": false, "sub": "ce2", "q": "DESCRIBE how to prepare an onion cell slide.", "a": "Place a thin onion epidermis layer on a slide, add iodine stain, lower a coverslip carefully and focus using low power first.", "rp": "rp1"}, {"tier": "F", "sep": false, "sub": "ce2", "q": "STATE the equation for magnification.", "a": "Magnification = image size \u00f7 real size.", "rp": "rp1"}, {"tier": "H", "sep": false, "sub": "ce2", "q": "CALCULATE real size from image size and magnification.", "a": "Real size = image size \u00f7 magnification. Convert units before calculating.", "rp": "rp1"}, {"tier": "F", "sep": false, "sub": "ce2", "q": "STATE why stain is used in microscopy.", "a": "Stain increases contrast so cell structures are easier to see.", "rp": "rp1"}, {"tier": "F", "sep": false, "sub": "ce3", "q": "DEFINE differentiation.", "a": "Differentiation is the process by which a cell becomes specialised for a function."}, {"tier": "F", "sep": false, "sub": "ce3", "q": "STATE two adaptations of sperm cells.", "a": "A tail for swimming and many mitochondria to provide energy."}, {"tier": "F", "sep": false, "sub": "ce3", "q": "STATE two adaptations of root hair cells.", "a": "Large surface area for absorption and many mitochondria for active transport."}, {"tier": "H", "sep": false, "sub": "ce3", "q": "EXPLAIN why specialised cells have different structures.", "a": "Their structures are adapted to their functions, making them more efficient."}, {"tier": "F", "sep": false, "sub": "ce4", "q": "DESCRIBE the outcome of mitosis.", "a": "Mitosis produces two genetically identical daughter cells."}, {"tier": "F", "sep": false, "sub": "ce4", "q": "STATE three uses of mitosis.", "a": "Growth, repair and replacement of damaged or worn-out cells."}, {"tier": "H", "sep": false, "sub": "ce4", "q": "EXPLAIN why stem cells are useful.", "a": "They can differentiate into specialised cells, so may replace damaged tissue."}, {"tier": "H", "sep": false, "sub": "ce4", "q": "EVALUATE embryonic stem cells.", "a": "They can form many cell types but raise ethical concerns and carry risks such as uncontrolled cell division."}, {"tier": "F", "sep": false, "sub": "ce5", "q": "DEFINE diffusion.", "a": "The spreading out of particles from higher concentration to lower concentration."}, {"tier": "F", "sep": false, "sub": "ce5", "q": "STATE three factors that increase diffusion rate.", "a": "Larger concentration gradient, higher temperature and larger surface area."}, {"tier": "H", "sep": false, "sub": "ce5", "q": "EXPLAIN how exchange surfaces are adapted.", "a": "They have large surface area, thin membranes and good blood supply or ventilation to maintain gradients."}, {"tier": "F", "sep": false, "sub": "ce5", "q": "STATE one example of diffusion in humans.", "a": "Oxygen diffuses from alveoli into blood; carbon dioxide diffuses from blood into alveoli."}, {"tier": "F", "sep": false, "sub": "ce6", "q": "DEFINE osmosis.", "a": "The movement of water from a dilute solution to a more concentrated solution through a partially permeable membrane."}, {"tier": "F", "sep": false, "sub": "ce6", "q": "DESCRIBE the potato osmosis practical.", "a": "Cut equal potato cylinders, record initial mass, place in different sugar solutions, dry, record final mass and calculate percentage change.", "rp": "rp3"}, {"tier": "F", "sep": false, "sub": "ce6", "q": "STATE control variables in the osmosis practical.", "a": "Potato size, time, temperature and volume/concentration range of solutions.", "rp": "rp3"}, {"tier": "H", "sep": false, "sub": "ce6", "q": "EXPLAIN why potato gains mass in dilute solution.", "a": "Water enters cells by osmosis because the outside solution is more dilute than the cell contents.", "rp": "rp3"}, {"tier": "F", "sep": false, "sub": "ce7", "q": "DEFINE active transport.", "a": "Movement of substances from lower to higher concentration using energy from respiration."}, {"tier": "F", "sep": false, "sub": "ce7", "q": "STATE where active transport occurs in plants.", "a": "Root hair cells absorb mineral ions from soil by active transport."}, {"tier": "H", "sep": false, "sub": "ce7", "q": "COMPARE diffusion and active transport.", "a": "Diffusion is passive and down a gradient; active transport uses energy and goes against a gradient."}, {"tier": "H", "sep": false, "sub": "ce7", "q": "EXPLAIN why root hair cells have many mitochondria.", "a": "They need energy from respiration for active transport of mineral ions."}, {"tier": "F", "sep": false, "sub": "ce5", "q": "EXPLAIN why multicellular organisms need exchange surfaces and a transport system.", "a": "As organisms increase in size their surface area to volume ratio decreases, so diffusion alone cannot supply all cells fast enough."}, {"tier": "H", "sep": false, "sub": "ce5", "q": "CALCULATE the surface area to volume ratio of a cube with sides 4 cm.", "a": "Surface area = 6 \u00d7 4\u00b2 = 96 cm\u00b2. Volume = 4\u00b3 = 64 cm\u00b3. SA:V ratio = 96\u00f764 = 1.5:1."}, {"tier": "F", "sep": false, "sub": "ce5", "q": "DESCRIBE how the small intestine is adapted for efficient absorption.", "a": "Villi and microvilli increase surface area. A rich blood supply maintains a concentration gradient. Walls are thin for a short diffusion distance."}], "organisation": [{"tier": "F", "sep": false, "sub": "or1", "q": "STATE the order of organisation in animals.", "a": "Cells \u2192 tissues \u2192 organs \u2192 organ systems \u2192 organism."}, {"tier": "F", "sep": false, "sub": "or1", "q": "STATE the role of the digestive system.", "a": "It breaks large insoluble food molecules into small soluble molecules for absorption."}, {"tier": "F", "sep": false, "sub": "or1", "q": "MATCH amylase, protease and lipase to substrates.", "a": "Amylase breaks starch; protease breaks protein; lipase breaks lipids."}, {"tier": "H", "sep": false, "sub": "or1", "q": "EXPLAIN how bile helps lipid digestion.", "a": "Bile neutralises stomach acid and emulsifies fats, increasing surface area for lipase."}, {"tier": "F", "sep": false, "sub": "or2", "q": "DEFINE enzyme.", "a": "A biological catalyst that speeds up reactions without being used up."}, {"tier": "F", "sep": false, "sub": "or2", "q": "DESCRIBE the lock-and-key model.", "a": "A substrate fits into the enzyme active site, forms an enzyme-substrate complex and products are released."}, {"tier": "F", "sep": false, "sub": "or2", "q": "DESCRIBE the amylase pH practical.", "a": "Mix starch, amylase and buffer, keep temperature constant, test samples with iodine and record time until starch is gone.", "rp": "rp5"}, {"tier": "H", "sep": false, "sub": "or2", "q": "EXPLAIN denaturation.", "a": "The active site changes shape so the substrate no longer fits.", "rp": "rp5"}, {"tier": "F", "sep": false, "sub": "or3", "q": "DESCRIBE the iodine test for starch.", "a": "Add iodine solution; blue-black means starch is present.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "or3", "q": "DESCRIBE Benedict\u2019s test for reducing sugars.", "a": "Add Benedict\u2019s and heat; blue changes to green, yellow, orange or brick-red if reducing sugar is present.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "or3", "q": "DESCRIBE the Biuret test for protein.", "a": "Add Biuret reagent; lilac or purple means protein is present.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "or3", "q": "DESCRIBE the ethanol emulsion test for lipids.", "a": "Shake with ethanol, add water; cloudy white emulsion means lipid is present.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "or4", "q": "STATE the function of red blood cells.", "a": "They carry oxygen using haemoglobin."}, {"tier": "F", "sep": false, "sub": "or4", "q": "STATE the functions of white blood cells, platelets and plasma.", "a": "White blood cells defend against pathogens; platelets clot blood; plasma transports dissolved substances."}, {"tier": "F", "sep": false, "sub": "or4", "q": "COMPARE arteries, veins and capillaries.", "a": "Arteries carry high-pressure blood away; veins carry lower-pressure blood back and have valves; capillaries are thin exchange vessels."}, {"tier": "H", "sep": false, "sub": "or4", "q": "EXPLAIN why capillaries are one cell thick.", "a": "This gives a short diffusion distance for exchange."}, {"tier": "F", "sep": false, "sub": "or5", "q": "STATE what coronary heart disease is.", "a": "Narrowing or blockage of coronary arteries by fatty deposits, reducing blood flow to heart muscle."}, {"tier": "F", "sep": false, "sub": "or5", "q": "STATE treatments for coronary heart disease.", "a": "Stents, statins, lifestyle changes, bypass surgery or transplant."}, {"tier": "H", "sep": false, "sub": "or5", "q": "EVALUATE stents and statins.", "a": "Stents act quickly but involve surgery; statins reduce cholesterol over time but need regular use and may have side effects."}, {"tier": "F", "sep": false, "sub": "or6", "q": "DEFINE health.", "a": "A state of physical and mental wellbeing."}, {"tier": "F", "sep": false, "sub": "or6", "q": "COMPARE communicable and non-communicable disease.", "a": "Communicable diseases can spread between organisms; non-communicable diseases cannot."}, {"tier": "F", "sep": false, "sub": "or6", "q": "STATE risk factors for non-communicable disease.", "a": "Smoking, alcohol, poor diet, obesity, lack of exercise and radiation exposure."}, {"tier": "H", "sep": false, "sub": "or6", "q": "EXPLAIN why correlation does not prove causation.", "a": "A link between factors may be due to another variable; controlled evidence is needed."}, {"tier": "F", "sep": false, "sub": "or7", "q": "COMPARE benign and malignant tumours.", "a": "Benign tumours stay in one place; malignant tumours invade tissues and may spread."}, {"tier": "H", "sep": false, "sub": "or7", "q": "EXPLAIN how cancer spreads.", "a": "Cells break away from a malignant tumour, travel in blood or lymph and form secondary tumours."}, {"tier": "F", "sep": false, "sub": "or8", "q": "STATE the functions of xylem and phloem.", "a": "Xylem transports water and mineral ions; phloem transports dissolved sugars."}, {"tier": "F", "sep": false, "sub": "or8", "q": "STATE the role of palisade mesophyll.", "a": "It contains many chloroplasts and carries out photosynthesis."}, {"tier": "H", "sep": false, "sub": "or8", "q": "EXPLAIN how guard cells control gas exchange.", "a": "They open and close stomata, controlling carbon dioxide entry and water vapour loss."}, {"tier": "F", "sep": false, "sub": "or9", "q": "DEFINE transpiration.", "a": "Loss of water vapour from leaves through stomata."}, {"tier": "F", "sep": false, "sub": "or9", "q": "STATE factors affecting transpiration rate.", "a": "Light intensity, temperature, air flow and humidity."}, {"tier": "H", "sep": false, "sub": "or9", "q": "EXPLAIN why high humidity reduces transpiration.", "a": "The water vapour gradient from leaf to air is smaller."}, {"tier": "H", "sep": false, "sub": "or9", "q": "COMPARE transpiration and translocation.", "a": "Transpiration is water movement/loss in xylem; translocation is sugar movement in phloem."}, {"tier": "F", "sep": false, "sub": "or4", "q": "DESCRIBE how red blood cells are adapted to carry oxygen.", "a": "Biconcave disc shape for large surface area. No nucleus \u2014 more room for haemoglobin. Flexible to pass through capillaries."}, {"tier": "F", "sep": false, "sub": "or5", "q": "STATE the role of the pacemaker in the heart.", "a": "A group of cells in the right atrium that controls the resting heart rate by generating electrical impulses."}, {"tier": "H", "sep": false, "sub": "or5", "q": "EXPLAIN the advantages and disadvantages of mechanical heart valves versus biological valves.", "a": "Mechanical valves last longer but require long-term anticoagulants. Biological valves are less likely to cause clotting but may wear out faster."}, {"tier": "F", "sep": false, "sub": "or2", "q": "DESCRIBE the effect of pH on enzyme activity.", "a": "Each enzyme has an optimum pH. Above or below this, the enzyme is denatured \u2014 the active site changes shape and the substrate no longer fits."}, {"tier": "H", "sep": false, "sub": "or9", "q": "EXPLAIN why humidity affects the rate of transpiration.", "a": "High humidity reduces the concentration gradient between leaf air spaces and atmosphere, slowing diffusion of water vapour out through stomata."}], "infection": [{"tier": "F", "sep": false, "sub": "in1", "q": "DEFINE pathogen.", "a": "A microorganism that causes disease."}, {"tier": "F", "sep": false, "sub": "in1", "q": "STATE four types of pathogen.", "a": "Bacteria, viruses, fungi and protists."}, {"tier": "F", "sep": false, "sub": "in1", "q": "STATE ways pathogens spread.", "a": "Air, direct contact, contaminated food/water and vectors."}, {"tier": "F", "sep": false, "sub": "in2", "q": "DESCRIBE measles.", "a": "A viral disease spread by droplets; symptoms include fever and red rash."}, {"tier": "F", "sep": false, "sub": "in2", "q": "DESCRIBE salmonella.", "a": "A bacterial disease spread in contaminated food causing fever, cramps, vomiting and diarrhoea."}, {"tier": "F", "sep": false, "sub": "in2", "q": "DESCRIBE malaria.", "a": "A protist disease spread by mosquitoes; spread can be reduced using nets and mosquito control."}, {"tier": "F", "sep": false, "sub": "in2", "q": "DESCRIBE tobacco mosaic virus.", "a": "A viral plant disease causing mosaic leaf discolouration and reduced photosynthesis."}, {"tier": "F", "sep": false, "sub": "in3", "q": "STATE body barriers against pathogens.", "a": "Skin, blood clotting, mucus, cilia, stomach acid and antimicrobial secretions."}, {"tier": "F", "sep": false, "sub": "in3", "q": "DESCRIBE white blood cell responses.", "a": "They engulf pathogens, produce antibodies and produce antitoxins."}, {"tier": "H", "sep": false, "sub": "in3", "q": "EXPLAIN why antibodies are specific.", "a": "Their binding sites are complementary to specific antigens."}, {"tier": "F", "sep": false, "sub": "in4", "q": "DESCRIBE vaccination.", "a": "A vaccine stimulates lymphocytes to produce antibodies and memory cells without causing serious disease."}, {"tier": "H", "sep": false, "sub": "in4", "q": "EXPLAIN herd immunity.", "a": "If many people are immune, pathogen spread is reduced, protecting non-immune people."}, {"tier": "H", "sep": false, "sub": "in4", "q": "EVALUATE vaccination programmes.", "a": "They reduce disease and outbreaks but need high uptake and may cause mild side effects."}, {"tier": "F", "sep": false, "sub": "in5", "q": "COMPARE antibiotics and painkillers.", "a": "Antibiotics kill or inhibit bacteria; painkillers relieve symptoms only."}, {"tier": "F", "sep": false, "sub": "in5", "q": "STATE why antibiotics do not treat viruses.", "a": "Viruses live and reproduce inside cells, so antibiotics cannot target them effectively."}, {"tier": "H", "sep": false, "sub": "in5", "q": "EXPLAIN antibiotic resistance.", "a": "Mutation can cause resistance; antibiotics kill non-resistant bacteria, leaving resistant bacteria to reproduce."}, {"tier": "F", "sep": false, "sub": "in5", "q": "DESCRIBE drug testing stages.", "a": "Preclinical testing in cells/tissues and animals, then clinical trials in humans."}, {"tier": "F", "sep": true, "sub": "in6", "q": "DESCRIBE aseptic technique for culturing microorganisms.", "a": "Sterilise equipment, disinfect surfaces, open plates briefly, tape lids and incubate safely.", "rp": "rp2"}, {"tier": "F", "sep": true, "sub": "in6", "q": "DESCRIBE testing antiseptics on bacteria.", "a": "Spread bacteria on agar, add antiseptic discs, incubate and measure clear inhibition zones.", "rp": "rp2"}, {"tier": "H", "sep": true, "sub": "in6", "q": "CALCULATE area of an inhibition zone.", "a": "Use area = \u03c0r\u00b2 where r is half the diameter.", "rp": "rp2"}, {"tier": "H", "sep": true, "sub": "in7", "q": "DESCRIBE monoclonal antibody production.", "a": "A lymphocyte making a chosen antibody is fused with a tumour cell to form a hybridoma."}, {"tier": "H", "sep": true, "sub": "in7", "q": "STATE uses of monoclonal antibodies.", "a": "Pregnancy tests, diagnosis, measuring chemicals/hormones and targeting cancer cells."}, {"tier": "H", "sep": true, "sub": "in7", "q": "EVALUATE monoclonal antibodies.", "a": "They are specific but can be expensive and may cause side effects."}, {"tier": "F", "sep": true, "sub": "in8", "q": "STATE signs of plant disease.", "a": "Stunted growth, spots, decay, abnormal growths, malformed leaves/stems and discolouration."}, {"tier": "F", "sep": true, "sub": "in8", "q": "STATE methods for detecting plant disease.", "a": "Observation, testing kits with monoclonal antibodies, or laboratory analysis."}, {"tier": "H", "sep": true, "sub": "in8", "q": "DESCRIBE plant defence responses.", "a": "Cell walls, waxy cuticles, bark, antibacterial chemicals and poisons to deter herbivores."}, {"tier": "F", "sep": false, "sub": "in3", "q": "DESCRIBE how memory lymphocytes produce a faster immune response.", "a": "Memory cells remain after infection. On re-exposure to the same pathogen they rapidly divide and produce antibodies before symptoms develop."}, {"tier": "F", "sep": false, "sub": "in5", "q": "DESCRIBE the stages of clinical drug trials.", "a": "Preclinical testing on cells/animals. Phase 1: small group of healthy volunteers for safety. Phase 2: larger group of patients for efficacy and dose. Phase 3: large randomised controlled trial."}], "bioenergetics": [{"tier": "F", "sep": false, "sub": "be1", "q": "STATE the word equation for photosynthesis.", "a": "Carbon dioxide + water \u2192 glucose + oxygen, in light and chlorophyll."}, {"tier": "H", "sep": false, "sub": "be1", "q": "STATE the symbol equation for photosynthesis.", "a": "6CO\u2082 + 6H\u2082O \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082."}, {"tier": "F", "sep": false, "sub": "be1", "q": "STATE uses of glucose in plants.", "a": "Respiration, starch storage, cellulose, lipids and amino acids/proteins."}, {"tier": "F", "sep": false, "sub": "be2", "q": "STATE limiting factors of photosynthesis.", "a": "Light intensity, carbon dioxide concentration and temperature."}, {"tier": "H", "sep": false, "sub": "be2", "q": "EXPLAIN limiting factor.", "a": "The factor in shortest supply that restricts the rate."}, {"tier": "H", "sep": false, "sub": "be2", "q": "EXPLAIN why high temperature reduces photosynthesis.", "a": "Enzymes denature, so the rate falls."}, {"tier": "F", "sep": false, "sub": "be3", "q": "DESCRIBE the pondweed photosynthesis practical.", "a": "Place pondweed in sodium hydrogencarbonate, vary lamp distance, allow time to adjust and measure oxygen bubbles or volume per minute.", "rp": "rp6"}, {"tier": "F", "sep": false, "sub": "be3", "q": "STATE control variables in the pondweed practical.", "a": "Temperature, carbon dioxide concentration, pondweed length/type and counting time.", "rp": "rp6"}, {"tier": "H", "sep": false, "sub": "be3", "q": "USE the inverse square law for light intensity.", "a": "Light intensity is proportional to 1 \u00f7 distance\u00b2.", "rp": "rp6"}, {"tier": "F", "sep": false, "sub": "be4", "q": "STATE the word equation for aerobic respiration.", "a": "Glucose + oxygen \u2192 carbon dioxide + water."}, {"tier": "H", "sep": false, "sub": "be4", "q": "STATE the symbol equation for aerobic respiration.", "a": "C\u2086H\u2081\u2082O\u2086 + 6O\u2082 \u2192 6CO\u2082 + 6H\u2082O."}, {"tier": "F", "sep": false, "sub": "be4", "q": "STATE uses of energy from respiration.", "a": "Muscle contraction, active transport, keeping warm and building larger molecules."}, {"tier": "F", "sep": false, "sub": "be5", "q": "STATE anaerobic respiration in muscles.", "a": "Glucose \u2192 lactic acid."}, {"tier": "F", "sep": false, "sub": "be5", "q": "STATE anaerobic respiration in yeast.", "a": "Glucose \u2192 ethanol + carbon dioxide."}, {"tier": "H", "sep": false, "sub": "be5", "q": "EXPLAIN oxygen debt.", "a": "Extra oxygen is needed after exercise to break down lactic acid."}, {"tier": "F", "sep": false, "sub": "be6", "q": "DESCRIBE body responses to exercise.", "a": "Heart rate, breathing rate and breathing volume increase."}, {"tier": "H", "sep": false, "sub": "be6", "q": "EXPLAIN muscle fatigue.", "a": "Lactic acid builds up during anaerobic respiration."}, {"tier": "H", "sep": false, "sub": "be7", "q": "DEFINE metabolism.", "a": "The sum of all chemical reactions in a cell or organism."}, {"tier": "H", "sep": false, "sub": "be7", "q": "STATE examples of metabolism.", "a": "Respiration, protein synthesis, conversion of glucose to starch/glycogen/cellulose and breakdown of excess proteins to urea."}, {"tier": "F", "sep": false, "sub": "be1", "q": "DESCRIBE three uses of glucose in plants after photosynthesis.", "a": "Used in respiration; converted to starch for storage; used to make cellulose for cell walls; converted to proteins using nitrates from soil."}], "homeostasis": [{"tier": "F", "sep": false, "sub": "ho1", "q": "DEFINE homeostasis.", "a": "Regulation of internal conditions to maintain optimum conditions for enzyme action and cell function."}, {"tier": "F", "sep": false, "sub": "ho1", "q": "STATE internal conditions controlled by homeostasis.", "a": "Blood glucose, body temperature and water/ion levels."}, {"tier": "H", "sep": false, "sub": "ho1", "q": "DESCRIBE control systems.", "a": "Receptors detect changes, coordination centres process information and effectors produce responses."}, {"tier": "F", "sep": false, "sub": "ho2", "q": "DESCRIBE a reflex arc.", "a": "Stimulus \u2192 receptor \u2192 sensory neurone \u2192 relay neurone \u2192 motor neurone \u2192 effector \u2192 response."}, {"tier": "F", "sep": false, "sub": "ho2", "q": "STATE why reflex actions are useful.", "a": "They are rapid automatic responses that protect the body."}, {"tier": "H", "sep": false, "sub": "ho2", "q": "EXPLAIN synapses.", "a": "Chemicals diffuse across the gap and trigger an impulse in the next neurone."}, {"tier": "F", "sep": false, "sub": "ho3", "q": "DESCRIBE the ruler-drop reaction time practical.", "a": "One person drops a ruler without warning; the other catches it. Record distance, repeat and calculate a mean.", "rp": "rp7"}, {"tier": "F", "sep": false, "sub": "ho3", "q": "STATE why repeats are used in reaction time tests.", "a": "They improve reliability and help identify anomalies.", "rp": "rp7"}, {"tier": "H", "sep": false, "sub": "ho3", "q": "SUGGEST controls for the reaction time practical.", "a": "Same person, same hand, same starting position, same ruler and controlled distractions.", "rp": "rp7"}, {"tier": "H", "sep": true, "sub": "ho4", "q": "STATE functions of cerebrum, cerebellum and medulla.", "a": "Cerebrum: conscious thought; cerebellum: coordination; medulla: breathing and heart rate."}, {"tier": "H", "sep": true, "sub": "ho4", "q": "STATE functions of retina, lens and optic nerve.", "a": "Retina detects light; lens focuses light; optic nerve carries impulses to brain."}, {"tier": "H", "sep": true, "sub": "ho4", "q": "EXPLAIN accommodation.", "a": "Ciliary muscles and suspensory ligaments alter lens shape to focus near or distant objects."}, {"tier": "F", "sep": false, "sub": "ho5", "q": "DEFINE hormone.", "a": "A chemical messenger released by a gland and carried in the blood."}, {"tier": "F", "sep": false, "sub": "ho5", "q": "COMPARE nervous and hormonal responses.", "a": "Nervous responses are fast and short; hormonal responses are slower and longer-lasting."}, {"tier": "F", "sep": false, "sub": "ho5", "q": "STATE the role of the pituitary gland.", "a": "It releases hormones that control other glands."}, {"tier": "F", "sep": false, "sub": "ho6", "q": "STATE the role of insulin.", "a": "Insulin lowers blood glucose by causing cells to take up glucose and store it as glycogen."}, {"tier": "H", "sep": false, "sub": "ho6", "q": "EXPLAIN the role of glucagon.", "a": "Glucagon raises blood glucose by causing glycogen to be converted to glucose."}, {"tier": "F", "sep": false, "sub": "ho6", "q": "COMPARE Type 1 and Type 2 diabetes.", "a": "Type 1: little/no insulin. Type 2: body cells respond poorly to insulin."}, {"tier": "H", "sep": true, "sub": "ho7", "q": "STATE what kidneys excrete.", "a": "Urea, excess ions and excess water."}, {"tier": "H", "sep": true, "sub": "ho7", "q": "EXPLAIN how ADH controls water reabsorption in the kidney tubules.", "a": "When blood is too concentrated, the pituitary gland releases ADH. ADH makes kidney tubules more permeable, so more water is reabsorbed into the blood. This is an example of negative feedback."}, {"tier": "H", "sep": true, "sub": "ho7", "q": "DESCRIBE temperature control when hot and cold.", "a": "Hot: sweating and vasodilation. Cold: shivering and vasoconstriction."}, {"tier": "F", "sep": false, "sub": "ho8", "q": "STATE roles of FSH, LH, oestrogen and progesterone.", "a": "FSH matures egg; LH triggers ovulation; oestrogen rebuilds lining; progesterone maintains lining."}, {"tier": "F", "sep": false, "sub": "ho8", "q": "STATE contraception methods.", "a": "Hormonal: pill/implant/injection. Non-hormonal: condoms/diaphragm/copper coil/sterilisation."}, {"tier": "H", "sep": false, "sub": "ho8", "q": "DESCRIBE IVF in outline.", "a": "Hormones stimulate eggs, eggs are collected, fertilised in a lab and embryos are placed in the uterus."}, {"tier": "H", "sep": true, "sub": "ho9", "q": "EXPLAIN phototropism in shoots.", "a": "Auxin moves to the shaded side, causing those cells to elongate more, bending the shoot towards light."}, {"tier": "H", "sep": true, "sub": "ho9", "q": "STATE uses of plant hormones.", "a": "Weedkillers, rooting powders and controlling fruit ripening."}, {"tier": "H", "sep": true, "sub": "ho10", "q": "DESCRIBE the plant response practical.", "a": "Grow seedlings with different light directions or orientations, control other variables and compare growth direction/length.", "rp": "rp8"}, {"tier": "H", "sep": true, "sub": "ho10", "q": "STATE control variables in plant response practical.", "a": "Seed type, age, water, temperature, growth time and light intensity except direction.", "rp": "rp8"}, {"tier": "F", "sep": false, "sub": "ho6", "q": "COMPARE Type 1 and Type 2 diabetes in terms of cause and treatment.", "a": "Type 1: pancreas fails to produce insulin; treated with insulin injections. Type 2: body cells do not respond to insulin; managed with diet, exercise and sometimes medication."}, {"tier": "F", "sep": false, "sub": "ho2", "q": "STATE the pathway of a reflex arc in order.", "a": "Stimulus \u2192 receptor \u2192 sensory neurone \u2192 relay neurone (in spinal cord) \u2192 motor neurone \u2192 effector \u2192 response."}, {"tier": "H", "sep": false, "sub": "ho2", "q": "EXPLAIN why reflex actions do not involve the conscious brain.", "a": "The impulse travels through the spinal cord and back to the effector without going to the cerebral cortex, so the response is faster."}], "inheritance": [{"tier": "F", "sep": false, "sub": "iv1", "q": "DEFINE gene.", "a": "A section of DNA that codes for a protein or characteristic."}, {"tier": "F", "sep": false, "sub": "iv1", "q": "DEFINE genome.", "a": "The entire genetic material of an organism."}, {"tier": "H", "sep": false, "sub": "iv1", "q": "EXPLAIN why understanding the human genome is useful.", "a": "It helps identify genes linked to disease and supports targeted treatments."}, {"tier": "H", "sep": true, "sub": "iv2", "q": "DESCRIBE protein synthesis.", "a": "A gene is copied into mRNA; mRNA is read at a ribosome and amino acids are joined in order."}, {"tier": "H", "sep": true, "sub": "iv2", "q": "EXPLAIN how mutation can affect protein.", "a": "A DNA base change can alter amino acid order and change protein shape or function."}, {"tier": "F", "sep": false, "sub": "iv3", "q": "STATE the purpose of meiosis.", "a": "To produce gametes with half the normal number of chromosomes."}, {"tier": "F", "sep": false, "sub": "iv3", "q": "COMPARE mitosis and meiosis.", "a": "Mitosis makes two identical body cells; meiosis makes four genetically different gametes."}, {"tier": "H", "sep": false, "sub": "iv3", "q": "EXPLAIN why meiosis produces variation.", "a": "Chromosomes are shuffled and gametes receive different allele combinations."}, {"tier": "F", "sep": false, "sub": "iv4", "q": "COMPARE sexual and asexual reproduction.", "a": "Sexual uses gametes and creates variation; asexual uses one parent and produces clones."}, {"tier": "H", "sep": true, "sub": "iv4", "q": "EVALUATE asexual reproduction.", "a": "It is fast and needs one parent, but produces little genetic variation."}, {"tier": "F", "sep": false, "sub": "iv5", "q": "DEFINE allele.", "a": "A different form of the same gene."}, {"tier": "F", "sep": false, "sub": "iv5", "q": "DEFINE dominant and recessive.", "a": "Dominant alleles show if present; recessive alleles show only when two copies are present."}, {"tier": "H", "sep": false, "sub": "iv5", "q": "USE a Punnett square.", "a": "Put parent gametes along the edges, combine alleles in boxes and count genotype/phenotype ratios."}, {"tier": "H", "sep": false, "sub": "iv6", "q": "DESCRIBE cystic fibrosis inheritance.", "a": "It is caused by a recessive allele, so two copies are needed."}, {"tier": "H", "sep": false, "sub": "iv6", "q": "DESCRIBE polydactyly inheritance.", "a": "It is caused by a dominant allele, so one copy can cause the condition."}, {"tier": "H", "sep": false, "sub": "iv6", "q": "EVALUATE embryo screening.", "a": "It can reduce inherited disorders but raises ethical concerns."}, {"tier": "F", "sep": false, "sub": "iv7", "q": "DEFINE variation.", "a": "Differences between individuals in a population."}, {"tier": "F", "sep": false, "sub": "iv7", "q": "STATE causes of variation.", "a": "Genes, environment or both."}, {"tier": "H", "sep": false, "sub": "iv7", "q": "EXPLAIN natural selection.", "a": "Individuals with advantageous traits survive and reproduce more, passing useful alleles on."}, {"tier": "F", "sep": false, "sub": "iv8", "q": "DESCRIBE selective breeding.", "a": "Choose parents with desired traits, breed them and repeat over generations."}, {"tier": "H", "sep": false, "sub": "iv8", "q": "EVALUATE selective breeding.", "a": "It can produce useful traits but reduces genetic variation and may increase inherited disease."}, {"tier": "H", "sep": true, "sub": "iv8", "q": "DESCRIBE genetic engineering.", "a": "A useful gene is cut out, inserted into a vector and transferred into a target organism."}, {"tier": "H", "sep": true, "sub": "iv9", "q": "DESCRIBE adult cell cloning.", "a": "A nucleus from an adult cell is placed into an enucleated egg, stimulated to divide and implanted into a surrogate."}, {"tier": "H", "sep": true, "sub": "iv9", "q": "DESCRIBE plant tissue culture.", "a": "Small groups of plant cells are grown with hormones to produce cloned plants."}, {"tier": "F", "sep": false, "sub": "iv10", "q": "STATE causes of extinction.", "a": "Environmental change, new predators, disease, competition, habitat loss or catastrophic events."}, {"tier": "H", "sep": false, "sub": "iv10", "q": "EXPLAIN how fossils support evolution.", "a": "They show organisms from the past and allow comparison with present organisms."}, {"tier": "F", "sep": true, "sub": "iv10", "q": "STATE the three domains.", "a": "Archaea, Bacteria and Eukaryota."}, {"tier": "H", "sep": false, "sub": "iv11", "q": "EXPLAIN antibiotic resistance.", "a": "Mutations create resistant bacteria; antibiotics kill non-resistant bacteria, so resistant ones survive and reproduce."}, {"tier": "F", "sep": false, "sub": "iv11", "q": "STATE ways to reduce antibiotic resistance.", "a": "Avoid unnecessary antibiotic use, complete courses and use infection control."}, {"tier": "F", "sep": false, "sub": "iv5", "q": "EXPLAIN sex determination using a genetic cross diagram.", "a": "Females are XX, males are XY. A cross gives 50% XX (female) and 50% XY (male) offspring, so there is an equal probability of each sex."}, {"tier": "H", "sep": false, "sub": "iv6", "q": "EXPLAIN how cystic fibrosis is inherited using allele notation.", "a": "Caused by a recessive allele (f). Both parents must carry at least one recessive allele. Two carrier parents (Ff \u00d7 Ff) have a 25% chance of an affected child (ff)."}, {"tier": "F", "sep": true, "sub": "iv4", "q": "STATE the advantages of asexual reproduction.", "a": "Only one parent needed; faster; more energy efficient; all offspring have the desired characteristics; useful when conditions are stable."}, {"tier": "F", "sep": false, "sub": "iv7", "q": "EXPLAIN how natural selection leads to evolution.", "a": "Variation exists in a population. Organisms better suited to the environment survive and reproduce. They pass on their advantageous alleles. Over generations the population changes."}], "ecology": [{"tier": "F", "sep": false, "sub": "ec1", "q": "DEFINE ecosystem.", "a": "The interaction of a community with the non-living parts of the environment."}, {"tier": "F", "sep": false, "sub": "ec1", "q": "DEFINE community and population.", "a": "Community: all populations in a habitat. Population: all individuals of one species in an area."}, {"tier": "F", "sep": false, "sub": "ec1", "q": "STATE what organisms compete for.", "a": "Animals: food, mates and territory. Plants: light, space, water and mineral ions."}, {"tier": "F", "sep": false, "sub": "ec2", "q": "STATE abiotic factors.", "a": "Light, temperature, moisture, soil pH, mineral ions, wind and carbon dioxide."}, {"tier": "F", "sep": false, "sub": "ec2", "q": "STATE biotic factors.", "a": "Food availability, new predators, new pathogens and competition."}, {"tier": "H", "sep": false, "sub": "ec2", "q": "EXPLAIN interdependence.", "a": "Changes to one species can affect others through feeding relationships and competition."}, {"tier": "F", "sep": false, "sub": "ec3", "q": "DESCRIBE random quadrat sampling.", "a": "Place quadrats randomly, count organisms, calculate a mean and scale up to estimate population.", "rp": "rp9"}, {"tier": "H", "sep": false, "sub": "ec3", "q": "DESCRIBE a transect.", "a": "Lay a tape through a habitat, place quadrats at regular intervals and record abundance along a gradient.", "rp": "rp9"}, {"tier": "H", "sep": false, "sub": "ec3", "q": "CALCULATE population estimate from quadrat data.", "a": "Mean per quadrat \u00d7 total area \u00f7 quadrat area.", "rp": "rp9"}, {"tier": "F", "sep": false, "sub": "ec4", "q": "DEFINE adaptation.", "a": "A feature that helps an organism survive and reproduce."}, {"tier": "F", "sep": false, "sub": "ec4", "q": "STATE adaptation types.", "a": "Structural, behavioural and functional."}, {"tier": "H", "sep": false, "sub": "ec4", "q": "EXPLAIN extremophiles.", "a": "They have adaptations allowing survival in extreme conditions such as high temperature or salt."}, {"tier": "F", "sep": false, "sub": "ec5", "q": "DESCRIBE the carbon cycle.", "a": "Photosynthesis takes in carbon dioxide; feeding transfers carbon; respiration, decay and combustion return carbon dioxide."}, {"tier": "F", "sep": false, "sub": "ec5", "q": "DESCRIBE the water cycle.", "a": "Evaporation, condensation, precipitation, runoff, drainage and transpiration move water."}, {"tier": "H", "sep": false, "sub": "ec5", "q": "EXPLAIN the role of decomposers.", "a": "They break down dead material and waste, recycling minerals and carbon."}, {"tier": "H", "sep": true, "sub": "ec6", "q": "DESCRIBE the decay practical.", "a": "Mix milk, lipase and indicator at different temperatures and time the colour change while controlling pH and volumes.", "rp": "rp10"}, {"tier": "H", "sep": true, "sub": "ec6", "q": "EXPLAIN why warm moist oxygen-rich conditions speed decay.", "a": "They support decomposer respiration and enzyme activity.", "rp": "rp10"}, {"tier": "H", "sep": true, "sub": "ec6", "q": "STATE control variables in the decay practical.", "a": "Milk volume, lipase volume/concentration, pH, indicator volume and temperature.", "rp": "rp10"}, {"tier": "F", "sep": false, "sub": "ec7", "q": "DEFINE biodiversity.", "a": "The variety of different species in an ecosystem or on Earth."}, {"tier": "F", "sep": false, "sub": "ec7", "q": "STATE human actions reducing biodiversity.", "a": "Deforestation, pollution, peat destruction, overfishing, land use change and waste."}, {"tier": "H", "sep": false, "sub": "ec7", "q": "EXPLAIN why biodiversity matters.", "a": "It helps ecosystem stability and preserves species and resources."}, {"tier": "F", "sep": false, "sub": "ec8", "q": "STATE reasons for deforestation.", "a": "Farming, biofuel crops, cattle, timber and development."}, {"tier": "H", "sep": false, "sub": "ec8", "q": "EXPLAIN how deforestation increases carbon dioxide.", "a": "Less photosynthesis occurs and burning/decay releases carbon dioxide."}, {"tier": "H", "sep": false, "sub": "ec8", "q": "EXPLAIN why peat bog destruction releases carbon.", "a": "Peat stores carbon; draining or burning it increases decay/combustion and carbon dioxide release."}, {"tier": "H", "sep": true, "sub": "ec9", "q": "DEFINE trophic level.", "a": "A feeding level in a food chain or food web."}, {"tier": "H", "sep": true, "sub": "ec9", "q": "EXPLAIN biomass loss between trophic levels.", "a": "Biomass is lost through respiration, waste, movement, uneaten parts and undigested material."}, {"tier": "H", "sep": true, "sub": "ec9", "q": "CALCULATE biomass transfer efficiency.", "a": "Efficiency = biomass transferred \u00f7 biomass available \u00d7 100%."}, {"tier": "H", "sep": true, "sub": "ec10", "q": "STATE threats to food security.", "a": "Rising population, changing diets, pests/pathogens, environmental change, conflict and farming costs."}, {"tier": "H", "sep": true, "sub": "ec10", "q": "STATE ways to improve food production.", "a": "Sustainable fisheries, mycoprotein, GM crops, biological control and improved farming."}, {"tier": "H", "sep": true, "sub": "ec10", "q": "EVALUATE intensive farming.", "a": "It increases yield but can reduce animal welfare and increase pollution or disease risk."}, {"tier": "F", "sep": true, "sub": "ec5", "q": "DESCRIBE the nitrogen cycle.", "a": "Nitrogen fixation by bacteria converts N\u2082 to nitrates. Plants absorb nitrates and make proteins. Animals eat plants. Decomposers break down dead material. Denitrifying bacteria return nitrogen to the atmosphere."}, {"tier": "H", "sep": true, "sub": "ec9", "q": "EXPLAIN why energy transfer between trophic levels is inefficient.", "a": "Energy is lost at each level through respiration, movement, heat loss and undigested material in faeces. Typically only about 10% is transferred to the next trophic level."}, {"tier": "F", "sep": true, "sub": "ec10", "q": "STATE two ways humans are working to improve food production.", "a": "Any two from: selective breeding for disease resistance or yield; use of fertilisers; hydroponics; biological control of pests; genetic modification of crops."}]}
+    },
+
+    chemistry:{
+      label:"⚗️ Chemistry",
+      sequence:["atomic","bonding","quantitative","chemical-changes","energy","rates","organic","analysis","atmosphere","resources"],
+      paper1:["atomic","bonding","quantitative","chemical-changes","energy"],
+      paper2:["rates","organic","analysis","atmosphere","resources"],
+      topics:{"atomic":"Atomic structure & the periodic table","bonding":"Bonding, structure & properties","quantitative":"Quantitative chemistry","chemical-changes":"Chemical changes","energy":"Energy changes","rates":"Rate & extent of chemical change","organic":"Organic chemistry","analysis":"Chemical analysis","atmosphere":"Chemistry of the atmosphere","resources":"Using resources"},
+      short:{"atomic":"Atomic structure","bonding":"Bonding","quantitative":"Quantitative","chemical-changes":"Chem changes","energy":"Energy changes","rates":"Rates","organic":"Organic","analysis":"Analysis","atmosphere":"Atmosphere","resources":"Resources"},
+      subtopics:{
+  atomic: [
+    {id:"at1", label:"Atoms, elements & compounds"},
+    {id:"at2", label:"Mixtures & separation"},
+    {id:"at3", label:"Atomic structure & isotopes"},
+    {id:"at4", label:"The periodic table"},
+    {id:"at5", label:"Electronic structure & groups"}
+  ],
+  bonding: [
+    {id:"bo1", label:"Ionic bonding & structure"},
+    {id:"bo2", label:"Covalent bonding & simple molecules"},
+    {id:"bo3", label:"Giant covalent & metallic structures"},
+    {id:"bo4", label:"Alloys & special materials (graphene, fullerenes, polymers)"}
+  ],
+  quantitative: [
+    {id:"qu1", label:"Relative masses & the mole"},
+    {id:"qu2", label:"Conservation of mass & equations"},
+    {id:"qu3", label:"Concentration, yield & atom economy"},
+    {id:"qu4", label:"Gas volumes & Avogadro (HT)"}
+  ],
+  "chemical-changes": [
+    {id:"cc1", label:"Reactivity series & metal extraction"},
+    {id:"cc2", label:"Acids, alkalis & salts"},
+    {id:"cc3", label:"Electrolysis"},
+    {id:"cc4", label:"pH, neutralisation & titration (HT)"}
+  ],
+  energy: [
+    {id:"en1", label:"Exothermic & endothermic reactions"},
+    {id:"en2", label:"Reaction profiles & activation energy"},
+    {id:"en3", label:"Bond energies (HT)"},
+    {id:"en4", label:"Fuel cells & energy storage"}
+  ],
+  rates: [
+    {id:"ra1", label:"Factors affecting rate of reaction"},
+    {id:"ra2", label:"Collision theory & catalysts"},
+    {id:"ra3", label:"Reversible reactions & dynamic equilibrium"},
+    {id:"ra4", label:"Le Chatelier's principle & industrial processes (HT)"}
+  ],
+  organic: [
+    {id:"or1", label:"Crude oil, hydrocarbons & alkanes"},
+    {id:"or2", label:"Cracking & alkenes"},
+    {id:"or3", label:"Polymers & addition polymerisation"},
+    {id:"or4", label:"Alcohols, carboxylic acids & esters (Sep)"}
+  ],
+  analysis: [
+    {id:"an1", label:"Purity, formulations & chromatography"},
+    {id:"an2", label:"Identifying gases"},
+    {id:"an3", label:"Flame tests & metal ion identification (Sep)"},
+    {id:"an4", label:"Instrumental analysis (Sep)"}
+  ],
+  atmosphere: [
+    {id:"am1", label:"Evolution of the atmosphere"},
+    {id:"am2", label:"Greenhouse gases & climate change"},
+    {id:"am3", label:"Air pollution & carbon footprint"}
+  ],
+  resources: [
+    {id:"re1", label:"Earth's resources & sustainable development"},
+    {id:"re2", label:"Life cycle assessment & recycling"},
+    {id:"re3", label:"Alternative methods of metal extraction"},
+    {id:"re4", label:"Water treatment & desalination"},
+    {id:"re5", label:"Fertilisers & the Haber process (Sep)"}
+  ]
+},
+      rpMeta:{
+  "rp1":{label:"RP1 · Preparation of a soluble salt", paper:1, sep:false, topic:"chemical-changes"},
+  "rp2":{label:"RP2 · Titration (acid/alkali)", paper:1, sep:true, topic:"chemical-changes"},
+  "rp3":{label:"RP3 · Electrolysis of aqueous solutions", paper:1, sep:false, topic:"chemical-changes"},
+  "rp4":{label:"RP4 · Temperature changes in reactions", paper:1, sep:false, topic:"energy"},
+  "rp5":{label:"RP5 · Rates of reaction", paper:2, sep:false, topic:"rates"},
+  "rp6":{label:"RP6 · Paper chromatography", paper:2, sep:false, topic:"analysis"},
+  "rp7":{label:"RP7 · Identifying ions", paper:2, sep:true, topic:"analysis"},
+  "rp8":{label:"RP8 · Water analysis & purification", paper:2, sep:false, topic:"resources"}
+},
+      questions:{
+  atomic: [
+    // at1 — Atoms, elements & compounds
+    {tier:"F",sep:false,sub:"at1",q:"STATE the definition of an element.",a:"A substance made of only one type of atom that cannot be broken down into simpler substances by chemical means."},
+    {tier:"F",sep:false,sub:"at1",q:"STATE the difference between a compound and a mixture.",a:"A compound has elements chemically bonded together in fixed proportions. A mixture has substances not chemically combined and can be separated by physical means."},
+    {tier:"F",sep:false,sub:"at1",q:"DESCRIBE what happens to atoms during a chemical reaction.",a:"Atoms are rearranged — no atoms are created or destroyed. The same atoms are present before and after the reaction, just in different combinations."},
+    // at2 — Mixtures & separation
+    {tier:"F",sep:false,sub:"at2",q:"STATE four methods used to separate mixtures.",a:"Filtration · Crystallisation · Distillation · Chromatography (also centrifugation and magnetic separation)"},
+    {tier:"F",sep:false,sub:"at2",q:"EXPLAIN how filtration separates an insoluble solid from a liquid.",a:"The mixture is poured through filter paper in a funnel. The solid (residue) is trapped by the paper and the liquid (filtrate) passes through."},
+    {tier:"F",sep:false,sub:"at2",q:"DESCRIBE how to use paper chromatography to separate a mixture of dyes.",a:"Draw a pencil baseline on chromatography paper. Spot the mixture on the line. Place in solvent below the baseline. Allow the solvent to travel up. Remove and mark the solvent front before it dries."},
+    // at3 — Atomic structure & isotopes
+    {tier:"F",sep:false,sub:"at3",q:"STATE the atomic number of an element.",a:"The number of protons in the nucleus. It uniquely identifies the element."},
+    {tier:"F",sep:false,sub:"at3",q:"STATE the relative mass and charge of a proton, neutron and electron.",a:"Proton: mass 1, charge +1 · Neutron: mass 1, charge 0 · Electron: mass ~0, charge −1"},
+    {tier:"F",sep:false,sub:"at3",q:"STATE the mass number of an atom.",a:"The total number of protons and neutrons in the nucleus."},
+    {tier:"F",sep:false,sub:"at3",q:"DEFINE isotopes.",a:"Atoms of the same element with the same number of protons but different numbers of neutrons."},
+    {tier:"H",sep:false,sub:"at3",q:"EXPLAIN why atoms have no overall electrical charge.",a:"The number of protons (positive) equals the number of electrons (negative), so the charges cancel exactly."},
+    {tier:"H",sep:false,sub:"at3",q:"DESCRIBE Rutherford's alpha-scattering experiment and what it showed.",a:"Alpha particles fired at gold foil — most passed through, some deflected, a few bounced back. This showed the atom has a small, dense, positively charged nucleus with mostly empty space around it."},
+    {tier:"H",sep:false,sub:"at3",q:"EXPLAIN how Bohr developed the nuclear model of the atom.",a:"Bohr proposed electrons orbit the nucleus in fixed energy levels (shells), explaining why atoms emit light at specific frequencies."},
+    {tier:"H",sep:true,sub:"at3",q:"DEFINE relative atomic mass.",a:"The weighted mean mass of all isotopes of an element relative to 1/12 the mass of carbon-12. Different isotopes contribute proportionally based on their abundance."},
+    // at4 — The periodic table
+    {tier:"F",sep:false,sub:"at4",q:"DESCRIBE how elements are arranged in the modern periodic table.",a:"In order of increasing atomic number. Elements with similar properties are placed in the same group (column)."},
+    {tier:"F",sep:false,sub:"at4",q:"STATE what the group number tells you about an element.",a:"The number of electrons in the outer shell (for groups 1–7)."},
+    {tier:"H",sep:false,sub:"at4",q:"EXPLAIN why Mendeleev left gaps in his periodic table.",a:"He predicted that undiscovered elements would fill the gaps, based on gaps in the pattern of properties. His predictions were later confirmed when those elements were discovered."},
+    // at5 — Electronic structure & groups
+    {tier:"F",sep:false,sub:"at5",q:"DESCRIBE the trend in reactivity as you go down Group 1.",a:"Reactivity increases; the elements react more vigorously with water and oxygen as you go down the group."},
+    {tier:"H",sep:false,sub:"at5",q:"EXPLAIN the trend in reactivity as you go down Group 1.",a:"Reactivity increases BECAUSE the outer electron is further from the nucleus, meaning there is less attraction, so the electron is lost more easily."},
+    {tier:"F",sep:false,sub:"at5",q:"STATE the trend in reactivity going down Group 7 (halogens).",a:"Reactivity decreases going down Group 7. Fluorine is the most reactive; iodine is the least."},
+    {tier:"H",sep:false,sub:"at5",q:"EXPLAIN why Group 0 elements are unreactive.",a:"They have a full outer shell of electrons, so they have no tendency to gain, lose, or share electrons."}
+  ],
+
+  bonding: [
+    // bo1 — Ionic bonding & structure
+    {tier:"F",sep:false,sub:"bo1",q:"STATE what type of bonding occurs between a metal and a non-metal.",a:"Ionic bonding — electrons are transferred from the metal to the non-metal, forming oppositely charged ions."},
+    {tier:"F",sep:false,sub:"bo1",q:"EXPLAIN why ionic compounds have high melting and boiling points.",a:"They have a giant ionic lattice with strong electrostatic forces between oppositely charged ions, requiring a lot of energy to overcome."},
+    {tier:"H",sep:false,sub:"bo1",q:"EXPLAIN why ionic compounds conduct electricity when molten or dissolved, but not when solid.",a:"When molten or dissolved, ions are free to move and carry charge. In a solid, ions are fixed in the lattice and cannot move."},
+    {tier:"H",sep:false,sub:"bo1",q:"DESCRIBE the structure of an ionic compound.",a:"A giant lattice of alternating positive and negative ions held together by strong electrostatic attraction in all directions."},
+    // bo2 — Covalent bonding & simple molecules
+    {tier:"F",sep:false,sub:"bo2",q:"DEFINE a covalent bond.",a:"A shared pair of electrons between two non-metal atoms."},
+    {tier:"F",sep:false,sub:"bo2",q:"EXPLAIN why simple molecular substances have low melting points.",a:"The intermolecular forces between molecules are weak and require little energy to break. The strong covalent bonds within molecules are not broken on melting."},
+    {tier:"H",sep:false,sub:"bo2",q:"EXPLAIN why most simple molecular substances do not conduct electricity.",a:"They have no free electrons or ions — all electrons are involved in covalent bonds and are not free to move."},
+    // bo3 — Giant covalent & metallic structures
+    {tier:"F",sep:false,sub:"bo3",q:"EXPLAIN why metals conduct electricity.",a:"They have a lattice of positive ions surrounded by delocalised electrons that are free to move and carry charge."},
+    {tier:"H",sep:false,sub:"bo3",q:"EXPLAIN why graphite conducts electricity but diamond does not.",a:"In graphite, each carbon forms 3 bonds leaving one delocalised electron per atom free to move. In diamond, all 4 electrons form covalent bonds — none are free."},
+    {tier:"H",sep:false,sub:"bo3",q:"DESCRIBE a giant covalent structure and give two examples.",a:"A lattice of atoms held together by covalent bonds throughout. Examples: diamond and silicon dioxide (SiO₂)."},
+    {tier:"F",sep:false,sub:"bo3",q:"EXPLAIN why giant covalent structures have very high melting points.",a:"They have many strong covalent bonds throughout the structure that require a very large amount of energy to break."},
+    // bo4 — Alloys, graphene, fullerenes, polymers
+    {tier:"F",sep:false,sub:"bo4",q:"DEFINE an alloy and DESCRIBE why they are harder than pure metals.",a:"A mixture of two or more elements where at least one is a metal. Different sized atoms distort the layers, making it harder for them to slide over each other."},
+    {tier:"H",sep:true,sub:"bo4",q:"EXPLAIN why fullerenes have different properties to diamond and graphite.",a:"Fullerenes (e.g. C₆₀ buckyballs, nanotubes) have hollow cage or tube structures. They can conduct electricity, are very strong, and have relatively low melting points."},
+    {tier:"H",sep:true,sub:"bo4",q:"DESCRIBE the structure and properties of graphene.",a:"A single layer of carbon atoms arranged in a hexagonal lattice. It is extremely strong, a good conductor of electricity due to delocalised electrons, and very thin/light."}
+  ],
+
+  quantitative: [
+    // qu1 — Relative masses & the mole
+    {tier:"F",sep:false,sub:"qu1",q:"DEFINE relative formula mass (Mr) of a compound.",a:"The sum of the relative atomic masses of all atoms in the formula."},
+    {tier:"F",sep:false,sub:"qu1",q:"STATE the equation used to calculate moles from mass.",a:"moles = mass (g) ÷ relative formula mass (Mr)"},
+    {tier:"H",sep:false,sub:"qu1",q:"DEFINE a mole.",a:"An amount of substance containing 6.02 × 10²³ particles (Avogadro's constant)."},
+    // qu2 — Conservation of mass & equations
+    {tier:"F",sep:false,sub:"qu2",q:"STATE the law of conservation of mass.",a:"In a chemical reaction, total mass of reactants equals total mass of products. Atoms are rearranged, not created or destroyed."},
+    {tier:"F",sep:false,sub:"qu2",q:"EXPLAIN why the mass of a reaction vessel may appear to change if a gas is produced.",a:"If the gas escapes to the atmosphere, the measured mass decreases, though total mass including gas is conserved."},
+    {tier:"H",sep:false,sub:"qu2",q:"EXPLAIN how to use a balanced equation to calculate the mass of a product from the mass of a reactant.",a:"Use moles = mass ÷ Mr for the reactant, then use the molar ratio from the equation to find moles of product, then mass = moles × Mr of product."},
+    // qu3 — Concentration, yield & atom economy
+    {tier:"F",sep:false,sub:"qu3",q:"DEFINE percentage yield.",a:"The percentage of the maximum possible mass of product that is actually obtained. % yield = (actual yield ÷ theoretical yield) × 100%."},
+    {tier:"F",sep:false,sub:"qu3",q:"STATE two reasons why the percentage yield of a reaction is never 100%.",a:"The reaction may not go to completion · some product may be lost during separation and purification · side reactions may produce other products."},
+    {tier:"H",sep:false,sub:"qu3",q:"STATE the equation linking concentration, moles and volume.",a:"concentration (mol/dm³) = moles ÷ volume (dm³)"},
+    {tier:"H",sep:false,sub:"qu3",q:"DEFINE atom economy and EXPLAIN why it matters.",a:"Atom economy = (mass of desired product ÷ total mass of all products) × 100%. Higher atom economy means less waste and more sustainable processes."},
+    {tier:"H",sep:false,sub:"qu3",q:"DEFINE percentage yield and STATE how it is calculated.",a:"% yield = (actual yield ÷ theoretical yield) × 100%. It measures how much of the expected product was actually made."},
+    // qu4 — Gas volumes (HT / Sep)
+    {tier:"H",sep:true,sub:"qu4",q:"STATE how you calculate the volume of a gas at room temperature and pressure.",a:"Volume (dm³) = moles × 24. At RTP, 1 mole of any gas occupies 24 dm³."},
+    {tier:"H",sep:true,sub:"qu4",q:"EXPLAIN why the volume of a gas depends on temperature and pressure but the volume of a solid does not.",a:"Gas particles are widely spaced and move freely, so changing pressure or temperature changes the space between them. Solid particles are fixed in position so their volume changes very little."}
+  ],
+
+  "chemical-changes": [
+    // cc1 — Reactivity series & metal extraction
+    {tier:"F",sep:false,sub:"cc1",q:"STATE the reactivity series order for: potassium, sodium, calcium, magnesium, zinc, iron, copper.",a:"K > Na > Ca > Mg > Zn > Fe > Cu (most to least reactive)"},
+    {tier:"F",sep:false,sub:"cc1",q:"EXPLAIN what it means if a metal displaces another from a salt solution.",a:"The more reactive metal displaces the less reactive one, as it forms ions more readily."},
+    {tier:"H",sep:false,sub:"cc1",q:"EXPLAIN why carbon can be used to extract metals below it in the reactivity series.",a:"Carbon is more reactive than those metals, so it can reduce the metal oxide by taking the oxygen, leaving the metal behind."},
+    // cc2 — Acids, alkalis & salts
+    {tier:"F",sep:false,sub:"cc2",q:"STATE the products of neutralising an acid with an alkali.",a:"A salt and water."},
+    {tier:"F",sep:false,sub:"cc2",q:"STATE the pH of a strong acid and a strong alkali.",a:"Strong acid: 0–3. Strong alkali: 12–14."},
+    {tier:"F",sep:false,sub:"cc2",q:"STATE the products when an acid reacts with a metal carbonate.",a:"A salt, water and carbon dioxide."},
+    // cc2 — RP1: Preparation of a soluble salt
+    {tier:"F",sep:false,sub:"cc2",rp:"rp1",q:"DESCRIBE how to prepare a pure, dry sample of copper sulfate crystals from copper oxide and sulfuric acid.",a:"Add excess copper oxide to warm dilute sulfuric acid and stir until no more dissolves. Filter to remove excess oxide. Heat the filtrate gently to evaporate some water, then leave to cool and crystallise. Pat dry with filter paper."},
+    {tier:"F",sep:false,sub:"cc2",rp:"rp1",q:"EXPLAIN why excess copper oxide is added in the preparation of a soluble salt.",a:"Excess ensures all the acid is used up (neutralised). The excess solid is removed by filtration, leaving a pure salt solution."},
+    {tier:"H",sep:false,sub:"cc2",rp:"rp1",q:"SUGGEST why the solution should be heated gently rather than boiled to dryness when making copper sulfate crystals.",a:"Boiling to dryness would decompose the crystals or cause them to lose their water of crystallisation, affecting purity and appearance."},
+    // cc3 — Electrolysis
+    {tier:"F",sep:false,sub:"cc3",q:"DEFINE electrolysis.",a:"Using electrical energy to break down an ionic compound (when molten or in solution) into its elements."},
+    {tier:"H",sep:false,sub:"cc3",q:"EXPLAIN at which electrode non-metals form during electrolysis.",a:"At the anode (positive electrode) — negatively charged non-metal ions are attracted there and lose electrons (oxidation)."},
+    {tier:"H",sep:false,sub:"cc3",q:"DEFINE oxidation and reduction in terms of electron transfer.",a:"Oxidation is loss of electrons; reduction is gain of electrons. (OIL RIG — Oxidation Is Loss, Reduction Is Gain)"},
+    {tier:"H",sep:false,sub:"cc3",q:"EXPLAIN why copper is purified by electrolysis.",a:"Impure copper is the anode; pure copper is the cathode. Copper ions dissolve from the anode and deposit as pure copper at the cathode."},
+    // cc3 — RP3: Electrolysis
+    {tier:"F",sep:false,sub:"cc3",rp:"rp3",q:"DESCRIBE how to investigate the electrolysis of copper sulfate solution using inert electrodes.",a:"Set up two inert (carbon/platinum) electrodes in copper sulfate solution connected to a DC power supply. Observe and record what forms at each electrode. Test gas at the anode with a glowing splint."},
+    {tier:"F",sep:false,sub:"cc3",rp:"rp3",q:"STATE what is produced at each electrode during the electrolysis of dilute sulfuric acid.",a:"Cathode (negative): hydrogen gas · Anode (positive): oxygen gas"},
+    {tier:"H",sep:false,sub:"cc3",rp:"rp3",q:"EXPLAIN why the product at the anode changes when copper sulfate solution is concentrated compared to dilute.",a:"In concentrated solution, chloride/sulfate ions compete with water. In dilute copper sulfate, water is preferentially discharged at the anode producing oxygen. The key variable is ion concentration."},
+    // cc4 — pH, neutralisation & titration
+    {tier:"F",sep:false,sub:"cc4",q:"STATE the ionic equation for a neutralisation reaction.",a:"H⁺(aq) + OH⁻(aq) → H₂O(l)"},
+    {tier:"H",sep:true,sub:"cc4",q:"DESCRIBE how to carry out a titration to find the concentration of an unknown acid.",a:"Add known volume of alkali to conical flask with indicator. Add acid from burette until endpoint (colour change). Use moles = concentration × volume to calculate unknown concentration."},
+    // cc4 — RP2: Titration (Sep only)
+    {tier:"F",sep:true,sub:"cc4",rp:"rp2",q:"DESCRIBE the correct technique for using a burette in a titration.",a:"Rinse with the solution to be used. Fill above the zero mark and drain to zero. Add the solution dropwise near the endpoint. Read the bottom of the meniscus at eye level. Record to nearest 0.05 cm³."},
+    {tier:"H",sep:true,sub:"cc4",rp:"rp2",q:"EXPLAIN why concordant titres are required and what 'concordant' means.",a:"Concordant means results within 0.10 cm³ of each other. They are required to ensure reproducibility and that the endpoint was found accurately each time."},
+    {tier:"H",sep:true,sub:"cc4",rp:"rp2",q:"DESCRIBE how to calculate the concentration of an acid from titration data.",a:"Step 1: moles of alkali = concentration × volume (in dm³). Step 2: use molar ratio from equation to find moles of acid. Step 3: concentration of acid = moles ÷ volume of acid used (dm³)."}
+  ],
+
+  energy: [
+    // en1 — Exothermic & endothermic
+    {tier:"F",sep:false,sub:"en1",q:"DEFINE an exothermic reaction and give two examples.",a:"A reaction that releases energy to the surroundings — temperature rises. Examples: combustion, neutralisation."},
+    {tier:"F",sep:false,sub:"en1",q:"DEFINE an endothermic reaction and give two examples.",a:"A reaction that absorbs energy from the surroundings — temperature falls. Examples: thermal decomposition, dissolving ammonium nitrate."},
+    // en1 — RP4: Temperature changes
+    {tier:"F",sep:false,sub:"en1",rp:"rp4",q:"DESCRIBE how to investigate the temperature change when an acid reacts with different metals.",a:"Measure fixed volumes of acid into a polystyrene cup. Record starting temperature. Add a measured mass of metal, stir and record the maximum temperature. Calculate temperature change. Repeat with other metals."},
+    {tier:"F",sep:false,sub:"en1",rp:"rp4",q:"STATE the variables to control when comparing energy changes in different reactions.",a:"Volume and concentration of acid, mass of solid added, starting temperature, and the calorimeter used (polystyrene cup) to minimise heat loss."},
+    {tier:"H",sep:false,sub:"en1",rp:"rp4",q:"EXPLAIN why a polystyrene cup is used rather than a glass beaker when measuring temperature changes.",a:"Polystyrene is a poor conductor of heat, so less energy is lost to the surroundings, making the measured temperature change more accurate."},
+    // en2 — Reaction profiles & activation energy
+    {tier:"F",sep:false,sub:"en2",q:"DESCRIBE what a reaction profile diagram shows.",a:"The energy of reactants and products, and the activation energy needed for the reaction to proceed."},
+    {tier:"H",sep:false,sub:"en2",q:"DEFINE activation energy.",a:"The minimum energy that colliding particles must have for a reaction to occur."},
+    // en3 — Bond energies (HT)
+    {tier:"H",sep:false,sub:"en3",q:"EXPLAIN how the overall energy change is calculated from bond energies.",a:"Energy in (breaking bonds in reactants) − energy out (forming bonds in products). Positive = endothermic; negative = exothermic."},
+    {tier:"H",sep:false,sub:"en3",q:"EXPLAIN why a reaction is exothermic in terms of bond breaking and making.",a:"It is exothermic because more energy is released when forming new bonds than is required to break the existing bonds."},
+    // en4 — Fuel cells
+    {tier:"H",sep:true,sub:"en4",q:"DESCRIBE a hydrogen fuel cell and STATE its advantages over combustion.",a:"Uses hydrogen and oxygen to produce electricity, with water as the only product. No CO₂ at point of use; continuous generation as long as fuel is supplied."}
+  ],
+
+  rates: [
+    // ra1 — Factors affecting rate
+    {tier:"F",sep:false,sub:"ra1",q:"STATE four factors that increase the rate of a chemical reaction.",a:"Increasing temperature · increasing concentration (or pressure for gases) · increasing surface area · adding a catalyst"},
+    {tier:"F",sep:false,sub:"ra1",q:"DESCRIBE the effect of increasing temperature on the rate of reaction.",a:"As temperature increases, the rate of reaction increases (the reaction happens faster)."},
+    // ra1 — RP5: Rates of reaction
+    {tier:"F",sep:false,sub:"ra1",rp:"rp5",q:"DESCRIBE how to investigate the effect of concentration on the rate of reaction between sodium thiosulfate and hydrochloric acid.",a:"Mix sodium thiosulfate solution and HCl in a conical flask placed over a cross on paper. Measure time for the cross to disappear due to sulfur precipitate forming. Repeat with different concentrations of sodium thiosulfate."},
+    {tier:"F",sep:false,sub:"ra1",rp:"rp5",q:"DESCRIBE how to measure the rate of reaction by collecting gas.",a:"Set up the reaction in a flask connected to a gas syringe or inverted measuring cylinder. Record the volume of gas collected at regular time intervals. Plot volume against time."},
+    {tier:"H",sep:false,sub:"ra1",rp:"rp5",q:"EXPLAIN how you could use the gradient of a volume-time graph to determine the rate of reaction at a specific time.",a:"Draw a tangent to the curve at that time point. The rate = the gradient of the tangent = change in volume ÷ change in time at that point."},
+    // ra2 — Collision theory & catalysts
+    {tier:"F",sep:false,sub:"ra2",q:"STATE what a catalyst does.",a:"Increases the rate of reaction without being used up. Provides an alternative pathway with lower activation energy."},
+    {tier:"H",sep:false,sub:"ra2",q:"EXPLAIN using collision theory why increasing concentration increases reaction rate.",a:"More particles per unit volume means more frequent collisions, so the rate increases."},
+    {tier:"H",sep:false,sub:"ra2",q:"EXPLAIN using collision theory why increasing temperature increases reaction rate.",a:"Particles have more kinetic energy, move faster, collide more frequently, and a greater proportion exceed the activation energy."},
+    // ra3 — Reversible reactions & equilibrium
+    {tier:"H",sep:true,sub:"ra3",q:"DEFINE dynamic equilibrium.",a:"The forward and reverse reactions occur at the same rate in a closed system, so concentrations of reactants and products remain constant."},
+    // ra4 — Le Chatelier & industrial processes
+    {tier:"H",sep:true,sub:"ra4",q:"STATE Le Chatelier's principle.",a:"If a system at equilibrium is disturbed, the equilibrium shifts in the direction that opposes the change."},
+    {tier:"H",sep:true,sub:"ra4",q:"EXPLAIN the effect of increasing pressure on a gaseous equilibrium.",a:"The equilibrium shifts towards the side with fewer moles of gas, reducing the pressure."},
+    {tier:"H",sep:true,sub:"ra4",q:"EXPLAIN what effect a catalyst has on the position of equilibrium.",a:"None — it speeds up both forward and reverse reactions equally, so equilibrium is reached faster but the position is unchanged."}
+  ],
+
+  organic: [
+    // or1 — Crude oil, hydrocarbons & alkanes
+    {tier:"F",sep:false,sub:"or1",q:"DESCRIBE crude oil and how its fractions are separated.",a:"A mixture of hydrocarbons separated by fractional distillation — components condense at different temperatures depending on chain length."},
+    {tier:"F",sep:false,sub:"or1",q:"DEFINE alkanes and state the formula for methane, ethane and propane.",a:"Saturated hydrocarbons, general formula CₙH₂ₙ₊₂. Methane: CH₄ · Ethane: C₂H₆ · Propane: C₃H₈"},
+    {tier:"F",sep:false,sub:"or1",q:"STATE the products of complete combustion of a hydrocarbon.",a:"Carbon dioxide and water only."},
+    // or2 — Cracking & alkenes
+    {tier:"H",sep:false,sub:"or2",q:"EXPLAIN what cracking is and why it is carried out.",a:"Breaking long-chain hydrocarbons into shorter, more useful ones using heat and a catalyst. Increases fuel supply and produces alkenes for making polymers."},
+    {tier:"H",sep:false,sub:"or2",q:"DEFINE alkenes and DESCRIBE how they differ from alkanes.",a:"Unsaturated hydrocarbons with a C=C double bond, general formula CₙH₂ₙ. Unlike alkanes, they decolourise bromine water."},
+    // or3 — Polymers
+    {tier:"H",sep:true,sub:"or3",q:"DESCRIBE addition polymerisation using ethene as an example.",a:"Many ethene monomers join under high pressure with a catalyst. The C=C double bond opens and molecules link into a long chain of poly(ethene). No other products formed."},
+    // or4 — Alcohols, carboxylic acids, esters (Sep)
+    {tier:"F",sep:true,sub:"or4",q:"STATE the conditions for fermentation and what it produces.",a:"Glucose → ethanol + carbon dioxide. Conditions: yeast, warm temperature (~30°C), anaerobic (no oxygen)."},
+    {tier:"H",sep:true,sub:"or4",q:"EXPLAIN how ethanol is produced industrially from ethene.",a:"Hydration of ethene: ethene + steam → ethanol, using a phosphoric acid catalyst at high temperature and pressure."}
+  ],
+
+  analysis: [
+    // an1 — Purity, formulations & chromatography
+    {tier:"F",sep:false,sub:"an1",q:"EXPLAIN how you can tell if a substance is pure using its melting point.",a:"A pure substance has a sharp, precise melting point. An impure substance melts over a range of temperatures at a lower value than expected."},
+    {tier:"F",sep:false,sub:"an1",q:"STATE what paper chromatography is used for.",a:"Separating mixtures of substances based on how they travel through a stationary phase with a moving solvent."},
+    {tier:"F",sep:false,sub:"an1",q:"STATE the Rf value in chromatography and how it is calculated.",a:"Rf = distance travelled by substance ÷ distance travelled by solvent front. Used to identify substances by comparing with known values."},
+    // an1 — RP6: Paper chromatography
+    {tier:"F",sep:false,sub:"an1",rp:"rp6",q:"EXPLAIN why the baseline in paper chromatography must be drawn in pencil, not pen.",a:"Ink would dissolve in the solvent and travel up the paper with the sample, contaminating the results. Pencil does not dissolve."},
+    {tier:"F",sep:false,sub:"an1",rp:"rp6",q:"EXPLAIN why the solvent level must be below the baseline when setting up paper chromatography.",a:"If the solvent level is above the baseline, the sample spots will dissolve directly into the solvent rather than being carried up the paper by capillary action."},
+    {tier:"H",sep:false,sub:"an1",rp:"rp6",q:"DESCRIBE how to calculate an Rf value from a chromatogram and explain how it can be used to identify a substance.",a:"Measure the distance from the baseline to the centre of the spot, and the distance from baseline to the solvent front. Rf = spot distance ÷ solvent front distance. Compare with known Rf values under the same conditions to identify the substance."},
+    // an2 — Gas tests
+    {tier:"F",sep:false,sub:"an2",q:"DESCRIBE how to test for Carbon Dioxide gas.",a:"Bubble the gas through limewater; it will turn cloudy/milky."},
+    {tier:"F",sep:false,sub:"an2",q:"DESCRIBE how to test for hydrogen gas.",a:"Hold a lit splint near the gas. A squeaky pop indicates hydrogen."},
+    {tier:"F",sep:false,sub:"an2",q:"DESCRIBE how to test for oxygen gas.",a:"Place a glowing splint into the gas. The splint relights in the presence of oxygen."},
+    // an3 — Flame tests & ion identification (Sep)
+    {tier:"F",sep:true,sub:"an3",q:"STATE what a flame test identifies and give four examples of colours.",a:"Metal ions. Li⁺: crimson · Na⁺: yellow · K⁺: lilac · Ca²⁺: orange-red · Cu²⁺: green"},
+    {tier:"H",sep:true,sub:"an3",q:"DESCRIBE how you test for halide ions in solution.",a:"Add dilute nitric acid then silver nitrate solution. Chloride → white precipitate · Bromide → cream · Iodide → yellow"},
+    {tier:"H",sep:true,sub:"an3",q:"DESCRIBE how you test for sulfate ions.",a:"Add dilute hydrochloric acid then barium chloride solution. A white precipitate of barium sulfate confirms sulfate ions."},
+    // an3 — RP7: Identifying ions (Sep only)
+    {tier:"F",sep:true,sub:"an3",rp:"rp7",q:"DESCRIBE the steps to identify an unknown ionic compound using chemical tests.",a:"1) Carry out a flame test to identify the metal cation. 2) Add NaOH to test for metal ions by precipitate colour. 3) Test for anions: add HCl + AgNO₃ for halides or HCl + BaCl₂ for sulfates. 4) Test gases produced with appropriate tests."},
+    {tier:"F",sep:true,sub:"an3",rp:"rp7",q:"STATE the colours of precipitates formed when NaOH is added to solutions of iron(II), iron(III) and copper(II) ions.",a:"Fe²⁺: green precipitate · Fe³⁺: brown/rust precipitate · Cu²⁺: blue precipitate"},
+    {tier:"H",sep:true,sub:"an3",rp:"rp7",q:"EXPLAIN why a flame test cannot distinguish between sodium and lithium if both are present in a mixture.",a:"Sodium gives a very intense yellow flame that masks any other colour. The bright yellow overpowers the crimson from lithium, making it impossible to identify lithium in the presence of sodium."},
+    // an4 — Instrumental analysis (Sep)
+    {tier:"H",sep:true,sub:"an4",q:"EXPLAIN the advantage of instrumental analysis over chemical tests.",a:"More sensitive, more accurate, can detect very small quantities, and can analyse complex mixtures quickly."}
+  ],
+
+  atmosphere: [
+    // am1 — Evolution of the atmosphere
+    {tier:"F",sep:false,sub:"am1",q:"STATE the approximate composition of the atmosphere today.",a:"About 78% nitrogen, 21% oxygen, ~1% argon, plus small amounts of CO₂ and other gases."},
+    {tier:"F",sep:false,sub:"am1",q:"DESCRIBE how oxygen levels in the atmosphere increased over time.",a:"Through photosynthesis by early plants and algae, which produced oxygen as a by-product."},
+    {tier:"H",sep:false,sub:"am1",q:"DESCRIBE how the early atmosphere was formed and how it changed.",a:"Intense volcanic activity released mainly water vapour, CO₂ and nitrogen. Water vapour condensed to form oceans, which absorbed CO₂. Nitrogen accumulated. Photosynthesis later added oxygen."},
+    // am2 — Greenhouse gases & climate change
+    {tier:"F",sep:false,sub:"am2",q:"DESCRIBE the greenhouse effect.",a:"Greenhouse gases (CO₂, methane, water vapour) absorb and re-emit infrared radiation from Earth's surface, keeping the planet warmer than it would otherwise be."},
+    {tier:"H",sep:false,sub:"am2",q:"EXPLAIN why it is difficult to make accurate predictions about climate change.",a:"Climate is a complex system with many interacting variables, uncertain future emissions, feedback loops, and long timescales."},
+    // am3 — Air pollution & carbon footprint
+    {tier:"F",sep:false,sub:"am3",q:"STATE three human activities that increase atmospheric CO₂.",a:"Burning fossil fuels · deforestation · cement production"},
+    {tier:"H",sep:false,sub:"am3",q:"DESCRIBE the environmental consequences of burning fossil fuels besides CO₂.",a:"Sulfur dioxide and nitrogen oxides cause acid rain · particulates cause respiratory problems · carbon monoxide is toxic."}
+  ],
+
+  resources: [
+    // re1 — Earth's resources & sustainability
+    {tier:"F",sep:false,sub:"re1",q:"STATE the difference between a renewable and a non-renewable resource.",a:"Renewable resources are replenished naturally at a similar rate to use. Non-renewable resources form much more slowly than they are used and will eventually run out."},
+    {tier:"F",sep:false,sub:"re1",q:"EXPLAIN why recycling metals is preferable to extracting them from ores.",a:"Uses less energy, conserves finite ore reserves, produces less waste and pollution, and reduces environmental damage from mining."},
+    // re2 — LCA & recycling
+    {tier:"F",sep:false,sub:"re2",q:"DESCRIBE a life cycle assessment (LCA).",a:"An analysis of the environmental impact of a product across its whole life — from extracting raw materials, through manufacture and use, to disposal."},
+    {tier:"H",sep:false,sub:"re2",q:"EXPLAIN the limitations of a life cycle assessment.",a:"Some stages are difficult to quantify, different analysts may make different judgements, and data may be incomplete or biased by who commissioned the assessment."},
+    // re3 — Alternative metal extraction
+    {tier:"F",sep:false,sub:"re3",q:"DESCRIBE phytomining.",a:"Using plants to absorb metal compounds from soil. The plants are burned and the metal is extracted from the ash — useful for low-grade ores."},
+    {tier:"F",sep:false,sub:"re3",q:"DESCRIBE bioleaching.",a:"Using bacteria to extract metal ions from low-grade ores. The bacteria produce an acidic leachate containing metal ions that can then be processed."},
+    {tier:"H",sep:false,sub:"re3",q:"SUGGEST why a company might choose phytomining over traditional mining even if it is slower.",a:"It is more sustainable, causes less environmental scarring to the landscape, and allows extraction of metal from low-grade ores that would otherwise be uneconomical."},
+    // re4 — Water treatment
+    {tier:"F",sep:false,sub:"re4",q:"DEFINE potable water.",a:"Water that is safe to drink (not necessarily pure water, as it contains dissolved salts)."},
+    {tier:"H",sep:false,sub:"re4",q:"DESCRIBE how water is treated to make it safe to drink.",a:"Sedimentation and filtration remove solids · chlorination kills pathogens · pH adjustment if needed."},
+    // re4 — RP8: Water purification
+    {tier:"F",sep:false,sub:"re4",rp:"rp8",q:"DESCRIBE how to test water samples for pH, dissolved solids and purity in the laboratory.",a:"pH: use pH meter or indicator · Dissolved solids: evaporate a known volume and weigh the residue · Purity: check melting/boiling point against pure water (0°C / 100°C at 1 atm)."},
+    {tier:"F",sep:false,sub:"re4",rp:"rp8",q:"DESCRIBE the process of distillation to produce pure water from a sample.",a:"Heat the water sample in a flask. Collect steam in a condenser, where it cools and condenses back to liquid. Collect the distillate. The dissolved solids remain in the original flask."},
+    {tier:"H",sep:false,sub:"re4",rp:"rp8",q:"EXPLAIN why distillation produces purer water than filtration alone.",a:"Filtration removes insoluble particles but dissolved salts and ions pass through. Distillation removes both — only water molecules evaporate and recondense, leaving dissolved substances behind."},
+    // re5 — Haber process & fertilisers (Sep)
+    {tier:"H",sep:true,sub:"re5",q:"DESCRIBE the Haber process and state the conditions used.",a:"Synthesis of ammonia: N₂ + 3H₂ ⇌ 2NH₃. Conditions: ~450°C, ~200 atm, iron catalyst. Higher pressure gives more yield but is expensive; lower temperature increases yield but slows reaction."},
+    {tier:"H",sep:true,sub:"re5",q:"DEFINE desalination and name two methods for it.",a:"Removing salt from seawater to make it potable. Methods: Distillation or Reverse Osmosis."}
+  ]
+}
+    },
+
+    physics:{
+      label:"⚛️ Physics",
+      sequence:["energy","electricity","particles","atomic","forces","waves","magnetism","space"],
+      paper1:["energy","electricity","particles","atomic"],
+      paper2:["forces","waves","magnetism","space"],
+      topics:{"energy":"Energy","electricity":"Electricity","particles":"Particle model of matter","atomic":"Atomic structure","forces":"Forces","waves":"Waves","magnetism":"Magnetism & electromagnetism","space":"Space physics"},
+      short:{"energy":"Energy","electricity":"Electricity","particles":"Particles","atomic":"Atomic structure","forces":"Forces","waves":"Waves","magnetism":"Magnetism","space":"Space"},
+      subtopics:{"energy": [{"id": "en1", "label": "Energy stores and transfers"}, {"id": "en2", "label": "Conservation, work and power"}, {"id": "en3", "label": "Efficiency"}, {"id": "en4", "label": "Specific heat capacity required practical"}, {"id": "en5", "label": "Thermal insulation required practical (Separate)"}, {"id": "en6", "label": "Energy resources"}], "electricity": [{"id": "el1", "label": "Current, charge and potential difference"}, {"id": "el2", "label": "Resistance and Ohm\u2019s law"}, {"id": "el3", "label": "Resistance of a wire required practical"}, {"id": "el4", "label": "I-V characteristics required practical"}, {"id": "el5", "label": "Series and parallel circuits"}, {"id": "el6", "label": "Mains electricity and plugs"}, {"id": "el7", "label": "National Grid and transformers"}], "particles": [{"id": "pa1", "label": "Density and required practical"}, {"id": "pa2", "label": "Internal energy and changes of state"}, {"id": "pa3", "label": "Specific latent heat"}, {"id": "pa4", "label": "Particle motion in gases"}, {"id": "pa5", "label": "Pressure in gases (Higher)"}], "atomic": [{"id": "at1", "label": "Atoms, isotopes and nuclear model"}, {"id": "at2", "label": "Development of atomic model"}, {"id": "at3", "label": "Radioactive decay"}, {"id": "at4", "label": "Nuclear equations and half-life"}, {"id": "at5", "label": "Irradiation, contamination and uses"}, {"id": "at6", "label": "Fission and fusion (Separate)"}], "forces": [{"id": "fo1", "label": "Scalars, vectors and contact/non-contact forces"}, {"id": "fo2", "label": "Weight, mass and resultant forces"}, {"id": "fo3", "label": "Work done, elasticity and Hooke\u2019s law required practical"}, {"id": "fo4", "label": "Moments, levers and gears"}, {"id": "fo5", "label": "Pressure in fluids (Separate)"}, {"id": "fo6", "label": "Distance, displacement, speed and velocity"}, {"id": "fo7", "label": "Acceleration and motion graphs"}, {"id": "fo8", "label": "Newton\u2019s laws and F=ma required practical"}, {"id": "fo9", "label": "Stopping distances and momentum"}], "waves": [{"id": "wa1", "label": "Wave properties and equations"}, {"id": "wa2", "label": "Ripple tank/string waves required practical"}, {"id": "wa3", "label": "Electromagnetic spectrum"}, {"id": "wa4", "label": "Reflection and refraction required practical (Separate)"}, {"id": "wa5", "label": "Sound, ultrasound and seismic waves"}, {"id": "wa6", "label": "Lenses and black body radiation (Separate)"}, {"id": "wa7", "label": "Infrared radiation required practical"}], "magnetism": [{"id": "ma1", "label": "Permanent and induced magnetism"}, {"id": "ma2", "label": "Magnetic fields"}, {"id": "ma3", "label": "Electromagnets and solenoids"}, {"id": "ma4", "label": "Motor effect"}, {"id": "ma5", "label": "Fleming\u2019s left-hand rule (Higher)"}, {"id": "ma6", "label": "Generator effect and transformers (Separate)"}], "space": [{"id": "sp1", "label": "Solar system and orbital motion (Separate)"}, {"id": "sp2", "label": "Life cycle of stars (Separate)"}, {"id": "sp3", "label": "Red-shift and expanding universe (Separate)"}]},
+      rpMeta:{"rp1": {"label": "RP1 \u00b7 Specific heat capacity", "paper": 1, "sep": false, "topic": "energy"}, "rp2": {"label": "RP2 \u00b7 Thermal insulation", "paper": 1, "sep": true, "topic": "energy"}, "rp3": {"label": "RP3 \u00b7 Resistance of a wire", "paper": 1, "sep": false, "topic": "electricity"}, "rp4": {"label": "RP4 \u00b7 I-V characteristics", "paper": 1, "sep": false, "topic": "electricity"}, "rp5": {"label": "RP5 \u00b7 Density", "paper": 1, "sep": false, "topic": "particles"}, "rp6": {"label": "RP6 \u00b7 Force and extension", "paper": 2, "sep": false, "topic": "forces"}, "rp7": {"label": "RP7 \u00b7 Force and acceleration", "paper": 2, "sep": false, "topic": "forces"}, "rp8": {"label": "RP8 \u00b7 Wave properties", "paper": 2, "sep": false, "topic": "waves"}, "rp9": {"label": "RP9 \u00b7 Light reflection/refraction", "paper": 2, "sep": true, "topic": "waves"}, "rp10": {"label": "RP10 \u00b7 Infrared radiation", "paper": 2, "sep": false, "topic": "waves"}},
+      questions:{"energy": [{"tier": "F", "sep": false, "sub": "en1", "q": "STATE the main energy stores.", "a": "Kinetic, thermal, chemical, gravitational potential, elastic potential, magnetic, electrostatic and nuclear."}, {"tier": "F", "sep": false, "sub": "en1", "q": "DESCRIBE an energy transfer when a kettle heats water.", "a": "Energy is transferred electrically to the heating element and then thermally to the water."}, {"tier": "F", "sep": false, "sub": "en1", "q": "STATE what happens to total energy in a closed system.", "a": "Total energy remains constant; energy is conserved."}, {"tier": "H", "sep": false, "sub": "en1", "q": "EXPLAIN why energy becomes less useful after many transfers.", "a": "More energy is dissipated to the surroundings, usually by heating, so less remains in useful stores."}, {"tier": "F", "sep": false, "sub": "en2", "q": "STATE the equation for work done.", "a": "work done = force \u00d7 distance moved in the direction of the force."}, {"tier": "F", "sep": false, "sub": "en2", "q": "STATE the equation for power.", "a": "power = energy transferred \u00f7 time."}, {"tier": "H", "sep": false, "sub": "en2", "q": "COMPARE power and energy.", "a": "Energy is the amount transferred; power is the rate of energy transfer."}, {"tier": "F", "sep": false, "sub": "en3", "q": "STATE the equation for efficiency.", "a": "efficiency = useful output energy \u00f7 total input energy \u00d7 100%."}, {"tier": "F", "sep": false, "sub": "en3", "q": "STATE two ways to reduce unwanted energy transfers.", "a": "Lubrication, thermal insulation, streamlining or reducing electrical resistance."}, {"tier": "H", "sep": false, "sub": "en3", "q": "EXPLAIN why lubrication increases efficiency.", "a": "It reduces friction, so less energy is dissipated by heating."}, {"tier": "F", "sep": false, "sub": "en4", "q": "DESCRIBE the specific heat capacity practical.", "a": "Heat a metal block with an immersion heater, measure mass, current, voltage, time and temperature change, then use E=mc\u0394\u03b8.", "rp": "rp1"}, {"tier": "F", "sep": false, "sub": "en4", "q": "STATE the equation used in the specific heat capacity practical.", "a": "energy transferred = mass \u00d7 specific heat capacity \u00d7 temperature change.", "rp": "rp1"}, {"tier": "H", "sep": false, "sub": "en4", "q": "EXPLAIN why insulation improves the SHC practical.", "a": "It reduces energy transfer to the surroundings, making the calculated value more accurate.", "rp": "rp1"}, {"tier": "F", "sep": true, "sub": "en5", "q": "DESCRIBE how to compare thermal insulation materials.", "a": "Wrap identical containers with different materials, add hot water, record temperature decrease over time and compare cooling rates.", "rp": "rp2"}, {"tier": "H", "sep": true, "sub": "en5", "q": "STATE variables to control in the thermal insulation practical.", "a": "Starting temperature, water volume, container type, insulation thickness and time intervals.", "rp": "rp2"}, {"tier": "F", "sep": false, "sub": "en6", "q": "STATE examples of renewable energy resources.", "a": "Solar, wind, hydroelectric, tidal, wave, geothermal and biofuel."}, {"tier": "F", "sep": false, "sub": "en6", "q": "STATE examples of non-renewable energy resources.", "a": "Coal, oil, natural gas and nuclear fuel."}, {"tier": "H", "sep": false, "sub": "en6", "q": "EVALUATE wind power.", "a": "Wind is renewable and has no direct fuel cost, but output is variable and some people object to visual/noise impacts."}, {"tier": "H", "sep": false, "sub": "en6", "q": "EXPLAIN why fossil fuels contribute to climate change.", "a": "Burning fossil fuels releases carbon dioxide, a greenhouse gas."}], "electricity": [{"tier": "F", "sep": false, "sub": "el1", "q": "STATE the equation linking charge, current and time.", "a": "charge flow = current \u00d7 time."}, {"tier": "F", "sep": false, "sub": "el1", "q": "DEFINE current.", "a": "The rate of flow of charge."}, {"tier": "F", "sep": false, "sub": "el1", "q": "DEFINE potential difference.", "a": "Energy transferred per unit charge between two points."}, {"tier": "H", "sep": false, "sub": "el1", "q": "EXPLAIN why current is the same in all parts of a series circuit.", "a": "Charge has only one route, so the same charge passes each component per second."}, {"tier": "F", "sep": false, "sub": "el2", "q": "STATE Ohm\u2019s law.", "a": "potential difference = current \u00d7 resistance."}, {"tier": "F", "sep": false, "sub": "el2", "q": "DESCRIBE an ohmic conductor.", "a": "It has constant resistance if temperature is constant, so current is proportional to potential difference."}, {"tier": "H", "sep": false, "sub": "el2", "q": "EXPLAIN why resistance of a filament lamp increases as current increases.", "a": "The filament gets hotter, ions vibrate more and electrons collide more often."}, {"tier": "F", "sep": false, "sub": "el3", "q": "DESCRIBE the resistance of a wire practical.", "a": "Measure current and potential difference for different wire lengths, calculate resistance and plot resistance against length.", "rp": "rp3"}, {"tier": "F", "sep": false, "sub": "el3", "q": "STATE the independent variable in the resistance wire practical.", "a": "Length of wire.", "rp": "rp3"}, {"tier": "H", "sep": false, "sub": "el3", "q": "EXPLAIN why current should be switched off between readings in the wire practical.", "a": "It prevents heating, which would change resistance.", "rp": "rp3"}, {"tier": "F", "sep": false, "sub": "el4", "q": "DESCRIBE how to investigate I-V characteristics.", "a": "Measure current for different potential differences using an ammeter, voltmeter and variable resistor, then plot I against V.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "el4", "q": "STATE the shape of an I-V graph for an ohmic resistor.", "a": "A straight line through the origin.", "rp": "rp4"}, {"tier": "H", "sep": false, "sub": "el4", "q": "DESCRIBE the I-V graph of a diode.", "a": "Very little current flows in reverse; current flows easily only above a threshold in forward bias.", "rp": "rp4"}, {"tier": "F", "sep": false, "sub": "el5", "q": "STATE the rules for current and potential difference in series circuits.", "a": "Current is the same everywhere; potential difference is shared between components."}, {"tier": "F", "sep": false, "sub": "el5", "q": "STATE the rules for current and potential difference in parallel circuits.", "a": "Potential difference is the same across branches; current splits between branches."}, {"tier": "H", "sep": false, "sub": "el5", "q": "EXPLAIN why adding resistors in parallel decreases total resistance.", "a": "It provides more pathways for charge, increasing total current for the same potential difference."}, {"tier": "F", "sep": false, "sub": "el6", "q": "STATE the UK mains potential difference and frequency.", "a": "About 230 V and 50 Hz."}, {"tier": "F", "sep": false, "sub": "el6", "q": "STATE the function of live, neutral and earth wires.", "a": "Live carries alternating potential difference; neutral completes the circuit; earth is a safety wire."}, {"tier": "H", "sep": false, "sub": "el6", "q": "EXPLAIN why the earth wire is a safety feature.", "a": "If the live wire touches the metal case, current flows to earth and the fuse blows or breaker trips."}, {"tier": "F", "sep": false, "sub": "el7", "q": "STATE why the National Grid uses high potential difference.", "a": "High potential difference reduces current, reducing energy loss by heating in cables."}, {"tier": "H", "sep": false, "sub": "el7", "q": "EXPLAIN how transformers help the National Grid.", "a": "Step-up transformers increase potential difference for transmission; step-down transformers reduce it for domestic use."}, {"tier": "F", "sep": false, "sub": "el2", "q": "DESCRIBE what is meant by an ohmic conductor.", "a": "A conductor where the current is directly proportional to the potential difference at constant temperature, so resistance is constant."}, {"tier": "F", "sep": false, "sub": "el1", "q": "STATE the equation for electrical power in terms of current and potential difference.", "a": "power = current \u00d7 potential difference; P = IV."}, {"tier": "H", "sep": false, "sub": "el6", "q": "EXPLAIN why a fuse provides safety in a domestic circuit.", "a": "If current exceeds the fuse rating, the fuse wire melts and breaks the circuit, preventing overheating and fire."}], "particles": [{"tier": "F", "sep": false, "sub": "pa1", "q": "STATE the equation for density.", "a": "density = mass \u00f7 volume."}, {"tier": "F", "sep": false, "sub": "pa1", "q": "DESCRIBE how to find density of a regular solid.", "a": "Measure mass with a balance, calculate volume from dimensions and use density = mass \u00f7 volume.", "rp": "rp5"}, {"tier": "F", "sep": false, "sub": "pa1", "q": "DESCRIBE how to find density of an irregular solid.", "a": "Measure mass, use water displacement to find volume, then calculate density.", "rp": "rp5"}, {"tier": "F", "sep": false, "sub": "pa1", "q": "DESCRIBE how to find density of a liquid.", "a": "Measure mass of a known volume using a balance and measuring cylinder, then calculate density.", "rp": "rp5"}, {"tier": "H", "sep": false, "sub": "pa1", "q": "EXPLAIN why repeated readings improve density measurements.", "a": "They reduce random error and allow a mean to be calculated.", "rp": "rp5"}, {"tier": "F", "sep": false, "sub": "pa2", "q": "DESCRIBE internal energy.", "a": "The total kinetic and potential energy of particles in a system."}, {"tier": "F", "sep": false, "sub": "pa2", "q": "STATE what happens during a change of state.", "a": "Energy changes the potential energy of particles, not the temperature."}, {"tier": "H", "sep": false, "sub": "pa2", "q": "EXPLAIN melting in terms of particles.", "a": "Energy is transferred to particles, weakening forces between them so the solid becomes a liquid."}, {"tier": "F", "sep": false, "sub": "pa3", "q": "STATE the equation for specific latent heat.", "a": "energy = mass \u00d7 specific latent heat."}, {"tier": "H", "sep": false, "sub": "pa3", "q": "COMPARE specific latent heat of fusion and vaporisation.", "a": "Fusion is for solid-liquid changes; vaporisation is for liquid-gas changes."}, {"tier": "F", "sep": false, "sub": "pa4", "q": "DESCRIBE gas pressure in terms of particles.", "a": "Gas particles collide with container walls and exert a force, producing pressure."}, {"tier": "H", "sep": false, "sub": "pa4", "q": "EXPLAIN why heating a gas at constant volume increases pressure.", "a": "Particles move faster and collide with walls more frequently and with greater force."}, {"tier": "H", "sep": false, "sub": "pa5", "q": "EXPLAIN the relationship between pressure and volume of a gas at constant temperature.", "a": "As volume decreases, pressure increases because particles collide with walls more often."}, {"tier": "H", "sep": false, "sub": "pa5", "q": "STATE the pressure-volume relationship for a fixed mass of gas at constant temperature.", "a": "pressure \u00d7 volume = constant."}, {"tier": "H", "sep": false, "sub": "pa2", "q": "EXPLAIN why ice is less dense than liquid water.", "a": "In ice, water molecules are arranged in a regular lattice with gaps, making it less dense than liquid water where molecules are more randomly packed."}], "atomic": [{"tier": "F", "sep": false, "sub": "at1", "q": "DESCRIBE the structure of an atom.", "a": "A small positive nucleus containing protons and neutrons, surrounded by electrons."}, {"tier": "F", "sep": false, "sub": "at1", "q": "DEFINE isotope.", "a": "Atoms of the same element with the same protons but different numbers of neutrons."}, {"tier": "F", "sep": false, "sub": "at1", "q": "STATE the relative charges of proton, neutron and electron.", "a": "Proton +1, neutron 0, electron \u22121."}, {"tier": "H", "sep": false, "sub": "at1", "q": "EXPLAIN why atoms are neutral.", "a": "They have equal numbers of protons and electrons."}, {"tier": "F", "sep": false, "sub": "at2", "q": "DESCRIBE Rutherford\u2019s alpha scattering evidence.", "a": "Most alpha particles passed through, some deflected and a few rebounded, showing a small dense positive nucleus."}, {"tier": "H", "sep": false, "sub": "at2", "q": "EXPLAIN how the nuclear model replaced the plum pudding model.", "a": "Alpha scattering showed positive charge and mass were concentrated in a tiny nucleus, not spread throughout the atom."}, {"tier": "F", "sep": false, "sub": "at3", "q": "STATE the three types of nuclear radiation.", "a": "Alpha, beta and gamma."}, {"tier": "F", "sep": false, "sub": "at3", "q": "COMPARE penetration of alpha, beta and gamma.", "a": "Alpha is stopped by paper, beta by thin aluminium, gamma is reduced by thick lead or concrete."}, {"tier": "H", "sep": false, "sub": "at3", "q": "COMPARE ionising power of alpha, beta and gamma.", "a": "Alpha is most ionising, beta is moderately ionising and gamma is least ionising."}, {"tier": "F", "sep": false, "sub": "at4", "q": "DEFINE half-life.", "a": "The time taken for the number of radioactive nuclei, or activity, to halve."}, {"tier": "H", "sep": false, "sub": "at4", "q": "BALANCE a nuclear equation for alpha decay.", "a": "Mass number decreases by 4 and atomic number decreases by 2."}, {"tier": "H", "sep": false, "sub": "at4", "q": "BALANCE a nuclear equation for beta decay.", "a": "Mass number stays the same and atomic number increases by 1."}, {"tier": "F", "sep": false, "sub": "at5", "q": "COMPARE irradiation and contamination.", "a": "Irradiation is exposure to radiation; contamination is unwanted radioactive material on or inside an object."}, {"tier": "F", "sep": false, "sub": "at5", "q": "STATE a medical use of radiation.", "a": "Tracers, radiotherapy or sterilising equipment."}, {"tier": "H", "sep": false, "sub": "at5", "q": "EVALUATE using radioactive tracers.", "a": "They can diagnose problems but expose patients to ionising radiation, so half-life and dose must be controlled."}, {"tier": "H", "sep": true, "sub": "at6", "q": "DESCRIBE nuclear fission.", "a": "A large unstable nucleus absorbs a neutron, splits into smaller nuclei and releases neutrons and energy."}, {"tier": "H", "sep": true, "sub": "at6", "q": "DESCRIBE a chain reaction.", "a": "Neutrons from one fission event cause further fission events."}, {"tier": "H", "sep": true, "sub": "at6", "q": "DESCRIBE nuclear fusion.", "a": "Two light nuclei join to form a heavier nucleus, releasing energy."}, {"tier": "F", "sep": false, "sub": "at3", "q": "STATE what is meant by background radiation and give two sources.", "a": "Radiation always present in the environment. Natural sources include rocks (radon gas), cosmic rays; man-made sources include nuclear fallout and medical procedures."}, {"tier": "F", "sep": false, "sub": "at4", "q": "CALCULATE the activity of a source after two half-lives if the initial activity is 800 Bq.", "a": "After 1 half-life: 400 Bq. After 2 half-lives: 200 Bq."}], "forces": [{"tier": "F", "sep": false, "sub": "fo1", "q": "COMPARE scalar and vector quantities.", "a": "Scalars have magnitude only; vectors have magnitude and direction."}, {"tier": "F", "sep": false, "sub": "fo1", "q": "STATE examples of contact and non-contact forces.", "a": "Contact: friction, air resistance, tension, normal reaction. Non-contact: gravity, magnetic, electrostatic."}, {"tier": "F", "sep": false, "sub": "fo2", "q": "STATE the equation for weight.", "a": "weight = mass \u00d7 gravitational field strength."}, {"tier": "F", "sep": false, "sub": "fo2", "q": "DESCRIBE resultant force.", "a": "The single force that has the same effect as all forces acting together."}, {"tier": "H", "sep": false, "sub": "fo2", "q": "EXPLAIN equilibrium.", "a": "If resultant force is zero, an object is stationary or moves at constant velocity."}, {"tier": "F", "sep": false, "sub": "fo3", "q": "STATE the equation for work done.", "a": "work done = force \u00d7 distance."}, {"tier": "F", "sep": false, "sub": "fo3", "q": "DESCRIBE the force-extension practical.", "a": "Add masses to a spring, measure extension, repeat and plot force against extension.", "rp": "rp6"}, {"tier": "F", "sep": false, "sub": "fo3", "q": "STATE Hooke\u2019s law.", "a": "Extension is directly proportional to force up to the limit of proportionality.", "rp": "rp6"}, {"tier": "H", "sep": false, "sub": "fo3", "q": "EXPLAIN the limit of proportionality.", "a": "Beyond this point, extension is no longer proportional to force and the spring may be permanently deformed.", "rp": "rp6"}, {"tier": "H", "sep": false, "sub": "fo4", "q": "STATE the equation for moment of a force.", "a": "moment = force \u00d7 perpendicular distance from pivot."}, {"tier": "H", "sep": false, "sub": "fo4", "q": "EXPLAIN how levers increase turning effect.", "a": "They increase the perpendicular distance from the pivot, increasing the moment."}, {"tier": "H", "sep": true, "sub": "fo5", "q": "STATE the equation for pressure.", "a": "pressure = force normal to a surface \u00f7 area."}, {"tier": "H", "sep": true, "sub": "fo5", "q": "EXPLAIN why pressure in a liquid increases with depth.", "a": "There is more liquid above, so the weight of liquid creates greater pressure."}, {"tier": "F", "sep": false, "sub": "fo6", "q": "STATE the equation for speed.", "a": "speed = distance \u00f7 time."}, {"tier": "F", "sep": false, "sub": "fo6", "q": "COMPARE distance and displacement.", "a": "Distance is scalar; displacement is vector distance in a stated direction."}, {"tier": "F", "sep": false, "sub": "fo7", "q": "STATE the equation for acceleration.", "a": "acceleration = change in velocity \u00f7 time."}, {"tier": "H", "sep": false, "sub": "fo7", "q": "INTERPRET gradient on a distance-time graph.", "a": "The gradient gives speed."}, {"tier": "H", "sep": false, "sub": "fo7", "q": "INTERPRET gradient and area on a velocity-time graph.", "a": "Gradient gives acceleration; area under the graph gives distance travelled."}, {"tier": "F", "sep": false, "sub": "fo8", "q": "STATE Newton\u2019s second law.", "a": "resultant force = mass \u00d7 acceleration."}, {"tier": "F", "sep": false, "sub": "fo8", "q": "DESCRIBE the force and acceleration practical.", "a": "Use a trolley, pulley and masses or light gates to measure acceleration for different forces or masses.", "rp": "rp7"}, {"tier": "H", "sep": false, "sub": "fo8", "q": "EXPLAIN inertial mass.", "a": "It is a measure of how difficult it is to change an object\u2019s velocity.", "rp": "rp7"}, {"tier": "F", "sep": false, "sub": "fo9", "q": "STATE factors affecting stopping distance.", "a": "Thinking distance and braking distance."}, {"tier": "F", "sep": false, "sub": "fo9", "q": "STATE factors increasing thinking distance.", "a": "Tiredness, alcohol, drugs and distractions."}, {"tier": "H", "sep": false, "sub": "fo9", "q": "STATE the equation for momentum.", "a": "momentum = mass \u00d7 velocity."}, {"tier": "H", "sep": false, "sub": "fo9", "q": "EXPLAIN conservation of momentum.", "a": "In a closed system, total momentum before an event equals total momentum after."}, {"tier": "F", "sep": false, "sub": "fo6", "q": "DESCRIBE the difference between average speed and instantaneous speed.", "a": "Average speed is total distance divided by total time. Instantaneous speed is the speed at a particular moment in time, read from a distance\u2013time graph gradient."}, {"tier": "H", "sep": false, "sub": "fo9", "q": "EXPLAIN why crumple zones and air bags reduce injury in a car crash.", "a": "They increase the time over which momentum changes, reducing the force experienced by passengers (F = \u0394p/\u0394t)."}], "waves": [{"tier": "F", "sep": false, "sub": "wa1", "q": "DEFINE transverse wave.", "a": "Oscillations are perpendicular to the direction of energy transfer."}, {"tier": "F", "sep": false, "sub": "wa1", "q": "DEFINE longitudinal wave.", "a": "Oscillations are parallel to the direction of energy transfer."}, {"tier": "F", "sep": false, "sub": "wa1", "q": "STATE the wave speed equation.", "a": "wave speed = frequency \u00d7 wavelength."}, {"tier": "H", "sep": false, "sub": "wa1", "q": "COMPARE amplitude, wavelength and frequency.", "a": "Amplitude is maximum displacement, wavelength is distance between matching points, frequency is waves per second."}, {"tier": "F", "sep": false, "sub": "wa2", "q": "DESCRIBE measuring wave speed in a ripple tank.", "a": "Measure wavelength using a ruler and frequency using a strobe/timer, then calculate speed.", "rp": "rp8"}, {"tier": "F", "sep": false, "sub": "wa2", "q": "DESCRIBE measuring wave speed on a string.", "a": "Measure wavelength of a standing wave and frequency of vibration, then calculate speed.", "rp": "rp8"}, {"tier": "H", "sep": false, "sub": "wa2", "q": "EXPLAIN why repeats improve wave speed measurements.", "a": "They reduce random error and allow a mean to be calculated.", "rp": "rp8"}, {"tier": "F", "sep": false, "sub": "wa3", "q": "LIST electromagnetic waves in order.", "a": "Radio, microwave, infrared, visible, ultraviolet, X-rays, gamma rays."}, {"tier": "F", "sep": false, "sub": "wa3", "q": "STATE what all electromagnetic waves have in common.", "a": "They are transverse and travel at the same speed in a vacuum."}, {"tier": "H", "sep": false, "sub": "wa3", "q": "EXPLAIN why ultraviolet, X-rays and gamma can be hazardous.", "a": "They have high frequency and can ionise atoms or damage cells."}, {"tier": "F", "sep": true, "sub": "wa4", "q": "DESCRIBE the reflection/refraction practical.", "a": "Use a ray box and glass block, trace incident and emergent rays and measure angles with a protractor.", "rp": "rp9"}, {"tier": "H", "sep": true, "sub": "wa4", "q": "STATE the law of reflection.", "a": "Angle of incidence equals angle of reflection.", "rp": "rp9"}, {"tier": "H", "sep": true, "sub": "wa4", "q": "EXPLAIN refraction.", "a": "A wave changes speed at a boundary, causing it to change direction.", "rp": "rp9"}, {"tier": "F", "sep": false, "sub": "wa5", "q": "STATE the range of human hearing.", "a": "About 20 Hz to 20,000 Hz."}, {"tier": "H", "sep": false, "sub": "wa5", "q": "DESCRIBE ultrasound.", "a": "Sound above 20,000 Hz, used in medical imaging and industrial testing."}, {"tier": "H", "sep": true, "sub": "wa6", "q": "COMPARE convex and concave lenses.", "a": "Convex lenses converge parallel rays; concave lenses diverge parallel rays."}, {"tier": "H", "sep": true, "sub": "wa6", "q": "DESCRIBE black body radiation.", "a": "All objects emit and absorb infrared radiation; a perfect black body is the best absorber and emitter."}, {"tier": "F", "sep": false, "sub": "wa7", "q": "DESCRIBE the infrared radiation practical.", "a": "Use different surface colours/finishes, heat them equally or use a Leslie cube, and compare temperature change or emitted radiation.", "rp": "rp10"}, {"tier": "H", "sep": false, "sub": "wa7", "q": "STATE which surfaces are best emitters and absorbers of infrared.", "a": "Matt black surfaces are best emitters and absorbers; shiny silver surfaces are poor emitters and absorbers.", "rp": "rp10"}, {"tier": "H", "sep": false, "sub": "wa5", "q": "DESCRIBE how seismic P-waves and S-waves provide evidence for the Earth's internal structure.", "a": "P-waves travel through solids and liquids; S-waves only through solids. The pattern of waves detected after earthquakes shows the Earth has a liquid outer core and solid inner core."}, {"tier": "F", "sep": false, "sub": "wa5", "q": "STATE two uses of ultrasound.", "a": "Medical imaging (e.g. scanning unborn babies); industrial testing for cracks in materials."}], "magnetism": [{"tier": "F", "sep": false, "sub": "ma1", "q": "COMPARE permanent and induced magnets.", "a": "Permanent magnets produce their own magnetic field; induced magnets become magnetic in a magnetic field."}, {"tier": "F", "sep": false, "sub": "ma1", "q": "STATE what happens between like and unlike magnetic poles.", "a": "Like poles repel; unlike poles attract."}, {"tier": "F", "sep": false, "sub": "ma2", "q": "DESCRIBE the magnetic field around a bar magnet.", "a": "Field lines go from north to south outside the magnet and are strongest where lines are closest."}, {"tier": "H", "sep": false, "sub": "ma2", "q": "EXPLAIN how a compass shows magnetic field direction.", "a": "The compass needle aligns with the magnetic field direction."}, {"tier": "F", "sep": false, "sub": "ma3", "q": "DESCRIBE how to make an electromagnet stronger.", "a": "Increase current, add more turns or use an iron core."}, {"tier": "H", "sep": false, "sub": "ma3", "q": "EXPLAIN why a solenoid with an iron core is stronger.", "a": "The iron core becomes magnetised and adds to the solenoid\u2019s magnetic field."}, {"tier": "F", "sep": false, "sub": "ma4", "q": "DESCRIBE the motor effect.", "a": "A current-carrying wire in a magnetic field experiences a force."}, {"tier": "H", "sep": false, "sub": "ma4", "q": "STATE factors affecting the force on a current-carrying conductor.", "a": "Magnetic flux density, current and length of conductor in the field."}, {"tier": "H", "sep": false, "sub": "ma5", "q": "USE Fleming\u2019s left-hand rule.", "a": "First finger = field, second finger = current, thumb = force/motion."}, {"tier": "H", "sep": true, "sub": "ma6", "q": "DESCRIBE the generator effect.", "a": "A potential difference is induced when a conductor cuts magnetic field lines or the field through a coil changes."}, {"tier": "H", "sep": true, "sub": "ma6", "q": "COMPARE step-up and step-down transformers.", "a": "Step-up increases potential difference; step-down decreases potential difference."}, {"tier": "H", "sep": true, "sub": "ma6", "q": "STATE the transformer equation.", "a": "primary voltage \u00f7 secondary voltage = primary turns \u00f7 secondary turns."}, {"tier": "H", "sep": true, "sub": "ma6", "q": "DESCRIBE how a simple ac generator produces electricity.", "a": "A coil of wire rotates in a magnetic field. As it rotates, it cuts field lines and an alternating potential difference is induced. Slip rings and brushes allow current to flow to the external circuit."}], "space": [{"tier": "F", "sep": true, "sub": "sp1", "q": "STATE the order of objects in the Solar System model.", "a": "Planets orbit the Sun; moons orbit planets; artificial satellites can orbit planets or moons."}, {"tier": "F", "sep": true, "sub": "sp1", "q": "DESCRIBE what keeps planets in orbit.", "a": "Gravity provides the centripetal force needed for circular or elliptical motion."}, {"tier": "H", "sep": true, "sub": "sp1", "q": "EXPLAIN why orbital speed changes in elliptical orbits.", "a": "Objects move faster when closer to the object they orbit because gravitational force is stronger."}, {"tier": "F", "sep": true, "sub": "sp2", "q": "DESCRIBE the life cycle of a star like the Sun.", "a": "Nebula \u2192 protostar \u2192 main sequence \u2192 red giant \u2192 white dwarf \u2192 black dwarf."}, {"tier": "F", "sep": true, "sub": "sp2", "q": "DESCRIBE the life cycle of a massive star.", "a": "Nebula \u2192 protostar \u2192 main sequence \u2192 red supergiant \u2192 supernova \u2192 neutron star or black hole."}, {"tier": "H", "sep": true, "sub": "sp2", "q": "EXPLAIN why fusion releases energy in stars.", "a": "Light nuclei fuse to form heavier nuclei, transferring energy from the nuclear store."}, {"tier": "F", "sep": true, "sub": "sp3", "q": "DESCRIBE red-shift.", "a": "Light from distant galaxies has increased wavelength, shifted towards the red end of the spectrum."}, {"tier": "H", "sep": true, "sub": "sp3", "q": "EXPLAIN how red-shift supports an expanding universe.", "a": "More distant galaxies show greater red-shift, suggesting galaxies are moving away and space is expanding."}, {"tier": "H", "sep": true, "sub": "sp3", "q": "STATE what the Big Bang theory suggests.", "a": "The universe began from a very small, hot, dense state and has been expanding since."}]}
+    }
+
+  },
+
+  jokes:[
+    {q:"Why can't you trust an atom?",a:"Because they make up everything! ⚛️"},
+    {q:"What did the photon say at airport security?",a:"No luggage — I'm travelling light! 💡"},
+    {q:"Why did the resistor get warm?",a:"It couldn't resist. 🔥"},
+    {q:"Why was the physics book sad?",a:"It had too many problems. 📚"},
+    {q:"I would tell you a joke about inertia…",a:"But it doesn't really go anywhere. 🛑"},
+    {q:"What do you call a fish without eyes?",a:"A fsh! 🐟"},
+    {q:"Why did the biology teacher go to jail?",a:"For splitting cells! 😄"},
+    {q:"Why are mitochondria invited to every party?",a:"Because they bring the energy! ⚡"},
+    {q:"What does a biologist wear to impress people?",a:"Designer genes! 👖"},
+    {q:"Why did the mushroom get invited everywhere?",a:"Because he was a fungi! 🍄"},
+    {q:"What did one DNA strand say to the other?",a:"Do these genes make me look fat? 🧬"},
+    {q:"Why did the amoeba fail its maths test?",a:"Because it multiplied by dividing! 🔬"},
+    {q:"What did the helpless T cell say when facing the infection?",a:"Is there antibody out there? 🦠"},
+    {q:"Two blood cells met and fell in love…",a:"Alas, it was all in vein. ❤️"},
+    {q:"Why did the cell go to therapy?",a:"It had too many issues with its membrane. 🧠"},
+    {q:"What do you call a biologist's selfie?",a:"A cell-fie! 🤳"},
+    {q:"I told a joke about noble gases once…",a:"No reaction! 😐"},
+    {q:"What's a chemistry teacher's favourite kind of tree?",a:"A chemis-tree! 🎄"},
+    {q:"A neutron walks into a bar and asks how much for a beer. The barman says…",a:"For you, no charge! 🍺"},
+    {q:"Why did the chemist read the book about helium?",a:"He couldn't put it down! He… He! 📖"},
+    {q:"What weapon can you make from potassium, nickel and iron?",a:"A KNiFe! 🔪"},
+    {q:"Why did the mole cross the road?",a:"To get to the other 6.02 × 10²³! 🦔"},
+    {q:"What did the scientist say when he found two isotopes of helium?",a:"HeHe! 😂"},
+    {q:"Why did the physics teacher break up with the biology teacher?",a:"There was no chemistry! ⚗️"},
+    {q:"What do you call iron blowing in the wind?",a:"Febreeze! 💨"},
+    {q:"How does a physicist exercise?",a:"By doing quantum leaps! 🏋️"},
+    {q:"Why can't you trust a quark?",a:"They're always charmed and strange! ✨"},
+    {q:"What do you call a tooth in a glass of water?",a:"A one-molar solution. 🦷"},
+    {q:"Why did the white bear dissolve in water?",a:"Because it was polar. 🐻‍❄️"},
+    {q:"What do you call an ion that also raps?",a:"Fluoride (Flo Rida). 🎤"},
+    {q:"If you're not part of the solution…",a:"You're part of the precipitate! 🧪"},
+    {q:"Why do plants hate maths?",a:"It gives them square roots. 🌿"},
+    {q:"What did the femur say to the patella?",a:"I knee'd you! 🦴"},
+    {q:"Why did the leaf go to the doctor?",a:"It was feeling green. 🍃"},
+    {q:"Light travels faster than sound…",a:"That's why some people appear bright until you hear them speak. 💬"}
+  ]
+};
+
+/* ══ Chiptune audio engine ═════════════════════════════════════
+   Square/triangle voices through a shared master bus with a gentle
+   lowpass, so 8-bit tone never gets shrill over classroom speakers.
+   Public API (beep / playWarning / playEnd / playJingle) unchanged. */
+let audioCtx=null, masterBus=null;
+const NOTE={C4:262,E4:330,G4:392,A4:440,C5:523,D5:587,E5:659,F5:698,G5:784,A5:880,B5:988,C6:1047,E6:1319,G6:1568,C7:2093};
+
+function audioOn(){const c=document.getElementById('chk-sound');return !c||c.checked;}
+
+function getAudio(){
+  if(!audioCtx){
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    masterBus=audioCtx.createGain();
+    masterBus.gain.value=0.55;
+    const soften=audioCtx.createBiquadFilter();
+    soften.type='lowpass'; soften.frequency.value=5400; soften.Q.value=0.5;
+    masterBus.connect(soften); soften.connect(audioCtx.destination);
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+/* One chiptune voice. slideTo bends the pitch; detune adds a second
+   oscillator a few cents off for that thick arcade-cabinet width. */
+function tone(freq,dur,{delay=0,vol=0.22,type='square',slideTo=null,detune=0,attack=0.006}={}){
+  if(!audioOn())return;
+  try{
+    const c=getAudio(), t=c.currentTime+delay, g=c.createGain();
+    g.connect(masterBus);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+attack);
+    g.gain.setValueAtTime(vol,t+dur*0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    const voices=detune?[0,detune]:[0];
+    voices.forEach(cents=>{
+      const o=c.createOscillator();
+      o.type=type; o.detune.value=cents;
+      o.frequency.setValueAtTime(freq,t);
+      if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur*0.9);
+      o.connect(g); o.start(t); o.stop(t+dur+0.03);
+    });
+  }catch(e){}
+}
+
+/* Short burst of filtered noise — the percussive thud under big cues. */
+function noiseHit(dur,{delay=0,vol=0.1,freq=1400}={}){
+  if(!audioOn())return;
+  try{
+    const c=getAudio(), t=c.currentTime+delay, n=Math.floor(c.sampleRate*dur);
+    const buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=c.createBufferSource(); src.buffer=buf;
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=freq; bp.Q.value=0.9;
+    const g=c.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    src.connect(bp); bp.connect(g); g.connect(masterBus); src.start(t); src.stop(t+dur);
+  }catch(e){}
+}
+
+/* Kept for backwards compatibility with the original call signature. */
+function beep(f,d,v,delay){tone(f,d,{delay,vol:v,type:'square'});}
+
+/* A new question lands — soft rising blip, deliberately understated. */
+function playBlip(){tone(NOTE.E5,0.07,{vol:0.1,type:'triangle',slideTo:NOTE.A5});}
+
+/* Final five seconds — tick climbs in pitch as the clock runs down. */
+let warnStep=0;
+function playWarning(secsLeft){
+  warnStep=(typeof secsLeft==='number')?Math.max(0,6-secsLeft):warnStep+1;
+  tone(760+warnStep*70,0.06,{vol:0.13,type:'square'});
+}
+
+/* Time's up — descending arcade buzz with a noise thump. */
+function playEnd(){
+  noiseHit(0.16,{vol:0.13,freq:900});
+  tone(NOTE.A5,0.13,{vol:0.2,type:'square',detune:-9});
+  tone(NOTE.F5,0.13,{delay:0.13,vol:0.2,type:'square',detune:-9});
+  tone(NOTE.D5,0.13,{delay:0.26,vol:0.2,type:'square',detune:-9});
+  tone(NOTE.G4,0.42,{delay:0.39,vol:0.24,type:'square',detune:-11,slideTo:NOTE.C4});
+  tone(NOTE.G4/2,0.46,{delay:0.39,vol:0.14,type:'triangle'});
+}
+
+/* Answer revealed — clean two-note confirmation chime. */
+function playReveal(){
+  tone(NOTE.G5,0.09,{vol:0.15,type:'triangle'});
+  tone(NOTE.C6,0.20,{delay:0.08,vol:0.16,type:'triangle',detune:7});
+}
+
+/* Easter-egg joke — full 1-up arcade fanfare. */
+function playJingle(){
+  const arp=[NOTE.C5,NOTE.E5,NOTE.G5,NOTE.C6,NOTE.E6,NOTE.G6];
+  arp.forEach((f,i)=>tone(f,0.1,{delay:i*0.075,vol:0.17,type:'square',detune:8}));
+  tone(NOTE.C7,0.46,{delay:0.45,vol:0.2,type:'square',detune:10});
+  tone(NOTE.C5,0.5,{delay:0.45,vol:0.13,type:'triangle'});
+  noiseHit(0.1,{delay:0.45,vol:0.07,freq:2600});
+}
+
+;let session=[],sessionIdx=0,revealed=false,timerInterval=null,usedJokes=[];const $=id=>document.getElementById(id);const S=()=>DATA.subjects[$('sel-subject').value];function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}function jokeEnabled(){return $('chk-joke').checked}function getMode(){const v=$('sel-topic').value;if(v==='paper1'||v==='paper2')return'paper';if(v==='rp-paper1'||v==='rp-paper2')return'rp';if(v==='random-all')return'random';return'topic'}function parseCommandWords(t){['DESCRIBE','EXPLAIN','SUGGEST','STATE','DEFINE','COMPARE','EVALUATE','CALCULATE','INTERPRET','MATCH','USE','LIST','BALANCE','DRAW','PREDICT','WRITE'].forEach(w=>t=t.replace(new RegExp('\\b'+w+'\\b','gi'),'<span class="cmd">'+w+'</span>'));return t}function populateSubjects(){$('sel-subject').innerHTML='';Object.entries(DATA.subjects).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;$('sel-subject').appendChild(o)});populateTopics()}function populateTopics(){const d=S(),yr=$('sel-year').value,sel=$('sel-topic'),prior=sel.value;sel.innerHTML='';function group(label,opts){const g=document.createElement('optgroup');g.label=label;opts.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.text;g.appendChild(opt)});sel.appendChild(g)}if(yr!=='11')group('— Year 10 / Paper 1 Topics —',d.paper1.map(t=>({value:t,text:d.topics[t]})));if(yr!=='10')group('— Year 11 / Paper 2 Topics —',d.paper2.map(t=>({value:t,text:d.topics[t]})));const rev=[];if(yr==='all'||yr==='10')rev.push({value:'paper1',text:'📝 Paper 1 Revision'});if(yr==='all'||yr==='11')rev.push({value:'paper2',text:'📝 Paper 2 Revision'});if(yr==='all')rev.push({value:'random-all',text:'🎲 Full Subject Random'});group('— Revision —',rev);const rp=[];if(yr==='all'||yr==='10')rp.push({value:'rp-paper1',text:'🔬 Paper 1 Practicals'});if(yr==='all'||yr==='11')rp.push({value:'rp-paper2',text:'🔬 Paper 2 Practicals'});group('— Required Practicals —',rp);const vals=Array.from(sel.options).map(o=>o.value);if(vals.includes(prior))sel.value=prior;populateSubtopics();updateStats();updateDots()}function populateSubtopics(){const d=S(),mode=getMode(),row=$('wa-subtopic-row'),sel=$('sel-subtopic');if(mode!=='topic'){row.classList.add('hidden');return}row.classList.remove('hidden');const subs=d.subtopics[$('sel-topic').value]||[],prior=sel.value;sel.innerHTML='';subs.forEach((s,i)=>{const opt=document.createElement('option');opt.value=s.id;opt.textContent=(i+1)+'. '+s.label;sel.appendChild(opt)});const ids=subs.map(s=>s.id);sel.value=ids.includes(prior)?prior:ids[ids.length-1];updateStats()}function filterQ(topic,subs){const d=S(),tier=$('sel-tier').value,course=$('sel-course').value;return(d.questions[topic]||[]).filter(q=>!(course==='combined'&&q.sep)&&!(tier==='F'&&q.tier==='H')&&(!subs||subs.includes(q.sub)))}function allQ(){const d=S();let out=[];d.sequence.forEach(t=>out.push(...filterQ(t,null).map(q=>({...q,_topic:t}))));return out}function filterRP(k){const d=S(),m=d.rpMeta[k];if(!m)return[];if($('sel-course').value==='combined'&&m.sep)return[];return filterQ(m.topic,null).filter(q=>q.rp===k)}function preceding(t){const d=S(),i=d.sequence.indexOf(t);return i<0?[]:d.sequence.slice(0,i)}function updateStats(){const d=S(),n=allQ().length;$('wa-bank-stats').textContent=d.label+' · '+n+' eligible questions · '+($('sel-course').value==='combined'?'Combined':'Separate')+' · '+($('sel-tier').value==='F'?'Foundation':'Higher')}function addJoke(){if(!jokeEnabled())return;const avail=DATA.jokes.filter((_,i)=>!usedJokes.includes(i)),pool=avail.length?avail:DATA.jokes,j=pool[Math.floor(Math.random()*pool.length)];usedJokes.push(DATA.jokes.indexOf(j));if(usedJokes.length>DATA.jokes.length-2)usedJokes=[];session.push({...j,_type:'joke',tier:'!'})}function take(pool,n,used){const out=[];for(const q of shuffle(pool)){if(!used.has(q.q)){out.push(q);used.add(q.q)}if(out.length===n)break}return out}function buildTopicSession(topic){const d=S(),subs=(d.subtopics[topic]||[]).map(s=>s.id),idx=subs.indexOf($('sel-subtopic').value),covered=subs.slice(0,idx+1),used=new Set();let topicQs=take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'topic'})),3,used),mix=[];preceding(topic).forEach(t=>mix.push(...filterQ(t,null).map(q=>({...q,_topic:t,_type:'mixed'}))));session=[...topicQs,...take(mix,2,used)];if(session.length<5)session.push(...take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'mixed'})),5-session.length,used));if(session.length<5)session.push(...take(allQ().map(q=>({...q,_type:'mixed'})),5-session.length,used));session=session.slice(0,5);addJoke();sessionIdx=0;updateDots()}function buildPaperSession(v){const d=S(),topics=v==='paper1'?d.paper1:d.paper2,used=new Set();let pool=[];topics.forEach(t=>pool.push(...filterQ(t,null).map(q=>({...q,_topic:t,_type:'revision'}))));session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildRPSession(v){const d=S(),keys=Object.keys(d.rpMeta).filter(k=>d.rpMeta[k].paper===(v==='rp-paper1'?1:2)),used=new Set();let pool=[];keys.forEach(k=>{const m=d.rpMeta[k];filterRP(k).forEach(q=>pool.push({...q,_topic:m.topic,_rpKey:k,_type:'rp'}))});session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildSession(){const v=$('sel-topic').value,m=getMode();if(m==='paper')buildPaperSession(v);else if(m==='rp')buildRPSession(v);else if(m==='random'){const used=new Set();session=take(allQ().map(q=>({...q,_type:'revision'})),5,used);addJoke();sessionIdx=0}else buildTopicSession(v);renderOutputView()}function updateDots(){const prog=$('wa-progress');prog.innerHTML='';const non=session.filter(q=>q._type!=='joke');non.forEach((q,i)=>{const d=document.createElement('div');d.className='prog-dot '+q._type+(i<sessionIdx?' done':i===sessionIdx?' current':'');prog.appendChild(d)});if(jokeEnabled()){const d=document.createElement('div');d.className='prog-dot joke'+(non.length<sessionIdx?' done':non.length===sessionIdx?' current':'');prog.appendChild(d)}const m=getMode(),cur=$('sel-topic').value;$('wa-mixed-note').textContent=m==='topic'?(preceding(cur).length?'Mixed recall from '+preceding(cur).length+' preceding topic(s)':'No preceding topics yet'):m==='paper'?(cur==='paper1'?'Paper 1 revision':'Paper 2 revision'):m==='rp'?'Required practical retrieval':'Full subject random retrieval'}function fitText(){if($('sel-layout').value==='matrix')return;const el=$('wa-q-text'),stage=$('wa-stage');let size=58;el.style.fontSize=size+'px';const avail=stage.clientHeight*.42;while(el.scrollHeight>avail&&size>20){size-=2;el.style.fontSize=size+'px'}}function modeClass(){const m=getMode();return m==='rp'?'rp-mode':(m==='paper'||m==='random')?'paper-mode':''}function showCurrent(){if(!session.length)return;const d=S(),item=session[sessionIdx];revealed=false;$('wa-stage').className=item._type==='joke'?'dadjoke':modeClass();$('wa-topic-badge').textContent=item._type==='joke'?'🥚 Easter egg — you\'ve earned it':item._type==='rp'?'🔬 '+(d.rpMeta[item._rpKey]?.label||'Required Practical'):item._type==='revision'?'📝 Revision · '+d.short[item._topic]:item._type==='mixed'?'🔀 Deeper Recall · '+d.topics[item._topic]:'🎯 Active Topic · '+d.topics[item._topic];$('wa-q-text').innerHTML=parseCommandWords(item.q);$('wa-ans-text').textContent=item.a;$('wa-answer').className='';$('wa-click-hint').style.display='';const tb=$('wa-tier-badge');if(item._type==='joke'){tb.textContent='🥚';tb.className='wa-tier tier-joke'}else if(item.tier==='F'){tb.textContent='Foundation';tb.className='wa-tier tier-F'}else{tb.textContent='Higher';tb.className='wa-tier tier-H'}updateDots();setTimeout(fitText,10);if(item._type==='joke'){clearInterval(timerInterval);$('wa-timer-section').className=''}else startTimer()}function renderMatrix(){const d=S(),box=$('wa-multi-stage');box.innerHTML='';session.filter(q=>q._type!=='joke').forEach((q,i)=>{const card=document.createElement('div');card.className='multi-card card-'+q._type;const head=q._type==='rp'?'🔬 '+(d.rpMeta[q._rpKey]?.label||'Required Practical'):q._type==='revision'?'📝 '+d.short[q._topic]:q._type==='mixed'?'🔀 '+d.short[q._topic]:'🎯 '+d.short[q._topic];card.innerHTML='<div class="multi-card-header">Question '+(i+1)+' <span>'+head+'</span></div><div class="multi-q-text">'+parseCommandWords(q.q)+'</div><div class="multi-a-box">'+q.a+'</div>';card.onclick=()=>card.querySelector('.multi-a-box').classList.toggle('shown');box.appendChild(card)})}function renderOutputView(){if($('sel-layout').value==='matrix'){$('wa-stage').style.display='none';$('wa-multi-stage').style.display='flex';clearInterval(timerInterval);$('wa-timer-section').className='';renderMatrix()}else{$('wa-stage').style.display='flex';$('wa-multi-stage').style.display='none';showCurrent()}}function revealAnswer(){if(!session.length){buildSession();return}if($('sel-layout').value==='matrix'){document.querySelectorAll('.multi-a-box').forEach(b=>b.classList.add('shown'));return}if(revealed)return;revealed=true;clearInterval(timerInterval);$('wa-answer').className='shown';const item=session[sessionIdx];$('wa-stage').className=(item._type==='joke'?'dadjoke':modeClass())+' answered';$('wa-click-hint').style.display='none';$('wa-timer-section').className='';if(item._type==='joke')playJingle()}function nextQuestion(){if($('sel-layout').value==='matrix'){buildSession();return}if(!session.length){buildSession();return}if(!revealed){revealAnswer();return}if(sessionIdx<session.length-1){sessionIdx++;renderOutputView()}else buildSession()}function startTimer(){clearInterval(timerInterval);const secs=parseInt($('sel-timer').value,10),sec=$('wa-timer-section'),cd=$('wa-countdown'),bar=$('wa-timer-bar');if(!secs){sec.className='';return}sec.className='active';let elapsed=0;cd.textContent=secs;bar.style.width='100%';timerInterval=setInterval(()=>{elapsed++;const rem=secs-elapsed;cd.textContent=Math.max(0,rem);bar.style.width=Math.max(0,rem/secs*100)+'%';if(rem<=0){clearInterval(timerInterval);playEnd()}},1000)}function handleStageClick(){if(!revealed)revealAnswer()}$('btn-start').addEventListener('click',e=>{e.stopPropagation();buildSession()});$('btn-reveal').addEventListener('click',e=>{e.stopPropagation();revealAnswer()});$('btn-next').addEventListener('click',e=>{e.stopPropagation();nextQuestion()});['sel-subject','sel-year','sel-course'].forEach(id=>$(id).addEventListener('change',populateTopics));$('sel-topic').addEventListener('change',populateSubtopics);$('sel-layout').addEventListener('change',renderOutputView);$('sel-tier').addEventListener('change',()=>{const tb=$('wa-tier-badge');tb.textContent=$('sel-tier').value==='F'?'Foundation':'Higher';tb.className='wa-tier '+($('sel-tier').value==='F'?'tier-F':'tier-H');updateStats()});$('chk-joke').addEventListener('change',updateDots);document.addEventListener('keydown',e=>{if(edIsVisible())return;if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;if(['Space','Enter','ArrowRight','PageDown'].includes(e.code)){e.preventDefault();if(!session.length)buildSession();else if(!revealed)revealAnswer();else nextQuestion()}});window.addEventListener('resize',fitText);populateSubjects(); initEditor();
+
+
+// ═══════════════════════════════════════════════════════════
+// EDITOR — v6
+// ═══════════════════════════════════════════════════════════
+
+const CMD_WORDS = ['BALANCE','CALCULATE','COMPARE','DEFINE','DESCRIBE','DRAW','EVALUATE','EXPLAIN','INTERPRET','LIST','MATCH','PREDICT','STATE','SUGGEST','USE','WRITE'];
+let edTab = 'bio';
+const LS_KEY = 'wa_qbank_v4';
+
+function edIsVisible(){ return document.getElementById('editor-panel').classList.contains('visible'); }
+
+// ── Storage ──────────────────────────────────────────────────
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      if(saved.bio)  DATA.subjects.biology.questions   = saved.bio;
+      if(saved.chem) DATA.subjects.chemistry.questions = saved.chem;
+      if(saved.phys) DATA.subjects.physics.questions   = saved.phys;
+      if(saved.jokes) DATA.jokes = saved.jokes;
+      edSetStatus('saved');
+    }
+  }catch(e){ console.warn('localStorage load failed',e); }
+}
+
+function saveToStorage(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      bio:   DATA.subjects.biology.questions,
+      chem:  DATA.subjects.chemistry.questions,
+      phys:  DATA.subjects.physics.questions,
+      jokes: DATA.jokes
+    }));
+    edSetStatus('saved');
+  }catch(e){ console.warn('localStorage save failed',e); }
+}
+
+function edSetStatus(s){
+  const el = document.getElementById('ed-save-status');
+  if(!el) return;
+  if(s==='saved'){ el.textContent='✓ All changes saved'; el.className='ed-save-status saved'; }
+  else { el.textContent='● Unsaved changes'; el.className='ed-save-status unsaved'; }
+}
+
+let edSaveTimer=null;
+function edScheduleSave(){
+  edSetStatus('unsaved');
+  clearTimeout(edSaveTimer);
+  edSaveTimer = setTimeout(saveToStorage, 800);
+}
+
+// ── Mode toggle ──────────────────────────────────────────────
+function setMode(mode){
+  const presenter = document.getElementById('presenter-panel');
+  const editor    = document.getElementById('editor-panel');
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  if(mode === 'editor'){
+    presenter.style.display = 'none';
+    editor.classList.add('visible');
+    edRender();
+    edUpdateCounts();
+  } else {
+    presenter.style.display = 'flex';
+    editor.classList.remove('visible');
+    populateSubjects();
+  }
+}
+
+// ── Tabs ─────────────────────────────────────────────────────
+function edSelectTab(tab){
+  edTab = tab;
+  document.querySelectorAll('.ed-tab').forEach((b,i) => {
+    b.classList.toggle('active', ['bio','chem','phys','jokes'][i] === tab);
+  });
+  const tf = document.getElementById('ed-filter-topic');
+  tf.innerHTML = '<option value="">All topics</option>';
+  if(tab !== 'jokes'){
+    const d = DATA.subjects[{bio:'biology',chem:'chemistry',phys:'physics'}[tab]];
+    d.sequence.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = d.topics[t];
+      tf.appendChild(o);
+    });
+  }
+  document.getElementById('ed-search').value = '';
+  edRender();
+}
+
+// ── Render ───────────────────────────────────────────────────
+function edRender(){
+  const search      = document.getElementById('ed-search').value.toLowerCase();
+  const filterTopic = document.getElementById('ed-filter-topic').value;
+  const thead = document.getElementById('ed-thead');
+  const tbody = document.getElementById('ed-tbody');
+
+  if(edTab === 'jokes'){
+    thead.innerHTML = '<tr><th style="width:40%">Question / Setup</th><th>Punchline / Answer</th><th style="width:28px"></th></tr>';
+    tbody.innerHTML = '';
+    DATA.jokes.forEach((j,idx) => {
+      if(search && !j.q.toLowerCase().includes(search) && !j.a.toLowerCase().includes(search)) return;
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><textarea class="ed-cell ed-cell-joke-q" rows="2" data-idx="'+idx+'" data-field="q" onchange="edJokeChange(this)" oninput="edAutoResize(this)">'+escHtml(j.q)+'</textarea></td>'+
+        '<td><textarea class="ed-cell ed-cell-joke-a" rows="2" data-idx="'+idx+'" data-field="a" onchange="edJokeChange(this)" oninput="edAutoResize(this)">'+escHtml(j.a)+'</textarea></td>'+
+        '<td class="col-del"><button class="del-btn" onclick="edDelJoke('+idx+')" title="Delete">✕</button></td>';
+      tbody.appendChild(tr);
+    });
+    return;
+  }
+
+  const subjKey = {bio:'biology',chem:'chemistry',phys:'physics'}[edTab];
+  const d = DATA.subjects[subjKey];
+
+  thead.innerHTML = '<tr>'+
+    '<th style="width:100px">Topic</th>'+
+    '<th style="width:82px">Subtopic</th>'+
+    '<th style="width:96px">Command</th>'+
+    '<th>Question <span style="font-weight:400;opacity:.7">(without command word)</span></th>'+
+    '<th>Answer</th>'+
+    '<th style="width:52px">Tier</th>'+
+    '<th style="width:52px">Sep?</th>'+
+    '<th style="width:52px">RP</th>'+
+    '<th style="width:28px"></th>'+
+    '</tr>';
+
+  tbody.innerHTML = '';
+  d.sequence.forEach(topicKey => {
+    if(filterTopic && filterTopic !== topicKey) return;
+    const qs = d.questions[topicKey] || [];
+    qs.forEach((q, qIdx) => {
+      let cmdWord='', qText=q.q;
+      for(const w of CMD_WORDS){
+        if(qText.toUpperCase().startsWith(w+' ')||qText.toUpperCase().startsWith(w+':')){
+          cmdWord=w; qText=qText.slice(w.length).replace(/^[\s:]+/,''); break;
+        }
+      }
+      if(search){
+        const hay=(q.q+q.a+topicKey+(q.sub||'')).toLowerCase();
+        if(!hay.includes(search)) return;
+      }
+      const tr = document.createElement('tr');
+      if(q.sep) tr.classList.add('row-sep');
+      if(q.tier==='H') tr.classList.add('row-ht');
+      const subOpts=(d.subtopics[topicKey]||[]).map(s=>
+        '<option value="'+s.id+'"'+(q.sub===s.id?' selected':'')+'>'+s.id+' \u2013 '+s.label+'</option>'
+      ).join('');
+      tr.innerHTML=
+        '<td><span style="font-size:11px;color:var(--muted)">'+escHtml(d.short[topicKey]||topicKey)+'</span></td>'+
+        '<td><select class="ed-cell ed-cell-sub" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="sub" onchange="edQChange(this,\''+topicKey+'\')">'+subOpts+'</select></td>'+
+        '<td><select class="ed-cell ed-cell-cmd" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="cmd" onchange="edQChange(this,\''+topicKey+'\')">'+
+          CMD_WORDS.map(w=>'<option'+(cmdWord===w?' selected':'')+'>'+w+'</option>').join('')+
+        '</select></td>'+
+        '<td><textarea class="ed-cell ed-cell-q" rows="2" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="qtext" onchange="edQChange(this,\''+topicKey+'\')" oninput="edAutoResize(this)">'+escHtml(qText)+'</textarea></td>'+
+        '<td><textarea class="ed-cell ed-cell-a" rows="2" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="a" onchange="edQChange(this,\''+topicKey+'\')" oninput="edAutoResize(this)">'+escHtml(q.a)+'</textarea></td>'+
+        '<td><select class="ed-cell ed-cell-tier" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="tier" onchange="edQChange(this,\''+topicKey+'\')">'+
+          '<option'+(q.tier==='F'?' selected':'')+'>F</option>'+
+          '<option'+(q.tier==='H'?' selected':'')+'>H</option>'+
+        '</select></td>'+
+        '<td><select class="ed-cell ed-cell-sep" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="sep" onchange="edQChange(this,\''+topicKey+'\')">'+
+          '<option value="false"'+(!q.sep?' selected':'')+'>No</option>'+
+          '<option value="true"'+(q.sep?' selected':'')+'>Yes</option>'+
+        '</select></td>'+
+        '<td><input class="ed-cell ed-cell-rp" type="text" value="'+escHtml(q.rp||'')+'" placeholder="\u2014" data-topic="'+topicKey+'" data-idx="'+qIdx+'" data-field="rp" onchange="edQChange(this,\''+topicKey+'\')" style="height:28px"></td>'+
+        '<td class="col-del"><button class="del-btn" onclick="edDelQ(\''+topicKey+'\','+qIdx+')" title="Delete">✕</button></td>';
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function edAutoResize(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
+
+// ── Edit handlers ────────────────────────────────────────────
+function edQChange(el, topicKey){
+  const subjKey={bio:'biology',chem:'chemistry',phys:'physics'}[edTab];
+  const q = DATA.subjects[subjKey].questions[topicKey][parseInt(el.dataset.idx)];
+  const field = el.dataset.field;
+  if(field==='cmd'||field==='qtext'){
+    const row=el.closest('tr');
+    q.q = row.querySelector('[data-field="cmd"]').value+' '+row.querySelector('[data-field="qtext"]').value.trim();
+  } else if(field==='a'){
+    q.a = el.value.trim();
+  } else if(field==='tier'){
+    q.tier=el.value; el.closest('tr').classList.toggle('row-ht',el.value==='H');
+  } else if(field==='sep'){
+    q.sep=(el.value==='true'); el.closest('tr').classList.toggle('row-sep',q.sep);
+  } else if(field==='sub'){
+    q.sub=el.value;
+  } else if(field==='rp'){
+    const v=el.value.trim(); if(v) q.rp=v; else delete q.rp;
+  }
+  edScheduleSave();
+  edUpdateCounts();
+}
+
+function edJokeChange(el){
+  DATA.jokes[parseInt(el.dataset.idx)][el.dataset.field]=el.value;
+  edScheduleSave(); edUpdateCounts();
+}
+
+// ── Add row ──────────────────────────────────────────────────
+function edAddRow(){
+  if(edTab==='jokes'){
+    DATA.jokes.push({q:'New joke setup\u2026',a:'Punchline! \uD83D\uDE04'});
+    edScheduleSave(); edRender(); edUpdateCounts();
+    const w=document.getElementById('ed-table-wrap'); w.scrollTop=w.scrollHeight;
+    return;
+  }
+  const subjKey={bio:'biology',chem:'chemistry',phys:'physics'}[edTab];
+  const d=DATA.subjects[subjKey];
+  const topicKey=document.getElementById('ed-filter-topic').value||d.sequence[0];
+  const firstSub=(d.subtopics[topicKey]||[])[0];
+  d.questions[topicKey]=d.questions[topicKey]||[];
+  d.questions[topicKey].push({tier:'F',sep:false,sub:firstSub?firstSub.id:'',q:'STATE new question here.',a:'Answer here.'});
+  edScheduleSave(); edRender(); edUpdateCounts();
+  const w=document.getElementById('ed-table-wrap'); w.scrollTop=w.scrollHeight;
+}
+
+// ── Delete ───────────────────────────────────────────────────
+function edDelQ(topicKey,idx){
+  if(!confirm('Delete this question?')) return;
+  DATA.subjects[{bio:'biology',chem:'chemistry',phys:'physics'}[edTab]].questions[topicKey].splice(idx,1);
+  edScheduleSave(); edRender(); edUpdateCounts();
+}
+function edDelJoke(idx){
+  if(!confirm('Delete this joke?')) return;
+  DATA.jokes.splice(idx,1);
+  edScheduleSave(); edRender(); edUpdateCounts();
+}
+
+// ── Counts ───────────────────────────────────────────────────
+function edUpdateCounts(){
+  document.getElementById('cnt-bio').textContent  = Object.values(DATA.subjects.biology.questions).flat().length;
+  document.getElementById('cnt-chem').textContent = Object.values(DATA.subjects.chemistry.questions).flat().length;
+  document.getElementById('cnt-phys').textContent = Object.values(DATA.subjects.physics.questions).flat().length;
+  document.getElementById('cnt-jokes').textContent= DATA.jokes.length;
+}
+
+// ── Reset ────────────────────────────────────────────────────
+function edClearStorage(){
+  if(!confirm('Reset to built-in questions? This will discard all edits.')) return;
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+// ── Export (BUG 1 FIX: now replaces all three subject blocks) ─
+function edExport(){
+  const newBioQ  = JSON.stringify(DATA.subjects.biology.questions);
+  const newChemQ = JSON.stringify(DATA.subjects.chemistry.questions);
+  const newPhysQ = JSON.stringify(DATA.subjects.physics.questions);
+  const newJokes = JSON.stringify(DATA.jokes);
+
+  // Use document.documentElement.outerHTML as the source
+  let src = '<!DOCTYPE html>' + document.documentElement.outerHTML;
+
+  // Replace biology questions (JSON format, key "cell")
+  src = src.replace(
+    /questions:\{"cell":\[[\s\S]*?\}(?=\s*\n\s*\}\s*,\s*\n\s*\n?\s*chemistry)/,
+    'questions:' + newBioQ
+  );
+
+  // Replace chemistry questions (JS object notation starting with atomic:)
+  // Convert to JSON format for the export — works identically at runtime
+  src = src.replace(
+    /questions:\{\s*\n\s*atomic:\s*\[[\s\S]*?\}\s*\n\s*\}\s*\n\s*\},\s*\n\s*\n\s*physics/,
+    'questions:' + newChemQ + '\n    },\n\n    physics'
+  );
+
+  // Replace physics questions (JSON format, key "energy")
+  src = src.replace(
+    /questions:\{"energy":\[[\s\S]*?\}(?=\s*\n\s*\}\s*\n\s*\}\s*\n\s*\},\s*\n\s*\n\s*jokes)/,
+    'questions:' + newPhysQ
+  );
+
+  // Replace jokes
+  src = src.replace(
+    /jokes:\[[\s\S]*?\]\s*\};\s*\n/,
+    'jokes:' + newJokes + '\n};\n'
+  );
+
+  const blob = new Blob([src], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.getElementById('ed-export-link');
+  a.href = url;
+  a.download = 'wa-science-retrieval-presenter-custom.html';
+  document.getElementById('ed-export-banner').classList.add('visible');
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+function initEditor(){
+  loadFromStorage();
+  edUpdateCounts();
+  if(typeof populateSubjects==='function') populateSubjects();
+}
+
+/* ══ Audio wiring ══════════════════════════════════════════════
+   Deliberately additive: every cue is driven by observing the DOM
+   the game already updates, so no game function is modified and
+   the sound fires however the teacher triggers it — button, click
+   on the stage, or keyboard. */
+(function initAudioCues(){
+  const $$ = id => document.getElementById(id);
+
+  // Browsers hold an AudioContext suspended until a real gesture.
+  // Unlock on the first interaction so the timer can actually sound.
+  const unlock = () => { try{ getAudio(); }catch(e){} };
+  document.addEventListener('pointerdown', unlock, {once:true});
+  document.addEventListener('keydown', unlock, {once:true});
+
+  // A new question is on the stage → blip.
+  new MutationObserver(() => {
+    if($$('wa-stage').style.display === 'none') return;   // board layout is silent
+    playBlip();
+  }).observe($$('wa-topic-badge'), {childList:true, characterData:true, subtree:true});
+
+  // Answer revealed → chime, unless it's the easter egg (playJingle covers that).
+  new MutationObserver(() => {
+    if(!$$('wa-answer').classList.contains('shown')) return;
+    if($$('wa-stage').classList.contains('dadjoke')) return;
+    playReveal();
+  }).observe($$('wa-answer'), {attributes:true, attributeFilter:['class']});
+
+  // Board layout: a card opening also chimes. Reveal-all lands as a single
+  // mutation batch, so five cards opening at once is one sound, not five.
+  let shownCards = 0;
+  new MutationObserver(() => {
+    const n = document.querySelectorAll('.multi-a-box.shown').length;
+    if(n > shownCards) playReveal();
+    shownCards = n;
+  }).observe($$('wa-multi-stage'), {attributes:true, attributeFilter:['class'], subtree:true, childList:true});
+
+  // Countdown reaches the last five seconds → rising tick per second, and
+  // the digits go red. `urgent` is safe to add here: the game reassigns
+  // wa-timer-section.className on every start/reveal, which clears it.
+  new MutationObserver(() => {
+    const sec = $$('wa-timer-section');
+    if(!sec.classList.contains('active')) return;
+    const n = parseInt($$('wa-countdown').textContent, 10);
+    const urgent = n >= 1 && n <= 5;
+    sec.classList.toggle('urgent', urgent);
+    if(urgent) playWarning(n);
+  }).observe($$('wa-countdown'), {childList:true, characterData:true, subtree:true});
+
+  // M mutes/unmutes. Separate listener — the game's own keydown handler is untouched.
+  document.addEventListener('keydown', e => {
+    if(e.code !== 'KeyM' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(typeof edIsVisible === 'function' && edIsVisible()) return;
+    if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    const c = $$('chk-sound');
+    if(c){ c.checked = !c.checked; c.dispatchEvent(new Event('change')); }
+  });
+
+  const chk = $$('chk-sound');
+  if(chk){
+    try{ chk.checked = localStorage.getItem('wa-sound-off') !== '1'; }catch(e){}
+    const paint = () => {
+      $$('wa-sound-icon').textContent = chk.checked ? '🔊' : '🔇';
+      $$('wa-sound-toggle').classList.toggle('muted', !chk.checked);
+    };
+    chk.addEventListener('change', () => {
+      paint();
+      try{ localStorage.setItem('wa-sound-off', chk.checked ? '0' : '1'); }catch(e){}
+      if(chk.checked) playBlip();
+    });
+    paint();
+  }
+})();
+
+</script>
+</body>
+</html>
