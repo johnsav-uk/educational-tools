@@ -1,0 +1,2436 @@
+"use strict";
+
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+var _React = React,
+  useState = _React.useState,
+  useEffect = _React.useEffect,
+  useRef = _React.useRef,
+  useMemo = _React.useMemo,
+  useCallback = _React.useCallback;
+
+/* ============================================================
+   1.  CHEMISTRY DATA  —  single source of truth
+   ============================================================ */
+
+var D2R = Math.PI / 180;
+
+/* CPK-style colours, plus generic placeholders for the custom builder */
+var ELEMENTS = {
+  H: {
+    colour: 0xf3f6fb,
+    radius: 0.30,
+    label: 'H'
+  },
+  C: {
+    colour: 0x4a4f57,
+    radius: 0.44,
+    label: 'C'
+  },
+  N: {
+    colour: 0x3b5cf0,
+    radius: 0.44,
+    label: 'N'
+  },
+  O: {
+    colour: 0xef2f2f,
+    radius: 0.43,
+    label: 'O'
+  },
+  F: {
+    colour: 0x8fe04f,
+    radius: 0.38,
+    label: 'F'
+  },
+  Cl: {
+    colour: 0x2fd94f,
+    radius: 0.47,
+    label: 'Cl'
+  },
+  Be: {
+    colour: 0xc2ff33,
+    radius: 0.44,
+    label: 'Be'
+  },
+  B: {
+    colour: 0xffa8a8,
+    radius: 0.45,
+    label: 'B'
+  },
+  P: {
+    colour: 0xff8c1a,
+    radius: 0.52,
+    label: 'P'
+  },
+  S: {
+    colour: 0xf5e050,
+    radius: 0.50,
+    label: 'S'
+  },
+  Xe: {
+    colour: 0x3fa7c4,
+    radius: 0.52,
+    label: 'Xe'
+  },
+  X: {
+    colour: 0x2dd4bf,
+    radius: 0.50,
+    label: 'X'
+  },
+  Y: {
+    colour: 0xb8c4d4,
+    radius: 0.36,
+    label: 'Y'
+  }
+};
+
+/* ---- helpers for building direction vectors -------------------------------- */
+
+function norm(v) {
+  var m = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / m, v[1] / m, v[2] / m];
+}
+
+/* Three C3v bonds pointing away from +y with the required X–A–X angle.
+   cos(theta) = 1 - 1.5 sin^2(alpha), where alpha is the angle to the C3 axis. */
+function pyramidBonds(theta) {
+  var s2 = (1 - Math.cos(theta * D2R)) / 1.5;
+  var s = Math.sqrt(s2);
+  var c = Math.sqrt(Math.max(0, 1 - s2));
+  return [0, 120, 240].map(function (phi) {
+    return [s * Math.cos(phi * D2R), -c, s * Math.sin(phi * D2R)];
+  });
+}
+
+/* Two bonds in the xy-plane, opening downwards, separated by theta. */
+function bentBonds(theta) {
+  var h = theta / 2 * D2R;
+  return [[Math.sin(h), -Math.cos(h), 0], [-Math.sin(h), -Math.cos(h), 0]];
+}
+
+/* n directions evenly spaced round the xz-plane, starting on +x. */
+function equatorial(n, offsetDeg) {
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var a = ((offsetDeg || 0) + i * (360 / n)) * D2R;
+    out.push([Math.cos(a), 0, Math.sin(a)]);
+  }
+  return out;
+}
+
+/* ============================================================
+   GEOMETRY: keyed "<bonding pairs>-<lone pairs>".
+   Every arrangement the AQA specification asks for, plus the
+   extra combinations the custom builder can reach.
+   ============================================================ */
+
+var GEOMETRY = {
+  '2-0': {
+    total: 2,
+    bp: 2,
+    lp: 0,
+    parent: 'Linear',
+    shape: 'Linear',
+    angles: ['180°'],
+    summary: '180°',
+    parentAngle: '180°',
+    reduction: 0,
+    examples: ['BeCl₂', 'CO₂', 'HCN'],
+    why: 'Two bonding pairs get as far apart as possible by sitting on opposite sides of the central atom.',
+    bonds: [[1, 0, 0], [-1, 0, 0]],
+    lones: [],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '180°',
+      r: 1.0
+    }]
+  },
+  '3-0': {
+    total: 3,
+    bp: 3,
+    lp: 0,
+    parent: 'Trigonal planar',
+    shape: 'Trigonal planar',
+    angles: ['120°'],
+    summary: '120°',
+    parentAngle: '120°',
+    reduction: 0,
+    examples: ['BF₃', 'AlCl₃', 'SO₃'],
+    why: 'Three bonding pairs and no lone pairs, so they spread into a flat triangle with all three angles equal.',
+    bonds: [[0, 1, 0], [Math.cos(210 * D2R), Math.sin(210 * D2R), 0], [Math.cos(330 * D2R), Math.sin(330 * D2R), 0]],
+    lones: [],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '120°',
+      r: 1.0
+    }, {
+      a: 1,
+      b: 2,
+      label: '120°',
+      r: 1.0
+    }]
+  },
+  '2-1': {
+    total: 3,
+    bp: 2,
+    lp: 1,
+    parent: 'Trigonal planar',
+    shape: 'Non-linear (bent)',
+    angles: ['≈119°'],
+    summary: '≈119°',
+    parentAngle: '120°',
+    reduction: 1,
+    aqaExtra: true,
+    examples: ['SO₂', 'SnCl₂'],
+    why: 'The parent arrangement is trigonal planar. One position holds a lone pair, which repels more strongly and squeezes the bond angle just below 120°.',
+    bonds: [[Math.sin(59.5 * D2R), -Math.cos(59.5 * D2R), 0], [-Math.sin(59.5 * D2R), -Math.cos(59.5 * D2R), 0]],
+    lones: [[0, 1, 0]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '≈119°',
+      r: 1.0
+    }]
+  },
+  '4-0': {
+    total: 4,
+    bp: 4,
+    lp: 0,
+    parent: 'Tetrahedral',
+    shape: 'Tetrahedral',
+    angles: ['109.5°'],
+    summary: '109.5°',
+    parentAngle: '109.5°',
+    reduction: 0,
+    examples: ['CH₄', 'NH₄⁺', 'SiCl₄', 'BF₄⁻'],
+    why: 'Four identical bonding pairs repel equally, so they point to the corners of a tetrahedron. This is a 3-D shape, never a flat cross.',
+    bonds: [norm([1, 1, 1]), norm([1, -1, -1]), norm([-1, 1, -1]), norm([-1, -1, 1])],
+    lones: [],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '109.5°',
+      r: 1.0
+    }]
+  },
+  '3-1': {
+    total: 4,
+    bp: 3,
+    lp: 1,
+    parent: 'Tetrahedral',
+    shape: 'Trigonal pyramidal',
+    angles: ['107°'],
+    summary: '107°',
+    parentAngle: '109.5°',
+    reduction: 1,
+    examples: ['NH₃', 'PH₃', 'H₃O⁺', 'NF₃'],
+    why: 'Four pairs give a tetrahedral parent arrangement, but one is a lone pair. The lone pair repels the bonding pairs more strongly, closing the angle from 109.5° to 107°.',
+    bonds: pyramidBonds(107),
+    lones: [[0, 1, 0]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '107°',
+      r: 1.0
+    }]
+  },
+  '2-2': {
+    total: 4,
+    bp: 2,
+    lp: 2,
+    parent: 'Tetrahedral',
+    shape: 'Non-linear (bent)',
+    angles: ['104.5°'],
+    summary: '104.5°',
+    parentAngle: '109.5°',
+    reduction: 2,
+    examples: ['H₂O', 'H₂S', 'OF₂', 'NH₂⁻'],
+    why: 'Four pairs, two of which are lone pairs. Two lots of extra lone-pair repulsion pull the angle down twice: 109.5° − 2 × 2.5° = 104.5°.',
+    bonds: bentBonds(104.5),
+    lones: [[0, Math.cos(57.5 * D2R), Math.sin(57.5 * D2R)], [0, Math.cos(57.5 * D2R), -Math.sin(57.5 * D2R)]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '104.5°',
+      r: 1.0
+    }]
+  },
+  '5-0': {
+    total: 5,
+    bp: 5,
+    lp: 0,
+    parent: 'Trigonal bipyramidal',
+    shape: 'Trigonal bipyramidal',
+    angles: ['120° between equatorial bonds', '90° between axial and equatorial bonds'],
+    summary: '120° and 90°',
+    parentAngle: '120° / 90°',
+    reduction: 0,
+    examples: ['PCl₅', 'PF₅'],
+    why: 'Five bonding pairs cannot all be equivalent. Three sit in a flat triangle (equatorial, 120° apart) and two sit above and below it (axial, at 90° to the equatorial plane).',
+    bonds: equatorial(3, 0).concat([[0, 1, 0], [0, -1, 0]]),
+    lones: [],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '120°',
+      r: 1.05
+    }, {
+      a: 0,
+      b: 3,
+      label: '90°',
+      r: 0.8
+    }]
+  },
+  '4-1': {
+    total: 5,
+    bp: 4,
+    lp: 1,
+    parent: 'Trigonal bipyramidal',
+    shape: 'See-saw',
+    angles: ['≈117° between equatorial bonds', '≈89° between axial and equatorial bonds'],
+    summary: '≈117° and ≈89°',
+    parentAngle: '120° / 90°',
+    reduction: 1,
+    aqaExtra: true,
+    examples: ['SF₄'],
+    why: 'The single lone pair takes an equatorial position, where there is more room, and pushes the remaining bonds away to give a distorted see-saw.',
+    bonds: [[-Math.cos(58.5 * D2R), 0, Math.sin(58.5 * D2R)], [-Math.cos(58.5 * D2R), 0, -Math.sin(58.5 * D2R)], [-Math.sin(2.5 * D2R), Math.cos(2.5 * D2R), 0], [-Math.sin(2.5 * D2R), -Math.cos(2.5 * D2R), 0]],
+    lones: [[1, 0, 0]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '≈117°',
+      r: 1.05
+    }, {
+      a: 0,
+      b: 2,
+      label: '≈89°',
+      r: 0.8
+    }]
+  },
+  '3-2': {
+    total: 5,
+    bp: 3,
+    lp: 2,
+    parent: 'Trigonal bipyramidal',
+    shape: 'T-shaped',
+    angles: ['≈87.5°'],
+    summary: '≈87.5°',
+    parentAngle: '90°',
+    reduction: 1,
+    examples: ['ClF₃', 'BrF₃'],
+    why: 'Both lone pairs take equatorial positions, where lone pair–lone pair repulsion is smallest. The three bonds are left in a T, with the axial bonds bent slightly towards the equatorial bond, so 90° becomes about 87.5°.',
+    bonds: [[1, 0, 0], [Math.sin(2.5 * D2R), Math.cos(2.5 * D2R), 0], [Math.sin(2.5 * D2R), -Math.cos(2.5 * D2R), 0]],
+    lones: [[Math.cos(120 * D2R), 0, Math.sin(120 * D2R)], [Math.cos(240 * D2R), 0, Math.sin(240 * D2R)]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '≈87.5°',
+      r: 0.9
+    }]
+  },
+  '2-3': {
+    total: 5,
+    bp: 2,
+    lp: 3,
+    parent: 'Trigonal bipyramidal',
+    shape: 'Linear',
+    angles: ['180°'],
+    summary: '180°',
+    parentAngle: '180°',
+    reduction: 0,
+    aqaExtra: true,
+    examples: ['XeF₂', 'I₃⁻'],
+    why: 'All three lone pairs sit in the equatorial plane, 120° apart, leaving the two bonds axial and exactly opposite one another.',
+    bonds: [[0, 1, 0], [0, -1, 0]],
+    lones: equatorial(3, 0),
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '180°',
+      r: 1.0
+    }]
+  },
+  '6-0': {
+    total: 6,
+    bp: 6,
+    lp: 0,
+    parent: 'Octahedral',
+    shape: 'Octahedral',
+    angles: ['90°'],
+    summary: '90°',
+    parentAngle: '90°',
+    reduction: 0,
+    examples: ['SF₆', 'PF₆⁻', 'SiF₆²⁻'],
+    why: 'Six identical bonding pairs point to the corners of an octahedron: four in a square around the middle, one above and one below.',
+    bonds: [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], [0, -1, 0]],
+    lones: [],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '90°',
+      r: 1.0
+    }, {
+      a: 0,
+      b: 4,
+      label: '90°',
+      r: 0.82
+    }]
+  },
+  '5-1': {
+    total: 6,
+    bp: 5,
+    lp: 1,
+    parent: 'Octahedral',
+    shape: 'Square pyramidal',
+    angles: ['≈89°'],
+    summary: '≈89°',
+    parentAngle: '90°',
+    reduction: 1,
+    aqaExtra: true,
+    examples: ['BrF₅', 'IF₅'],
+    why: 'One octahedral position holds a lone pair. The four bonds in the square are pushed slightly up and away from it, so those angles drop just below 90°.',
+    bonds: [[Math.sin(89 * D2R), Math.cos(89 * D2R), 0], [0, Math.cos(89 * D2R), Math.sin(89 * D2R)], [-Math.sin(89 * D2R), Math.cos(89 * D2R), 0], [0, Math.cos(89 * D2R), -Math.sin(89 * D2R)], [0, 1, 0]],
+    lones: [[0, -1, 0]],
+    arcs: [{
+      a: 0,
+      b: 4,
+      label: '≈89°',
+      r: 0.9
+    }, {
+      a: 0,
+      b: 1,
+      label: '90°',
+      r: 1.1
+    }]
+  },
+  '4-2': {
+    total: 6,
+    bp: 4,
+    lp: 2,
+    parent: 'Octahedral',
+    shape: 'Square planar',
+    angles: ['90°'],
+    summary: '90°',
+    parentAngle: '90°',
+    reduction: 0,
+    examples: ['XeF₄', 'ICl₄⁻'],
+    why: 'The two lone pairs go opposite one another, 180° apart, to keep the strongest repulsion — lone pair to lone pair — as small as possible. That leaves four bonds in a flat square at exactly 90°.',
+    bonds: [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1]],
+    lones: [[0, 1, 0], [0, -1, 0]],
+    arcs: [{
+      a: 0,
+      b: 1,
+      label: '90°',
+      r: 1.0
+    }]
+  }
+};
+
+/* ============================================================
+   SPECIES: the named examples AQA expects students to know
+   ============================================================ */
+
+var SPECIES = [{
+  id: 'BeCl2',
+  formula: 'BeCl₂',
+  name: 'Beryllium chloride',
+  central: 'Be',
+  outer: 'Cl',
+  bp: 2,
+  lp: 0,
+  group: '2 pairs'
+}, {
+  id: 'BF3',
+  formula: 'BF₃',
+  name: 'Boron trifluoride',
+  central: 'B',
+  outer: 'F',
+  bp: 3,
+  lp: 0,
+  group: '3 pairs'
+}, {
+  id: 'CH4',
+  formula: 'CH₄',
+  name: 'Methane',
+  central: 'C',
+  outer: 'H',
+  bp: 4,
+  lp: 0,
+  group: '4 pairs'
+}, {
+  id: 'NH4',
+  formula: 'NH₄⁺',
+  name: 'Ammonium ion',
+  central: 'N',
+  outer: 'H',
+  bp: 4,
+  lp: 0,
+  group: '4 pairs',
+  charge: '+'
+}, {
+  id: 'NH3',
+  formula: 'NH₃',
+  name: 'Ammonia',
+  central: 'N',
+  outer: 'H',
+  bp: 3,
+  lp: 1,
+  group: '4 pairs'
+}, {
+  id: 'H2O',
+  formula: 'H₂O',
+  name: 'Water',
+  central: 'O',
+  outer: 'H',
+  bp: 2,
+  lp: 2,
+  group: '4 pairs'
+}, {
+  id: 'PCl5',
+  formula: 'PCl₅',
+  name: 'Phosphorus(V) chloride',
+  central: 'P',
+  outer: 'Cl',
+  bp: 5,
+  lp: 0,
+  group: '5 pairs'
+}, {
+  id: 'ClF3',
+  formula: 'ClF₃',
+  name: 'Chlorine trifluoride',
+  central: 'Cl',
+  outer: 'F',
+  bp: 3,
+  lp: 2,
+  group: '5 pairs'
+}, {
+  id: 'SF6',
+  formula: 'SF₆',
+  name: 'Sulfur hexafluoride',
+  central: 'S',
+  outer: 'F',
+  bp: 6,
+  lp: 0,
+  group: '6 pairs'
+}, {
+  id: 'PF6',
+  formula: 'PF₆⁻',
+  name: 'Hexafluorophosphate ion',
+  central: 'P',
+  outer: 'F',
+  bp: 6,
+  lp: 0,
+  group: '6 pairs',
+  charge: '−'
+}, {
+  id: 'XeF4',
+  formula: 'XeF₄',
+  name: 'Xenon tetrafluoride',
+  central: 'Xe',
+  outer: 'F',
+  bp: 4,
+  lp: 2,
+  group: '6 pairs'
+}];
+var GROUP_ORDER = ['2 pairs', '3 pairs', '4 pairs', '5 pairs', '6 pairs'];
+var GROUP_ACCENT = {
+  '2 pairs': 'from-sky-500/25 to-sky-500/5 border-sky-400/30 text-sky-200',
+  '3 pairs': 'from-emerald-500/25 to-emerald-500/5 border-emerald-400/30 text-emerald-200',
+  '4 pairs': 'from-violet-500/25 to-violet-500/5 border-violet-400/30 text-violet-200',
+  '5 pairs': 'from-amber-500/25 to-amber-500/5 border-amber-400/30 text-amber-200',
+  '6 pairs': 'from-rose-500/25 to-rose-500/5 border-rose-400/30 text-rose-200'
+};
+function geomFor(bp, lp) {
+  return GEOMETRY[bp + '-' + lp] || null;
+}
+
+/* ============================================================
+   2.  THREE.JS ENGINE
+   ============================================================ */
+
+var BOND_LEN = 2.15;
+var LONE_COLOUR = 0xa78bfa;
+var ARC_COLOUR = 0xfbbf24;
+
+/* A camera-facing text label drawn onto a canvas texture. */
+function makeLabel(text, opts) {
+  opts = opts || {};
+  var pad = 12;
+  var stack = opts.mono ? '"JetBrains Mono", ui-monospace, Consolas, monospace' : '"Archivo Narrow", "Arial Narrow", Helvetica, sans-serif';
+  var font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px ' + stack;
+  var measure = document.createElement('canvas').getContext('2d');
+  measure.font = font;
+  var w = Math.ceil(measure.measureText(text).width) + pad * 2;
+  var h = (opts.size || 72) + pad * 2;
+  var cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  var ctx = cv.getContext('2d');
+  ctx.font = font;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (opts.pill) {
+    var r = h / 2;
+    ctx.fillStyle = opts.pill;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(w - r, 0);
+    ctx.arc(w - r, r, r, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(r, h);
+    ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (!opts.pill) {
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(3, 7, 14, 0.92)';
+    ctx.strokeText(text, w / 2, h / 2 + 2);
+  }
+  ctx.fillStyle = opts.colour || '#ffffff';
+  ctx.fillText(text, w / 2, h / 2 + 2);
+  var tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  var mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthTest: false
+  });
+  var sprite = new THREE.Sprite(mat);
+  var scale = opts.scale || 0.34;
+  sprite.scale.set(w / h * scale, scale, 1);
+  sprite.renderOrder = 999;
+  return sprite;
+}
+
+/* Points along the shorter great-circle arc from a to b. */
+function arcPoints(a, b, radius, segments) {
+  var axis = new THREE.Vector3().crossVectors(a, b);
+  if (axis.lengthSq() < 1e-8) {
+    // exactly opposite (180°): any perpendicular axis will do
+    var helper = Math.abs(a.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    axis.crossVectors(a, helper);
+  }
+  axis.normalize();
+  var angle = a.angleTo(b);
+  var pts = [];
+  for (var i = 0; i <= segments; i++) {
+    var q = new THREE.Quaternion().setFromAxisAngle(axis, angle * (i / segments));
+    pts.push(a.clone().applyQuaternion(q).multiplyScalar(radius));
+  }
+  return pts;
+}
+function atomMesh(symbol, radius) {
+  var el = ELEMENTS[symbol] || ELEMENTS.Y;
+  var geo = new THREE.SphereGeometry(radius, 48, 36);
+  var mat = new THREE.MeshStandardMaterial({
+    color: el.colour,
+    roughness: 0.32,
+    metalness: 0.12,
+    envMapIntensity: 0.6
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+/* Builds the whole molecule (atoms, bonds, lone pairs, angle arcs) as one Group. */
+function buildMolecule(spec, opts) {
+  var g = geomFor(spec.bp, spec.lp);
+  var group = new THREE.Group();
+  if (!g) return group;
+  var centralEl = ELEMENTS[spec.central] || ELEMENTS.X;
+  var outerEl = ELEMENTS[spec.outer] || ELEMENTS.Y;
+
+  // --- central atom -------------------------------------------------------
+  var centre = atomMesh(spec.central, centralEl.radius * 1.05);
+  group.add(centre);
+  if (opts.showLabels) {
+    var lbl = makeLabel(centralEl.label, {
+      colour: '#ffffff',
+      size: 84,
+      scale: 0.46
+    });
+    lbl.position.set(0, centralEl.radius * 1.05 + 0.34, 0);
+    group.add(lbl);
+  }
+  var bondDirs = g.bonds.map(function (d) {
+    return new THREE.Vector3(d[0], d[1], d[2]).normalize();
+  });
+  var loneDirs = g.lones.map(function (d) {
+    return new THREE.Vector3(d[0], d[1], d[2]).normalize();
+  });
+
+  // --- bonds + outer atoms ------------------------------------------------
+  var bondMat = new THREE.MeshStandardMaterial({
+    color: 0xdfe7f1,
+    roughness: 0.45,
+    metalness: 0.05
+  });
+  var up = new THREE.Vector3(0, 1, 0);
+  bondDirs.forEach(function (dir) {
+    var cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, BOND_LEN, 24), bondMat);
+    cyl.position.copy(dir.clone().multiplyScalar(BOND_LEN / 2));
+    cyl.quaternion.setFromUnitVectors(up, dir);
+    group.add(cyl);
+    var atom = atomMesh(spec.outer, outerEl.radius);
+    atom.position.copy(dir.clone().multiplyScalar(BOND_LEN));
+    group.add(atom);
+    if (opts.showLabels) {
+      var _lbl = makeLabel(outerEl.label, {
+        colour: '#0b111b',
+        size: 64,
+        scale: 0.3,
+        pill: 'rgba(240,246,255,0.92)'
+      });
+      _lbl.position.copy(dir.clone().multiplyScalar(BOND_LEN + outerEl.radius + 0.26));
+      group.add(_lbl);
+    }
+  });
+
+  // --- lone pairs as translucent electron clouds ---------------------------
+  if (opts.showLones) {
+    loneDirs.forEach(function (dir) {
+      var lobe = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 24), new THREE.MeshStandardMaterial({
+        color: LONE_COLOUR,
+        transparent: true,
+        opacity: 0.34,
+        roughness: 0.15,
+        metalness: 0,
+        emissive: LONE_COLOUR,
+        emissiveIntensity: 0.45,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      }));
+      lobe.scale.set(0.92, 1.55, 0.92);
+      lobe.position.copy(dir.clone().multiplyScalar(0.98));
+      lobe.quaternion.setFromUnitVectors(up, dir);
+      group.add(lobe);
+
+      // the two electrons inside the cloud
+      var dotMat = new THREE.MeshStandardMaterial({
+        color: 0xede9fe,
+        emissive: 0xc4b5fd,
+        emissiveIntensity: 0.9,
+        roughness: 0.2
+      });
+      var perp = Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0, 1, 0).cross(dir).normalize() : new THREE.Vector3(1, 0, 0).cross(dir).normalize();
+      [-1, 1].forEach(function (s) {
+        var dot = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), dotMat);
+        dot.position.copy(dir.clone().multiplyScalar(1.05)).addScaledVector(perp, 0.19 * s);
+        group.add(dot);
+      });
+    });
+  }
+
+  // --- live bond-angle arcs ------------------------------------------------
+  if (opts.showAngles) {
+    g.arcs.forEach(function (arc) {
+      var a = bondDirs[arc.a];
+      var b = bondDirs[arc.b];
+      if (!a || !b) return;
+      var radius = BOND_LEN * 0.42 * (arc.r || 1);
+      var pts = arcPoints(a, b, radius, 64);
+      var curve = new THREE.CatmullRomCurve3(pts);
+      var tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, 0.028, 10, false), new THREE.MeshBasicMaterial({
+        color: ARC_COLOUR,
+        transparent: true,
+        opacity: 0.95
+      }));
+      group.add(tube);
+      var mid = pts[Math.floor(pts.length / 2)].clone().normalize().multiplyScalar(radius * 1.3 + 0.12);
+      var lbl = makeLabel(arc.label, {
+        colour: '#fde68a',
+        size: 62,
+        scale: 0.32,
+        mono: true,
+        weight: '500'
+      });
+      lbl.position.copy(mid);
+      group.add(lbl);
+    });
+  }
+  return group;
+}
+
+/* Imperative viewer wrapper — created once, then fed new specs. */
+function createViewer(mount) {
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x070b12, 0.028);
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+  camera.position.set(3.4, 2.6, 7.4);
+  var renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  mount.appendChild(renderer.domElement);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.07;
+  controls.rotateSpeed = 0.85;
+  controls.minDistance = 4;
+  controls.maxDistance = 20;
+  controls.autoRotateSpeed = 1.1;
+  scene.add(new THREE.HemisphereLight(0x9fd6ff, 0x0a1220, 0.85));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  var key = new THREE.DirectionalLight(0xffffff, 0.95);
+  key.position.set(5, 7, 6);
+  scene.add(key);
+  var rim = new THREE.DirectionalLight(0x7dd3fc, 0.55);
+  rim.position.set(-6, -3, -5);
+  scene.add(rim);
+  var root = new THREE.Group();
+  scene.add(root);
+  var current = null;
+  var tween = 1;
+  var raf = 0;
+  var clock = new THREE.Clock();
+  function clear(obj) {
+    obj.traverse(function (child) {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        var mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(function (m) {
+          if (m.map) m.map.dispose();
+          m.dispose();
+        });
+      }
+    });
+  }
+  function setMolecule(spec, opts) {
+    if (current) {
+      root.remove(current);
+      clear(current);
+    }
+    current = buildMolecule(spec, opts);
+    root.add(current);
+    tween = 0;
+  }
+  function resize() {
+    var w = mount.clientWidth || 1;
+    var h = mount.clientHeight || 1;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  var ro = new ResizeObserver(resize);
+  ro.observe(mount);
+  resize();
+  function loop() {
+    raf = requestAnimationFrame(loop);
+    var dt = Math.min(clock.getDelta(), 0.05);
+    if (tween < 1) {
+      tween = Math.min(1, tween + dt / 0.45);
+      var e = 1 - Math.pow(1 - tween, 3); // easeOutCubic
+      root.scale.setScalar(0.72 + 0.28 * e);
+      root.rotation.y = -0.6 * (1 - e);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  loop();
+  return {
+    setMolecule: setMolecule,
+    setAutoRotate: function setAutoRotate(on) {
+      controls.autoRotate = !!on;
+    },
+    resetView: function resetView() {
+      controls.reset();
+      camera.position.set(3.4, 2.6, 7.4);
+      controls.update();
+    },
+    dispose: function dispose() {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      if (current) clear(current);
+      controls.dispose();
+      renderer.dispose();
+      if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+  };
+}
+function Viewer(props) {
+  var mountRef = useRef(null);
+  var viewerRef = useRef(null);
+  var _useState = useState(false),
+    _useState2 = _slicedToArray(_useState, 2),
+    ready = _useState2[0],
+    setReady = _useState2[1];
+  useEffect(function () {
+    var v = createViewer(mountRef.current);
+    viewerRef.current = v;
+    setReady(true);
+    return function () {
+      v.dispose();
+      viewerRef.current = null;
+    };
+  }, []);
+  var _useState3 = useState(false),
+    _useState4 = _slicedToArray(_useState3, 2),
+    fontsReady = _useState4[0],
+    setFontsReady = _useState4[1];
+  useEffect(function () {
+    if (!document.fonts || !document.fonts.ready) {
+      setFontsReady(true);
+      return;
+    }
+    var live = true;
+    document.fonts.ready.then(function () {
+      if (live) setFontsReady(true);
+    });
+    return function () {
+      live = false;
+    };
+  }, []);
+  var spec = props.spec,
+    showLones = props.showLones,
+    showAngles = props.showAngles,
+    showLabels = props.showLabels;
+  useEffect(function () {
+    if (!viewerRef.current) return;
+    viewerRef.current.setMolecule(spec, {
+      showLones: showLones,
+      showAngles: showAngles,
+      showLabels: showLabels
+    });
+  }, [ready, fontsReady, spec.central, spec.outer, spec.bp, spec.lp, showLones, showAngles, showLabels]);
+  useEffect(function () {
+    if (viewerRef.current) viewerRef.current.setAutoRotate(props.autoRotate);
+  }, [ready, props.autoRotate]);
+  useEffect(function () {
+    if (props.resetSignal && viewerRef.current) viewerRef.current.resetView();
+  }, [props.resetSignal]);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "absolute inset-0"
+  });
+}
+
+/* ============================================================
+   3.  SHARED UI PIECES
+   ============================================================ */
+
+var GT = '>'; // literal "greater than", kept out of JSX text
+
+function Card(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: 'glass rounded-2xl ' + (props.className || '')
+  }, props.title ? /*#__PURE__*/React.createElement("div", {
+    className: "px-5 pt-4 pb-3 border-b border-white/10 flex items-center gap-2"
+  }, props.icon ? /*#__PURE__*/React.createElement("span", {
+    className: "text-lg leading-none"
+  }, props.icon) : null, /*#__PURE__*/React.createElement("h3", {
+    className: "font-display font-bold text-[1.05rem] tracking-tight text-slate-100"
+  }, props.title), props.badge ? /*#__PURE__*/React.createElement("span", {
+    className: "ml-auto font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-400"
+  }, props.badge) : null) : null, /*#__PURE__*/React.createElement("div", {
+    className: props.bodyClass || 'p-5'
+  }, props.children));
+}
+function Stat(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: 'rounded-xl border px-3 py-2.5 text-center bg-gradient-to-b ' + props.tone
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-2xl font-mono font-medium leading-none tabular-nums"
+  }, props.value), /*#__PURE__*/React.createElement("div", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] mt-1.5 opacity-80"
+  }, props.label));
+}
+function Toggle(props) {
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      props.onChange(!props.checked);
+    },
+    className: 'flex items-center gap-2.5 w-full text-left rounded-xl px-3 py-2.5 border transition ' + (props.checked ? 'bg-sky-500/15 border-sky-400/40 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20')
+  }, /*#__PURE__*/React.createElement("span", {
+    className: 'w-9 h-5 rounded-full relative transition shrink-0 ' + (props.checked ? 'bg-sky-400' : 'bg-slate-600')
+  }, /*#__PURE__*/React.createElement("span", {
+    className: 'absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ' + (props.checked ? 'left-4.5' : 'left-0.5'),
+    style: {
+      left: props.checked ? '1.125rem' : '0.125rem'
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-medium"
+  }, props.label));
+}
+function Callout(props) {
+  var tones = {
+    amber: 'bg-amber-500/10 border-amber-400/30 text-amber-100',
+    sky: 'bg-sky-500/10 border-sky-400/30 text-sky-100',
+    violet: 'bg-violet-500/10 border-violet-400/30 text-violet-100',
+    rose: 'bg-rose-500/10 border-rose-400/30 text-rose-100',
+    emerald: 'bg-emerald-500/10 border-emerald-400/30 text-emerald-100'
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: 'rounded-xl border px-4 py-3 ' + (tones[props.tone] || tones.sky)
+  }, props.title ? /*#__PURE__*/React.createElement("div", {
+    className: "font-display font-bold text-[0.95rem] mb-1 flex items-center gap-2"
+  }, props.icon ? /*#__PURE__*/React.createElement("span", null, props.icon) : null, props.title) : null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm leading-relaxed opacity-90"
+  }, props.children));
+}
+
+/* ============================================================
+   4.  TAB 1 — 3D VISUALISER
+   ============================================================ */
+
+function ReductionChain(props) {
+  var g = props.g;
+  if (g.parent === 'Tetrahedral') {
+    var steps = [{
+      lp: 0,
+      angle: '109.5°',
+      label: '0 lone pairs'
+    }, {
+      lp: 1,
+      angle: '107°',
+      label: '1 lone pair'
+    }, {
+      lp: 2,
+      angle: '104.5°',
+      label: '2 lone pairs'
+    }];
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-stretch gap-1.5"
+    }, steps.map(function (s, i) {
+      var on = s.lp === g.lp;
+      return /*#__PURE__*/React.createElement(React.Fragment, {
+        key: s.lp
+      }, i > 0 ? /*#__PURE__*/React.createElement("div", {
+        className: "flex flex-col items-center justify-center px-0.5 shrink-0"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "text-[10px] text-amber-300 font-mono leading-none"
+      }, "\u22122.5\xB0"), /*#__PURE__*/React.createElement("span", {
+        className: "text-slate-500 text-xs leading-none"
+      }, "\u2192")) : null, /*#__PURE__*/React.createElement("div", {
+        className: 'flex-1 rounded-lg border px-2 py-2 text-center transition ' + (on ? 'bg-amber-400/20 border-amber-300/50 text-amber-50' : 'bg-white/[0.03] border-white/10 text-slate-400')
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "text-base font-mono font-medium tabular-nums"
+      }, s.angle), /*#__PURE__*/React.createElement("div", {
+        className: "font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 opacity-80"
+      }, s.label)));
+    })), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-slate-400 mt-2.5 leading-relaxed"
+    }, "Every lone pair on the central atom knocks roughly ", /*#__PURE__*/React.createElement("strong", {
+      className: "text-amber-200"
+    }, "2.5\xB0"), " off the tetrahedral ideal, because a lone pair is held closer to the nucleus and repels harder than a bonding pair."));
+  }
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-base font-mono font-medium tabular-nums text-slate-300"
+  }, g.parentAngle), /*#__PURE__*/React.createElement("div", {
+    className: "font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 text-slate-500"
+  }, g.parent, " ideal")), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center px-0.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-mono leading-none text-amber-300"
+  }, g.reduction ? '−' + (g.reduction * 2.5).toFixed(1).replace('.0', '') + '°' : 'no change'), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-500 text-xs leading-none"
+  }, "\u2192")), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 rounded-lg border border-amber-300/50 bg-amber-400/20 px-2 py-2 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-base font-mono font-medium tabular-nums text-amber-50"
+  }, g.summary), /*#__PURE__*/React.createElement("div", {
+    className: "font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 text-amber-100/70"
+  }, "actual"))), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-2.5 leading-relaxed"
+  }, "The 2.5\xB0 rule is quoted against the ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-200"
+  }, "tetrahedral"), " parent shape (109.5\xB0 \u2192 107\xB0 \u2192 104.5\xB0). Here the parent arrangement is ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-200"
+  }, g.parent.toLowerCase()), ", so quote the angles above \u2014 lone pairs still close the angle, but AQA gives these values directly."));
+}
+function ContextPanel(props) {
+  var g = props.g,
+    title = props.title,
+    subtitle = props.subtitle;
+  if (!g) {
+    return /*#__PURE__*/React.createElement(Card, {
+      title: "Shape data",
+      icon: "\uD83D\uDCD0"
+    }, /*#__PURE__*/React.createElement(Callout, {
+      tone: "rose",
+      title: "Not a shape you need"
+    }, props.invalidReason));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement(Card, {
+    bodyClass: "p-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "font-display text-4xl font-bold tracking-tight text-white"
+  }, title), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm text-slate-400 mt-0.5"
+  }, subtitle)), g.aqaExtra ? /*#__PURE__*/React.createElement("span", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] px-2 py-1 rounded-full bg-slate-500/20 border border-slate-400/30 text-slate-300 shrink-0"
+  }, "Beyond AQA") : /*#__PURE__*/React.createElement("span", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 shrink-0"
+  }, "AQA 3.1.3.5")), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-2 mt-4"
+  }, /*#__PURE__*/React.createElement(Stat, {
+    value: g.total,
+    label: "Electron pairs",
+    tone: "from-slate-400/20 to-slate-400/5 border-slate-400/30 text-slate-100"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    value: g.bp,
+    label: "Bonding pairs",
+    tone: "from-sky-400/25 to-sky-400/5 border-sky-400/40 text-sky-100"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    value: g.lp,
+    label: "Lone pairs",
+    tone: "from-violet-400/25 to-violet-400/5 border-violet-400/40 text-violet-100"
+  })), /*#__PURE__*/React.createElement("dl", {
+    className: "mt-4 divide-y divide-white/[0.07] text-sm"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-baseline justify-between gap-4 py-2.5"
+  }, /*#__PURE__*/React.createElement("dt", {
+    className: "text-slate-400 shrink-0"
+  }, "Parent electron-pair geometry"), /*#__PURE__*/React.createElement("dd", {
+    className: "font-display font-bold text-slate-200 text-right"
+  }, g.parent)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-baseline justify-between gap-4 py-2.5"
+  }, /*#__PURE__*/React.createElement("dt", {
+    className: "text-slate-400 shrink-0"
+  }, "Molecular shape"), /*#__PURE__*/React.createElement("dd", {
+    className: "font-display font-bold text-emerald-300 text-right"
+  }, g.shape)), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-baseline justify-between gap-4 py-2.5"
+  }, /*#__PURE__*/React.createElement("dt", {
+    className: "text-slate-400 shrink-0"
+  }, "Bond angle(s)"), /*#__PURE__*/React.createElement("dd", {
+    className: "font-mono font-medium text-amber-300 text-right tabular-nums"
+  }, g.angles.map(function (a, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i
+    }, a);
+  }))))), /*#__PURE__*/React.createElement(Card, {
+    title: "The 2.5\xB0 reduction rule",
+    icon: "\uD83D\uDCC9"
+  }, /*#__PURE__*/React.createElement(ReductionChain, {
+    g: g
+  })), /*#__PURE__*/React.createElement(Card, {
+    title: "Why this shape?",
+    icon: "\uD83D\uDCA1"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 leading-relaxed"
+  }, g.why), /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 flex flex-wrap gap-1.5"
+  }, g.examples.map(function (e) {
+    return /*#__PURE__*/React.createElement("span", {
+      key: e,
+      className: "text-xs font-display font-semibold px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300"
+    }, e);
+  }))));
+}
+function VisualiserTab(props) {
+  var mode = props.mode,
+    setMode = props.setMode,
+    speciesId = props.speciesId,
+    setSpeciesId = props.setSpeciesId,
+    custom = props.custom,
+    setCustom = props.setCustom,
+    opts = props.opts,
+    setOpts = props.setOpts;
+  var _useState5 = useState(0),
+    _useState6 = _slicedToArray(_useState5, 2),
+    resetSignal = _useState6[0],
+    setResetSignal = _useState6[1];
+  var species = SPECIES.filter(function (s) {
+    return s.id === speciesId;
+  })[0] || SPECIES[2];
+  var isCustom = mode === 'custom';
+  var bp = isCustom ? custom.bp : species.bp;
+  var lp = isCustom ? custom.lp : species.lp;
+  var g = geomFor(bp, lp);
+  var spec = useMemo(function () {
+    return {
+      central: isCustom ? 'X' : species.central,
+      outer: isCustom ? 'Y' : species.outer,
+      bp: bp,
+      lp: lp
+    };
+  }, [isCustom, species.central, species.outer, bp, lp]);
+  var invalidReason = bp + lp > 6 ? 'That comes to ' + (bp + lp) + ' electron pairs. A-Level VSEPR at AQA stops at six pairs around a central atom, so drop the number of bonding or lone pairs.' : 'This combination of ' + bp + ' bonding and ' + lp + ' lone pairs is not one you will meet at A-Level. Try another combination.';
+  function setPair(field, value) {
+    setCustom(function (c) {
+      var next = Object.assign({}, c);
+      next[field] = value;
+      return next;
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] gap-5 fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4 min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass rounded-2xl overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative h-[clamp(340px,52vh,620px)] bg-[radial-gradient(circle_at_50%_35%,#12233a_0%,#080d16_65%,#05080e_100%)]"
+  }, /*#__PURE__*/React.createElement(Viewer, {
+    spec: spec,
+    showLones: opts.lones,
+    showAngles: opts.angles,
+    showLabels: opts.labels,
+    autoRotate: opts.spin,
+    resetSignal: resetSignal
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-white/10 text-slate-300"
+  }, "drag to rotate \xB7 scroll to zoom \xB7 right-drag to pan")), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-3 left-3 flex flex-wrap gap-1.5"
+  }, g ? /*#__PURE__*/React.createElement("span", {
+    className: "text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-sky-400/30 text-sky-200"
+  }, "\u25CF bonding pair") : null, g && lp > 0 ? /*#__PURE__*/React.createElement("span", {
+    className: "text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-violet-400/30 text-violet-200"
+  }, "\u25CF lone pair cloud") : null, g && opts.angles ? /*#__PURE__*/React.createElement("span", {
+    className: "text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-amber-400/30 text-amber-200"
+  }, "\u25CF bond angle") : null), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setResetSignal(resetSignal + 1);
+    },
+    className: "absolute top-3 right-3 text-xs px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur border border-white/15 text-slate-200 hover:border-white/35 transition"
+  }, "Reset view"))), /*#__PURE__*/React.createElement(Card, {
+    bodyClass: "p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mb-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setMode('preset');
+    },
+    className: 'flex-1 rounded-xl px-3 py-2 font-display text-[0.95rem] font-bold border transition ' + (!isCustom ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')
+  }, "AQA species"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setMode('custom');
+    },
+    className: 'flex-1 rounded-xl px-3 py-2 font-display text-[0.95rem] font-bold border transition ' + (isCustom ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')
+  }, "Custom builder")), !isCustom ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, GROUP_ORDER.map(function (grp) {
+    var members = SPECIES.filter(function (s) {
+      return s.group === grp;
+    });
+    if (!members.length) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: grp,
+      className: "flex flex-wrap items-center gap-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 w-[62px] shrink-0"
+    }, grp), members.map(function (s) {
+      var on = !isCustom && s.id === speciesId;
+      return /*#__PURE__*/React.createElement("button", {
+        key: s.id,
+        type: "button",
+        onClick: function onClick() {
+          setMode('preset');
+          setSpeciesId(s.id);
+        },
+        title: s.name,
+        className: 'px-3 py-1.5 rounded-xl font-display text-[0.95rem] font-bold border transition bg-gradient-to-b ' + (on ? GROUP_ACCENT[grp] + ' ring-1 ring-white/25' : 'from-white/[0.05] to-transparent border-white/10 text-slate-300 hover:border-white/30')
+      }, s.formula);
+    }));
+  })) : /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 gap-5"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-baseline justify-between mb-1.5"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-medium text-sky-200"
+  }, "Bonding pairs"), /*#__PURE__*/React.createElement("span", {
+    className: "text-lg font-mono font-medium tabular-nums text-sky-300"
+  }, custom.bp)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "2",
+    max: "6",
+    step: "1",
+    value: custom.bp,
+    onChange: function onChange(e) {
+      setPair('bp', parseInt(e.target.value, 10));
+    },
+    className: "w-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-[10px] font-mono text-slate-500 mt-1 px-0.5"
+  }, /*#__PURE__*/React.createElement("span", null, "2"), /*#__PURE__*/React.createElement("span", null, "3"), /*#__PURE__*/React.createElement("span", null, "4"), /*#__PURE__*/React.createElement("span", null, "5"), /*#__PURE__*/React.createElement("span", null, "6"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-baseline justify-between mb-1.5"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-medium text-violet-200"
+  }, "Lone pairs"), /*#__PURE__*/React.createElement("span", {
+    className: "text-lg font-mono font-medium tabular-nums text-violet-300"
+  }, custom.lp)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "0",
+    max: "3",
+    step: "1",
+    value: custom.lp,
+    onChange: function onChange(e) {
+      setPair('lp', parseInt(e.target.value, 10));
+    },
+    className: "w-full"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-[10px] font-mono text-slate-500 mt-1 px-0.5"
+  }, /*#__PURE__*/React.createElement("span", null, "0"), /*#__PURE__*/React.createElement("span", null, "1"), /*#__PURE__*/React.createElement("span", null, "2"), /*#__PURE__*/React.createElement("span", null, "3"))), /*#__PURE__*/React.createElement("div", {
+    className: "sm:col-span-2 text-xs text-slate-400 rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2"
+  }, "Total electron pairs: ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-100 font-mono tabular-nums"
+  }, custom.bp + custom.lp), ' ', "\u2014 the generic central atom ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-teal-300"
+  }, "X"), " is bonded to", ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-200"
+  }, "Y"), " atoms.")), /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10"
+  }, /*#__PURE__*/React.createElement(Toggle, {
+    checked: opts.lones,
+    onChange: function onChange(v) {
+      setOpts(Object.assign({}, opts, {
+        lones: v
+      }));
+    },
+    label: "Lone pair clouds"
+  }), /*#__PURE__*/React.createElement(Toggle, {
+    checked: opts.angles,
+    onChange: function onChange(v) {
+      setOpts(Object.assign({}, opts, {
+        angles: v
+      }));
+    },
+    label: "Bond angles"
+  }), /*#__PURE__*/React.createElement(Toggle, {
+    checked: opts.labels,
+    onChange: function onChange(v) {
+      setOpts(Object.assign({}, opts, {
+        labels: v
+      }));
+    },
+    label: "Atom labels"
+  }), /*#__PURE__*/React.createElement(Toggle, {
+    checked: opts.spin,
+    onChange: function onChange(v) {
+      setOpts(Object.assign({}, opts, {
+        spin: v
+      }));
+    },
+    label: "Auto-rotate"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement(ContextPanel, {
+    g: g,
+    invalidReason: invalidReason,
+    title: isCustom ? g ? g.shape : 'No such shape' : species.formula,
+    subtitle: isCustom ? custom.bp + ' bonding · ' + custom.lp + ' lone' : species.name
+  })));
+}
+
+/* ============================================================
+   5.  TAB 2 — SPECIFICATION NOTES & EXAM RULES
+   ============================================================ */
+
+var EXAM_STEPS = [{
+  n: 1,
+  title: 'Count the electron pairs',
+  text: 'Work out the total number of electron pairs in the outer shell of the central atom. Remember to adjust for the charge on an ion: add one electron for each negative charge, remove one for each positive charge.',
+  mark: 'e.g. "there are 4 pairs of electrons around the nitrogen"'
+}, {
+  n: 2,
+  title: 'Split them into bonding and lone',
+  text: 'State how many of those pairs are bonding pairs and how many are lone pairs. Examiners award this separately from the total, so never merge the two statements into one vague sentence.',
+  mark: 'e.g. "3 bonding pairs and 1 lone pair"'
+}, {
+  n: 3,
+  title: 'Say that pairs repel and get as far apart as possible',
+  text: 'The principle mark: electron pairs repel one another and arrange themselves to be as far apart as possible, giving the minimum repulsion and the most stable arrangement.',
+  mark: 'e.g. "the pairs repel and move as far apart as possible"'
+}, {
+  n: 4,
+  title: 'Compare the strengths of repulsion (only if there are lone pairs)',
+  text: 'If the central atom has any lone pairs, you must state that a lone pair repels more strongly than a bonding pair. Without this sentence the explanation mark is lost, even if the shape and angle are right.',
+  mark: 'e.g. "lone pair–bonding pair repulsion is greater than bonding pair–bonding pair repulsion"'
+}, {
+  n: 5,
+  title: 'Name the shape and give the bond angle',
+  text: 'Finish with the shape name and the numerical bond angle. Both are needed. "Pyramidal" without 107°, or 107° without the name, is a half answer.',
+  mark: 'e.g. "trigonal pyramidal, bond angle 107°"'
+}];
+var TRAPS = [['Writing "the lone pair repels" and stopping there', 'You must say it repels MORE than a bonding pair — it is a comparison mark.'], ['Calling H₂O "linear" because it is drawn H–O–H', 'The shape is named from the positions of the atoms in 3-D: non-linear (bent), 104.5°.'], ['Forgetting the charge on an ion', 'NH₄⁺ still has 4 pairs and no lone pair — the nitrogen lone pair became the dative bond to H⁺.'], ['Saying "electrons repel"', 'Say electron PAIRS repel. The whole model is about pairs, not individual electrons.'], ['Quoting 109° instead of 109.5°', 'AQA mark schemes accept 109.5° (or 109°28′). Learn the half-degree.'], ['Giving one angle for PCl₅ or SF₄', 'Trigonal bipyramidal species have two different angles — quote both.'], ['Drawing a flat cross for CH₄', 'A 2-D cross scores nothing for shape. Use wedges and dashes to show the tetrahedron.']];
+function PrincipleCard(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "rounded-xl border border-white/10 bg-white/[0.03] p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2.5 mb-2"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-7 h-7 shrink-0 rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-200 grid place-items-center text-sm font-bold"
+  }, props.n), /*#__PURE__*/React.createElement("h4", {
+    className: "font-display font-bold text-slate-100 text-[0.98rem]"
+  }, props.title)), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 leading-relaxed"
+  }, props.children));
+}
+function RepulsionLadder() {
+  var rows = [{
+    a: 'Lone pair',
+    b: 'lone pair',
+    tone: 'from-rose-500/30 to-rose-500/5 border-rose-400/40',
+    w: '100%',
+    note: 'strongest'
+  }, {
+    a: 'Lone pair',
+    b: 'bonding pair',
+    tone: 'from-amber-500/30 to-amber-500/5 border-amber-400/40',
+    w: '72%',
+    note: ''
+  }, {
+    a: 'Bonding pair',
+    b: 'bonding pair',
+    tone: 'from-sky-500/30 to-sky-500/5 border-sky-400/40',
+    w: '46%',
+    note: 'weakest'
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, rows.map(function (r, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "flex items-center gap-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "w-[190px] shrink-0 text-sm text-slate-200"
+    }, r.a, " ", /*#__PURE__*/React.createElement("span", {
+      className: "text-slate-500"
+    }, "\u2013"), " ", r.b), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 h-8 rounded-lg bg-white/[0.03] border border-white/10 overflow-hidden"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: 'h-full bg-gradient-to-r border-r ' + r.tone,
+      style: {
+        width: r.w
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "w-[68px] shrink-0 text-right font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500"
+    }, r.note));
+  }), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 leading-relaxed pt-1"
+  }, "A lone pair is held by only one nucleus, so its charge cloud sits closer to the central atom and spreads out more. That is why the order is", ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-rose-200"
+  }, "lone\u2013lone"), " ", GT, ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-amber-200"
+  }, "lone\u2013bonding"), " ", GT, ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-sky-200"
+  }, "bonding\u2013bonding"), "."));
+}
+function SummaryTable(props) {
+  var _useState7 = useState(''),
+    _useState8 = _slicedToArray(_useState7, 2),
+    query = _useState8[0],
+    setQuery = _useState8[1];
+  var _useState9 = useState('all'),
+    _useState10 = _slicedToArray(_useState9, 2),
+    pairFilter = _useState10[0],
+    setPairFilter = _useState10[1];
+  var _useState11 = useState(false),
+    _useState12 = _slicedToArray(_useState11, 2),
+    showExtras = _useState12[0],
+    setShowExtras = _useState12[1];
+  var rows = SPECIES.map(function (s) {
+    var g = geomFor(s.bp, s.lp);
+    return {
+      s: s,
+      g: g
+    };
+  });
+  var filtered = rows.filter(function (r) {
+    if (pairFilter !== 'all' && r.g.total !== parseInt(pairFilter, 10)) return false;
+    if (!query.trim()) return true;
+    var hay = (r.s.formula + ' ' + r.s.name + ' ' + r.g.shape + ' ' + r.g.parent + ' ' + r.g.summary).toLowerCase();
+    return hay.indexOf(query.trim().toLowerCase()) !== -1;
+  });
+  var extraKeys = Object.keys(GEOMETRY).filter(function (k) {
+    return GEOMETRY[k].aqaExtra;
+  });
+  return /*#__PURE__*/React.createElement(Card, {
+    title: "Summary comparison table",
+    icon: "\uD83D\uDCCA",
+    badge: "click a row to open it in 3-D"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap items-center gap-2 mb-4"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: query,
+    onChange: function onChange(e) {
+      setQuery(e.target.value);
+    },
+    placeholder: "Filter by species, shape or angle\u2026",
+    className: "flex-1 min-w-[200px] rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:border-sky-400/50"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-1.5"
+  }, ['all', '2', '3', '4', '5', '6'].map(function (f) {
+    var on = pairFilter === f;
+    return /*#__PURE__*/React.createElement("button", {
+      key: f,
+      type: "button",
+      onClick: function onClick() {
+        setPairFilter(f);
+      },
+      className: 'px-3 py-2 rounded-xl font-display text-xs font-bold border transition ' + (on ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')
+    }, f === 'all' ? 'All' : f + ' pairs');
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "overflow-x-auto -mx-5 px-5"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "w-full text-sm border-separate border-spacing-y-1.5 min-w-[720px]"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 text-left"
+  }, /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1"
+  }, "Species"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1 text-center"
+  }, "Total pairs"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1 text-center"
+  }, "Bonding"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1 text-center"
+  }, "Lone"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1"
+  }, "Parent geometry"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1"
+  }, "Shape"), /*#__PURE__*/React.createElement("th", {
+    className: "font-medium px-3 pb-1"
+  }, "Bond angle(s)"))), /*#__PURE__*/React.createElement("tbody", null, filtered.map(function (r) {
+    return /*#__PURE__*/React.createElement("tr", {
+      key: r.s.id,
+      onClick: function onClick() {
+        props.onSelect(r.s.id);
+      },
+      className: "cursor-pointer group"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 rounded-l-xl bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-l border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "font-display font-bold text-lg text-white"
+    }, r.s.formula), /*#__PURE__*/React.createElement("div", {
+      className: "text-[11px] text-slate-500"
+    }, r.s.name)), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-mono font-medium text-slate-200"
+    }, r.g.total)), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-mono font-medium bg-sky-500/20 border border-sky-400/30 text-sky-200 tabular-nums"
+    }, r.g.bp)), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: 'inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-mono font-medium tabular-nums border ' + (r.g.lp ? 'bg-violet-500/20 border-violet-400/30 text-violet-200' : 'bg-white/5 border-white/10 text-slate-500')
+    }, r.g.lp)), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 text-slate-400 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, r.g.parent), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 font-display font-bold text-emerald-300 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, r.g.shape), /*#__PURE__*/React.createElement("td", {
+      className: "px-3 py-2.5 rounded-r-xl font-mono font-medium text-amber-300 tabular-nums bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-r border-white/[0.07] group-hover:border-sky-400/30 transition"
+    }, r.g.summary));
+  }), !filtered.length ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    colSpan: "7",
+    className: "px-3 py-6 text-center text-slate-500"
+  }, "Nothing matches that filter.")) : null))), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setShowExtras(!showExtras);
+    },
+    className: "mt-4 text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 decoration-white/20"
+  }, showExtras ? 'Hide' : 'Show', " the four shapes beyond the AQA list (the custom builder can still make them)"), showExtras ? /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 grid sm:grid-cols-2 gap-2"
+  }, extraKeys.map(function (k) {
+    var g = GEOMETRY[k];
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      className: "rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center justify-between gap-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-display font-bold text-slate-200"
+    }, g.shape), /*#__PURE__*/React.createElement("span", {
+      className: "text-amber-300 font-mono tabular-nums text-xs"
+    }, g.summary)), /*#__PURE__*/React.createElement("div", {
+      className: "text-[11px] text-slate-500 mt-0.5"
+    }, g.bp, " bonding \xB7 ", g.lp, " lone \u2014 e.g. ", g.examples[0]));
+  })) : null);
+}
+function NotesTab(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-5 fade-in"
+  }, /*#__PURE__*/React.createElement(Card, {
+    title: "What the specification actually says",
+    icon: "\uD83D\uDCDC",
+    badge: "AQA 3.1.3.5"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-300 leading-relaxed"
+  }, "You must be able to ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-100"
+  }, "explain"), " the shapes of, and bond angles in, simple molecules and ions with up to six electron pairs (including lone pairs) surrounding the central atom, and ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-100"
+  }, "predict"), " the shapes of, and bond angles in, species with up to six electron pairs. Drawings must show the three-dimensional arrangement \u2014 wedges and dashes, not a flat cross.")), /*#__PURE__*/React.createElement(Card, {
+    title: "The three core VSEPR principles",
+    icon: "\u269B\uFE0F"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-3 gap-3"
+  }, /*#__PURE__*/React.createElement(PrincipleCard, {
+    n: "1",
+    title: "Pairs repel"
+  }, "Electron pairs in the outer shell of the central atom are all negatively charged, so they repel one another and arrange themselves ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-100"
+  }, "as far apart as possible"), ". That minimum-repulsion arrangement is the shape."), /*#__PURE__*/React.createElement(PrincipleCard, {
+    n: "2",
+    title: "Not all repulsions are equal"
+  }, "The order of repulsion strength is ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-rose-200"
+  }, "lone\u2013lone"), " ", GT, ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-amber-200"
+  }, "lone\u2013bonding"), " ", GT, ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-sky-200"
+  }, "bonding\u2013bonding"), ". Lone pairs take up more room."), /*#__PURE__*/React.createElement(PrincipleCard, {
+    n: "3",
+    title: "Each lone pair costs \u22482.5\xB0"
+  }, "Every lone pair on the central atom reduces the bond angle by roughly", ' ', /*#__PURE__*/React.createElement("strong", {
+    className: "text-amber-200"
+  }, "2.5\xB0"), " from the ideal parent angle: 109.5\xB0 \u2192 107\xB0 \u2192 104.5\xB0."))), /*#__PURE__*/React.createElement("div", {
+    className: "grid lg:grid-cols-2 gap-5"
+  }, /*#__PURE__*/React.createElement(Card, {
+    title: "Order of repulsion strength",
+    icon: "\uD83D\uDCF6"
+  }, /*#__PURE__*/React.createElement(RepulsionLadder, null)), /*#__PURE__*/React.createElement(Card, {
+    title: "Counting the pairs on an ion",
+    icon: "\uD83D\uDD22"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3 text-sm text-slate-300 leading-relaxed"
+  }, /*#__PURE__*/React.createElement("p", null, "Work from the central atom's outer-shell electrons, then adjust for charge and bonding:"), /*#__PURE__*/React.createElement("ol", {
+    className: "space-y-1.5 list-decimal list-inside marker:text-slate-500"
+  }, /*#__PURE__*/React.createElement("li", null, "Start with the group number (outer-shell electrons) of the central atom."), /*#__PURE__*/React.createElement("li", null, "Add one electron for each atom bonded to it by a single covalent bond."), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("strong", {
+    className: "text-emerald-300"
+  }, "Add"), " one for each negative charge; ", /*#__PURE__*/React.createElement("strong", {
+    className: "text-rose-300"
+  }, "subtract"), " one for each positive charge."), /*#__PURE__*/React.createElement("li", null, "Divide by two to get the total number of electron pairs."), /*#__PURE__*/React.createElement("li", null, "Bonding pairs = number of bonded atoms. Lone pairs = total \u2212 bonding.")), /*#__PURE__*/React.createElement("div", {
+    className: "rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2.5 space-y-1.5 font-mono text-xs"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "NH\u2084\u207A :"), " 5 + 4 \u2212 1 = 8 e\u207B = ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sky-300"
+  }, "4 pairs"), ", all bonding \u2192 tetrahedral, 109.5\xB0"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "PF\u2086\u207B :"), " 5 + 6 + 1 = 12 e\u207B = ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sky-300"
+  }, "6 pairs"), ", all bonding \u2192 octahedral, 90\xB0"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400"
+  }, "H\u2082O  :"), " 6 + 2 = 8 e\u207B = ", /*#__PURE__*/React.createElement("span", {
+    className: "text-sky-300"
+  }, "4 pairs"), ", 2 bonding + ", /*#__PURE__*/React.createElement("span", {
+    className: "text-violet-300"
+  }, "2 lone"), " \u2192 non-linear, 104.5\xB0"))))), /*#__PURE__*/React.createElement(Card, {
+    title: "AQA exam technique \u2014 the five-step answer",
+    icon: "\u270D\uFE0F",
+    badge: "how the marks are earned"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2.5"
+  }, EXAM_STEPS.map(function (s) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: s.n,
+      className: "rounded-xl border border-white/10 bg-white/[0.03] p-4"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-start gap-3"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "w-7 h-7 shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 grid place-items-center text-sm font-bold"
+    }, s.n), /*#__PURE__*/React.createElement("div", {
+      className: "min-w-0"
+    }, /*#__PURE__*/React.createElement("h4", {
+      className: "font-display font-bold text-slate-100 text-[0.98rem]"
+    }, s.title), /*#__PURE__*/React.createElement("p", {
+      className: "text-sm text-slate-300 leading-relaxed mt-1"
+    }, s.text), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-emerald-200/80 mt-2 font-mono"
+    }, s.mark))));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4"
+  }, /*#__PURE__*/React.createElement(Callout, {
+    tone: "amber",
+    icon: "\u23F1\uFE0F",
+    title: "Rule of thumb for marks"
+  }, "A shape question worth ", /*#__PURE__*/React.createElement("strong", null, "1\u20132 marks"), " usually wants only the shape name and the bond angle. A question worth ", /*#__PURE__*/React.createElement("strong", null, "3\u20134 marks"), " wants the full explanation: pairs counted, split into bonding and lone, the repulsion statement, then the shape and angle."))), /*#__PURE__*/React.createElement(Card, {
+    title: "Mark-scheme traps",
+    icon: "\uD83D\uDEA7"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid md:grid-cols-2 gap-2.5"
+  }, TRAPS.map(function (t, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "rounded-xl border border-rose-400/20 bg-rose-500/[0.07] px-4 py-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-sm font-semibold text-rose-100 flex items-start gap-2"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "shrink-0"
+    }, "\u2717"), /*#__PURE__*/React.createElement("span", null, t[0])), /*#__PURE__*/React.createElement("div", {
+      className: "text-sm text-slate-300 leading-relaxed mt-1.5 pl-6"
+    }, t[1]));
+  }))), /*#__PURE__*/React.createElement(SummaryTable, {
+    onSelect: props.onSelect
+  }));
+}
+
+/* ============================================================
+   6.  TAB 3 — QUIZ AND EXAM PRACTICE
+   ============================================================ */
+
+var MCQ_BANK = [{
+  q: 'What is the shape of a methane molecule, CH₄?',
+  o: ['Tetrahedral', 'Square planar', 'Trigonal pyramidal', 'Trigonal planar'],
+  a: 0,
+  why: '4 bonding pairs, no lone pairs — the pairs point to the corners of a tetrahedron.'
+}, {
+  q: 'What is the H–C–H bond angle in CH₄?',
+  o: ['90°', '104.5°', '107°', '109.5°'],
+  a: 3,
+  why: 'Four identical bonding pairs give the undistorted tetrahedral angle of 109.5°.'
+}, {
+  q: 'What is the shape of an ammonia molecule, NH₃?',
+  o: ['Trigonal planar', 'Trigonal pyramidal', 'Non-linear', 'Tetrahedral'],
+  a: 1,
+  why: '4 electron pairs but only 3 bonds — the lone pair is not counted in the shape name.'
+}, {
+  q: 'What is the H–N–H bond angle in NH₃?',
+  o: ['107°', '109.5°', '104.5°', '120°'],
+  a: 0,
+  why: 'One lone pair reduces 109.5° by about 2.5°, giving 107°.'
+}, {
+  q: 'What is the shape of a water molecule, H₂O?',
+  o: ['Linear', 'Trigonal pyramidal', 'Non-linear (bent)', 'Tetrahedral'],
+  a: 2,
+  why: '4 pairs, 2 bonding and 2 lone — the two bonds give a bent (non-linear) shape.'
+}, {
+  q: 'What is the H–O–H bond angle in H₂O?',
+  o: ['109.5°', '107°', '104.5°', '90°'],
+  a: 2,
+  why: 'Two lone pairs: 109.5° − 2 × 2.5° = 104.5°.'
+}, {
+  q: 'What is the shape of BF₃?',
+  o: ['Trigonal planar', 'Trigonal pyramidal', 'T-shaped', 'Tetrahedral'],
+  a: 0,
+  why: 'Boron has only 3 electron pairs, all bonding, so the molecule is flat.'
+}, {
+  q: 'What is the F–B–F bond angle in BF₃?',
+  o: ['90°', '107°', '109.5°', '120°'],
+  a: 3,
+  why: 'Three bonding pairs in a plane are 360°/3 = 120° apart.'
+}, {
+  q: 'What is the shape of BeCl₂?',
+  o: ['Non-linear', 'Linear', 'Trigonal planar', 'Tetrahedral'],
+  a: 1,
+  why: 'Only 2 electron pairs around beryllium, so they sit at opposite ends.'
+}, {
+  q: 'What is the Cl–Be–Cl bond angle in BeCl₂?',
+  o: ['120°', '109.5°', '180°', '90°'],
+  a: 2,
+  why: 'Two pairs get as far apart as possible: directly opposite, 180°.'
+}, {
+  q: 'What is the shape of PCl₅?',
+  o: ['Octahedral', 'Square pyramidal', 'Trigonal bipyramidal', 'See-saw'],
+  a: 2,
+  why: '5 bonding pairs, no lone pairs — three equatorial and two axial positions.'
+}, {
+  q: 'Which pair of bond angles is found in PCl₅?',
+  o: ['90° and 120°', '104.5° and 107°', '109.5° only', '90° and 180°'],
+  a: 0,
+  why: '120° between the equatorial bonds and 90° between axial and equatorial bonds.'
+}, {
+  q: 'What is the shape of SF₆?',
+  o: ['Octahedral', 'Trigonal bipyramidal', 'Square planar', 'Hexagonal planar'],
+  a: 0,
+  why: '6 bonding pairs, no lone pairs, pointing to the corners of an octahedron.'
+}, {
+  q: 'What is the F–S–F bond angle between adjacent bonds in SF₆?',
+  o: ['60°', '90°', '109.5°', '120°'],
+  a: 1,
+  why: 'All adjacent bonds in an octahedral arrangement are at 90°.'
+}, {
+  q: 'What is the shape of the NH₄⁺ ion?',
+  o: ['Trigonal pyramidal', 'Tetrahedral', 'Square planar', 'Non-linear'],
+  a: 1,
+  why: 'The nitrogen lone pair is used in the dative bond, leaving 4 bonding pairs and no lone pairs.'
+}, {
+  q: 'What is the bond angle in NH₄⁺?',
+  o: ['107°', '104.5°', '109.5°', '120°'],
+  a: 2,
+  why: 'No lone pairs remain, so the angle returns to the full tetrahedral 109.5°.'
+}, {
+  q: 'What is the shape of XeF₄?',
+  o: ['Tetrahedral', 'See-saw', 'Square planar', 'Octahedral'],
+  a: 2,
+  why: '6 pairs, 4 bonding and 2 lone. The lone pairs go opposite each other, leaving a flat square.'
+}, {
+  q: 'How many electron pairs surround the xenon atom in XeF₄?',
+  o: ['4', '5', '6', '8'],
+  a: 2,
+  why: '8 outer electrons on Xe plus 4 from the bonded F atoms = 12 electrons = 6 pairs.'
+}, {
+  q: 'What is the shape of ClF₃?',
+  o: ['Trigonal planar', 'T-shaped', 'Trigonal pyramidal', 'See-saw'],
+  a: 1,
+  why: '5 pairs, 3 bonding and 2 lone. Both lone pairs go equatorial, leaving a T of bonds.'
+}, {
+  q: 'What is the approximate bond angle in ClF₃?',
+  o: ['120°', '109.5°', '87.5°', '104.5°'],
+  a: 2,
+  why: 'The 90° axial–equatorial angle is squeezed by the lone pairs to about 87.5°.'
+}, {
+  q: 'What is the shape of the PF₆⁻ ion?',
+  o: ['Octahedral', 'Square planar', 'Trigonal bipyramidal', 'Tetrahedral'],
+  a: 0,
+  why: '5 + 6 + 1 = 12 electrons = 6 pairs, all bonding.'
+}, {
+  q: 'Which is the correct order of repulsion strength?',
+  o: ['bonding–bonding > lone–bonding > lone–lone', 'lone–lone > lone–bonding > bonding–bonding', 'lone–bonding > lone–lone > bonding–bonding', 'they are all equal'],
+  a: 1,
+  why: 'Lone pairs are held by one nucleus only, so they spread out more and repel more strongly.'
+}, {
+  q: 'By approximately how much does each lone pair reduce the bond angle?',
+  o: ['1°', '2.5°', '5°', '10°'],
+  a: 1,
+  why: '109.5° → 107° → 104.5°: about 2.5° per lone pair.'
+}, {
+  q: 'A central atom has 4 electron pairs: 2 bonding and 2 lone. What is the shape?',
+  o: ['Linear', 'Non-linear (bent)', 'Trigonal pyramidal', 'Tetrahedral'],
+  a: 1,
+  why: 'The parent shape is tetrahedral; with only two bonds the molecule is bent, angle 104.5°.'
+}, {
+  q: 'Why is the bond angle in NH₃ smaller than in CH₄?',
+  o: ['Nitrogen is more electronegative than carbon', 'Ammonia has fewer atoms', 'The lone pair on nitrogen repels more strongly than a bonding pair', 'Ammonia has three electron pairs, methane has four'],
+  a: 2,
+  why: 'Both have 4 pairs. The extra lone-pair repulsion in NH₃ squeezes the bonds together.'
+}, {
+  q: 'How many lone pairs are on the central atom in H₂O?',
+  o: ['0', '1', '2', '3'],
+  a: 2,
+  why: 'Oxygen has 6 outer electrons; 2 are used in bonds, leaving 4 electrons as 2 lone pairs.'
+}, {
+  q: 'How many electron pairs surround the boron atom in BF₃?',
+  o: ['2', '3', '4', '6'],
+  a: 1,
+  why: 'Boron has 3 outer electrons and forms 3 bonds: 6 electrons = 3 pairs, no lone pairs.'
+}, {
+  q: 'A species has 5 electron pairs: 3 bonding and 2 lone. What is its shape?',
+  o: ['Trigonal planar', 'Trigonal pyramidal', 'T-shaped', 'See-saw'],
+  a: 2,
+  why: 'The lone pairs take equatorial positions in the trigonal bipyramidal parent, giving a T-shape.'
+}, {
+  q: 'Which species has a bond angle of 120°?',
+  o: ['NH₃', 'BF₃', 'H₂O', 'CH₄'],
+  a: 1,
+  why: 'Only the trigonal planar arrangement gives 120°.'
+}, {
+  q: 'Which statement would gain the explanation mark in a shape question?',
+  o: ['The electrons repel each other', 'The lone pair repels', 'Lone pair–bonding pair repulsion is greater than bonding pair–bonding pair repulsion', 'The molecule is polar'],
+  a: 2,
+  why: 'The mark is for the comparison, not just for saying that a lone pair repels.'
+}, {
+  q: 'What is the parent electron-pair geometry of XeF₄?',
+  o: ['Tetrahedral', 'Square planar', 'Octahedral', 'Trigonal bipyramidal'],
+  a: 2,
+  why: 'Six pairs always start from an octahedral arrangement; the shape name describes the atoms only.'
+}, {
+  q: 'Which of these is drawn correctly as a 3-D shape in an exam answer?',
+  o: ['A flat cross for CH₄', 'A tetrahedron for CH₄ using wedges and dashes', 'H–O–H drawn in a straight line', 'A hexagon for SF₆'],
+  a: 1,
+  why: 'AQA expects wedge-and-dash drawings that show the three-dimensional arrangement.'
+}];
+var STRUCTURED = [{
+  id: 'nh3',
+  marks: 4,
+  prompt: 'Explain, in terms of electron pairs, the shape of, and the bond angle in, a molecule of ammonia, NH₃.',
+  criteria: [{
+    text: 'States there are 4 electron pairs around the nitrogen atom',
+    any: [/\b(4|four)\b[\s\S]{0,30}(electron )?pairs?/i, /(electron )?pairs?[\s\S]{0,15}\b(4|four)\b/i]
+  }, {
+    text: 'States 3 bonding pairs and 1 lone pair',
+    all: [/\b(3|three)\b[\s\S]{0,25}bond/i, /\b(1|one|a)\b[\s\S]{0,20}lone/i]
+  }, {
+    text: 'States that the lone pair repels more strongly than a bonding pair',
+    any: [/lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i, /(more|greater|stronger)[\s\S]{0,40}repuls[\s\S]{0,40}lone/i, /lone[- ]?pair[\s\S]{0,25}bond[\s\S]{0,25}(repuls|repel)[\s\S]{0,25}(greater|more)/i]
+  }, {
+    text: 'Names the shape as trigonal pyramidal AND gives the bond angle as 107°',
+    all: [/pyramid/i, /107/]
+  }],
+  model: 'There are 4 pairs of electrons in the outer shell of the nitrogen atom: 3 bonding pairs and 1 lone pair. The electron pairs repel one another and move as far apart as possible. The lone pair repels more strongly than the bonding pairs, so the bonding pairs are pushed closer together and the angle is reduced from 109.5° by about 2.5°. The shape is therefore trigonal pyramidal with a bond angle of 107°.'
+}, {
+  id: 'h2o-ch4',
+  marks: 4,
+  prompt: 'Explain why the bond angle in a molecule of water is smaller than the bond angle in a molecule of methane.',
+  criteria: [{
+    text: 'States both molecules have 4 electron pairs around the central atom',
+    any: [/both[\s\S]{0,40}\b(4|four)\b/i, /\b(4|four)\b[\s\S]{0,40}pairs[\s\S]{0,60}both/i, /\b(4|four)\b[\s\S]{0,30}pairs/i]
+  }, {
+    text: 'States CH₄ has 4 bonding pairs, whereas H₂O has 2 bonding pairs and 2 lone pairs',
+    all: [/\b(2|two)\b[\s\S]{0,25}lone/i, /\b(2|two|4|four)\b[\s\S]{0,25}bond/i]
+  }, {
+    text: 'States that lone pairs repel more strongly than bonding pairs',
+    any: [/lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i, /(more|greater|stronger)[\s\S]{0,40}repuls[\s\S]{0,40}(than )?bond/i]
+  }, {
+    text: 'Quotes both angles, 109.5° for CH₄ and 104.5° for H₂O (or the 2 × 2.5° reduction)',
+    all: [/109(\.5)?/, /104\.5/]
+  }],
+  model: 'Both molecules have 4 electron pairs around the central atom, so both are based on a tetrahedral arrangement. In methane all 4 pairs are bonding pairs, so the angle is the ideal 109.5°. In water only 2 pairs are bonding and 2 are lone pairs. Lone pairs repel more strongly than bonding pairs, so each lone pair reduces the angle by about 2.5°. The H–O–H angle is therefore 109.5° − 2 × 2.5° = 104.5°, smaller than in methane.'
+}, {
+  id: 'nh4',
+  marks: 3,
+  prompt: 'State and explain the shape of, and the bond angle in, the ammonium ion, NH₄⁺.',
+  criteria: [{
+    text: 'States there are 4 electron pairs, all of them bonding pairs (no lone pairs)',
+    all: [/\b(4|four)\b[\s\S]{0,30}pairs?/i, /(all[\s\S]{0,20}bond|no lone|0 lone|without[\s\S]{0,10}lone)/i]
+  }, {
+    text: 'States that the pairs repel equally and move as far apart as possible',
+    any: [/(as far apart as possible|maximum separation|minimi[sz]e[\s\S]{0,15}repuls|repel[\s\S]{0,25}equally)/i]
+  }, {
+    text: 'Names the shape as tetrahedral AND gives the bond angle as 109.5°',
+    all: [/tetrahedral/i, /109(\.5)?/]
+  }],
+  model: 'The nitrogen atom in NH₄⁺ has 4 pairs of electrons around it and all 4 are bonding pairs — the lone pair that nitrogen had in NH₃ has been used to form the dative covalent bond to H⁺. With no lone pairs, all four pairs repel equally and move as far apart as possible. The ion is therefore tetrahedral with a bond angle of 109.5°.'
+}, {
+  id: 'pcl5',
+  marks: 4,
+  prompt: 'Explain the shape of, and the bond angles in, a molecule of phosphorus(V) chloride, PCl₅.',
+  criteria: [{
+    text: 'States there are 5 electron pairs around the phosphorus atom',
+    any: [/\b(5|five)\b[\s\S]{0,30}(electron )?pairs?/i]
+  }, {
+    text: 'States all 5 pairs are bonding pairs / there are no lone pairs',
+    any: [/(all[\s\S]{0,20}bond|no lone|0 lone|five bonding|5 bonding)/i]
+  }, {
+    text: 'States the pairs repel and get as far apart as possible, giving a trigonal bipyramid',
+    all: [/(as far apart as possible|minimi[sz]e[\s\S]{0,15}repuls|repel)/i, /bipyramid/i]
+  }, {
+    text: 'Gives both bond angles: 120° between equatorial bonds and 90° between axial and equatorial bonds',
+    all: [/120/, /\b90\b/]
+  }],
+  model: 'There are 5 pairs of electrons around the phosphorus atom and all 5 are bonding pairs, with no lone pairs. The pairs repel one another and move as far apart as possible. Five pairs cannot all be equivalent, so three lie in a plane at 120° to one another (equatorial) and two lie above and below that plane at 90° to it (axial). The shape is trigonal bipyramidal, with bond angles of 120° and 90°.'
+}, {
+  id: 'clf3',
+  marks: 4,
+  prompt: 'ClF₃ has three bonds and two lone pairs on the chlorine atom. Explain the shape of, and the bond angle in, this molecule.',
+  criteria: [{
+    text: 'States there are 5 electron pairs around the chlorine atom',
+    any: [/\b(5|five)\b[\s\S]{0,30}(electron )?pairs?/i]
+  }, {
+    text: 'States 3 bonding pairs and 2 lone pairs',
+    all: [/\b(3|three)\b[\s\S]{0,25}bond/i, /\b(2|two)\b[\s\S]{0,25}lone/i]
+  }, {
+    text: 'States that lone pair–lone pair repulsion is the greatest, so the lone pairs sit as far apart as possible (equatorial)',
+    any: [/lone[\s\S]{0,30}lone[\s\S]{0,40}(repuls|repel)/i, /lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i, /equatorial/i]
+  }, {
+    text: 'Names the shape as T-shaped AND gives the bond angle as about 87.5°',
+    all: [/t[- ]?shape/i, /87(\.5)?/]
+  }],
+  model: 'There are 5 pairs of electrons around the chlorine atom: 3 bonding pairs and 2 lone pairs. The parent arrangement is trigonal bipyramidal. Lone pair–lone pair repulsion is the strongest repulsion, so the two lone pairs take equatorial positions where they are furthest apart. That leaves the three bonds in a T-shape. Because the lone pairs repel the bonding pairs more strongly than bonding pairs repel each other, the bond angle is reduced from 90° to about 87.5°.'
+}, {
+  id: 'xef4',
+  marks: 4,
+  prompt: 'Explain why XeF₄ is square planar and state its bond angle.',
+  criteria: [{
+    text: 'States there are 6 electron pairs around the xenon atom',
+    any: [/\b(6|six)\b[\s\S]{0,30}(electron )?pairs?/i]
+  }, {
+    text: 'States 4 bonding pairs and 2 lone pairs',
+    all: [/\b(4|four)\b[\s\S]{0,25}bond/i, /\b(2|two)\b[\s\S]{0,25}lone/i]
+  }, {
+    text: 'States the two lone pairs are opposite one another (180° apart) to minimise lone pair–lone pair repulsion',
+    any: [/opposite/i, /180/, /trans/i, /lone[\s\S]{0,25}lone[\s\S]{0,40}(repuls|repel)/i]
+  }, {
+    text: 'States the shape is square planar with bond angles of 90°',
+    all: [/square planar/i, /\b90\b/]
+  }],
+  model: 'The xenon atom has 6 pairs of electrons around it: 4 bonding pairs and 2 lone pairs, so the parent arrangement is octahedral. Lone pair–lone pair repulsion is the strongest, so the two lone pairs take positions opposite one another, 180° apart. The four bonding pairs are then left in a plane, pointing to the corners of a square. The shape is square planar with bond angles of 90°.'
+}, {
+  id: 'bf3',
+  marks: 3,
+  prompt: 'State and explain the shape of, and the bond angle in, a molecule of BF₃.',
+  criteria: [{
+    text: 'States there are 3 electron pairs around the boron atom, all bonding',
+    all: [/\b(3|three)\b[\s\S]{0,30}pairs?/i, /(all[\s\S]{0,20}bond|no lone|0 lone|bonding)/i]
+  }, {
+    text: 'States the pairs repel one another and move as far apart as possible',
+    any: [/(as far apart as possible|maximum separation|minimi[sz]e[\s\S]{0,15}repuls|repel)/i]
+  }, {
+    text: 'Names the shape as trigonal planar AND gives the bond angle as 120°',
+    all: [/(trigonal|triangular) planar/i, /120/]
+  }],
+  model: 'The boron atom has 3 pairs of electrons in its outer shell and all 3 are bonding pairs, with no lone pairs. The pairs repel one another and move as far apart as possible. Three equivalent pairs spread out in a single plane, so the molecule is trigonal planar with bond angles of 120°.'
+}];
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
+function autoTick(answer, c) {
+  var t = (answer || '').trim();
+  if (t.length < 4) return false;
+  if (c.all && !c.all.every(function (r) {
+    return r.test(t);
+  })) return false;
+  if (c.any && !c.any.some(function (r) {
+    return r.test(t);
+  })) return false;
+  return true;
+}
+function McqQuiz() {
+  var _useState13 = useState(function () {
+      return null;
+    }),
+    _useState14 = _slicedToArray(_useState13, 2),
+    round = _useState14[0],
+    setRound = _useState14[1];
+  var _useState15 = useState(0),
+    _useState16 = _slicedToArray(_useState15, 2),
+    index = _useState16[0],
+    setIndex = _useState16[1];
+  var _useState17 = useState([]),
+    _useState18 = _slicedToArray(_useState17, 2),
+    picked = _useState18[0],
+    setPicked = _useState18[1];
+  var start = useCallback(function () {
+    var chosen = shuffle(MCQ_BANK).slice(0, 10).map(function (q) {
+      var opts = shuffle(q.o.map(function (text, i) {
+        return {
+          text: text,
+          correct: i === q.a
+        };
+      }));
+      return {
+        q: q.q,
+        why: q.why,
+        opts: opts
+      };
+    });
+    setRound(chosen);
+    setIndex(0);
+    setPicked([]);
+  }, []);
+  useEffect(function () {
+    start();
+  }, [start]);
+  if (!round) return null;
+  var finished = index >= round.length;
+  var score = picked.filter(function (p) {
+    return p.correct;
+  }).length;
+  if (finished) {
+    var pct = Math.round(score / round.length * 100);
+    var verdict = pct >= 90 ? 'Exam ready.' : pct >= 70 ? 'Solid — tidy up the stragglers.' : pct >= 50 ? 'Halfway there. Re-read the summary table.' : 'Back to the notes tab first.';
+    return /*#__PURE__*/React.createElement(Card, {
+      title: "Quickfire results",
+      icon: "\uD83C\uDFC1"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col sm:flex-row items-center gap-6"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "relative w-32 h-32 shrink-0 grid place-items-center"
+    }, /*#__PURE__*/React.createElement("svg", {
+      viewBox: "0 0 120 120",
+      className: "absolute inset-0 -rotate-90"
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: "60",
+      cy: "60",
+      r: "52",
+      fill: "none",
+      stroke: "rgba(255,255,255,.1)",
+      strokeWidth: "12"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "60",
+      cy: "60",
+      r: "52",
+      fill: "none",
+      stroke: pct >= 70 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#fb7185',
+      strokeWidth: "12",
+      strokeLinecap: "round",
+      strokeDasharray: (2 * Math.PI * 52).toFixed(1),
+      strokeDashoffset: (2 * Math.PI * 52 * (1 - score / round.length)).toFixed(1)
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "text-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-3xl font-mono font-medium tabular-nums"
+    }, score, /*#__PURE__*/React.createElement("span", {
+      className: "text-slate-500"
+    }, "/", round.length)), /*#__PURE__*/React.createElement("div", {
+      className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 mt-0.5"
+    }, "correct"))), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 min-w-0 text-center sm:text-left"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "font-display text-2xl font-bold text-slate-100"
+    }, verdict), /*#__PURE__*/React.createElement("p", {
+      className: "text-sm text-slate-400 mt-1"
+    }, "Every question is drawn at random from a bank of ", MCQ_BANK.length, ", so a second run will not be the same paper."), /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      onClick: start,
+      className: "mt-4 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition"
+    }, "New set of 10"))), /*#__PURE__*/React.createElement("div", {
+      className: "mt-6 space-y-2"
+    }, round.map(function (item, i) {
+      var p = picked[i];
+      var ok = p && p.correct;
+      return /*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: 'rounded-xl border px-4 py-3 ' + (ok ? 'border-emerald-400/25 bg-emerald-500/[0.07]' : 'border-rose-400/25 bg-rose-500/[0.07]')
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "flex items-start gap-2.5"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: 'shrink-0 text-sm ' + (ok ? 'text-emerald-300' : 'text-rose-300')
+      }, ok ? '✓' : '✗'), /*#__PURE__*/React.createElement("div", {
+        className: "min-w-0"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "text-sm text-slate-200"
+      }, item.q), !ok ? /*#__PURE__*/React.createElement("div", {
+        className: "text-xs text-slate-400 mt-1"
+      }, "You chose ", /*#__PURE__*/React.createElement("span", {
+        className: "text-rose-300"
+      }, p ? p.text : '—'), ' · ', "correct answer: ", /*#__PURE__*/React.createElement("span", {
+        className: "text-emerald-300"
+      }, item.opts.filter(function (o) {
+        return o.correct;
+      })[0].text)) : null, /*#__PURE__*/React.createElement("div", {
+        className: "text-xs text-slate-500 mt-1"
+      }, item.why))));
+    })));
+  }
+  var item = round[index];
+  var answered = picked.length > index;
+  var chosen = answered ? picked[index] : null;
+  return /*#__PURE__*/React.createElement(Card, {
+    bodyClass: "p-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between gap-4 mb-4"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500"
+  }, "Question ", index + 1, " of ", round.length), /*#__PURE__*/React.createElement("span", {
+    className: "font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 tabular-nums"
+  }, "Score ", score)), /*#__PURE__*/React.createElement("div", {
+    className: "h-1.5 rounded-full bg-white/10 overflow-hidden mb-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-full bg-gradient-to-r from-sky-400 to-violet-400 transition-all duration-300",
+    style: {
+      width: index / round.length * 100 + '%'
+    }
+  })), /*#__PURE__*/React.createElement("h3", {
+    className: "font-display text-xl font-bold text-slate-50 leading-snug"
+  }, item.q), /*#__PURE__*/React.createElement("div", {
+    className: "grid sm:grid-cols-2 gap-2.5 mt-4"
+  }, item.opts.map(function (o, i) {
+    var cls = 'bg-white/[0.04] border-white/10 text-slate-200 hover:border-sky-400/50 hover:bg-sky-500/10';
+    if (answered) {
+      if (o.correct) cls = 'bg-emerald-500/15 border-emerald-400/50 text-emerald-100';else if (chosen === o) cls = 'bg-rose-500/15 border-rose-400/50 text-rose-100';else cls = 'bg-white/[0.02] border-white/[0.07] text-slate-500';
+    }
+    return /*#__PURE__*/React.createElement("button", {
+      key: i,
+      type: "button",
+      disabled: answered,
+      onClick: function onClick() {
+        setPicked(picked.concat([o]));
+      },
+      className: 'text-left rounded-xl border px-4 py-3 text-sm font-medium transition ' + cls
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "opacity-50 mr-2 font-mono"
+    }, 'ABCD'[i]), o.text);
+  })), answered ? /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 flex flex-col sm:flex-row sm:items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: 'flex-1 rounded-xl border px-4 py-3 text-sm ' + (chosen.correct ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/30 bg-amber-500/10 text-amber-100')
+  }, /*#__PURE__*/React.createElement("strong", null, chosen.correct ? 'Correct. ' : 'Not quite. '), item.why), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setIndex(index + 1);
+    },
+    className: "px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition shrink-0"
+  }, index + 1 === round.length ? 'See results' : 'Next question')) : null);
+}
+function StructuredQuiz() {
+  var _useState19 = useState(STRUCTURED[0].id),
+    _useState20 = _slicedToArray(_useState19, 2),
+    qid = _useState20[0],
+    setQid = _useState20[1];
+  var _useState21 = useState({}),
+    _useState22 = _slicedToArray(_useState21, 2),
+    state = _useState22[0],
+    setState = _useState22[1];
+  var q = STRUCTURED.filter(function (s) {
+    return s.id === qid;
+  })[0];
+  var entry = state[qid] || {
+    text: '',
+    submitted: false,
+    ticks: []
+  };
+  function update(patch) {
+    setState(function (prev) {
+      var next = Object.assign({}, prev);
+      next[qid] = Object.assign({}, prev[qid] || {
+        text: '',
+        submitted: false,
+        ticks: []
+      }, patch);
+      return next;
+    });
+  }
+  function submit() {
+    var ticks = q.criteria.map(function (c) {
+      return autoTick(entry.text, c);
+    });
+    update({
+      submitted: true,
+      ticks: ticks
+    });
+  }
+  var awarded = entry.ticks.filter(Boolean).length;
+  var words = entry.text.trim() ? entry.text.trim().split(/\s+/).length : 0;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement(Card, {
+    title: "Choose a structured question",
+    icon: "\uD83D\uDDC2\uFE0F",
+    bodyClass: "p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2"
+  }, STRUCTURED.map(function (s) {
+    var on = s.id === qid;
+    var label = s.prompt.replace(/^.*?(BeCl₂|BF₃|CH₄|NH₄⁺|NH₃|H₂O|PCl₅|ClF₃|SF₆|PF₆⁻|XeF₄|water|methane).*$/i, '$1');
+    return /*#__PURE__*/React.createElement("button", {
+      key: s.id,
+      type: "button",
+      onClick: function onClick() {
+        setQid(s.id);
+      },
+      className: 'px-3.5 py-2 rounded-xl font-display text-[0.95rem] font-bold border transition ' + (on ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')
+    }, s.id === 'h2o-ch4' ? 'H₂O vs CH₄' : label, /*#__PURE__*/React.createElement("span", {
+      className: "ml-2 text-[10px] font-mono opacity-60"
+    }, "[", s.marks, "]"));
+  }))), /*#__PURE__*/React.createElement(Card, {
+    bodyClass: "p-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start justify-between gap-4"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-base text-slate-100 leading-relaxed font-medium"
+  }, q.prompt), /*#__PURE__*/React.createElement("span", {
+    className: "shrink-0 text-sm font-mono font-medium text-slate-400 tabular-nums"
+  }, "[", q.marks, " marks]")), /*#__PURE__*/React.createElement("textarea", {
+    value: entry.text,
+    onChange: function onChange(e) {
+      update({
+        text: e.target.value
+      });
+    },
+    rows: "7",
+    placeholder: "Write your full exam answer here. Count the pairs, split them into bonding and lone, explain the repulsion, then name the shape and give the angle\u2026",
+    className: "mt-4 w-full rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 text-sm leading-relaxed placeholder:text-slate-600 focus:outline-none focus:border-violet-400/50 resize-y"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 flex flex-wrap items-center gap-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: submit,
+    disabled: !entry.text.trim(),
+    className: "px-5 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-35 disabled:hover:bg-violet-500 text-slate-950 font-semibold text-sm transition"
+  }, entry.submitted ? 'Re-check my answer' : 'Submit and self-assess'), entry.submitted ? /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      update({
+        text: '',
+        submitted: false,
+        ticks: []
+      });
+    },
+    className: "px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:border-white/35 text-sm transition"
+  }, "Clear") : null, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-slate-500 font-mono tabular-nums ml-auto"
+  }, words, " words"))), entry.submitted ? /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4 fade-in"
+  }, /*#__PURE__*/React.createElement(Card, {
+    title: "AQA mark scheme \u2014 tick what you actually wrote",
+    icon: "\u2705",
+    badge: 'you scored ' + awarded + ' / ' + q.marks
+  }, /*#__PURE__*/React.createElement(Callout, {
+    tone: "sky",
+    icon: "\u2139\uFE0F"
+  }, "Boxes have been pre-ticked where the wording was spotted in your answer. This is a keyword check, not an examiner \u2014 read each point and correct the ticks yourself."), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mt-4"
+  }, q.criteria.map(function (c, i) {
+    var on = !!entry.ticks[i];
+    return /*#__PURE__*/React.createElement("button", {
+      key: i,
+      type: "button",
+      onClick: function onClick() {
+        var t = entry.ticks.slice();
+        t[i] = !t[i];
+        update({
+          ticks: t
+        });
+      },
+      className: 'w-full text-left flex items-start gap-3 rounded-xl border px-4 py-3 transition ' + (on ? 'bg-emerald-500/12 border-emerald-400/40' : 'bg-white/[0.03] border-white/10 hover:border-white/25')
+    }, /*#__PURE__*/React.createElement("span", {
+      className: 'mt-0.5 w-5 h-5 shrink-0 rounded-md grid place-items-center text-xs font-bold border ' + (on ? 'bg-emerald-400 border-emerald-300 text-slate-900' : 'border-white/25 text-transparent')
+    }, "\u2713"), /*#__PURE__*/React.createElement("span", {
+      className: 'text-sm leading-relaxed ' + (on ? 'text-emerald-50' : 'text-slate-300')
+    }, c.text), /*#__PURE__*/React.createElement("span", {
+      className: "ml-auto shrink-0 text-xs font-mono text-slate-500"
+    }, "[1]"));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4 h-2 rounded-full bg-white/10 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h-full bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500",
+    style: {
+      width: awarded / q.marks * 100 + '%'
+    }
+  }))), /*#__PURE__*/React.createElement(Card, {
+    title: "Model answer",
+    icon: "\uD83C\uDF93"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-slate-200 leading-relaxed"
+  }, q.model), /*#__PURE__*/React.createElement("div", {
+    className: "mt-4"
+  }, /*#__PURE__*/React.createElement(Callout, {
+    tone: "violet",
+    icon: "\uD83D\uDD0D",
+    title: "Your answer, for comparison"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "whitespace-pre-wrap"
+  }, entry.text))))) : null);
+}
+function QuizTab() {
+  var _useState23 = useState('mcq'),
+    _useState24 = _slicedToArray(_useState23, 2),
+    mode = _useState24[0],
+    setMode = _useState24[1];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-4xl mx-auto space-y-4 fade-in"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "glass rounded-2xl p-1.5 flex gap-1.5"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setMode('mcq');
+    },
+    className: 'flex-1 rounded-xl px-4 py-2.5 font-display text-[0.95rem] font-bold transition ' + (mode === 'mcq' ? 'bg-sky-500/20 text-sky-100 border border-sky-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')
+  }, "\u26A1 Quickfire MCQ \u2014 10 questions"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: function onClick() {
+      setMode('structured');
+    },
+    className: 'flex-1 rounded-xl px-4 py-2.5 font-display text-[0.95rem] font-bold transition ' + (mode === 'structured' ? 'bg-violet-500/20 text-violet-100 border border-violet-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')
+  }, "\uD83D\uDCDD Structured answer with mark scheme")), mode === 'mcq' ? /*#__PURE__*/React.createElement(McqQuiz, null) : /*#__PURE__*/React.createElement(StructuredQuiz, null));
+}
+
+/* ============================================================
+   7.  APP SHELL
+   ============================================================ */
+
+var TABS = [{
+  id: 'viz',
+  label: '3D Visualiser',
+  icon: '🧪'
+}, {
+  id: 'notes',
+  label: 'Revision Notes',
+  icon: '📚'
+}, {
+  id: 'quiz',
+  label: 'Exam Practice',
+  icon: '📝'
+}];
+function App() {
+  var _useState25 = useState('viz'),
+    _useState26 = _slicedToArray(_useState25, 2),
+    tab = _useState26[0],
+    setTab = _useState26[1];
+  var _useState27 = useState('preset'),
+    _useState28 = _slicedToArray(_useState27, 2),
+    mode = _useState28[0],
+    setMode = _useState28[1];
+  var _useState29 = useState('CH4'),
+    _useState30 = _slicedToArray(_useState29, 2),
+    speciesId = _useState30[0],
+    setSpeciesId = _useState30[1];
+  var _useState31 = useState({
+      bp: 4,
+      lp: 1
+    }),
+    _useState32 = _slicedToArray(_useState31, 2),
+    custom = _useState32[0],
+    setCustom = _useState32[1];
+  var _useState33 = useState({
+      lones: true,
+      angles: true,
+      labels: true,
+      spin: false
+    }),
+    _useState34 = _slicedToArray(_useState33, 2),
+    opts = _useState34[0],
+    setOpts = _useState34[1];
+  var openInViewer = useCallback(function (id) {
+    setMode('preset');
+    setSpeciesId(id);
+    setTab('viz');
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-full"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "sticky top-0 z-30 backdrop-blur-xl bg-[#070b12]/75 border-b border-white/10"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-[1500px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center gap-x-5 gap-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-violet-500 grid place-items-center text-lg shrink-0"
+  }, "\uD83E\uDDEC"), /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "font-display text-lg sm:text-xl font-bold tracking-tight text-white leading-tight truncate"
+  }, "Shapes of Simple Molecules and Ions"), /*#__PURE__*/React.createElement("p", {
+    className: "font-display font-semibold text-[10px] uppercase tracking-[0.12em] text-slate-400 leading-tight"
+  }, "AQA A-Level Chemistry \xB7 3.1.3.5 \xB7 VSEPR theory"))), /*#__PURE__*/React.createElement("nav", {
+    className: "flex gap-1.5 ml-auto glass-soft rounded-2xl p-1.5"
+  }, TABS.map(function (t) {
+    var on = tab === t.id;
+    return /*#__PURE__*/React.createElement("button", {
+      key: t.id,
+      type: "button",
+      onClick: function onClick() {
+        setTab(t.id);
+      },
+      className: 'px-3 sm:px-4 py-2 rounded-xl font-display text-[0.95rem] font-bold transition whitespace-nowrap ' + (on ? 'bg-white/10 text-white shadow-inner' : 'text-slate-400 hover:text-slate-200')
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "mr-1.5"
+    }, t.icon), /*#__PURE__*/React.createElement("span", {
+      className: "hidden sm:inline"
+    }, t.label));
+  })))), /*#__PURE__*/React.createElement("main", {
+    className: "max-w-[1500px] mx-auto px-4 sm:px-6 py-6"
+  }, tab === 'viz' ? /*#__PURE__*/React.createElement(VisualiserTab, {
+    mode: mode,
+    setMode: setMode,
+    speciesId: speciesId,
+    setSpeciesId: setSpeciesId,
+    custom: custom,
+    setCustom: setCustom,
+    opts: opts,
+    setOpts: setOpts
+  }) : null, tab === 'notes' ? /*#__PURE__*/React.createElement(NotesTab, {
+    onSelect: openInViewer
+  }) : null, tab === 'quiz' ? /*#__PURE__*/React.createElement(QuizTab, null) : null), /*#__PURE__*/React.createElement("footer", {
+    className: "max-w-[1500px] mx-auto px-4 sm:px-6 pb-10 pt-4 text-xs text-slate-600"
+  }, "Built for AQA A-Level Chemistry 3.1.3.5. Bond angles are the values quoted in AQA mark schemes; the 3-D models are drawn to those angles rather than to scale."));
+}
+ReactDOM.createRoot(document.getElementById('root')).render( /*#__PURE__*/React.createElement(App, null));
