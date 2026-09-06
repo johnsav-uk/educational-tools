@@ -1,0 +1,3217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organic Reaction Mechanisms — AQA 3.3.2–3.3.13</title>
+<meta name="description" content="Every curly-arrow mechanism on the AQA A-level Chemistry specification, animated step by step, with an arrow-rules guide and exam practice.">
+
+<!-- ── Fonts ───────────────────────────────────────────────────────────── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- ── Tailwind ────────────────────────────────────────────────────────── -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
+          display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
+          mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
+        }
+      }
+    }
+  };
+</script>
+
+<!-- ── Lucide icons ────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+
+<!-- ── React + Babel ──────────────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+
+<style>
+  :root { color-scheme: dark; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 700px at 10% -12%, #16304a 0%, transparent 60%),
+      radial-gradient(900px 620px at 94% -4%, #2a1b45 0%, transparent 58%),
+      #070b12;
+    background-attachment: fixed;
+    color: #e6edf3;
+    font-family: 'Source Sans 3','Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .glass {
+    background: linear-gradient(160deg, rgba(255,255,255,.065), rgba(255,255,255,.022));
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .stage {
+    background:
+      radial-gradient(75% 75% at 50% 32%, #16233a 0%, #0a1120 58%, #06090f 100%);
+  }
+
+  /* ── Chemical rendering ───────────────────────────────────────────── */
+  .atom      { font-family:'Source Sans 3',system-ui,sans-serif; font-weight:600;
+               fill:#e8f1fb; font-size:21px; text-anchor:middle; dominant-baseline:middle; }
+  .atom-key  { fill:#f8fafc; }
+  .bond      { stroke:#7dd3fc; stroke-width:2.4; stroke-linecap:round; }
+  .bond-weak { stroke:#7dd3fc; stroke-width:2.4; stroke-linecap:round;
+               stroke-dasharray:6 5; opacity:.75; }
+  .lp        { fill:#c4b5fd; }
+  .delta     { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
+               fill:#fbbf24; text-anchor:middle; dominant-baseline:middle; }
+  .chg-ring  { fill:none; stroke-width:1.6; }
+  .chg-txt   { font-family:'Source Sans 3',sans-serif; font-size:14px; font-weight:700;
+               text-anchor:middle; dominant-baseline:central; }
+  .curly     { fill:none; stroke:#fb923c; stroke-width:2.6; stroke-linecap:round; }
+  .curly-h   { fill:#fb923c; stroke:none; }
+  .ray       { fill:none; stroke:#a78bfa; stroke-width:2.2; stroke-linecap:round;
+               stroke-dasharray:13 9; opacity:.9;
+               animation:ray 1.1s linear infinite; }
+  @keyframes ray { to { stroke-dashoffset:-22; } }
+  .lamp      { fill:rgba(167,139,250,.15); stroke:#a78bfa; stroke-width:2; }
+  .lamp-txt  { font-family:'Archivo Narrow',sans-serif; font-size:16px; font-weight:700;
+               fill:#c4b5fd; text-anchor:middle; dominant-baseline:middle;
+               letter-spacing:.06em; }
+  .annot     { font-family:'JetBrains Mono',monospace; font-size:12px; fill:#94a3b8;
+               text-anchor:middle; }
+  /* No text-transform here. Captions carry formulae as well as names, and
+     uppercasing turns AlCl₃ into ALCL₃ and NaBH₄ into NABH₄. */
+  .caption   { font-family:'Archivo Narrow',sans-serif; font-size:16px; fill:#7dd3fc;
+               text-anchor:middle; letter-spacing:.03em; }
+
+  /* Arrow draw-on animation */
+  .draw       { stroke-dasharray:1; stroke-dashoffset:1; animation:draw .85s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset:0; } }
+  .head-in    { opacity:0; animation:headin .3s ease-out .78s forwards; }
+  @keyframes headin { to { opacity:1; } }
+  .pop        { animation:pop .45s cubic-bezier(.2,.9,.3,1.4) both; }
+  @keyframes pop { from { opacity:0; transform:scale(.86);} to {opacity:1; transform:none;} }
+
+  /* Species that slide into place (a radical colliding) or simply appear
+     (the products, once the collision has happened). */
+  .slide      { animation:slidein .9s cubic-bezier(.2,.8,.3,1) both; }
+  @keyframes slidein {
+    from { transform:translate(var(--dx,0), var(--dy,0)); opacity:.3; }
+    to   { transform:none; opacity:1; }
+  }
+  .appear     { animation:appear .5s ease-out both; }
+  @keyframes appear { from { opacity:0; } to { opacity:1; } }
+
+  .fadein  { animation:fade .35s ease both; }
+  @keyframes fade { from { opacity:0; transform:translateY(6px);} to {opacity:1; transform:none;} }
+
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb { background:rgba(148,163,184,.28); border-radius:999px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+
+  .hot { cursor:pointer; transition:opacity .15s; }
+  .hot:hover { opacity:.75; }
+
+  details > summary { list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<noscript class="block p-8 text-center">This app needs JavaScript enabled.</noscript>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ════════════════════════════════════════════════════════════════════════
+   1.  STRUCTURE ENGINE
+   A scene is a plain object: { nodes, bonds, arrows, notes, caption }.
+   Nodes carry a label (Unicode subscripts), a position, an optional formal
+   charge, an optional dipole label and an optional list of lone-pair angles.
+   Anchors are written as short strings so the mechanism data stays readable:
+
+     "c2"              centre of node c2
+     "c2@-70,26"       26 px from c2 on bearing -70deg (0 = right, +ve = down)
+     "c1|c2"           midpoint of the c1-c2 bond
+     "c1|c2^9"         that midpoint, pushed 9 px along the bond normal
+     "220,140"         a raw scene coordinate
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const RAD = Math.PI / 180;
+
+/* Default scene canvas. The interactive overlays reuse it, so a scene and its
+   clickable points are guaranteed to line up. */
+const VIEW = '0 0 880 400';
+
+/* Half-width / half-height of a node's text box, used to clip bonds so they
+   stop cleanly at the edge of a label instead of running under it. */
+function nodeRadii(node) {
+  if (!node.label) return { rx: 0, ry: 0 };
+  const chars = [...node.label].filter(c => !'₀₁₂₃₄₅₆₇₈₉'.includes(c)).length
+              + [...node.label].filter(c => '₀₁₂₃₄₅₆₇₈₉'.includes(c)).length * 0.6;
+  return { rx: chars * 5.9 + 4.5, ry: 13 };
+}
+
+/* Where a line leaving `node` towards (tx,ty) should start. */
+function edgePoint(node, tx, ty) {
+  const { rx, ry } = nodeRadii(node);
+  const dx = tx - node.x, dy = ty - node.y;
+  const len = Math.hypot(dx, dy) || 1;
+  if (!rx && !ry) return { x: node.x, y: node.y };
+  // scale the direction vector until it leaves the ellipse
+  const t = 1 / Math.hypot((dx / len) / rx, (dy / len) / ry);
+  return { x: node.x + (dx / len) * t, y: node.y + (dy / len) * t };
+}
+
+function resolveAnchor(spec, map) {
+  if (typeof spec === 'object') return spec;
+  let s = spec.trim();
+
+  // raw coordinate
+  if (/^-?[\d.]+\s*,\s*-?[\d.]+$/.test(s)) {
+    const [x, y] = s.split(',').map(Number);
+    return { x, y };
+  }
+
+  // bond midpoint  "a|b"  with optional "^offset"
+  if (s.includes('|')) {
+    let normal = 0;
+    const caret = s.indexOf('^');
+    if (caret > -1) { normal = parseFloat(s.slice(caret + 1)); s = s.slice(0, caret); }
+    let polar = null;
+    const at = s.indexOf('@');
+    if (at > -1) { polar = s.slice(at + 1).split(',').map(Number); s = s.slice(0, at); }
+    const [ia, ib] = s.split('|');
+    const A = map[ia.trim()], B = map[ib.trim()];
+    let x = (A.x + B.x) / 2, y = (A.y + B.y) / 2;
+    if (normal) {
+      const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1;
+      x += (-dy / L) * normal; y += (dx / L) * normal;
+    }
+    if (polar) { x += Math.cos(polar[0] * RAD) * polar[1]; y += Math.sin(polar[0] * RAD) * polar[1]; }
+    return { x, y };
+  }
+
+  // node centre, optionally offset polar  "id@angle,dist"
+  const at = s.indexOf('@');
+  if (at > -1) {
+    const id = s.slice(0, at).trim();
+    const [ang, dist] = s.slice(at + 1).split(',').map(Number);
+    const n = map[id];
+    return { x: n.x + Math.cos(ang * RAD) * dist, y: n.y + Math.sin(ang * RAD) * dist };
+  }
+  const n = map[s];
+  return { x: n.x, y: n.y };
+}
+
+/* Cubic Bezier for a curly arrow: bows out perpendicular to the chord.
+   `bow` is signed, so the same two anchors can curve either way. */
+function curlyPath(p1, p2, bow) {
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const L = Math.hypot(dx, dy) || 1;
+  const nx = -dy / L, ny = dx / L;
+  const c1 = { x: p1.x + dx * 0.28 + nx * bow, y: p1.y + dy * 0.28 + ny * bow };
+  const c2 = { x: p1.x + dx * 0.72 + nx * bow, y: p1.y + dy * 0.72 + ny * bow };
+  const d = `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} C ${c1.x.toFixed(1)} ${c1.y.toFixed(1)}, `
+          + `${c2.x.toFixed(1)} ${c2.y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  // tangent at t = 1 points from the last control point to the end point
+  const ang = Math.atan2(p2.y - c2.y, p2.x - c2.x) / RAD;
+  return { d, ang, end: p2 };
+}
+
+/* Every curly arrow on the AQA specification moves a pair of electrons, so every
+   head is a full one. Free-radical substitution is answered with equations, not
+   with half-headed arrows, so none are drawn anywhere in this file. */
+function ArrowHead({ x, y, ang }) {
+  const size = 11, spread = 26;
+  const a1 = (ang + 180 - spread) * RAD, a2 = (ang + 180 + spread) * RAD;
+  const p1 = `${x + Math.cos(a1) * size},${y + Math.sin(a1) * size}`;
+  const p2 = `${x + Math.cos(a2) * size},${y + Math.sin(a2) * size}`;
+  return <polygon className="curly-h" points={`${x},${y} ${p1} ${p2}`} />;
+}
+
+/* An ultraviolet lamp, with rays that travel towards the bond they break. */
+function UVLamp({ x, y, tx, ty }) {
+  const dx = tx - x, dy = ty - y, L = Math.hypot(dx, dy) || 1;
+  const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  const wave = (off) => {
+    let d = '';
+    for (let i = 0; i <= 44; i++) {
+      const t = 0.32 + (i / 44) * 0.68;
+      const a = Math.sin(i / 44 * Math.PI * 4) * 5;
+      const px = x + ux * (L * t) + nx * (off + a);
+      const py = y + uy * (L * t) + ny * (off + a);
+      d += (i ? ' L ' : 'M ') + px.toFixed(1) + ' ' + py.toFixed(1);
+    }
+    return d;
+  };
+  return (
+    <g>
+      {[-15, 0, 15].map((o, i) => (
+        <path key={i} className="ray" d={wave(o)} style={{ animationDelay: (i * 0.28) + 's' }} />
+      ))}
+      <circle className="lamp" cx={x} cy={y} r="27" />
+      <text className="lamp-txt" x={x} y={y + 1}>UV</text>
+    </g>
+  );
+}
+
+/* `enter` slides a species in from an offset (a radical arriving); `at` alone
+   just fades it in once the collision has happened. Only use `enter` on species
+   with no bonds of their own — a bond will not follow a sliding atom. */
+function anim(o) {
+  if (o.enter) return {
+    className: 'slide',
+    style: { '--dx': o.enter[0] + 'px', '--dy': o.enter[1] + 'px',
+             animationDelay: (o.at || 0) + 's' }
+  };
+  if (o.at !== undefined) return { className: 'appear', style: { animationDelay: o.at + 's' } };
+  return {};
+}
+
+/* ── Lone pairs: two dots sitting just outside the label, drawn broadside
+      to the bearing they are given. ─────────────────────────────────────── */
+function LonePair({ node, ang, show }) {
+  if (!show) return null;
+  const { rx, ry } = nodeRadii(node);
+  const r = Math.max(rx, ry) * 0.55 + 11;
+  const cx = node.x + Math.cos(ang * RAD) * r;
+  const cy = node.y + Math.sin(ang * RAD) * r;
+  const px = -Math.sin(ang * RAD) * 3.6, py = Math.cos(ang * RAD) * 3.6;
+  return (
+    <g className="lp">
+      <circle cx={cx + px} cy={cy + py} r="2.5" />
+      <circle cx={cx - px} cy={cy - py} r="2.5" />
+    </g>
+  );
+}
+
+function FormalCharge({ node, chg }) {
+  const { rx } = nodeRadii(node);
+  const cx = node.x + (node.cdx !== undefined ? node.cdx : rx + 9);
+  const cy = node.y + (node.cdy !== undefined ? node.cdy : -12);
+  const pos = chg === '+';
+  const col = pos ? '#f87171' : '#38bdf8';
+  return (
+    <g>
+      <circle className="chg-ring" cx={cx} cy={cy} r="8.5" stroke={col} />
+      <text className="chg-txt" x={cx} y={cy + 0.5} fill={col}>{pos ? '+' : '\u2212'}</text>
+    </g>
+  );
+}
+
+function Scene({ scene, showDipoles, showLonePairs, showArrows, animKey }) {
+  const map = useMemo(() => {
+    const m = {};
+    (scene.nodes || []).forEach(n => { m[n.id] = n; });
+    return m;
+  }, [scene]);
+
+  const bonds = (scene.bonds || []).map((b, i) => {
+    const A = map[b.a], B = map[b.b];
+    const p = edgePoint(A, B.x, B.y), q = edgePoint(B, A.x, A.y);
+    const dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L * 3.7, ny = dx / L * 3.7;
+    const cls = b.style === 'dash' ? 'bond-weak' : 'bond';
+    const stroke = b.col ? { stroke: b.col } : undefined;
+    let inner;
+    if (b.order === 2) {
+      inner = (
+        <React.Fragment>
+          <line className={cls} style={stroke} x1={p.x + nx} y1={p.y + ny} x2={q.x + nx} y2={q.y + ny} />
+          <line className={cls} style={stroke} x1={p.x - nx} y1={p.y - ny} x2={q.x - nx} y2={q.y - ny} />
+        </React.Fragment>
+      );
+    } else if (b.order === 3) {
+      inner = (
+        <React.Fragment>
+          <line className={cls} style={stroke} x1={p.x} y1={p.y} x2={q.x} y2={q.y} />
+          <line className={cls} style={stroke} x1={p.x + nx * 1.6} y1={p.y + ny * 1.6} x2={q.x + nx * 1.6} y2={q.y + ny * 1.6} />
+          <line className={cls} style={stroke} x1={p.x - nx * 1.6} y1={p.y - ny * 1.6} x2={q.x - nx * 1.6} y2={q.y - ny * 1.6} />
+        </React.Fragment>
+      );
+    } else {
+      inner = <line className={cls} style={stroke} x1={p.x} y1={p.y} x2={q.x} y2={q.y} />;
+    }
+    return <g key={'b' + i} {...anim(b)}>{inner}</g>;
+  });
+
+  const arcs = (scene.arcs || []).map((a, i) => {
+    const x0 = a.cx + Math.cos(a.a0 * RAD) * a.r, y0 = a.cy + Math.sin(a.a0 * RAD) * a.r;
+    const x1 = a.cx + Math.cos(a.a1 * RAD) * a.r, y1 = a.cy + Math.sin(a.a1 * RAD) * a.r;
+    const large = Math.abs(a.a1 - a.a0) > 180 ? 1 : 0;
+    return (
+      <path key={'a' + i} className={a.dash ? 'bond-weak' : 'bond'} fill="none"
+            d={`M ${x0} ${y0} A ${a.r} ${a.r} 0 ${large} 1 ${x1} ${y1}`} />
+    );
+  });
+
+  const circles = (scene.circles || []).map((c, i) => (
+    <circle key={'c' + i} className={c.dash ? 'bond-weak' : 'bond'} fill="none"
+            cx={c.cx} cy={c.cy} r={c.r} />
+  ));
+
+  const atoms = (scene.nodes || []).map(n => (
+    <g key={'n' + n.id} {...anim(n)}>
+      {n.label && (
+        <text className={'atom' + (n.key ? ' atom-key' : '')} x={n.x} y={n.y + 1} fill={n.col}>
+          {n.label}
+        </text>
+      )}
+      {(n.lp || []).map((ang, j) => (
+        <LonePair key={j} node={n} ang={ang} show={showLonePairs} />
+      ))}
+      {n.rad !== undefined && (() => {
+        const { rx, ry } = nodeRadii(n);
+        const r = Math.max(rx, ry) * 0.55 + 11;
+        return <circle className="lp" fill="#f472b6" r="3.4"
+                       cx={n.x + Math.cos(n.rad * RAD) * r}
+                       cy={n.y + Math.sin(n.rad * RAD) * r} />;
+      })()}
+      {n.chg && <FormalCharge node={n} chg={n.chg} />}
+      {n.delta && showDipoles && (
+        <text className="delta"
+              x={n.x + (n.dx || 0)}
+              y={n.y + (n.dy !== undefined ? n.dy : -24)}>
+          {n.delta}
+        </text>
+      )}
+    </g>
+  ));
+
+  const arrows = showArrows ? (scene.arrows || []).map((ar, i) => {
+    const p1 = resolveAnchor(ar.from, map), p2 = resolveAnchor(ar.to, map);
+    const { d, ang, end } = curlyPath(p1, p2, ar.bow === undefined ? 34 : ar.bow);
+    const delay = (ar.delay || i * 0.5);
+    return (
+      <g key={animKey + '-ar' + i}>
+        <path className="curly draw" d={d} pathLength="1"
+              style={{ animationDelay: delay + 's' }} />
+        <g className="head-in" style={{ animationDelay: (delay + 0.78) + 's' }}>
+          <ArrowHead x={end.x} y={end.y} ang={ang} />
+        </g>
+        {ar.tag && (
+          <text className="annot" x={(p1.x + p2.x) / 2 + (ar.tx || 0)} y={(p1.y + p2.y) / 2 + (ar.ty || 0)}
+                fill="#fdba74">{ar.tag}</text>
+        )}
+      </g>
+    );
+  }) : null;
+
+  const notes = (scene.notes || []).map((t, i) => (
+    <g key={'t' + i} {...anim(t)}>
+      <text className={t.cls || 'annot'} x={t.x} y={t.y}
+            fill={t.col} style={{ fontSize: t.size }}>{t.text}</text>
+    </g>
+  ));
+
+  return (
+    <svg viewBox={scene.view || VIEW} className="w-full h-full block"
+         preserveAspectRatio="xMidYMid meet">
+      {scene.uv && <UVLamp {...scene.uv} />}
+      {circles}{arcs}{bonds}{atoms}{notes}{arrows}
+    </svg>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   2.  MECHANISM DATA
+   Every mechanism on the AQA A-level specification, 3.3.2 - 3.3.13.
+   AQA never uses the labels SN1 / SN2 / E1 / E2, so neither does this file:
+   the names below are the ones printed on the specification and used in the
+   mark schemes.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const N  = (id, label, x, y, o = {}) => ({ id, label, x, y, ...o });
+const BD = (a, b, order = 1, o = {}) => ({ a, b, order, ...o });
+const AR = (from, to, bow, o = {}) => ({ from, to, bow, ...o });
+const TX = (x, y, text, o = {}) => ({ x, y, text, ...o });
+const NAME = (x, y, text) => TX(x, y, text, { cls: 'caption' });
+const RXN = (x, y, at) => TX(x, y, '→', { size: 30, col: '#64748b', at });
+const PLUS = (x, y, at) => TX(x, y, '+', { size: 26, col: '#64748b', at });
+const EQN = (x, y, text, at) => TX(x, y, text, { size: 20, col: '#e6edf3', at });
+
+const MECHANISMS = [];
+
+/* ── ALKENES: electrophilic addition ──────────────────────────────────────
+   These are drawn as displayed formulae rather than condensed, so the new
+   C–H and C–Br bonds are visible as bonds. Three rules keep the stages
+   readable as a sequence:
+
+     · the C=C sits at a fixed place, carbons at x = 300 and 410 on y = 235,
+       with the substituents splayed at 120°;
+     · the attacking molecule sits above the double bond, which is where the
+       π electrons are, with the atom that adds nearest the alkene;
+     · nothing teleports. The atom that adds appears where the arrow pointed
+       to it, and the anion stays where it was and drops onto the carbocation
+       from directly above.
+
+   New bonds and the atoms on the end of them are drawn in green. ───────── */
+
+const NEW = '#34d399';
+
+const alkLeftH  = () => [N('h1', 'H', 231, 195), N('h2', 'H', 231, 275)];
+const alkRightH = () => [N('h3', 'H', 479, 195), N('h4', 'H', 479, 275)];
+const alkLeftB  = () => [BD('c1', 'h1'), BD('c1', 'h2')];
+const alkRightB = () => [BD('c2', 'h3'), BD('c2', 'h4')];
+/* the atom that has just added to the right-hand carbon, drawn where the
+   curly arrow pointed to it in the step before */
+const added = (id, label, lp) => N(id, label, 410, 150, { col: NEW, lp });
+const addedB = (id) => BD('c2', id, 1, { col: NEW });
+/* and the one the anion brings to the left-hand carbon */
+const gained = (id, label, lp) => N(id, label, 300, 150, { col: NEW, lp });
+const gainedB = (id) => BD('c1', id, 1, { col: NEW });
+
+MECHANISMS.push({
+  id: 'ea-ethene-hbr',
+  group: 'Alkenes',
+  type: 'Electrophilic addition',
+  name: 'Ethene + HBr',
+  spec: '3.3.4',
+  equation: 'CH₂=CH₂ + HBr → CH₃CH₂Br',
+  conditions: 'Room temperature, gaseous HBr (or concentrated hydrobromic acid).',
+  why: 'The C=C π bond sticks out above and below the plane of the molecule and is a region '
+     + 'of high electron density, so it attracts electrophiles. H–Br is already polar because '
+     + 'bromine is more electronegative than hydrogen, so the H carries δ+.',
+  steps: [
+    {
+      title: 'The π bond attacks the δ+ hydrogen',
+      teach: 'The pair of electrons in the π bond moves out to form a new bond to the δ+ H of '
+           + 'H–Br. At the same time the H–Br bond breaks heterolytically — both electrons go '
+           + 'to the bromine, which becomes a bromide ion.',
+      marks: ['Curly arrow from the C=C bond to the H of H–Br',
+              'Curly arrow from the H–Br bond to the Br',
+              'δ+ on H and δ− on Br shown'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
+          N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
+        ],
+        bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('h', 'br')],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,30', 24, { delay: 0.5 })],
+        notes: [NAME(355, 350, 'ethene'), NAME(600, 110, 'hydrogen bromide')]
+      }
+    },
+    {
+      title: 'A carbocation intermediate forms',
+      teach: 'The right-hand carbon has gained the hydrogen — that new bond is drawn in green. '
+           + 'The left-hand carbon is left with only three bonds and a positive charge. Draw the '
+           + '+ on the carbon itself, never floating in space, and draw the bromide ion with its '
+           + 'lone pairs and a full negative charge.',
+      marks: ['Correct carbocation with + on the carbon',
+              'Bromide ion drawn with a full negative charge',
+              'Curly arrow from a lone pair on Br⁻ to the C⁺'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235, { chg: '+', cdx: 0, cdy: 32 }), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(), added('hn', 'H'),
+          N('br', 'Br', 300, 60, { chg: '−', cdx: -34, cdy: -20, lp: [90, 180, 270, 0] })
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('hn')],
+        arrows: [AR('br@90,26', 'c1@-90,26', -24)],
+        notes: [NAME(355, 350, 'carbocation intermediate'),
+                TX(590, 152, 'the new C–H bond', { col: NEW, size: 13 })]
+      }
+    },
+    {
+      title: 'Bromide adds to give bromoethane',
+      teach: 'The lone pair on the bromide ion forms the new C–Br bond, on the carbon that '
+           + 'carried the positive charge. A molecule has added across the double bond, so this '
+           + 'is an addition reaction.',
+      marks: ['Correct product: bromoethane'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          added('hn', 'H'), gained('br', 'Br', [180, 0, 270])
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('hn'), gainedB('br')],
+        notes: [NAME(355, 350, 'bromoethane'),
+                TX(620, 152, 'both new bonds in green', { col: NEW, size: 13 })]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'ea-propene-hbr',
+  group: 'Alkenes',
+  type: 'Electrophilic addition',
+  name: 'Propene + HBr (major product)',
+  spec: '3.3.4',
+  equation: 'CH₃CH=CH₂ + HBr → CH₃CHBrCH₃ (major)',
+  conditions: 'Room temperature. Both products form; the major one comes from the more stable carbocation.',
+  why: 'With an unsymmetrical alkene the H can add to either carbon, giving either a primary '
+     + 'or a secondary carbocation. Alkyl groups are electron releasing, so they spread the '
+     + 'positive charge and stabilise the ion: tertiary > secondary > primary. The major product '
+     + 'comes from the more stable intermediate.',
+  steps: [
+    {
+      title: 'The π bond attacks the δ+ hydrogen',
+      teach: 'The H adds to the CH₂ end, because that leaves the positive charge on the middle '
+           + 'carbon — a secondary carbocation, stabilised by two alkyl groups.',
+      marks: ['Curly arrow from the C=C bond to the H of H–Br',
+              'Curly arrow from the H–Br bond to the Br'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          N('me', 'H₃C', 222, 190), N('h2', 'H', 231, 275), ...alkRightH(),
+          N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
+          N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
+        ],
+        bonds: [BD('c1', 'c2', 2), BD('c1', 'me'), BD('c1', 'h2'),
+                ...alkRightB(), BD('h', 'br')],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,30', 24, { delay: 0.5 })],
+        notes: [NAME(355, 350, 'propene')]
+      }
+    },
+    {
+      title: 'The secondary carbocation',
+      teach: 'The hydrogen has joined the end carbon, so the positive charge sits on the middle '
+           + 'one. The primary carbocation CH₃CH₂CH₂⁺ would also form, but it is less stable, so '
+           + 'less of the 1-bromopropane product is made.',
+      marks: ['Secondary carbocation drawn with + on the middle carbon',
+              'Bromide ion with a full negative charge',
+              'Curly arrow from a lone pair on Br⁻ to the C⁺'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235, { chg: '+', cdx: 0, cdy: 32 }), N('c2', 'C', 410, 235),
+          N('me', 'H₃C', 222, 190), N('h2', 'H', 231, 275), ...alkRightH(), added('hn', 'H'),
+          N('br', 'Br', 300, 60, { chg: '−', cdx: -34, cdy: -20, lp: [90, 180, 270, 0] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c1', 'me'), BD('c1', 'h2'),
+                ...alkRightB(), addedB('hn')],
+        arrows: [AR('br@90,26', 'c1@-90,26', -24)],
+        notes: [NAME(355, 350, 'secondary carbocation — the more stable one'),
+                TX(590, 152, 'the new C–H bond', { col: NEW, size: 13 })]
+      }
+    },
+    {
+      title: '2-bromopropane is the major product',
+      teach: 'Bromide bonds to the middle carbon. The bromine ends up on the carbon that already '
+           + 'had the most alkyl groups, and the end carbon is now a methyl group.',
+      marks: ['Correct major product: 2-bromopropane'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          N('me', 'H₃C', 222, 190), N('h2', 'H', 231, 275), ...alkRightH(),
+          added('hn', 'H'), gained('br', 'Br', [180, 0, 270])
+        ],
+        bonds: [BD('c1', 'c2'), BD('c1', 'me'), BD('c1', 'h2'),
+                ...alkRightB(), addedB('hn'), gainedB('br')],
+        notes: [NAME(355, 350, '2-bromopropane')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'ea-ethene-br2',
+  group: 'Alkenes',
+  type: 'Electrophilic addition',
+  name: 'Ethene + Br₂',
+  spec: '3.3.4',
+  equation: 'CH₂=CH₂ + Br₂ → CH₂BrCH₂Br',
+  conditions: 'Room temperature; bromine water or bromine in an organic solvent. The orange colour disappears — the test for a C=C.',
+  why: 'Br₂ is a non-polar molecule, so it is not an electrophile to begin with. As it comes '
+     + 'close to the electron-rich π bond, the electrons in Br₂ are repelled away from the '
+     + 'nearer bromine: an induced dipole is set up, and the near Br becomes δ+.',
+  steps: [
+    {
+      title: 'The π bond induces a dipole in Br₂',
+      teach: 'You must say that the dipole is induced. The π electrons repel the bonding pair in '
+           + 'Br–Br, so the closer bromine becomes δ+ and is attacked.',
+      marks: ['Induced dipole shown: δ+ on the nearer Br, δ− on the far Br',
+              'Curly arrow from the C=C bond to the δ+ Br',
+              'Curly arrow from the Br–Br bond to the δ− Br'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          N('br1', 'Br', 400, 132, { delta: 'δ+', dx: 30, dy: 6 }),
+          N('br2', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
+        ],
+        bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('br1', 'br2')],
+        arrows: [AR('c1|c2', 'br1@138,26', -26), AR('br1|br2', 'br2@0,30', 24, { delay: 0.5 })],
+        notes: [NAME(355, 350, 'ethene'),
+                TX(650, 225, 'the dipole is induced, not permanent', { col: '#fbbf24' })]
+      }
+    },
+    {
+      title: 'Carbocation and bromide ion',
+      teach: 'One bromine has bonded to a carbon — the new bond is in green. The other has left '
+           + 'as a bromide ion, taking both electrons from the Br–Br bond with it.',
+      marks: ['Correct carbocation with + on the carbon',
+              'Bromide ion with a full negative charge',
+              'Curly arrow from a lone pair on Br⁻ to the C⁺'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235, { chg: '+', cdx: 0, cdy: 32 }), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(), added('brn', 'Br', [180, 0, 270]),
+          N('br2', 'Br', 300, 60, { chg: '−', cdx: -34, cdy: -20, lp: [90, 180, 270, 0] })
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('brn')],
+        arrows: [AR('br2@90,26', 'c1@-90,26', -24)],
+        notes: [NAME(355, 350, 'carbocation intermediate'),
+                TX(600, 152, 'the new C–Br bond', { col: NEW, size: 13 })]
+      }
+    },
+    {
+      title: '1,2-dibromoethane',
+      teach: 'Both carbons now carry a bromine. The orange bromine colour has gone, which is why '
+           + 'this is the test for unsaturation.',
+      marks: ['Correct product: 1,2-dibromoethane'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          added('brn', 'Br', [0, 300, 240]), gained('br2', 'Br', [180, 240, 300])
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('brn'), gainedB('br2')],
+        notes: [NAME(355, 350, '1,2-dibromoethane')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'ea-ethene-h2so4',
+  group: 'Alkenes',
+  type: 'Electrophilic addition',
+  name: 'Ethene + concentrated H₂SO₄',
+  spec: '3.3.4',
+  equation: 'CH₂=CH₂ + H₂SO₄ → CH₃CH₂OSO₃H, then + H₂O → CH₃CH₂OH',
+  conditions: 'Cold concentrated sulfuric acid, then warm with water. This is the industrial hydration route in disguise.',
+  why: 'Sulfuric acid is strongly polar: the O–H hydrogen carries δ+ and is attacked by the '
+     + 'π bond exactly as in HBr. The product, ethyl hydrogensulfate, is then hydrolysed by '
+     + 'water to the alcohol, regenerating the acid.',
+  steps: [
+    {
+      title: 'The π bond attacks the δ+ hydrogen of H₂SO₄',
+      teach: 'Sulfuric acid is H–O–SO₂–O–H, so it has two O–H groups. The π electrons attack '
+           + 'the δ+ hydrogen of one of them, and that O–H bond breaks heterolytically to leave '
+           + 'a hydrogensulfate ion.',
+      marks: ['Curly arrow from the C=C bond to the H of an O–H group',
+              'Curly arrow from that H–O bond to the O'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
+          N('o', 'O', 300, 45, { delta: 'δ−', dx: 34, dy: -8, lp: [250, 300] }),
+          N('s', 'SO₂', 200, 45), N('o2', 'O', 105, 45, { lp: [270, 90] }),
+          N('sh', 'H', 40, 45)
+        ],
+        bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(),
+                BD('h', 'o'), BD('o', 's'), BD('s', 'o2'), BD('o2', 'sh')],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|o', 'o@0,30', 24, { delay: 0.5 })],
+        notes: [NAME(355, 350, 'ethene'), NAME(170, 112, 'sulfuric acid')]
+      }
+    },
+    {
+      title: 'Carbocation and hydrogensulfate ion',
+      teach: 'The negative charge sits on the oxygen of the hydrogensulfate ion, and it is one of '
+           + 'that oxygen’s lone pairs that attacks the carbocation.',
+      marks: ['Correct carbocation with + on the carbon',
+              'Curly arrow from a lone pair on the O⁻ to the C⁺'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235, { chg: '+', cdx: 0, cdy: 32 }), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(), added('hn', 'H'),
+          N('o', 'O', 300, 62, { chg: '−', cdx: 34, cdy: -8, lp: [250, 300, 90] }),
+          N('s', 'SO₂', 200, 62), N('o2', 'O', 105, 62, { lp: [270, 90] }),
+          N('sh', 'H', 40, 62)
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('hn'),
+                BD('o', 's'), BD('s', 'o2'), BD('o2', 'sh')],
+        arrows: [AR('o@90,24', 'c1@-90,26', -24)],
+        notes: [NAME(355, 350, 'carbocation intermediate'),
+                TX(590, 152, 'the new C–H bond', { col: NEW, size: 13 })]
+      }
+    },
+    {
+      title: 'Ethyl hydrogensulfate',
+      teach: 'The addition product is an ester of sulfuric acid. On its own it is not the target '
+           + 'molecule — the next step turns it into the alcohol.',
+      marks: ['Correct addition product: CH₃CH₂OSO₃H'],
+      scene: {
+        nodes: [
+          N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+          ...alkLeftH(), ...alkRightH(),
+          added('hn', 'H'), gained('o', 'O', [0, 270]),
+          N('s', 'SO₂', 208, 112), N('o2', 'O', 112, 112, { lp: [270, 90] }),
+          N('sh', 'H', 45, 112)
+        ],
+        bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), addedB('hn'),
+                gainedB('o'), BD('o', 's'), BD('s', 'o2'), BD('o2', 'sh')],
+        notes: [NAME(355, 350, 'ethyl hydrogensulfate')]
+      }
+    },
+    {
+      title: 'Hydrolysis with water gives ethanol',
+      teach: 'Warming with water hydrolyses the C–O bond and gives ethanol, releasing the '
+           + 'sulfuric acid unchanged. Overall the H₂SO₄ is a catalyst for the hydration of '
+           + 'ethene. AQA does not require the mechanism of this final step.',
+      marks: ['Ethanol as the final product', 'H₂SO₄ regenerated — it acts as a catalyst'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 150, 130), N('c2', 'CH₂', 255, 130),
+          N('o', 'O', 340, 130), N('s', 'SO₂', 430, 130),
+          N('o2', 'O', 520, 130), N('h2', 'H', 585, 130),
+          N('p1', 'H₃C', 220, 305), N('p2', 'CH₂', 325, 305), N('p3', 'OH', 410, 305)
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'o'), BD('o', 's'), BD('s', 'o2'), BD('o2', 'h2'),
+                BD('p1', 'p2'), BD('p2', 'p3')],
+        notes: [
+          TX(730, 135, '+ H₂O, warm', { col: '#fbbf24' }),
+          TX(360, 215, '↓', { size: 30, col: '#64748b' }),
+          NAME(340, 365, 'ethanol   +   H₂SO₄ regenerated')
+        ]
+      }
+    }
+  ]
+});
+
+/* ── HALOGENOALKANES: nucleophilic substitution ───────────────────────── */
+
+/* Bromoethane is the substrate for all three substitutions, so the polarised
+   C–Br skeleton and the arrow that expels the bromide are shared. */
+const haloSkeleton = () => [
+  N('c1', 'H₃C', 300, 190),
+  N('c2', 'CH₂', 405, 190, { delta: 'δ+', dy: -30 }),
+  N('br', 'Br', 500, 190, { delta: 'δ−', dy: -30, lp: [40, 90, 140] })
+];
+const haloBonds = () => [BD('c1', 'c2'), BD('c2', 'br')];
+const expelBromide = () => AR('c2|br', 'br@148,26', -22, { delay: 0.5 });
+
+MECHANISMS.push({
+  id: 'ns-hydroxide',
+  group: 'Halogenoalkanes',
+  type: 'Nucleophilic substitution',
+  name: 'Bromoethane + aqueous KOH (hydrolysis)',
+  spec: '3.3.3',
+  equation: 'CH₃CH₂Br + OH⁻ → CH₃CH₂OH + Br⁻',
+  conditions: 'Warm aqueous potassium (or sodium) hydroxide, under reflux. Aqueous is the key word — ethanolic KOH gives elimination instead.',
+  why: 'Bromine is more electronegative than carbon, so the C–Br bond is polar and the carbon '
+     + 'carries δ+. A nucleophile is an electron-pair donor that is attracted to that electron-'
+     + 'deficient carbon. Bromide is a good leaving group because the C–Br bond is weak and '
+     + 'Br⁻ is a stable ion.',
+  steps: [
+    {
+      title: 'Hydroxide attacks the δ+ carbon',
+      teach: 'A lone pair on the oxygen of the hydroxide ion forms a new bond to the δ+ carbon. '
+           + 'The arrow must start at the lone pair, not at the negative sign. As that bond '
+           + 'forms, the C–Br bond breaks and both electrons go to the bromine.',
+      marks: ['Curly arrow from a lone pair on the OH⁻ to the δ+ carbon',
+              'Curly arrow from the C–Br bond to the Br',
+              'δ+ and δ− shown on the C–Br bond'],
+      scene: {
+        nodes: [
+          ...haloSkeleton(),
+          N('o', 'O', 300, 345, { chg: '−', cdx: -26, cdy: 22, lp: [-55, 25, 95] }),
+          N('oh', 'H', 218, 345)
+        ],
+        bonds: [...haloBonds(), BD('o', 'oh')],
+        arrows: [AR('o@-55,26', 'c2@130,26', 26), expelBromide()],
+        notes: [NAME(300, 388, 'hydroxide ion — the nucleophile')]
+      }
+    },
+    {
+      title: 'Ethanol and a bromide ion',
+      teach: 'The hydroxide has substituted for the bromine. Warming an alcohol out of a '
+           + 'halogenoalkane like this is called hydrolysis.',
+      marks: ['Correct product: ethanol', 'Bromide ion released'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 250, 190), N('c2', 'CH₂', 355, 190),
+          N('o', 'OH', 440, 190, { lp: [90, 270] }),
+          N('br', 'Br', 600, 190, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'o')],
+        notes: [TX(530, 198, '+', { size: 26, col: '#64748b' }), NAME(345, 280, 'ethanol')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'ns-cyanide',
+  group: 'Halogenoalkanes',
+  type: 'Nucleophilic substitution',
+  name: 'Bromoethane + ethanolic KCN',
+  spec: '3.3.3',
+  equation: 'CH₃CH₂Br + CN⁻ → CH₃CH₂CN + Br⁻',
+  conditions: 'Warm potassium cyanide dissolved in ethanol, under reflux.',
+  why: 'The cyanide ion donates the lone pair on its carbon. This is a synthetically important '
+     + 'reaction because it lengthens the carbon chain by one: the nitrile can then be reduced '
+     + 'to an amine or hydrolysed to a carboxylic acid.',
+  steps: [
+    {
+      title: 'Cyanide attacks the δ+ carbon',
+      teach: 'The lone pair used is the one on the carbon of CN⁻, not on the nitrogen — that is '
+           + 'why the new bond is a C–C bond and the chain grows by one carbon.',
+      marks: ['Curly arrow from the lone pair on the carbon of CN⁻ to the δ+ carbon',
+              'Curly arrow from the C–Br bond to the Br'],
+      scene: {
+        nodes: [
+          ...haloSkeleton(),
+          N('cn', 'C', 300, 345, { chg: '−', cdx: -20, cdy: -20, lp: [-55] }),
+          N('nn', 'N', 210, 345, { lp: [180] })
+        ],
+        bonds: [...haloBonds(), BD('cn', 'nn', 3)],
+        arrows: [AR('cn@-55,26', 'c2@130,26', 26), expelBromide()],
+        notes: [NAME(255, 388, 'cyanide ion')]
+      }
+    },
+    {
+      title: 'Propanenitrile and a bromide ion',
+      teach: 'Count the carbons: bromoethane has two, propanenitrile has three. The nitrile '
+           + 'carbon is carbon number one when you name the product.',
+      marks: ['Correct product: propanenitrile', 'Bromide ion released'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 235, 190), N('c2', 'CH₂', 340, 190),
+          N('c3', 'C', 425, 190), N('nn', 'N', 505, 190, { lp: [0] }),
+          N('br', 'Br', 640, 190, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c3', 'nn', 3)],
+        notes: [TX(575, 198, '+', { size: 26, col: '#64748b' }), NAME(370, 280, 'propanenitrile')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'ns-ammonia',
+  group: 'Halogenoalkanes',
+  type: 'Nucleophilic substitution',
+  name: 'Bromoethane + excess NH₃',
+  spec: '3.3.3 / 3.3.12',
+  equation: 'CH₃CH₂Br + 2NH₃ → CH₃CH₂NH₂ + NH₄Br',
+  conditions: 'Excess ethanolic ammonia, heated in a sealed tube under pressure. Excess ammonia limits further substitution.',
+  why: 'Ammonia is a nucleophile because of the lone pair on nitrogen. Two molecules of ammonia '
+     + 'are needed: one to attack the carbon, and a second to remove a proton from the '
+     + 'positively charged intermediate.',
+  steps: [
+    {
+      title: 'Ammonia attacks the δ+ carbon',
+      teach: 'The nitrogen lone pair forms a bond to the δ+ carbon and the bromide leaves. The '
+           + 'nitrogen now has four bonds, so it carries a full positive charge.',
+      marks: ['Curly arrow from the lone pair on N to the δ+ carbon',
+              'Curly arrow from the C–Br bond to the Br'],
+      scene: {
+        nodes: [
+          ...haloSkeleton(),
+          N('nh3', 'H₃N', 295, 345, { lp: [-45] })
+        ],
+        bonds: [...haloBonds()],
+        arrows: [AR('nh3@-45,28', 'c2@130,26', 26), expelBromide()],
+        notes: [NAME(295, 388, 'ammonia — the nucleophile')]
+      }
+    },
+    {
+      title: 'The alkylammonium ion loses a proton',
+      teach: 'A second ammonia molecule acts as a base and removes a hydrogen from the '
+           + 'positively charged nitrogen. Two arrows are needed: one from the ammonia lone pair '
+           + 'to that hydrogen, and one from the N–H bond back onto the nitrogen.',
+      marks: ['Positive charge shown on the nitrogen of the intermediate',
+              'Curly arrow from the lone pair of the second NH₃ to an H on N⁺',
+              'Curly arrow from the N–H bond to the N'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 150, 200), N('c2', 'CH₂', 255, 200),
+          N('n', 'N', 350, 200, { chg: '+', cdx: -14, cdy: -26 }),
+          N('ha', 'H', 350, 120), N('hb', 'H', 430, 245), N('hc', 'H', 350, 285),
+          N('nh3', 'H₃N', 580, 130, { lp: [200] }),
+          N('br', 'Br', 200, 340, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'n'), BD('n', 'ha'), BD('n', 'hb'), BD('n', 'hc')],
+        arrows: [
+          AR('nh3@195,32', 'hb@25,22', 26),
+          AR('n|hb', 'n@42,30', -28, { delay: 0.5 })
+        ],
+        notes: [NAME(230, 378, 'bromide ion — a spectator here')]
+      }
+    },
+    {
+      title: 'Ethylamine and an ammonium ion',
+      teach: 'The product is a primary amine. Because ethylamine is itself a nucleophile it can '
+           + 'attack more bromoethane, giving secondary and tertiary amines and finally a '
+           + 'quaternary ammonium salt — which is why a large excess of ammonia is used.',
+      marks: ['Correct product: ethylamine', 'NH₄⁺ (with Br⁻, ammonium bromide) also formed'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 210, 190), N('c2', 'CH₂', 315, 190),
+          N('n', 'NH₂', 405, 190, { lp: [270] }),
+          N('am', 'NH₄', 570, 190, { chg: '+' }),
+          N('br', 'Br', 690, 190, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'n')],
+        notes: [TX(490, 198, '+', { size: 26, col: '#64748b' }), NAME(320, 285, 'ethylamine')]
+      }
+    }
+  ]
+});
+
+/* ── HALOGENOALKANES: elimination ─────────────────────────────────────── */
+
+MECHANISMS.push({
+  id: 'elim-koh',
+  group: 'Halogenoalkanes',
+  type: 'Elimination',
+  name: '2-bromopropane + ethanolic KOH',
+  spec: '3.3.3',
+  equation: 'CH₃CHBrCH₃ + OH⁻ → CH₃CH=CH₂ + H₂O + Br⁻',
+  conditions: 'Hot ethanolic (not aqueous) potassium hydroxide, under reflux.',
+  why: 'Here the hydroxide behaves as a base, not as a nucleophile: it takes a proton from the '
+     + 'carbon next to the one bearing the bromine. The electrons left behind form a π bond, and '
+     + 'the bromide is pushed out. Ethanolic conditions and heat favour elimination; aqueous '
+     + 'conditions favour substitution.',
+  steps: [
+    {
+      title: 'Three arrows, all in one step',
+      teach: 'Start at the hydroxide lone pair and work along: OH⁻ to the H, then the C–H bond '
+           + 'into the C–C bond to make the double bond, then the C–Br bond onto the bromine. '
+           + 'The middle arrow must point between the two carbons, not at a carbon.',
+      marks: ['Curly arrow from a lone pair on OH⁻ to the H on the adjacent carbon',
+              'Curly arrow from that C–H bond to the space between the two carbons',
+              'Curly arrow from the C–Br bond to the Br',
+              'OH⁻ acting as a base, with its lone pair shown'],
+      scene: {
+        nodes: [
+          N('o', 'O', 150, 105, { chg: '−', cdx: -22, cdy: -18, lp: [10, 90, 200] }),
+          N('oh', 'H', 150, 45),
+          N('h', 'H', 265, 130),
+          N('c1', 'CH₂', 265, 225),
+          N('c2', 'CH', 380, 225),
+          N('c3', 'CH₃', 380, 330),
+          N('br', 'Br', 480, 225, { delta: 'δ−', dy: -30, lp: [40, 90, 140] })
+        ],
+        bonds: [BD('o', 'oh'), BD('h', 'c1'), BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'br')],
+        arrows: [
+          AR('o@15,26', 'h@185,24', -22),
+          AR('c1|h', 'c1|c2@-90,16', 26, { delay: 0.5 }),
+          AR('c2|br', 'br@148,26', -22, { delay: 1.0 })
+        ],
+        notes: [NAME(150, 175, 'OH⁻ as a base'), NAME(330, 378, '2-bromopropane')]
+      }
+    },
+    {
+      title: 'Propene, water and bromide',
+      teach: 'A small molecule (HBr, as H⁺ and Br⁻) has been removed and a double bond has '
+           + 'formed, so this is an elimination. Note there is no carbocation intermediate to draw.',
+      marks: ['Correct alkene: propene', 'H₂O and Br⁻ also formed'],
+      scene: {
+        nodes: [
+          N('a', 'H₂C', 200, 190), N('b', 'CH', 310, 190), N('c', 'CH₃', 410, 190),
+          N('w', 'H₂O', 540, 190, { lp: [90, 270] }),
+          N('br', 'Br', 660, 190, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+        ],
+        bonds: [BD('a', 'b', 2), BD('b', 'c')],
+        notes: [
+          TX(480, 198, '+', { size: 26, col: '#64748b' }),
+          TX(605, 198, '+', { size: 26, col: '#64748b' }),
+          NAME(305, 280, 'propene')
+        ]
+      }
+    }
+  ]
+});
+
+/* ── ALCOHOLS: elimination of water ───────────────────────────────────── */
+
+MECHANISMS.push({
+  id: 'elim-dehydration',
+  group: 'Alcohols',
+  type: 'Elimination (dehydration)',
+  name: 'Propan-2-ol + concentrated H₂SO₄',
+  spec: '3.3.5',
+  equation: 'CH₃CH(OH)CH₃ → CH₃CH=CH₂ + H₂O',
+  conditions: 'Warm with concentrated sulfuric (or phosphoric) acid, about 170 °C. The acid is a catalyst.',
+  why: 'Hydroxide is a very poor leaving group, so the alcohol is protonated first: that turns '
+     + '–OH into –OH₂⁺, and water is an excellent leaving group. A carbocation forms, then a '
+     + 'proton is lost from the neighbouring carbon to give the alkene.',
+  steps: [
+    {
+      title: 'The alcohol is protonated',
+      teach: 'A lone pair on the alcohol oxygen picks up an H⁺ from the acid. The oxygen now has '
+           + 'three bonds and a full positive charge.',
+      marks: ['Curly arrow from a lone pair on the O to the H⁺',
+              'Protonated alcohol drawn with + on the oxygen'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 195, 240), N('c2', 'CH', 300, 240), N('c3', 'CH₃', 300, 345),
+          N('o', 'O', 390, 185, { lp: [125, 215] }), N('oh', 'H', 390, 110),
+          N('hp', 'H', 540, 110, { chg: '+' })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('o', 'oh')],
+        arrows: [AR('o@-30,28', 'hp@185,22', -26)],
+        notes: [NAME(168, 330, 'propan-2-ol'), NAME(600, 175, 'H⁺ from H₂SO₄')]
+      }
+    },
+    {
+      title: 'Water leaves, giving a carbocation',
+      teach: 'The C–O bond breaks heterolytically: both electrons go to the oxygen, which '
+           + 'departs as a neutral water molecule. The arrow starts on the C–O bond and points '
+           + 'at the oxygen.',
+      marks: ['Curly arrow from the C–O bond to the O',
+              'Secondary carbocation with + on the middle carbon',
+              'H₂O shown as the leaving group'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 195, 240), N('c2', 'CH', 300, 240), N('c3', 'CH₃', 300, 345),
+          N('o', 'O', 390, 185, { chg: '+', cdx: 4, cdy: -30, lp: [215] }),
+          N('h1', 'H', 465, 145), N('h2', 'H', 350, 110)
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('o', 'h1'), BD('o', 'h2')],
+        arrows: [AR('c2|o', 'o@210,26', -24)],
+        notes: [NAME(560, 235, 'water is a good leaving group')]
+      }
+    },
+    {
+      title: 'A base removes a proton from the next carbon',
+      teach: 'The hydrogensulfate ion (or a water molecule) takes a proton from a carbon next to '
+           + 'the positive one. Those C–H electrons become the π bond. Two arrows here: base to '
+           + 'H, and C–H bond into the C–C bond.',
+      marks: ['Curly arrow from the base to the H on the adjacent carbon',
+              'Curly arrow from that C–H bond to between the two carbons',
+              'Positive charge on the correct carbon'],
+      scene: {
+        nodes: [
+          N('o', 'O', 150, 105, { chg: '−', cdx: -34, cdy: -22, lp: [10, 180, 250] }),
+          N('s', 'SO₂', 150, 180), N('o2', 'O', 150, 255, { lp: [0, 180] }),
+          N('h2', 'H', 150, 325),
+          N('h', 'H', 265, 140),
+          N('c1', 'CH₂', 265, 235),
+          N('c2', 'CH', 380, 235, { chg: '+' }),
+          N('c3', 'CH₃', 380, 340)
+        ],
+        bonds: [BD('o', 's'), BD('s', 'o2'), BD('o2', 'h2'),
+                BD('h', 'c1'), BD('c1', 'c2'), BD('c2', 'c3')],
+        arrows: [
+          AR('o@10,26', 'h@185,24', -22),
+          AR('c1|h', 'c1|c2@-90,16', 26, { delay: 0.5 })
+        ],
+        notes: [NAME(150, 380, 'HSO₄⁻ acting as a base')]
+      }
+    },
+    {
+      title: 'Propene and water',
+      teach: 'The sulfuric acid is regenerated, so it is a catalyst. Overall a molecule of water '
+           + 'has been eliminated from the alcohol.',
+      marks: ['Correct alkene: propene', 'H₂SO₄ regenerated — it is a catalyst'],
+      scene: {
+        nodes: [
+          N('a', 'H₂C', 220, 190), N('b', 'CH', 330, 190), N('c', 'CH₃', 430, 190),
+          N('w', 'H₂O', 570, 190, { lp: [90, 270] })
+        ],
+        bonds: [BD('a', 'b', 2), BD('b', 'c')],
+        notes: [
+          TX(505, 198, '+', { size: 26, col: '#64748b' }),
+          NAME(330, 280, 'propene   +   H₂SO₄ regenerated')
+        ]
+      }
+    }
+  ]
+});
+
+/* ── CARBONYLS: nucleophilic addition ─────────────────────────────────── */
+
+MECHANISMS.push({
+  id: 'na-ethanal-nabh4',
+  group: 'Carbonyls',
+  type: 'Nucleophilic addition',
+  name: 'Ethanal + NaBH₄ (reduction)',
+  spec: '3.3.7',
+  equation: 'CH₃CHO + 2[H] → CH₃CH₂OH',
+  conditions: 'Sodium tetrahydridoborate(III) in aqueous or alcoholic solution, then dilute acid.',
+  why: 'Oxygen is much more electronegative than carbon, so C=O is strongly polar and the carbon '
+     + 'is δ+. NaBH₄ behaves as a source of the hydride ion, :H⁻, which is a nucleophile. Note '
+     + 'that C=O adds a nucleophile whereas C=C adds an electrophile — the polarity is the reason.',
+  extra: 'In an equation you may write the reducing agent as [H]; in the mechanism you must draw '
+       + 'it as the hydride ion H⁻ with its lone pair, because a curly arrow has to start on a '
+       + 'pair of electrons.',
+  steps: [
+    {
+      title: 'Hydride attacks the δ+ carbonyl carbon',
+      teach: 'The lone pair on H⁻ forms a new C–H bond. The carbon cannot have five bonds, so at '
+           + 'the same time the π bond of C=O breaks and both of those electrons move onto the '
+           + 'oxygen, giving it a negative charge.',
+      marks: ['Curly arrow from the lone pair on H⁻ to the carbon of C=O',
+              'Curly arrow from the C=O π bond to the O',
+              'δ+ on C and δ− on O shown'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 250, 245), N('c2', 'C', 355, 245, { delta: 'δ+', dx: 32, dy: -6 }),
+          N('o', 'O', 355, 140, { delta: 'δ−', dx: 34, dy: -2, lp: [0, 180] }),
+          N('h', 'H', 440, 297),
+          N('hyd', 'H', 240, 355, { chg: '−', cdx: -20, cdy: -18, lp: [-45] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'h')],
+        arrows: [AR('hyd@-45,24', 'c2@165,28', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+        notes: [NAME(215, 388, 'hydride ion from NaBH₄')]
+      }
+    },
+    {
+      title: 'The negative oxygen takes a proton from water',
+      teach: 'The alkoxide intermediate is a strong base. It removes a hydrogen from a water '
+           + 'molecule (or from the dilute acid added afterwards).',
+      marks: ['Negatively charged oxygen intermediate drawn correctly',
+              'Curly arrow from a lone pair on the O⁻ to the H of water',
+              'Curly arrow from the O–H bond to the O'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 215, 230), N('c2', 'CH', 320, 230), N('h', 'H', 320, 330),
+          N('o', 'O', 415, 172, { chg: '−', cdx: 0, cdy: -32, lp: [-8, 75, 195] }),
+          N('hw', 'H', 555, 258, { delta: 'δ+', dx: -6, dy: -28 }),
+          N('wo', 'O', 640, 302, { lp: [90, 0] }), N('wh', 'H', 640, 372)
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'h'), BD('c2', 'o'), BD('hw', 'wo'), BD('wo', 'wh')],
+        arrows: [AR('o@-8,28', 'hw@172,24', -26), AR('hw|wo', 'wo@200,26', -22, { delay: 0.5 })],
+        notes: [NAME(400, 100, 'alkoxide intermediate')]
+      }
+    },
+    {
+      title: 'Ethanol is the product',
+      teach: 'An aldehyde is reduced to a primary alcohol; a ketone would give a secondary '
+           + 'alcohol by exactly the same mechanism.',
+      marks: ['Correct product: ethanol'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 250, 190), N('c2', 'CH₂', 355, 190),
+          N('o', 'OH', 440, 190, { lp: [90, 270] }),
+          N('oh2', 'OH', 600, 190, { chg: '−', lp: [90, 180, 270] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'o')],
+        notes: [TX(525, 198, '+', { size: 26, col: '#64748b' }), NAME(345, 280, 'ethanol')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'na-propanone-kcn',
+  group: 'Carbonyls',
+  type: 'Nucleophilic addition',
+  name: 'Propanone + KCN / H⁺',
+  spec: '3.3.7',
+  equation: 'CH₃COCH₃ + HCN → (CH₃)₂C(OH)CN',
+  conditions: 'Potassium cyanide with dilute acid (safer than using HCN directly), at room temperature.',
+  why: 'Cyanide donates the lone pair on its carbon to the δ+ carbonyl carbon. The reaction is '
+     + 'useful because it lengthens the carbon chain by one and installs an –OH at the same time.',
+  extra: 'Stereochemistry: the planar carbonyl can be attacked from either face with equal '
+       + 'probability. With an unsymmetrical carbonyl such as ethanal, that gives equal amounts '
+       + 'of the two enantiomers — a racemic mixture, which is optically inactive. Propanone is '
+       + 'symmetrical, so its product is not chiral. Free HCN is very toxic, and KCN with dilute '
+       + 'acid still releases it, so a fume cupboard is essential.',
+  steps: [
+    {
+      title: 'Cyanide attacks the δ+ carbonyl carbon',
+      teach: 'Start the arrow at the lone pair on the carbon of CN⁻. The C=O π electrons move '
+           + 'onto the oxygen at the same time.',
+      marks: ['Curly arrow from the lone pair on the carbon of CN⁻ to the carbonyl carbon',
+              'Curly arrow from the C=O π bond to the O',
+              'δ+ on C and δ− on O shown'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 240, 250), N('c2', 'C', 348, 250, { delta: 'δ+', dx: 32, dy: -6 }),
+          N('c3', 'CH₃', 455, 250),
+          N('o', 'O', 348, 145, { delta: 'δ−', dx: 34, dy: -2, lp: [0, 180] }),
+          N('cn', 'C', 250, 358, { chg: '−', cdx: -20, cdy: -18, lp: [-45] }),
+          N('nn', 'N', 162, 358, { lp: [180] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o', 2), BD('cn', 'nn', 3)],
+        arrows: [AR('cn@-45,24', 'c2@175,30', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+        notes: [NAME(206, 390, 'cyanide ion')]
+      }
+    },
+    {
+      title: 'The alkoxide picks up a proton',
+      teach: 'The negatively charged oxygen takes an H⁺ from the acid (or from HCN). Do not draw '
+           + 'the proton simply appearing — show the arrow from the oxygen lone pair to the H⁺.',
+      marks: ['Intermediate with the negative charge on the oxygen',
+              'Curly arrow from a lone pair on O⁻ to the H⁺'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 205, 220), N('c2', 'C', 310, 220), N('c3', 'CH₃', 310, 325),
+          N('o', 'O', 310, 115, { chg: '−', cdx: -26, cdy: -16, lp: [180, 0, 270] }),
+          N('cq', 'C', 410, 220), N('nq', 'N', 495, 220, { lp: [0] }),
+          N('hp', 'H', 520, 95, { chg: '+' })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('c2', 'cq'), BD('cq', 'nq', 3)],
+        arrows: [AR('o@-20,28', 'hp@190,22', -26)],
+        notes: [NAME(620, 165, 'H⁺ from the dilute acid')]
+      }
+    },
+    {
+      title: 'A hydroxynitrile is formed',
+      teach: 'The product has both an –OH and a –CN on the same carbon: it is a hydroxynitrile. '
+           + 'Number from the nitrile carbon when naming it.',
+      marks: ['Correct product: 2-hydroxy-2-methylpropanenitrile'],
+      scene: {
+        nodes: [
+          N('c1', 'H₃C', 210, 220), N('c2', 'C', 315, 220), N('c3', 'CH₃', 315, 325),
+          N('o', 'OH', 315, 115, { lp: [180, 0] }),
+          N('cq', 'C', 415, 220), N('nq', 'N', 500, 220, { lp: [0] })
+        ],
+        bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('c2', 'cq'), BD('cq', 'nq', 3)],
+        notes: [NAME(430, 370, '2-hydroxy-2-methylpropanenitrile')]
+      }
+    }
+  ]
+});
+
+/* ── ACYL CHLORIDES: nucleophilic addition–elimination ────────────────────
+   All four required examples share one skeleton: the nucleophile adds to the
+   δ+ carbonyl carbon, the C=O reforms, and chloride is eliminated. Only the
+   nucleophile and the final proton loss change, so the skeleton is built once
+   and each example supplies its own nucleophile and product. ─────────────── */
+
+const ACYL_VIEW = '0 0 880 430';
+
+function acylMech(cfg) {
+  return {
+    id: cfg.id,
+    group: 'Acyl chlorides',
+    type: 'Nucleophilic addition–elimination',
+    name: cfg.name,
+    spec: '3.3.11',
+    equation: cfg.equation,
+    conditions: cfg.conditions,
+    why: 'The carbonyl carbon of an acyl chloride carries a large δ+ because it is bonded to two '
+       + 'electronegative atoms, so it is very readily attacked by nucleophiles. Unlike an '
+       + 'aldehyde or ketone, it has a good leaving group: after the nucleophile adds, the C=O '
+       + 'reforms and chloride is eliminated. That two-part sequence is why AQA calls it '
+       + 'addition–elimination. ' + (cfg.why || ''),
+    extra: cfg.extra,
+    steps: [
+      {
+        title: 'Addition: the nucleophile attacks the δ+ carbon',
+        teach: cfg.teach1,
+        marks: ['Curly arrow from the lone pair on the nucleophile to the carbonyl carbon',
+                'Curly arrow from the C=O π bond to the O',
+                'δ+ on the carbonyl carbon shown'],
+        scene: {
+          view: ACYL_VIEW,
+          nodes: [
+            N('c1', 'H₃C', 255, 235), N('c2', 'C', 360, 235, { delta: 'δ+', dx: 34, dy: -6 }),
+            N('o', 'O', 360, 130, { delta: 'δ−', dx: 34, dy: -2, lp: [0, 180] }),
+            N('cl', 'Cl', 458, 292, { delta: 'δ−', dx: 30, dy: 24, lp: [40, 90, 0] }),
+            ...cfg.nuc1.nodes
+          ],
+          bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'cl'), ...(cfg.nuc1.bonds || [])],
+          arrows: [AR(cfg.nuc1.from, 'c2@165,30', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+          notes: [NAME(660, 420, cfg.nuc1.label), NAME(238, 148, 'ethanoyl chloride')]
+        }
+      },
+      {
+        title: 'Elimination: the C=O reforms and chloride leaves',
+        teach: 'The tetrahedral intermediate is unstable. A lone pair on the negative oxygen '
+             + 'pushes back down to remake the π bond, and that forces out the chloride ion. '
+             + 'Two arrows: O⁻ to the C–O bond, and the C–Cl bond to the Cl.',
+        marks: ['Tetrahedral intermediate with the negative charge on the oxygen',
+                'Curly arrow from a lone pair on O⁻ towards the C–O bond',
+                'Curly arrow from the C–Cl bond to the Cl',
+                'Cl⁻ shown as the leaving group'],
+        scene: {
+          view: ACYL_VIEW,
+          nodes: [
+            N('c1', 'H₃C', 245, 205), N('c2', 'C', 350, 205),
+            N('o', 'O', 350, 100, { chg: '−', cdx: -26, cdy: -16, lp: [180, 0, 270] }),
+            N('cl', 'Cl', 462, 262, { lp: [40, 90, 0] }),
+            ...cfg.nuc2.nodes
+          ],
+          bonds: [BD('c1', 'c2'), BD('c2', 'o'), BD('c2', 'cl'), ...(cfg.nuc2.bonds || [])],
+          arrows: [AR('o@-45,28', 'c2|o^13', 24), AR('c2|cl', 'cl@205,26', -24, { delay: 0.5 })],
+          notes: [NAME(600, 130, 'tetrahedral intermediate')]
+        }
+      },
+      cfg.step3,
+      cfg.step4
+    ]
+  };
+}
+
+MECHANISMS.push(acylMech({
+  id: 'ae-water',
+  name: 'Ethanoyl chloride + water',
+  equation: 'CH₃COCl + H₂O → CH₃COOH + HCl',
+  conditions: 'Vigorous reaction at room temperature; misty fumes of HCl are seen.',
+  why: 'Water is a weak nucleophile, but the acyl chloride is reactive enough that no catalyst '
+     + 'is needed.',
+  extra: 'Compare this with a halogenoalkane: bromoethane needs warming under reflux with '
+       + 'aqueous hydroxide, while ethanoyl chloride reacts violently with cold water. Acyl '
+       + 'chlorides are far more reactive because the carbonyl carbon carries a much larger δ+.',
+  teach1: 'A lone pair on the water oxygen attacks the carbonyl carbon while the C=O π electrons '
+        + 'move onto the oxygen.',
+  nuc1: {
+    label: 'water — the nucleophile',
+    nodes: [N('w', 'O', 250, 352, { lp: [-50, 90, 170] }), N('wh1', 'H', 172, 312),
+            N('wh2', 'H', 188, 402)],
+    bonds: [BD('w', 'wh1'), BD('w', 'wh2')],
+    from: 'w@-50,28'
+  },
+  nuc2: {
+    nodes: [N('w', 'O', 350, 315, { chg: '+', cdx: 26, cdy: -16 }),
+            N('wh1', 'H', 268, 368), N('wh2', 'H', 432, 368)],
+    bonds: [BD('c2', 'w'), BD('w', 'wh1'), BD('w', 'wh2')]
+  },
+  step3: {
+    title: 'The oxygen loses a proton',
+    teach: 'The chloride ion removes the extra hydrogen, which both neutralises the oxygen and '
+         + 'makes the hydrogen chloride you can see as misty fumes.',
+    marks: ['Curly arrow from a lone pair on Cl⁻ to the H on the O⁺',
+            'Curly arrow from the O–H bond to the O',
+            'HCl formed'],
+    scene: {
+      view: ACYL_VIEW,
+      nodes: [
+        N('c1', 'H₃C', 245, 205), N('c2', 'C', 350, 205),
+        N('o', 'O', 350, 100, { lp: [0, 180] }),
+        N('w', 'O', 350, 315, { chg: '+', cdx: -26, cdy: -6 }),
+        N('wh1', 'H', 268, 368), N('wh2', 'H', 432, 368),
+        N('cl', 'Cl', 640, 300, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'w'), BD('w', 'wh1'), BD('w', 'wh2')],
+      arrows: [AR('cl@172,30', 'wh2@22,24', -26), AR('w|wh2', 'w@52,28', 28, { delay: 0.5 })]
+    }
+  },
+  step4: {
+    title: 'Ethanoic acid and hydrogen chloride',
+    teach: 'Overall the –Cl has been replaced by –OH. The steamy white fumes of HCl are the '
+         + 'classic observation for an acyl chloride reacting with water.',
+    marks: ['Correct product: ethanoic acid', 'HCl also formed'],
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 250, 190), N('c2', 'C', 355, 190),
+        N('o', 'O', 355, 92, { lp: [0, 180] }),
+        N('oh', 'OH', 452, 248, { lp: [90] }),
+        N('h', 'H', 630, 190), N('cl', 'Cl', 700, 190, { lp: [90, 270, 0] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'oh'), BD('h', 'cl')],
+      notes: [TX(555, 198, '+', { size: 26, col: '#64748b' }),
+              NAME(330, 330, 'ethanoic acid'), NAME(672, 270, 'hydrogen chloride')]
+    }
+  }
+}));
+
+MECHANISMS.push(acylMech({
+  id: 'ae-ammonia',
+  name: 'Ethanoyl chloride + ammonia',
+  equation: 'CH₃COCl + 2NH₃ → CH₃CONH₂ + NH₄Cl',
+  conditions: 'Vigorous reaction with cold ammonia; a white smoke of ammonium chloride forms.',
+  why: 'Ammonia is a better nucleophile than water because nitrogen is less electronegative than '
+     + 'oxygen, so its lone pair is more available.',
+  extra: 'Two moles of ammonia are used per mole of acyl chloride: one becomes the amide, the '
+       + 'second mops up the HCl as ammonium chloride.',
+  teach1: 'The nitrogen lone pair attacks the carbonyl carbon while the C=O π electrons move '
+        + 'onto the oxygen.',
+  nuc1: {
+    label: 'ammonia — the nucleophile',
+    nodes: [N('n', 'N', 250, 348, { lp: [-50] }), N('nh1', 'H', 172, 308),
+            N('nh2', 'H', 180, 398), N('nh3', 'H', 300, 402)],
+    bonds: [BD('n', 'nh1'), BD('n', 'nh2'), BD('n', 'nh3')],
+    from: 'n@-50,26'
+  },
+  nuc2: {
+    nodes: [N('n', 'N', 350, 312, { chg: '+', cdx: 24, cdy: -16 }),
+            N('nh1', 'H', 268, 362), N('nh2', 'H', 432, 362), N('nh3', 'H', 350, 392)],
+    bonds: [BD('c2', 'n'), BD('n', 'nh1'), BD('n', 'nh2'), BD('n', 'nh3')]
+  },
+  step3: {
+    title: 'A second ammonia removes the proton',
+    teach: 'Excess ammonia acts as the base. Its lone pair takes the hydrogen from the '
+         + 'positively charged nitrogen, and the N–H electrons return to that nitrogen.',
+    marks: ['Curly arrow from the lone pair of a second NH₃ to the H on N⁺',
+            'Curly arrow from the N–H bond to the N',
+            'NH₄⁺ formed'],
+    scene: {
+      view: ACYL_VIEW,
+      nodes: [
+        N('c1', 'H₃C', 245, 205), N('c2', 'C', 350, 205),
+        N('o', 'O', 350, 100, { lp: [0, 180] }),
+        N('n', 'N', 350, 312, { chg: '+', cdx: -24, cdy: -8 }),
+        N('nh1', 'H', 268, 362), N('nh2', 'H', 432, 362), N('nh3', 'H', 350, 392),
+        N('base', 'H₃N', 640, 290, { lp: [195] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'n'),
+              BD('n', 'nh1'), BD('n', 'nh2'), BD('n', 'nh3')],
+      arrows: [AR('base@193,32', 'nh2@25,24', -26), AR('n|nh2', 'n@48,28', 28, { delay: 0.5 })]
+    }
+  },
+  step4: {
+    title: 'Ethanamide and ammonium chloride',
+    teach: 'The product is a primary amide. The HCl produced immediately reacts with more '
+         + 'ammonia, which is why you see white smoke.',
+    marks: ['Correct product: ethanamide', 'NH₄Cl also formed'],
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 240, 190), N('c2', 'C', 345, 190),
+        N('o', 'O', 345, 92, { lp: [0, 180] }),
+        N('n', 'NH₂', 445, 248, { lp: [90] }),
+        N('am', 'NH₄', 630, 190, { chg: '+' }),
+        N('cl', 'Cl', 745, 190, { chg: '−', lp: [90, 270, 0] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'n')],
+      notes: [TX(545, 198, '+', { size: 26, col: '#64748b' }), NAME(320, 330, 'ethanamide')]
+    }
+  }
+}));
+
+MECHANISMS.push(acylMech({
+  id: 'ae-methanol',
+  name: 'Ethanoyl chloride + methanol',
+  equation: 'CH₃COCl + CH₃OH → CH₃COOCH₃ + HCl',
+  conditions: 'Room temperature, no catalyst needed; misty fumes of HCl.',
+  why: 'Alcohols behave just like water here — a lone pair on the oxygen does the attacking.',
+  extra: 'This is a much better route to an ester than heating a carboxylic acid with an alcohol: '
+       + 'esterification is reversible and slow, whereas an acyl chloride reacts fast and goes to '
+       + 'completion. The drawback is that acyl chlorides are corrosive and hydrolyse in moist air.',
+  teach1: 'A lone pair on the methanol oxygen attacks the carbonyl carbon while the C=O π '
+        + 'electrons move onto the oxygen.',
+  nuc1: {
+    label: 'methanol — the nucleophile',
+    nodes: [N('mo', 'O', 255, 350, { lp: [-50, 100, 190] }), N('mc', 'CH₃', 152, 350),
+            N('mh', 'H', 255, 412)],
+    bonds: [BD('mo', 'mc'), BD('mo', 'mh')],
+    from: 'mo@-50,28'
+  },
+  nuc2: {
+    nodes: [N('mo', 'O', 350, 312, { chg: '+', cdx: 24, cdy: -16 }),
+            N('mc', 'CH₃', 252, 366), N('mh', 'H', 440, 366)],
+    bonds: [BD('c2', 'mo'), BD('mo', 'mc'), BD('mo', 'mh')]
+  },
+  step3: {
+    title: 'The oxygen loses its proton',
+    teach: 'Chloride takes the hydrogen off the positively charged oxygen, giving HCl and the '
+         + 'neutral ester.',
+    marks: ['Curly arrow from a lone pair on Cl⁻ to the H on the O⁺',
+            'Curly arrow from the O–H bond to the O',
+            'HCl formed'],
+    scene: {
+      view: ACYL_VIEW,
+      nodes: [
+        N('c1', 'H₃C', 245, 205), N('c2', 'C', 350, 205),
+        N('o', 'O', 350, 100, { lp: [0, 180] }),
+        N('mo', 'O', 350, 312, { chg: '+', cdx: -24, cdy: -8 }),
+        N('mc', 'CH₃', 252, 366), N('mh', 'H', 440, 366),
+        N('cl', 'Cl', 645, 300, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'mo'), BD('mo', 'mc'), BD('mo', 'mh')],
+      arrows: [AR('cl@172,30', 'mh@22,24', -26), AR('mo|mh', 'mo@50,28', 28, { delay: 0.5 })]
+    }
+  },
+  step4: {
+    title: 'Methyl ethanoate and hydrogen chloride',
+    teach: 'Name esters from the alcohol first (methyl), then the acid (ethanoate).',
+    marks: ['Correct product: methyl ethanoate', 'HCl also formed'],
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 215, 190), N('c2', 'C', 320, 190),
+        N('o1', 'O', 320, 92, { lp: [0, 180] }),
+        N('o2', 'O', 418, 248, { lp: [90, 180] }), N('c3', 'CH₃', 515, 248),
+        N('h', 'H', 650, 190), N('cl', 'Cl', 720, 190, { lp: [90, 270, 0] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o1', 2), BD('c2', 'o2'), BD('o2', 'c3'), BD('h', 'cl')],
+      notes: [TX(580, 198, '+', { size: 26, col: '#64748b' }), NAME(330, 340, 'methyl ethanoate')]
+    }
+  }
+}));
+
+MECHANISMS.push(acylMech({
+  id: 'ae-methylamine',
+  name: 'Ethanoyl chloride + methylamine',
+  equation: 'CH₃COCl + 2CH₃NH₂ → CH₃CONHCH₃ + CH₃NH₃⁺Cl⁻',
+  conditions: 'Room temperature, excess amine.',
+  why: 'A primary amine is an even better nucleophile than ammonia, because the alkyl group '
+     + 'releases electron density onto the nitrogen.',
+  extra: 'The product is a secondary amide (an N-substituted amide). As with ammonia, a second '
+       + 'molecule of the amine is needed to take up the HCl, forming methylammonium chloride.',
+  teach1: 'The nitrogen lone pair of methylamine attacks the carbonyl carbon while the C=O π '
+        + 'electrons move onto the oxygen.',
+  nuc1: {
+    label: 'methylamine — the nucleophile',
+    nodes: [N('mn', 'N', 258, 348, { lp: [-50] }), N('mc', 'CH₃', 155, 348),
+            N('mh1', 'H', 210, 412), N('mh2', 'H', 322, 400)],
+    bonds: [BD('mn', 'mc'), BD('mn', 'mh1'), BD('mn', 'mh2')],
+    from: 'mn@-50,26'
+  },
+  nuc2: {
+    nodes: [N('mn', 'N', 350, 312, { chg: '+', cdx: 24, cdy: -16 }),
+            N('mc', 'CH₃', 250, 366), N('mh1', 'H', 432, 362), N('mh2', 'H', 350, 394)],
+    bonds: [BD('c2', 'mn'), BD('mn', 'mc'), BD('mn', 'mh1'), BD('mn', 'mh2')]
+  },
+  step3: {
+    title: 'A second methylamine removes the proton',
+    teach: 'Excess methylamine acts as the base, exactly as the second ammonia did.',
+    marks: ['Curly arrow from the lone pair of a second CH₃NH₂ to the H on N⁺',
+            'Curly arrow from the N–H bond to the N',
+            'CH₃NH₃⁺ formed'],
+    scene: {
+      view: ACYL_VIEW,
+      nodes: [
+        N('c1', 'H₃C', 245, 205), N('c2', 'C', 350, 205),
+        N('o', 'O', 350, 100, { lp: [0, 180] }),
+        N('mn', 'N', 350, 312, { chg: '+', cdx: -24, cdy: -8 }),
+        N('mc', 'CH₃', 250, 366), N('mh1', 'H', 432, 362), N('mh2', 'H', 350, 394),
+        N('bn', 'NH₂', 632, 292, { lp: [200] }), N('bc', 'CH₃', 748, 292)
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'mn'),
+              BD('mn', 'mc'), BD('mn', 'mh1'), BD('mn', 'mh2'), BD('bn', 'bc')],
+      arrows: [AR('bn@198,32', 'mh1@25,24', -26), AR('mn|mh1', 'mn@48,28', 28, { delay: 0.5 })]
+    }
+  },
+  step4: {
+    title: 'N-methylethanamide and methylammonium chloride',
+    teach: 'The N- in the name tells you the methyl group is on the nitrogen, not on the carbon '
+         + 'chain.',
+    marks: ['Correct product: N-methylethanamide', 'CH₃NH₃⁺Cl⁻ also formed'],
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 190, 190), N('c2', 'C', 295, 190),
+        N('o', 'O', 295, 92, { lp: [0, 180] }),
+        N('n', 'NH', 390, 248, { lp: [90] }), N('c3', 'CH₃', 482, 248),
+        N('am', 'CH₃NH₃', 640, 190, { chg: '+' }),
+        N('cl', 'Cl', 790, 190, { chg: '−', lp: [90, 270] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'n'), BD('n', 'c3')],
+      notes: [NAME(300, 340, 'N-methylethanamide')]
+    }
+  }
+}));
+
+/* ── AROMATIC: electrophilic substitution ─────────────────────────────────
+   Benzene is drawn as a regular hexagon of radius 82 about (330, 215), with a
+   circle for the delocalised ring. In the intermediate the circle becomes a
+   horseshoe, because only five carbons share the delocalised system. ────── */
+
+const RING = { cx: 330, cy: 215, r: 82 };
+/* v0 is the top vertex — the carbon that becomes sp3 in the intermediate.
+   v1 and v5 are the carbons either side of it, positions 2 and 6. */
+const RING_ANGLES = [-90, -30, 30, 90, 150, 210];
+const ringNodes = () =>
+  RING_ANGLES.map((a, i) => N('v' + i, '', RING.cx + Math.cos(a * RAD) * RING.r,
+                                           RING.cy + Math.sin(a * RAD) * RING.r));
+/* The horseshoe covers the five carbons that are still delocalised, so it runs
+   from position 2 to position 6 and no further: taken past them it claims the
+   sp3 carbon is still part of the system, and the mark is lost. Deriving the
+   two ends from the vertex angles keeps that true if the ring is ever moved. */
+const HORSESHOE = { cx: RING.cx, cy: RING.cy, r: 48,
+                    a0: RING_ANGLES[1], a1: RING_ANGLES[5] };
+const ringBonds = () => [BD('v0', 'v1'), BD('v1', 'v2'), BD('v2', 'v3'),
+                         BD('v3', 'v4'), BD('v4', 'v5'), BD('v5', 'v0')];
+
+MECHANISMS.push({
+  id: 'es-nitration',
+  group: 'Aromatic',
+  type: 'Electrophilic substitution',
+  name: 'Nitration of benzene',
+  spec: '3.3.10',
+  equation: 'C₆H₆ + HNO₃ → C₆H₅NO₂ + H₂O',
+  conditions: 'Concentrated nitric acid with concentrated sulfuric acid as catalyst, below 55 °C. '
+            + 'Above that temperature further nitration gives dinitrobenzene.',
+  why: 'Benzene is electron rich because of the delocalised ring, so it attracts electrophiles. '
+     + 'It substitutes rather than adds, because addition would destroy the delocalised system '
+     + 'and lose the extra stability that comes with it.',
+  extra: 'Nitrobenzene is reduced (tin and concentrated HCl, then NaOH) to phenylamine, which is '
+       + 'used to make azo dyes — the reason nitration matters industrially.',
+  steps: [
+    {
+      title: 'Making the electrophile',
+      teach: 'Sulfuric acid is the stronger acid, so it protonates nitric acid; water is then '
+           + 'lost to leave the nitronium ion, NO₂⁺. You are expected to be able to write this '
+           + 'equation. The sulfuric acid is regenerated later, so it is a catalyst.',
+      marks: ['Correct equation for the generation of NO₂⁺',
+              'NO₂⁺ identified as the electrophile'],
+      scene: {
+        nodes: [],
+        notes: [
+          TX(440, 150, 'HNO₃  +  2H₂SO₄  →  NO₂⁺  +  2HSO₄⁻  +  H₃O⁺',
+             { size: 25, col: '#e6edf3' }),
+          NAME(440, 215, 'the nitronium ion is the electrophile'),
+          TX(440, 285, 'The H₂SO₄ is regenerated in the last step, so it is a catalyst.',
+             { size: 15, col: '#94a3b8' })
+        ]
+      }
+    },
+    {
+      title: 'The ring attacks the nitronium ion',
+      teach: 'A pair of electrons from the delocalised ring forms a bond to the nitrogen. The '
+           + 'arrow must start on the circle, not on a C=C, and end on the nitrogen atom.',
+      marks: ['Curly arrow from the delocalised ring to the N of NO₂⁺'],
+      scene: {
+        nodes: [...ringNodes(), N('no2', 'NO₂', 330, 58, { chg: '+' })],
+        bonds: ringBonds(),
+        circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }],
+        arrows: [AR(RING.cx + ',' + (RING.cy - 48), 'no2@90,26', 26)],
+        notes: [NAME(650, 215, 'benzene is electron-rich')]
+      }
+    },
+    {
+      title: 'The unstable intermediate loses a proton',
+      teach: 'One carbon is now bonded to four things, so it is sp³ and out of the delocalised '
+           + 'system: the ring becomes a horseshoe over the other five carbons, with the positive '
+           + 'charge inside it. Stop the horseshoe at the carbons either side of the sp³ one — '
+           + 'positions 2 and 6. Drawn any further round it says the sp³ carbon is still '
+           + 'delocalised, and the mark is lost. The C–H electrons then drop back into the ring, '
+           + 'restoring the delocalisation, and the H⁺ is picked up by HSO₄⁻.',
+      marks: ['Horseshoe running from position 2 to position 6 only — five carbons, no further',
+              'Positive charge drawn inside the ring',
+              'Curly arrow from the C–H bond into the ring',
+              'H⁺ removed by HSO₄⁻, regenerating H₂SO₄'],
+      scene: {
+        nodes: [
+          ...ringNodes(), N('h', 'H', 262, 62), N('no2', 'NO₂', 412, 66),
+          N('bo', 'O', 155, 105, { chg: '−', cdx: -34, cdy: -22, lp: [-20, 180, 250] }),
+          N('bs', 'SO₂', 155, 180), N('bo2', 'O', 155, 255, { lp: [0, 180] }),
+          N('bh', 'H', 155, 325)
+        ],
+        bonds: [...ringBonds(), BD('v0', 'h'), BD('v0', 'no2'),
+                BD('bo', 'bs'), BD('bs', 'bo2'), BD('bo2', 'bh')],
+        arcs: [HORSESHOE],
+        arrows: [
+          AR('bo@-20,26', 'h@188,24', -24),
+          AR('v0|h', RING.cx + ',' + (RING.cy - 52), 26, { delay: 0.5 })
+        ],
+        notes: [
+          TX(330, 226, '+', { size: 30, col: '#f87171' }),
+          NAME(640, 200, 'charge spread over five carbons'),
+          NAME(155, 380, 'HSO₄⁻ as a base')
+        ]
+      }
+    },
+    {
+      title: 'Nitrobenzene',
+      teach: 'The delocalised ring is back, so the product is still aromatic. Substitution, not '
+           + 'addition, has taken place. Sulfuric acid has been regenerated.',
+      marks: ['Correct product: nitrobenzene', 'H₂SO₄ regenerated — it is a catalyst'],
+      scene: {
+        nodes: [...ringNodes(), N('no2', 'NO₂', 330, 58)],
+        bonds: [...ringBonds(), BD('v0', 'no2')],
+        circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }],
+        notes: [NAME(330, 360, 'nitrobenzene'), NAME(650, 215, '+ H₂SO₄ regenerated')]
+      }
+    }
+  ]
+});
+
+MECHANISMS.push({
+  id: 'es-acylation',
+  group: 'Aromatic',
+  type: 'Electrophilic substitution',
+  name: 'Friedel–Crafts acylation of benzene',
+  spec: '3.3.10',
+  equation: 'C₆H₆ + CH₃COCl → C₆H₅COCH₃ + HCl',
+  conditions: 'Heat under reflux with an acyl chloride and anhydrous aluminium chloride as a '
+            + 'halogen carrier, in a dry, inert solvent.',
+  why: 'Benzene on its own is not reactive enough to attack a neutral acyl chloride, so a '
+     + 'halogen carrier is used to strip off the chloride and generate a much stronger '
+     + 'electrophile: the acylium ion. The mechanism is then identical in shape to nitration.',
+  extra: 'This is one of the few ways to form a carbon–carbon bond onto a benzene ring, which is '
+       + 'why it matters in synthesis. The AlCl₃ is regenerated in the final step, so it is a '
+       + 'catalyst; it must be anhydrous, because water destroys it.',
+  steps: [
+    {
+      title: 'Making the acylium ion',
+      teach: 'Aluminium chloride is electron deficient: the aluminium has only six electrons '
+           + 'around it and an empty orbital to fill. A lone pair on the chlorine of the acyl '
+           + 'chloride forms a bond to that aluminium, and at the same moment the C–Cl bond '
+           + 'breaks, both of its electrons going to the same chlorine. The chlorine leaves as '
+           + 'part of AlCl₄⁻, and what is left is the acylium ion, CH₃CO⁺.',
+      marks: ['Curly arrow from a lone pair on the Cl to the Al of AlCl₃',
+              'Curly arrow from the C–Cl bond to the Cl',
+              'CH₃CO⁺ identified as the electrophile, with the + on the carbon',
+              'CH₃COCl + AlCl₃ → CH₃CO⁺ + AlCl₄⁻, with AlCl₃ named as the halogen carrier'],
+      scene: {
+        view: '0 0 880 430',
+        nodes: [
+          N('me', 'H₃C', 110, 130), N('c', 'C', 210, 130),
+          N('o', 'O', 210, 45, { lp: [0, 180] }),
+          N('cl', 'Cl', 325, 205, { lp: [30, 90, 150] }),
+          N('al', 'AlCl₃', 500, 205),
+          N('pme', 'H₃C', 150, 345), N('pc', 'C', 250, 345, { chg: '+', cdx: 0, cdy: -30 }),
+          N('po', 'O', 345, 345, { lp: [90, 270] }),
+          N('pal', 'AlCl₄', 560, 345, { chg: '−', cdx: 44, cdy: -18 })
+        ],
+        bonds: [BD('me', 'c'), BD('c', 'o', 2), BD('c', 'cl'),
+                BD('pme', 'pc'), BD('pc', 'po', 2)],
+        arrows: [AR('cl@30,28', 'al@180,40', 26), AR('c|cl', 'cl@213,30', 20, { delay: 0.5 })],
+        notes: [
+          NAME(700, 150, 'AlCl₃ has an empty orbital'),
+          NAME(200, 262, 'ethanoyl chloride'),
+          TX(440, 272, '↓', { size: 30, col: '#64748b' }),
+          PLUS(448, 353),
+          NAME(250, 402, 'the acylium ion — the electrophile'),
+          NAME(600, 402, 'AlCl₄⁻ carries the chloride away')
+        ]
+      }
+    },
+    {
+      title: 'The ring attacks the acylium ion',
+      teach: 'A pair of electrons from the delocalised ring forms a bond to the positively '
+           + 'charged carbon of CH₃CO⁺.',
+      marks: ['Curly arrow from the delocalised ring to the C⁺ of the acylium ion'],
+      scene: {
+        nodes: [
+          ...ringNodes(),
+          N('ac', 'C', 330, 58, { chg: '+', cdx: 0, cdy: -28 }),
+          N('acm', 'CH₃', 222, 58),
+          N('aco', 'O', 428, 58, { lp: [0, 90] })
+        ],
+        bonds: [...ringBonds(), BD('ac', 'acm'), BD('ac', 'aco', 2)],
+        circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }],
+        arrows: [AR(RING.cx + ',' + (RING.cy - 48), 'ac@90,26', 26)],
+        notes: [NAME(620, 220, 'acylium ion, CH₃CO⁺')]
+      }
+    },
+    {
+      title: 'The intermediate loses a proton to AlCl₄⁻',
+      teach: 'Same shape as nitration: a horseshoe over the five carbons still in the '
+           + 'delocalised system, stopping at positions 2 and 6, with the positive charge inside '
+           + 'it. Then the C–H electrons drop back into the ring. AlCl₄⁻ takes the H⁺, which '
+           + 'regenerates AlCl₃ and gives HCl.',
+      marks: ['Horseshoe running from position 2 to position 6 only — five carbons, no further',
+              'Positive charge drawn inside the ring',
+              'Curly arrow from the C–H bond into the ring',
+              'AlCl₃ regenerated and HCl formed'],
+      scene: {
+        nodes: [
+          ...ringNodes(), N('h', 'H', 262, 62),
+          N('ac', 'C', 420, 82), N('acm', 'CH₃', 528, 130), N('aco', 'O', 420, 18, { lp: [0, 180] }),
+          N('bo', 'AlCl₄', 110, 130, { chg: '−', cdx: -34, cdy: -22, lp: [10, 95] })
+        ],
+        bonds: [...ringBonds(), BD('v0', 'h'), BD('v0', 'ac'), BD('ac', 'acm'), BD('ac', 'aco', 2)],
+        arcs: [HORSESHOE],
+        arrows: [
+          AR('bo@12,30', 'h@188,24', -24),
+          AR('v0|h', RING.cx + ',' + (RING.cy - 52), 26, { delay: 0.5 })
+        ],
+        notes: [
+          TX(330, 226, '+', { size: 30, col: '#f87171' }),
+          NAME(660, 230, 'AlCl₄⁻ + H⁺ → AlCl₃ + HCl')
+        ]
+      }
+    },
+    {
+      title: 'Phenylethanone',
+      teach: 'The aromatic ring is restored and a ketone group has been attached. A carbon–carbon '
+           + 'bond has been made to the ring.',
+      marks: ['Correct product: phenylethanone', 'AlCl₃ regenerated, HCl released'],
+      scene: {
+        nodes: [
+          ...ringNodes(),
+          N('ac', 'C', 335, 62), N('acm', 'CH₃', 448, 98), N('aco', 'O', 244, 24, { lp: [180, 90] })
+        ],
+        bonds: [...ringBonds(), BD('v0', 'ac'), BD('ac', 'acm'), BD('ac', 'aco', 2)],
+        circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }],
+        notes: [NAME(330, 360, 'phenylethanone'), NAME(660, 215, '+ HCl   + AlCl₃ regenerated')]
+      }
+    }
+  ]
+});
+
+/* ── ALKANES: free-radical substitution ───────────────────────────────────
+   The one mechanism on the specification that is answered with equations
+   rather than curly arrows. AQA ask for the initiation, propagation and
+   termination steps, with a dot on every radical; half-headed "fishhook"
+   arrows are an other-board convention and earn nothing here. So this is
+   staged as what actually happens: ultraviolet light splits Cl₂, and the
+   radicals that result collide with the next molecule. ─────────────────── */
+
+MECHANISMS.push({
+  id: 'frs-chlorination',
+  group: 'Alkanes',
+  type: 'Free-radical substitution',
+  name: 'Chlorination of methane',
+  spec: '3.3.2',
+  equation: 'CH₄ + Cl₂ → CH₃Cl + HCl   (ultraviolet light)',
+  conditions: 'Ultraviolet light (or a high temperature) to break the Cl–Cl bond.',
+  why: 'A radical is a species with an unpaired electron, written with a dot: Cl•, •CH₃. '
+     + 'Ultraviolet light breaks the Cl–Cl bond by homolytic fission — the bond splits evenly, '
+     + 'one electron to each atom — and the radicals that result set off a chain reaction. '
+     + 'Heterolytic fission, used in every other mechanism on the specification, gives both '
+     + 'electrons to one atom instead and produces ions.',
+  extra: 'AQA do not ask for curly arrows here. The marks are for the equations: one initiation '
+       + 'step, two propagation steps and the termination steps, each with the dots shown. You '
+       + 'may see half-headed "fishhook" arrows in textbooks written for other exam boards — '
+       + 'they are not required, and time spent drawing them is time lost. What is required is '
+       + 'that the two propagation steps use up one radical and make another, so the chain keeps '
+       + 'running.',
+  steps: [
+    {
+      title: 'Initiation — ultraviolet light breaks the Cl–Cl bond',
+      teach: 'Ultraviolet light supplies enough energy to break the Cl–Cl bond homolytically: '
+           + 'the bonding pair splits evenly, one electron to each chlorine, so two chlorine '
+           + 'radicals form. Only the Cl–Cl bond breaks — it is much weaker than any C–H bond in '
+           + 'methane.',
+      marks: ['Cl₂ → 2Cl• as the initiation equation',
+              'A dot on each chlorine radical',
+              'Homolytic fission named — one electron to each atom',
+              'UV light (or a high temperature) given as the condition'],
+      scene: {
+        uv: { x: 100, y: 168, tx: 268, ty: 186 },
+        nodes: [
+          N('cl1', 'Cl', 330, 190), N('cl2', 'Cl', 425, 190),
+          N('p1', 'Cl', 618, 190, { rad: 0, enter: [40, 0], at: 1.0 }),
+          N('p2', 'Cl', 742, 190, { rad: 0, enter: [-40, 0], at: 1.0 })
+        ],
+        bonds: [BD('cl1', 'cl2')],
+        notes: [
+          RXN(525, 200, 0.9), PLUS(682, 200, 1.0),
+          NAME(378, 285, 'homolytic fission'),
+          NAME(678, 285, 'two chlorine radicals'),
+          NAME(100, 232, 'ultraviolet light'),
+          EQN(440, 360, 'Cl₂   →   2Cl•', 1.1)
+        ]
+      }
+    },
+    {
+      title: 'Propagation 1 — a chlorine radical takes a hydrogen',
+      teach: 'A chlorine radical collides with a methane molecule and pulls off a hydrogen atom, '
+           + 'making hydrogen chloride. What is left behind is a methyl radical, with the '
+           + 'unpaired electron on the carbon. One radical has been used up and a new one made — '
+           + 'that is what keeps the chain going.',
+      marks: ['Cl• + CH₄ → •CH₃ + HCl',
+              'Dots shown on both the chlorine radical and the methyl radical',
+              'One radical used up and one made, so the chain continues'],
+      scene: {
+        nodes: [
+          N('clr', 'Cl', 92, 190, { rad: 0, enter: [-96, 0], at: 0.2 }),
+          N('c', 'C', 300, 190), N('hu', 'H', 300, 112), N('hd', 'H', 300, 268),
+          N('hl', 'H', 222, 190, { col: NEW }), N('hr', 'H', 378, 190),
+          N('ph', 'H', 556, 190, { col: NEW, at: 1.2 }),
+          N('pcl', 'Cl', 630, 190, { at: 1.2 }),
+          N('pm', 'CH₃', 772, 190, { rad: 180, at: 1.2 })
+        ],
+        bonds: [
+          BD('c', 'hu'), BD('c', 'hd'), BD('c', 'hr'),
+          BD('c', 'hl', 1, { col: NEW }),
+          BD('ph', 'pcl', 1, { col: NEW, at: 1.2 })
+        ],
+        notes: [
+          PLUS(168, 200), RXN(472, 200, 1.1),
+          NAME(300, 330, 'methane'),
+          NAME(690, 250, 'the transferred H is green'),
+          EQN(440, 372, 'Cl•  +  CH₄   →   •CH₃  +  HCl', 1.3)
+        ]
+      }
+    },
+    {
+      title: 'Propagation 2 — the methyl radical attacks Cl₂',
+      teach: 'The methyl radical collides with a chlorine molecule, takes one chlorine atom to '
+           + 'become chloromethane, and leaves a chlorine radical behind. That radical goes on to '
+           + 'attack another methane, so one initiation event can lead to thousands of product '
+           + 'molecules.',
+      marks: ['•CH₃ + Cl₂ → CH₃Cl + Cl•',
+              'A dot on the methyl radical and on the chlorine radical produced',
+              'The chlorine radical is regenerated, so the chain continues'],
+      scene: {
+        nodes: [
+          N('m', 'CH₃', 108, 190, { rad: 180, enter: [-96, 0], at: 0.2 }),
+          N('cl1', 'Cl', 278, 190, { col: NEW }), N('cl2', 'Cl', 372, 190),
+          N('pc', 'H₃C', 552, 190, { at: 1.2 }),
+          N('pcl', 'Cl', 640, 190, { col: NEW, at: 1.2 }),
+          N('pr', 'Cl', 780, 190, { rad: 0, at: 1.2 })
+        ],
+        bonds: [
+          BD('cl1', 'cl2'),
+          BD('pc', 'pcl', 1, { col: NEW, at: 1.2 })
+        ],
+        notes: [
+          PLUS(190, 200), RXN(462, 200, 1.1),
+          NAME(325, 285, 'chlorine'),
+          EQN(440, 372, '•CH₃  +  Cl₂   →   CH₃Cl  +  Cl•', 1.3)
+        ]
+      }
+    },
+    {
+      title: 'Termination — two radicals collide and pair up',
+      teach: 'Whenever two radicals meet they can pair their unpaired electrons to form a bond. '
+           + 'That removes two radicals from the mixture without making any, so the chain stops. '
+           + 'There are three possible terminations here and you should be able to write all of '
+           + 'them.',
+      marks: ['Any two radicals combining, e.g. •CH₃ + Cl• → CH₃Cl',
+              'Dots shown on both radicals on the left-hand side',
+              'Termination removes radicals and so ends the chain',
+              'Able to write all three termination equations'],
+      scene: {
+        nodes: [
+          N('a', 'Cl', 175, 110, { rad: 0, enter: [-72, 0], at: 0.2 }),
+          N('b', 'CH₃', 360, 110, { rad: 180, enter: [72, 0], at: 0.2 }),
+          N('pc', 'H₃C', 580, 110, { at: 1.2 }), N('pcl', 'Cl', 668, 110, { at: 1.2 })
+        ],
+        bonds: [BD('pc', 'pcl', 1, { at: 1.2 })],
+        notes: [
+          PLUS(263, 120), RXN(472, 120, 1.1),
+          NAME(440, 205, 'the three terminations'),
+          EQN(440, 255, 'Cl•  +  Cl•   →   Cl₂'),
+          EQN(440, 305, '•CH₃  +  Cl•   →   CH₃Cl'),
+          EQN(440, 355, '•CH₃  +  •CH₃   →   C₂H₆')
+        ]
+      }
+    },
+    {
+      title: 'Why the yield is poor',
+      teach: 'Chloromethane still has C–H bonds, so a chlorine radical can attack it again. The '
+           + 'result is a mixture of chloromethane, dichloromethane, trichloromethane and '
+           + 'tetrachloromethane, plus ethane from termination. With a longer alkane the radical '
+           + 'can also attack different carbons, giving a mixture of positional isomers.',
+      marks: ['Further substitution produces CH₂Cl₂, CHCl₃ and CCl₄',
+              'Termination gives minor products such as ethane',
+              'Longer chains give a mixture of positional isomers'],
+      scene: {
+        nodes: [],
+        notes: [
+          TX(440, 130, 'CH₄  →  CH₃Cl  →  CH₂Cl₂  →  CHCl₃  →  CCl₄',
+             { size: 22, col: '#e6edf3' }),
+          NAME(440, 190, 'every product still has C–H bonds left to attack'),
+          TX(440, 265, 'Use a large excess of methane to favour CH₃Cl.',
+             { size: 16, col: '#94a3b8' }),
+          TX(440, 300, 'CFC radicals attack ozone by exactly this chain mechanism.',
+             { size: 16, col: '#94a3b8' })
+        ]
+      }
+    }
+  ]
+});
+
+const GROUP_ORDER = ['Alkanes', 'Alkenes', 'Halogenoalkanes', 'Alcohols',
+                     'Carbonyls', 'Acyl chlorides', 'Aromatic'];
+const GROUP_ICON = {
+  'Alkanes': 'flame', 'Alkenes': 'git-merge', 'Halogenoalkanes': 'replace',
+  'Alcohols': 'droplet', 'Carbonyls': 'circle-dot', 'Acyl chlorides': 'zap',
+  'Aromatic': 'hexagon'
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   3.  THE ARROW RULES, AND WHAT LOSES MARKS
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const ARROW_RULES = [
+  {
+    icon: 'move-right',
+    title: 'What a curly arrow means',
+    body: 'A curly arrow shows the movement of a pair of electrons, and every curly arrow on '
+        + 'the AQA specification is double-headed. Nothing else is ever represented by one — not '
+        + 'an atom moving, not a molecule approaching, not a bond “swapping”.'
+  },
+  {
+    icon: 'crosshair',
+    title: 'Where an arrow starts',
+    body: 'Always at electrons: either a lone pair, or the middle of a bond (a σ bond, a π bond, '
+        + 'or the delocalised ring of benzene). Never start an arrow at a negative sign, at a '
+        + 'positive sign, or at an atom symbol. If a species has a lone pair, draw the lone pair '
+        + 'in and start there.'
+  },
+  {
+    icon: 'target',
+    title: 'Where an arrow ends',
+    body: 'At the atom that gains the electrons, or between two atoms where the new bond forms. '
+        + 'For an attack on a δ+ carbon, the head goes on the carbon. For breaking a bond, the '
+        + 'head goes on the atom that keeps the pair. An arrow that stops in blank space earns '
+        + 'nothing.'
+  },
+  {
+    icon: 'diff',
+    title: 'Dipoles and charges',
+    body: 'Draw δ+ and δ− on every polar bond you are using: C–Br, C–Cl, C=O, H–Br, H–O. Draw '
+        + 'full charges on ions, and put the charge on the correct atom — the + belongs on the '
+        + 'carbon of a carbocation and on the nitrogen or oxygen when they have gained an extra '
+        + 'bond. A charge floating next to the structure is not credited.'
+  },
+  {
+    icon: 'circle-dot',
+    title: 'Lone pairs',
+    body: 'Show the lone pair on any nucleophile you are using: :OH⁻, :CN⁻, :NH₃, water, alcohols, '
+        + 'amines, and halide ions. It is the visible starting point of your arrow, and AQA mark '
+        + 'schemes frequently require the arrow to come from it.'
+  },
+  {
+    icon: 'layers',
+    title: 'Intermediates must be drawn in full',
+    body: 'A carbocation, a tetrahedral intermediate, or an alkylammonium ion is a separate '
+        + 'species and needs its own complete structure with all bonds and charges. Do not run '
+        + 'two steps together into one diagram, and do not draw the product of step 2 with the '
+        + 'arrows of step 1 still on it.'
+  },
+  {
+    icon: 'spell-check',
+    title: 'AQA vocabulary',
+    body: 'The specification names the mechanisms: free-radical substitution, electrophilic '
+        + 'addition, nucleophilic substitution, elimination, nucleophilic addition, nucleophilic '
+        + 'addition–elimination, and electrophilic substitution. AQA does not use SN1, SN2, E1 or '
+        + 'E2, and those labels earn no credit — use the specification names.'
+  },
+  {
+    icon: 'flame',
+    title: 'Free radicals need no arrows',
+    body: 'AQA do not ask for curly arrows in free-radical substitution. The marks are for the '
+        + 'equations — one initiation step, two propagation steps and the terminations — with a '
+        + 'dot on every radical to show its unpaired electron. Textbooks written for other exam '
+        + 'boards draw half-headed “fishhook” arrows for these steps; here they earn nothing, and '
+        + 'the time spent on them is time lost.'
+  },
+  {
+    icon: 'ruler',
+    title: 'Draw it big and clearly',
+    body: 'Examiners have to see exactly where the tail and head sit. Leave space between the '
+        + 'nucleophile and the substrate, make the arrow a clear arc rather than a scribble, and '
+        + 'make sure the head touches the atom you mean. If an arrow could be read as pointing at '
+        + 'two different atoms, it will not be credited.'
+  }
+];
+
+const COMMON_ERRORS = [
+  { err: 'Arrow starts at the negative charge',
+    fix: 'Start it at the lone pair. Draw the lone pair on the ion first, then begin the arrow there.' },
+  { err: 'Arrow starts at an atom symbol rather than at electrons',
+    fix: 'Move the tail onto the bond or onto the lone pair — the electrons are what move.' },
+  { err: 'Arrow points into empty space',
+    fix: 'Put the head on the atom that gains the pair, or exactly between the two atoms forming the new bond.' },
+  { err: 'Arrow drawn from an electrophile to a nucleophile',
+    fix: 'Arrows always run from electron-rich to electron-poor. Attack goes nucleophile → δ+ atom, never the reverse.' },
+  { err: 'δ+ and δ− missing from a polar bond',
+    fix: 'Label the dipole on C–Br, C–Cl, C=O or H–Br whenever the mechanism uses it. Often a mark in itself.' },
+  { err: 'Carbocation drawn without its positive charge, or with the charge in the wrong place',
+    fix: 'The + goes on the carbon with only three bonds.' },
+  { err: 'Carbon left with five bonds',
+    fix: 'If a nucleophile adds to C=O or C=C, a second arrow must break the π bond in the same step.' },
+  { err: 'Benzene intermediate drawn with a complete circle',
+    fix: 'Use a horseshoe: one carbon is now sp³ and is outside the delocalised system. Put the + inside the ring.' },
+  { err: 'Drawing curly arrows for free-radical substitution',
+    fix: 'AQA want the initiation, propagation and termination equations instead. No arrows are required.' },
+  { err: 'Forgetting the dot on a radical',
+    fix: 'The dot is the unpaired electron — it is what makes it a radical. Write Cl• and •CH₃, not Cl and CH₃.' },
+  { err: 'Giving only one propagation step',
+    fix: 'There are two, and between them they must use up one radical and make another so the chain carries on.' },
+  { err: 'Using SN1, SN2, E1 or E2 as the name of the mechanism',
+    fix: 'Use the AQA name: nucleophilic substitution, or elimination.' },
+  { err: 'Ethanolic and aqueous conditions mixed up for KOH',
+    fix: 'Warm aqueous KOH gives substitution (an alcohol); hot ethanolic KOH gives elimination (an alkene).' },
+  { err: 'Writing [H] in the mechanism for a NaBH₄ reduction',
+    fix: '[H] is fine in an equation, but the mechanism needs the hydride ion H⁻ with its lone pair.' }
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   4.  PRACTICE: SPOT THE ERROR
+   Each item is a deliberately flawed diagram. Clickable hotspots sit over
+   the places a student might blame; only one of them is the actual fault.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const FLAWED = [
+  {
+    id: 'f-charge-tail',
+    title: 'Bromoethane + aqueous KOH',
+    prompt: 'This candidate has drawn the hydrolysis of bromoethane. Click the part of the '
+          + 'diagram that would lose a mark.',
+    scene: {
+      nodes: [
+        ...haloSkeleton(),
+        N('o', 'O', 300, 345, { chg: '−', cdx: -24, cdy: -20, lp: [-55, 40, 130] }),
+        N('oh', 'H', 218, 345)
+      ],
+      bonds: [...haloBonds(), BD('o', 'oh')],
+      arrows: [AR('276,325', 'c2@130,26', 26), expelBromide()]
+    },
+    hotspots: [
+      { x: 276, y: 325, r: 24, correct: true,
+        why: 'The arrow has been drawn starting at the negative sign. A curly arrow represents a '
+           + 'moving pair of electrons, so it must start at the lone pair on the oxygen — which '
+           + 'this candidate has even drawn in. AQA mark schemes specify “arrow from lone pair on '
+           + 'O”, so this loses the first mark outright.' },
+      { x: 388, y: 210, r: 22, correct: false,
+        why: 'This head is fine: it lands on the δ+ carbon, which is exactly where the new bond forms.' },
+      { x: 478, y: 204, r: 22, correct: false,
+        why: 'This arrow is correct: it starts on the C–Br bond and ends on the bromine, which keeps both electrons.' },
+      { x: 405, y: 160, r: 22, correct: false,
+        why: 'The dipole labels are correct and are worth a mark — C is δ+ and Br is δ−.' }
+    ]
+  },
+  {
+    id: 'f-wrong-target',
+    title: 'Ethene + HBr',
+    prompt: 'The first step of an electrophilic addition. Click the mistake.',
+    scene: {
+      nodes: [
+        N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+        ...alkLeftH(), ...alkRightH(),
+        N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
+        N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
+      ],
+      bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('h', 'br')],
+      arrows: [AR('c1|c2', 'br@70,30', -30), AR('h|br', 'br@0,30', 24, { delay: 0.5 })]
+    },
+    hotspots: [
+      { x: 310, y: 70, r: 26, correct: true,
+        why: 'The arrow from the C=C has been pointed at the bromine. The π electrons attack the '
+           + 'δ+ hydrogen — that is the electrophilic part of the molecule. Sending them to the '
+           + 'δ− bromine pushes electrons towards a negative centre, which cannot happen.' },
+      { x: 355, y: 235, r: 26, correct: false,
+        why: 'The tail is right: it starts in the middle of the C=C bond, which is where the π electrons are.' },
+      { x: 400, y: 132, r: 24, correct: false,
+        why: 'Nothing wrong with the hydrogen itself — the problem is that no arrow points at it.' },
+      { x: 430, y: 138, r: 22, correct: false,
+        why: 'The δ+ label on the hydrogen is correct and is worth a mark.' }
+    ]
+  },
+  {
+    id: 'f-missing-charge',
+    title: 'The intermediate in an electrophilic addition',
+    prompt: 'This is the second step of ethene + HBr. Click what is missing or wrong.',
+    scene: {
+      nodes: [
+        N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+        ...alkLeftH(), ...alkRightH(), N('hn', 'H', 410, 150),
+        N('br', 'Br', 300, 60, { chg: '−', cdx: -34, cdy: -20, lp: [90, 180, 270, 0] })
+      ],
+      bonds: [BD('c1', 'c2'), ...alkLeftB(), ...alkRightB(), BD('c2', 'hn')],
+      arrows: [AR('br@90,26', 'c1@-90,26', -24)]
+    },
+    hotspots: [
+      { x: 300, y: 235, r: 30, correct: true,
+        why: 'The carbocation has no positive charge on it. This carbon has only three bonds, so '
+           + 'it must carry a full +. AQA award a specific mark for the correct intermediate, and '
+           + 'a carbocation without its charge does not get it.' },
+      { x: 300, y: 60, r: 30, correct: false,
+        why: 'The bromide ion is drawn correctly, with its lone pairs and a full negative charge.' },
+      { x: 410, y: 150, r: 26, correct: false,
+        why: 'This hydrogen is right. It is the one that added from H–Br in the first step, and it '
+           + 'is on the correct carbon.' },
+      { x: 312, y: 148, r: 22, correct: false,
+        why: 'This arrow is right: it starts at a lone pair on the bromide and ends on the electron-deficient carbon.' }
+    ]
+  },
+  {
+    id: 'f-backwards',
+    title: 'Ethanal + NaBH₄',
+    prompt: 'A nucleophilic addition to a carbonyl. Click the arrow or label that is wrong.',
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 250, 245), N('c2', 'C', 355, 245, { delta: 'δ+', dx: 32, dy: -6 }),
+        N('o', 'O', 355, 140, { delta: 'δ−', dx: 34, dy: -2, lp: [0, 180] }),
+        N('h', 'H', 440, 297),
+        N('hyd', 'H', 240, 355, { chg: '−', cdx: -20, cdy: -18, lp: [-45] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'h')],
+      arrows: [AR('hyd@-45,24', 'c2@165,28', 26), AR('o@200,26', 'c2@125,26', -30, { delay: 0.5 })]
+    },
+    hotspots: [
+      { x: 332, y: 131, r: 26, correct: true,
+        why: 'The second arrow has been drawn from the oxygen down onto the carbon — backwards. '
+           + 'The π electrons of C=O move away from the carbon and onto the oxygen, giving it the '
+           + 'negative charge. Without that arrow the carbon would end up with five bonds.' },
+      { x: 257, y: 338, r: 24, correct: false,
+        why: 'This tail is correct: it starts on the lone pair of the hydride ion.' },
+      { x: 389, y: 138, r: 22, correct: false,
+        why: 'The δ− on the oxygen is correct. Oxygen is more electronegative than carbon.' },
+      { x: 440, y: 297, r: 24, correct: false,
+        why: 'The aldehyde hydrogen is drawn correctly and takes no part in this step.' }
+    ]
+  },
+  {
+    id: 'f-radical-steps',
+    title: 'Chlorination of methane',
+    prompt: 'A candidate has written the three stages of the free-radical substitution. '
+          + 'Click the line that would lose a mark.',
+    scene: {
+      nodes: [],
+      notes: [
+        NAME(440, 96, 'initiation'),
+        TX(440, 138, 'Cl₂   →   2Cl•', { size: 21, col: '#e6edf3' }),
+        NAME(440, 203, 'propagation'),
+        TX(440, 245, 'Cl•  +  CH₄   →   CH₃Cl  +  H•', { size: 21, col: '#e6edf3' }),
+        NAME(440, 310, 'termination'),
+        TX(440, 352, '•CH₃  +  Cl•   →   CH₃Cl', { size: 21, col: '#e6edf3' }),
+        TX(742, 138, 'UV light', { col: '#fbbf24' })
+      ]
+    },
+    hotspots: [
+      { x: 440, y: 240, rx: 205, ry: 34, correct: true,
+        why: 'The propagation step is wrong. A chlorine radical collides with methane and pulls '
+           + 'off a hydrogen atom, so the products are a methyl radical and hydrogen chloride: '
+           + 'Cl• + CH₄ → •CH₃ + HCl. What is written swaps the chlorine straight in and releases '
+           + 'a hydrogen radical, which is not what happens — and it leaves the second propagation '
+           + 'step with no methyl radical to work on.' },
+      { x: 440, y: 133, rx: 130, ry: 34, correct: false,
+        why: 'This initiation step is right: the Cl–Cl bond breaks homolytically to give two '
+           + 'chlorine radicals, and both dots are shown.' },
+      { x: 440, y: 347, rx: 165, ry: 34, correct: false,
+        why: 'This termination step is right. Two radicals pair their unpaired electrons, which '
+           + 'removes radicals from the mixture and ends the chain.' },
+      { x: 742, y: 133, rx: 58, ry: 26, correct: false,
+        why: 'UV light is the correct condition, and stating it is worth a mark — it supplies the '
+           + 'energy for the homolytic fission.' }
+    ]
+  },
+  {
+    id: 'f-horseshoe',
+    title: 'The intermediate in the nitration of benzene',
+    prompt: 'An electrophilic substitution intermediate. Click what has been drawn wrongly.',
+    scene: {
+      nodes: [...ringNodes(), N('h', 'H', 262, 62), N('no2', 'NO₂', 412, 66)],
+      bonds: [...ringBonds(), BD('v0', 'h'), BD('v0', 'no2')],
+      circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }],
+      notes: [TX(330, 226, '+', { size: 30, col: '#f87171' })]
+    },
+    hotspots: [
+      { x: 330, y: 167, r: 28, correct: true,
+        why: 'The delocalised ring has been drawn as a complete circle. The top carbon now has '
+           + 'four single bonds, so it is sp³ and cannot be part of the delocalised system. AQA '
+           + 'require a horseshoe over the other five carbons, running from the carbon on one '
+           + 'side of it to the carbon on the other — positions 2 and 6 — with the + inside.' },
+      { x: 330, y: 220, r: 24, correct: false,
+        why: 'The positive charge inside the ring is right — the charge is spread over five carbons.' },
+      { x: 412, y: 66, r: 28, correct: false,
+        why: 'The nitro group has bonded correctly to the ring carbon.' },
+      { x: 262, y: 62, r: 26, correct: false,
+        why: 'The hydrogen is still attached at this stage — it is lost in the next step, not this one.' }
+    ]
+  }
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   5.  PRACTICE: BUILD THE MECHANISM
+   The student places each curly arrow by clicking a start point and then an
+   end point. The marking points are the ones AQA actually print.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const QUESTIONS = [
+  {
+    id: 'q-hbr',
+    title: 'Electrophilic addition',
+    stem: 'Ethene reacts with hydrogen bromide at room temperature. Outline the mechanism for '
+        + 'the first step of this reaction, showing the movement of electron pairs.',
+    total: 4,
+    scene: {
+      nodes: [
+        N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
+        ...alkLeftH(), ...alkRightH(),
+        N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
+        N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
+      ],
+      bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('h', 'br')]
+    },
+    points: [
+      { id: 'a', label: 'the C=C bond', anchor: 'c1|c2', role: 'bond' },
+      { id: 'b', label: 'the H atom', anchor: 'h@135,24', role: 'atom' },
+      { id: 'c', label: 'the H–Br bond', anchor: 'h|br', role: 'bond' },
+      { id: 'd', label: 'the Br atom', anchor: 'br@0,30', role: 'atom' },
+      { id: 'e', label: 'empty space beside the molecule', anchor: '620,320', role: 'space' },
+      { id: 'f', label: 'the left-hand carbon', anchor: 'c1', role: 'atom' }
+    ],
+    answers: [
+      { from: 'a', to: 'b', bow: -26, note: 'The π electrons attack the δ+ hydrogen.' },
+      { from: 'c', to: 'd', bow: 24, note: 'The H–Br bond breaks; both electrons go to bromine.' }
+    ],
+    marks: [
+      'M1  Curly arrow from the C=C bond to the H of H–Br',
+      'M2  Curly arrow from the H–Br bond to the Br',
+      'M3  Correct carbocation, CH₃CH₂⁺, with the + on the carbon',
+      'M4  Curly arrow from a lone pair on Br⁻ to the C⁺, giving bromoethane'
+    ]
+  },
+  {
+    id: 'q-cn',
+    title: 'Nucleophilic substitution',
+    stem: 'Bromoethane is heated under reflux with potassium cyanide dissolved in ethanol. '
+        + 'Outline the mechanism for this reaction.',
+    total: 4,
+    scene: {
+      nodes: [
+        ...haloSkeleton(),
+        N('cn', 'C', 300, 345, { chg: '−', cdx: -20, cdy: -20, lp: [-55] }),
+        N('nn', 'N', 210, 345, { lp: [180] })
+      ],
+      bonds: [...haloBonds(), BD('cn', 'nn', 3)]
+    },
+    points: [
+      { id: 'a', label: 'the lone pair on the C of CN⁻', anchor: 'cn@-55,26', role: 'lonePair' },
+      { id: 'b', label: 'the δ+ carbon', anchor: 'c2@130,26', role: 'atom' },
+      { id: 'c', label: 'the C–Br bond', anchor: 'c2|br', role: 'bond' },
+      { id: 'd', label: 'the Br atom', anchor: 'br@148,26', role: 'atom' },
+      { id: 'e', label: 'the negative sign on CN⁻', anchor: 'cn@-160,22', role: 'charge' },
+      { id: 'f', label: 'the nitrogen of CN⁻', anchor: 'nn', role: 'atom' }
+    ],
+    answers: [
+      { from: 'a', to: 'b', bow: 26, note: 'The lone pair on carbon forms the new C–C bond.' },
+      { from: 'c', to: 'd', bow: -22, note: 'The C–Br bond breaks; bromide is the leaving group.' }
+    ],
+    marks: [
+      'M1  Curly arrow from the lone pair on the carbon of CN⁻ to the δ+ carbon',
+      'M2  Curly arrow from the C–Br bond to the Br',
+      'M3  δ+ and δ− shown correctly on the C–Br bond',
+      'M4  Correct products: CH₃CH₂CN and Br⁻'
+    ]
+  },
+  {
+    id: 'q-carbonyl',
+    title: 'Nucleophilic addition',
+    stem: 'Ethanal is reduced by sodium tetrahydridoborate(III), which acts as a source of '
+        + 'hydride ions. Outline the mechanism for the first step.',
+    total: 4,
+    scene: {
+      nodes: [
+        N('c1', 'H₃C', 250, 245), N('c2', 'C', 355, 245, { delta: 'δ+', dx: 32, dy: -6 }),
+        N('o', 'O', 355, 140, { delta: 'δ−', dx: 34, dy: -2, lp: [0, 180] }),
+        N('h', 'H', 440, 297),
+        N('hyd', 'H', 240, 355, { chg: '−', cdx: -20, cdy: -18, lp: [-45] })
+      ],
+      bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'h')]
+    },
+    points: [
+      { id: 'a', label: 'the lone pair on H⁻', anchor: 'hyd@-45,24', role: 'lonePair' },
+      { id: 'b', label: 'the carbonyl carbon', anchor: 'c2@165,28', role: 'atom' },
+      { id: 'c', label: 'the C=O bond', anchor: 'c2|o', role: 'bond' },
+      { id: 'd', label: 'the oxygen atom', anchor: 'o@250,26', role: 'atom' },
+      { id: 'e', label: 'the negative sign on H⁻', anchor: 'hyd@-140,24', role: 'charge' },
+      { id: 'f', label: 'the aldehyde hydrogen', anchor: 'h', role: 'atom' }
+    ],
+    answers: [
+      { from: 'a', to: 'b', bow: 26, note: 'The hydride lone pair forms the new C–H bond.' },
+      { from: 'c', to: 'd', bow: 26, note: 'The π electrons move onto the oxygen, so carbon keeps four bonds.' }
+    ],
+    marks: [
+      'M1  Curly arrow from the lone pair on H⁻ to the carbon of C=O',
+      'M2  Curly arrow from the C=O bond to the O',
+      'M3  δ+ on C and δ− on O shown',
+      'M4  Intermediate with the negative charge on oxygen, then protonated to give ethanol'
+    ]
+  },
+  {
+    id: 'q-elimination',
+    title: 'Elimination',
+    stem: '2-bromopropane is heated with a concentrated solution of potassium hydroxide in '
+        + 'ethanol. Outline the mechanism for the elimination reaction.',
+    total: 4,
+    scene: {
+      nodes: [
+        N('o', 'O', 150, 105, { chg: '−', cdx: -22, cdy: -18, lp: [10, 90, 200] }),
+        N('oh', 'H', 150, 45),
+        N('h', 'H', 265, 130),
+        N('c1', 'CH₂', 265, 225),
+        N('c2', 'CH', 380, 225),
+        N('c3', 'CH₃', 380, 330),
+        N('br', 'Br', 480, 225, { delta: 'δ−', dy: -30, lp: [40, 90, 140] })
+      ],
+      bonds: [BD('o', 'oh'), BD('h', 'c1'), BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'br')]
+    },
+    points: [
+      { id: 'a', label: 'a lone pair on OH⁻', anchor: 'o@15,26', role: 'lonePair' },
+      { id: 'b', label: 'the hydrogen on the adjacent carbon', anchor: 'h@185,24', role: 'atom' },
+      { id: 'c', label: 'the C–H bond', anchor: 'c1|h', role: 'bond' },
+      { id: 'd', label: 'between the two carbons', anchor: 'c1|c2@-90,16', role: 'bond' },
+      { id: 'e', label: 'the C–Br bond', anchor: 'c2|br', role: 'bond' },
+      { id: 'f', label: 'the Br atom', anchor: 'br@148,26', role: 'atom' },
+      { id: 'g', label: 'the negative sign on OH⁻', anchor: 'o@200,24', role: 'charge' },
+      { id: 'h', label: 'the carbon bearing the Br', anchor: 'c2', role: 'atom' }
+    ],
+    answers: [
+      { from: 'a', to: 'b', bow: -22, note: 'The hydroxide acts as a base and removes a proton.' },
+      { from: 'c', to: 'd', bow: 26, note: 'Those C–H electrons become the π bond of the alkene.' },
+      { from: 'e', to: 'f', bow: -22, note: 'The bromide leaves with both electrons.' }
+    ],
+    marks: [
+      'M1  Curly arrow from a lone pair on OH⁻ to the H on the adjacent carbon',
+      'M2  Curly arrow from that C–H bond to between the two carbon atoms',
+      'M3  Curly arrow from the C–Br bond to the Br',
+      'M4  Correct products: propene, H₂O and Br⁻'
+    ]
+  },
+  {
+    id: 'q-benzene',
+    title: 'Electrophilic substitution',
+    stem: 'Benzene is nitrated using a mixture of concentrated nitric and sulfuric acids. '
+        + 'Outline the mechanism for the reaction of benzene with the nitronium ion.',
+    total: 4,
+    scene: {
+      nodes: [...ringNodes(), N('no2', 'NO₂', 330, 58, { chg: '+' })],
+      bonds: ringBonds(),
+      circles: [{ cx: RING.cx, cy: RING.cy, r: 48 }]
+    },
+    points: [
+      { id: 'a', label: 'the delocalised ring', anchor: '330,167', role: 'bond' },
+      { id: 'b', label: 'the nitrogen of NO₂⁺', anchor: 'no2@90,26', role: 'atom' },
+      { id: 'c', label: 'a C–C bond of the ring', anchor: 'v0|v1', role: 'bond' },
+      { id: 'd', label: 'the positive sign on NO₂⁺', anchor: 'no2@-25,25', role: 'charge' },
+      { id: 'e', label: 'a ring carbon', anchor: 'v3', role: 'atom' }
+    ],
+    answers: [
+      { from: 'a', to: 'b', bow: 26, note: 'A pair of electrons leaves the delocalised ring to bond to the nitrogen.' }
+    ],
+    marks: [
+      'M1  Curly arrow from the delocalised ring to the N of NO₂⁺',
+      'M2  Intermediate drawn with a horseshoe and a + inside the ring',
+      'M3  Curly arrow from the C–H bond back into the ring',
+      'M4  Nitrobenzene as the product, with H₂SO₄ regenerated'
+    ]
+  }
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   6.  INTERFACE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Lucide ships icon data as [[tag, attrs], ...]. Build the SVG by hand and
+   hand it to a span whose children React never re-renders, so the library and
+   the reconciler stay out of each other's way. If the CDN is blocked the icon
+   is simply absent and every control still reads correctly from its label. */
+function Icon({ name, size = 16, cls = '' }) {
+  const host = useRef(null);
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    el.innerHTML = '';
+    const L = window.lucide;
+    const key = name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join('');
+    const node = L && L.icons && L.icons[key];
+    if (!node) return;
+    const parts = (Array.isArray(node) && node[0] === 'svg') ? node[2] : node;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    (parts || []).forEach(part => {
+      if (!Array.isArray(part)) return;
+      const child = document.createElementNS(NS, part[0]);
+      Object.keys(part[1] || {}).forEach(k => child.setAttribute(k, part[1][k]));
+      svg.appendChild(child);
+    });
+    el.appendChild(svg);
+  }, [name, size]);
+  return <span ref={host} className={'inline-flex shrink-0 ' + cls}
+               style={{ width: size, height: size }} aria-hidden="true" />;
+}
+
+function Toggle({ on, set, label }) {
+  return (
+    <button onClick={() => set(!on)}
+            className={'px-3 py-1.5 rounded-lg text-xs font-semibold border transition ' +
+              (on ? 'bg-sky-500/20 border-sky-400/50 text-sky-200'
+                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200')}>
+      {label}
+    </button>
+  );
+}
+
+/* ── Section 1: the mechanism player ──────────────────────────────────── */
+
+function Player() {
+  const [mid, setMid] = useState('ea-ethene-hbr');
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [dipoles, setDipoles] = useState(true);
+  const [lonePairs, setLonePairs] = useState(true);
+  const [arrows, setArrows] = useState(true);
+  const [query, setQuery] = useState('');
+  const [animKey, setAnimKey] = useState(0);
+
+  const mech = MECHANISMS.find(m => m.id === mid) || MECHANISMS[0];
+  const stepData = mech.steps[Math.min(step, mech.steps.length - 1)];
+  const last = mech.steps.length - 1;
+
+  useEffect(() => { setStep(0); setPlaying(false); setAnimKey(k => k + 1); }, [mid]);
+  useEffect(() => { setAnimKey(k => k + 1); }, [step]);
+  useEffect(() => {
+    if (!playing) return;
+    const t = setTimeout(() => {
+      if (step < last) setStep(step + 1); else setPlaying(false);
+    }, 3800);
+    return () => clearTimeout(t);
+  }, [playing, step, last]);
+
+  const q = query.trim().toLowerCase();
+  const matches = m => !q || (m.name + ' ' + m.type + ' ' + m.group + ' ' + m.equation)
+                              .toLowerCase().includes(q);
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
+
+      {/* mechanism menu */}
+      <aside className="glass rounded-2xl p-3 h-fit lg:sticky lg:top-4">
+        <div className="relative mb-3">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+            <Icon name="search" size={14} />
+          </span>
+          <input value={query} onChange={e => setQuery(e.target.value)}
+                 placeholder="Filter mechanisms…"
+                 className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2
+                            text-sm placeholder:text-slate-500 focus:outline-none
+                            focus:border-sky-400/60" />
+        </div>
+        <div className="max-h-[38vh] lg:max-h-[62vh] overflow-y-auto pr-1 space-y-3">
+          {GROUP_ORDER.map(group => {
+            const items = MECHANISMS.filter(m => m.group === group && matches(m));
+            if (!items.length) return null;
+            return (
+              <div key={group}>
+                <div className="flex items-center gap-2 px-1 pb-1 text-[11px] uppercase
+                                tracking-[.14em] font-display text-slate-400">
+                  <Icon name={GROUP_ICON[group]} size={13} />{group}
+                </div>
+                <div className="space-y-1">
+                  {items.map(m => (
+                    <button key={m.id} onClick={() => setMid(m.id)}
+                      className={'w-full text-left px-3 py-2 rounded-lg border text-sm transition ' +
+                        (m.id === mid
+                          ? 'bg-sky-500/20 border-sky-400/50 text-sky-100'
+                          : 'bg-white/[.03] border-transparent hover:bg-white/[.07] text-slate-300')}>
+                      <div className="font-semibold leading-tight">{m.name}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">{m.type}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </aside>
+
+      {/* stage and notes */}
+      <section className="min-w-0 space-y-4">
+        <div className="glass rounded-2xl p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+            <div>
+              <h2 className="font-display text-2xl tracking-wide">{mech.name}</h2>
+              <p className="text-sm text-sky-300/90">{mech.type}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] px-2 py-1 rounded-md bg-white/5
+                               border border-white/10 text-slate-400">AQA {mech.spec}</span>
+            </div>
+          </div>
+
+          <div className="stage rounded-xl border border-white/10 overflow-hidden
+                          h-[44vh] min-h-[320px]">
+            <Scene scene={stepData.scene} showDipoles={dipoles} showLonePairs={lonePairs}
+                   showArrows={arrows} animKey={animKey + '-' + mech.id + '-' + step} />
+          </div>
+
+          {/* stepper */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <button onClick={() => { setPlaying(false); setStep(Math.max(0, step - 1)); }}
+                    disabled={step === 0}
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                               font-semibold disabled:opacity-30 hover:bg-white/10
+                               flex items-center gap-1.5">
+              <Icon name="chevron-left" size={15} />Back
+            </button>
+            <button onClick={() => setPlaying(!playing)}
+                    className="px-4 py-2 rounded-lg bg-sky-500/25 border border-sky-400/50
+                               text-sky-100 text-sm font-semibold hover:bg-sky-500/35
+                               flex items-center gap-1.5">
+              <Icon name={playing ? 'pause' : 'play'} size={15} />{playing ? 'Pause' : 'Play'}
+            </button>
+            <button onClick={() => { setPlaying(false); setStep(Math.min(last, step + 1)); }}
+                    disabled={step === last}
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                               font-semibold disabled:opacity-30 hover:bg-white/10
+                               flex items-center gap-1.5">
+              Forward<Icon name="chevron-right" size={15} />
+            </button>
+            <button onClick={() => setAnimKey(k => k + 1)}
+                    title="Replay the arrow animation"
+                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                               font-semibold hover:bg-white/10 flex items-center gap-1.5">
+              <Icon name="rotate-ccw" size={15} />Replay
+            </button>
+
+            <div className="flex-1 min-w-[8rem] flex items-center justify-center gap-1.5">
+              {mech.steps.map((_, i) => (
+                <button key={i} onClick={() => { setPlaying(false); setStep(i); }}
+                        title={'Stage ' + (i + 1)}
+                        className={'h-2 rounded-full transition-all ' +
+                          (i === step ? 'w-7 bg-sky-400' : 'w-2 bg-white/20 hover:bg-white/40')} />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Toggle on={dipoles} set={setDipoles} label="δ+ / δ−" />
+              <Toggle on={lonePairs} set={setLonePairs} label="lone pairs" />
+              <Toggle on={arrows} set={setArrows} label="arrows" />
+            </div>
+          </div>
+        </div>
+
+        {/* what is happening, and the marks */}
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <div className="glass rounded-2xl p-4 fadein" key={mech.id + step}>
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[.14em]
+                            font-display text-slate-400 mb-1.5">
+              <Icon name="footprints" size={13} />Stage {step + 1} of {mech.steps.length}
+            </div>
+            <h3 className="font-display text-xl text-sky-200 mb-2">{stepData.title}</h3>
+            <p className="text-sm text-slate-300 leading-relaxed">{stepData.teach}</p>
+          </div>
+          <div className="glass rounded-2xl p-4">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[.14em]
+                            font-display text-amber-300/80 mb-2">
+              <Icon name="check-check" size={13} />What earns the marks here
+            </div>
+            <ul className="space-y-2">
+              {stepData.marks.map((m, i) => (
+                <li key={i} className="flex gap-2 text-sm text-slate-300">
+                  <span className="mt-[3px] text-amber-400"><Icon name="check" size={13} /></span>
+                  <span>{m}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* the reaction in words */}
+        <div className="glass rounded-2xl p-4 space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <div className="text-[11px] uppercase tracking-[.14em] font-display
+                              text-slate-400 mb-1">Overall equation</div>
+              <div className="font-mono text-sm text-sky-200 break-words">{mech.equation}</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-[.14em] font-display
+                              text-slate-400 mb-1">Conditions</div>
+              <div className="text-sm text-slate-300">{mech.conditions}</div>
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-[.14em] font-display
+                            text-slate-400 mb-1">Why it happens</div>
+            <p className="text-sm text-slate-300 leading-relaxed">{mech.why}</p>
+          </div>
+          {mech.extra && (
+            <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-3">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[.14em]
+                              font-display text-violet-300 mb-1">
+                <Icon name="lightbulb" size={13} />Worth knowing
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{mech.extra}</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ── Section 2: the rules ─────────────────────────────────────────────── */
+
+function Rules() {
+  return (
+    <div className="space-y-5">
+      <div className="glass rounded-2xl p-5">
+        <h2 className="font-display text-2xl tracking-wide mb-2">The one sentence to remember</h2>
+        <p className="text-lg text-sky-200 leading-relaxed">
+          A curly arrow shows the movement of a <strong className="text-sky-100">pair of
+          electrons</strong>, from a lone pair or a bond, to an atom or to where a new bond forms.
+        </p>
+        <p className="text-sm text-slate-400 mt-2">
+          Every curly arrow on the AQA specification is double-headed. Free-radical substitution
+          is the exception that needs none: it is answered with equations and dots.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {ARROW_RULES.map((r, i) => (
+          <div key={i} className="glass rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="grid place-items-center w-8 h-8 rounded-lg bg-sky-500/15
+                               border border-sky-400/30 text-sky-300">
+                <Icon name={r.icon} size={16} />
+              </span>
+              <h3 className="font-display text-lg text-sky-100">{r.title}</h3>
+            </div>
+            <p className="text-sm text-slate-300 leading-relaxed">{r.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="glass rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-rose-400"><Icon name="triangle-alert" size={18} /></span>
+          <h2 className="font-display text-2xl tracking-wide">Where the marks actually go missing</h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {COMMON_ERRORS.map((e, i) => (
+            <div key={i} className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="flex gap-2 items-start">
+                <span className="mt-[3px] text-rose-400"><Icon name="x" size={14} /></span>
+                <div className="text-sm font-semibold text-rose-200">{e.err}</div>
+              </div>
+              <div className="flex gap-2 items-start mt-2">
+                <span className="mt-[3px] text-emerald-400"><Icon name="check" size={14} /></span>
+                <div className="text-sm text-slate-300">{e.fix}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass rounded-2xl p-5">
+        <h2 className="font-display text-2xl tracking-wide mb-3">The seven mechanisms, in a table</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse min-w-[40rem]">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-[.14em] font-display
+                             text-slate-400 border-b border-white/10">
+                <th className="py-2 pr-4">Mechanism</th>
+                <th className="py-2 pr-4">Attacking species</th>
+                <th className="py-2 pr-4">Typical substrate</th>
+                <th className="py-2">How it is answered</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300">
+              {[
+                ['Free-radical substitution', 'A radical, e.g. Cl•', 'Alkane', 'Equations — no arrows'],
+                ['Electrophilic addition', 'Electrophile, e.g. H of HBr', 'Alkene', 'Curly arrows'],
+                ['Nucleophilic substitution', 'Nucleophile: OH⁻, CN⁻, NH₃', 'Halogenoalkane', 'Curly arrows'],
+                ['Elimination', 'Base: OH⁻ (ethanolic), or acid on an alcohol', 'Halogenoalkane / alcohol', 'Curly arrows'],
+                ['Nucleophilic addition', 'Nucleophile: H⁻, CN⁻', 'Aldehyde / ketone', 'Curly arrows'],
+                ['Nucleophilic addition–elimination', 'Nucleophile: H₂O, NH₃, ROH, RNH₂', 'Acyl chloride', 'Curly arrows'],
+                ['Electrophilic substitution', 'Electrophile: NO₂⁺, CH₃CO⁺', 'Benzene', 'Curly arrows']
+              ].map((row, i) => (
+                <tr key={i} className="border-b border-white/5">
+                  {row.map((cell, j) => (
+                    <td key={j} className={'py-2 pr-4 ' + (j === 0 ? 'text-sky-200 font-semibold' : '')}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Section 3a: spot the error ───────────────────────────────────────── */
+
+function SpotError() {
+  const [i, setI] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [seen, setSeen] = useState({});
+  const item = FLAWED[i];
+
+  const choose = (idx) => {
+    if (picked !== null) return;
+    setPicked(idx);
+    setSeen(s => ({ ...s, [item.id]: item.hotspots[idx].correct }));
+  };
+  const go = (n) => { setI(n); setPicked(null); };
+
+  const chosen = picked === null ? null : item.hotspots[picked];
+  const score = Object.values(seen).filter(Boolean).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="glass rounded-2xl p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-[.14em] font-display text-slate-400">
+              Flawed answer {i + 1} of {FLAWED.length}
+            </div>
+            <h2 className="font-display text-2xl tracking-wide">{item.title}</h2>
+          </div>
+          <div className="font-mono text-xs px-3 py-1.5 rounded-lg bg-white/5 border
+                          border-white/10 text-slate-300">
+            found {score} / {FLAWED.length}
+          </div>
+        </div>
+        <p className="text-sm text-slate-300 mb-3">{item.prompt}</p>
+
+        <div className="relative stage rounded-xl border border-white/10 overflow-hidden
+                        h-[44vh] min-h-[320px]">
+          <Scene scene={item.scene} showDipoles showLonePairs showArrows
+                 animKey={'flaw-' + item.id} />
+          <svg viewBox={item.scene.view || VIEW}
+               className="absolute inset-0 w-full h-full"
+               preserveAspectRatio="xMidYMid meet">
+            {item.hotspots.map((h, idx) => {
+              const done = picked !== null;
+              const stroke = !done ? 'rgba(148,163,184,.55)'
+                           : h.correct ? '#34d399' : (idx === picked ? '#f87171' : 'rgba(148,163,184,.25)');
+              const fill = !done ? 'rgba(148,163,184,.08)'
+                         : h.correct ? 'rgba(52,211,153,.16)'
+                         : (idx === picked ? 'rgba(248,113,113,.16)' : 'transparent');
+              return (
+                <ellipse key={idx} className={done ? '' : 'hot'} cx={h.x} cy={h.y}
+                         rx={h.rx || h.r} ry={h.ry || h.r}
+                         fill={fill} stroke={stroke} strokeWidth="2" strokeDasharray="5 4"
+                         onClick={() => choose(idx)}
+                         style={{ cursor: done ? 'default' : 'pointer' }} />
+              );
+            })}
+          </svg>
+        </div>
+      </div>
+
+      {chosen && (
+        <div className={'glass rounded-2xl p-4 fadein border ' +
+              (chosen.correct ? 'border-emerald-400/40' : 'border-rose-400/40')}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={chosen.correct ? 'text-emerald-400' : 'text-rose-400'}>
+              <Icon name={chosen.correct ? 'circle-check' : 'circle-x'} size={18} />
+            </span>
+            <h3 className="font-display text-xl">
+              {chosen.correct ? 'That is the error' : 'Not the error here'}
+            </h3>
+          </div>
+          <p className="text-sm text-slate-300 leading-relaxed">{chosen.why}</p>
+          {!chosen.correct && (
+            <p className="text-sm text-amber-200/90 mt-3">
+              The fault is elsewhere — the ringed area outlined in green is the one that would
+              lose the mark.
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <button onClick={() => go(Math.max(0, i - 1))} disabled={i === 0}
+                className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                           font-semibold disabled:opacity-30 hover:bg-white/10
+                           flex items-center gap-1.5">
+          <Icon name="chevron-left" size={15} />Previous
+        </button>
+        <button onClick={() => setPicked(null)} disabled={picked === null}
+                className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                           font-semibold disabled:opacity-30 hover:bg-white/10
+                           flex items-center gap-1.5">
+          <Icon name="rotate-ccw" size={15} />Try again
+        </button>
+        <button onClick={() => go(Math.min(FLAWED.length - 1, i + 1))} disabled={i === FLAWED.length - 1}
+                className="px-4 py-2 rounded-lg bg-sky-500/25 border border-sky-400/50
+                           text-sky-100 text-sm font-semibold disabled:opacity-30
+                           hover:bg-sky-500/35 flex items-center gap-1.5 ml-auto">
+          Next diagram<Icon name="chevron-right" size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Section 3b: place the arrows, then mark yourself ─────────────────── */
+
+const LETTERS = 'ABCDEFGH';
+
+function BuildMechanism() {
+  const [qi, setQi] = useState(0);
+  const [placed, setPlaced] = useState([]);
+  const [from, setFrom] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [ticks, setTicks] = useState({});
+  const [revealed, setRevealed] = useState(false);
+
+  const q = QUESTIONS[qi];
+  const nodeMap = useMemo(() => {
+    const m = {};
+    (q.scene.nodes || []).forEach(n => { m[n.id] = n; });
+    return m;
+  }, [q]);
+  const pt = id => q.points.find(p => p.id === id);
+  const xy = p => resolveAnchor(p.anchor, nodeMap);
+
+  const reset = (n) => {
+    setQi(n); setPlaced([]); setFrom(null); setMsg(null); setTicks({}); setRevealed(false);
+  };
+  const clear = () => { setPlaced([]); setFrom(null); setMsg(null); setTicks({}); setRevealed(false); };
+
+  const why = (a, b) => {
+    if (a.role === 'charge')
+      return 'A curly arrow never starts at a charge symbol. Start it at the electrons — a lone '
+           + 'pair, or the middle of a bond.';
+    if (a.role === 'atom')
+      return 'Arrows start at electrons, not at an atom label. Use a lone pair on that atom, or '
+           + 'one of its bonds.';
+    if (b.role === 'space')
+      return 'An arrow must end on an atom, or exactly where the new bond forms. An arrow into '
+           + 'blank space scores nothing.';
+    if (b.role === 'charge')
+      return 'Point the arrow at the atom itself, not at its charge symbol.';
+    return 'Not one of the arrows in this mechanism. Ask yourself which electrons are the most '
+         + 'available, and which atom is short of electrons.';
+  };
+
+  const click = (p) => {
+    if (revealed) return;
+    if (!from) { setFrom(p.id); setMsg(null); return; }
+    if (from === p.id) { setFrom(null); return; }
+    const hit = q.answers.find(a => a.from === from && a.to === p.id);
+    if (hit && !placed.some(x => x.from === hit.from && x.to === hit.to)) {
+      const next = [...placed, hit];
+      setPlaced(next);
+      setTicks(t => {
+        const u = { ...t };
+        next.forEach((_, i) => { u[i] = true; });
+        return u;
+      });
+      setMsg({ ok: true, text: hit.note });
+    } else if (hit) {
+      setMsg({ ok: true, text: 'You have already placed that arrow.' });
+    } else {
+      setMsg({ ok: false, text: why(pt(from), p) });
+    }
+    setFrom(null);
+  };
+
+  const shown = revealed ? q.answers : placed;
+  const scene = { ...q.scene, arrows: shown.map(a => ({
+    from: pt(a.from).anchor, to: pt(a.to).anchor, bow: a.bow, delay: 0
+  })) };
+
+  const ticked = Object.values(ticks).filter(Boolean).length;
+  const done = placed.length === q.answers.length;
+
+  return (
+    <div className="space-y-4">
+      <div className="glass rounded-2xl p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+          <div>
+            <div className="text-[11px] uppercase tracking-[.14em] font-display text-slate-400">
+              Question {qi + 1} of {QUESTIONS.length} · {q.title}
+            </div>
+            <p className="text-sm text-slate-200 mt-1 max-w-3xl leading-relaxed">{q.stem}</p>
+          </div>
+          <div className="font-mono text-xs px-3 py-1.5 rounded-lg bg-amber-500/15
+                          border border-amber-400/30 text-amber-200 shrink-0">
+            [{q.total} marks]
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400 mb-3">
+          {from
+            ? 'Now click where that pair of electrons ends up.'
+            : 'Click a labelled point to start an arrow, then click where the electrons go.'}
+        </p>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_15rem]">
+          <div className="relative stage rounded-xl border border-white/10 overflow-hidden
+                          h-[44vh] min-h-[320px]">
+            <Scene scene={scene} showDipoles showLonePairs showArrows
+                   animKey={'q-' + q.id + '-' + shown.length + '-' + revealed} />
+            <svg viewBox={q.scene.view || VIEW}
+                 className="absolute inset-0 w-full h-full"
+                 preserveAspectRatio="xMidYMid meet">
+              {q.points.map((p, idx) => {
+                const c = xy(p);
+                const active = from === p.id;
+                const used = shown.some(a => a.from === p.id || a.to === p.id);
+                return (
+                  <g key={p.id} className={revealed ? '' : 'hot'}
+                     onClick={() => click(p)}
+                     style={{ cursor: revealed ? 'default' : 'pointer' }}>
+                    <circle cx={c.x} cy={c.y} r="15"
+                            fill={active ? 'rgba(56,189,248,.35)'
+                                 : used ? 'rgba(52,211,153,.18)' : 'rgba(148,163,184,.10)'}
+                            stroke={active ? '#38bdf8' : used ? '#34d399' : 'rgba(148,163,184,.6)'}
+                            strokeWidth="2" strokeDasharray={used ? '' : '4 3'} />
+                    <text x={c.x} y={c.y + 1} textAnchor="middle" dominantBaseline="middle"
+                          fontSize="12" fontWeight="700"
+                          fill={active ? '#e0f2fe' : used ? '#a7f3d0' : '#cbd5e1'}
+                          style={{ pointerEvents: 'none' }}>
+                      {LETTERS[idx]}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[11px] uppercase tracking-[.14em] font-display text-slate-400">
+              Points you can click
+            </div>
+            {q.points.map((p, idx) => (
+              <button key={p.id} onClick={() => click(p)} disabled={revealed}
+                className={'w-full text-left px-2.5 py-1.5 rounded-lg border text-xs transition ' +
+                  (from === p.id ? 'bg-sky-500/25 border-sky-400/60 text-sky-100'
+                                 : 'bg-white/[.03] border-white/10 text-slate-300 hover:bg-white/[.08]')}>
+                <span className="font-mono font-bold mr-1.5">{LETTERS[idx]}</span>{p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {msg && (
+          <div className={'mt-3 rounded-xl p-3 text-sm fadein border ' +
+                (msg.ok ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100'
+                        : 'border-rose-400/40 bg-rose-500/10 text-rose-100')}>
+            <span className="inline-flex items-center gap-2 align-middle mr-1.5">
+              <Icon name={msg.ok ? 'circle-check' : 'circle-x'} size={15} />
+            </span>
+            {msg.text}
+          </div>
+        )}
+
+        {done && !revealed && (
+          <div className="mt-3 rounded-xl p-3 text-sm border border-sky-400/40 bg-sky-500/10
+                          text-sky-100 fadein">
+            Every arrow for this step is in place. Now work through the mark scheme below and be
+            honest about the parts you would have written.
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="glass rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[.14em]
+                            font-display text-amber-300/80">
+              <Icon name="clipboard-check" size={13} />AQA mark scheme
+            </div>
+            <span className="font-mono text-xs text-slate-400">{ticked} / {q.marks.length}</span>
+          </div>
+          <ul className="space-y-2">
+            {q.marks.map((m, i) => {
+              const on = !!ticks[i];
+              return (
+                <li key={i}>
+                  <button onClick={() => setTicks(t => ({ ...t, [i]: !t[i] }))}
+                    className={'w-full text-left flex gap-2.5 items-start px-3 py-2 rounded-lg ' +
+                      'border text-sm transition ' +
+                      (on ? 'bg-emerald-500/12 border-emerald-400/40 text-emerald-50'
+                          : 'bg-white/[.03] border-white/10 text-slate-300 hover:bg-white/[.07]')}>
+                    <span className={'mt-[2px] ' + (on ? 'text-emerald-400' : 'text-slate-500')}>
+                      <Icon name={on ? 'square-check' : 'square'} size={15} />
+                    </span>
+                    <span className="font-mono text-[12px] leading-relaxed">{m}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-xs text-slate-500 mt-3">
+            The arrow marks tick themselves as you place each arrow. Tick the rest yourself once
+            you have written out the intermediate and the products.
+          </p>
+        </div>
+
+        <div className="glass rounded-2xl p-4 flex flex-col gap-2 md:w-56">
+          <button onClick={clear}
+            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                       font-semibold hover:bg-white/10 flex items-center gap-2 justify-center">
+            <Icon name="eraser" size={15} />Clear arrows
+          </button>
+          <button onClick={() => setRevealed(!revealed)}
+            className="px-3 py-2 rounded-lg bg-violet-500/20 border border-violet-400/40
+                       text-violet-100 text-sm font-semibold hover:bg-violet-500/30
+                       flex items-center gap-2 justify-center">
+            <Icon name={revealed ? 'eye-off' : 'eye'} size={15} />
+            {revealed ? 'Hide answer' : 'Show the answer'}
+          </button>
+          <div className="h-px bg-white/10 my-1" />
+          <div className="flex gap-2">
+            <button onClick={() => reset(Math.max(0, qi - 1))} disabled={qi === 0}
+              className="flex-1 px-2 py-2 rounded-lg bg-white/5 border border-white/10 text-sm
+                         font-semibold disabled:opacity-30 hover:bg-white/10
+                         flex items-center justify-center">
+              <Icon name="chevron-left" size={15} />
+            </button>
+            <button onClick={() => reset(Math.min(QUESTIONS.length - 1, qi + 1))}
+              disabled={qi === QUESTIONS.length - 1}
+              className="flex-1 px-2 py-2 rounded-lg bg-sky-500/25 border border-sky-400/50
+                         text-sky-100 text-sm font-semibold disabled:opacity-30
+                         hover:bg-sky-500/35 flex items-center justify-center">
+              <Icon name="chevron-right" size={15} />
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
+            Question {qi + 1} of {QUESTIONS.length}. Moving on clears your working.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Practice() {
+  const [mode, setMode] = useState('build');
+  return (
+    <div className="space-y-4">
+      <div className="glass rounded-2xl p-2 inline-flex gap-1">
+        {[['build', 'Place the arrows', 'pencil-line'],
+          ['spot', 'Spot the error', 'search-x']].map(([k, label, icon]) => (
+          <button key={k} onClick={() => setMode(k)}
+            className={'px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ' +
+              (mode === k ? 'bg-sky-500/25 text-sky-100 border border-sky-400/50'
+                          : 'text-slate-400 border border-transparent hover:text-slate-200')}>
+            <Icon name={icon} size={15} />{label}
+          </button>
+        ))}
+      </div>
+      {mode === 'build' ? <BuildMechanism /> : <SpotError />}
+    </div>
+  );
+}
+
+/* ── Shell ────────────────────────────────────────────────────────────── */
+
+const TABS = [
+  { id: 'player', label: 'Mechanism player', icon: 'shuffle' },
+  { id: 'rules', label: 'Curly arrow rules', icon: 'target' },
+  { id: 'practice', label: 'Exam practice', icon: 'pencil-ruler' }
+];
+
+function App() {
+  const [tab, setTab] = useState('player');
+  return (
+    <div className="min-h-full">
+      <header className="sticky top-0 z-20 backdrop-blur-xl bg-[#070b12]/75
+                         border-b border-white/10">
+        <div className="max-w-[1500px] mx-auto px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div>
+            <h1 className="font-display text-xl sm:text-2xl tracking-wide leading-none">
+              Organic Reaction Mechanisms
+            </h1>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+              {MECHANISMS.length} mechanisms · AQA A-level Chemistry 3.3.2 – 3.3.13
+            </p>
+          </div>
+          <nav className="flex gap-1 ml-auto">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={'px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold flex items-center ' +
+                  'gap-2 transition border ' +
+                  (tab === t.id ? 'bg-sky-500/25 text-sky-100 border-sky-400/50'
+                                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5')}>
+                <Icon name={t.icon} size={15} />
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      <main className="max-w-[1500px] mx-auto px-4 py-5">
+        {tab === 'player' && <Player />}
+        {tab === 'rules' && <Rules />}
+        {tab === 'practice' && <Practice />}
+      </main>
+
+      <footer className="max-w-[1500px] mx-auto px-4 pb-8 pt-2 text-xs text-slate-500">
+        Mechanism names and marking points follow the AQA A-level Chemistry specification (7405).
+        AQA does not use the labels SN1, SN2, E1 or E2, so they are not used here.
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>
