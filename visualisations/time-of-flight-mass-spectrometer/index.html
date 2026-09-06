@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Flight Tube</title>
+<title>Time of Flight Tube</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap">
@@ -142,6 +142,8 @@ header.bar{
 }
 .seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow); }
 .seg.accent button[aria-pressed="true"]{ background:var(--accent); color:var(--accent-ink); }
+.seg.mini{ padding:1px; }
+.seg.mini button{ font-size:.68rem; padding:3px 8px; }
 select.field, input.field{
   width:100%; font-family:var(--f-body); font-size:.85rem; color:var(--ink);
   background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:7px 9px;
@@ -246,6 +248,9 @@ table.data th{
 }
 table.data th:first-child, table.data td:first-child{ text-align:left; }
 table.data td{ text-align:right; padding:4px 6px; border-bottom:1px solid var(--line-soft); color:var(--ink-2); }
+#flight-table{ font-size:.72rem; }
+#flight-table th, #flight-table td{ padding:4px 3px; }
+#flight-table td.found{ color:var(--accent-text); }
 table.data tr:last-child td{ border-bottom:0; }
 .swatch{ display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; vertical-align:baseline; }
 
@@ -288,7 +293,7 @@ table.data tr:last-child td{ border-bottom:0; }
 
   <header class="bar">
     <div class="wordmark">
-      <h1>The Flight Tube</h1>
+      <h1>Time of Flight Tube</h1>
       <span class="spec-ref">AQA A-level · 3.1.1.2</span>
     </div>
     <span class="subtle" style="flex:1 1 200px">Time of flight mass spectrometry — drag to orbit, scroll to zoom, shift-drag to pan.</span>
@@ -345,9 +350,11 @@ table.data tr:last-child td{ border-bottom:0; }
         <div style="padding:9px 10px 11px;">
           <table class="data" id="flight-table"></table>
           <p class="subtle" style="margin:8px 2px 0; line-height:1.35; font-size:.72rem;">
-            Calculated for every ion at a constant kinetic energy of
-            <span style="font-family:var(--f-mono)">4.34 &times; 10<sup>&minus;16</sup> J</span>
-            over a 1.00 m drift region — the order of magnitude a real ToF instrument works at.
+            <b>v</b> and <b>t</b> are calculated for every ion at a constant kinetic energy of
+            <span style="font-family:var(--f-mono)">4.34 × 10<sup>−16</sup> J</span> over a
+            1.00 m drift region — the order of magnitude a real ToF instrument works at.
+            <b>found</b> is what the detector has counted so far, on the same scale as the graph;
+            it converges on <b>true</b> the longer the run goes on.
           </p>
         </div>
       </section>
@@ -367,8 +374,14 @@ table.data tr:last-child td{ border-bottom:0; }
 
       <section class="panel" style="flex:0 0 auto;">
         <div class="panel-head">
-          <span class="eyebrow">Mass spectrum — relative abundance vs m/z</span>
-          <span class="subtle" id="spectrum-state">idle</span>
+          <span class="eyebrow">Mass spectrum</span>
+          <div style="display:flex; align-items:center; gap:9px;">
+            <div class="seg mini" role="group" aria-label="Vertical scale">
+              <button id="norm-total" aria-pressed="true">% of total</button>
+              <button id="norm-base" aria-pressed="false">% of base peak</button>
+            </div>
+            <span class="subtle" id="spectrum-state">idle</span>
+          </div>
         </div>
         <div class="spectrum-wrap"><canvas id="spectrum"></canvas></div>
         <div class="readouts" id="readouts"></div>
@@ -579,11 +592,34 @@ const state = {
   quizIndex: 0,
   quizResults: [],           // "right" | "wrong"
   quizAnswered: false,
-  awaitingPick: false
+  awaitingPick: false,
+  normalise: "total"        // "total" = abundances sum to 100; "base" = tallest peak is 100
 };
 
 const sample = () => SAMPLES.find(s => s.id === state.sampleId);
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+/* One vertical scale, used by the graph and the flight-data table alike, so
+   the numbers printed on the trace are the numbers shown in the table.
+   Isotope spectra are conventionally quoted as percentages summing to 100;
+   fragmentation spectra are quoted against a base peak of 100. */
+function truePct(sp, i){
+  if (state.normalise === "base"){
+    const maxAb = Math.max(...sp.map(x => x.ab));
+    return (sp[i].ab / maxAb) * 100;
+  }
+  const tot = sp.reduce((a, x) => a + x.ab, 0);
+  return (sp[i].ab / tot) * 100;
+}
+function foundPct(sp, i){
+  const c = state.counts[sp[i].mz] || 0;
+  if (state.normalise === "base"){
+    const mx = Math.max(1, ...Object.values(state.counts));
+    return (c / mx) * 100;
+  }
+  const tot = Object.values(state.counts).reduce((a, b) => a + b, 0);
+  return tot ? (c / tot) * 100 : 0;
+}
 
 /* Ion mass in kg from an m/z value (1+ ions). */
 const ionMassKg = mz => mz / (1000 * NA);
@@ -1119,6 +1155,7 @@ function recordHit(mz){
   state.detected++;
   detectorGlow = 1;
   drawSpectrum();
+  updateFlightFound();
   updateReadouts();
 }
 
@@ -1192,16 +1229,14 @@ function drawSpectrum(){
   /* Detector trace: one continuous line running along the baseline and rising
      to a sharp peak at each m/z — the way a mass spectrum is printed on an
      exam paper, rather than a bar chart. */
-  const maxAb = Math.max(...sp.map(s => s.ab));
-  const maxCount = Math.max(1, ...Object.values(state.counts));
   const yBase = pad.t + plotH;
   const sigma = clamp(plotW * 0.0055, 2.0, 5.0);
 
   const peaks = sp.map((s, i) => ({
     mz: s.mz,
     x: X(s.mz),
-    h: ((state.counts[s.mz] || 0) / maxCount) * 100,
-    exp: (s.ab / maxAb) * 100,
+    h: foundPct(sp, i),
+    exp: truePct(sp, i),
     colour: speciesColour(i, sp.length)
   }));
 
@@ -1248,13 +1283,18 @@ function drawSpectrum(){
   ctx.strokeStyle = grad; ctx.lineWidth = 1.8; ctx.lineJoin = "round"; ctx.stroke();
 
   /* peak height and m/z, with a dotted guide down to the axis for reading off */
+  let lastLabelRight = -Infinity;
   peaks.forEach(p => {
-    if (p.h > 0.5){
+    if (p.h > 0.05){
       ctx.setLineDash([2, 3]); ctx.strokeStyle = p.colour; ctx.globalAlpha = 0.42; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(p.x, Y(p.h) + 3); ctx.lineTo(p.x, yBase); ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1;
       ctx.fillStyle = ink; ctx.font = mono; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-      ctx.fillText(p.h.toFixed(0), p.x, Y(p.h) - 7);
+      const txt = p.h.toFixed(1);
+      const half = ctx.measureText(txt).width / 2 + 3;
+      const lift = (p.x - half < lastLabelRight) ? 13 : 0;   // neighbouring peaks
+      ctx.fillText(txt, p.x, Y(p.h) - 7 - lift);
+      lastLabelRight = p.x + half;
     }
     ctx.fillStyle = p.h > 0 ? ink2 : muted;
     ctx.font = mono; ctx.textAlign = "center"; ctx.textBaseline = "top";
@@ -1264,7 +1304,7 @@ function drawSpectrum(){
 
   /* legend for the ghost line */
   ctx.font = disp; ctx.fillStyle = muted; ctx.textAlign = "right";
-  ctx.fillText("DASHED = TRUE ABUNDANCE", w - pad.r, pad.t - 4);
+  ctx.fillText("DASHED = TRUE ABUNDANCE", w - pad.r, pad.t - 6);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1383,11 +1423,29 @@ function renderFlightTable(){
       '<td><span class="swatch" style="background:' + speciesColour(i, sp.length) + '"></span>' + s.mz + '</td>' +
       '<td>' + (v / 1000).toFixed(1) + '</td>' +
       '<td>' + t.toFixed(2) + '</td>' +
-      '<td>' + s.ab.toFixed(1) + '</td></tr>';
+      '<td>' + truePct(sp, i).toFixed(1) + '</td>' +
+      '<td class="found" data-mz="' + s.mz + '">' + foundPct(sp, i).toFixed(1) + '</td></tr>';
   }).join("");
   document.getElementById("flight-table").innerHTML =
-    '<thead><tr><th>m/z</th><th>v / km s⁻¹</th><th>t / µs</th><th>true %</th></tr></thead><tbody>' +
+    '<thead><tr><th>m/z</th><th>v / km s⁻¹</th><th>t / µs</th><th>true</th><th>found</th></tr></thead><tbody>' +
     rows + '</tbody>';
+}
+
+/* Only the measured column changes as ions land, so update it in place. */
+function updateFlightFound(){
+  const sp = sample().species;
+  document.querySelectorAll("#flight-table td.found").forEach(td => {
+    const i = sp.findIndex(x => String(x.mz) === td.dataset.mz);
+    if (i >= 0) td.textContent = foundPct(sp, i).toFixed(1);
+  });
+}
+
+function setNormalise(mode){
+  state.normalise = mode;
+  document.getElementById("norm-total").setAttribute("aria-pressed", String(mode === "total"));
+  document.getElementById("norm-base").setAttribute("aria-pressed", String(mode === "base"));
+  renderFlightTable();
+  drawSpectrum();
 }
 
 function updateReadouts(){
@@ -1655,9 +1713,8 @@ function setSample(id){
   recomputeRun();
   document.getElementById("sample-note").textContent = sample().note;
   setMethod(sample().method);
-  renderFlightTable();
+  setNormalise(sample().kind === "element" ? "total" : "base");
   updateHud();
-  drawSpectrum();
   updateReadouts();
 }
 
@@ -1665,6 +1722,7 @@ function resetRun(){
   state.counts = {}; state.detected = 0;
   clearIons();
   drawSpectrum();
+  updateFlightFound();
   updateReadouts();
   document.getElementById("spectrum-state").textContent = state.running ? "acquiring" : "idle";
 }
@@ -1754,7 +1812,7 @@ function boot(){
   renderSampleControls();
   recomputeRun();
   setMethod(sample().method);
-  renderFlightTable();
+  setNormalise(sample().kind === "element" ? "total" : "base");
   updateReadouts();
   renderCard();
   resizeSpectrum();
@@ -1773,6 +1831,8 @@ function boot(){
       ion.vFinal = nv;
     });
   });
+  document.getElementById("norm-total").addEventListener("click", () => setNormalise("total"));
+  document.getElementById("norm-base").addEventListener("click", () => setNormalise("base"));
   document.getElementById("run").addEventListener("click", () => setRunning(!state.running));
   document.getElementById("reset").addEventListener("click", () => { resetRun(); });
   document.getElementById("view-reset").addEventListener("click", () => selectStage(-1));
