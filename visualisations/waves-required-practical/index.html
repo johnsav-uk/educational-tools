@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waves Required Practical — Ripple Tank &amp; Stretched String</title>
+<meta name="description" content="AQA GCSE Physics Required Practical 8: a live ripple tank with a virtual ruler and strobe, a vibrating string with adjustable tension and length, plus the method, error analysis and exam practice.">
+
+<!-- ── Fonts ───────────────────────────────────────────────────────────── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- ── Tailwind ────────────────────────────────────────────────────────── -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
+          display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
+          mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
+        }
+      }
+    }
+  };
+</script>
+
+<!-- ── Lucide icons ────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+
+<!-- ── Three.js, for the 3D apparatus view ────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- ── React + Babel ──────────────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+
+<style>
+  :root { color-scheme: dark; }
+  html, body, #root { min-height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 700px at 8% -14%, #0e3346 0%, transparent 60%),
+      radial-gradient(900px 620px at 96% -6%, #3a2a10 0%, transparent 58%),
+      #0f172a;
+    background-attachment: fixed;
+    color: #f1f5f9;
+    font-family: 'Source Sans 3','Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Sliders: one house style, tinted per section by a CSS variable. */
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 22px; background: transparent; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px; border-radius: 999px;
+    background: rgba(148,163,184,.28);
+    border: 1px solid rgba(148,163,184,.18);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 6px; border-radius: 999px;
+    background: rgba(148,163,184,.28);
+    border: 1px solid rgba(148,163,184,.18);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; margin-top: -7px; border-radius: 50%;
+    background: var(--accent, #22d3ee);
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 0 1px var(--accent, #22d3ee), 0 2px 8px -2px rgba(0,0,0,.8);
+    transition: transform .12s ease;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent, #22d3ee);
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 0 1px var(--accent, #22d3ee);
+  }
+  input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
+  input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(125,211,252,.45); }
+  input[type="range"]:focus-visible { outline: none; }
+
+  canvas.sim { touch-action: none; display: block; width: 100%; height: auto; }
+  .no-sel { user-select: none; -webkit-user-select: none; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgba(15,23,42,.6); }
+  ::-webkit-scrollbar-thumb { background: rgba(100,116,139,.5); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.7); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-off { animation: none !important; }
+  }
+</style>
+</head>
+<body class="font-sans text-slate-100">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo, useCallback, Fragment } = React;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONSTANTS AND PURE PHYSICS
+   Everything the simulations need to agree on lives here, so the two
+   canvases and their dashboards can never drift apart.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const G = 9.81;                       // m s⁻²
+
+/* --- Ripple tank ---------------------------------------------------- */
+const TANK = {
+  W: 760, H: 460,                     // canvas logical pixels
+  widthCm: 30,                        // the tank is 30 cm across
+  pxPerCm: 760 / 30                   // 25.33 px per cm
+};
+
+// Shallow-water waves travel at v = √(gh). A 5 mm depth gives ~22 cm s⁻¹,
+// which is exactly what a school ripple tank does.
+const rippleSpeedCmS = (depthMm) => Math.sqrt(G * (depthMm / 1000)) * 100;
+
+/* --- Stretched string ------------------------------------------------ */
+const STR = {
+  W: 760, H: 470,
+  pxPerM: 500,                        // 500 px = 1.00 m of bench
+  pxPerCm: 5,
+  genX: 100,                          // vibration generator peg
+  pulleyX: 700,                       // pulley wheel centre
+  bridgeMin: 200, bridgeMax: 668      // travel limits for the wooden bridge
+};
+
+const MU_OPTIONS = [
+  { id: 'thin',   label: 'Thin',   sub: '0.30 g m⁻¹', mu: 0.30e-3 },
+  { id: 'medium', label: 'Medium', sub: '0.50 g m⁻¹', mu: 0.50e-3 },
+  { id: 'thick',  label: 'Thick',  sub: '1.00 g m⁻¹', mu: 1.00e-3 }
+];
+
+const stringSpeed  = (massG, mu) => Math.sqrt(((massG / 1000) * G) / mu);  // v = √(T/μ)
+const harmonicF    = (n, L, v)   => (n * v) / (2 * L);                     // fₙ = nv/2L
+
+// Resonance response of mode n to a driving frequency f. A Lorentzian is
+// close enough to the real thing, and it gives the low, messy wobble that
+// students actually see when the frequency is off resonance.
+const RES_WIDTH = 1.3;                // Hz — half-width of each peak
+const modeResponse = (f, fn) => (RES_WIDTH * RES_WIDTH) / ((f - fn) * (f - fn) + RES_WIDTH * RES_WIDTH);
+
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const fmt   = (v, dp = 1) => (Number.isFinite(v) ? v.toFixed(dp) : '—');
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHARED UI PRIMITIVES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Lucide renders by replacing a placeholder node, so hand it a span whose
+   children React never re-renders and the two stay out of each other's
+   way. If the CDN is blocked the icon is simply absent. */
+function Icon({ name, className = 'w-4 h-4' }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    host.innerHTML = '';
+    try {
+      const L = window.lucide;
+      if (!L || !L.createIcons) return;
+      const slot = document.createElement('i');
+      slot.setAttribute('data-lucide', name);
+      host.appendChild(slot);
+      L.createIcons({ nameAttr: 'data-lucide' });
+      const svg = host.querySelector('svg');
+      if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); }
+    } catch (e) { /* icons are decoration only */ }
+  }, [name]);
+  return <span ref={ref} className={'inline-block align-middle ' + className} aria-hidden="true" />;
+}
+
+function Card({ title, icon, accent = 'cyan', className = '', children, right }) {
+  const ring = accent === 'amber' ? 'text-amber-400' : accent === 'indigo' ? 'text-indigo-400' : 'text-cyan-400';
+  return (
+    <section className={'bg-slate-800/80 border border-slate-700 rounded-xl p-5 backdrop-blur ' + className}>
+      {title && (
+        <header className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-wide text-slate-100">
+            {icon && <span className={ring}><Icon name={icon} className="w-5 h-5" /></span>}
+            {title}
+          </h3>
+          {right}
+        </header>
+      )}
+      {children}
+    </section>
+  );
+}
+
+function Slider({ label, value, min, max, step, onChange, unit = '', accent = '#22d3ee', dp = 1, hint }) {
+  return (
+    <div className="mb-4">
+      <div className="flex items-baseline justify-between gap-3 mb-1">
+        <label className="text-xs uppercase tracking-wider text-slate-400">{label}</label>
+        <span className="font-mono text-sm font-semibold" style={{ color: accent }}>
+          {typeof value === 'number' ? value.toFixed(dp) : value}
+          <span className="text-slate-400 ml-1">{unit}</span>
+        </span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        style={{ '--accent': accent }}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        aria-label={label}
+      />
+      {hint && <p className="text-[11px] leading-snug text-slate-500 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function Metric({ label, value, unit, accent = 'text-cyan-300', sub }) {
+  return (
+    <div className="bg-slate-900/70 border border-slate-700/80 rounded-lg px-3 py-2">
+      <div className="text-xs text-slate-400 uppercase tracking-wider">{label}</div>
+      <div className={'text-2xl font-mono font-bold leading-tight ' + accent}>
+        {value}<span className="text-sm text-slate-400 font-sans font-normal ml-1">{unit}</span>
+      </div>
+      {sub && <div className="text-[11px] text-slate-500 leading-snug mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function Btn({ active, onClick, children, className = '', title, disabled }) {
+  const base = 'px-3 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:opacity-40 disabled:cursor-not-allowed';
+  const tone = active ? 'bg-indigo-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-100';
+  return (
+    <button type="button" title={title} disabled={disabled} onClick={onClick} className={base + ' ' + tone + ' ' + className}>
+      {children}
+    </button>
+  );
+}
+
+function Toggle({ label, checked, onChange, accent = 'bg-cyan-500' }) {
+  return (
+    <button
+      type="button" role="switch" aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2 hover:border-slate-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+    >
+      <span className="text-sm text-slate-200 text-left">{label}</span>
+      <span className={'relative w-10 h-5 rounded-full shrink-0 transition-colors ' + (checked ? accent : 'bg-slate-600')}>
+        <span className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform"
+              style={{ transform: checked ? 'translateX(20px)' : 'none' }} />
+      </span>
+    </button>
+  );
+}
+
+function Badge({ children, tone = 'slate' }) {
+  const tones = {
+    slate:  'bg-slate-700/70 text-slate-200 border-slate-600',
+    cyan:   'bg-cyan-500/15 text-cyan-300 border-cyan-500/40',
+    amber:  'bg-amber-500/15 text-amber-300 border-amber-500/40',
+    green:  'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+    rose:   'bg-rose-500/15 text-rose-300 border-rose-500/40',
+    indigo: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40'
+  };
+  return (
+    <span className={'inline-block text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ' + tones[tone]}>
+      {children}
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE VIRTUAL RULER
+   Both practicals need the same thing: a scale you drag over the picture
+   and two markers you slide along it. Reading = separation of the markers.
+   State is held in canvas pixels; the caller converts to centimetres.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const RULER_H = 40;      // height of the ruler body in canvas px
+const GRAB    = 14;      // hit radius for the marker tabs
+
+function drawRuler(ctx, r, pxPerCm, opts) {
+  const { x, y, span, a, b } = r;
+  const tickTop = y + 6;
+
+  // body
+  ctx.save();
+  ctx.fillStyle = 'rgba(15,23,42,.88)';
+  ctx.strokeStyle = 'rgba(148,163,184,.65)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x, y, span, RULER_H, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // centimetre graduations
+  ctx.strokeStyle = 'rgba(226,232,240,.8)';
+  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const totalCm = span / pxPerCm;
+  const labelEvery = pxPerCm < 8 ? 10 : pxPerCm < 16 ? 5 : 1;
+  for (let c = 0; c <= totalCm + 0.001; c += 1) {
+    const px = x + c * pxPerCm;
+    if (px > x + span + 0.5) break;
+    const major = c % labelEvery === 0;
+    ctx.globalAlpha = major ? 0.95 : 0.5;
+    ctx.lineWidth = major ? 1.4 : 1;
+    ctx.beginPath();
+    ctx.moveTo(px, tickTop);
+    ctx.lineTo(px, tickTop + (major ? 13 : 7));
+    ctx.stroke();
+    if (major) {
+      ctx.globalAlpha = 0.9;
+      ctx.fillText(String(c), px, tickTop + 15);
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // "cm" caption, and a grip so it looks draggable
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(148,163,184,.9)';
+  ctx.fillText('cm', x + span - 6, y + 3);
+  ctx.restore();
+
+  // the two markers
+  const markers = [
+    { pos: a, colour: opts.colourA || '#22d3ee', tag: 'A' },
+    { pos: b, colour: opts.colourB || '#f59e0b', tag: 'B' }
+  ];
+  markers.forEach(m => {
+    const px = x + m.pos;
+    ctx.save();
+    ctx.strokeStyle = m.colour;
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(px, opts.guideTop);
+    ctx.lineTo(px, opts.guideBottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // tab
+    ctx.fillStyle = m.colour;
+    ctx.beginPath();
+    ctx.moveTo(px, y - 2);
+    ctx.lineTo(px - 8, y - 15);
+    ctx.lineTo(px + 8, y - 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(m.tag, px, y - 10);
+    ctx.restore();
+  });
+
+  // reading
+  const readCm = Math.abs(b - a) / pxPerCm;
+  const midX = x + (a + b) / 2;
+  const label = readCm.toFixed(1) + ' cm';
+  ctx.save();
+  ctx.font = 'bold 13px JetBrains Mono, monospace';
+  const w = ctx.measureText(label).width + 16;
+  const boxY = y + RULER_H + 6;
+  ctx.fillStyle = 'rgba(2,6,23,.92)';
+  ctx.strokeStyle = 'rgba(148,163,184,.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(midX - w / 2, boxY, w, 22, 6);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, midX, boxY + 11);
+  ctx.restore();
+}
+
+/* Pointer handling shared by both canvases. Returns the props to spread
+   onto the <canvas>, plus a helper that maps a client point into canvas
+   coordinates for the section-specific drags (the wooden bridge). */
+function useCanvasDrag(canvasRef, logicalW, logicalH, handlers) {
+  const toLocal = useCallback((e) => {
+    const c = canvasRef.current;
+    if (!c) return { x: 0, y: 0 };
+    const r = c.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (logicalW / r.width),
+      y: (e.clientY - r.top) * (logicalH / r.height)
+    };
+  }, [canvasRef, logicalW, logicalH]);
+
+  const drag = useRef(null);
+
+  const onPointerDown = (e) => {
+    const p = toLocal(e);
+    const hit = handlers.hitTest(p);
+    if (!hit) return;
+    drag.current = hit;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  const onPointerMove = (e) => {
+    const p = toLocal(e);
+    if (drag.current) { handlers.onDrag(drag.current, p); e.preventDefault(); }
+    else if (handlers.onHover) handlers.onHover(p);
+  };
+  const end = (e) => {
+    if (drag.current) {
+      drag.current = null;
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+  };
+  return { onPointerDown, onPointerMove, onPointerUp: end, onPointerCancel: end, toLocal };
+}
+
+/* Older Safari and Firefox lack roundRect; the ruler and every panel
+   depend on it, so patch it before anything draws. */
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    const rad = Math.min(typeof r === 'number' ? r : 0, w / 2, h / 2);
+    this.moveTo(x + rad, y);
+    this.arcTo(x + w, y, x + w, y + h, rad);
+    this.arcTo(x + w, y + h, x, y + h, rad);
+    this.arcTo(x, y + h, x, y, rad);
+    this.arcTo(x, y, x + w, y, rad);
+    this.closePath();
+    return this;
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PART A — RIPPLE TANK
+   ═══════════════════════════════════════════════════════════════════ */
+
+const TANK_DEFAULTS = { freq: 8, depth: 5, source: 'plane', timeMode: 'strobe', waves: 10 };
+const DIPPER_X = 74;              // straight dipper / point dipper, in canvas px
+const SOURCE_Y = TANK.H / 2;
+const FIELD_SCALE = 2;            // the wave field is computed at half resolution
+const FIELD_W = TANK.W / FIELD_SCALE;
+const FIELD_H = TANK.H / FIELD_SCALE;
+
+function defaultTankRuler() {
+  return { x: 90, y: 330, span: 600, a: 60, b: 360 };
+}
+
+function RippleTank() {
+  const [freq, setFreq]     = useState(TANK_DEFAULTS.freq);
+  const [depth, setDepth]   = useState(TANK_DEFAULTS.depth);
+  const [source, setSource] = useState(TANK_DEFAULTS.source);
+  const [timeMode, setMode] = useState(TANK_DEFAULTS.timeMode);
+  const [waves, setWaves]   = useState(TANK_DEFAULTS.waves);
+  const [showRuler, setShowRuler] = useState(true);
+  const [ruler, setRuler]   = useState(defaultTankRuler);
+
+  const canvasRef = useRef(null);
+  const fieldRef  = useRef(null);     // offscreen half-resolution canvas
+  const imgRef    = useRef(null);     // its ImageData, reused every frame
+  const simT      = useRef(0);        // simulation time in seconds
+
+  /* --- derived physics ------------------------------------------------ */
+  const vCmS      = rippleSpeedCmS(depth);
+  const lambdaCm  = vCmS / freq;
+  const lambdaPx  = lambdaCm * TANK.pxPerCm;
+
+  const readingCm = Math.abs(ruler.b - ruler.a) / TANK.pxPerCm;
+  const lambdaMeasured = readingCm / waves;
+  const vMeasured = freq * lambdaMeasured;
+  const pctErr = lambdaCm > 0 ? ((lambdaMeasured - lambdaCm) / lambdaCm) * 100 : 0;
+
+  /* The draw loop reads parameters through a ref so it can be mounted
+     once and still see the newest slider values. */
+  const params = useRef({});
+  params.current = { freq, depth, source, timeMode, ruler, showRuler, lambdaPx, lambdaCm, vCmS };
+
+  /* --- pointer interaction ------------------------------------------- */
+  const hitTest = useCallback((p) => {
+    const r = params.current.ruler;
+    if (!params.current.showRuler) return null;
+    const near = (px) => Math.abs(p.x - px) < GRAB && p.y > r.y - 22 && p.y < r.y + RULER_H + 6;
+    if (near(r.x + r.a)) return { kind: 'a' };
+    if (near(r.x + r.b)) return { kind: 'b' };
+    if (p.x > r.x && p.x < r.x + r.span && p.y > r.y && p.y < r.y + RULER_H) {
+      return { kind: 'body', dx: p.x - r.x, dy: p.y - r.y };
+    }
+    return null;
+  }, []);
+
+  const onDrag = useCallback((hit, p) => {
+    setRuler(prev => {
+      if (hit.kind === 'body') {
+        return {
+          ...prev,
+          x: clamp(p.x - hit.dx, 4, TANK.W - prev.span - 4),
+          y: clamp(p.y - hit.dy, 40, TANK.H - RULER_H - 34)
+        };
+      }
+      const local = clamp(p.x - prev.x, 0, prev.span);
+      return hit.kind === 'a' ? { ...prev, a: local } : { ...prev, b: local };
+    });
+  }, []);
+
+  const canvasProps = useCanvasDrag(canvasRef, TANK.W, TANK.H, { hitTest, onDrag });
+
+  /* --- auto-measure: park the markers on crests ----------------------- */
+  const autoMeasure = () => {
+    const { lambdaPx: lp, source: src, freq: f } = params.current;
+    if (!(lp > 2)) return;
+    const frac = (f * simT.current) % 1;                     // crest phase drift
+    const next = { ...params.current.ruler };
+    if (src === 'point') next.y = SOURCE_Y + 24;             // lay the rule along a radius from the source
+    // crest n sits a distance lp*(n + frac) from the dipper
+    const originToRuler = next.x - DIPPER_X;
+    let n = Math.ceil((originToRuler + 8) / lp - frac);
+    let aPx = lp * (n + frac) - originToRuler;
+    while (aPx < 8) { n += 1; aPx = lp * (n + frac) - originToRuler; }
+    const count = Math.max(1, Math.min(waves, Math.floor((next.span - aPx) / lp)));
+    next.a = clamp(aPx, 0, next.span);
+    next.b = clamp(aPx + count * lp, 0, next.span);
+    setShowRuler(true);
+    setRuler(next);
+    setWaves(count);
+  };
+
+  const reset = () => {
+    setFreq(TANK_DEFAULTS.freq); setDepth(TANK_DEFAULTS.depth);
+    setSource(TANK_DEFAULTS.source); setMode(TANK_DEFAULTS.timeMode);
+    setWaves(TANK_DEFAULTS.waves); setRuler(defaultTankRuler()); setShowRuler(true);
+    simT.current = 0;
+  };
+
+  /* --- the animation loop --------------------------------------------- */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = TANK.W * dpr;
+    canvas.height = TANK.H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const field = document.createElement('canvas');
+    field.width = FIELD_W; field.height = FIELD_H;
+    const fctx = field.getContext('2d');
+    fieldRef.current = { field, fctx };
+    imgRef.current = fctx.createImageData(FIELD_W, FIELD_H);
+
+    let raf = 0, last = performance.now();
+
+    const loop = (now) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const P = params.current;
+      const scale = P.timeMode === 'live' ? 1 : P.timeMode === 'strobe' ? 0.035 : 0;
+      simT.current += dt * scale;
+      drawTank(ctx, fieldRef.current, imgRef.current, P, simT.current);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const modeLabel = { live: 'Live', strobe: 'Strobe', freeze: 'Frozen' }[timeMode];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-5 items-start">
+
+      {/* ── LEFT: controls and dashboard ─────────────────────────────── */}
+      <div className="space-y-5">
+        <Card title="Dipper controls" icon="waves" accent="cyan">
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <Btn active={source === 'plane'} onClick={() => setSource('plane')}>Plane waves</Btn>
+            <Btn active={source === 'point'} onClick={() => setSource('point')}>Point source</Btn>
+          </div>
+          <p className="text-xs text-slate-400 mb-4 leading-snug">
+            {source === 'plane'
+              ? 'A straight dipper bar makes parallel wavefronts — the easy case for measuring wavelength.'
+              : 'A single dipper ball makes circular wavefronts spreading out from one point.'}
+          </p>
+
+          <Slider label="Frequency f" value={freq} min={1} max={20} step={0.5}
+                  onChange={setFreq} unit="Hz" accent="#22d3ee" dp={1}
+                  hint="Motor speed on the signal generator — the independent variable." />
+
+          <Slider label="Water depth" value={depth} min={1} max={12} step={0.5}
+                  onChange={setDepth} unit="mm" accent="#38bdf8" dp={1}
+                  hint={'Shallow water: v = √(gh) = ' + fmt(vCmS, 1) + ' cm s⁻¹. Keep it constant — it is a control variable.'} />
+
+          <div className="mb-2">
+            <span className="text-xs uppercase tracking-wider text-slate-400 block mb-2">Stroboscope</span>
+            <div className="grid grid-cols-3 gap-2">
+              <Btn active={timeMode === 'live'}   onClick={() => setMode('live')}   title="Real time — the pattern blurs, exactly as it does in the lab">Live</Btn>
+              <Btn active={timeMode === 'strobe'} onClick={() => setMode('strobe')} title="Strobe slightly off the dipper frequency: the pattern crawls">Strobe</Btn>
+              <Btn active={timeMode === 'freeze'} onClick={() => setMode('freeze')} title="Strobe exactly on frequency: the pattern stands still">Freeze</Btn>
+            </div>
+            <p className="text-[11px] leading-snug text-slate-500 mt-2">
+              In the lab the pattern moves too fast to measure. A strobe flashing at the dipper
+              frequency freezes it; flashing just off it makes the waves crawl.
+            </p>
+          </div>
+
+          <Btn onClick={reset} className="w-full mt-2 flex items-center justify-center gap-2">
+            <Icon name="rotate-ccw" className="w-4 h-4" /> Reset tank
+          </Btn>
+        </Card>
+
+        <Card title="Measurement" icon="ruler" accent="cyan">
+          <Toggle label="Show virtual ruler" checked={showRuler} onChange={setShowRuler} />
+          <div className="mt-3 mb-3">
+            <div className="flex items-baseline justify-between gap-3 mb-1">
+              <label className="text-xs uppercase tracking-wider text-slate-400">Crests spanned (n)</label>
+              <span className="font-mono text-sm font-semibold text-cyan-300">{waves}</span>
+            </div>
+            <input type="range" min={1} max={15} step={1} value={waves}
+                   style={{ '--accent': '#22d3ee' }}
+                   onChange={(e) => setWaves(parseInt(e.target.value, 10))}
+                   aria-label="Number of crests spanned" />
+            <p className="text-[11px] leading-snug text-slate-500 mt-0.5">
+              Measure across many waves and divide — one wave alone is far too short to measure well.
+            </p>
+          </div>
+          <Btn onClick={autoMeasure} className="w-full flex items-center justify-center gap-2" title="Snap marker A to a crest and marker B n crests further on">
+            <Icon name="crosshair" className="w-4 h-4" /> Snap markers to crests
+          </Btn>
+          <p className="text-[11px] leading-snug text-slate-500 mt-2">
+            Drag the ruler by its body; drag the <span className="text-cyan-300 font-semibold">A</span> and
+            <span className="text-amber-300 font-semibold"> B</span> tabs to line them up with crests.
+            {source === 'point' && ' For circular waves, measure outwards along a line from the source.'}
+          </p>
+        </Card>
+
+        <Card title="Live readings" icon="gauge" accent="cyan"
+              right={<Badge tone={timeMode === 'freeze' ? 'green' : timeMode === 'strobe' ? 'cyan' : 'slate'}>{modeLabel}</Badge>}>
+          <div className="grid grid-cols-2 gap-2">
+            <Metric label="Frequency f" value={fmt(freq, 1)} unit="Hz" />
+            <Metric label="Ruler reading" value={fmt(readingCm, 1)} unit="cm" sub={waves + ' crests'} />
+            <Metric label="Wavelength λ" value={fmt(lambdaMeasured, 2)} unit="cm" accent="text-amber-300"
+                    sub={'reading ÷ ' + waves} />
+            <Metric label="Speed v = fλ" value={fmt(freq * lambdaMeasured, 1)} unit="cm s⁻¹" accent="text-emerald-300" />
+          </div>
+          <div className="mt-3 text-xs bg-slate-900/60 border border-slate-700 rounded-lg p-3 leading-relaxed">
+            <div className="flex justify-between text-slate-300">
+              <span>True wavelength</span>
+              <span className="font-mono text-slate-100">{fmt(lambdaCm, 2)} cm</span>
+            </div>
+            <div className="flex justify-between text-slate-300">
+              <span>True speed √(gh)</span>
+              <span className="font-mono text-slate-100">{fmt(vCmS, 1)} cm s⁻¹</span>
+            </div>
+            <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-700">
+              <span className="text-slate-400">Your measurement is</span>
+              <Badge tone={Math.abs(pctErr) < 3 ? 'green' : Math.abs(pctErr) < 10 ? 'amber' : 'rose'}>
+                {(pctErr >= 0 ? '+' : '') + fmt(pctErr, 1) + '%'}
+              </Badge>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-2 leading-snug">
+            v = f λ = {fmt(freq, 1)} × {fmt(lambdaMeasured / 100, 4)} m = <span className="font-mono text-slate-300">{fmt(vMeasured / 100, 3)} m s⁻¹</span>
+          </p>
+        </Card>
+      </div>
+
+      {/* ── RIGHT: the tank ───────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <Card className="!p-3">
+          <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+            <canvas
+              ref={canvasRef} className="sim no-sel"
+              style={{ aspectRatio: TANK.W + ' / ' + TANK.H, cursor: showRuler ? 'grab' : 'default' }}
+              {...canvasProps}
+              aria-label="Ripple tank viewed from above, with a draggable ruler"
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 px-1">
+            <p className="text-xs text-slate-400">
+              Viewed from above — bright bands are crests focusing the lamp onto the screen below, dark bands are troughs.
+            </p>
+            <div className="flex items-center gap-2">
+              <Badge tone="cyan">{fmt(TANK.widthCm, 0)} cm tank</Badge>
+              <Badge tone="slate">{lambdaCm > 0 ? fmt(TANK.widthCm / lambdaCm, 1) : '—'} waves across</Badge>
+            </div>
+          </div>
+        </Card>
+
+        <ApparatusScene paramsRef={params} timeRef={simT} />
+
+        <Card title="What to notice" icon="lightbulb" accent="cyan">
+          <ul className="text-sm text-slate-300 space-y-2 leading-relaxed">
+            <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+              <span>Raise <b>f</b> and the crests bunch up: λ falls, but v = fλ stays the same. Frequency does not change wave speed.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+              <span>Change the <b>depth</b> and the speed changes, so λ changes even though the motor speed has not. That is why depth is a control variable.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+              <span>Try <b>Live</b> at 15 Hz: the pattern is a blur. This is the whole reason a stroboscope, or a phone camera at a matched frame rate, is used.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+              <span>Measuring one crest-to-crest gap gives a huge percentage uncertainty. Ten gaps divided by ten cuts it by a factor of ten.</span></li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* --- the ripple tank renderer ----------------------------------------- */
+function drawTank(ctx, fieldPair, img, P, t) {
+  const { field, fctx } = fieldPair;
+  const { source, freq, lambdaPx, ruler, showRuler } = P;
+  const data = img.data;
+
+  // Crest colour ramp: deep water blue through to a bright cyan highlight.
+  const TROUGH = [4, 20, 38], CREST = [186, 245, 255];
+
+  const lam = Math.max(lambdaPx, 3);
+  const k = (2 * Math.PI) / lam;
+  const phase = 2 * Math.PI * freq * t;
+  const x0 = DIPPER_X / FIELD_SCALE;
+  const y0 = SOURCE_Y / FIELD_SCALE;
+
+  if (source === 'plane') {
+    // Displacement depends on x alone, so one row of values fills the frame.
+    const col = new Float32Array(FIELD_W);
+    for (let px = 0; px < FIELD_W; px++) {
+      const d = (px - x0) * FIELD_SCALE;
+      col[px] = d < 0 ? -0.62 : Math.cos(k * d - phase);   // still water behind the dipper
+    }
+    let i = 0;
+    for (let py = 0; py < FIELD_H; py++) {
+      for (let px = 0; px < FIELD_W; px++) {
+        let b = 0.5 + 0.5 * col[px];
+        b = b * b * (3 - 2 * b);                       // smoothstep sharpens the bands
+        data[i++] = TROUGH[0] + (CREST[0] - TROUGH[0]) * b;
+        data[i++] = TROUGH[1] + (CREST[1] - TROUGH[1]) * b;
+        data[i++] = TROUGH[2] + (CREST[2] - TROUGH[2]) * b;
+        data[i++] = 255;
+      }
+    }
+  } else {
+    let i = 0;
+    for (let py = 0; py < FIELD_H; py++) {
+      const dy = (py - y0) * FIELD_SCALE;
+      for (let px = 0; px < FIELD_W; px++) {
+        const dx = (px - x0) * FIELD_SCALE;
+        const r = Math.sqrt(dx * dx + dy * dy);
+        // circular waves lose amplitude as the energy spreads round the ring
+        const amp = Math.min(1, 26 / Math.sqrt(Math.max(r, 6)));
+        let b = 0.5 + 0.5 * amp * Math.cos(k * r - phase);
+        b = b * b * (3 - 2 * b);
+        data[i++] = TROUGH[0] + (CREST[0] - TROUGH[0]) * b;
+        data[i++] = TROUGH[1] + (CREST[1] - TROUGH[1]) * b;
+        data[i++] = TROUGH[2] + (CREST[2] - TROUGH[2]) * b;
+        data[i++] = 255;
+      }
+    }
+  }
+  fctx.putImageData(img, 0, 0);
+
+  // blow the field up to full size; the slight softness reads as a projection
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(field, 0, 0, TANK.W, TANK.H);
+  ctx.restore();
+
+  // vignette, so the middle of the screen looks lit
+  const vg = ctx.createRadialGradient(TANK.W * 0.5, TANK.H * 0.5, TANK.H * 0.25, TANK.W * 0.5, TANK.H * 0.5, TANK.W * 0.72);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,.55)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, TANK.W, TANK.H);
+
+  /* --- the dipper ----------------------------------------------------- */
+  ctx.save();
+  if (source === 'plane') {
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(DIPPER_X - 12, 30, 20, TANK.H - 60, 6);
+    ctx.fill(); ctx.stroke();
+    // motor arm
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(DIPPER_X - 2, 30); ctx.lineTo(DIPPER_X - 2, 8); ctx.stroke();
+  } else {
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(DIPPER_X, SOURCE_Y); ctx.lineTo(DIPPER_X, 8); ctx.stroke();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath(); ctx.arc(DIPPER_X, SOURCE_Y, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(source === 'plane' ? 'straight dipper' : 'point dipper', 12, TANK.H - 20);
+  ctx.restore();
+
+  /* --- tank walls ----------------------------------------------------- */
+  ctx.save();
+  ctx.strokeStyle = 'rgba(148,163,184,.55)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(3, 3, TANK.W - 6, TANK.H - 6);
+  ctx.restore();
+
+  /* --- ruler ---------------------------------------------------------- */
+  if (showRuler) {
+    drawRuler(ctx, ruler, TANK.pxPerCm, {
+      guideTop: 8, guideBottom: TANK.H - 8,
+      colourA: '#22d3ee', colourB: '#fbbf24'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PART A — THE APPARATUS IN 3D
+   A real three.js scene rather than a drawing, so students can look at the
+   set-up from the angle they will actually stand at. It shares the ripple
+   tank's clock and wavelength, so the water surface, the pattern cast on
+   the paper and the 2D view above are all the same wave.
+   Scene units are centimetres.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const DIP_X    = -11;      // the dipper sits 5 cm in from the left wall
+const WATER_Y  = 22.6;
+const PAPER_W  = 40, PAPER_D = 30;
+const TEX_W    = 192, TEX_H = 144;
+
+const APPARATUS_LABELS = [
+  { id: 'lamp',   text: 'Lamp',              pos: [0, 53, 0],      tone: 'amber' },
+  { id: 'tank',   text: 'Ripple tank',      pos: [17, 20, 13.5],  tone: 'cyan'  },
+  { id: 'water',  text: 'Water (~5 mm)',    pos: [7, 25.5, 5],    tone: 'cyan' },
+  { id: 'dipper', text: 'Dipper',           pos: [DIP_X, 23.4, 15], tone: 'cyan' },
+  { id: 'motor',  text: 'Motor & beam',     pos: [DIP_X, 33.5, -9], tone: 'slate' },
+  { id: 'paper',  text: 'Paper screen',     pos: [13, 0.6, 13],   tone: 'slate' },
+  { id: 'supply', text: 'Signal generator', pos: [-33, 9, 7],     tone: 'slate' },
+  { id: 'strobe', text: 'Stroboscope',      pos: [29, 30, 12],    tone: 'amber' }
+];
+
+/* Paint the projected pattern onto the paper texture. Bright bands are the
+   crests acting as converging lenses, dark bands are the troughs. */
+function paintPaper(ctx, P, t) {
+  const img = ctx.__img || (ctx.__img = ctx.createImageData(TEX_W, TEX_H));
+  const d = img.data;
+  const lam = Math.max(P.lambdaCm, 0.15);
+  const k = (2 * Math.PI) / lam;
+  const phase = 2 * Math.PI * P.freq * t;
+  const DARK = [58, 66, 80], LIGHT = [248, 250, 252];
+  let i = 0;
+  for (let py = 0; py < TEX_H; py++) {
+    const wz = (py / (TEX_H - 1) - 0.5) * PAPER_D;
+    for (let px = 0; px < TEX_W; px++) {
+      const wx = (px / (TEX_W - 1) - 0.5) * PAPER_W;
+      const dx = wx - DIP_X;
+      let val;
+      if (P.source === 'plane') {
+        val = dx < 0 ? -0.6 : Math.cos(k * dx - phase);
+      } else {
+        const r = Math.sqrt(dx * dx + wz * wz);
+        val = Math.min(1, 5 / Math.sqrt(Math.max(r, 1.5))) * Math.cos(k * r - phase);
+      }
+      let b = 0.5 + 0.5 * val;
+      b = b * b * (3 - 2 * b);
+      // the lamp only lights a circle of paper, so fade towards the edges
+      const fall = clamp(1.25 - Math.hypot(wx, wz) / 21, 0, 1);
+      const lit = b * fall;
+      d[i++] = DARK[0] + (LIGHT[0] - DARK[0]) * lit;
+      d[i++] = DARK[1] + (LIGHT[1] - DARK[1]) * lit;
+      d[i++] = DARK[2] + (LIGHT[2] - DARK[2]) * lit;
+      d[i++] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function ApparatusScene({ paramsRef, timeRef }) {
+  const hostRef   = useRef(null);      // holds the <canvas>
+  const labelHost = useRef(null);
+  const labelEls  = useRef({});
+  const view      = useRef({ az: -0.78, pol: 0.58, dist: 112, auto: true });
+  const [labelsOn, setLabelsOn] = useState(true);
+  const [ok, setOk] = useState(true);
+
+  const resetView = () => { view.current = { az: -0.78, pol: 0.58, dist: 112, auto: true }; };
+  const zoom = (f) => { view.current.dist = clamp(view.current.dist * f, 46, 190); };
+
+  useEffect(() => {
+    const THREE = window.THREE;
+    const host = hostRef.current;
+    if (!THREE || !host) { setOk(false); return; }
+
+    /* --- renderer, scene, camera ------------------------------------- */
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (err) { setOk(false); return; }   // no WebGL on this machine
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(host.clientWidth, host.clientHeight, false);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.style.cursor = 'grab';
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, host.clientWidth / host.clientHeight, 0.5, 600);
+    const target = new THREE.Vector3(0, 19, 0);
+
+    const mat = (hex, opts) => new THREE.MeshPhongMaterial(Object.assign({ color: hex }, opts || {}));
+    const add = (m, x, y, z) => { m.position.set(x, y, z); scene.add(m); return m; };
+
+    /* --- lighting ----------------------------------------------------- */
+    scene.add(new THREE.AmbientLight(0x93a4c4, 0.62));
+    const key = new THREE.DirectionalLight(0xffffff, 0.62);
+    key.position.set(-46, 62, 54);
+    scene.add(key);
+    const bulbLight = new THREE.PointLight(0xfff2cc, 1.15, 150, 2);
+    bulbLight.position.set(0, 45, 0);
+    scene.add(bulbLight);
+
+    /* --- bench and the paper screen ----------------------------------- */
+    add(new THREE.Mesh(new THREE.PlaneGeometry(260, 190), mat(0x3d3125)),
+        0, 0, 0).rotation.x = -Math.PI / 2;
+
+    const texCanvas = document.createElement('canvas');
+    texCanvas.width = TEX_W; texCanvas.height = TEX_H;
+    const texCtx = texCanvas.getContext('2d');
+    const paperTex = new THREE.CanvasTexture(texCanvas);
+    const paper = add(new THREE.Mesh(new THREE.PlaneGeometry(PAPER_W, PAPER_D),
+                      new THREE.MeshBasicMaterial({ map: paperTex })), 0, 0.35, 0);
+    paper.rotation.x = -Math.PI / 2;
+
+    /* --- the tank: glass tray on four legs ---------------------------- */
+    const glass = mat(0xbfe6f7, { transparent: true, opacity: 0.32, shininess: 120, side: THREE.DoubleSide });
+    const metal = mat(0x8fa0b5, { shininess: 80 });
+    const tank = new THREE.Group();
+    tank.add(new THREE.Mesh(new THREE.BoxGeometry(33, 0.4, 25), glass).translateY(20.2));
+    [[0, 12.3], [0, -12.3]].forEach(([x, z]) =>
+      tank.add(new THREE.Mesh(new THREE.BoxGeometry(33, 4.4, 0.4), glass).translateY(22.4).translateZ(z)));
+    [[16.3, 0], [-16.3, 0]].forEach(([x]) =>
+      tank.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 4.4, 25), glass).translateY(22.4).translateX(x)));
+    [[15.4, 11.4], [-15.4, 11.4], [15.4, -11.4], [-15.4, -11.4]].forEach(([x, z]) => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 20, 12), metal);
+      leg.position.set(x, 10, z);
+      tank.add(leg);
+    });
+    scene.add(tank);
+
+    /* --- the water surface, displaced every frame --------------------- */
+    const WSEG_X = 96, WSEG_Z = 70;
+    const waterGeo = new THREE.PlaneGeometry(31.6, 24, WSEG_X, WSEG_Z);
+    const water = add(new THREE.Mesh(waterGeo, mat(0x22d3ee, {
+      transparent: true, opacity: 0.66, shininess: 220, specular: 0xffffff, side: THREE.DoubleSide
+    })), 0, WATER_Y, 0);
+    water.rotation.x = -Math.PI / 2;
+    const wPos = waterGeo.attributes.position;
+
+    /* --- dipper, beam and motor --------------------------------------- */
+    const wood = mat(0xa9761f, { shininess: 20 });
+    const beam = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 30), wood), DIP_X, 29.5, 0);
+    const barDipper = add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.4, 22), mat(0xe2e8f0)), DIP_X, 23.4, 0);
+    const ballDipper = add(new THREE.Mesh(new THREE.SphereGeometry(1.15, 20, 16), mat(0xe2e8f0)), DIP_X, 23.4, 0);
+    [-9, 9].forEach(z => {
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5.4, 8), metal);
+      rod.position.set(DIP_X, 26.4, z);
+      scene.add(rod);
+    });
+    // suspension frame
+    [-13.5, 13.5].forEach(z => {
+      const s = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 9, 8), metal);
+      s.position.set(DIP_X, 34.3, z);
+      scene.add(s);
+    });
+    add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 29), metal), DIP_X, 38.9, 0);
+    const post = add(new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 39, 12), metal), DIP_X, 19.5, -14.5);
+    add(new THREE.Mesh(new THREE.BoxGeometry(9, 1.1, 7), mat(0x475569)), DIP_X, 0.6, -14.5);
+
+    const motor = new THREE.Group();
+    const canBody = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 3.4, 20), mat(0x334155));
+    canBody.rotation.z = Math.PI / 2;
+    motor.add(canBody);
+    const eccentric = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.6, 0.7), mat(0xf59e0b));
+    eccentric.position.set(1.9, 0.9, 0);
+    motor.add(eccentric);
+    motor.position.set(DIP_X, 31.6, -8);
+    scene.add(motor);
+
+    /* --- lamp on its stand -------------------------------------------- */
+    add(new THREE.Mesh(new THREE.BoxGeometry(11, 1.2, 9), mat(0x475569)), 0, 0.6, -25);
+    add(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 52, 14), metal), 0, 26, -25);
+    add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 2.4), mat(0x64748b)), 0, 50, -25);
+    const arm = add(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 25, 12), metal), 0, 50, -12.5);
+    arm.rotation.x = Math.PI / 2;
+    const shade = add(new THREE.Mesh(new THREE.ConeGeometry(4.2, 5, 26, 1, true),
+                      mat(0x1f2937, { side: THREE.DoubleSide })), 0, 47.6, 0);
+    shade.rotation.x = Math.PI;
+    add(new THREE.Mesh(new THREE.SphereGeometry(1.4, 18, 14),
+        new THREE.MeshBasicMaterial({ color: 0xfff6d6 })), 0, 45.4, 0);
+    const beamCone = add(new THREE.Mesh(new THREE.ConeGeometry(19, 45, 40, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xfff0c4, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false })),
+      0, 22.9, 0);
+    beamCone.renderOrder = 3;
+
+    /* --- signal generator, with a lead to the motor -------------------- */
+    const box = add(new THREE.Mesh(new THREE.BoxGeometry(15, 8, 11), mat(0x1e293b)), -33, 4, 7);
+    add(new THREE.Mesh(new THREE.PlaneGeometry(11, 4.6), new THREE.MeshBasicMaterial({ color: 0x0b1220 })), -25.4, 4.6, 7)
+      .rotation.y = Math.PI / 2;
+    const lead = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-33, 8, 3), new THREE.Vector3(-28, 12, -3),
+      new THREE.Vector3(-20, 22, -8), new THREE.Vector3(DIP_X - 1, 30, -8)
+    ]);
+    scene.add(new THREE.Mesh(new THREE.TubeGeometry(lead, 30, 0.28, 8, false), mat(0xdc2626)));
+
+    /* --- stroboscope --------------------------------------------------- */
+    add(new THREE.Mesh(new THREE.BoxGeometry(8, 5, 8), mat(0x475569)), 29, 0.9, 12)
+      .scale.set(1, 0.4, 1);
+    add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 24, 12), metal), 29, 13, 12);
+    const strobeHead = add(new THREE.Mesh(new THREE.BoxGeometry(7, 6, 5), mat(0x334155)), 29, 26, 12);
+    strobeHead.rotation.y = -0.6;
+    const strobeFace = add(new THREE.Mesh(new THREE.CircleGeometry(2.1, 22),
+      new THREE.MeshBasicMaterial({ color: 0xfef3c7 })), 26.2, 26, 10.2);
+    strobeFace.rotation.y = -0.6 - Math.PI / 2;
+
+    /* --- interaction: drag to orbit ----------------------------------- */
+    let dragging = false, lastX = 0, lastY = 0;
+    const el = renderer.domElement;
+    const down = (e) => {
+      dragging = true; view.current.auto = false;
+      lastX = e.clientX; lastY = e.clientY;
+      el.setPointerCapture(e.pointerId); el.style.cursor = 'grabbing';
+    };
+    const move = (e) => {
+      if (!dragging) return;
+      view.current.az -= (e.clientX - lastX) * 0.008;
+      view.current.pol = clamp(view.current.pol - (e.clientY - lastY) * 0.006, 0.08, 1.32);
+      lastX = e.clientX; lastY = e.clientY;
+    };
+    const up = (e) => {
+      dragging = false; el.style.cursor = 'grab';
+      try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+
+    /* --- keep the renderer the size of its card ------------------------ */
+    const resize = () => {
+      const w = host.clientWidth, h = host.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(host);
+
+    // do not burn frames on a scene that has scrolled out of sight
+    let visible = true;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.01 });
+    io.observe(host);
+
+    /* --- the loop ------------------------------------------------------ */
+    const proj = new THREE.Vector3();
+    let raf = 0, frame = 0, lastNow = performance.now();
+
+    const loop = (now) => {
+      raf = requestAnimationFrame(loop);
+      const dt = Math.min((now - lastNow) / 1000, 0.05);
+      lastNow = now;
+      if (!visible) return;
+
+      const P = paramsRef.current;
+      const t = timeRef.current;
+      const v = view.current;
+      if (v.auto) v.az += dt * 0.06;
+
+      camera.position.set(
+        target.x + v.dist * Math.cos(v.pol) * Math.sin(v.az),
+        target.y + v.dist * Math.sin(v.pol),
+        target.z + v.dist * Math.cos(v.pol) * Math.cos(v.az)
+      );
+      camera.lookAt(target);
+
+      /* water surface */
+      const lam = Math.max(P.lambdaCm, 0.15);
+      const k = (2 * Math.PI) / lam;
+      const phase = 2 * Math.PI * P.freq * t;
+      const amp = clamp(0.25 * lam, 0.22, 0.7);       // exaggerated a little, so the ripples read at this scale
+      const arr = wPos.array;
+      for (let i = 0; i < wPos.count; i++) {
+        const lx = arr[i * 3], ly = arr[i * 3 + 1];   // local plane coords
+        const dx = lx - DIP_X, wz = -ly;
+        let h;
+        if (P.source === 'plane') {
+          h = dx < 0 ? 0 : amp * Math.cos(k * dx - phase);
+        } else {
+          const r = Math.sqrt(dx * dx + wz * wz);
+          h = amp * Math.min(1, 5 / Math.sqrt(Math.max(r, 1.5))) * Math.cos(k * r - phase);
+        }
+        arr[i * 3 + 2] = h;
+      }
+      wPos.needsUpdate = true;
+      waterGeo.computeVertexNormals();
+
+      /* dipper, motor, projected pattern */
+      barDipper.visible = P.source === 'plane';
+      ballDipper.visible = P.source === 'point';
+      const bob = Math.sin(phase) * 0.32;
+      barDipper.position.y = ballDipper.position.y = 23.4 + bob;
+      beam.position.y = 29.5 + bob * 0.5;
+      motor.rotation.x = -phase;
+
+      if ((frame++ & 1) === 0) { paintPaper(texCtx, P, t); paperTex.needsUpdate = true; }
+
+      renderer.render(scene, camera);
+
+      /* HTML labels, pinned to their 3D anchors */
+      if (labelHost.current && labelHost.current.style.display !== 'none') {
+        const w = host.clientWidth, h = host.clientHeight;
+        APPARATUS_LABELS.forEach(L => {
+          const node = labelEls.current[L.id];
+          if (!node) return;
+          proj.set(L.pos[0], L.pos[1], L.pos[2]).project(camera);
+          if (proj.z > 1) { node.style.opacity = '0'; return; }
+          node.style.opacity = '1';
+          const halfW = node.offsetWidth / 2 + 4, halfH = node.offsetHeight / 2 + 4;
+          const lx = clamp((proj.x * 0.5 + 0.5) * w, halfW, w - halfW);
+          const ly = clamp((-proj.y * 0.5 + 0.5) * h, halfH, h - halfH);
+          node.style.transform = 'translate(-50%,-50%) translate(' +
+            lx.toFixed(1) + 'px,' + ly.toFixed(1) + 'px)';
+        });
+      }
+    };
+    raf = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect(); io.disconnect();
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      scene.traverse(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+      });
+      paperTex.dispose();
+      renderer.dispose();
+      if (el.parentNode) el.parentNode.removeChild(el);
+    };
+  }, [paramsRef, timeRef]);
+
+  if (!ok) {
+    return (
+      <Card title="The apparatus in 3D" icon="box" accent="cyan">
+        <p className="text-sm text-slate-400 leading-relaxed">
+          The 3D view needs the three.js library, which did not load — usually a blocked CDN on a school network.
+          Everything else on this page still works.
+        </p>
+      </Card>
+    );
+  }
+
+  const toneClass = {
+    cyan:  'border-cyan-400/60 text-cyan-200 bg-cyan-950/80',
+    amber: 'border-amber-400/60 text-amber-200 bg-amber-950/80',
+    slate: 'border-slate-400/50 text-slate-200 bg-slate-900/85'
+  };
+
+  return (
+    <Card title="The apparatus in 3D" icon="box" accent="cyan"
+          right={
+            <div className="flex items-center gap-1.5">
+              <Btn onClick={() => zoom(0.82)} className="!px-2.5 !py-1.5" title="Zoom in">＋</Btn>
+              <Btn onClick={() => zoom(1.22)} className="!px-2.5 !py-1.5" title="Zoom out">−</Btn>
+              <Btn active={labelsOn} onClick={() => setLabelsOn(v => !v)} className="!px-2.5 !py-1.5 text-xs">Labels</Btn>
+              <Btn onClick={resetView} className="!px-2.5 !py-1.5" title="Reset the view">
+                <Icon name="rotate-ccw" className="w-4 h-4" />
+              </Btn>
+            </div>
+          }>
+      <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+        <div ref={hostRef} className="w-full no-sel" style={{ height: 'clamp(260px, 38vw, 400px)' }} />
+        <div ref={labelHost} className="absolute inset-0 pointer-events-none"
+             style={{ display: labelsOn ? 'block' : 'none' }}>
+          {APPARATUS_LABELS.map(L => (
+            <span key={L.id}
+                  ref={el => { labelEls.current[L.id] = el; }}
+                  className={'absolute top-0 left-0 whitespace-nowrap text-[11px] font-semibold px-1.5 py-0.5 rounded border backdrop-blur-sm ' + toneClass[L.tone]}
+                  style={{ opacity: 0 }}>
+              {L.text}
+            </span>
+          ))}
+        </div>
+        <span className="absolute bottom-2 right-2 text-[10px] uppercase tracking-wider text-slate-400 bg-slate-950/70 rounded px-1.5 py-0.5">
+          drag to orbit
+        </span>
+      </div>
+      <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+        The lamp shines down through the water and the glass base onto the paper. Where a crest sits, the water
+        curves like a converging lens and focuses the light into a <span className="text-cyan-300">bright line</span>;
+        a trough spreads it out into a dark one. The pattern on the paper is what you measure — the same pattern as
+        the view above, and it moves at the speed of the waves themselves.
+      </p>
+    </Card>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PART B — STANDING WAVES ON A STRETCHED STRING
+   ═══════════════════════════════════════════════════════════════════ */
+
+const STRING_Y   = 175;           // the string at rest, canvas px
+const BENCH_Y    = 245;           // bench surface
+const PULLEY_R   = 18;
+const MAX_AMP    = 56;            // px, amplitude of the 1st harmonic at full resonance
+const N_MODES    = 6;             // modes carried in the superposition
+const DISPLAY_HZ = 2.5;           // the screen oscillates slowly; the eye could never follow 50 Hz
+
+const STR_DEFAULTS = { mass: 200, muId: 'medium', bridgeX: 400, loops: 1 };
+
+function defaultStringRuler() {
+  return { x: 100, y: 336, span: 600, a: 0, b: 300 };
+}
+
+function VibratingString() {
+  const [massG, setMassG]   = useState(STR_DEFAULTS.mass);
+  const [muId, setMuId]     = useState(STR_DEFAULTS.muId);
+  const [bridgeX, setBridge]= useState(STR_DEFAULTS.bridgeX);
+  const [loops, setLoops]   = useState(STR_DEFAULTS.loops);
+  const [showRuler, setShowRuler] = useState(true);
+  const [showNodes, setShowNodes] = useState(true);
+  const [showBlur, setShowBlur]   = useState(true);
+  const [ruler, setRuler]   = useState(defaultStringRuler);
+
+  const mu = MU_OPTIONS.find(o => o.id === muId).mu;
+  const L  = (bridgeX - STR.genX) / STR.pxPerM;      // vibrating length, metres
+  const T  = (massG / 1000) * G;                     // tension, newtons
+  const v  = stringSpeed(massG, mu);                 // √(T/μ), m s⁻¹
+
+  const [freq, setFreq] = useState(() => Math.round(harmonicF(1, 0.6, stringSpeed(200, 0.5e-3)) * 4) / 4);
+
+  const canvasRef = useRef(null);
+  const simT = useRef(0);
+
+  /* --- resonance analysis --------------------------------------------- */
+  const modes = useMemo(() => {
+    const out = [];
+    for (let n = 1; n <= N_MODES; n++) {
+      const fn = harmonicF(n, L, v);
+      out.push({ n, fn, w: modeResponse(freq, fn) });
+    }
+    return out;
+  }, [L, v, freq]);
+
+  const dominant = modes.reduce((best, m) => (m.w > best.w ? m : best), modes[0]);
+  const onResonance = dominant.w > 0.5;
+  const nShown = onResonance ? dominant.n : 0;
+
+  /* --- measurement ----------------------------------------------------- */
+  const readingCm  = Math.abs(ruler.b - ruler.a) / STR.pxPerCm;
+  const loopCm     = readingCm / loops;
+  const lambdaMeas = 2 * loopCm / 100;                 // metres — one loop is half a wavelength
+  const vMeas      = freq * lambdaMeas;
+  const pctErr     = v > 0 ? ((vMeas - v) / v) * 100 : 0;
+
+  const params = useRef({});
+  params.current = { freq, bridgeX, modes, dominant, onResonance, showRuler, showNodes, showBlur, ruler, massG, L, v };
+
+  /* --- dragging: the ruler, its markers, and the wooden bridge --------- */
+  const hitTest = useCallback((p) => {
+    const P = params.current;
+    if (Math.abs(p.x - P.bridgeX) < 18 && p.y > STRING_Y - 16 && p.y < BENCH_Y + 8) return { kind: 'bridge' };
+    if (!P.showRuler) return null;
+    const r = P.ruler;
+    const near = (px) => Math.abs(p.x - px) < GRAB && p.y > r.y - 22 && p.y < r.y + RULER_H + 6;
+    if (near(r.x + r.a)) return { kind: 'a' };
+    if (near(r.x + r.b)) return { kind: 'b' };
+    if (p.x > r.x && p.x < r.x + r.span && p.y > r.y && p.y < r.y + RULER_H) {
+      return { kind: 'body', dx: p.x - r.x, dy: p.y - r.y };
+    }
+    return null;
+  }, []);
+
+  const onDrag = useCallback((hit, p) => {
+    if (hit.kind === 'bridge') { setBridge(clamp(Math.round(p.x), STR.bridgeMin, STR.bridgeMax)); return; }
+    setRuler(prev => {
+      if (hit.kind === 'body') {
+        return {
+          ...prev,
+          x: clamp(p.x - hit.dx, 4, STR.W - prev.span - 4),
+          y: clamp(p.y - hit.dy, BENCH_Y + 25, STR.H - RULER_H - 34)
+        };
+      }
+      const local = clamp(p.x - prev.x, 0, prev.span);
+      return hit.kind === 'a' ? { ...prev, a: local } : { ...prev, b: local };
+    });
+  }, []);
+
+  const canvasProps = useCanvasDrag(canvasRef, STR.W, STR.H, { hitTest, onDrag });
+
+  /* --- helpers --------------------------------------------------------- */
+  const tuneTo = (n) => setFreq(Math.round(harmonicF(n, L, v) * 4) / 4);
+
+  const snapToLoops = () => {
+    const P = params.current;
+    const n = P.onResonance ? P.dominant.n : 1;
+    const loopPx = (P.bridgeX - STR.genX) / n;
+    const want = clamp(loops, 1, n);
+    setRuler(prev => {
+      const x = clamp(STR.genX, 4, STR.W - prev.span - 4);
+      return { ...prev, x, a: 0, b: clamp(want * loopPx, 0, prev.span) };
+    });
+    setLoops(want);
+    setShowRuler(true);
+  };
+
+  const reset = () => {
+    setMassG(STR_DEFAULTS.mass); setMuId(STR_DEFAULTS.muId);
+    setBridge(STR_DEFAULTS.bridgeX); setLoops(STR_DEFAULTS.loops);
+    setRuler(defaultStringRuler()); setShowRuler(true); setShowNodes(true); setShowBlur(true);
+    setFreq(Math.round(harmonicF(1, 0.6, stringSpeed(STR_DEFAULTS.mass, 0.5e-3)) * 4) / 4);
+    simT.current = 0;
+  };
+
+  /* --- animation ------------------------------------------------------- */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = STR.W * dpr; canvas.height = STR.H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    let raf = 0, last = performance.now();
+    const loop = (now) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      simT.current += dt;
+      drawString(ctx, params.current, simT.current);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-5 items-start">
+
+      {/* ── LEFT: controls ───────────────────────────────────────────── */}
+      <div className="space-y-5">
+        <Card title="Signal generator" icon="audio-waveform" accent="amber"
+              right={<Badge tone={onResonance ? 'green' : 'slate'}>{onResonance ? 'Resonating' : 'Off resonance'}</Badge>}>
+          <Slider label="Driving frequency f" value={freq} min={1} max={250} step={0.25}
+                  onChange={setFreq} unit="Hz" accent="#f59e0b" dp={2}
+                  hint="Creep up slowly: resonance is narrow, and you will sail straight past it." />
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            <Btn onClick={() => setFreq(f => clamp(Math.round((f - 1) * 4) / 4, 1, 250))}>−1</Btn>
+            <Btn onClick={() => setFreq(f => clamp(Math.round((f - 0.25) * 4) / 4, 1, 250))}>−0.25</Btn>
+            <Btn onClick={() => setFreq(f => clamp(Math.round((f + 0.25) * 4) / 4, 1, 250))}>+0.25</Btn>
+            <Btn onClick={() => setFreq(f => clamp(Math.round((f + 1) * 4) / 4, 1, 250))}>+1</Btn>
+          </div>
+
+          <div className="mb-1 text-xs uppercase tracking-wider text-slate-400">Jump to a harmonic</div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {[1, 2, 3, 4, 5].map(n => {
+              const fn = harmonicF(n, L, v);
+              return (
+                <Btn key={n} active={onResonance && dominant.n === n} onClick={() => tuneTo(n)}
+                     className="!px-1 !py-1.5 flex flex-col leading-tight"
+                     title={'fₙ = ' + fmt(fn, 1) + ' Hz'} disabled={fn > 250}>
+                  <span className="text-[13px]">{n}{n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}</span>
+                  <span className="text-[10px] font-mono opacity-70">{fmt(fn, 0)}</span>
+                </Btn>
+              );
+            })}
+          </div>
+
+          {/* resonance meter */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs text-slate-400 uppercase tracking-wider mb-1">
+              <span>Amplitude response</span><span className="font-mono">{Math.round(dominant.w * 100)}%</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-slate-900 border border-slate-700 overflow-hidden">
+              <div className="h-full rounded-full transition-[width] duration-100"
+                   style={{ width: Math.max(2, dominant.w * 100) + '%',
+                            background: onResonance ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : '#475569' }} />
+            </div>
+            <p className="text-[11px] leading-snug text-slate-500 mt-1">
+              Nearest harmonic: {dominant.n} at <span className="font-mono">{fmt(dominant.fn, 2)} Hz</span>
+              {' '}({freq > dominant.fn ? '+' : ''}{fmt(freq - dominant.fn, 2)} Hz away)
+            </p>
+          </div>
+        </Card>
+
+        <Card title="Tension and length" icon="weight" accent="amber">
+          <Slider label="Hanging mass" value={massG} min={50} max={500} step={50}
+                  onChange={setMassG} unit="g" accent="#fbbf24" dp={0}
+                  hint={'T = mg = ' + fmt(T, 2) + ' N.  More tension means a faster wave, so every harmonic climbs.'} />
+
+          <Slider label="Vibrating length L (or drag the bridge)" value={L * 100}
+                  min={(STR.bridgeMin - STR.genX) / STR.pxPerCm} max={(STR.bridgeMax - STR.genX) / STR.pxPerCm} step={1}
+                  onChange={(cm) => setBridge(STR.genX + cm * STR.pxPerCm)} unit="cm" accent="#fbbf24" dp={0}
+                  hint="Measured from the vibration generator to the wooden bridge." />
+
+          <div className="mb-1 text-xs uppercase tracking-wider text-slate-400">String (control variable)</div>
+          <div className="grid grid-cols-3 gap-1.5 mb-3">
+            {MU_OPTIONS.map(o => (
+              <Btn key={o.id} active={muId === o.id} onClick={() => setMuId(o.id)}
+                   className="!px-1 !py-1.5 flex flex-col leading-tight">
+                <span className="text-[13px]">{o.label}</span>
+                <span className="text-[10px] font-mono opacity-70">{o.sub}</span>
+              </Btn>
+            ))}
+          </div>
+
+          <Btn onClick={reset} className="w-full flex items-center justify-center gap-2">
+            <Icon name="rotate-ccw" className="w-4 h-4" /> Reset apparatus
+          </Btn>
+        </Card>
+
+        <Card title="Overlays and measurement" icon="ruler" accent="amber">
+          <div className="space-y-2">
+            <Toggle label="Mark nodes and antinodes" checked={showNodes} onChange={setShowNodes} accent="bg-amber-500" />
+            <Toggle label="Show the blur the eye sees" checked={showBlur} onChange={setShowBlur} accent="bg-amber-500" />
+            <Toggle label="Show metre rule" checked={showRuler} onChange={setShowRuler} accent="bg-amber-500" />
+          </div>
+          <div className="mt-4 mb-3">
+            <div className="flex items-baseline justify-between gap-3 mb-1">
+              <label className="text-xs uppercase tracking-wider text-slate-400">Loops spanned</label>
+              <span className="font-mono text-sm font-semibold text-amber-300">{loops}</span>
+            </div>
+            <input type="range" min={1} max={6} step={1} value={loops}
+                   style={{ '--accent': '#f59e0b' }}
+                   onChange={(e) => setLoops(parseInt(e.target.value, 10))} aria-label="Loops spanned" />
+          </div>
+          <Btn onClick={snapToLoops} className="w-full flex items-center justify-center gap-2">
+            <Icon name="crosshair" className="w-4 h-4" /> Snap rule to the loops
+          </Btn>
+          <p className="text-[11px] leading-snug text-slate-500 mt-2">
+            One loop, node to node, is <b>half</b> a wavelength. Measure several loops and divide.
+          </p>
+        </Card>
+      </div>
+
+      {/* ── RIGHT: apparatus ─────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <Card className="!p-3">
+          <div className="rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+            <canvas ref={canvasRef} className="sim no-sel"
+                    style={{ aspectRatio: STR.W + ' / ' + STR.H, cursor: 'grab' }}
+                    {...canvasProps}
+                    aria-label="Vibration generator, string, wooden bridge, pulley and hanging masses seen from the side" />
+          </div>
+          <p className="text-xs text-slate-400 mt-3 px-1">
+            Drag the <span className="text-amber-300 font-semibold">wooden bridge</span> to change L; drag the metre rule
+            and its <span className="text-cyan-300 font-semibold">A</span>/<span className="text-amber-300 font-semibold">B</span> tabs to measure a loop.
+          </p>
+        </Card>
+
+        <Card title="Live readings" icon="gauge" accent="amber">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Metric label="Frequency f" value={fmt(freq, 2)} unit="Hz" accent="text-amber-300" />
+            <Metric label="Tension T" value={fmt(T, 2)} unit="N" accent="text-amber-300" sub={massG + ' g × 9.81'} />
+            <Metric label="Length L" value={fmt(L * 100, 0)} unit="cm" accent="text-amber-300" />
+            <Metric label="Harmonic" value={nShown || '—'} unit={nShown ? (nShown === 1 ? 'st' : nShown === 2 ? 'nd' : nShown === 3 ? 'rd' : 'th') : ''}
+                    accent="text-amber-300" sub={nShown ? nShown + ' loop' + (nShown > 1 ? 's' : '') : 'not resonating'} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+            <Metric label="Measured λ" value={fmt(lambdaMeas * 100, 1)} unit="cm" sub={'2 × ' + fmt(loopCm, 1) + ' cm loop'} />
+            <Metric label="Speed v = fλ" value={fmt(vMeas, 1)} unit="m s⁻¹" accent="text-emerald-300" />
+            <Metric label="True √(T/μ)" value={fmt(v, 1)} unit="m s⁻¹" accent="text-slate-200"
+                    sub={<span>μ = {(mu * 1000).toFixed(2)} g m⁻¹</span>} />
+          </div>
+          <div className="flex items-center justify-between mt-3 text-xs bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+            <span className="text-slate-400">Measured speed against √(T/μ)</span>
+            <Badge tone={Math.abs(pctErr) < 3 ? 'green' : Math.abs(pctErr) < 10 ? 'amber' : 'rose'}>
+              {(pctErr >= 0 ? '+' : '') + fmt(pctErr, 1) + '%'}
+            </Badge>
+          </div>
+        </Card>
+
+        <Card title="What to notice" icon="lightbulb" accent="amber">
+          <ul className="text-sm text-slate-300 space-y-2 leading-relaxed">
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span>Off resonance the string just shivers. Only at fₙ = nv/2L do the reflected waves arrive back in step and build a standing wave.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span>Add mass and every harmonic frequency rises, because v = √(T/μ) rises. Halve L and every harmonic doubles.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span>Nodes never move — that is what makes them measurable. Measure node to node and double it to get λ.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span>A standing wave transfers no energy along the string; the two travelling waves carry equal energy in opposite directions.</span></li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* --- the apparatus renderer -------------------------------------------- */
+function drawString(ctx, P, t) {
+  const { bridgeX, modes, dominant, onResonance, showNodes, showBlur, showRuler, ruler, massG, freq } = P;
+  const W = STR.W, H = STR.H;
+  const x0 = STR.genX, x1 = bridgeX, seg = x1 - x0;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // background wash
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b1220');
+  bg.addColorStop(1, '#060a13');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* --- bench ---------------------------------------------------------- */
+  ctx.save();
+  ctx.fillStyle = '#3f3222';
+  ctx.fillRect(0, BENCH_Y, 690, 12);
+  ctx.fillStyle = '#2b2217';
+  ctx.fillRect(0, BENCH_Y + 12, 690, 6);
+  ctx.fillRect(640, BENCH_Y + 18, 16, H - BENCH_Y - 18);
+  ctx.restore();
+
+  /* --- signal generator, top left -------------------------------------- */
+  ctx.save();
+  ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(18, 16, 176, 62, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#020617';
+  ctx.beginPath(); ctx.roundRect(28, 26, 122, 26, 4); ctx.fill();
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 17px JetBrains Mono, monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText(freq.toFixed(2), 140, 40);
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'left';
+  ctx.fillText('Hz', 34, 40);
+  ctx.fillText('SIGNAL GENERATOR', 28, 62);
+  // dial
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(172, 40, 12, 0, Math.PI * 2); ctx.stroke();
+  const dial = (freq / 250) * Math.PI * 1.6 - Math.PI * 0.8;
+  ctx.beginPath(); ctx.moveTo(172, 40);
+  ctx.lineTo(172 + 10 * Math.sin(dial), 40 - 10 * Math.cos(dial)); ctx.stroke();
+  // lead down to the vibration generator
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(106, 78);
+  ctx.bezierCurveTo(106, 120, 70, 140, 70, STRING_Y + 10);
+  ctx.stroke();
+  ctx.restore();
+
+  /* --- vibration generator --------------------------------------------- */
+  ctx.save();
+  ctx.fillStyle = '#334155'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(44, STRING_Y + 10, 112, BENCH_Y - STRING_Y - 10, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(226,232,240,.75)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VIBRATION', 100, STRING_Y + 32);
+  ctx.fillText('GENERATOR', 100, STRING_Y + 45);
+  // the driven peg — it is what shakes the string end
+  const drive = Math.sin(2 * Math.PI * DISPLAY_HZ * t) * 3;
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x0, STRING_Y + 10); ctx.lineTo(x0, STRING_Y + drive); ctx.stroke();
+  ctx.restore();
+
+  /* --- pulley and masses ------------------------------------------------ */
+  ctx.save();
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(STR.pulleyX, STRING_Y + PULLEY_R); ctx.lineTo(STR.pulleyX, BENCH_Y + 2); ctx.stroke();
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(STR.pulleyX - 26, BENCH_Y - 2, 52, 10);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.beginPath(); ctx.arc(STR.pulleyX, STRING_Y, PULLEY_R, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#64748b';
+  ctx.beginPath(); ctx.arc(STR.pulleyX, STRING_Y, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  const hangX = STR.pulleyX + PULLEY_R;
+  const discs = Math.round(massG / 50);
+  const hangerTop = BENCH_Y + 36;
+  ctx.save();
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(hangX, STRING_Y); ctx.lineTo(hangX, hangerTop); ctx.stroke();
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(hangX - 16, hangerTop, 32, 5);            // hanger plate
+  for (let i = 0; i < discs; i++) {
+    const y = hangerTop + 5 + i * 13;
+    ctx.fillStyle = i % 2 ? '#94a3b8' : '#cbd5e1';
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(hangX - 20, y, 40, 12, 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText(massG + ' g', hangX, hangerTop + 9 + discs * 13);
+  ctx.restore();
+
+  /* --- displacement of the vibrating segment ---------------------------- */
+  const osc = Math.sin(2 * Math.PI * DISPLAY_HZ * t);
+  const shape = (u) => {
+    let y = 0;
+    for (let i = 0; i < modes.length; i++) {
+      const m = modes[i];
+      y += (MAX_AMP / (1 + 0.18 * (m.n - 1))) * m.w * Math.sin(m.n * Math.PI * u);
+    }
+    return y;
+  };
+
+  const STEP = 3;
+  // the blurred envelope: what the eye actually sees at 50 Hz
+  if (showBlur) {
+    ctx.save();
+    ctx.beginPath();
+    for (let x = x0; x <= x1; x += STEP) ctx.lineTo(x, STRING_Y - Math.abs(shape((x - x0) / seg)));
+    for (let x = x1; x >= x0; x -= STEP) ctx.lineTo(x, STRING_Y + Math.abs(shape((x - x0) / seg)));
+    ctx.closePath();
+    const grd = ctx.createLinearGradient(0, STRING_Y - MAX_AMP, 0, STRING_Y + MAX_AMP);
+    grd.addColorStop(0, 'rgba(251,191,36,.16)');
+    grd.addColorStop(0.5, 'rgba(251,191,36,.05)');
+    grd.addColorStop(1, 'rgba(251,191,36,.16)');
+    ctx.fillStyle = grd; ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,36,.32)'; ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // the string itself
+  ctx.save();
+  ctx.strokeStyle = onResonance ? '#fbbf24' : '#cbd5e1';
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = onResonance ? 'rgba(251,191,36,.55)' : 'transparent';
+  ctx.shadowBlur = onResonance ? 8 : 0;
+  ctx.beginPath();
+  ctx.moveTo(x0, STRING_Y);
+  for (let x = x0; x <= x1; x += STEP) ctx.lineTo(x, STRING_Y - shape((x - x0) / seg) * osc);
+  ctx.lineTo(x1, STRING_Y - 2);
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+  // the dead length: bridge, over the pulley, down to the masses
+  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, STRING_Y - 2);
+  ctx.lineTo(STR.pulleyX, STRING_Y - PULLEY_R);
+  ctx.arc(STR.pulleyX, STRING_Y, PULLEY_R, -Math.PI / 2, 0);
+  ctx.stroke();
+  ctx.restore();
+
+  /* --- nodes and antinodes ---------------------------------------------- */
+  if (showNodes && onResonance) {
+    const n = dominant.n;
+    ctx.save();
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= n; i++) {
+      const x = x0 + (seg * i) / n;
+      ctx.strokeStyle = 'rgba(226,232,240,.5)';
+      ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, STRING_Y - MAX_AMP - 6); ctx.lineTo(x, STRING_Y + MAX_AMP + 6); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath(); ctx.arc(x, STRING_Y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(226,232,240,.85)';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('N', x, STRING_Y - MAX_AMP - 10);
+    }
+    for (let i = 0; i < n; i++) {
+      const x = x0 + (seg * (i + 0.5)) / n;
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(x, STRING_Y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.textBaseline = 'top';
+      ctx.fillText('A', x, STRING_Y + MAX_AMP + 10);
+    }
+    // one loop, labelled
+    const loopPx = seg / n;
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+    const arrowY = STRING_Y - MAX_AMP - 24;
+    ctx.beginPath();
+    ctx.moveTo(x0, arrowY); ctx.lineTo(x0 + loopPx, arrowY);
+    ctx.moveTo(x0 + 6, arrowY - 4); ctx.lineTo(x0, arrowY); ctx.lineTo(x0 + 6, arrowY + 4);
+    ctx.moveTo(x0 + loopPx - 6, arrowY - 4); ctx.lineTo(x0 + loopPx, arrowY); ctx.lineTo(x0 + loopPx - 6, arrowY + 4);
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('λ/2', x0 + loopPx / 2, arrowY - 4);
+    ctx.restore();
+  } else if (showNodes) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(148,163,184,.85)';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('no standing wave — tune the frequency to a harmonic', (x0 + x1) / 2, STRING_Y - MAX_AMP - 16);
+    ctx.restore();
+  }
+
+  /* --- wooden bridge (draggable) ---------------------------------------- */
+  ctx.save();
+  ctx.fillStyle = '#a16207'; ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bridgeX, STRING_Y - 6);
+  ctx.lineTo(bridgeX + 15, BENCH_Y);
+  ctx.lineTo(bridgeX - 15, BENCH_Y);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(253,230,138,.9)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('bridge ⇄', bridgeX, BENCH_Y + 4);
+  ctx.restore();
+
+  /* --- L dimension line -------------------------------------------------- */
+  ctx.save();
+  const dimY = BENCH_Y + 22;
+  ctx.strokeStyle = 'rgba(148,163,184,.8)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x0, dimY); ctx.lineTo(x1, dimY);
+  ctx.moveTo(x0, dimY - 4); ctx.lineTo(x0, dimY + 4);
+  ctx.moveTo(x1, dimY - 4); ctx.lineTo(x1, dimY + 4);
+  ctx.stroke();
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('L = ' + ((x1 - x0) / STR.pxPerCm).toFixed(0) + ' cm', (x0 + x1) / 2, dimY - 3);
+  ctx.restore();
+
+  /* --- metre rule -------------------------------------------------------- */
+  if (showRuler) {
+    drawRuler(ctx, ruler, STR.pxPerCm, {
+      guideTop: STRING_Y - MAX_AMP - 8, guideBottom: ruler.y - 18,
+      colourA: '#22d3ee', colourB: '#fbbf24'
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PART C — METHOD, MATHS AND EXAM PRACTICE
+   ═══════════════════════════════════════════════════════════════════ */
+
+const RIPPLE_METHOD = [
+  'Put the ripple tank on a level bench, half fill it with water and check the depth is the same all over — an uneven depth changes the wave speed across the tank.',
+  'Clamp the lamp above the tank and put a large sheet of white paper on the floor or bench underneath, so the crests are projected as bright lines and the troughs as dark lines.',
+  'Fit the straight dipper so it just touches the surface, connect the motor to the low-voltage supply and switch on. Set a low frequency to start with.',
+  'Adjust the frequency until you can see clear, evenly spaced wavefronts on the paper.',
+  'Use a stroboscope (or film the pattern on a phone) to freeze the wavefronts so they can be measured.',
+  'Lay a ruler on the paper and measure the distance across 10 wavefronts, crest to crest. Divide by 10 to get one wavelength λ.',
+  'Take the frequency f from the signal generator; check it by counting how many waves pass a fixed point in 10 s and dividing by 10.',
+  'Calculate the wave speed from v = f λ. Repeat at several frequencies and show that v stays the same while λ falls.'
+];
+
+const STRING_METHOD = [
+  'Clamp the vibration generator at one end of the bench and connect it to the signal generator.',
+  'Tie one end of the string to the vibrator, run it over the pulley at the far end of the bench and hang a mass hanger from the free end.',
+  'Place the wooden bridge under the string. The vibrating length L is measured from the vibration generator to the bridge with a metre rule.',
+  'Record the total hanging mass and work out the tension, T = mg.',
+  'Switch on and slowly increase the frequency from zero until the string vibrates with one clear loop of the largest possible amplitude — the fundamental, or 1st harmonic.',
+  'Record that frequency f. The vibrating length is one loop, so λ = 2L.',
+  'Calculate the wave speed from v = f λ.',
+  'Keep increasing the frequency to find the 2nd, 3rd and higher harmonics, which appear at 2f₁, 3f₁, 4f₁ … Each gives another value of v that should agree.',
+  'Repeat with different hanging masses (changing T) or different lengths L, keeping the same string so μ does not change.'
+];
+
+const VARIABLES = [
+  { role: 'Independent', tone: 'cyan',  ripple: 'Frequency of the dipper, set on the signal generator.', string: 'Frequency of the signal generator (or the hanging mass, if you are investigating tension).' },
+  { role: 'Dependent',   tone: 'amber', ripple: 'Wavelength measured on the projected pattern.',          string: 'Wavelength, found from the loop length: λ = 2 × (node-to-node distance).' },
+  { role: 'Control',     tone: 'slate', ripple: 'Water depth, and so the wave speed. Also the same tank, lamp and screen distance throughout.', string: 'The same string, so mass per unit length μ stays the same; plus the tension and length whenever they are not the variable being changed.' }
+];
+
+const ERRORS = [
+  { title: 'Measuring a single wave', why: 'One wavelength may only be about 1 cm. A ±1 mm reading error is then a 10% uncertainty.', fix: 'Measure across 10 wavefronts and divide by 10, which cuts the percentage uncertainty by a factor of ten.' },
+  { title: 'A dim or blurred projection', why: 'If the pattern is faint, the middle of each bright band is hard to judge and the wavelength reading drifts.', fix: 'Darken the room, raise the lamp so the beam covers the whole tank, and keep the water depth constant so the bands stay sharp.' },
+  { title: 'The pattern will not stand still', why: 'At 10–20 Hz the waves move far too fast for the eye to fix on a crest.', fix: 'Use a stroboscope at the same frequency as the dipper, or film it and step through the video frame by frame.' },
+  { title: 'Parallax on the ruler', why: 'Looking at the scale from an angle shifts the reading, and it shifts differently at each end.', fix: 'Lie the ruler flat on the paper, right against the pattern, and read it from directly above.' },
+  { title: 'Judging resonance on the string', why: 'The amplitude changes slowly near resonance, so two students will pick slightly different frequencies.', fix: 'Approach resonance from both directions, note the range over which the loops look largest and take the middle as your value.' },
+  { title: 'The end of the string is not a perfect node', why: 'The vibration generator drives the string, so that end moves a little. The true vibrating length is slightly more than the measured L.', fix: 'Measure L from the generator to the bridge consistently, and use higher harmonics where the error matters less.' },
+  { title: 'Not zeroing the mass', why: 'The mass hanger itself is usually 50 g or 100 g and is easily left out of the tension.', fix: 'Include the hanger in the total mass before calculating T = mg.' }
+];
+
+const RISKS = [
+  { hazard: 'Water near mains electricity', risk: 'Electric shock from the lamp or motor supply.', control: 'Use a low-voltage supply, keep leads off the bench top and mop up spills at once.' },
+  { hazard: 'Water on the floor', risk: 'Slipping.', control: 'Fill the tank over a sink, carry it with two hands and clear spills immediately.' },
+  { hazard: 'Stroboscope light', risk: 'A flashing light between about 5 and 30 Hz can trigger a seizure in people with photosensitive epilepsy.', control: 'Warn the class before switching it on and let anyone affected leave the room.' },
+  { hazard: 'Falling masses', risk: 'Bruised or broken toes if the string snaps.', control: 'Put a tray or a box of sand under the masses, keep feet clear and do not overload the string.' },
+  { hazard: 'The string snapping under tension', risk: 'The string whips back towards the face.', control: 'Wear eye protection and stay out of the line of the string.' }
+];
+
+/* --- randomised v = fλ practice ---------------------------------------- */
+const rnd = (lo, hi, step) => lo + step * Math.floor(Math.random() * ((hi - lo) / step + 1));
+
+function makeProblem() {
+  const kind = Math.floor(Math.random() * 5);
+
+  if (kind === 0) {
+    const f = rnd(4, 20, 1), lamCm = rnd(10, 40, 1) / 10;
+    return {
+      stem: 'Waves in a ripple tank are made at ' + f + ' Hz. The wavelength is measured as ' + lamCm.toFixed(1) + ' cm. Calculate the speed of the waves.',
+      answer: f * lamCm / 100, unit: 'm/s', dp: 3,
+      working: ['Convert the wavelength to metres: λ = ' + lamCm.toFixed(1) + ' cm = ' + (lamCm / 100).toFixed(3) + ' m',
+                'v = f λ = ' + f + ' × ' + (lamCm / 100).toFixed(3),
+                'v = ' + (f * lamCm / 100).toFixed(3) + ' m/s']
+    };
+  }
+  if (kind === 1) {
+    const f = rnd(6, 18, 1), v = rnd(15, 40, 1) / 100;
+    return {
+      stem: 'Water waves travel at ' + v.toFixed(2) + ' m/s across a ripple tank. The dipper vibrates at ' + f + ' Hz. Calculate the wavelength, in centimetres.',
+      answer: (v / f) * 100, unit: 'cm', dp: 2,
+      working: ['Rearrange v = f λ to give λ = v ÷ f',
+                'λ = ' + v.toFixed(2) + ' ÷ ' + f + ' = ' + (v / f).toFixed(4) + ' m',
+                'λ = ' + ((v / f) * 100).toFixed(2) + ' cm']
+    };
+  }
+  if (kind === 2) {
+    const lamCm = rnd(10, 45, 5) / 10, v = rnd(15, 40, 1) / 100;
+    return {
+      stem: 'A wave of wavelength ' + lamCm.toFixed(1) + ' cm travels at ' + v.toFixed(2) + ' m/s. Calculate its frequency.',
+      answer: v / (lamCm / 100), unit: 'Hz', dp: 1,
+      working: ['Rearrange v = f λ to give f = v ÷ λ',
+                'λ = ' + lamCm.toFixed(1) + ' cm = ' + (lamCm / 100).toFixed(3) + ' m',
+                'f = ' + v.toFixed(2) + ' ÷ ' + (lamCm / 100).toFixed(3) + ' = ' + (v / (lamCm / 100)).toFixed(1) + ' Hz']
+    };
+  }
+  if (kind === 3) {
+    const f = rnd(8, 20, 1), n = 10, totalCm = rnd(120, 300, 5) / 10;
+    return {
+      stem: 'A student measures the distance across ' + n + ' wavefronts in a ripple tank as ' + totalCm.toFixed(1) + ' cm. The dipper frequency is ' + f + ' Hz. Calculate the speed of the waves.',
+      answer: f * (totalCm / n) / 100, unit: 'm/s', dp: 3,
+      working: ['One wavelength: λ = ' + totalCm.toFixed(1) + ' ÷ ' + n + ' = ' + (totalCm / n).toFixed(2) + ' cm',
+                'In metres: λ = ' + (totalCm / n / 100).toFixed(4) + ' m',
+                'v = f λ = ' + f + ' × ' + (totalCm / n / 100).toFixed(4) + ' = ' + (f * (totalCm / n) / 100).toFixed(3) + ' m/s']
+    };
+  }
+  const loops = rnd(2, 5, 1), f = rnd(30, 120, 5), loopCm = rnd(15, 40, 1);
+  const totalCm = loops * loopCm;
+  return {
+    stem: 'A string resonates with ' + loops + ' loops. The ' + loops + ' loops span ' + totalCm + ' cm and the signal generator reads ' + f + ' Hz. Calculate the speed of the wave on the string.',
+    answer: f * (2 * loopCm / 100), unit: 'm/s', dp: 1,
+    working: ['One loop = ' + totalCm + ' ÷ ' + loops + ' = ' + loopCm + ' cm',
+              'A loop is half a wavelength, so λ = 2 × ' + loopCm + ' = ' + (2 * loopCm) + ' cm = ' + (2 * loopCm / 100).toFixed(2) + ' m',
+              'v = f λ = ' + f + ' × ' + (2 * loopCm / 100).toFixed(2) + ' = ' + (f * 2 * loopCm / 100).toFixed(1) + ' m/s']
+  };
+}
+
+const MARK_POINTS = [
+  { credit: true,  text: 'Set the tank up level, half filled, with a lamp above and white paper below so the wavefronts show up.' },
+  { credit: true,  text: 'Switch the dipper on and use a stroboscope (or a phone video) to freeze the pattern so it can be measured.' },
+  { credit: true,  text: 'Measure the distance across 10 wavefronts with a ruler laid flat on the paper, then divide by 10 to get λ.' },
+  { credit: true,  text: 'Find the frequency from the signal generator, or by counting the waves passing a point in 10 s and dividing by 10.' },
+  { credit: true,  text: 'Calculate the speed using v = f λ, with λ converted into metres.' },
+  { credit: true,  text: 'Repeat the measurement and take a mean to reduce the effect of random error.' },
+  { credit: false, text: 'Measure the potential difference across the signal generator with a voltmeter.', why: 'The p.d. tells you nothing about the wavelength or the frequency of the water waves.' },
+  { credit: false, text: 'Draw a tangent to the wavefront and find its gradient.', why: 'There is no graph here — a tangent gradient is a technique for rate-of-change graphs, not for a projected wave pattern.' },
+  { credit: false, text: 'Measure the wavelength of one single wave and use that.', why: 'One wavelength is only a centimetre or so, so the percentage uncertainty is huge. The mark scheme wants 10 waves divided by 10.' }
+];
+
+function NotesAndExam() {
+  const [tab, setTab] = useState('ripple');
+  const [problem, setProblem] = useState(makeProblem);
+  const [entry, setEntry] = useState('');
+  const [verdict, setVerdict] = useState(null);     // null | 'right' | 'close' | 'wrong'
+  const [showWork, setShowWork] = useState(false);
+  const [score, setScore] = useState({ right: 0, tried: 0 });
+
+  const [ticks, setTicks] = useState(() => MARK_POINTS.map(() => false));
+  const [marked, setMarked] = useState(false);
+
+  const check = () => {
+    const given = parseFloat(entry.replace(/[^0-9eE+.\-]/g, ''));
+    if (!Number.isFinite(given)) { setVerdict('wrong'); return; }
+    const err = Math.abs(given - problem.answer) / Math.abs(problem.answer);
+    const v = err < 0.025 ? 'right' : err < 0.12 ? 'close' : 'wrong';
+    setVerdict(v);
+    setShowWork(v === 'right');
+    setScore(s => ({ right: s.right + (v === 'right' ? 1 : 0), tried: s.tried + 1 }));
+  };
+
+  const next = () => {
+    setProblem(makeProblem()); setEntry(''); setVerdict(null); setShowWork(false);
+  };
+
+  const creditTicked = ticks.filter((t, i) => t && MARK_POINTS[i].credit).length;
+  const wrongTicked  = ticks.filter((t, i) => t && !MARK_POINTS[i].credit).length;
+  const marks = Math.min(4, creditTicked);
+
+  const method = tab === 'ripple' ? RIPPLE_METHOD : STRING_METHOD;
+
+  return (
+    <div className="space-y-5">
+
+      {/* ── Method ────────────────────────────────────────────────────── */}
+      <Card title="Required Practical 8 — the method" icon="clipboard-list" accent="indigo"
+            right={
+              <div className="flex gap-2">
+                <Btn active={tab === 'ripple'} onClick={() => setTab('ripple')} className="!py-1.5 !px-2.5 text-xs">🌊 Ripple tank</Btn>
+                <Btn active={tab === 'string'} onClick={() => setTab('string')} className="!py-1.5 !px-2.5 text-xs">🎸 String</Btn>
+              </div>
+            }>
+        <ol className="space-y-2">
+          {method.map((step, i) => (
+            <li key={i} className="flex gap-3 text-sm text-slate-300 leading-relaxed">
+              <span className={'shrink-0 w-6 h-6 rounded-md grid place-items-center text-xs font-mono font-bold ' +
+                               (tab === 'ripple' ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40'
+                                                 : 'bg-amber-500/15 text-amber-300 border border-amber-500/40')}>
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-4 text-sm bg-slate-900/60 border border-slate-700 rounded-lg p-4">
+          <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">The equation you are proving</div>
+          <p className="font-mono text-lg text-slate-100">v = f λ</p>
+          <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+            wave speed (m/s) = frequency (Hz) × wavelength (m). On the string the extra step is
+            <span className="text-amber-300"> λ = 2 × loop length</span>, because one loop runs from node to node,
+            which is half a wave.
+          </p>
+        </div>
+      </Card>
+
+      {/* ── Variables ─────────────────────────────────────────────────── */}
+      <Card title="Identifying the variables" icon="git-compare-arrows" accent="indigo">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse min-w-[560px]">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wider text-slate-400">
+                <th className="py-2 pr-3 font-medium">Role</th>
+                <th className="py-2 pr-3 font-medium">Ripple tank</th>
+                <th className="py-2 font-medium">Stretched string</th>
+              </tr>
+            </thead>
+            <tbody>
+              {VARIABLES.map(v => (
+                <tr key={v.role} className="border-t border-slate-700 align-top">
+                  <td className="py-3 pr-3"><Badge tone={v.tone}>{v.role}</Badge></td>
+                  <td className="py-3 pr-3 text-slate-300 leading-relaxed">{v.ripple}</td>
+                  <td className="py-3 text-slate-300 leading-relaxed">{v.string}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* ── Errors and risks ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        <Card title="Where the marks are lost" icon="triangle-alert" accent="amber">
+          <ul className="space-y-3">
+            {ERRORS.map(e => (
+              <li key={e.title} className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+                <p className="font-semibold text-slate-100 text-sm">{e.title}</p>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">{e.why}</p>
+                <p className="text-xs text-emerald-300 mt-1.5 leading-relaxed"><b>Fix:</b> {e.fix}</p>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card title="Risk assessment" icon="shield-alert" accent="indigo">
+          <ul className="space-y-3">
+            {RISKS.map(r => (
+              <li key={r.hazard} className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+                <p className="font-semibold text-slate-100 text-sm">{r.hazard}</p>
+                <p className="text-xs text-rose-300 mt-1 leading-relaxed"><b>Risk:</b> {r.risk}</p>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed"><b>Control:</b> {r.control}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-slate-500 mt-3 leading-snug">
+            A hazard is the thing that could cause harm; the risk is the harm it could do. Exam answers need both,
+            plus a control measure that actually reduces it.
+          </p>
+        </Card>
+      </div>
+
+      {/* ── Calculation practice ───────────────────────────────────────── */}
+      <Card title="Equation practice — v = f λ" icon="calculator" accent="cyan"
+            right={<Badge tone={score.tried === 0 ? 'slate' : score.right / score.tried > 0.7 ? 'green' : 'amber'}>
+              {score.right} / {score.tried}
+            </Badge>}>
+        <p className="text-slate-200 leading-relaxed mb-4">{problem.stem}</p>
+
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <input
+            type="text" inputMode="decimal" value={entry}
+            onChange={(e) => { setEntry(e.target.value); setVerdict(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && entry.trim() && !verdict) check(); }}
+            placeholder="your answer"
+            className="w-40 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 font-mono text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+            aria-label="Your answer"
+          />
+          <span className="font-mono text-slate-400">{problem.unit}</span>
+          <Btn active onClick={check} disabled={!entry.trim()}>Check</Btn>
+          <Btn onClick={() => setShowWork(s => !s)}>{showWork ? 'Hide working' : 'Show working'}</Btn>
+          <Btn onClick={next} className="ml-auto flex items-center gap-2">
+            <Icon name="dice-5" className="w-4 h-4" /> New question
+          </Btn>
+        </div>
+
+        {verdict && (
+          <div className={'text-sm rounded-lg px-3 py-2 border mb-3 ' + (
+            verdict === 'right' ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+              : verdict === 'close' ? 'bg-amber-500/10 border-amber-500/40 text-amber-200'
+              : 'bg-rose-500/10 border-rose-500/40 text-rose-200')}>
+            {verdict === 'right' && 'Correct — the answer is ' + problem.answer.toFixed(problem.dp) + ' ' + problem.unit + '.'}
+            {verdict === 'close' && 'Close. Check your unit conversion — centimetres to metres is the usual slip. Try again.'}
+            {verdict === 'wrong' && 'Not right yet. Write down v, f and λ, decide which one is missing, then rearrange v = f λ.'}
+          </div>
+        )}
+
+        {showWork && (
+          <ol className="text-sm bg-slate-900/60 border border-slate-700 rounded-lg p-4 space-y-1.5">
+            {problem.working.map((w, i) => (
+              <li key={i} className="font-mono text-slate-300">{w}</li>
+            ))}
+          </ol>
+        )}
+      </Card>
+
+      {/* ── 4-mark question ────────────────────────────────────────────── */}
+      <Card title="Exam question — 4 marks" icon="pen-line" accent="indigo">
+        <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 mb-4">
+          <p className="text-slate-100 leading-relaxed">
+            A student is given a ripple tank, a lamp, a signal generator with a straight dipper, a stroboscope
+            and a metre rule. <b>Describe how the student could determine the speed of the water waves in the tank.</b>
+          </p>
+          <p className="text-xs text-slate-400 mt-2">[4 marks]</p>
+        </blockquote>
+
+        <p className="text-sm text-slate-400 mb-3">
+          Write your answer on paper first. Then tick every point you actually made, and mark yourself.
+        </p>
+
+        <ul className="space-y-2">
+          {MARK_POINTS.map((p, i) => {
+            const on = ticks[i];
+            const shown = marked;
+            const tone = !shown ? 'border-slate-700 bg-slate-900/60'
+              : on && p.credit ? 'border-emerald-500/50 bg-emerald-500/10'
+              : on && !p.credit ? 'border-rose-500/50 bg-rose-500/10'
+              : p.credit ? 'border-amber-500/40 bg-amber-500/5'
+              : 'border-slate-700 bg-slate-900/40 opacity-60';
+            return (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() => { setTicks(t => t.map((v, j) => (j === i ? !v : v))); setMarked(false); }}
+                  className={'w-full text-left flex gap-3 items-start border rounded-lg p-3 transition-colors hover:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ' + tone}
+                >
+                  <span className={'shrink-0 w-5 h-5 mt-0.5 rounded border grid place-items-center text-xs font-bold ' +
+                                   (on ? 'bg-indigo-600 border-indigo-400 text-white' : 'border-slate-500 text-transparent')}>✓</span>
+                  <span className="text-sm text-slate-200 leading-relaxed">
+                    {p.text}
+                    {marked && (
+                      <span className="block mt-1 text-xs">
+                        {p.credit
+                          ? <span className="text-emerald-300">Creditworthy point{on ? ' — you had it.' : ' — you missed this one.'}</span>
+                          : <span className="text-rose-300">No credit. {p.why}</span>}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <Btn active onClick={() => setMarked(true)}>Mark my answer</Btn>
+          <Btn onClick={() => { setTicks(MARK_POINTS.map(() => false)); setMarked(false); }}>Clear ticks</Btn>
+          {marked && (
+            <div className="flex items-center gap-3 ml-auto">
+              {wrongTicked > 0 && <Badge tone="rose">{wrongTicked} point{wrongTicked > 1 ? 's' : ''} earn nothing</Badge>}
+              <Badge tone={marks === 4 ? 'green' : marks >= 2 ? 'amber' : 'rose'}>{marks} / 4 marks</Badge>
+            </div>
+          )}
+        </div>
+
+        {marked && (
+          <p className="text-sm text-slate-300 mt-3 leading-relaxed bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+            {marks === 4
+              ? 'Full marks. Notice that four points is all the examiner wants: how the pattern is made visible, how λ is measured over 10 waves, where f comes from, and the calculation v = f λ.'
+              : 'Six of the statements above are creditworthy and you need any four of them. The four that are hardest to leave out: freeze the pattern, measure 10 wavelengths and divide by 10, get f from the signal generator, then calculate v = f λ.'}
+          </p>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   APP SHELL
+   ═══════════════════════════════════════════════════════════════════ */
+
+const TABS = [
+  { id: 'ripple', label: 'Ripple Tank',    emoji: '🌊', sub: 'Part A — water waves' },
+  { id: 'string', label: 'Stretched String', emoji: '🎸', sub: 'Part B — standing waves' },
+  { id: 'notes',  label: 'Method & Exam',  emoji: '📝', sub: 'Part C — the write-up' }
+];
+
+function App() {
+  const [tab, setTab] = useState('ripple');
+
+  return (
+    <div className="min-h-screen">
+      <header className="border-b border-slate-700/70 bg-slate-900/70 backdrop-blur sticky top-0 z-30">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[.18em] text-cyan-400 font-semibold">AQA GCSE Physics · Required Practical 8</p>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-wide text-slate-50">
+                Measuring Waves — Ripple Tank &amp; Stretched String
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge tone="cyan">v = f λ</Badge>
+              <Badge tone="amber">λ = 2 × loop</Badge>
+              <Badge tone="slate">4.6.1.2</Badge>
+            </div>
+          </div>
+
+          <nav className="flex flex-wrap gap-2 mt-4" role="tablist" aria-label="Sections">
+            {TABS.map(t => (
+              <button
+                key={t.id} role="tab" aria-selected={tab === t.id}
+                onClick={() => setTab(t.id)}
+                className={'flex items-center gap-2.5 px-4 py-2.5 rounded-lg border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ' +
+                  (tab === t.id
+                    ? 'bg-indigo-600 border-indigo-400 text-white'
+                    : 'bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-100')}
+              >
+                <span className="text-lg leading-none">{t.emoji}</span>
+                <span className="leading-tight">
+                  <span className="block text-sm font-semibold">{t.label}</span>
+                  <span className={'block text-[11px] ' + (tab === t.id ? 'text-indigo-200' : 'text-slate-400')}>{t.sub}</span>
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 pb-24">
+        {tab === 'ripple' && <RippleTank />}
+        {tab === 'string' && <VibratingString />}
+        {tab === 'notes'  && <NotesAndExam />}
+      </main>
+
+      <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        Both halves of Required Practical 8 in one place. Everything is simulated from
+        v = √(gh) for shallow water and v = √(T/μ) for the string, so the numbers behave the way the apparatus does.
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<!-- ── Home button, self-contained ─────────────────────────────────────────
+     Fixed bottom-left, scoped class name, sits above everything so it is
+     reachable even when a page opens a full-screen overlay. -->
+<style>
+  .sv-home{
+    position:fixed; left:14px; bottom:14px; z-index:2147483000;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%;
+    color:#efe9dd; background:#14120f;
+    border:1px solid rgba(239,233,221,.24);
+    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
+    transition:background .15s ease, transform .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
+  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
+  .sv-home svg{ width:18px; height:18px; display:block; }
+  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
+  @media print{ .sv-home{ display:none; } }
+</style>
+<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
+    <path d="M9.75 21v-6.2h4.5V21"/>
+  </svg>
+</a>
+</body>
+</html>
