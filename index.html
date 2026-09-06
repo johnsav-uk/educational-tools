@@ -190,7 +190,7 @@ html{scroll-behavior:smooth}
 
   <section class="hero">
     <div class="hero-left">
-      <p class="eyebrow">Index &mdash; 13 tools</p>
+      <p class="eyebrow" id="tool-count">Index &mdash; 14 tools</p>
       <h1>Two<br>ways in.<br><span class="u">Play</span> or<br><span class="c">dissect</span>.</h1>
     </div>
     <div class="hero-right">
@@ -244,7 +244,7 @@ html{scroll-behavior:smooth}
   <section id="catalog" class="catalog">
     <div class="catalog-head">
       <h2>03 / Catalogue</h2>
-      <span class="count" id="count" role="status" aria-live="polite">13 / 13 shown</span>
+      <span class="count" id="count" role="status" aria-live="polite">14 / 14 shown</span>
     </div>
 
     <div class="controls">
@@ -356,6 +356,12 @@ html{scroll-behavior:smooth}
       kind: "Revision Game", level: "GCSE", tags: ["Languages", "Revision Game", "Interactive"],
       keywords: "spanish espanol conecta 4 connect four vocabulary mfl languages modern foreign" }
   ];
+
+  // The hero count is written from the array rather than kept in sync by hand,
+  // so adding a RESOURCES entry is the only edit a new tool needs. The markup
+  // keeps a correct literal as the no-JS fallback.
+  var toolCountEl = document.getElementById('tool-count');
+  if (toolCountEl) toolCountEl.innerHTML = 'Index &mdash; ' + RESOURCES.length + ' tools';
 
   var FILTERS = ["All", "AQA Chemistry", "Chemistry", "Physics", "Biology", "Languages", "Revision Game", "3D Model", "Interactive"];
 
