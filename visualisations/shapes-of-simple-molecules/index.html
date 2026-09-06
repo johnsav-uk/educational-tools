@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shapes of Simple Molecules and Ions — AQA 3.1.3.5</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:    { 900:'#070b12', 800:'#0b111b', 700:'#111a27', 600:'#1b2736' },
+          bond:   '#38bdf8',
+          lone:   '#a78bfa',
+          arc:    '#fbbf24'
+        },
+        fontFamily: {
+          sans: ['Inter','Segoe UI','system-ui','-apple-system','sans-serif']
+        }
+      }
+    }
+  };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+
+<style>
+  :root { color-scheme: dark; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 700px at 12% -10%, #16304a 0%, transparent 60%),
+      radial-gradient(900px 600px at 92% 0%, #2a1b45 0%, transparent 58%),
+      #070b12;
+    background-attachment: fixed;
+    color: #e6edf3;
+    font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .glass {
+    background: linear-gradient(160deg, rgba(255,255,255,.065), rgba(255,255,255,.022));
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 18px 44px -24px rgba(0,0,0,.85);
+  }
+  .glass-soft {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  canvas { display: block; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.26); }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 6px; border-radius: 99px; background: rgba(255,255,255,.14);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; margin-top: -7px;
+    height: 20px; width: 20px; border-radius: 99px;
+    background: #38bdf8; border: 3px solid #0b111b;
+    box-shadow: 0 0 0 1px rgba(56,189,248,.5), 0 4px 12px rgba(56,189,248,.35);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 99px; background: rgba(255,255,255,.14); }
+  input[type=range]::-moz-range-thumb {
+    height: 16px; width: 16px; border-radius: 99px; background: #38bdf8;
+    border: 3px solid #0b111b; cursor: pointer;
+  }
+
+  .fade-in { animation: fadeIn .35s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .boot {
+    display:flex; align-items:center; justify-content:center; height:100%;
+    color:#8b98a5; font-size:14px; letter-spacing:.04em;
+  }
+</style>
+</head>
+<body>
+<div id="root"><div class="boot">Loading the molecular workshop…</div></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ============================================================
+   1.  CHEMISTRY DATA  —  single source of truth
+   ============================================================ */
+
+const D2R = Math.PI / 180;
+
+/* CPK-style colours, plus generic placeholders for the custom builder */
+const ELEMENTS = {
+  H:  { colour: 0xf3f6fb, radius: 0.30, label: 'H'  },
+  C:  { colour: 0x4a4f57, radius: 0.44, label: 'C'  },
+  N:  { colour: 0x3b5cf0, radius: 0.44, label: 'N'  },
+  O:  { colour: 0xef2f2f, radius: 0.43, label: 'O'  },
+  F:  { colour: 0x8fe04f, radius: 0.38, label: 'F'  },
+  Cl: { colour: 0x2fd94f, radius: 0.47, label: 'Cl' },
+  Be: { colour: 0xc2ff33, radius: 0.44, label: 'Be' },
+  B:  { colour: 0xffa8a8, radius: 0.45, label: 'B'  },
+  P:  { colour: 0xff8c1a, radius: 0.52, label: 'P'  },
+  S:  { colour: 0xf5e050, radius: 0.50, label: 'S'  },
+  Xe: { colour: 0x3fa7c4, radius: 0.52, label: 'Xe' },
+  X:  { colour: 0x2dd4bf, radius: 0.50, label: 'X'  },
+  Y:  { colour: 0xb8c4d4, radius: 0.36, label: 'Y'  }
+};
+
+/* ---- helpers for building direction vectors -------------------------------- */
+
+function norm(v) {
+  const m = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / m, v[1] / m, v[2] / m];
+}
+
+/* Three C3v bonds pointing away from +y with the required X–A–X angle.
+   cos(theta) = 1 - 1.5 sin^2(alpha), where alpha is the angle to the C3 axis. */
+function pyramidBonds(theta) {
+  const s2 = (1 - Math.cos(theta * D2R)) / 1.5;
+  const s = Math.sqrt(s2);
+  const c = Math.sqrt(Math.max(0, 1 - s2));
+  return [0, 120, 240].map(function (phi) {
+    return [s * Math.cos(phi * D2R), -c, s * Math.sin(phi * D2R)];
+  });
+}
+
+/* Two bonds in the xy-plane, opening downwards, separated by theta. */
+function bentBonds(theta) {
+  const h = (theta / 2) * D2R;
+  return [[Math.sin(h), -Math.cos(h), 0], [-Math.sin(h), -Math.cos(h), 0]];
+}
+
+/* n directions evenly spaced round the xz-plane, starting on +x. */
+function equatorial(n, offsetDeg) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = ((offsetDeg || 0) + i * (360 / n)) * D2R;
+    out.push([Math.cos(a), 0, Math.sin(a)]);
+  }
+  return out;
+}
+
+/* ============================================================
+   GEOMETRY: keyed "<bonding pairs>-<lone pairs>".
+   Every arrangement the AQA specification asks for, plus the
+   extra combinations the custom builder can reach.
+   ============================================================ */
+
+const GEOMETRY = {
+
+  '2-0': {
+    total: 2, bp: 2, lp: 0,
+    parent: 'Linear', shape: 'Linear',
+    angles: ['180°'], summary: '180°',
+    parentAngle: '180°', reduction: 0,
+    examples: ['BeCl₂', 'CO₂', 'HCN'],
+    why: 'Two bonding pairs get as far apart as possible by sitting on opposite sides of the central atom.',
+    bonds: [[1, 0, 0], [-1, 0, 0]],
+    lones: [],
+    arcs: [{ a: 0, b: 1, label: '180°', r: 1.0 }]
+  },
+
+  '3-0': {
+    total: 3, bp: 3, lp: 0,
+    parent: 'Trigonal planar', shape: 'Trigonal planar',
+    angles: ['120°'], summary: '120°',
+    parentAngle: '120°', reduction: 0,
+    examples: ['BF₃', 'AlCl₃', 'SO₃'],
+    why: 'Three bonding pairs and no lone pairs, so they spread into a flat triangle with all three angles equal.',
+    bonds: [[0, 1, 0], [Math.cos(210 * D2R), Math.sin(210 * D2R), 0], [Math.cos(330 * D2R), Math.sin(330 * D2R), 0]],
+    lones: [],
+    arcs: [{ a: 0, b: 1, label: '120°', r: 1.0 }, { a: 1, b: 2, label: '120°', r: 1.0 }]
+  },
+
+  '2-1': {
+    total: 3, bp: 2, lp: 1,
+    parent: 'Trigonal planar', shape: 'Non-linear (bent)',
+    angles: ['≈119°'], summary: '≈119°',
+    parentAngle: '120°', reduction: 1, aqaExtra: true,
+    examples: ['SO₂', 'SnCl₂'],
+    why: 'The parent arrangement is trigonal planar. One position holds a lone pair, which repels more strongly and squeezes the bond angle just below 120°.',
+    bonds: [[Math.sin(59.5 * D2R), -Math.cos(59.5 * D2R), 0], [-Math.sin(59.5 * D2R), -Math.cos(59.5 * D2R), 0]],
+    lones: [[0, 1, 0]],
+    arcs: [{ a: 0, b: 1, label: '≈119°', r: 1.0 }]
+  },
+
+  '4-0': {
+    total: 4, bp: 4, lp: 0,
+    parent: 'Tetrahedral', shape: 'Tetrahedral',
+    angles: ['109.5°'], summary: '109.5°',
+    parentAngle: '109.5°', reduction: 0,
+    examples: ['CH₄', 'NH₄⁺', 'SiCl₄', 'BF₄⁻'],
+    why: 'Four identical bonding pairs repel equally, so they point to the corners of a tetrahedron. This is a 3-D shape, never a flat cross.',
+    bonds: [norm([1, 1, 1]), norm([1, -1, -1]), norm([-1, 1, -1]), norm([-1, -1, 1])],
+    lones: [],
+    arcs: [{ a: 0, b: 1, label: '109.5°', r: 1.0 }]
+  },
+
+  '3-1': {
+    total: 4, bp: 3, lp: 1,
+    parent: 'Tetrahedral', shape: 'Trigonal pyramidal',
+    angles: ['107°'], summary: '107°',
+    parentAngle: '109.5°', reduction: 1,
+    examples: ['NH₃', 'PH₃', 'H₃O⁺', 'NF₃'],
+    why: 'Four pairs give a tetrahedral parent arrangement, but one is a lone pair. The lone pair repels the bonding pairs more strongly, closing the angle from 109.5° to 107°.',
+    bonds: pyramidBonds(107),
+    lones: [[0, 1, 0]],
+    arcs: [{ a: 0, b: 1, label: '107°', r: 1.0 }]
+  },
+
+  '2-2': {
+    total: 4, bp: 2, lp: 2,
+    parent: 'Tetrahedral', shape: 'Non-linear (bent)',
+    angles: ['104.5°'], summary: '104.5°',
+    parentAngle: '109.5°', reduction: 2,
+    examples: ['H₂O', 'H₂S', 'OF₂', 'NH₂⁻'],
+    why: 'Four pairs, two of which are lone pairs. Two lots of extra lone-pair repulsion pull the angle down twice: 109.5° − 2 × 2.5° = 104.5°.',
+    bonds: bentBonds(104.5),
+    lones: [[0, Math.cos(57.5 * D2R), Math.sin(57.5 * D2R)], [0, Math.cos(57.5 * D2R), -Math.sin(57.5 * D2R)]],
+    arcs: [{ a: 0, b: 1, label: '104.5°', r: 1.0 }]
+  },
+
+  '5-0': {
+    total: 5, bp: 5, lp: 0,
+    parent: 'Trigonal bipyramidal', shape: 'Trigonal bipyramidal',
+    angles: ['120° between equatorial bonds', '90° between axial and equatorial bonds'],
+    summary: '120° and 90°',
+    parentAngle: '120° / 90°', reduction: 0,
+    examples: ['PCl₅', 'PF₅'],
+    why: 'Five bonding pairs cannot all be equivalent. Three sit in a flat triangle (equatorial, 120° apart) and two sit above and below it (axial, at 90° to the equatorial plane).',
+    bonds: equatorial(3, 0).concat([[0, 1, 0], [0, -1, 0]]),
+    lones: [],
+    arcs: [{ a: 0, b: 1, label: '120°', r: 1.05 }, { a: 0, b: 3, label: '90°', r: 0.8 }]
+  },
+
+  '4-1': {
+    total: 5, bp: 4, lp: 1,
+    parent: 'Trigonal bipyramidal', shape: 'See-saw',
+    angles: ['≈117° between equatorial bonds', '≈89° between axial and equatorial bonds'],
+    summary: '≈117° and ≈89°',
+    parentAngle: '120° / 90°', reduction: 1, aqaExtra: true,
+    examples: ['SF₄'],
+    why: 'The single lone pair takes an equatorial position, where there is more room, and pushes the remaining bonds away to give a distorted see-saw.',
+    bonds: [
+      [-Math.cos(58.5 * D2R), 0, Math.sin(58.5 * D2R)],
+      [-Math.cos(58.5 * D2R), 0, -Math.sin(58.5 * D2R)],
+      [-Math.sin(2.5 * D2R), Math.cos(2.5 * D2R), 0],
+      [-Math.sin(2.5 * D2R), -Math.cos(2.5 * D2R), 0]
+    ],
+    lones: [[1, 0, 0]],
+    arcs: [{ a: 0, b: 1, label: '≈117°', r: 1.05 }, { a: 0, b: 2, label: '≈89°', r: 0.8 }]
+  },
+
+  '3-2': {
+    total: 5, bp: 3, lp: 2,
+    parent: 'Trigonal bipyramidal', shape: 'T-shaped',
+    angles: ['≈87.5°'], summary: '≈87.5°',
+    parentAngle: '90°', reduction: 1,
+    examples: ['ClF₃', 'BrF₃'],
+    why: 'Both lone pairs take equatorial positions, where lone pair–lone pair repulsion is smallest. The three bonds are left in a T, with the axial bonds bent slightly towards the equatorial bond, so 90° becomes about 87.5°.',
+    bonds: [
+      [1, 0, 0],
+      [Math.sin(2.5 * D2R), Math.cos(2.5 * D2R), 0],
+      [Math.sin(2.5 * D2R), -Math.cos(2.5 * D2R), 0]
+    ],
+    lones: [[Math.cos(120 * D2R), 0, Math.sin(120 * D2R)], [Math.cos(240 * D2R), 0, Math.sin(240 * D2R)]],
+    arcs: [{ a: 0, b: 1, label: '≈87.5°', r: 0.9 }]
+  },
+
+  '2-3': {
+    total: 5, bp: 2, lp: 3,
+    parent: 'Trigonal bipyramidal', shape: 'Linear',
+    angles: ['180°'], summary: '180°',
+    parentAngle: '180°', reduction: 0, aqaExtra: true,
+    examples: ['XeF₂', 'I₃⁻'],
+    why: 'All three lone pairs sit in the equatorial plane, 120° apart, leaving the two bonds axial and exactly opposite one another.',
+    bonds: [[0, 1, 0], [0, -1, 0]],
+    lones: equatorial(3, 0),
+    arcs: [{ a: 0, b: 1, label: '180°', r: 1.0 }]
+  },
+
+  '6-0': {
+    total: 6, bp: 6, lp: 0,
+    parent: 'Octahedral', shape: 'Octahedral',
+    angles: ['90°'], summary: '90°',
+    parentAngle: '90°', reduction: 0,
+    examples: ['SF₆', 'PF₆⁻', 'SiF₆²⁻'],
+    why: 'Six identical bonding pairs point to the corners of an octahedron: four in a square around the middle, one above and one below.',
+    bonds: [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], [0, -1, 0]],
+    lones: [],
+    arcs: [{ a: 0, b: 1, label: '90°', r: 1.0 }, { a: 0, b: 4, label: '90°', r: 0.82 }]
+  },
+
+  '5-1': {
+    total: 6, bp: 5, lp: 1,
+    parent: 'Octahedral', shape: 'Square pyramidal',
+    angles: ['≈89°'], summary: '≈89°',
+    parentAngle: '90°', reduction: 1, aqaExtra: true,
+    examples: ['BrF₅', 'IF₅'],
+    why: 'One octahedral position holds a lone pair. The four bonds in the square are pushed slightly up and away from it, so those angles drop just below 90°.',
+    bonds: [
+      [Math.sin(89 * D2R), Math.cos(89 * D2R), 0],
+      [0, Math.cos(89 * D2R), Math.sin(89 * D2R)],
+      [-Math.sin(89 * D2R), Math.cos(89 * D2R), 0],
+      [0, Math.cos(89 * D2R), -Math.sin(89 * D2R)],
+      [0, 1, 0]
+    ],
+    lones: [[0, -1, 0]],
+    arcs: [{ a: 0, b: 4, label: '≈89°', r: 0.9 }, { a: 0, b: 1, label: '90°', r: 1.1 }]
+  },
+
+  '4-2': {
+    total: 6, bp: 4, lp: 2,
+    parent: 'Octahedral', shape: 'Square planar',
+    angles: ['90°'], summary: '90°',
+    parentAngle: '90°', reduction: 0,
+    examples: ['XeF₄', 'ICl₄⁻'],
+    why: 'The two lone pairs go opposite one another, 180° apart, to keep the strongest repulsion — lone pair to lone pair — as small as possible. That leaves four bonds in a flat square at exactly 90°.',
+    bonds: [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1]],
+    lones: [[0, 1, 0], [0, -1, 0]],
+    arcs: [{ a: 0, b: 1, label: '90°', r: 1.0 }]
+  }
+};
+
+/* ============================================================
+   SPECIES: the named examples AQA expects students to know
+   ============================================================ */
+
+const SPECIES = [
+  { id: 'BeCl2', formula: 'BeCl₂', name: 'Beryllium chloride',        central: 'Be', outer: 'Cl', bp: 2, lp: 0, group: '2 pairs' },
+  { id: 'BF3',   formula: 'BF₃',   name: 'Boron trifluoride',         central: 'B',  outer: 'F',  bp: 3, lp: 0, group: '3 pairs' },
+  { id: 'CH4',   formula: 'CH₄',   name: 'Methane',                   central: 'C',  outer: 'H',  bp: 4, lp: 0, group: '4 pairs' },
+  { id: 'NH4',   formula: 'NH₄⁺',  name: 'Ammonium ion',              central: 'N',  outer: 'H',  bp: 4, lp: 0, group: '4 pairs', charge: '+' },
+  { id: 'NH3',   formula: 'NH₃',   name: 'Ammonia',                   central: 'N',  outer: 'H',  bp: 3, lp: 1, group: '4 pairs' },
+  { id: 'H2O',   formula: 'H₂O',   name: 'Water',                     central: 'O',  outer: 'H',  bp: 2, lp: 2, group: '4 pairs' },
+  { id: 'PCl5',  formula: 'PCl₅',  name: 'Phosphorus(V) chloride',    central: 'P',  outer: 'Cl', bp: 5, lp: 0, group: '5 pairs' },
+  { id: 'ClF3',  formula: 'ClF₃',  name: 'Chlorine trifluoride',      central: 'Cl', outer: 'F',  bp: 3, lp: 2, group: '5 pairs' },
+  { id: 'SF6',   formula: 'SF₆',   name: 'Sulfur hexafluoride',       central: 'S',  outer: 'F',  bp: 6, lp: 0, group: '6 pairs' },
+  { id: 'PF6',   formula: 'PF₆⁻',  name: 'Hexafluorophosphate ion',   central: 'P',  outer: 'F',  bp: 6, lp: 0, group: '6 pairs', charge: '−' },
+  { id: 'XeF4',  formula: 'XeF₄',  name: 'Xenon tetrafluoride',       central: 'Xe', outer: 'F',  bp: 4, lp: 2, group: '6 pairs' }
+];
+
+const GROUP_ORDER = ['2 pairs', '3 pairs', '4 pairs', '5 pairs', '6 pairs'];
+const GROUP_ACCENT = {
+  '2 pairs': 'from-sky-500/25 to-sky-500/5 border-sky-400/30 text-sky-200',
+  '3 pairs': 'from-emerald-500/25 to-emerald-500/5 border-emerald-400/30 text-emerald-200',
+  '4 pairs': 'from-violet-500/25 to-violet-500/5 border-violet-400/30 text-violet-200',
+  '5 pairs': 'from-amber-500/25 to-amber-500/5 border-amber-400/30 text-amber-200',
+  '6 pairs': 'from-rose-500/25 to-rose-500/5 border-rose-400/30 text-rose-200'
+};
+
+function geomFor(bp, lp) { return GEOMETRY[bp + '-' + lp] || null; }
+
+/* ============================================================
+   2.  THREE.JS ENGINE
+   ============================================================ */
+
+const BOND_LEN = 2.15;
+const LONE_COLOUR = 0xa78bfa;
+const ARC_COLOUR = 0xfbbf24;
+
+/* A camera-facing text label drawn onto a canvas texture. */
+function makeLabel(text, opts) {
+  opts = opts || {};
+  const pad = 12;
+  const font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px Inter, Segoe UI, system-ui, sans-serif';
+  const measure = document.createElement('canvas').getContext('2d');
+  measure.font = font;
+  const w = Math.ceil(measure.measureText(text).width) + pad * 2;
+  const h = (opts.size || 72) + pad * 2;
+
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.font = font;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (opts.pill) {
+    const r = h / 2;
+    ctx.fillStyle = opts.pill;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(w - r, 0);
+    ctx.arc(w - r, r, r, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(r, h);
+    ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (!opts.pill) {
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(3, 7, 14, 0.92)';
+    ctx.strokeText(text, w / 2, h / 2 + 2);
+  }
+  ctx.fillStyle = opts.colour || '#ffffff';
+  ctx.fillText(text, w / 2, h / 2 + 2);
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  const scale = (opts.scale || 0.34);
+  sprite.scale.set((w / h) * scale, scale, 1);
+  sprite.renderOrder = 999;
+  return sprite;
+}
+
+/* Points along the shorter great-circle arc from a to b. */
+function arcPoints(a, b, radius, segments) {
+  const axis = new THREE.Vector3().crossVectors(a, b);
+  if (axis.lengthSq() < 1e-8) {
+    // exactly opposite (180°): any perpendicular axis will do
+    const helper = Math.abs(a.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    axis.crossVectors(a, helper);
+  }
+  axis.normalize();
+  const angle = a.angleTo(b);
+  const pts = [];
+  for (let i = 0; i <= segments; i++) {
+    const q = new THREE.Quaternion().setFromAxisAngle(axis, angle * (i / segments));
+    pts.push(a.clone().applyQuaternion(q).multiplyScalar(radius));
+  }
+  return pts;
+}
+
+function atomMesh(symbol, radius) {
+  const el = ELEMENTS[symbol] || ELEMENTS.Y;
+  const geo = new THREE.SphereGeometry(radius, 48, 36);
+  const mat = new THREE.MeshStandardMaterial({
+    color: el.colour,
+    roughness: 0.32,
+    metalness: 0.12,
+    envMapIntensity: 0.6
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+/* Builds the whole molecule (atoms, bonds, lone pairs, angle arcs) as one Group. */
+function buildMolecule(spec, opts) {
+  const g = geomFor(spec.bp, spec.lp);
+  const group = new THREE.Group();
+  if (!g) return group;
+
+  const centralEl = ELEMENTS[spec.central] || ELEMENTS.X;
+  const outerEl = ELEMENTS[spec.outer] || ELEMENTS.Y;
+
+  // --- central atom -------------------------------------------------------
+  const centre = atomMesh(spec.central, centralEl.radius * 1.05);
+  group.add(centre);
+  if (opts.showLabels) {
+    const lbl = makeLabel(centralEl.label, { colour: '#ffffff', size: 84, scale: 0.46 });
+    lbl.position.set(0, centralEl.radius * 1.05 + 0.34, 0);
+    group.add(lbl);
+  }
+
+  const bondDirs = g.bonds.map(function (d) { return new THREE.Vector3(d[0], d[1], d[2]).normalize(); });
+  const loneDirs = g.lones.map(function (d) { return new THREE.Vector3(d[0], d[1], d[2]).normalize(); });
+
+  // --- bonds + outer atoms ------------------------------------------------
+  const bondMat = new THREE.MeshStandardMaterial({ color: 0xdfe7f1, roughness: 0.45, metalness: 0.05 });
+  const up = new THREE.Vector3(0, 1, 0);
+
+  bondDirs.forEach(function (dir) {
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, BOND_LEN, 24), bondMat);
+    cyl.position.copy(dir.clone().multiplyScalar(BOND_LEN / 2));
+    cyl.quaternion.setFromUnitVectors(up, dir);
+    group.add(cyl);
+
+    const atom = atomMesh(spec.outer, outerEl.radius);
+    atom.position.copy(dir.clone().multiplyScalar(BOND_LEN));
+    group.add(atom);
+
+    if (opts.showLabels) {
+      const lbl = makeLabel(outerEl.label, { colour: '#0b111b', size: 64, scale: 0.3, pill: 'rgba(240,246,255,0.92)' });
+      lbl.position.copy(dir.clone().multiplyScalar(BOND_LEN + outerEl.radius + 0.26));
+      group.add(lbl);
+    }
+  });
+
+  // --- lone pairs as translucent electron clouds ---------------------------
+  if (opts.showLones) {
+    loneDirs.forEach(function (dir) {
+      const lobe = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 32, 24),
+        new THREE.MeshStandardMaterial({
+          color: LONE_COLOUR,
+          transparent: true,
+          opacity: 0.34,
+          roughness: 0.15,
+          metalness: 0,
+          emissive: LONE_COLOUR,
+          emissiveIntensity: 0.45,
+          depthWrite: false,
+          side: THREE.DoubleSide
+        })
+      );
+      lobe.scale.set(0.92, 1.55, 0.92);
+      lobe.position.copy(dir.clone().multiplyScalar(0.98));
+      lobe.quaternion.setFromUnitVectors(up, dir);
+      group.add(lobe);
+
+      // the two electrons inside the cloud
+      const dotMat = new THREE.MeshStandardMaterial({
+        color: 0xede9fe, emissive: 0xc4b5fd, emissiveIntensity: 0.9, roughness: 0.2
+      });
+      const perp = Math.abs(dir.y) < 0.9
+        ? new THREE.Vector3(0, 1, 0).cross(dir).normalize()
+        : new THREE.Vector3(1, 0, 0).cross(dir).normalize();
+      [-1, 1].forEach(function (s) {
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), dotMat);
+        dot.position.copy(dir.clone().multiplyScalar(1.05)).addScaledVector(perp, 0.19 * s);
+        group.add(dot);
+      });
+    });
+  }
+
+  // --- live bond-angle arcs ------------------------------------------------
+  if (opts.showAngles) {
+    g.arcs.forEach(function (arc) {
+      const a = bondDirs[arc.a];
+      const b = bondDirs[arc.b];
+      if (!a || !b) return;
+      const radius = BOND_LEN * 0.42 * (arc.r || 1);
+      const pts = arcPoints(a, b, radius, 64);
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const tube = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 64, 0.028, 10, false),
+        new THREE.MeshBasicMaterial({ color: ARC_COLOUR, transparent: true, opacity: 0.95 })
+      );
+      group.add(tube);
+
+      const mid = pts[Math.floor(pts.length / 2)].clone().normalize().multiplyScalar(radius * 1.3 + 0.12);
+      const lbl = makeLabel(arc.label, { colour: '#fde68a', size: 62, scale: 0.32 });
+      lbl.position.copy(mid);
+      group.add(lbl);
+    });
+  }
+
+  return group;
+}
+
+/* Imperative viewer wrapper — created once, then fed new specs. */
+function createViewer(mount) {
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x070b12, 0.028);
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+  camera.position.set(3.4, 2.6, 7.4);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  mount.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.07;
+  controls.rotateSpeed = 0.85;
+  controls.minDistance = 4;
+  controls.maxDistance = 20;
+  controls.autoRotateSpeed = 1.1;
+
+  scene.add(new THREE.HemisphereLight(0x9fd6ff, 0x0a1220, 0.85));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  const key = new THREE.DirectionalLight(0xffffff, 0.95);
+  key.position.set(5, 7, 6);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x7dd3fc, 0.55);
+  rim.position.set(-6, -3, -5);
+  scene.add(rim);
+
+  const root = new THREE.Group();
+  scene.add(root);
+
+  let current = null;
+  let tween = 1;
+  let raf = 0;
+  const clock = new THREE.Clock();
+
+  function clear(obj) {
+    obj.traverse(function (child) {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); });
+      }
+    });
+  }
+
+  function setMolecule(spec, opts) {
+    if (current) { root.remove(current); clear(current); }
+    current = buildMolecule(spec, opts);
+    root.add(current);
+    tween = 0;
+  }
+
+  function resize() {
+    const w = mount.clientWidth || 1;
+    const h = mount.clientHeight || 1;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(mount);
+  resize();
+
+  function loop() {
+    raf = requestAnimationFrame(loop);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    if (tween < 1) {
+      tween = Math.min(1, tween + dt / 0.45);
+      const e = 1 - Math.pow(1 - tween, 3);       // easeOutCubic
+      root.scale.setScalar(0.72 + 0.28 * e);
+      root.rotation.y = -0.6 * (1 - e);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  loop();
+
+  return {
+    setMolecule: setMolecule,
+    setAutoRotate: function (on) { controls.autoRotate = !!on; },
+    resetView: function () {
+      controls.reset();
+      camera.position.set(3.4, 2.6, 7.4);
+      controls.update();
+    },
+    dispose: function () {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      if (current) clear(current);
+      controls.dispose();
+      renderer.dispose();
+      if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+  };
+}
+
+function Viewer(props) {
+  const mountRef = useRef(null);
+  const viewerRef = useRef(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(function () {
+    const v = createViewer(mountRef.current);
+    viewerRef.current = v;
+    setReady(true);
+    return function () { v.dispose(); viewerRef.current = null; };
+  }, []);
+
+  const { spec, showLones, showAngles, showLabels } = props;
+
+  useEffect(function () {
+    if (!viewerRef.current) return;
+    viewerRef.current.setMolecule(spec, {
+      showLones: showLones, showAngles: showAngles, showLabels: showLabels
+    });
+  }, [ready, spec.central, spec.outer, spec.bp, spec.lp, showLones, showAngles, showLabels]);
+
+  useEffect(function () {
+    if (viewerRef.current) viewerRef.current.setAutoRotate(props.autoRotate);
+  }, [ready, props.autoRotate]);
+
+  useEffect(function () {
+    if (props.resetSignal && viewerRef.current) viewerRef.current.resetView();
+  }, [props.resetSignal]);
+
+  return <div ref={mountRef} className="absolute inset-0" />;
+}
+
+/* ============================================================
+   3.  SHARED UI PIECES
+   ============================================================ */
+
+const GT = '>';   // literal "greater than", kept out of JSX text
+
+function Card(props) {
+  return (
+    <div className={'glass rounded-2xl ' + (props.className || '')}>
+      {props.title ? (
+        <div className="px-5 pt-4 pb-3 border-b border-white/10 flex items-center gap-2">
+          {props.icon ? <span className="text-lg leading-none">{props.icon}</span> : null}
+          <h3 className="font-semibold tracking-tight text-slate-100">{props.title}</h3>
+          {props.badge ? <span className="ml-auto text-[11px] uppercase tracking-wider text-slate-400">{props.badge}</span> : null}
+        </div>
+      ) : null}
+      <div className={props.bodyClass || 'p-5'}>{props.children}</div>
+    </div>
+  );
+}
+
+function Stat(props) {
+  return (
+    <div className={'rounded-xl border px-3 py-2.5 text-center bg-gradient-to-b ' + props.tone}>
+      <div className="text-2xl font-bold leading-none tabular-nums">{props.value}</div>
+      <div className="text-[10px] uppercase tracking-wider mt-1.5 opacity-80">{props.label}</div>
+    </div>
+  );
+}
+
+function Toggle(props) {
+  return (
+    <button
+      type="button"
+      onClick={function () { props.onChange(!props.checked); }}
+      className={'flex items-center gap-2.5 w-full text-left rounded-xl px-3 py-2.5 border transition ' +
+        (props.checked
+          ? 'bg-sky-500/15 border-sky-400/40 text-sky-100'
+          : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20')}
+    >
+      <span className={'w-9 h-5 rounded-full relative transition shrink-0 ' + (props.checked ? 'bg-sky-400' : 'bg-slate-600')}>
+        <span className={'absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ' + (props.checked ? 'left-4.5' : 'left-0.5')}
+              style={{ left: props.checked ? '1.125rem' : '0.125rem' }} />
+      </span>
+      <span className="text-sm font-medium">{props.label}</span>
+    </button>
+  );
+}
+
+function Callout(props) {
+  const tones = {
+    amber: 'bg-amber-500/10 border-amber-400/30 text-amber-100',
+    sky:   'bg-sky-500/10 border-sky-400/30 text-sky-100',
+    violet:'bg-violet-500/10 border-violet-400/30 text-violet-100',
+    rose:  'bg-rose-500/10 border-rose-400/30 text-rose-100',
+    emerald:'bg-emerald-500/10 border-emerald-400/30 text-emerald-100'
+  };
+  return (
+    <div className={'rounded-xl border px-4 py-3 ' + (tones[props.tone] || tones.sky)}>
+      {props.title ? <div className="font-semibold text-sm mb-1 flex items-center gap-2">{props.icon ? <span>{props.icon}</span> : null}{props.title}</div> : null}
+      <div className="text-sm leading-relaxed opacity-90">{props.children}</div>
+    </div>
+  );
+}
+
+/* ============================================================
+   4.  TAB 1 — 3D VISUALISER
+   ============================================================ */
+
+function ReductionChain(props) {
+  const g = props.g;
+  if (g.parent === 'Tetrahedral') {
+    const steps = [
+      { lp: 0, angle: '109.5°', label: '0 lone pairs' },
+      { lp: 1, angle: '107°', label: '1 lone pair' },
+      { lp: 2, angle: '104.5°', label: '2 lone pairs' }
+    ];
+    return (
+      <div>
+        <div className="flex items-stretch gap-1.5">
+          {steps.map(function (s, i) {
+            const on = s.lp === g.lp;
+            return (
+              <React.Fragment key={s.lp}>
+                {i > 0 ? (
+                  <div className="flex flex-col items-center justify-center px-0.5 shrink-0">
+                    <span className="text-[10px] text-amber-300 font-semibold leading-none">−2.5°</span>
+                    <span className="text-slate-500 text-xs leading-none">→</span>
+                  </div>
+                ) : null}
+                <div className={'flex-1 rounded-lg border px-2 py-2 text-center transition ' +
+                  (on ? 'bg-amber-400/20 border-amber-300/50 text-amber-50' : 'bg-white/[0.03] border-white/10 text-slate-400')}>
+                  <div className="text-base font-bold tabular-nums">{s.angle}</div>
+                  <div className="text-[9px] uppercase tracking-wide mt-0.5 opacity-80">{s.label}</div>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+          Every lone pair on the central atom knocks roughly <strong className="text-amber-200">2.5°</strong> off the
+          tetrahedral ideal, because a lone pair is held closer to the nucleus and repels harder than a bonding pair.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-center">
+          <div className="text-base font-bold tabular-nums text-slate-300">{g.parentAngle}</div>
+          <div className="text-[9px] uppercase tracking-wide mt-0.5 text-slate-500">{g.parent} ideal</div>
+        </div>
+        <div className="flex flex-col items-center px-0.5">
+          <span className="text-[10px] font-semibold leading-none text-amber-300">
+            {g.reduction ? '−' + (g.reduction * 2.5).toFixed(1).replace('.0', '') + '°' : 'no change'}
+          </span>
+          <span className="text-slate-500 text-xs leading-none">→</span>
+        </div>
+        <div className="flex-1 rounded-lg border border-amber-300/50 bg-amber-400/20 px-2 py-2 text-center">
+          <div className="text-base font-bold tabular-nums text-amber-50">{g.summary}</div>
+          <div className="text-[9px] uppercase tracking-wide mt-0.5 text-amber-100/70">actual</div>
+        </div>
+      </div>
+      <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+        The 2.5° rule is quoted against the <strong className="text-slate-200">tetrahedral</strong> parent shape
+        (109.5° → 107° → 104.5°). Here the parent arrangement is <strong className="text-slate-200">{g.parent.toLowerCase()}</strong>,
+        so quote the angles above — lone pairs still close the angle, but AQA gives these values directly.
+      </p>
+    </div>
+  );
+}
+
+function ContextPanel(props) {
+  const { g, title, subtitle } = props;
+  if (!g) {
+    return (
+      <Card title="Shape data" icon="📐">
+        <Callout tone="rose" title="Not a shape you need">
+          {props.invalidReason}
+        </Callout>
+      </Card>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <Card bodyClass="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-3xl font-bold tracking-tight text-white">{title}</div>
+            <div className="text-sm text-slate-400 mt-0.5">{subtitle}</div>
+          </div>
+          {g.aqaExtra ? (
+            <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-slate-500/20 border border-slate-400/30 text-slate-300 shrink-0">
+              Beyond AQA
+            </span>
+          ) : (
+            <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 shrink-0">
+              AQA 3.1.3.5
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <Stat value={g.total} label="Electron pairs" tone="from-slate-400/20 to-slate-400/5 border-slate-400/30 text-slate-100" />
+          <Stat value={g.bp} label="Bonding pairs" tone="from-sky-400/25 to-sky-400/5 border-sky-400/40 text-sky-100" />
+          <Stat value={g.lp} label="Lone pairs" tone="from-violet-400/25 to-violet-400/5 border-violet-400/40 text-violet-100" />
+        </div>
+
+        <dl className="mt-4 divide-y divide-white/[0.07] text-sm">
+          <div className="flex items-baseline justify-between gap-4 py-2.5">
+            <dt className="text-slate-400 shrink-0">Parent electron-pair geometry</dt>
+            <dd className="font-semibold text-slate-200 text-right">{g.parent}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 py-2.5">
+            <dt className="text-slate-400 shrink-0">Molecular shape</dt>
+            <dd className="font-semibold text-emerald-300 text-right">{g.shape}</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 py-2.5">
+            <dt className="text-slate-400 shrink-0">Bond angle(s)</dt>
+            <dd className="font-semibold text-amber-300 text-right tabular-nums">
+              {g.angles.map(function (a, i) { return <div key={i}>{a}</div>; })}
+            </dd>
+          </div>
+        </dl>
+      </Card>
+
+      <Card title="The 2.5° reduction rule" icon="📉">
+        <ReductionChain g={g} />
+      </Card>
+
+      <Card title="Why this shape?" icon="💡">
+        <p className="text-sm text-slate-300 leading-relaxed">{g.why}</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {g.examples.map(function (e) {
+            return <span key={e} className="text-xs px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300">{e}</span>;
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function VisualiserTab(props) {
+  const { mode, setMode, speciesId, setSpeciesId, custom, setCustom, opts, setOpts } = props;
+  const [resetSignal, setResetSignal] = useState(0);
+
+  const species = SPECIES.filter(function (s) { return s.id === speciesId; })[0] || SPECIES[2];
+  const isCustom = mode === 'custom';
+
+  const bp = isCustom ? custom.bp : species.bp;
+  const lp = isCustom ? custom.lp : species.lp;
+  const g = geomFor(bp, lp);
+
+  const spec = useMemo(function () {
+    return {
+      central: isCustom ? 'X' : species.central,
+      outer: isCustom ? 'Y' : species.outer,
+      bp: bp, lp: lp
+    };
+  }, [isCustom, species.central, species.outer, bp, lp]);
+
+  const invalidReason = bp + lp > 6
+    ? 'That comes to ' + (bp + lp) + ' electron pairs. A-Level VSEPR at AQA stops at six pairs around a central atom, so drop the number of bonding or lone pairs.'
+    : 'This combination of ' + bp + ' bonding and ' + lp + ' lone pairs is not one you will meet at A-Level. Try another combination.';
+
+  function setPair(field, value) {
+    setCustom(function (c) {
+      const next = Object.assign({}, c);
+      next[field] = value;
+      return next;
+    });
+  }
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_400px] gap-5 fade-in">
+
+      {/* ------------------------------------------------ left: canvas + controls */}
+      <div className="space-y-4 min-w-0">
+        <div className="glass rounded-2xl overflow-hidden">
+          <div className="relative h-[clamp(340px,52vh,620px)] bg-[radial-gradient(circle_at_50%_35%,#12233a_0%,#080d16_65%,#05080e_100%)]">
+            <Viewer
+              spec={spec}
+              showLones={opts.lones}
+              showAngles={opts.angles}
+              showLabels={opts.labels}
+              autoRotate={opts.spin}
+              resetSignal={resetSignal}
+            />
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none">
+              <span className="text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-white/10 text-slate-300">
+                drag to rotate · scroll to zoom · right-drag to pan
+              </span>
+            </div>
+            <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+              {g ? (
+                <span className="text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-sky-400/30 text-sky-200">
+                  ● bonding pair
+                </span>
+              ) : null}
+              {g && lp > 0 ? (
+                <span className="text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-violet-400/30 text-violet-200">
+                  ● lone pair cloud
+                </span>
+              ) : null}
+              {g && opts.angles ? (
+                <span className="text-xs px-2.5 py-1 rounded-lg bg-black/45 backdrop-blur border border-amber-400/30 text-amber-200">
+                  ● bond angle
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={function () { setResetSignal(resetSignal + 1); }}
+              className="absolute top-3 right-3 text-xs px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur border border-white/15 text-slate-200 hover:border-white/35 transition"
+            >
+              Reset view
+            </button>
+          </div>
+        </div>
+
+        {/* preset / custom switch */}
+        <Card bodyClass="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              type="button"
+              onClick={function () { setMode('preset'); }}
+              className={'flex-1 rounded-xl px-3 py-2 text-sm font-semibold border transition ' +
+                (!isCustom ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}
+            >
+              AQA species
+            </button>
+            <button
+              type="button"
+              onClick={function () { setMode('custom'); }}
+              className={'flex-1 rounded-xl px-3 py-2 text-sm font-semibold border transition ' +
+                (isCustom ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}
+            >
+              Custom builder
+            </button>
+          </div>
+
+          {!isCustom ? (
+            <div className="space-y-3">
+              {GROUP_ORDER.map(function (grp) {
+                const members = SPECIES.filter(function (s) { return s.group === grp; });
+                if (!members.length) return null;
+                return (
+                  <div key={grp} className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-500 w-[62px] shrink-0">{grp}</span>
+                    {members.map(function (s) {
+                      const on = !isCustom && s.id === speciesId;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={function () { setMode('preset'); setSpeciesId(s.id); }}
+                          title={s.name}
+                          className={'px-3 py-1.5 rounded-xl text-sm font-semibold border transition bg-gradient-to-b ' +
+                            (on ? GROUP_ACCENT[grp] + ' ring-1 ring-white/25' : 'from-white/[0.05] to-transparent border-white/10 text-slate-300 hover:border-white/30')}
+                        >
+                          {s.formula}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div>
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <label className="text-sm font-medium text-sky-200">Bonding pairs</label>
+                  <span className="text-lg font-bold tabular-nums text-sky-300">{custom.bp}</span>
+                </div>
+                <input type="range" min="2" max="6" step="1" value={custom.bp}
+                       onChange={function (e) { setPair('bp', parseInt(e.target.value, 10)); }}
+                       className="w-full" />
+                <div className="flex justify-between text-[10px] text-slate-500 mt-1 px-0.5">
+                  <span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <label className="text-sm font-medium text-violet-200">Lone pairs</label>
+                  <span className="text-lg font-bold tabular-nums text-violet-300">{custom.lp}</span>
+                </div>
+                <input type="range" min="0" max="3" step="1" value={custom.lp}
+                       onChange={function (e) { setPair('lp', parseInt(e.target.value, 10)); }}
+                       className="w-full" />
+                <div className="flex justify-between text-[10px] text-slate-500 mt-1 px-0.5">
+                  <span>0</span><span>1</span><span>2</span><span>3</span>
+                </div>
+              </div>
+              <div className="sm:col-span-2 text-xs text-slate-400 rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2">
+                Total electron pairs: <strong className="text-slate-100 tabular-nums">{custom.bp + custom.lp}</strong>
+                {' '}— the generic central atom <strong className="text-teal-300">X</strong> is bonded to
+                {' '}<strong className="text-slate-200">Y</strong> atoms.
+              </div>
+            </div>
+          )}
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
+            <Toggle checked={opts.lones}  onChange={function (v) { setOpts(Object.assign({}, opts, { lones: v })); }}  label="Lone pair clouds" />
+            <Toggle checked={opts.angles} onChange={function (v) { setOpts(Object.assign({}, opts, { angles: v })); }} label="Bond angles" />
+            <Toggle checked={opts.labels} onChange={function (v) { setOpts(Object.assign({}, opts, { labels: v })); }} label="Atom labels" />
+            <Toggle checked={opts.spin}   onChange={function (v) { setOpts(Object.assign({}, opts, { spin: v })); }}   label="Auto-rotate" />
+          </div>
+        </Card>
+      </div>
+
+      {/* ------------------------------------------------ right: context panel */}
+      <div className="min-w-0">
+        <ContextPanel
+          g={g}
+          invalidReason={invalidReason}
+          title={isCustom ? (g ? g.shape : 'No such shape') : species.formula}
+          subtitle={isCustom
+            ? custom.bp + ' bonding · ' + custom.lp + ' lone'
+            : species.name}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   5.  TAB 2 — SPECIFICATION NOTES & EXAM RULES
+   ============================================================ */
+
+const EXAM_STEPS = [
+  {
+    n: 1,
+    title: 'Count the electron pairs',
+    text: 'Work out the total number of electron pairs in the outer shell of the central atom. Remember to adjust for the charge on an ion: add one electron for each negative charge, remove one for each positive charge.',
+    mark: 'e.g. "there are 4 pairs of electrons around the nitrogen"'
+  },
+  {
+    n: 2,
+    title: 'Split them into bonding and lone',
+    text: 'State how many of those pairs are bonding pairs and how many are lone pairs. Examiners award this separately from the total, so never merge the two statements into one vague sentence.',
+    mark: 'e.g. "3 bonding pairs and 1 lone pair"'
+  },
+  {
+    n: 3,
+    title: 'Say that pairs repel and get as far apart as possible',
+    text: 'The principle mark: electron pairs repel one another and arrange themselves to be as far apart as possible, giving the minimum repulsion and the most stable arrangement.',
+    mark: 'e.g. "the pairs repel and move as far apart as possible"'
+  },
+  {
+    n: 4,
+    title: 'Compare the strengths of repulsion (only if there are lone pairs)',
+    text: 'If the central atom has any lone pairs, you must state that a lone pair repels more strongly than a bonding pair. Without this sentence the explanation mark is lost, even if the shape and angle are right.',
+    mark: 'e.g. "lone pair–bonding pair repulsion is greater than bonding pair–bonding pair repulsion"'
+  },
+  {
+    n: 5,
+    title: 'Name the shape and give the bond angle',
+    text: 'Finish with the shape name and the numerical bond angle. Both are needed. "Pyramidal" without 107°, or 107° without the name, is a half answer.',
+    mark: 'e.g. "trigonal pyramidal, bond angle 107°"'
+  }
+];
+
+const TRAPS = [
+  ['Writing "the lone pair repels" and stopping there', 'You must say it repels MORE than a bonding pair — it is a comparison mark.'],
+  ['Calling H₂O "linear" because it is drawn H–O–H', 'The shape is named from the positions of the atoms in 3-D: non-linear (bent), 104.5°.'],
+  ['Forgetting the charge on an ion', 'NH₄⁺ still has 4 pairs and no lone pair — the nitrogen lone pair became the dative bond to H⁺.'],
+  ['Saying "electrons repel"', 'Say electron PAIRS repel. The whole model is about pairs, not individual electrons.'],
+  ['Quoting 109° instead of 109.5°', 'AQA mark schemes accept 109.5° (or 109°28′). Learn the half-degree.'],
+  ['Giving one angle for PCl₅ or SF₄', 'Trigonal bipyramidal species have two different angles — quote both.'],
+  ['Drawing a flat cross for CH₄', 'A 2-D cross scores nothing for shape. Use wedges and dashes to show the tetrahedron.']
+];
+
+function PrincipleCard(props) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center gap-2.5 mb-2">
+        <span className="w-7 h-7 shrink-0 rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-200 grid place-items-center text-sm font-bold">
+          {props.n}
+        </span>
+        <h4 className="font-semibold text-slate-100 text-sm">{props.title}</h4>
+      </div>
+      <p className="text-sm text-slate-300 leading-relaxed">{props.children}</p>
+    </div>
+  );
+}
+
+function RepulsionLadder() {
+  const rows = [
+    { a: 'Lone pair', b: 'lone pair', tone: 'from-rose-500/30 to-rose-500/5 border-rose-400/40', w: '100%', note: 'strongest' },
+    { a: 'Lone pair', b: 'bonding pair', tone: 'from-amber-500/30 to-amber-500/5 border-amber-400/40', w: '72%', note: '' },
+    { a: 'Bonding pair', b: 'bonding pair', tone: 'from-sky-500/30 to-sky-500/5 border-sky-400/40', w: '46%', note: 'weakest' }
+  ];
+  return (
+    <div className="space-y-2">
+      {rows.map(function (r, i) {
+        return (
+          <div key={i} className="flex items-center gap-3">
+            <div className="w-[190px] shrink-0 text-sm text-slate-200">
+              {r.a} <span className="text-slate-500">–</span> {r.b}
+            </div>
+            <div className="flex-1 h-8 rounded-lg bg-white/[0.03] border border-white/10 overflow-hidden">
+              <div className={'h-full bg-gradient-to-r border-r ' + r.tone} style={{ width: r.w }} />
+            </div>
+            <div className="w-[68px] shrink-0 text-right text-[11px] uppercase tracking-wider text-slate-500">{r.note}</div>
+          </div>
+        );
+      })}
+      <p className="text-sm text-slate-300 leading-relaxed pt-1">
+        A lone pair is held by only one nucleus, so its charge cloud sits closer to the central atom and spreads out
+        more. That is why the order is
+        {' '}<strong className="text-rose-200">lone–lone</strong> {GT}
+        {' '}<strong className="text-amber-200">lone–bonding</strong> {GT}
+        {' '}<strong className="text-sky-200">bonding–bonding</strong>.
+      </p>
+    </div>
+  );
+}
+
+function SummaryTable(props) {
+  const [query, setQuery] = useState('');
+  const [pairFilter, setPairFilter] = useState('all');
+  const [showExtras, setShowExtras] = useState(false);
+
+  const rows = SPECIES.map(function (s) {
+    const g = geomFor(s.bp, s.lp);
+    return { s: s, g: g };
+  });
+
+  const filtered = rows.filter(function (r) {
+    if (pairFilter !== 'all' && r.g.total !== parseInt(pairFilter, 10)) return false;
+    if (!query.trim()) return true;
+    const hay = (r.s.formula + ' ' + r.s.name + ' ' + r.g.shape + ' ' + r.g.parent + ' ' + r.g.summary).toLowerCase();
+    return hay.indexOf(query.trim().toLowerCase()) !== -1;
+  });
+
+  const extraKeys = Object.keys(GEOMETRY).filter(function (k) { return GEOMETRY[k].aqaExtra; });
+
+  return (
+    <Card title="Summary comparison table" icon="📊" badge="click a row to open it in 3-D">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <input
+          value={query}
+          onChange={function (e) { setQuery(e.target.value); }}
+          placeholder="Filter by species, shape or angle…"
+          className="flex-1 min-w-[200px] rounded-xl bg-white/[0.04] border border-white/10 px-3.5 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:border-sky-400/50"
+        />
+        <div className="flex gap-1.5">
+          {['all', '2', '3', '4', '5', '6'].map(function (f) {
+            const on = pairFilter === f;
+            return (
+              <button key={f} type="button" onClick={function () { setPairFilter(f); }}
+                className={'px-3 py-2 rounded-xl text-xs font-semibold border transition ' +
+                  (on ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}>
+                {f === 'all' ? 'All' : f + ' pairs'}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto -mx-5 px-5">
+        <table className="w-full text-sm border-separate border-spacing-y-1.5 min-w-[720px]">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-slate-500 text-left">
+              <th className="font-medium px-3 pb-1">Species</th>
+              <th className="font-medium px-3 pb-1 text-center">Total pairs</th>
+              <th className="font-medium px-3 pb-1 text-center">Bonding</th>
+              <th className="font-medium px-3 pb-1 text-center">Lone</th>
+              <th className="font-medium px-3 pb-1">Parent geometry</th>
+              <th className="font-medium px-3 pb-1">Shape</th>
+              <th className="font-medium px-3 pb-1">Bond angle(s)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(function (r) {
+              return (
+                <tr key={r.s.id}
+                    onClick={function () { props.onSelect(r.s.id); }}
+                    className="cursor-pointer group">
+                  <td className="px-3 py-2.5 rounded-l-xl bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-l border-white/[0.07] group-hover:border-sky-400/30 transition">
+                    <div className="font-bold text-base text-white">{r.s.formula}</div>
+                    <div className="text-[11px] text-slate-500">{r.s.name}</div>
+                  </td>
+                  <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
+                    <span className="tabular-nums font-semibold text-slate-200">{r.g.total}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
+                    <span className="inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-bold bg-sky-500/20 border border-sky-400/30 text-sky-200 tabular-nums">{r.g.bp}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
+                    <span className={'inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-bold tabular-nums border ' +
+                      (r.g.lp ? 'bg-violet-500/20 border-violet-400/30 text-violet-200' : 'bg-white/5 border-white/10 text-slate-500')}>{r.g.lp}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-slate-400 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.parent}</td>
+                  <td className="px-3 py-2.5 font-semibold text-emerald-300 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.shape}</td>
+                  <td className="px-3 py-2.5 rounded-r-xl font-semibold text-amber-300 tabular-nums bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-r border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.summary}</td>
+                </tr>
+              );
+            })}
+            {!filtered.length ? (
+              <tr><td colSpan="7" className="px-3 py-6 text-center text-slate-500">Nothing matches that filter.</td></tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <button type="button" onClick={function () { setShowExtras(!showExtras); }}
+        className="mt-4 text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 decoration-white/20">
+        {showExtras ? 'Hide' : 'Show'} the four shapes beyond the AQA list (the custom builder can still make them)
+      </button>
+      {showExtras ? (
+        <div className="mt-3 grid sm:grid-cols-2 gap-2">
+          {extraKeys.map(function (k) {
+            const g = GEOMETRY[k];
+            return (
+              <div key={k} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-slate-200">{g.shape}</span>
+                  <span className="text-amber-300 tabular-nums text-xs">{g.summary}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">
+                  {g.bp} bonding · {g.lp} lone — e.g. {g.examples[0]}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+function NotesTab(props) {
+  return (
+    <div className="space-y-5 fade-in">
+
+      <Card title="What the specification actually says" icon="📜" badge="AQA 3.1.3.5">
+        <p className="text-sm text-slate-300 leading-relaxed">
+          You must be able to <strong className="text-slate-100">explain</strong> the shapes of, and bond angles in,
+          simple molecules and ions with up to six electron pairs (including lone pairs) surrounding the central atom,
+          and <strong className="text-slate-100">predict</strong> the shapes of, and bond angles in, species with up to
+          six electron pairs. Drawings must show the three-dimensional arrangement — wedges and dashes, not a flat cross.
+        </p>
+      </Card>
+
+      <Card title="The three core VSEPR principles" icon="⚛️">
+        <div className="grid md:grid-cols-3 gap-3">
+          <PrincipleCard n="1" title="Pairs repel">
+            Electron pairs in the outer shell of the central atom are all negatively charged, so they repel one another
+            and arrange themselves <strong className="text-slate-100">as far apart as possible</strong>. That minimum-repulsion
+            arrangement is the shape.
+          </PrincipleCard>
+          <PrincipleCard n="2" title="Not all repulsions are equal">
+            The order of repulsion strength is <strong className="text-rose-200">lone–lone</strong> {GT}{' '}
+            <strong className="text-amber-200">lone–bonding</strong> {GT}{' '}
+            <strong className="text-sky-200">bonding–bonding</strong>. Lone pairs take up more room.
+          </PrincipleCard>
+          <PrincipleCard n="3" title="Each lone pair costs ≈2.5°">
+            Every lone pair on the central atom reduces the bond angle by roughly{' '}
+            <strong className="text-amber-200">2.5°</strong> from the ideal parent angle:
+            109.5° → 107° → 104.5°.
+          </PrincipleCard>
+        </div>
+      </Card>
+
+      <div className="grid lg:grid-cols-2 gap-5">
+        <Card title="Order of repulsion strength" icon="📶">
+          <RepulsionLadder />
+        </Card>
+
+        <Card title="Counting the pairs on an ion" icon="🔢">
+          <div className="space-y-3 text-sm text-slate-300 leading-relaxed">
+            <p>
+              Work from the central atom&apos;s outer-shell electrons, then adjust for charge and bonding:
+            </p>
+            <ol className="space-y-1.5 list-decimal list-inside marker:text-slate-500">
+              <li>Start with the group number (outer-shell electrons) of the central atom.</li>
+              <li>Add one electron for each atom bonded to it by a single covalent bond.</li>
+              <li><strong className="text-emerald-300">Add</strong> one for each negative charge; <strong className="text-rose-300">subtract</strong> one for each positive charge.</li>
+              <li>Divide by two to get the total number of electron pairs.</li>
+              <li>Bonding pairs = number of bonded atoms. Lone pairs = total − bonding.</li>
+            </ol>
+            <div className="rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2.5 space-y-1.5 font-mono text-xs">
+              <div><span className="text-slate-400">NH₄⁺ :</span> 5 + 4 − 1 = 8 e⁻ = <span className="text-sky-300">4 pairs</span>, all bonding → tetrahedral, 109.5°</div>
+              <div><span className="text-slate-400">PF₆⁻ :</span> 5 + 6 + 1 = 12 e⁻ = <span className="text-sky-300">6 pairs</span>, all bonding → octahedral, 90°</div>
+              <div><span className="text-slate-400">H₂O  :</span> 6 + 2 = 8 e⁻ = <span className="text-sky-300">4 pairs</span>, 2 bonding + <span className="text-violet-300">2 lone</span> → non-linear, 104.5°</div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card title="AQA exam technique — the five-step answer" icon="✍️" badge="how the marks are earned">
+        <div className="space-y-2.5">
+          {EXAM_STEPS.map(function (s) {
+            return (
+              <div key={s.n} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="flex items-start gap-3">
+                  <span className="w-7 h-7 shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 grid place-items-center text-sm font-bold">
+                    {s.n}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-slate-100 text-sm">{s.title}</h4>
+                    <p className="text-sm text-slate-300 leading-relaxed mt-1">{s.text}</p>
+                    <p className="text-xs text-emerald-200/80 mt-2 font-mono">{s.mark}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4">
+          <Callout tone="amber" icon="⏱️" title="Rule of thumb for marks">
+            A shape question worth <strong>1–2 marks</strong> usually wants only the shape name and the bond angle.
+            A question worth <strong>3–4 marks</strong> wants the full explanation: pairs counted, split into bonding
+            and lone, the repulsion statement, then the shape and angle.
+          </Callout>
+        </div>
+      </Card>
+
+      <Card title="Mark-scheme traps" icon="🚧">
+        <div className="grid md:grid-cols-2 gap-2.5">
+          {TRAPS.map(function (t, i) {
+            return (
+              <div key={i} className="rounded-xl border border-rose-400/20 bg-rose-500/[0.07] px-4 py-3">
+                <div className="text-sm font-semibold text-rose-100 flex items-start gap-2">
+                  <span className="shrink-0">✗</span><span>{t[0]}</span>
+                </div>
+                <div className="text-sm text-slate-300 leading-relaxed mt-1.5 pl-6">{t[1]}</div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <SummaryTable onSelect={props.onSelect} />
+    </div>
+  );
+}
+
+/* ============================================================
+   6.  TAB 3 — QUIZ AND EXAM PRACTICE
+   ============================================================ */
+
+const MCQ_BANK = [
+  { q: 'What is the shape of a methane molecule, CH₄?',
+    o: ['Tetrahedral', 'Square planar', 'Trigonal pyramidal', 'Trigonal planar'], a: 0,
+    why: '4 bonding pairs, no lone pairs — the pairs point to the corners of a tetrahedron.' },
+  { q: 'What is the H–C–H bond angle in CH₄?',
+    o: ['90°', '104.5°', '107°', '109.5°'], a: 3,
+    why: 'Four identical bonding pairs give the undistorted tetrahedral angle of 109.5°.' },
+  { q: 'What is the shape of an ammonia molecule, NH₃?',
+    o: ['Trigonal planar', 'Trigonal pyramidal', 'Non-linear', 'Tetrahedral'], a: 1,
+    why: '4 electron pairs but only 3 bonds — the lone pair is not counted in the shape name.' },
+  { q: 'What is the H–N–H bond angle in NH₃?',
+    o: ['107°', '109.5°', '104.5°', '120°'], a: 0,
+    why: 'One lone pair reduces 109.5° by about 2.5°, giving 107°.' },
+  { q: 'What is the shape of a water molecule, H₂O?',
+    o: ['Linear', 'Trigonal pyramidal', 'Non-linear (bent)', 'Tetrahedral'], a: 2,
+    why: '4 pairs, 2 bonding and 2 lone — the two bonds give a bent (non-linear) shape.' },
+  { q: 'What is the H–O–H bond angle in H₂O?',
+    o: ['109.5°', '107°', '104.5°', '90°'], a: 2,
+    why: 'Two lone pairs: 109.5° − 2 × 2.5° = 104.5°.' },
+  { q: 'What is the shape of BF₃?',
+    o: ['Trigonal planar', 'Trigonal pyramidal', 'T-shaped', 'Tetrahedral'], a: 0,
+    why: 'Boron has only 3 electron pairs, all bonding, so the molecule is flat.' },
+  { q: 'What is the F–B–F bond angle in BF₃?',
+    o: ['90°', '107°', '109.5°', '120°'], a: 3,
+    why: 'Three bonding pairs in a plane are 360°/3 = 120° apart.' },
+  { q: 'What is the shape of BeCl₂?',
+    o: ['Non-linear', 'Linear', 'Trigonal planar', 'Tetrahedral'], a: 1,
+    why: 'Only 2 electron pairs around beryllium, so they sit at opposite ends.' },
+  { q: 'What is the Cl–Be–Cl bond angle in BeCl₂?',
+    o: ['120°', '109.5°', '180°', '90°'], a: 2,
+    why: 'Two pairs get as far apart as possible: directly opposite, 180°.' },
+  { q: 'What is the shape of PCl₅?',
+    o: ['Octahedral', 'Square pyramidal', 'Trigonal bipyramidal', 'See-saw'], a: 2,
+    why: '5 bonding pairs, no lone pairs — three equatorial and two axial positions.' },
+  { q: 'Which pair of bond angles is found in PCl₅?',
+    o: ['90° and 120°', '104.5° and 107°', '109.5° only', '90° and 180°'], a: 0,
+    why: '120° between the equatorial bonds and 90° between axial and equatorial bonds.' },
+  { q: 'What is the shape of SF₆?',
+    o: ['Octahedral', 'Trigonal bipyramidal', 'Square planar', 'Hexagonal planar'], a: 0,
+    why: '6 bonding pairs, no lone pairs, pointing to the corners of an octahedron.' },
+  { q: 'What is the F–S–F bond angle between adjacent bonds in SF₆?',
+    o: ['60°', '90°', '109.5°', '120°'], a: 1,
+    why: 'All adjacent bonds in an octahedral arrangement are at 90°.' },
+  { q: 'What is the shape of the NH₄⁺ ion?',
+    o: ['Trigonal pyramidal', 'Tetrahedral', 'Square planar', 'Non-linear'], a: 1,
+    why: 'The nitrogen lone pair is used in the dative bond, leaving 4 bonding pairs and no lone pairs.' },
+  { q: 'What is the bond angle in NH₄⁺?',
+    o: ['107°', '104.5°', '109.5°', '120°'], a: 2,
+    why: 'No lone pairs remain, so the angle returns to the full tetrahedral 109.5°.' },
+  { q: 'What is the shape of XeF₄?',
+    o: ['Tetrahedral', 'See-saw', 'Square planar', 'Octahedral'], a: 2,
+    why: '6 pairs, 4 bonding and 2 lone. The lone pairs go opposite each other, leaving a flat square.' },
+  { q: 'How many electron pairs surround the xenon atom in XeF₄?',
+    o: ['4', '5', '6', '8'], a: 2,
+    why: '8 outer electrons on Xe plus 4 from the bonded F atoms = 12 electrons = 6 pairs.' },
+  { q: 'What is the shape of ClF₃?',
+    o: ['Trigonal planar', 'T-shaped', 'Trigonal pyramidal', 'See-saw'], a: 1,
+    why: '5 pairs, 3 bonding and 2 lone. Both lone pairs go equatorial, leaving a T of bonds.' },
+  { q: 'What is the approximate bond angle in ClF₃?',
+    o: ['120°', '109.5°', '87.5°', '104.5°'], a: 2,
+    why: 'The 90° axial–equatorial angle is squeezed by the lone pairs to about 87.5°.' },
+  { q: 'What is the shape of the PF₆⁻ ion?',
+    o: ['Octahedral', 'Square planar', 'Trigonal bipyramidal', 'Tetrahedral'], a: 0,
+    why: '5 + 6 + 1 = 12 electrons = 6 pairs, all bonding.' },
+  { q: 'Which is the correct order of repulsion strength?',
+    o: ['bonding–bonding > lone–bonding > lone–lone',
+        'lone–lone > lone–bonding > bonding–bonding',
+        'lone–bonding > lone–lone > bonding–bonding',
+        'they are all equal'], a: 1,
+    why: 'Lone pairs are held by one nucleus only, so they spread out more and repel more strongly.' },
+  { q: 'By approximately how much does each lone pair reduce the bond angle?',
+    o: ['1°', '2.5°', '5°', '10°'], a: 1,
+    why: '109.5° → 107° → 104.5°: about 2.5° per lone pair.' },
+  { q: 'A central atom has 4 electron pairs: 2 bonding and 2 lone. What is the shape?',
+    o: ['Linear', 'Non-linear (bent)', 'Trigonal pyramidal', 'Tetrahedral'], a: 1,
+    why: 'The parent shape is tetrahedral; with only two bonds the molecule is bent, angle 104.5°.' },
+  { q: 'Why is the bond angle in NH₃ smaller than in CH₄?',
+    o: ['Nitrogen is more electronegative than carbon',
+        'Ammonia has fewer atoms',
+        'The lone pair on nitrogen repels more strongly than a bonding pair',
+        'Ammonia has three electron pairs, methane has four'], a: 2,
+    why: 'Both have 4 pairs. The extra lone-pair repulsion in NH₃ squeezes the bonds together.' },
+  { q: 'How many lone pairs are on the central atom in H₂O?',
+    o: ['0', '1', '2', '3'], a: 2,
+    why: 'Oxygen has 6 outer electrons; 2 are used in bonds, leaving 4 electrons as 2 lone pairs.' },
+  { q: 'How many electron pairs surround the boron atom in BF₃?',
+    o: ['2', '3', '4', '6'], a: 1,
+    why: 'Boron has 3 outer electrons and forms 3 bonds: 6 electrons = 3 pairs, no lone pairs.' },
+  { q: 'A species has 5 electron pairs: 3 bonding and 2 lone. What is its shape?',
+    o: ['Trigonal planar', 'Trigonal pyramidal', 'T-shaped', 'See-saw'], a: 2,
+    why: 'The lone pairs take equatorial positions in the trigonal bipyramidal parent, giving a T-shape.' },
+  { q: 'Which species has a bond angle of 120°?',
+    o: ['NH₃', 'BF₃', 'H₂O', 'CH₄'], a: 1,
+    why: 'Only the trigonal planar arrangement gives 120°.' },
+  { q: 'Which statement would gain the explanation mark in a shape question?',
+    o: ['The electrons repel each other',
+        'The lone pair repels',
+        'Lone pair–bonding pair repulsion is greater than bonding pair–bonding pair repulsion',
+        'The molecule is polar'], a: 2,
+    why: 'The mark is for the comparison, not just for saying that a lone pair repels.' },
+  { q: 'What is the parent electron-pair geometry of XeF₄?',
+    o: ['Tetrahedral', 'Square planar', 'Octahedral', 'Trigonal bipyramidal'], a: 2,
+    why: 'Six pairs always start from an octahedral arrangement; the shape name describes the atoms only.' },
+  { q: 'Which of these is drawn correctly as a 3-D shape in an exam answer?',
+    o: ['A flat cross for CH₄',
+        'A tetrahedron for CH₄ using wedges and dashes',
+        'H–O–H drawn in a straight line',
+        'A hexagon for SF₆'], a: 1,
+    why: 'AQA expects wedge-and-dash drawings that show the three-dimensional arrangement.' }
+];
+
+const STRUCTURED = [
+  {
+    id: 'nh3',
+    marks: 4,
+    prompt: 'Explain, in terms of electron pairs, the shape of, and the bond angle in, a molecule of ammonia, NH₃.',
+    criteria: [
+      { text: 'States there are 4 electron pairs around the nitrogen atom',
+        any: [/\b(4|four)\b[\s\S]{0,30}(electron )?pairs?/i, /(electron )?pairs?[\s\S]{0,15}\b(4|four)\b/i] },
+      { text: 'States 3 bonding pairs and 1 lone pair',
+        all: [/\b(3|three)\b[\s\S]{0,25}bond/i, /\b(1|one|a)\b[\s\S]{0,20}lone/i] },
+      { text: 'States that the lone pair repels more strongly than a bonding pair',
+        any: [/lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i,
+              /(more|greater|stronger)[\s\S]{0,40}repuls[\s\S]{0,40}lone/i,
+              /lone[- ]?pair[\s\S]{0,25}bond[\s\S]{0,25}(repuls|repel)[\s\S]{0,25}(greater|more)/i] },
+      { text: 'Names the shape as trigonal pyramidal AND gives the bond angle as 107°',
+        all: [/pyramid/i, /107/] }
+    ],
+    model: 'There are 4 pairs of electrons in the outer shell of the nitrogen atom: 3 bonding pairs and 1 lone pair. The electron pairs repel one another and move as far apart as possible. The lone pair repels more strongly than the bonding pairs, so the bonding pairs are pushed closer together and the angle is reduced from 109.5° by about 2.5°. The shape is therefore trigonal pyramidal with a bond angle of 107°.'
+  },
+  {
+    id: 'h2o-ch4',
+    marks: 4,
+    prompt: 'Explain why the bond angle in a molecule of water is smaller than the bond angle in a molecule of methane.',
+    criteria: [
+      { text: 'States both molecules have 4 electron pairs around the central atom',
+        any: [/both[\s\S]{0,40}\b(4|four)\b/i, /\b(4|four)\b[\s\S]{0,40}pairs[\s\S]{0,60}both/i, /\b(4|four)\b[\s\S]{0,30}pairs/i] },
+      { text: 'States CH₄ has 4 bonding pairs, whereas H₂O has 2 bonding pairs and 2 lone pairs',
+        all: [/\b(2|two)\b[\s\S]{0,25}lone/i, /\b(2|two|4|four)\b[\s\S]{0,25}bond/i] },
+      { text: 'States that lone pairs repel more strongly than bonding pairs',
+        any: [/lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i,
+              /(more|greater|stronger)[\s\S]{0,40}repuls[\s\S]{0,40}(than )?bond/i] },
+      { text: 'Quotes both angles, 109.5° for CH₄ and 104.5° for H₂O (or the 2 × 2.5° reduction)',
+        all: [/109(\.5)?/, /104\.5/] }
+    ],
+    model: 'Both molecules have 4 electron pairs around the central atom, so both are based on a tetrahedral arrangement. In methane all 4 pairs are bonding pairs, so the angle is the ideal 109.5°. In water only 2 pairs are bonding and 2 are lone pairs. Lone pairs repel more strongly than bonding pairs, so each lone pair reduces the angle by about 2.5°. The H–O–H angle is therefore 109.5° − 2 × 2.5° = 104.5°, smaller than in methane.'
+  },
+  {
+    id: 'nh4',
+    marks: 3,
+    prompt: 'State and explain the shape of, and the bond angle in, the ammonium ion, NH₄⁺.',
+    criteria: [
+      { text: 'States there are 4 electron pairs, all of them bonding pairs (no lone pairs)',
+        all: [/\b(4|four)\b[\s\S]{0,30}pairs?/i, /(all[\s\S]{0,20}bond|no lone|0 lone|without[\s\S]{0,10}lone)/i] },
+      { text: 'States that the pairs repel equally and move as far apart as possible',
+        any: [/(as far apart as possible|maximum separation|minimi[sz]e[\s\S]{0,15}repuls|repel[\s\S]{0,25}equally)/i] },
+      { text: 'Names the shape as tetrahedral AND gives the bond angle as 109.5°',
+        all: [/tetrahedral/i, /109(\.5)?/] }
+    ],
+    model: 'The nitrogen atom in NH₄⁺ has 4 pairs of electrons around it and all 4 are bonding pairs — the lone pair that nitrogen had in NH₃ has been used to form the dative covalent bond to H⁺. With no lone pairs, all four pairs repel equally and move as far apart as possible. The ion is therefore tetrahedral with a bond angle of 109.5°.'
+  },
+  {
+    id: 'pcl5',
+    marks: 4,
+    prompt: 'Explain the shape of, and the bond angles in, a molecule of phosphorus(V) chloride, PCl₅.',
+    criteria: [
+      { text: 'States there are 5 electron pairs around the phosphorus atom',
+        any: [/\b(5|five)\b[\s\S]{0,30}(electron )?pairs?/i] },
+      { text: 'States all 5 pairs are bonding pairs / there are no lone pairs',
+        any: [/(all[\s\S]{0,20}bond|no lone|0 lone|five bonding|5 bonding)/i] },
+      { text: 'States the pairs repel and get as far apart as possible, giving a trigonal bipyramid',
+        all: [/(as far apart as possible|minimi[sz]e[\s\S]{0,15}repuls|repel)/i, /bipyramid/i] },
+      { text: 'Gives both bond angles: 120° between equatorial bonds and 90° between axial and equatorial bonds',
+        all: [/120/, /\b90\b/] }
+    ],
+    model: 'There are 5 pairs of electrons around the phosphorus atom and all 5 are bonding pairs, with no lone pairs. The pairs repel one another and move as far apart as possible. Five pairs cannot all be equivalent, so three lie in a plane at 120° to one another (equatorial) and two lie above and below that plane at 90° to it (axial). The shape is trigonal bipyramidal, with bond angles of 120° and 90°.'
+  },
+  {
+    id: 'clf3',
+    marks: 4,
+    prompt: 'ClF₃ has three bonds and two lone pairs on the chlorine atom. Explain the shape of, and the bond angle in, this molecule.',
+    criteria: [
+      { text: 'States there are 5 electron pairs around the chlorine atom',
+        any: [/\b(5|five)\b[\s\S]{0,30}(electron )?pairs?/i] },
+      { text: 'States 3 bonding pairs and 2 lone pairs',
+        all: [/\b(3|three)\b[\s\S]{0,25}bond/i, /\b(2|two)\b[\s\S]{0,25}lone/i] },
+      { text: 'States that lone pair–lone pair repulsion is the greatest, so the lone pairs sit as far apart as possible (equatorial)',
+        any: [/lone[\s\S]{0,30}lone[\s\S]{0,40}(repuls|repel)/i,
+              /lone[\s\S]{0,40}(repel|repuls)[\s\S]{0,40}(more|greater|stronger)/i,
+              /equatorial/i] },
+      { text: 'Names the shape as T-shaped AND gives the bond angle as about 87.5°',
+        all: [/t[- ]?shape/i, /87(\.5)?/] }
+    ],
+    model: 'There are 5 pairs of electrons around the chlorine atom: 3 bonding pairs and 2 lone pairs. The parent arrangement is trigonal bipyramidal. Lone pair–lone pair repulsion is the strongest repulsion, so the two lone pairs take equatorial positions where they are furthest apart. That leaves the three bonds in a T-shape. Because the lone pairs repel the bonding pairs more strongly than bonding pairs repel each other, the bond angle is reduced from 90° to about 87.5°.'
+  },
+  {
+    id: 'xef4',
+    marks: 4,
+    prompt: 'Explain why XeF₄ is square planar and state its bond angle.',
+    criteria: [
+      { text: 'States there are 6 electron pairs around the xenon atom',
+        any: [/\b(6|six)\b[\s\S]{0,30}(electron )?pairs?/i] },
+      { text: 'States 4 bonding pairs and 2 lone pairs',
+        all: [/\b(4|four)\b[\s\S]{0,25}bond/i, /\b(2|two)\b[\s\S]{0,25}lone/i] },
+      { text: 'States the two lone pairs are opposite one another (180° apart) to minimise lone pair–lone pair repulsion',
+        any: [/opposite/i, /180/, /trans/i, /lone[\s\S]{0,25}lone[\s\S]{0,40}(repuls|repel)/i] },
+      { text: 'States the shape is square planar with bond angles of 90°',
+        all: [/square planar/i, /\b90\b/] }
+    ],
+    model: 'The xenon atom has 6 pairs of electrons around it: 4 bonding pairs and 2 lone pairs, so the parent arrangement is octahedral. Lone pair–lone pair repulsion is the strongest, so the two lone pairs take positions opposite one another, 180° apart. The four bonding pairs are then left in a plane, pointing to the corners of a square. The shape is square planar with bond angles of 90°.'
+  },
+  {
+    id: 'bf3',
+    marks: 3,
+    prompt: 'State and explain the shape of, and the bond angle in, a molecule of BF₃.',
+    criteria: [
+      { text: 'States there are 3 electron pairs around the boron atom, all bonding',
+        all: [/\b(3|three)\b[\s\S]{0,30}pairs?/i, /(all[\s\S]{0,20}bond|no lone|0 lone|bonding)/i] },
+      { text: 'States the pairs repel one another and move as far apart as possible',
+        any: [/(as far apart as possible|maximum separation|minimi[sz]e[\s\S]{0,15}repuls|repel)/i] },
+      { text: 'Names the shape as trigonal planar AND gives the bond angle as 120°',
+        all: [/(trigonal|triangular) planar/i, /120/] }
+    ],
+    model: 'The boron atom has 3 pairs of electrons in its outer shell and all 3 are bonding pairs, with no lone pairs. The pairs repel one another and move as far apart as possible. Three equivalent pairs spread out in a single plane, so the molecule is trigonal planar with bond angles of 120°.'
+  }
+];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function autoTick(answer, c) {
+  const t = (answer || '').trim();
+  if (t.length < 4) return false;
+  if (c.all && !c.all.every(function (r) { return r.test(t); })) return false;
+  if (c.any && !c.any.some(function (r) { return r.test(t); })) return false;
+  return true;
+}
+
+function McqQuiz() {
+  const [round, setRound] = useState(function () { return null; });
+  const [index, setIndex] = useState(0);
+  const [picked, setPicked] = useState([]);
+
+  const start = useCallback(function () {
+    const chosen = shuffle(MCQ_BANK).slice(0, 10).map(function (q) {
+      const opts = shuffle(q.o.map(function (text, i) { return { text: text, correct: i === q.a }; }));
+      return { q: q.q, why: q.why, opts: opts };
+    });
+    setRound(chosen);
+    setIndex(0);
+    setPicked([]);
+  }, []);
+
+  useEffect(function () { start(); }, [start]);
+
+  if (!round) return null;
+
+  const finished = index >= round.length;
+  const score = picked.filter(function (p) { return p.correct; }).length;
+
+  if (finished) {
+    const pct = Math.round((score / round.length) * 100);
+    const verdict = pct >= 90 ? 'Exam ready.' : pct >= 70 ? 'Solid — tidy up the stragglers.' : pct >= 50 ? 'Halfway there. Re-read the summary table.' : 'Back to the notes tab first.';
+    return (
+      <Card title="Quickfire results" icon="🏁">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="relative w-32 h-32 shrink-0 grid place-items-center">
+            <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="12" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke={pct >= 70 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#fb7185'}
+                      strokeWidth="12" strokeLinecap="round"
+                      strokeDasharray={(2 * Math.PI * 52).toFixed(1)}
+                      strokeDashoffset={(2 * Math.PI * 52 * (1 - score / round.length)).toFixed(1)} />
+            </svg>
+            <div className="text-center">
+              <div className="text-3xl font-bold tabular-nums">{score}<span className="text-slate-500">/{round.length}</span></div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">correct</div>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <div className="text-xl font-semibold text-slate-100">{verdict}</div>
+            <p className="text-sm text-slate-400 mt-1">Every question is drawn at random from a bank of {MCQ_BANK.length}, so a second run will not be the same paper.</p>
+            <button type="button" onClick={start}
+              className="mt-4 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition">
+              New set of 10
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-2">
+          {round.map(function (item, i) {
+            const p = picked[i];
+            const ok = p && p.correct;
+            return (
+              <div key={i} className={'rounded-xl border px-4 py-3 ' + (ok ? 'border-emerald-400/25 bg-emerald-500/[0.07]' : 'border-rose-400/25 bg-rose-500/[0.07]')}>
+                <div className="flex items-start gap-2.5">
+                  <span className={'shrink-0 text-sm ' + (ok ? 'text-emerald-300' : 'text-rose-300')}>{ok ? '✓' : '✗'}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm text-slate-200">{item.q}</div>
+                    {!ok ? (
+                      <div className="text-xs text-slate-400 mt-1">
+                        You chose <span className="text-rose-300">{p ? p.text : '—'}</span>{' · '}
+                        correct answer: <span className="text-emerald-300">{item.opts.filter(function (o) { return o.correct; })[0].text}</span>
+                      </div>
+                    ) : null}
+                    <div className="text-xs text-slate-500 mt-1">{item.why}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    );
+  }
+
+  const item = round[index];
+  const answered = picked.length > index;
+  const chosen = answered ? picked[index] : null;
+
+  return (
+    <Card bodyClass="p-5">
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <span className="text-[11px] uppercase tracking-wider text-slate-500">
+          Question {index + 1} of {round.length}
+        </span>
+        <span className="text-[11px] uppercase tracking-wider text-slate-500 tabular-nums">
+          Score {score}
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-5">
+        <div className="h-full bg-gradient-to-r from-sky-400 to-violet-400 transition-all duration-300"
+             style={{ width: ((index / round.length) * 100) + '%' }} />
+      </div>
+
+      <h3 className="text-lg font-semibold text-slate-50 leading-snug">{item.q}</h3>
+
+      <div className="grid sm:grid-cols-2 gap-2.5 mt-4">
+        {item.opts.map(function (o, i) {
+          let cls = 'bg-white/[0.04] border-white/10 text-slate-200 hover:border-sky-400/50 hover:bg-sky-500/10';
+          if (answered) {
+            if (o.correct) cls = 'bg-emerald-500/15 border-emerald-400/50 text-emerald-100';
+            else if (chosen === o) cls = 'bg-rose-500/15 border-rose-400/50 text-rose-100';
+            else cls = 'bg-white/[0.02] border-white/[0.07] text-slate-500';
+          }
+          return (
+            <button key={i} type="button" disabled={answered}
+              onClick={function () { setPicked(picked.concat([o])); }}
+              className={'text-left rounded-xl border px-4 py-3 text-sm font-medium transition ' + cls}>
+              <span className="opacity-50 mr-2">{'ABCD'[i]}</span>{o.text}
+            </button>
+          );
+        })}
+      </div>
+
+      {answered ? (
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className={'flex-1 rounded-xl border px-4 py-3 text-sm ' +
+            (chosen.correct ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/30 bg-amber-500/10 text-amber-100')}>
+            <strong>{chosen.correct ? 'Correct. ' : 'Not quite. '}</strong>{item.why}
+          </div>
+          <button type="button" onClick={function () { setIndex(index + 1); }}
+            className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition shrink-0">
+            {index + 1 === round.length ? 'See results' : 'Next question'}
+          </button>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+function StructuredQuiz() {
+  const [qid, setQid] = useState(STRUCTURED[0].id);
+  const [state, setState] = useState({});
+
+  const q = STRUCTURED.filter(function (s) { return s.id === qid; })[0];
+  const entry = state[qid] || { text: '', submitted: false, ticks: [] };
+
+  function update(patch) {
+    setState(function (prev) {
+      const next = Object.assign({}, prev);
+      next[qid] = Object.assign({}, prev[qid] || { text: '', submitted: false, ticks: [] }, patch);
+      return next;
+    });
+  }
+
+  function submit() {
+    const ticks = q.criteria.map(function (c) { return autoTick(entry.text, c); });
+    update({ submitted: true, ticks: ticks });
+  }
+
+  const awarded = entry.ticks.filter(Boolean).length;
+  const words = entry.text.trim() ? entry.text.trim().split(/\s+/).length : 0;
+
+  return (
+    <div className="space-y-4">
+      <Card title="Choose a structured question" icon="🗂️" bodyClass="p-4">
+        <div className="flex flex-wrap gap-2">
+          {STRUCTURED.map(function (s) {
+            const on = s.id === qid;
+            const label = s.prompt.replace(/^.*?(BeCl₂|BF₃|CH₄|NH₄⁺|NH₃|H₂O|PCl₅|ClF₃|SF₆|PF₆⁻|XeF₄|water|methane).*$/i, '$1');
+            return (
+              <button key={s.id} type="button" onClick={function () { setQid(s.id); }}
+                className={'px-3.5 py-2 rounded-xl text-sm font-semibold border transition ' +
+                  (on ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}>
+                {s.id === 'h2o-ch4' ? 'H₂O vs CH₄' : label}
+                <span className="ml-2 text-[10px] opacity-60">[{s.marks}]</span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card bodyClass="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-base text-slate-100 leading-relaxed font-medium">{q.prompt}</p>
+          <span className="shrink-0 text-sm font-bold text-slate-400 tabular-nums">[{q.marks} marks]</span>
+        </div>
+
+        <textarea
+          value={entry.text}
+          onChange={function (e) { update({ text: e.target.value }); }}
+          rows="7"
+          placeholder="Write your full exam answer here. Count the pairs, split them into bonding and lone, explain the repulsion, then name the shape and give the angle…"
+          className="mt-4 w-full rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 text-sm leading-relaxed placeholder:text-slate-600 focus:outline-none focus:border-violet-400/50 resize-y"
+        />
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button type="button" onClick={submit} disabled={!entry.text.trim()}
+            className="px-5 py-2.5 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-35 disabled:hover:bg-violet-500 text-slate-950 font-semibold text-sm transition">
+            {entry.submitted ? 'Re-check my answer' : 'Submit and self-assess'}
+          </button>
+          {entry.submitted ? (
+            <button type="button" onClick={function () { update({ text: '', submitted: false, ticks: [] }); }}
+              className="px-4 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:border-white/35 text-sm transition">
+              Clear
+            </button>
+          ) : null}
+          <span className="text-xs text-slate-500 tabular-nums ml-auto">{words} words</span>
+        </div>
+      </Card>
+
+      {entry.submitted ? (
+        <div className="space-y-4 fade-in">
+          <Card title="AQA mark scheme — tick what you actually wrote" icon="✅"
+                badge={'you scored ' + awarded + ' / ' + q.marks}>
+            <Callout tone="sky" icon="ℹ️">
+              Boxes have been pre-ticked where the wording was spotted in your answer. This is a keyword check,
+              not an examiner — read each point and correct the ticks yourself.
+            </Callout>
+            <div className="space-y-2 mt-4">
+              {q.criteria.map(function (c, i) {
+                const on = !!entry.ticks[i];
+                return (
+                  <button key={i} type="button"
+                    onClick={function () {
+                      const t = entry.ticks.slice();
+                      t[i] = !t[i];
+                      update({ ticks: t });
+                    }}
+                    className={'w-full text-left flex items-start gap-3 rounded-xl border px-4 py-3 transition ' +
+                      (on ? 'bg-emerald-500/12 border-emerald-400/40' : 'bg-white/[0.03] border-white/10 hover:border-white/25')}>
+                    <span className={'mt-0.5 w-5 h-5 shrink-0 rounded-md grid place-items-center text-xs font-bold border ' +
+                      (on ? 'bg-emerald-400 border-emerald-300 text-slate-900' : 'border-white/25 text-transparent')}>✓</span>
+                    <span className={'text-sm leading-relaxed ' + (on ? 'text-emerald-50' : 'text-slate-300')}>
+                      {c.text}
+                    </span>
+                    <span className="ml-auto shrink-0 text-xs font-semibold text-slate-500">[1]</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500"
+                   style={{ width: ((awarded / q.marks) * 100) + '%' }} />
+            </div>
+          </Card>
+
+          <Card title="Model answer" icon="🎓">
+            <p className="text-sm text-slate-200 leading-relaxed">{q.model}</p>
+            <div className="mt-4">
+              <Callout tone="violet" icon="🔍" title="Your answer, for comparison">
+                <span className="whitespace-pre-wrap">{entry.text}</span>
+              </Callout>
+            </div>
+          </Card>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function QuizTab() {
+  const [mode, setMode] = useState('mcq');
+  return (
+    <div className="max-w-4xl mx-auto space-y-4 fade-in">
+      <div className="glass rounded-2xl p-1.5 flex gap-1.5">
+        <button type="button" onClick={function () { setMode('mcq'); }}
+          className={'flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ' +
+            (mode === 'mcq' ? 'bg-sky-500/20 text-sky-100 border border-sky-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')}>
+          ⚡ Quickfire MCQ — 10 questions
+        </button>
+        <button type="button" onClick={function () { setMode('structured'); }}
+          className={'flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ' +
+            (mode === 'structured' ? 'bg-violet-500/20 text-violet-100 border border-violet-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')}>
+          📝 Structured answer with mark scheme
+        </button>
+      </div>
+      {mode === 'mcq' ? <McqQuiz /> : <StructuredQuiz />}
+    </div>
+  );
+}
+
+/* ============================================================
+   7.  APP SHELL
+   ============================================================ */
+
+const TABS = [
+  { id: 'viz',   label: '3D Visualiser',  icon: '🧪' },
+  { id: 'notes', label: 'Revision Notes', icon: '📚' },
+  { id: 'quiz',  label: 'Exam Practice',  icon: '📝' }
+];
+
+function App() {
+  const [tab, setTab] = useState('viz');
+  const [mode, setMode] = useState('preset');
+  const [speciesId, setSpeciesId] = useState('CH4');
+  const [custom, setCustom] = useState({ bp: 4, lp: 1 });
+  const [opts, setOpts] = useState({ lones: true, angles: true, labels: true, spin: false });
+
+  const openInViewer = useCallback(function (id) {
+    setMode('preset');
+    setSpeciesId(id);
+    setTab('viz');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  return (
+    <div className="min-h-full">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#070b12]/75 border-b border-white/10">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-violet-500 grid place-items-center text-lg shrink-0">
+              🧬
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
+                Shapes of Simple Molecules and Ions
+              </h1>
+              <p className="text-[11px] text-slate-400 leading-tight">
+                AQA A-Level Chemistry · 3.1.3.5 · VSEPR theory
+              </p>
+            </div>
+          </div>
+          <nav className="flex gap-1.5 ml-auto glass-soft rounded-2xl p-1.5">
+            {TABS.map(function (t) {
+              const on = tab === t.id;
+              return (
+                <button key={t.id} type="button" onClick={function () { setTab(t.id); }}
+                  className={'px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap ' +
+                    (on ? 'bg-white/10 text-white shadow-inner' : 'text-slate-400 hover:text-slate-200')}>
+                  <span className="mr-1.5">{t.icon}</span>
+                  <span className="hidden sm:inline">{t.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 py-6">
+        {tab === 'viz' ? (
+          <VisualiserTab
+            mode={mode} setMode={setMode}
+            speciesId={speciesId} setSpeciesId={setSpeciesId}
+            custom={custom} setCustom={setCustom}
+            opts={opts} setOpts={setOpts}
+          />
+        ) : null}
+        {tab === 'notes' ? <NotesTab onSelect={openInViewer} /> : null}
+        {tab === 'quiz' ? <QuizTab /> : null}
+      </main>
+
+      <footer className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-10 pt-4 text-xs text-slate-600">
+        Built for AQA A-Level Chemistry 3.1.3.5. Bond angles are the values quoted in AQA mark schemes;
+        the 3-D models are drawn to those angles rather than to scale.
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
