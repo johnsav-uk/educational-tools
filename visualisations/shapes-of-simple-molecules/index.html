@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shapes of Simple Molecules and Ions — AQA 3.1.3.5</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -17,7 +21,9 @@
           arc:    '#fbbf24'
         },
         fontFamily: {
-          sans: ['Inter','Segoe UI','system-ui','-apple-system','sans-serif']
+          sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
+          display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
+          mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
         }
       }
     }
@@ -32,7 +38,12 @@
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
 <style>
-  :root { color-scheme: dark; }
+  :root {
+    color-scheme: dark;
+    --f-display: "Archivo Narrow", "Arial Narrow", Helvetica, sans-serif;
+    --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
   html, body, #root { height: 100%; }
   body {
     margin: 0;
@@ -42,7 +53,7 @@
       #070b12;
     background-attachment: fixed;
     color: #e6edf3;
-    font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: var(--f-body);
     -webkit-font-smoothing: antialiased;
   }
   .glass {
@@ -374,7 +385,10 @@ const ARC_COLOUR = 0xfbbf24;
 function makeLabel(text, opts) {
   opts = opts || {};
   const pad = 12;
-  const font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px Inter, Segoe UI, system-ui, sans-serif';
+  const stack = opts.mono
+    ? '"JetBrains Mono", ui-monospace, Consolas, monospace'
+    : '"Archivo Narrow", "Arial Narrow", Helvetica, sans-serif';
+  const font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px ' + stack;
   const measure = document.createElement('canvas').getContext('2d');
   measure.font = font;
   const w = Math.ceil(measure.measureText(text).width) + pad * 2;
@@ -542,7 +556,7 @@ function buildMolecule(spec, opts) {
       group.add(tube);
 
       const mid = pts[Math.floor(pts.length / 2)].clone().normalize().multiplyScalar(radius * 1.3 + 0.12);
-      const lbl = makeLabel(arc.label, { colour: '#fde68a', size: 62, scale: 0.32 });
+      const lbl = makeLabel(arc.label, { colour: '#fde68a', size: 62, scale: 0.32, mono: true, weight: '500' });
       lbl.position.copy(mid);
       group.add(lbl);
     });
@@ -663,6 +677,14 @@ function Viewer(props) {
     return function () { v.dispose(); viewerRef.current = null; };
   }, []);
 
+  const [fontsReady, setFontsReady] = useState(false);
+  useEffect(function () {
+    if (!document.fonts || !document.fonts.ready) { setFontsReady(true); return; }
+    let live = true;
+    document.fonts.ready.then(function () { if (live) setFontsReady(true); });
+    return function () { live = false; };
+  }, []);
+
   const { spec, showLones, showAngles, showLabels } = props;
 
   useEffect(function () {
@@ -670,7 +692,7 @@ function Viewer(props) {
     viewerRef.current.setMolecule(spec, {
       showLones: showLones, showAngles: showAngles, showLabels: showLabels
     });
-  }, [ready, spec.central, spec.outer, spec.bp, spec.lp, showLones, showAngles, showLabels]);
+  }, [ready, fontsReady, spec.central, spec.outer, spec.bp, spec.lp, showLones, showAngles, showLabels]);
 
   useEffect(function () {
     if (viewerRef.current) viewerRef.current.setAutoRotate(props.autoRotate);
@@ -695,8 +717,8 @@ function Card(props) {
       {props.title ? (
         <div className="px-5 pt-4 pb-3 border-b border-white/10 flex items-center gap-2">
           {props.icon ? <span className="text-lg leading-none">{props.icon}</span> : null}
-          <h3 className="font-semibold tracking-tight text-slate-100">{props.title}</h3>
-          {props.badge ? <span className="ml-auto text-[11px] uppercase tracking-wider text-slate-400">{props.badge}</span> : null}
+          <h3 className="font-display font-bold text-[1.05rem] tracking-tight text-slate-100">{props.title}</h3>
+          {props.badge ? <span className="ml-auto font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-400">{props.badge}</span> : null}
         </div>
       ) : null}
       <div className={props.bodyClass || 'p-5'}>{props.children}</div>
@@ -707,8 +729,8 @@ function Card(props) {
 function Stat(props) {
   return (
     <div className={'rounded-xl border px-3 py-2.5 text-center bg-gradient-to-b ' + props.tone}>
-      <div className="text-2xl font-bold leading-none tabular-nums">{props.value}</div>
-      <div className="text-[10px] uppercase tracking-wider mt-1.5 opacity-80">{props.label}</div>
+      <div className="text-2xl font-mono font-medium leading-none tabular-nums">{props.value}</div>
+      <div className="font-display font-bold text-[10px] uppercase tracking-[0.11em] mt-1.5 opacity-80">{props.label}</div>
     </div>
   );
 }
@@ -742,7 +764,7 @@ function Callout(props) {
   };
   return (
     <div className={'rounded-xl border px-4 py-3 ' + (tones[props.tone] || tones.sky)}>
-      {props.title ? <div className="font-semibold text-sm mb-1 flex items-center gap-2">{props.icon ? <span>{props.icon}</span> : null}{props.title}</div> : null}
+      {props.title ? <div className="font-display font-bold text-[0.95rem] mb-1 flex items-center gap-2">{props.icon ? <span>{props.icon}</span> : null}{props.title}</div> : null}
       <div className="text-sm leading-relaxed opacity-90">{props.children}</div>
     </div>
   );
@@ -769,14 +791,14 @@ function ReductionChain(props) {
               <React.Fragment key={s.lp}>
                 {i > 0 ? (
                   <div className="flex flex-col items-center justify-center px-0.5 shrink-0">
-                    <span className="text-[10px] text-amber-300 font-semibold leading-none">−2.5°</span>
+                    <span className="text-[10px] text-amber-300 font-mono leading-none">−2.5°</span>
                     <span className="text-slate-500 text-xs leading-none">→</span>
                   </div>
                 ) : null}
                 <div className={'flex-1 rounded-lg border px-2 py-2 text-center transition ' +
                   (on ? 'bg-amber-400/20 border-amber-300/50 text-amber-50' : 'bg-white/[0.03] border-white/10 text-slate-400')}>
-                  <div className="text-base font-bold tabular-nums">{s.angle}</div>
-                  <div className="text-[9px] uppercase tracking-wide mt-0.5 opacity-80">{s.label}</div>
+                  <div className="text-base font-mono font-medium tabular-nums">{s.angle}</div>
+                  <div className="font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 opacity-80">{s.label}</div>
                 </div>
               </React.Fragment>
             );
@@ -793,18 +815,18 @@ function ReductionChain(props) {
     <div>
       <div className="flex items-center gap-2">
         <div className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-center">
-          <div className="text-base font-bold tabular-nums text-slate-300">{g.parentAngle}</div>
-          <div className="text-[9px] uppercase tracking-wide mt-0.5 text-slate-500">{g.parent} ideal</div>
+          <div className="text-base font-mono font-medium tabular-nums text-slate-300">{g.parentAngle}</div>
+          <div className="font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 text-slate-500">{g.parent} ideal</div>
         </div>
         <div className="flex flex-col items-center px-0.5">
-          <span className="text-[10px] font-semibold leading-none text-amber-300">
+          <span className="text-[10px] font-mono leading-none text-amber-300">
             {g.reduction ? '−' + (g.reduction * 2.5).toFixed(1).replace('.0', '') + '°' : 'no change'}
           </span>
           <span className="text-slate-500 text-xs leading-none">→</span>
         </div>
         <div className="flex-1 rounded-lg border border-amber-300/50 bg-amber-400/20 px-2 py-2 text-center">
-          <div className="text-base font-bold tabular-nums text-amber-50">{g.summary}</div>
-          <div className="text-[9px] uppercase tracking-wide mt-0.5 text-amber-100/70">actual</div>
+          <div className="text-base font-mono font-medium tabular-nums text-amber-50">{g.summary}</div>
+          <div className="font-display font-bold text-[9px] uppercase tracking-[0.1em] mt-0.5 text-amber-100/70">actual</div>
         </div>
       </div>
       <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
@@ -832,15 +854,15 @@ function ContextPanel(props) {
       <Card bodyClass="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-3xl font-bold tracking-tight text-white">{title}</div>
+            <div className="font-display text-4xl font-bold tracking-tight text-white">{title}</div>
             <div className="text-sm text-slate-400 mt-0.5">{subtitle}</div>
           </div>
           {g.aqaExtra ? (
-            <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-slate-500/20 border border-slate-400/30 text-slate-300 shrink-0">
+            <span className="font-display font-bold text-[10px] uppercase tracking-[0.11em] px-2 py-1 rounded-full bg-slate-500/20 border border-slate-400/30 text-slate-300 shrink-0">
               Beyond AQA
             </span>
           ) : (
-            <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 shrink-0">
+            <span className="font-display font-bold text-[10px] uppercase tracking-[0.11em] px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 shrink-0">
               AQA 3.1.3.5
             </span>
           )}
@@ -855,15 +877,15 @@ function ContextPanel(props) {
         <dl className="mt-4 divide-y divide-white/[0.07] text-sm">
           <div className="flex items-baseline justify-between gap-4 py-2.5">
             <dt className="text-slate-400 shrink-0">Parent electron-pair geometry</dt>
-            <dd className="font-semibold text-slate-200 text-right">{g.parent}</dd>
+            <dd className="font-display font-bold text-slate-200 text-right">{g.parent}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 py-2.5">
             <dt className="text-slate-400 shrink-0">Molecular shape</dt>
-            <dd className="font-semibold text-emerald-300 text-right">{g.shape}</dd>
+            <dd className="font-display font-bold text-emerald-300 text-right">{g.shape}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 py-2.5">
             <dt className="text-slate-400 shrink-0">Bond angle(s)</dt>
-            <dd className="font-semibold text-amber-300 text-right tabular-nums">
+            <dd className="font-mono font-medium text-amber-300 text-right tabular-nums">
               {g.angles.map(function (a, i) { return <div key={i}>{a}</div>; })}
             </dd>
           </div>
@@ -878,7 +900,7 @@ function ContextPanel(props) {
         <p className="text-sm text-slate-300 leading-relaxed">{g.why}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {g.examples.map(function (e) {
-            return <span key={e} className="text-xs px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300">{e}</span>;
+            return <span key={e} className="text-xs font-display font-semibold px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300">{e}</span>;
           })}
         </div>
       </Card>
@@ -970,7 +992,7 @@ function VisualiserTab(props) {
             <button
               type="button"
               onClick={function () { setMode('preset'); }}
-              className={'flex-1 rounded-xl px-3 py-2 text-sm font-semibold border transition ' +
+              className={'flex-1 rounded-xl px-3 py-2 font-display text-[0.95rem] font-bold border transition ' +
                 (!isCustom ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}
             >
               AQA species
@@ -978,7 +1000,7 @@ function VisualiserTab(props) {
             <button
               type="button"
               onClick={function () { setMode('custom'); }}
-              className={'flex-1 rounded-xl px-3 py-2 text-sm font-semibold border transition ' +
+              className={'flex-1 rounded-xl px-3 py-2 font-display text-[0.95rem] font-bold border transition ' +
                 (isCustom ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}
             >
               Custom builder
@@ -992,7 +1014,7 @@ function VisualiserTab(props) {
                 if (!members.length) return null;
                 return (
                   <div key={grp} className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-500 w-[62px] shrink-0">{grp}</span>
+                    <span className="font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 w-[62px] shrink-0">{grp}</span>
                     {members.map(function (s) {
                       const on = !isCustom && s.id === speciesId;
                       return (
@@ -1001,7 +1023,7 @@ function VisualiserTab(props) {
                           type="button"
                           onClick={function () { setMode('preset'); setSpeciesId(s.id); }}
                           title={s.name}
-                          className={'px-3 py-1.5 rounded-xl text-sm font-semibold border transition bg-gradient-to-b ' +
+                          className={'px-3 py-1.5 rounded-xl font-display text-[0.95rem] font-bold border transition bg-gradient-to-b ' +
                             (on ? GROUP_ACCENT[grp] + ' ring-1 ring-white/25' : 'from-white/[0.05] to-transparent border-white/10 text-slate-300 hover:border-white/30')}
                         >
                           {s.formula}
@@ -1017,29 +1039,29 @@ function VisualiserTab(props) {
               <div>
                 <div className="flex items-baseline justify-between mb-1.5">
                   <label className="text-sm font-medium text-sky-200">Bonding pairs</label>
-                  <span className="text-lg font-bold tabular-nums text-sky-300">{custom.bp}</span>
+                  <span className="text-lg font-mono font-medium tabular-nums text-sky-300">{custom.bp}</span>
                 </div>
                 <input type="range" min="2" max="6" step="1" value={custom.bp}
                        onChange={function (e) { setPair('bp', parseInt(e.target.value, 10)); }}
                        className="w-full" />
-                <div className="flex justify-between text-[10px] text-slate-500 mt-1 px-0.5">
+                <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1 px-0.5">
                   <span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
                 </div>
               </div>
               <div>
                 <div className="flex items-baseline justify-between mb-1.5">
                   <label className="text-sm font-medium text-violet-200">Lone pairs</label>
-                  <span className="text-lg font-bold tabular-nums text-violet-300">{custom.lp}</span>
+                  <span className="text-lg font-mono font-medium tabular-nums text-violet-300">{custom.lp}</span>
                 </div>
                 <input type="range" min="0" max="3" step="1" value={custom.lp}
                        onChange={function (e) { setPair('lp', parseInt(e.target.value, 10)); }}
                        className="w-full" />
-                <div className="flex justify-between text-[10px] text-slate-500 mt-1 px-0.5">
+                <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1 px-0.5">
                   <span>0</span><span>1</span><span>2</span><span>3</span>
                 </div>
               </div>
               <div className="sm:col-span-2 text-xs text-slate-400 rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2">
-                Total electron pairs: <strong className="text-slate-100 tabular-nums">{custom.bp + custom.lp}</strong>
+                Total electron pairs: <strong className="text-slate-100 font-mono tabular-nums">{custom.bp + custom.lp}</strong>
                 {' '}— the generic central atom <strong className="text-teal-300">X</strong> is bonded to
                 {' '}<strong className="text-slate-200">Y</strong> atoms.
               </div>
@@ -1124,7 +1146,7 @@ function PrincipleCard(props) {
         <span className="w-7 h-7 shrink-0 rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-200 grid place-items-center text-sm font-bold">
           {props.n}
         </span>
-        <h4 className="font-semibold text-slate-100 text-sm">{props.title}</h4>
+        <h4 className="font-display font-bold text-slate-100 text-[0.98rem]">{props.title}</h4>
       </div>
       <p className="text-sm text-slate-300 leading-relaxed">{props.children}</p>
     </div>
@@ -1148,7 +1170,7 @@ function RepulsionLadder() {
             <div className="flex-1 h-8 rounded-lg bg-white/[0.03] border border-white/10 overflow-hidden">
               <div className={'h-full bg-gradient-to-r border-r ' + r.tone} style={{ width: r.w }} />
             </div>
-            <div className="w-[68px] shrink-0 text-right text-[11px] uppercase tracking-wider text-slate-500">{r.note}</div>
+            <div className="w-[68px] shrink-0 text-right font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500">{r.note}</div>
           </div>
         );
       })}
@@ -1196,7 +1218,7 @@ function SummaryTable(props) {
             const on = pairFilter === f;
             return (
               <button key={f} type="button" onClick={function () { setPairFilter(f); }}
-                className={'px-3 py-2 rounded-xl text-xs font-semibold border transition ' +
+                className={'px-3 py-2 rounded-xl font-display text-xs font-bold border transition ' +
                   (on ? 'bg-sky-500/20 border-sky-400/50 text-sky-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}>
                 {f === 'all' ? 'All' : f + ' pairs'}
               </button>
@@ -1208,7 +1230,7 @@ function SummaryTable(props) {
       <div className="overflow-x-auto -mx-5 px-5">
         <table className="w-full text-sm border-separate border-spacing-y-1.5 min-w-[720px]">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-slate-500 text-left">
+            <tr className="font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 text-left">
               <th className="font-medium px-3 pb-1">Species</th>
               <th className="font-medium px-3 pb-1 text-center">Total pairs</th>
               <th className="font-medium px-3 pb-1 text-center">Bonding</th>
@@ -1225,22 +1247,22 @@ function SummaryTable(props) {
                     onClick={function () { props.onSelect(r.s.id); }}
                     className="cursor-pointer group">
                   <td className="px-3 py-2.5 rounded-l-xl bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-l border-white/[0.07] group-hover:border-sky-400/30 transition">
-                    <div className="font-bold text-base text-white">{r.s.formula}</div>
+                    <div className="font-display font-bold text-lg text-white">{r.s.formula}</div>
                     <div className="text-[11px] text-slate-500">{r.s.name}</div>
                   </td>
                   <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
-                    <span className="tabular-nums font-semibold text-slate-200">{r.g.total}</span>
+                    <span className="font-mono font-medium text-slate-200">{r.g.total}</span>
                   </td>
                   <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
-                    <span className="inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-bold bg-sky-500/20 border border-sky-400/30 text-sky-200 tabular-nums">{r.g.bp}</span>
+                    <span className="inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-mono font-medium bg-sky-500/20 border border-sky-400/30 text-sky-200 tabular-nums">{r.g.bp}</span>
                   </td>
                   <td className="px-3 py-2.5 text-center bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">
-                    <span className={'inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-bold tabular-nums border ' +
+                    <span className={'inline-block min-w-[26px] px-1.5 py-0.5 rounded-lg text-xs font-mono font-medium tabular-nums border ' +
                       (r.g.lp ? 'bg-violet-500/20 border-violet-400/30 text-violet-200' : 'bg-white/5 border-white/10 text-slate-500')}>{r.g.lp}</span>
                   </td>
                   <td className="px-3 py-2.5 text-slate-400 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.parent}</td>
-                  <td className="px-3 py-2.5 font-semibold text-emerald-300 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.shape}</td>
-                  <td className="px-3 py-2.5 rounded-r-xl font-semibold text-amber-300 tabular-nums bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-r border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.summary}</td>
+                  <td className="px-3 py-2.5 font-display font-bold text-emerald-300 bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.shape}</td>
+                  <td className="px-3 py-2.5 rounded-r-xl font-mono font-medium text-amber-300 tabular-nums bg-white/[0.035] group-hover:bg-sky-500/10 border-y border-r border-white/[0.07] group-hover:border-sky-400/30 transition">{r.g.summary}</td>
                 </tr>
               );
             })}
@@ -1262,8 +1284,8 @@ function SummaryTable(props) {
             return (
               <div key={k} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-slate-200">{g.shape}</span>
-                  <span className="text-amber-300 tabular-nums text-xs">{g.summary}</span>
+                  <span className="font-display font-bold text-slate-200">{g.shape}</span>
+                  <span className="text-amber-300 font-mono tabular-nums text-xs">{g.summary}</span>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-0.5">
                   {g.bp} bonding · {g.lp} lone — e.g. {g.examples[0]}
@@ -1346,7 +1368,7 @@ function NotesTab(props) {
                     {s.n}
                   </span>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-slate-100 text-sm">{s.title}</h4>
+                    <h4 className="font-display font-bold text-slate-100 text-[0.98rem]">{s.title}</h4>
                     <p className="text-sm text-slate-300 leading-relaxed mt-1">{s.text}</p>
                     <p className="text-xs text-emerald-200/80 mt-2 font-mono">{s.mark}</p>
                   </div>
@@ -1669,12 +1691,12 @@ function McqQuiz() {
                       strokeDashoffset={(2 * Math.PI * 52 * (1 - score / round.length)).toFixed(1)} />
             </svg>
             <div className="text-center">
-              <div className="text-3xl font-bold tabular-nums">{score}<span className="text-slate-500">/{round.length}</span></div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">correct</div>
+              <div className="text-3xl font-mono font-medium tabular-nums">{score}<span className="text-slate-500">/{round.length}</span></div>
+              <div className="font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 mt-0.5">correct</div>
             </div>
           </div>
           <div className="flex-1 min-w-0 text-center sm:text-left">
-            <div className="text-xl font-semibold text-slate-100">{verdict}</div>
+            <div className="font-display text-2xl font-bold text-slate-100">{verdict}</div>
             <p className="text-sm text-slate-400 mt-1">Every question is drawn at random from a bank of {MCQ_BANK.length}, so a second run will not be the same paper.</p>
             <button type="button" onClick={start}
               className="mt-4 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition">
@@ -1717,10 +1739,10 @@ function McqQuiz() {
   return (
     <Card bodyClass="p-5">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <span className="text-[11px] uppercase tracking-wider text-slate-500">
+        <span className="font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500">
           Question {index + 1} of {round.length}
         </span>
-        <span className="text-[11px] uppercase tracking-wider text-slate-500 tabular-nums">
+        <span className="font-display font-bold text-[10px] uppercase tracking-[0.11em] text-slate-500 tabular-nums">
           Score {score}
         </span>
       </div>
@@ -1729,7 +1751,7 @@ function McqQuiz() {
              style={{ width: ((index / round.length) * 100) + '%' }} />
       </div>
 
-      <h3 className="text-lg font-semibold text-slate-50 leading-snug">{item.q}</h3>
+      <h3 className="font-display text-xl font-bold text-slate-50 leading-snug">{item.q}</h3>
 
       <div className="grid sm:grid-cols-2 gap-2.5 mt-4">
         {item.opts.map(function (o, i) {
@@ -1743,7 +1765,7 @@ function McqQuiz() {
             <button key={i} type="button" disabled={answered}
               onClick={function () { setPicked(picked.concat([o])); }}
               className={'text-left rounded-xl border px-4 py-3 text-sm font-medium transition ' + cls}>
-              <span className="opacity-50 mr-2">{'ABCD'[i]}</span>{o.text}
+              <span className="opacity-50 mr-2 font-mono">{'ABCD'[i]}</span>{o.text}
             </button>
           );
         })}
@@ -1797,10 +1819,10 @@ function StructuredQuiz() {
             const label = s.prompt.replace(/^.*?(BeCl₂|BF₃|CH₄|NH₄⁺|NH₃|H₂O|PCl₅|ClF₃|SF₆|PF₆⁻|XeF₄|water|methane).*$/i, '$1');
             return (
               <button key={s.id} type="button" onClick={function () { setQid(s.id); }}
-                className={'px-3.5 py-2 rounded-xl text-sm font-semibold border transition ' +
+                className={'px-3.5 py-2 rounded-xl font-display text-[0.95rem] font-bold border transition ' +
                   (on ? 'bg-violet-500/20 border-violet-400/50 text-violet-100' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/25')}>
                 {s.id === 'h2o-ch4' ? 'H₂O vs CH₄' : label}
-                <span className="ml-2 text-[10px] opacity-60">[{s.marks}]</span>
+                <span className="ml-2 text-[10px] font-mono opacity-60">[{s.marks}]</span>
               </button>
             );
           })}
@@ -1810,7 +1832,7 @@ function StructuredQuiz() {
       <Card bodyClass="p-5">
         <div className="flex items-start justify-between gap-4">
           <p className="text-base text-slate-100 leading-relaxed font-medium">{q.prompt}</p>
-          <span className="shrink-0 text-sm font-bold text-slate-400 tabular-nums">[{q.marks} marks]</span>
+          <span className="shrink-0 text-sm font-mono font-medium text-slate-400 tabular-nums">[{q.marks} marks]</span>
         </div>
 
         <textarea
@@ -1832,7 +1854,7 @@ function StructuredQuiz() {
               Clear
             </button>
           ) : null}
-          <span className="text-xs text-slate-500 tabular-nums ml-auto">{words} words</span>
+          <span className="text-xs text-slate-500 font-mono tabular-nums ml-auto">{words} words</span>
         </div>
       </Card>
 
@@ -1861,7 +1883,7 @@ function StructuredQuiz() {
                     <span className={'text-sm leading-relaxed ' + (on ? 'text-emerald-50' : 'text-slate-300')}>
                       {c.text}
                     </span>
-                    <span className="ml-auto shrink-0 text-xs font-semibold text-slate-500">[1]</span>
+                    <span className="ml-auto shrink-0 text-xs font-mono text-slate-500">[1]</span>
                   </button>
                 );
               })}
@@ -1892,12 +1914,12 @@ function QuizTab() {
     <div className="max-w-4xl mx-auto space-y-4 fade-in">
       <div className="glass rounded-2xl p-1.5 flex gap-1.5">
         <button type="button" onClick={function () { setMode('mcq'); }}
-          className={'flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ' +
+          className={'flex-1 rounded-xl px-4 py-2.5 font-display text-[0.95rem] font-bold transition ' +
             (mode === 'mcq' ? 'bg-sky-500/20 text-sky-100 border border-sky-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')}>
           ⚡ Quickfire MCQ — 10 questions
         </button>
         <button type="button" onClick={function () { setMode('structured'); }}
-          className={'flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ' +
+          className={'flex-1 rounded-xl px-4 py-2.5 font-display text-[0.95rem] font-bold transition ' +
             (mode === 'structured' ? 'bg-violet-500/20 text-violet-100 border border-violet-400/40' : 'text-slate-400 hover:text-slate-200 border border-transparent')}>
           📝 Structured answer with mark scheme
         </button>
@@ -1940,10 +1962,10 @@ function App() {
               🧬
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
+              <h1 className="font-display text-lg sm:text-xl font-bold tracking-tight text-white leading-tight truncate">
                 Shapes of Simple Molecules and Ions
               </h1>
-              <p className="text-[11px] text-slate-400 leading-tight">
+              <p className="font-display font-semibold text-[10px] uppercase tracking-[0.12em] text-slate-400 leading-tight">
                 AQA A-Level Chemistry · 3.1.3.5 · VSEPR theory
               </p>
             </div>
@@ -1953,7 +1975,7 @@ function App() {
               const on = tab === t.id;
               return (
                 <button key={t.id} type="button" onClick={function () { setTab(t.id); }}
-                  className={'px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap ' +
+                  className={'px-3 sm:px-4 py-2 rounded-xl font-display text-[0.95rem] font-bold transition whitespace-nowrap ' +
                     (on ? 'bg-white/10 text-white shadow-inner' : 'text-slate-400 hover:text-slate-200')}>
                   <span className="mr-1.5">{t.icon}</span>
                   <span className="hidden sm:inline">{t.label}</span>
