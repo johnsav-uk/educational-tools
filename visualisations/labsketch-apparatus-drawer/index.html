@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabSketch (beta) — Apparatus Diagram Drawer</title>
+<meta name="description" content="Free lab apparatus diagram drawer with one-click pre-drawn templates for every AQA GCSE Chemistry and Physics required practical. Export high-resolution PNG or vector SVG.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: {
+    sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
+    display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
+    mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
+  } } } };
+</script>
+
+<!-- Lucide icons -->
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+
+<!-- React + Babel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+
+<style>
+  :root { color-scheme: dark; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0; background: #18181b; color: #e4e4e7;
+    font-family: 'Source Sans 3','Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing: antialiased; overflow: hidden;
+  }
+  ::-webkit-scrollbar { width:9px; height:9px; }
+  ::-webkit-scrollbar-track { background:#1f1f23; }
+  ::-webkit-scrollbar-thumb { background:#52525b; border-radius:5px; }
+  ::-webkit-scrollbar-thumb:hover { background:#71717a; }
+
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:#52525b; outline:none; }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%;
+    background:#38bdf8; border:2px solid #0f172a; cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px; height:15px; border-radius:50%; background:#38bdf8; border:2px solid #0f172a; cursor:pointer;
+  }
+  .palitem { transition: border-color .12s ease, background .12s ease, transform .12s ease; }
+  .palitem:hover { transform: translateY(-1px); }
+  .no-sel { user-select:none; -webkit-user-select:none; }
+  svg text { font-family:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif; }
+  /* Printing gives the drawing the whole page: the dark studio chrome is
+     hidden and the canvas loses its frame. */
+  @media print {
+    body { background:#fff; overflow:visible; }
+    .noprint { display:none !important; }
+    #ls-stage { position:fixed; inset:0; margin:0 !important; border:0 !important;
+                border-radius:0 !important; box-shadow:none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback, useMemo, Fragment } = React;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1.  DRAWING CONSTANTS
+   Everything is drawn to look like a printed exam-paper diagram: one dark ink
+   stroke, white fill, nothing that would turn to mud in a photocopier.
+   ══════════════════════════════════════════════════════════════════════════ */
+const INK    = '#1f2937';   // outlines
+const RUBBER = '#52525b';   // bungs and tubing
+const METAL  = '#71717a';   // stands, tripods, clamps
+const DARK   = '#3f3f46';   // carbon electrodes, motor bodies
+const SW     = 2.2;         // default stroke width
+
+const LIQUIDS = [
+  { n:'Water',               c:'#bfdbfe' },
+  { n:'Colourless solution', c:'#eaf2fb' },
+  { n:'Copper(II) sulfate',  c:'#2563eb' },
+  { n:'Potassium manganate', c:'#7e22ce' },
+  { n:'Iron(III) chloride',  c:'#b45309' },
+  { n:'Bromine water',       c:'#ea580c' },
+  { n:'Iodine solution',     c:'#92400e' },
+  { n:'Limewater, cloudy',   c:'#dbe3ea' },
+  { n:'Ethanol / solvent',   c:'#f1f5f9' },
+  { n:'Sodium hydroxide',    c:'#f0f7ff' }
+];
+
+/* Universal indicator across the range, plus the two titration indicators. */
+const INDICATOR = [
+  { n:'pH 1 red',     c:'#dc2626' },
+  { n:'pH 3 orange',  c:'#ea580c' },
+  { n:'pH 5 yellow',  c:'#eab308' },
+  { n:'pH 7 green',   c:'#16a34a' },
+  { n:'pH 9 blue',    c:'#2563eb' },
+  { n:'pH 12 purple', c:'#7c3aed' },
+  { n:'Phenolphthalein pink', c:'#ec4899' },
+  { n:'Methyl orange',        c:'#f97316' }
+];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2.  AUTOMATIC CHEMICAL FORMATTING
+   Typing CuSO4(aq) into a label prints CuSO₄(aq). A digit that follows a
+   letter or a closing bracket drops to subscript; a digit run followed by
+   + or - rises, which is how an ion is written; cm3 and dm3 are the two unit
+   exceptions that must go up rather than down.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SUB = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+const SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻'};
+
+function chemFormat(raw){
+  if(raw === undefined || raw === null) return '';
+  let s = String(raw)
+    .replace(/<->/g, '\u21cc')
+    .replace(/-->/g, '\u2192')
+    .replace(/->/g,  '\u2192')
+    .replace(/degC/g, '\u00b0C')
+    .replace(/\bdeg\b/g, '\u00b0');
+  let out = '', i = 0;
+  const isLet = ch => !!ch && /[A-Za-z)\]}]/.test(ch);
+  while(i < s.length){
+    const c = s[i];
+    if(c === '^'){                                    // explicit: SO4^2-
+      let j = i + 1;
+      while(j < s.length && /[0-9+\-]/.test(s[j])) j++;
+      out += s.slice(i + 1, j).replace(/./g, ch => SUP[ch] || ch);
+      i = j; continue;
+    }
+    if(c === '_'){                                    // explicit subscript
+      let j = i + 1;
+      while(j < s.length && /[0-9]/.test(s[j])) j++;
+      out += s.slice(i + 1, j).replace(/./g, ch => SUB[ch] || ch);
+      i = j; continue;
+    }
+    if(/[0-9]/.test(c) && isLet(s[i-1])){
+      let j = i; while(j < s.length && /[0-9]/.test(s[j])) j++;
+      const run = s.slice(i, j);
+      if((run === '2' || run === '3') && /(^|[^A-Za-z])(cm|dm|mm|m)$/.test(s.slice(0, i))){
+        out += SUP[run]; i = j; continue;              // cm3 -> cm³
+      }
+      if(s[j] === '+' || s[j] === '-'){                // Cu2+, SO42-
+        out += run.replace(/./g, ch => SUP[ch]) + SUP[s[j]];
+        i = j + 1; continue;
+      }
+      out += run.replace(/./g, ch => SUB[ch]); i = j; continue;
+    }
+    if((c === '+' || c === '-') && isLet(s[i-1]) && !/[A-Za-z0-9(]/.test(s[i+1] || ' ')){
+      out += SUP[c]; i++; continue;                    // OH-, Na+
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3.  SVG SHORTHAND
+   ══════════════════════════════════════════════════════════════════════════ */
+const P  = (d, extra) => <path d={d} fill="none" stroke={INK} strokeWidth={SW}
+  strokeLinecap="round" strokeLinejoin="round" {...(extra||{})} />;
+const Pf = (d, fill, extra) => <path d={d} fill={fill} stroke={INK} strokeWidth={SW}
+  strokeLinecap="round" strokeLinejoin="round" {...(extra||{})} />;
+const L  = (x1,y1,x2,y2, extra) => <line x1={x1} y1={y1} x2={x2} y2={y2}
+  stroke={INK} strokeWidth={SW} strokeLinecap="round" {...(extra||{})} />;
+const T  = (x,y,txt,size,extra) => <text x={x} y={y} fontSize={size||12} fill={INK}
+  textAnchor="middle" dominantBaseline="middle" {...(extra||{})}>{txt}</text>;
+
+/* Graduation ticks down one wall of a vessel. */
+function ticks(key, x, y0, y1, n, len, side){
+  const out = [];
+  for(let i = 0; i <= n; i++){
+    const y = y0 + (y1 - y0) * i / n;
+    const big = i % 2 === 0;
+    out.push(<line key={key + i} x1={x} y1={y} x2={x + (side||1) * (big ? len : len * 0.55)} y2={y}
+      stroke={INK} strokeWidth={1.1} opacity={0.8} strokeLinecap="round" />);
+  }
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4.  THE EQUIPMENT REGISTRY
+   Every piece of apparatus is one entry. It declares its natural size, the
+   properties the inspector may edit, the anchor points it snaps by, and the
+   SVG that draws it. Nothing is a bitmap, so everything exports as vector.
+
+   A vessel additionally declares `interior` (a clip shape) and `lz` (the top
+   and bottom of the fillable space). Those two are what let the liquid stay
+   horizontal when the glassware is tilted: the liquid is a very large rect
+   drawn inside a counter-rotated group and clipped to the interior, so however
+   far the flask leans the surface stays level with the bench.
+   ══════════════════════════════════════════════════════════════════════════ */
+const DEF = {};
+function D(id, o){
+  DEF[id] = Object.assign({ id, cat:'glass', props:{}, schema:[], anchors:[], tags:'' }, o);
+}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+/* A rounded-bottom tube, used by test tubes, boiling tubes and gas jars. */
+function tubePath(w, h, inset, r){
+  const x0 = inset, x1 = w - inset, yb = h - r;
+  return `M${x0},6 L${x0},${yb} A${r},${r} 0 0 0 ${x1},${yb} L${x1},6`;
+}
+
+/* ── 4a. Containers and glassware ─────────────────────────────────────── */
+
+D('beaker', {
+  name:'Beaker', cat:'glass', w:120, h:132, tags:'beaker 250 glass container',
+  props:{ liquid:0.45, fill:'#bfdbfe', opacity:1, grads:true },
+  schema:['liquid','fill','opacity','grads'],
+  lz:[12,122],
+  anchors:[{id:'mouth',kind:'mouth',x:60,y:9},{id:'base',kind:'surface',x:60,y:126}],
+  interior:() => <path d="M13,10 L13,118 Q13,123 19,123 L101,123 Q107,123 107,118 L107,10 Z" />,
+  draw:(p) => <>
+    {P('M10,9 L10,118 Q10,126 18,126 L102,126 Q110,126 110,118 L110,9')}
+    {P('M2,4 L10,9 L110,9 L118,4')}
+    {p.grads && ticks('b', 108, 46, 112, 4, -11, 1)}
+  </>
+});
+
+D('conical', {
+  name:'Conical flask', cat:'glass', w:130, h:158, tags:'conical erlenmeyer flask titration',
+  props:{ liquid:0.35, fill:'#eaf2fb', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[48,146],
+  anchors:[{id:'neck',kind:'neck',x:65,y:8},{id:'base',kind:'surface',x:65,y:151}],
+  interior:() => <path d="M55,10 L55,48 L20,139 Q18,146 24,146 L106,146 Q112,146 110,139 L75,48 L75,10 Z" />,
+  draw:() => <>
+    {P('M52,8 L52,47 L15,140 Q11,151 22,151 L108,151 Q119,151 115,140 L78,47 L78,8')}
+    {P('M45,8 L85,8')}
+  </>
+});
+
+D('rbflask', {
+  name:'Round-bottom flask', cat:'glass', w:120, h:152, tags:'round bottom flask distillation',
+  props:{ liquid:0.4, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[44,141],
+  anchors:[{id:'neck',kind:'neck',x:60,y:8},{id:'base',kind:'surface',x:60,y:146}],
+  interior:() => <path d="M50,10 L50,45 A49,49 0 1 0 70,45 L70,10 Z" />,
+  draw:() => <>
+    {P('M47,8 L47,42 A52,52 0 1 0 73,42 L73,8')}
+    {P('M40,8 L80,8')}
+  </>
+});
+
+D('boilingtube', {
+  name:'Boiling tube', cat:'glass', w:48, h:140, tags:'boiling tube',
+  props:{ liquid:0.4, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[10,133],
+  anchors:[{id:'neck',kind:'neck',x:24,y:8},{id:'base',kind:'surface',x:24,y:138}],
+  interior:() => <path d="M11,10 L11,124 A13,13 0 0 0 37,124 L37,10 Z" />,
+  draw:() => <>
+    {P(tubePath(48,140,8,16))}
+    {P('M3,7 L45,7')}
+  </>
+});
+
+D('testtube', {
+  name:'Test tube', cat:'glass', w:36, h:114, tags:'test tube ion tests',
+  props:{ liquid:0.35, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[10,108],
+  anchors:[{id:'neck',kind:'neck',x:18,y:8},{id:'base',kind:'surface',x:18,y:112}],
+  interior:() => <path d="M9,10 L9,102 A9,9 0 0 0 27,102 L27,10 Z" />,
+  draw:() => <>
+    {P(tubePath(36,114,7,11))}
+    {P('M2,7 L34,7')}
+  </>
+});
+
+D('rack', {
+  name:'Test-tube rack', cat:'glass', w:220, h:92, tags:'rack test tube holder',
+  props:{ holes:4 },
+  schema:['holes'],
+  anchors:[{id:'base',kind:'surface',x:110,y:90}],
+  draw:(p) => {
+    const n = Math.max(2, Math.min(6, (p.holes|0) || 4));
+    const holes = [];
+    for(let i=0;i<n;i++){
+      const cx = 26 + (168/(n-1))*i;
+      holes.push(<ellipse key={'h'+i} cx={cx} cy={20} rx={13} ry={5}
+        fill="#fff" stroke={INK} strokeWidth={1.8} />);
+    }
+    return <>
+      {Pf('M8,14 L212,14 L212,26 L8,26 Z', '#fff')}
+      {Pf('M8,62 L212,62 L212,72 L8,72 Z', '#fff')}
+      {L(16,26,16,62)}{L(204,26,204,62)}
+      {L(16,72,16,88)}{L(204,72,204,88)}
+      {L(4,88,216,88)}
+      {holes}
+    </>;
+  }
+});
+
+D('basin', {
+  name:'Evaporating basin', cat:'glass', w:124, h:60, tags:'evaporating basin dish crystallisation salt',
+  props:{ liquid:0.5, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[12,50],
+  anchors:[{id:'mouth',kind:'mouth',x:62,y:10},{id:'base',kind:'surface',x:62,y:54}],
+  interior:() => <path d="M12,12 Q14,50 62,50 Q110,50 112,12 Z" />,
+  draw:() => <>
+    {P('M9,10 Q10,54 62,54 Q114,54 115,10')}
+    {P('M2,10 L122,10')}
+  </>
+});
+
+D('crucible', {
+  name:'Crucible and lid', cat:'glass', w:84, h:66, tags:'crucible lid heating mass',
+  props:{ lid:true },
+  schema:['lid'],
+  anchors:[{id:'base',kind:'surface',x:42,y:62}],
+  draw:(p) => <>
+    {P('M16,16 L26,58 Q28,62 42,62 Q56,62 58,58 L68,16')}
+    {p.lid ? <>{P('M8,16 L76,16')}{P('M36,16 Q42,6 48,16')}</> : P('M10,16 L74,16')}
+  </>
+});
+
+D('trough', {
+  name:'Water trough', cat:'glass', w:250, h:120, tags:'trough water bath gas collection over water',
+  props:{ liquid:0.62, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[12,110],
+  anchors:[{id:'base',kind:'surface',x:125,y:114}],
+  interior:() => <path d="M11,12 L11,104 Q11,111 20,111 L230,111 Q239,111 239,104 L239,12 Z" />,
+  draw:() => <>
+    {P('M8,10 L8,104 Q8,114 20,114 L230,114 Q242,114 242,104 L242,10')}
+    {P('M2,10 L248,10')}
+  </>
+});
+
+D('cylinder', {
+  name:'Measuring cylinder', cat:'meas', w:70, h:196, tags:'measuring cylinder volume graduated',
+  props:{ liquid:0.55, fill:'#bfdbfe', opacity:1, grads:true },
+  schema:['liquid','fill','opacity','grads'],
+  lz:[14,168],
+  anchors:[{id:'mouth',kind:'mouth',x:35,y:10},{id:'base',kind:'surface',x:35,y:190}],
+  interior:() => <path d="M20,12 L20,168 L50,168 L50,12 Z" />,
+  draw:(p) => <>
+    {P('M17,10 L17,168 Q17,177 26,181 L26,186')}
+    {P('M53,10 L53,168 Q53,177 44,181 L44,186')}
+    {P('M10,10 L60,10')}
+    {P('M8,190 Q8,182 26,186 L44,186 Q62,182 62,190')}
+    {p.grads && ticks('c', 51, 30, 164, 10, -12, 1)}
+  </>
+});
+
+D('volumetric', {
+  name:'Volumetric flask', cat:'glass', w:100, h:176, tags:'volumetric flask standard solution',
+  props:{ liquid:0.55, fill:'#eaf2fb', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[36,166],
+  anchors:[{id:'neck',kind:'neck',x:50,y:8},{id:'base',kind:'surface',x:50,y:170}],
+  interior:() => <path d="M43,10 L43,74 Q14,102 14,138 Q14,168 50,168 Q86,168 86,138 Q86,102 57,74 L57,10 Z" />,
+  draw:() => <>
+    {P('M40,8 L40,74 Q10,104 10,140 Q10,171 50,171 Q90,171 90,140 Q90,104 60,74 L60,8')}
+    {P('M34,8 L66,8')}
+    {L(40,58,60,58,{strokeWidth:1.4})}
+  </>
+});
+
+D('gasjar', {
+  name:'Gas jar', cat:'glass', w:78, h:140, tags:'gas jar collection',
+  props:{ liquid:0, fill:'#dbe3ea', opacity:0.6 },
+  schema:['liquid','fill','opacity'],
+  lz:[12,132],
+  anchors:[{id:'mouth',kind:'mouth',x:39,y:10},{id:'base',kind:'surface',x:39,y:134}],
+  interior:() => <path d="M13,12 L13,126 Q13,131 20,131 L58,131 Q65,131 65,126 L65,12 Z" />,
+  draw:() => <>
+    {P('M10,10 L10,126 Q10,134 20,134 L58,134 Q68,134 68,126 L68,10')}
+    {P('M3,10 L75,10')}
+  </>
+});
+
+D('watchglass', {
+  name:'Watch glass', cat:'glass', w:100, h:28, tags:'watch glass cover',
+  props:{},
+  anchors:[{id:'base',kind:'surface',x:50,y:24}],
+  draw:() => <>{P('M6,10 Q50,30 94,10')}{P('M2,10 L98,10')}</>
+});
+
+D('cup', {
+  name:'Polystyrene cup', cat:'glass', w:104, h:112, tags:'polystyrene cup calorimeter energy enthalpy insulated temperature change',
+  props:{ liquid:0.55, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[16,102],
+  anchors:[{id:'mouth',kind:'mouth',x:52,y:10},{id:'base',kind:'surface',x:52,y:108}],
+  interior:() => <path d="M22,14 L33,100 Q35,104 52,104 Q69,104 71,100 L82,14 Z" />,
+  draw:() => <>
+    {P('M14,10 L28,102 Q30,108 52,108 Q74,108 76,102 L90,10')}
+    {P('M22,12 L34,99 Q36,102 52,102 Q68,102 70,99 L82,12')}
+    {P('M8,10 L96,10')}
+  </>
+});
+
+D('cuplid', {
+  name:'Lid with hole', cat:'glass', w:110, h:18, tags:'lid cover polystyrene hole thermometer',
+  props:{},
+  anchors:[{id:'port',kind:'port',x:55,y:9},{id:'base',kind:'surface',x:55,y:14}],
+  draw:() => <>
+    {Pf('M6,4 L104,4 Q108,4 108,9 Q108,14 104,14 L6,14 Q2,14 2,9 Q2,4 6,4 Z', '#f4f4f5')}
+    {L(46,4,46,14)}{L(64,4,64,14)}
+  </>
+});
+
+D('condenser', {
+  name:'Liebig condenser', cat:'glass', w:240, h:112,
+  tags:'condenser liebig distillation water cooling purification jacket',
+  props:{},
+  anchors:[
+    { id:'in',     kind:'neck', x:4,   y:52 },
+    { id:'out',    kind:'drip', x:236, y:52 },
+    { id:'waterA', kind:'tube', x:69,  y:104 },
+    { id:'waterB', kind:'tube', x:171, y:104 }
+  ],
+  draw:() => <>
+    {/* the inner tube, straight through the jacket and out at both ends */}
+    {P('M4,44 L236,44')}
+    {P('M4,60 L236,60')}
+    {/* the water jacket, sealed onto the tube at each end */}
+    {P('M26,44 C39,44 41,30 56,30 L184,30 C199,30 201,44 214,44')}
+    {P('M26,60 C39,60 41,74 56,74 L184,74 C199,74 201,60 214,60')}
+    {/* the two water arms, hanging under the jacket */}
+    {P('M62,74 L62,104')}{P('M76,74 L76,104')}
+    {P('M164,74 L164,104')}{P('M178,74 L178,104')}
+  </>
+});
+
+D('eureka', {
+  name:'Displacement (eureka) can', cat:'meas', w:150, h:124, tags:'eureka displacement can density spout overflow',
+  props:{ liquid:0.72, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[14,110],
+  anchors:[{id:'spout',kind:'drip',x:147,y:38},{id:'base',kind:'surface',x:60,y:114}],
+  interior:() => <path d="M13,14 L13,105 Q13,111 20,111 L100,111 Q107,111 107,105 L107,14 Z" />,
+  draw:() => <>
+    {P('M10,12 L10,105 Q10,114 20,114 L100,114 Q110,114 110,105 L110,12')}
+    {P('M4,12 L116,12')}
+    {P('M100,26 L142,26 L142,38 L100,38')}
+    {P('M142,26 L149,32 L142,38')}
+  </>
+});
+
+D('funnel', {
+  name:'Filter funnel', cat:'extra', w:104, h:118, tags:'funnel filter paper filtration residue crystallisation',
+  props:{ paper:true },
+  schema:['paper'],
+  anchors:[{id:'stem',kind:'neck',x:52,y:114},{id:'mouth',kind:'mouth',x:52,y:8}],
+  draw:(p) => <>
+    {P('M6,8 L44,62 L44,116')}
+    {P('M98,8 L60,62 L60,116')}
+    {P('M2,8 L102,8')}
+    {p.paper && <>
+      {Pf('M16,14 L52,66 L88,14 Z', '#fafafa', { strokeWidth:1.6 })}
+      {L(52,14,52,66,{strokeWidth:1.1, opacity:0.4})}
+    </>}
+  </>
+});
+
+/* ── 4b. Heat and supports ─────────────────────────────────────────────── */
+
+D('bunsen', {
+  name:'Bunsen burner', cat:'heat', w:96, h:212,
+  tags:'bunsen burner flame heat safety roaring air hole gas',
+  props:{ flame:'roaring' },
+  schema:['flame'],
+  anchors:[{id:'flame',kind:'heat',x:48,y:38},{id:'base',kind:'surface',x:48,y:206}],
+  draw:(p) => <>
+    {p.flame === 'safety' && <>
+      {Pf('M37,98 C29,80 39,66 43,50 C45,41 48,56 53,47 C58,63 67,80 59,98 Z', '#fbbf24', { stroke:'#d97706', strokeWidth:1.8 })}
+      {Pf('M43,98 C40,86 45,78 48,68 C51,78 56,86 53,98 Z', '#fde68a', { stroke:'none' })}
+    </>}
+    {p.flame === 'roaring' && <>
+      {Pf('M35,98 C31,76 41,60 48,38 C55,60 65,76 61,98 Z', '#bfdbfe', { stroke:'#3b82f6', strokeWidth:1.8 })}
+      {Pf('M43,98 C41,82 45,72 48,60 C51,72 55,82 53,98 Z', '#1d4ed8', { stroke:'none' })}
+    </>}
+    {P('M40,98 L40,174')}
+    {P('M56,98 L56,174')}
+    {P('M34,98 L62,98')}
+    {Pf('M34,140 L62,140 L62,164 L34,164 Z', '#fff')}
+    <circle cx={48} cy={152} r={5} fill="#fff" stroke={INK} strokeWidth={1.8} />
+    {Pf('M20,206 L34,174 L62,174 L76,206 Z', '#fff')}
+    {P('M12,206 L84,206')}
+    {P('M62,186 L82,186 L82,196')}
+  </>
+});
+
+D('tripod', {
+  name:'Tripod', cat:'heat', w:170, h:172, tags:'tripod stand support heat',
+  props:{},
+  anchors:[{id:'top',kind:'tripodtop',x:85,y:12},{id:'base',kind:'surface',x:85,y:168}],
+  draw:() => <>
+    <ellipse cx={85} cy={12} rx={72} ry={9} fill="none" stroke={METAL} strokeWidth={SW} />
+    {P('M20,16 L10,168', { stroke:METAL })}
+    {P('M150,16 L160,168', { stroke:METAL })}
+    {P('M85,21 L85,168', { stroke:METAL })}
+    {P('M2,168 L20,168', { stroke:METAL })}
+    {P('M150,168 L168,168', { stroke:METAL })}
+    {P('M74,168 L96,168', { stroke:METAL })}
+  </>
+});
+
+D('gauze', {
+  name:'Gauze mat', cat:'heat', w:132, h:18, tags:'gauze wire mesh tripod heat spread',
+  props:{},
+  anchors:[{id:'seat',kind:'tripodtop',x:66,y:14},{id:'top',kind:'surface',x:66,y:5}],
+  draw:() => {
+    const v = [];
+    for(let i=1;i<11;i++) v.push(<line key={'v'+i} x1={8+i*11.6} y1={6} x2={8+i*11.6} y2={13}
+      stroke={METAL} strokeWidth={1} />);
+    return <>
+      {Pf('M6,5 L126,5 L126,14 L6,14 Z', '#fff', { stroke:METAL })}
+      {v}
+      {L(6,9.5,126,9.5,{ stroke:METAL, strokeWidth:1 })}
+    </>;
+  }
+});
+
+D('mat', {
+  name:'Heatproof mat', cat:'heat', w:200, h:22, tags:'heatproof mat bench safety',
+  props:{},
+  anchors:[{id:'top',kind:'surface',x:100,y:6}],
+  draw:() => <>
+    {Pf('M6,6 L194,6 L194,17 L6,17 Z', '#e4e4e7')}
+    {L(6,11.5,194,11.5,{ strokeWidth:1, opacity:0.4 })}
+  </>
+});
+
+D('stand', {
+  name:'Retort stand', cat:'heat', w:240, h:420, tags:'retort stand clamp boss rod base',
+  props:{},
+  anchors:[
+    {id:'p1',kind:'post',x:44,y:60},{id:'p2',kind:'post',x:44,y:130},
+    {id:'p3',kind:'post',x:44,y:200},{id:'p4',kind:'post',x:44,y:270},
+    {id:'p5',kind:'post',x:44,y:340},
+    {id:'base',kind:'surface',x:110,y:414}
+  ],
+  draw:() => <>
+    {Pf('M36,10 L52,10 L52,386 L36,386 Z', '#fff', { stroke:METAL })}
+    {P('M36,10 L52,10', { stroke:METAL })}
+    {Pf('M12,386 L228,386 L228,410 L12,410 Z', '#e4e4e7', { stroke:METAL })}
+    {L(12,398,228,398,{ stroke:METAL, strokeWidth:1, opacity:0.4 })}
+  </>
+});
+
+D('clamp', {
+  name:'Boss and clamp', cat:'heat', w:156, h:50, tags:'clamp boss jaws hold burette',
+  props:{},
+  anchors:[{id:'boss',kind:'post',x:12,y:25},{id:'jaw',kind:'grip',x:142,y:25}],
+  draw:() => <>
+    {Pf('M4,10 L26,10 L26,40 L4,40 Z', '#e4e4e7', { stroke:METAL })}
+    <circle cx={15} cy={25} r={4} fill="#fff" stroke={METAL} strokeWidth={1.6} />
+    {Pf('M26,20 L112,20 L112,30 L26,30 Z', '#e4e4e7', { stroke:METAL })}
+    {P('M112,25 C124,25 126,8 138,10 L150,13', { stroke:METAL })}
+    {P('M112,25 C124,25 126,42 138,40 L150,37', { stroke:METAL })}
+    {P('M138,10 L138,40', { stroke:METAL, strokeWidth:1.6, opacity:0.5 })}
+  </>
+});
+
+D('tongs', {
+  name:'Tongs', cat:'heat', w:110, h:48, tags:'tongs crucible hold hot',
+  props:{},
+  anchors:[],
+  draw:() => <>
+    {P('M6,10 C50,10 70,18 104,20', { stroke:METAL })}
+    {P('M6,38 C50,38 70,30 104,28', { stroke:METAL })}
+    {P('M6,10 Q0,24 6,38', { stroke:METAL })}
+  </>
+});
+
+D('spatula', {
+  name:'Spatula', cat:'heat', w:100, h:20, tags:'spatula solid powder transfer',
+  props:{},
+  anchors:[],
+  draw:() => <>
+    {Pf('M4,7 L74,7 L74,13 L4,13 Z', '#e4e4e7', { stroke:METAL })}
+    {Pf('M74,4 Q98,4 98,10 Q98,16 74,16 Z', '#e4e4e7', { stroke:METAL })}
+  </>
+});
+
+/* ── 4c. Measurement and sensors ───────────────────────────────────────── */
+
+D('burette', {
+  name:'Burette', cat:'meas', w:46, h:346, tags:'burette titration tap volume 50 graduated',
+  props:{ liquid:0.62, fill:'#eaf2fb', opacity:1, grads:true },
+  schema:['liquid','fill','opacity','grads'],
+  lz:[22,278],
+  anchors:[{id:'grip',kind:'grip',x:23,y:150},{id:'grip2',kind:'grip',x:23,y:250},{id:'tip',kind:'drip',x:23,y:342}],
+  interior:() => <path d="M15,22 L15,278 L31,278 L31,22 Z" />,
+  draw:(p) => <>
+    {P('M12,20 L12,280')}
+    {P('M34,20 L34,280')}
+    {P('M6,20 L40,20')}
+    {P('M12,280 L34,280')}
+    {Pf('M16,280 L30,280 L30,296 L16,296 Z', '#fff')}
+    <circle cx={23} cy={302} r={10} fill="#fff" stroke={INK} strokeWidth={SW} />
+    {L(11,302,35,302)}
+    {P('M20,312 L20,330 L22,342')}
+    {P('M26,312 L26,330 L24,342')}
+    {p.grads && ticks('bu', 32, 34, 268, 12, -11, 1)}
+  </>
+});
+
+D('thermometer', {
+  name:'Thermometer', cat:'meas', w:24, h:180, tags:'thermometer temperature degrees celsius',
+  props:{ level:0.45 },
+  schema:['level'],
+  anchors:[{id:'bulb',kind:'probe',x:12,y:174},{id:'stem',kind:'port',x:12,y:30}],
+  draw:(p) => {
+    const t = clamp01(p.level === undefined ? 0.45 : p.level);
+    const yTop = 158 - 148 * t;
+    const tk = [];
+    for(let i=0;i<15;i++) tk.push(<line key={'t'+i} x1={16} y1={22+i*9} x2={i%5===0?20:18.5} y2={22+i*9}
+      stroke={INK} strokeWidth={0.9} opacity={0.7} />);
+    return <>
+      {Pf('M6,10 L18,10 L18,158 L6,158 Z', '#fff')}
+      <rect x={9.5} y={yTop} width={5} height={158 - yTop} fill="#dc2626" />
+      <circle cx={12} cy={166} r={8} fill="#dc2626" stroke={INK} strokeWidth={SW} />
+      {P('M6,10 Q12,4 18,10')}
+      {tk}
+    </>;
+  }
+});
+
+D('balance', {
+  name:'Electronic balance', cat:'meas', w:180, h:82, tags:'balance mass grams electronic scales weigh',
+  props:{ reading:'24.7 g' },
+  schema:['reading'],
+  anchors:[{id:'pan',kind:'surface',x:90,y:12},{id:'base',kind:'surface',x:90,y:78}],
+  draw:(p) => <>
+    {Pf('M18,6 L162,6 L162,16 L18,16 Z', '#f4f4f5')}
+    {Pf('M8,16 L172,16 L176,72 L4,72 Z', '#e4e4e7')}
+    {Pf('M28,30 L110,30 L110,54 L28,54 Z', '#fff')}
+    {T(69, 42, p.reading || '', 17, { fontFamily:'JetBrains Mono, monospace' })}
+    <circle cx={140} cy={36} r={7} fill="#fff" stroke={INK} strokeWidth={1.6} />
+    <circle cx={140} cy={56} r={7} fill="#fff" stroke={INK} strokeWidth={1.6} />
+    {T(140, 68, 'tare', 8)}
+  </>
+});
+
+D('gassyringe', {
+  name:'Gas syringe', cat:'meas', w:230, h:66, tags:'gas syringe volume collect rate of reaction',
+  props:{ plunger:0.4, grads:true },
+  schema:['plunger','grads'],
+  anchors:[{id:'nozzle',kind:'tube',x:4,y:33}],
+  draw:(p) => {
+    const t = clamp01(p.plunger === undefined ? 0.4 : p.plunger);
+    const px = 46 + 140 * t;
+    const tk = [];
+    if(p.grads) for(let i=0;i<=10;i++) tk.push(<line key={'g'+i} x1={46+i*14} y1={16} x2={46+i*14} y2={i%5===0?26:22}
+      stroke={INK} strokeWidth={1} opacity={0.75} />);
+    return <>
+      {P('M4,33 L28,33')}
+      {Pf('M28,14 L196,14 L196,52 L28,52 Z', '#fff')}
+      {Pf(`M${px},16 L${px+8},16 L${px+8},50 L${px},50 Z`, '#e4e4e7')}
+      {P(`M${px+8},33 L214,33`)}
+      {P('M214,20 L214,46')}
+      {tk}
+    </>;
+  }
+});
+
+D('stopwatch', {
+  name:'Stopwatch', cat:'meas', w:84, h:96, tags:'stopwatch timer seconds rate',
+  props:{ reading:'0:30' },
+  schema:['reading'],
+  anchors:[],
+  draw:(p) => <>
+    <circle cx={42} cy={54} r={34} fill="#fff" stroke={INK} strokeWidth={SW} />
+    {Pf('M34,14 L50,14 L50,22 L34,22 Z', '#e4e4e7')}
+    {P('M42,14 L42,8')}
+    {T(42, 54, p.reading || '', 16, { fontFamily:'JetBrains Mono, monospace' })}
+  </>
+});
+
+D('ruler', {
+  name:'Ruler (30 cm)', cat:'meas', w:260, h:30, tags:'ruler scale centimetre measure length',
+  props:{},
+  anchors:[],
+  draw:() => {
+    const tk = [];
+    for(let i=0;i<=24;i++){
+      const x = 10 + i*10, big = i%5===0;
+      tk.push(<line key={'r'+i} x1={x} y1={8} x2={x} y2={big?20:15} stroke={INK} strokeWidth={1} />);
+      if(big) tk.push(<text key={'n'+i} x={x} y={26} fontSize={7.5} fill={INK} textAnchor="middle">{i}</text>);
+    }
+    return <>{Pf('M4,8 L256,8 L256,28 L4,28 Z', '#fff')}{tk}</>;
+  }
+});
+
+/* ── 4d. Circuit symbols ───────────────────────────────────────────────── */
+/* Drawn to the GCSE circuit-symbol conventions, each with a lead stub either
+   side carrying a `terminal` anchor so wires clip straight onto them.        */
+
+const meter = (letter) => ({
+  cat:'meas', w:72, h:72, props:{}, tags:'meter circuit',
+  anchors:[{id:'a',kind:'terminal',x:2,y:36},{id:'b',kind:'terminal',x:70,y:36}],
+  draw:() => <>
+    <circle cx={36} cy={36} r={26} fill="#fff" stroke={INK} strokeWidth={SW} />
+    {L(2,36,10,36)}{L(62,36,70,36)}
+    {T(36,36,letter,20,{ fontWeight:700 })}
+  </>
+});
+D('ammeter',  Object.assign(meter('A'), { name:'Ammeter',  tags:'ammeter current amps circuit series' }));
+D('voltmeter',Object.assign(meter('V'), { name:'Voltmeter',tags:'voltmeter potential difference volts circuit parallel' }));
+
+D('cell', {
+  name:'Cell', cat:'extra', w:80, h:44, tags:'cell battery circuit symbol',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:22},{id:'b',kind:'terminal',x:78,y:22}],
+  draw:() => <>
+    {L(2,22,34,22)}{L(46,22,78,22)}
+    {L(34,6,34,38,{ strokeWidth:2.6 })}
+    {L(46,14,46,30,{ strokeWidth:4 })}
+  </>
+});
+
+D('battery', {
+  name:'Battery', cat:'extra', w:118, h:44, tags:'battery cells circuit symbol',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:22},{id:'b',kind:'terminal',x:116,y:22}],
+  draw:() => <>
+    {L(2,22,30,22)}{L(42,22,66,22)}{L(78,22,116,22)}
+    {L(30,6,30,38,{ strokeWidth:2.6 })}{L(42,14,42,30,{ strokeWidth:4 })}
+    {L(66,6,66,38,{ strokeWidth:2.6 })}{L(78,14,78,30,{ strokeWidth:4 })}
+  </>
+});
+
+D('lamp', {
+  name:'Filament lamp', cat:'extra', w:72, h:72, tags:'lamp bulb filament circuit symbol i-v',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:36},{id:'b',kind:'terminal',x:70,y:36}],
+  draw:() => <>
+    <circle cx={36} cy={36} r={22} fill="#fff" stroke={INK} strokeWidth={SW} />
+    {L(2,36,14,36)}{L(58,36,70,36)}
+    {L(21,21,51,51)}{L(51,21,21,51)}
+  </>
+});
+
+D('resistor', {
+  name:'Fixed resistor', cat:'extra', w:112, h:40, tags:'resistor circuit symbol ohms',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:20},{id:'b',kind:'terminal',x:110,y:20}],
+  draw:() => <>
+    {L(2,20,24,20)}{L(88,20,110,20)}
+    {Pf('M24,8 L88,8 L88,32 L24,32 Z', '#fff')}
+  </>
+});
+
+D('varresistor', {
+  name:'Variable resistor', cat:'extra', w:118, h:56, tags:'variable resistor rheostat circuit symbol current',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:30},{id:'b',kind:'terminal',x:116,y:30}],
+  draw:() => <>
+    {L(2,30,26,30)}{L(92,30,116,30)}
+    {Pf('M26,18 L92,18 L92,42 L26,42 Z', '#fff')}
+    {P('M18,48 L100,10')}
+    {Pf('M100,10 L88,12 L95,20 Z', INK)}
+  </>
+});
+
+D('switch', {
+  name:'Switch (open)', cat:'extra', w:104, h:44, tags:'switch circuit symbol open closed',
+  props:{ closed:false },
+  schema:['closed'],
+  anchors:[{id:'a',kind:'terminal',x:2,y:30},{id:'b',kind:'terminal',x:102,y:30}],
+  draw:(p) => <>
+    {L(2,30,28,30)}{L(76,30,102,30)}
+    <circle cx={28} cy={30} r={3.4} fill={INK} />
+    <circle cx={76} cy={30} r={3.4} fill={INK} />
+    {p.closed ? L(28,30,76,30) : L(28,30,72,12)}
+  </>
+});
+
+D('diode', {
+  name:'Diode', cat:'extra', w:96, h:44, tags:'diode circuit symbol i-v characteristic',
+  props:{},
+  anchors:[{id:'a',kind:'terminal',x:2,y:22},{id:'b',kind:'terminal',x:94,y:22}],
+  draw:() => <>
+    {L(2,22,34,22)}{L(62,22,94,22)}
+    {Pf('M34,8 L62,22 L34,36 Z', '#fff')}
+    {L(62,8,62,36,{ strokeWidth:3 })}
+  </>
+});
+
+D('psu', {
+  name:'DC power supply', cat:'extra', w:190, h:104, tags:'power supply dc battery pack volts electrolysis circuit',
+  props:{ reading:'6.0 V' },
+  schema:['reading'],
+  anchors:[{id:'pos',kind:'terminal',x:52,y:100},{id:'neg',kind:'terminal',x:138,y:100}],
+  draw:(p) => <>
+    {Pf('M8,10 L182,10 L182,92 L8,92 Z', '#f4f4f5')}
+    {Pf('M26,24 L112,24 L112,52 L26,52 Z', '#fff')}
+    {T(69, 38, p.reading || '', 18, { fontFamily:'JetBrains Mono, monospace' })}
+    <circle cx={148} cy={38} r={13} fill="#fff" stroke={INK} strokeWidth={1.8} />
+    {L(148,38,148,28)}
+    <circle cx={52} cy={92} r={7} fill="#fff" stroke={INK} strokeWidth={1.8} />
+    <circle cx={138} cy={92} r={7} fill="#fff" stroke={INK} strokeWidth={1.8} />
+    {T(52, 72, '+', 18, { fontWeight:700 })}
+    {T(138, 72, '−', 18, { fontWeight:700 })}
+    {L(52,99,52,102)}{L(138,99,138,102)}
+  </>
+});
+
+D('electrode', {
+  name:'Carbon electrode', cat:'extra', w:20, h:140, tags:'electrode graphite carbon inert electrolysis anode cathode',
+  props:{},
+  anchors:[{id:'top',kind:'terminal',x:10,y:4},{id:'tip',kind:'probe',x:10,y:136}],
+  draw:() => <>
+    {Pf('M4,8 L16,8 L16,136 Q10,140 4,136 Z', DARK, { stroke:INK })}
+    {L(10,2,10,8)}
+  </>
+});
+
+D('crocclip', {
+  name:'Crocodile clip', cat:'extra', w:54, h:30, tags:'crocodile clip connector wire',
+  props:{},
+  anchors:[{id:'lead',kind:'terminal',x:52,y:15}],
+  draw:() => <>
+    {P('M4,8 L34,12 L34,18 L4,22 Z', { fill:'#e4e4e7' })}
+    {L(14,12,20,18)}{L(22,12,28,18)}
+    {L(34,15,52,15)}
+  </>
+});
+
+/* ── 4e. Tubing, stoppers and extras ───────────────────────────────────── */
+
+D('bung', {
+  name:'Rubber bung', cat:'extra', w:56, h:34, tags:'bung stopper rubber hole delivery tube seal',
+  props:{ holes:1 },
+  schema:['holes'],
+  anchors:(p) => {
+    const a = [{ id:'seat', kind:'neck', x:28, y:31 }];
+    const n = p.holes|0;
+    if(n === 1) a.push({ id:'port', kind:'tube', x:28, y:4 });
+    if(n === 2){ a.push({ id:'portA', kind:'tube', x:18, y:4 }); a.push({ id:'portB', kind:'tube', x:38, y:4 }); }
+    return a;
+  },
+  draw:(p) => {
+    const n = p.holes|0;
+    const hole = (x) => <rect key={'hl'+x} x={x-3.5} y={4} width={7} height={26} fill="#fff"
+      stroke={INK} strokeWidth={1.4} />;
+    return <>
+      {Pf('M8,4 L48,4 L42,30 L14,30 Z', '#a1a1aa')}
+      {n === 1 && hole(28)}
+      {n === 2 && <>{hole(18)}{hole(38)}</>}
+    </>;
+  }
+});
+
+D('nichrome', {
+  name:'Nichrome wire loop', cat:'extra', w:26, h:150, tags:'nichrome wire loop flame test ions',
+  props:{},
+  anchors:[{id:'tip',kind:'probe',x:13,y:146}],
+  draw:() => <>
+    {Pf('M6,6 L20,6 L20,52 L6,52 Z', '#e4e4e7')}
+    {P('M13,52 L13,132', { stroke:METAL })}
+    <circle cx={13} cy={139} r={7} fill="none" stroke={METAL} strokeWidth={SW} />
+  </>
+});
+
+D('rod', {
+  name:'Stirring rod', cat:'extra', w:16, h:160, tags:'glass rod stirrer stir',
+  props:{},
+  anchors:[],
+  draw:() => P('M8,6 L8,154')
+});
+
+D('pipette', {
+  name:'Dropping pipette', cat:'extra', w:28, h:120, tags:'pipette dropper indicator add drops',
+  props:{},
+  anchors:[{id:'tip',kind:'drip',x:14,y:116}],
+  draw:() => <>
+    {Pf('M6,6 Q14,-2 22,6 L22,30 L6,30 Z', '#d4d4d8')}
+    {P('M10,30 L10,96 L13,116')}
+    {P('M18,30 L18,96 L15,116')}
+  </>
+});
+
+D('clip', {
+  name:'Paper clip / holder', cat:'extra', w:52, h:32, tags:'clip holder chromatography paper suspend',
+  props:{},
+  anchors:[{id:'jaw',kind:'grip',x:26,y:16}],
+  draw:() => <>
+    {Pf('M6,8 L46,8 L46,24 L6,24 Z', '#e4e4e7')}
+    {L(16,8,16,24,{ strokeWidth:1.4 })}{L(36,8,36,24,{ strokeWidth:1.4 })}
+  </>
+});
+
+D('tile', {
+  name:'White tile', cat:'extra', w:160, h:110, tags:'white tile titration end point colour change',
+  props:{},
+  anchors:[{id:'top',kind:'surface',x:80,y:8}],
+  draw:() => <>
+    {Pf('M6,8 L154,8 L154,102 L6,102 Z', '#ffffff')}
+    {Pf('M6,8 L154,8 L154,16 L6,16 Z', '#f4f4f5')}
+  </>
+});
+
+D('crosstile', {
+  name:'Paper with cross', cat:'extra', w:130, h:130, tags:'cross x paper disappearing rate sodium thiosulfate turbidity',
+  props:{},
+  anchors:[{id:'top',kind:'surface',x:65,y:8}],
+  draw:() => <>
+    {Pf('M6,6 L124,6 L124,124 L6,124 Z', '#ffffff')}
+    {L(30,30,100,100,{ strokeWidth:7 })}
+    {L(100,30,30,100,{ strokeWidth:7 })}
+  </>
+});
+
+D('chroma', {
+  name:'Chromatography paper', cat:'extra', w:76, h:212,
+  tags:'chromatography paper rf pencil baseline solvent front spots ink dye',
+  props:{ run:0.6, spots:3, colours:'#dc2626,#16a34a,#2563eb' },
+  schema:['run','spots','colours'],
+  anchors:[{id:'hang',kind:'grip',x:38,y:8}],
+  draw:(p) => {
+    const run  = clamp01(p.run === undefined ? 0.6 : p.run);
+    const n    = Math.max(1, Math.min(4, (p.spots|0) || 3));
+    const cols = String(p.colours || '#dc2626,#16a34a,#2563eb').split(',').map(s => s.trim());
+    const baseY = 182, frontY = baseY - 150 * run;
+    const dots = [];
+    for(let i=0;i<n;i++){
+      const cx = 38 + (n === 1 ? 0 : (i - (n-1)/2) * (44/Math.max(1,n-1)));
+      const c  = cols[i % cols.length] || '#334155';
+      dots.push(<ellipse key={'s'+i} cx={cx} cy={baseY} rx={5.5} ry={4} fill={c} opacity={run>0?0.35:1} />);
+      if(run > 0.05){
+        const rise = 0.35 + 0.55 * ((i + 1) / n);
+        dots.push(<ellipse key={'m'+i} cx={cx} cy={baseY - (baseY - frontY) * rise} rx={6} ry={5} fill={c} />);
+      }
+    }
+    return <>
+      {Pf('M12,6 L64,6 L64,206 L12,206 Z', '#fffdf7')}
+      {L(12,baseY,64,baseY,{ strokeWidth:1.3, strokeDasharray:'5 4', opacity:0.85 })}
+      {run > 0.05 && L(12,frontY,64,frontY,{ strokeWidth:1.2, stroke:'#0ea5e9', opacity:0.8 })}
+      {dots}
+    </>;
+  }
+});
+
+/* ── 4f. Physics apparatus ─────────────────────────────────────────────── */
+
+D('rippletank', {
+  name:'Ripple tank', cat:'extra', w:300, h:130, tags:'ripple tank waves water wavelength frequency physics',
+  props:{ liquid:0.42, fill:'#bfdbfe', opacity:1 },
+  schema:['liquid','fill','opacity'],
+  lz:[14,72],
+  anchors:[{id:'base',kind:'surface',x:150,y:126}],
+  interior:() => <path d="M13,14 L13,70 L287,70 L287,14 Z" />,
+  draw:() => <>
+    {P('M10,12 L10,72 L290,72 L290,12')}
+    {P('M4,12 L296,12')}
+    {P('M40,72 L34,126')}{P('M260,72 L266,126')}
+    {P('M20,126 L48,126')}{P('M252,126 L280,126')}
+  </>
+});
+
+D('vibrator', {
+  name:'Vibrating bar and motor', cat:'extra', w:250, h:56, tags:'vibrating bar dipper motor ripple tank waves straight',
+  props:{},
+  anchors:[{id:'bar',kind:'surface',x:125,y:48}],
+  draw:() => <>
+    {Pf('M96,6 L154,6 L154,34 L96,34 Z', '#e4e4e7')}
+    {T(125,20,'M',15,{ fontWeight:700 })}
+    {Pf('M14,38 L236,38 L236,50 L14,50 Z', '#d4d4d8')}
+    {L(125,34,125,38)}
+  </>
+});
+
+D('lightsource', {
+  name:'Lamp on stand', cat:'extra', w:84, h:104, tags:'lamp light source ray box shadow ripple tank',
+  props:{},
+  anchors:[{id:'base',kind:'surface',x:42,y:100}],
+  draw:() => <>
+    {Pf('M20,10 Q42,-2 64,10 L58,38 L26,38 Z', '#fef3c7')}
+    {P('M42,38 L42,88')}
+    {P('M18,96 L66,96')}
+    {P('M42,88 Q42,96 30,96')}{P('M42,88 Q42,96 54,96')}
+  </>
+});
+
+D('screen', {
+  name:'Shadow screen', cat:'extra', w:310, h:86, tags:'screen shadow white paper ripple tank projection',
+  props:{},
+  anchors:[{id:'top',kind:'surface',x:155,y:10}],
+  draw:() => <>
+    {Pf('M40,8 L304,8 L268,78 L6,78 Z', '#ffffff')}
+  </>
+});
+
+D('wavelines', {
+  name:'Wave crests', cat:'extra', w:250, h:70, tags:'waves crests wavefronts wavelength shadow pattern ripple',
+  props:{ n:7, curved:false },
+  schema:['n','curved'],
+  anchors:[],
+  draw:(p) => {
+    const n = Math.max(2, Math.min(14, (p.n|0) || 7));
+    const out = [];
+    for(let i=0;i<n;i++){
+      const x = 14 + i * (222/(n-1));
+      out.push(p.curved
+        ? <path key={'w'+i} d={`M${x},8 Q${x+16},35 ${x},62`} fill="none" stroke={INK} strokeWidth={2.4} opacity={0.8} />
+        : <line key={'w'+i} x1={x} y1={8} x2={x} y2={62} stroke={INK} strokeWidth={2.4} opacity={0.8} />);
+    }
+    return <>{out}</>;
+  }
+});
+
+D('block', {
+  name:'Solid block', cat:'extra', w:76, h:60, tags:'solid block object density irregular mass sample',
+  props:{},
+  anchors:[{id:'top',kind:'grip',x:38,y:8},{id:'base',kind:'surface',x:38,y:54}],
+  draw:() => <>
+    {Pf('M10,20 L30,8 L68,14 L64,48 L28,56 L8,44 Z', '#d4d4d8')}
+    {P('M10,20 L28,26 L64,14', { strokeWidth:1.4, opacity:0.6 })}
+    {P('M28,26 L28,56', { strokeWidth:1.4, opacity:0.6 })}
+  </>
+});
+
+D('node', {
+  name:'Junction dot', cat:'extra', w:16, h:16, tags:'junction node dot circuit connection',
+  props:{},
+  anchors:[{id:'c',kind:'terminal',x:8,y:8}],
+  draw:() => <circle cx={8} cy={8} r={4.6} fill={INK} />
+});
+
+/* ── 4g. Linear pieces: tubing, wires, leaders ─────────────────────────── */
+/* A linear item has no rotation handle. Leaders and rules are a simple bow
+   between two ends. Tubing and wire are `route` items, which is a different
+   thing: a real path of nodes, each carrying a tangent handle you swing about
+   the node to shape the bend, with the end nodes clipped onto apparatus ports.
+                                                                              */
+
+function bowPath(x2, y2, bend){
+  const mx = x2/2, my = y2/2;
+  const len = Math.hypot(x2, y2) || 1;
+  const nx = -y2/len, ny = x2/len;
+  return `M0,0 Q${mx + nx*bend*2},${my + ny*bend*2} ${x2},${y2}`;
+}
+
+/* ── Routed paths ──────────────────────────────────────────────────────────
+   A node is [x, y, hx, hy]: a point, and the handle that leaves it. The
+   handle arriving at a node is that same handle mirrored, so a node is always
+   smooth and one handle is all the user has to grab — which is what the
+   diamond hanging off each end of a selected tube is.
+
+   `pts` holds the nodes. A tube that has never been shaped by hand has no
+   `pts`, and its nodes are derived from the old two-point bow instead. That
+   conversion is exact — a quadratic is the cubic with its controls two thirds
+   of the way to the quadratic's own — so every template drawn before handles
+   existed still renders to the same pixels.                                  */
+
+function nodesOf(p){
+  if(Array.isArray(p.pts) && p.pts.length >= 2)
+    return p.pts.map(q => [+q[0] || 0, +q[1] || 0, +q[2] || 0, +q[3] || 0]);
+  const x2 = p.x2 || 0, y2 = p.y2 || 0, bend = p.bend || 0;
+  const len = Math.hypot(x2, y2) || 1;
+  const cx = x2/2 + (-y2/len) * bend * 2;
+  const cy = y2/2 + ( x2/len) * bend * 2;
+  return [[0, 0, cx*2/3, cy*2/3], [x2, y2, (x2 - cx)*2/3, (y2 - cy)*2/3]];
+}
+
+/* Keep x2/y2 in step with the last node, so the end anchors, the two-point
+   form and anything else that reads them stay correct. */
+function nodePatch(nodes){
+  const r  = v => Math.round(v * 10) / 10;
+  const pts = nodes.map(n => [r(n[0]), r(n[1]), r(n[2]), r(n[3])]);
+  const last = pts[pts.length - 1];
+  return { pts, x2: last[0], y2: last[1] };
+}
+
+function nodePath(n){
+  if(n.length < 2) return 'M0,0';
+  let d = `M${n[0][0]},${n[0][1]}`;
+  for(let i = 0; i < n.length - 1; i++){
+    const a = n[i], b = n[i+1];
+    d += ` C${a[0] + a[2]},${a[1] + a[3]} ${b[0] - b[2]},${b[1] - b[3]} ${b[0]},${b[1]}`;
+  }
+  return d;
+}
+
+/* Sampled rather than taken from the control hull: a handle can stand well
+   clear of the curve it shapes, and the export crops to these bounds. */
+function nodeBounds(n){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const eat = (x, y) => { x0 = Math.min(x0,x); y0 = Math.min(y0,y); x1 = Math.max(x1,x); y1 = Math.max(y1,y); };
+  for(let i = 0; i < n.length - 1; i++){
+    const a = n[i], b = n[i+1];
+    const px = [a[0], a[0]+a[2], b[0]-b[2], b[0]], py = [a[1], a[1]+a[3], b[1]-b[3], b[1]];
+    for(let t = 0; t <= 1.0001; t += 1/14){
+      const u = 1 - t;
+      eat(u*u*u*px[0] + 3*u*u*t*px[1] + 3*u*t*t*px[2] + t*t*t*px[3],
+          u*u*u*py[0] + 3*u*u*t*py[1] + 3*u*t*t*py[2] + t*t*t*py[3]);
+    }
+  }
+  if(!isFinite(x0)) return { x:0, y:0, w:0, h:0 };
+  return { x:x0, y:y0, w:x1-x0, h:y1-y0 };
+}
+
+/* The curve as it was before handles: a symmetric bow across the chord.
+   The Curve slider writes this, so it stays a one-move coarse control. */
+function bowNodes(n, bend){
+  const a = n[0], b = n[n.length - 1];
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const cx = a[0] + dx/2 + (-dy/len) * bend * 2;
+  const cy = a[1] + dy/2 + ( dx/len) * bend * 2;
+  return [[a[0], a[1], (cx - a[0])*2/3, (cy - a[1])*2/3],
+          [b[0], b[1], (b[0] - cx)*2/3, (b[1] - cy)*2/3]];
+}
+
+/* `endMates` is the list of anchor kinds an end node will clip onto. It is
+   deliberately separate from MATES, which governs whole-item snapping: a tube
+   end should latch to a flask mouth, but a bung being dragged should not. */
+const routeAnchors = (kind) => (p) => {
+  const n = nodesOf(p), last = n[n.length - 1];
+  return [{ id:'a', kind:kind, x:0, y:0 }, { id:'b', kind:kind, x:last[0], y:last[1] }];
+};
+
+D('deliverytube', {
+  name:'Delivery tube', cat:'extra', linear:true, route:true, w:160, h:60,
+  tags:'delivery tube rubber tubing gas connect bung syringe bend',
+  props:{ x2:150, y2:60, bend:26, pts:null, bind:null },
+  schema:[],
+  endMates:['tube','port','mouth','neck','drip'],
+  anchors: routeAnchors('tube'),
+  draw:(p) => {
+    const d = nodePath(nodesOf(p));
+    return <>
+      <path d={d} fill="none" stroke={INK} strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#a1a1aa" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round" />
+    </>;
+  }
+});
+
+D('glasstube', {
+  name:'Glass delivery tube', cat:'extra', linear:true, route:true, w:150, h:70,
+  tags:'glass delivery tube bent right angle gas',
+  props:{ x2:140, y2:70, bend:0, pts:null, bind:null },
+  schema:[],
+  endMates:['tube','port','mouth','neck','drip'],
+  anchors: routeAnchors('tube'),
+  draw:(p) => {
+    const d = nodePath(nodesOf(p));
+    return <>
+      <path d={d} fill="none" stroke={INK} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke="#ffffff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+    </>;
+  }
+});
+
+D('wire', {
+  name:'Connecting wire', cat:'extra', linear:true, route:true, w:140, h:40,
+  tags:'wire lead connect circuit crocodile',
+  props:{ x2:140, y2:0, bend:0, colour:'#1f2937', pts:null, bind:null },
+  schema:['colour'],
+  endMates:['terminal'],
+  anchors: routeAnchors('terminal'),
+  draw:(p) => <path d={nodePath(nodesOf(p))} fill="none"
+    stroke={p.colour || INK} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+});
+
+D('arrow', {
+  name:'Label arrow', cat:'extra', linear:true, w:120, h:40,
+  tags:'arrow leader pointer annotate label',
+  props:{ x2:110, y2:-40, bend:0 },
+  schema:['bend'],
+  anchors:(p) => [{id:'a',kind:'free',x:0,y:0},{id:'b',kind:'free',x:p.x2,y:p.y2}],
+  draw:(p) => {
+    const ang = Math.atan2(p.y2 - (p.bend||0)*0.2, p.x2) * 180/Math.PI;
+    return <>
+      <path d={bowPath(p.x2, p.y2, p.bend || 0)} fill="none" stroke={INK} strokeWidth={2} strokeLinecap="round" />
+      <g transform={`translate(${p.x2} ${p.y2}) rotate(${ang})`}>
+        <path d="M0,0 L-12,-5 L-12,5 Z" fill={INK} />
+      </g>
+    </>;
+  }
+});
+
+D('rule', {
+  name:'Plain line', cat:'extra', linear:true, w:120, h:20,
+  tags:'line rule divider bench level',
+  props:{ x2:160, y2:0, bend:0, dash:false },
+  schema:['bend','dash'],
+  anchors:(p) => [{id:'a',kind:'free',x:0,y:0},{id:'b',kind:'free',x:p.x2,y:p.y2}],
+  draw:(p) => <path d={bowPath(p.x2, p.y2, p.bend || 0)} fill="none" stroke={INK}
+    strokeWidth={2} strokeLinecap="round" strokeDasharray={p.dash ? '7 6' : undefined} />
+});
+
+/* ── 4h. Text label ────────────────────────────────────────────────────── */
+/* The label is the one item whose box depends on its content, so it supplies
+   its own `box`. Chemical auto-formatting runs at draw time, which keeps the
+   raw text editable: the inspector still shows CuSO4, the canvas shows CuSO₄. */
+
+D('label', {
+  name:'Text label', cat:'extra', w:120, h:24,
+  tags:'label text caption annotate name formula',
+  props:{ text:'CuSO4(aq)', size:17, chem:true, bold:false, boxed:false, align:'middle' },
+  schema:['text','size','chem','bold','boxed'],
+  anchors:[],
+  box:(p) => {
+    const lines = String(p.text || ' ').split('\n');
+    const wide  = lines.reduce((m, l) => Math.max(m, l.length), 1);
+    const size  = p.size || 17;
+    return { x:0, y:0, w: Math.max(28, wide * size * 0.55 + 14), h: lines.length * size * 1.32 + 10 };
+  },
+  draw:(p) => {
+    const lines = String(p.text === undefined ? '' : p.text).split('\n');
+    const size  = p.size || 17;
+    const b     = DEF.label.box(p);
+    return <>
+      {p.boxed && <rect x={1} y={1} width={b.w-2} height={b.h-2} rx={5}
+        fill="#ffffff" stroke={INK} strokeWidth={1.6} />}
+      {lines.map((ln, i) => (
+        <text key={i} x={b.w/2} y={9 + size*0.72 + i*size*1.32} fontSize={size} fill={INK}
+          textAnchor="middle" fontWeight={p.bold ? 700 : 400}>
+          {p.chem === false ? ln : chemFormat(ln)}
+        </text>
+      ))}
+    </>;
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5.  GEOMETRY
+   An item is placed by the top-left of its local box, then scaled, then
+   rotated about the box centre. Everything else — anchors, selection
+   outlines, export bounds — is derived from that one transform.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+let SEQ = 0;
+const uid = () => 'i' + (++SEQ) + Math.random().toString(36).slice(2,6);
+
+function mkItem(type, x, y, over, rot, s){
+  const d = DEF[type];
+  return {
+    id: uid(), type,
+    x: Math.round(x), y: Math.round(y),
+    rot: rot || 0, s: s === undefined ? 1 : s,
+    props: Object.assign({}, d.props, over || {})
+  };
+}
+const I = mkItem;   // short alias, used heavily by the practical templates
+
+function propsOf(it){ return Object.assign({}, DEF[it.type].props, it.props); }
+
+function boxOf(it){
+  const d = DEF[it.type], p = propsOf(it);
+  if(d.route){
+    const b = nodeBounds(nodesOf(p)), pad = 9;
+    return { x: b.x - pad, y: b.y - pad, w: b.w + pad*2, h: b.h + pad*2 };
+  }
+  if(d.linear){
+    const x2 = p.x2 || 0, y2 = p.y2 || 0, bend = p.bend || 0;
+    const pad = 10 + Math.abs(bend);
+    return { x: Math.min(0, x2) - pad, y: Math.min(0, y2) - pad,
+             w: Math.abs(x2) + pad*2, h: Math.abs(y2) + pad*2 };
+  }
+  if(d.box) return d.box(p);
+  return { x:0, y:0, w:d.w, h:d.h };
+}
+
+function centreOf(it){ const b = boxOf(it); return { x: b.x + b.w/2, y: b.y + b.h/2 }; }
+
+function transformOf(it){
+  const c = centreOf(it);
+  return `translate(${it.x} ${it.y}) scale(${it.s}) rotate(${it.rot} ${c.x} ${c.y})`;
+}
+
+/* Local point to world point, matching that transform exactly. */
+function toWorld(it, px, py){
+  const c = centreOf(it), r = (it.rot||0) * Math.PI/180, s = it.s === undefined ? 1 : it.s;
+  const dx = px - c.x, dy = py - c.y;
+  const rx = dx*Math.cos(r) - dy*Math.sin(r);
+  const ry = dx*Math.sin(r) + dy*Math.cos(r);
+  return { x: it.x + s*(c.x + rx), y: it.y + s*(c.y + ry) };
+}
+
+function cornersOf(it){
+  const b = boxOf(it);
+  return [[b.x,b.y],[b.x+b.w,b.y],[b.x+b.w,b.y+b.h],[b.x,b.y+b.h]].map(([px,py]) => toWorld(it,px,py));
+}
+
+function worldBounds(items){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  items.forEach(it => cornersOf(it).forEach(c => {
+    x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y);
+    x1 = Math.max(x1, c.x); y1 = Math.max(y1, c.y);
+  }));
+  if(!isFinite(x0)) return { x:0, y:0, w:0, h:0 };
+  return { x:x0, y:y0, w:x1-x0, h:y1-y0 };
+}
+
+function anchorsOf(it){
+  const d = DEF[it.type], p = propsOf(it);
+  const list = typeof d.anchors === 'function' ? d.anchors(p) : (d.anchors || []);
+  return list.map(a => Object.assign({}, a, toWorld(it, a.x, a.y), { item: it.id }));
+}
+
+/* Which anchor kinds mate with which. A bung seats in a neck, a clamp grips a
+   burette, a tube plugs into a bung, a wire clips to a terminal.             */
+const MATES = {
+  neck:['neck'], mouth:['neck','port'], port:['probe','stem','port'],
+  tube:['tube'], terminal:['terminal'], grip:['grip'],
+  post:['post'], tripodtop:['tripodtop'], surface:['surface'],
+  probe:['port'], drip:['mouth','neck'], heat:['surface','tripodtop'], free:[]
+};
+function mates(a, b){ return (MATES[a] || []).indexOf(b) >= 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5b.  CONNECTIONS
+   An end node that has been dropped on a port stores which item and which
+   anchor it took, and `reconnect` puts it back there after anything moves.
+   That is the difference between a connection and two things that merely
+   finish up near each other: move the flask and the tube goes with it.
+   ══════════════════════════════════════════════════════════════════════════ */
+const PORT_R = 30;              // how close an end has to be to clip on
+
+function anchorPos(it, id){
+  const list = anchorsOf(it);
+  for(let i = 0; i < list.length; i++) if(list[i].id === id) return list[i];
+  return null;
+}
+
+/* The nearest port an end of `selfId` could take. Route items are skipped:
+   a tube clipping to another tube's end could bind the two in a ring, and
+   then neither of them has anywhere to be resolved from. */
+function nearestPort(pt, kinds, items, selfId){
+  if(!kinds) return null;
+  let best = null;
+  items.forEach(it => {
+    if(it.id === selfId) return;
+    const d = DEF[it.type];
+    if(!d || d.route) return;
+    anchorsOf(it).forEach(a => {
+      if(kinds.indexOf(a.kind) < 0) return;
+      const dist = Math.hypot(a.x - pt.x, a.y - pt.y);
+      if(dist < PORT_R && (!best || dist < best.dist))
+        best = { dist, x:a.x, y:a.y, id:a.id, item:it.id, kind:a.kind };
+    });
+  });
+  return best;
+}
+
+/* ── Mounting ───────────────────────────────────────────────────────────────
+   The same idea one level up: a bung dropped into a neck, a clamp clipped to
+   a stand, gauze seated on a tripod — the piece records the host it took and
+   which pair of anchors met, and `remount` keeps that pair coincident. Move
+   the stand and the clamp goes with it; move the flask and its bung goes too,
+   which in turn drags the tube clipped into the bung.
+
+   `surface` is in, so a beaker stands on its gauze and travels with the
+   tripod, but only when the host's anchor is something to stand *on*: two
+   pieces whose 'base' anchors happen to meet are both just on the bench, and
+   mounting one to the other would be nonsense. `heat` is out for the same
+   reason — a Bunsen under a tripod is beside it, not part of it. */
+const MOUNT_KINDS = { neck:1, port:1, post:1, grip:1, tripodtop:1, probe:1, mouth:1, drip:1, surface:1 };
+
+/* A mount has a direction, and `mates` on its own does not give one: neck
+   meets neck, post meets post, so without this every pair would mount both
+   ways round and a stand would end up hanging off its own clamp. An anchor is
+   a plug or a socket, by its name. Plugs go into sockets, never the reverse:
+   a bung's seat, a clamp's boss, a burette's grip and anything's base are
+   plugs; a flask's neck, a stand's post, a clamp's jaw, a mat's top and a
+   balance's pan are sockets. */
+const PLUG_IDS = { base:1, seat:1, boss:1, grip:1, grip2:1, hang:1, stem:1, tip:1, spout:1, bulb:1 };
+const isPlug = (a) => !!PLUG_IDS[a.id];
+function mountable(mine, host){
+  return !!MOUNT_KINDS[mine.kind] && isPlug(mine) && !isPlug(host);
+}
+
+/* Anchors as declared, before they are placed in the world. */
+function localAnchors(it){
+  const d = DEF[it.type], p = propsOf(it);
+  return typeof d.anchors === 'function' ? d.anchors(p) : (d.anchors || []);
+}
+
+/* Resolved depth first, so a burette on a clamp on a stand all arrives in the
+   right place in one pass. A mount that would close a loop is simply not
+   followed. */
+function remount(list){
+  const by = {}; list.forEach(i => { by[i.id] = i; });
+  const done = {}, state = {};
+  let touched = false;
+  function resolve(it){
+    if(state[it.id] === 2) return done[it.id];
+    if(state[it.id] === 1) return it;            // a loop: leave this one where it is
+    state[it.id] = 1;
+    const m = (it.props || {}).mount;
+    let res = it;
+    if(m){
+      const hostRaw = by[m.host];
+      if(!hostRaw || m.host === it.id){
+        res = Object.assign({}, it, { props: Object.assign({}, it.props, { mount:null }) });
+      } else {
+        const host = resolve(hostRaw);
+        const ha = anchorPos(host, m.at);
+        const mine = localAnchors(it).filter(a => a.id === m.my)[0];
+        if(!ha || !mine){
+          res = Object.assign({}, it, { props: Object.assign({}, it.props, { mount:null }) });
+        } else {
+          const w  = toWorld(it, mine.x, mine.y);
+          const dx = ha.x - w.x, dy = ha.y - w.y;
+          if(Math.abs(dx) > 0.02 || Math.abs(dy) > 0.02)
+            res = Object.assign({}, it, { x: Math.round(it.x + dx), y: Math.round(it.y + dy) });
+        }
+      }
+    }
+    if(res !== it) touched = true;
+    state[it.id] = 2; done[it.id] = res;
+    return res;
+  }
+  const out = list.map(resolve);
+  return touched ? out : list;
+}
+
+/* A piece left sitting with one of its anchors on a mating anchor takes it.
+   Snapping during the drag has already made them coincide exactly, so the
+   tolerance here only has to forgive the rounding. */
+function autoMount(list, ids, tol){
+  const r = tol === undefined ? 3 : tol;
+  let touched = false;
+  const out = list.map(it => {
+    if(ids && ids.indexOf(it.id) < 0) return it;
+    if((it.props || {}).mount) return it;
+    if(DEF[it.type].route) return it;
+    const mineAll = anchorsOf(it);
+    let best = null;
+    mineAll.forEach(mine => {
+      list.forEach(other => {
+        if(other.id === it.id || DEF[other.type].route) return;
+        anchorsOf(other).forEach(ha => {
+          if(!mates(mine.kind, ha.kind) || !mountable(mine, ha)) return;
+          const dist = Math.hypot(mine.x - ha.x, mine.y - ha.y);
+          if(dist <= r && (!best || dist < best.dist))
+            best = { dist, host: other.id, my: mine.id, at: ha.id };
+        });
+      });
+    });
+    if(!best) return it;
+    touched = true;
+    return Object.assign({}, it, { props: Object.assign({}, it.props,
+      { mount: { host: best.host, my: best.my, at: best.at } }) });
+  });
+  return touched ? out : list;
+}
+
+/* Apparatus settles first, then the tube ends that hang off it. */
+function resolveAll(list){ return reconnect(remount(list)); }
+
+function reconnect(list){
+  const by = {};
+  list.forEach(i => { by[i.id] = i; });
+  let touched = false;
+  const out = list.map(it => {
+    const d = DEF[it.type];
+    if(!d || !d.route) return it;
+    const p = propsOf(it);
+    const bind = p.bind || {};
+    if(!bind.a && !bind.b) return it;
+    let a = bind.a && by[bind.a.id] ? bind.a : null;
+    let b = bind.b && by[bind.b.id] ? bind.b : null;
+    const world = nodesOf(p).map(n => [it.x + n[0], it.y + n[1], n[2], n[3]]);
+    if(a){ const w = anchorPos(by[a.id], a.anchor); if(w){ world[0][0] = w.x; world[0][1] = w.y; } else a = null; }
+    if(b){ const w = anchorPos(by[b.id], b.anchor);
+           if(w){ world[world.length-1][0] = w.x; world[world.length-1][1] = w.y; } else b = null; }
+    const ox = Math.round(world[0][0]), oy = Math.round(world[0][1]);
+    const np = Object.assign({}, it.props,
+      nodePatch(world.map(n => [n[0] - ox, n[1] - oy, n[2], n[3]])),
+      { bind: (a || b) ? { a, b } : null });
+    if(it.x === ox && it.y === oy &&
+       JSON.stringify(it.props.pts) === JSON.stringify(np.pts) &&
+       (it.props.bind ? it.props.bind.a : null) === a &&
+       (it.props.bind ? it.props.bind.b : null) === b) return it;
+    touched = true;
+    return Object.assign({}, it, { x: ox, y: oy, props: np });
+  });
+  return touched ? out : list;
+}
+
+/* Ends that were dropped exactly on a port take that port. This is what runs
+   after a whole tube is dragged into place, and on loading a template, so a
+   template arrives already wired up rather than merely looking wired up. */
+function autoBind(list, ids, tol){
+  const r = tol === undefined ? 6 : tol;
+  let touched = false;
+  const out = list.map(it => {
+    const d = DEF[it.type];
+    if(!d || !d.route) return it;
+    if(ids && ids.indexOf(it.id) < 0) return it;
+    const p = propsOf(it), n = nodesOf(p);
+    const bind = Object.assign({}, p.bind || {});
+    let changed = false;
+    [['a', 0], ['b', n.length - 1]].forEach(([which, i]) => {
+      if(bind[which]) return;
+      const hit = nearestPort({ x: it.x + n[i][0], y: it.y + n[i][1] }, d.endMates, list, it.id);
+      if(hit && hit.dist <= r){ bind[which] = { id: hit.item, anchor: hit.id }; changed = true; }
+    });
+    if(!changed) return it;
+    touched = true;
+    return Object.assign({}, it, { props: Object.assign({}, it.props, { bind }) });
+  });
+  return touched ? out : list;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6.  THE REQUIRED PRACTICAL TEMPLATES
+   Each one is a plain list of placed items, arranged on a bench line at
+   y = 700 so that apparatus loaded from different templates onto the same
+   canvas still stands on the same bench. Nothing here is special-cased in the
+   engine: a template is exactly what a teacher could have dragged out by hand,
+   which is what makes every part of it editable afterwards.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const BENCH = 700;
+
+/* Centre a text label on a point rather than placing it by its corner. */
+function LB(text, cx, cy, over){
+  const p = Object.assign({}, DEF.label.props, { text, size:15 }, over || {});
+  const b = DEF.label.box(p);
+  return mkItem('label', cx - b.w/2, cy - b.h/2, p);
+}
+const TITLE = (text, cx, cy) => LB(text, cx, cy, { size:19, bold:true });
+
+const PRESETS = [
+{
+  id:'rp-salts', code:'Chem RP1', subject:'Chemistry',
+  title:'Making a soluble salt',
+  blurb:'Warm the acid, filter off the excess insoluble base, then evaporate to the point of crystallisation.',
+  build:() => [
+    /* 1 — warming the acid over a Bunsen */
+    I('mat', 110, 694), I('bunsen', 162, 494, { flame:'safety' }),
+    I('tripod', 125, 532), I('gauze', 144, 530),
+    I('beaker', 150, 409, { liquid:0.5, fill:'#dbeafe' }),
+    TITLE('1  warm the acid', 210, 772),
+    LB('excess insoluble base\n(copper(II) oxide)', 210, 372),
+    /* 2 — filtering off the excess solid */
+    I('conical', 495, 549, { liquid:0.3, fill:'#2563eb' }),
+    I('funnel', 508, 443, { paper:true }),
+    TITLE('2  filter off the excess', 560, 772),
+    LB('filter paper keeps\nthe residue', 690, 470),
+    LB('filtrate: CuSO4(aq)', 560, 726),
+    /* 3 — evaporating to the crystallisation point */
+    I('mat', 840, 694), I('bunsen', 892, 494, { flame:'safety' }),
+    I('tripod', 855, 532), I('gauze', 874, 530),
+    I('basin', 878, 481, { liquid:0.55, fill:'#2563eb' }),
+    TITLE('3  evaporate, then crystallise', 940, 772),
+    LB('evaporating basin — heat until\ncrystals start to appear at the edge', 940, 380)
+  ]
+},
+{
+  id:'rp-titration', code:'Chem RP2', subject:'Chemistry',
+  title:'Neutralisation and titration',
+  blurb:'Burette clamped over a conical flask on a white tile, with the indicator colour set from the inspector.',
+  build:() => [
+    I('stand', 586, 290), I('clamp', 618, 325),
+    I('burette', 737, 100, { liquid:0.6, fill:'#dbeafe' }),
+    I('tile', 680, 598),
+    I('conical', 695, 455, { liquid:0.3, fill:'#ec4899' }),
+    LB('burette\n0.100 mol/dm3 NaOH(aq)', 940, 200),
+    I('arrow', 930, 230, { x2:-140, y2:40 }),
+    LB('25.0 cm3 of acid, run in\nfrom a pipette, plus indicator', 980, 470),
+    I('arrow', 845, 482, { x2:-60, y2:25 }),
+    LB('white tile — the end point is\neasier to see against it', 980, 640),
+    I('arrow', 880, 640, { x2:-110, y2:-10 }),
+    TITLE('Titration', 760, 790)
+  ]
+},
+{
+  id:'rp-electrolysis', code:'Chem RP3', subject:'Chemistry',
+  title:'Electrolysis of a solution',
+  blurb:'Two inert carbon electrodes in the electrolyte, wired to a d.c. supply, with the gases collected in inverted tubes.',
+  build:() => [
+    I('psu', 545, 120, { reading:'6.0 V' }),
+    I('wire', 597, 220, { x2:3, y2:304 }),
+    I('wire', 683, 220, { x2:-3, y2:304 }),
+    I('beaker', 544, 498, { liquid:0.72, fill:'#dbeafe', grads:false }, 0, 1.6),
+    I('testtube', 582, 544, { liquid:0.15, fill:'#dbeafe' }, 180),
+    I('testtube', 662, 544, { liquid:0.3,  fill:'#dbeafe' }, 180),
+    I('electrode', 590, 520), I('electrode', 670, 520),
+    LB('d.c. power supply', 640, 90),
+    LB('positive electrode\n(anode) — oxygen', 400, 470),
+    I('arrow', 470, 480, { x2:118, y2:60 }),
+    LB('negative electrode\n(cathode) — hydrogen', 900, 470),
+    I('arrow', 830, 480, { x2:-140, y2:70 }),
+    LB('inert carbon (graphite) electrodes', 640, 745),
+    LB('dilute H2SO4(aq)', 850, 620),
+    I('arrow', 790, 620, { x2:-70, y2:0 }),
+    TITLE('Electrolysis', 300, 200)
+  ]
+},
+{
+  id:'rp-enthalpy', code:'Chem RP4', subject:'Chemistry',
+  title:'Temperature changes',
+  blurb:'Polystyrene cup inside a glass beaker, lid on, thermometer and stirrer through the hole.',
+  build:() => [
+    I('beaker', 425, 542, { liquid:0, grads:false }, 0, 1.25),
+    I('cup', 448, 586, { liquid:0.6, fill:'#dbeafe' }),
+    I('cuplid', 445, 582),
+    I('rod', 530, 520, {}, 10),
+    I('thermometer', 488, 496, { level:0.4 }),
+    LB('lid cuts the heat lost\nto the air', 760, 470),
+    I('arrow', 690, 490, { x2:-130, y2:100 }),
+    LB('polystyrene cup —\na poor conductor', 760, 620),
+    I('arrow', 680, 630, { x2:-130, y2:10 }),
+    LB('glass beaker adds\na second layer of insulation', 200, 620),
+    I('arrow', 300, 615, { x2:120, y2:15 }),
+    LB('25 cm3 of acid; the alkali is added\n5 cm3 at a time from a measuring cylinder', 500, 780),
+    TITLE('Energy changes', 500, 330)
+  ]
+},
+{
+  id:'rp-rates-cross', code:'Chem RP5a', subject:'Chemistry',
+  title:'Rates: the disappearing cross',
+  blurb:'Conical flask standing on a printed cross — time how long the cross takes to vanish.',
+  build:() => [
+    I('crosstile', 235, 576),
+    I('conical', 235, 433, { liquid:0.4, fill:'#dbe3ea', opacity:0.92 }),
+    I('stopwatch', 430, 604, { reading:'0:42' }),
+    LB('look down through the flask', 300, 330),
+    I('arrow', 300, 350, { x2:0, y2:70 }),
+    LB('sodium thiosulfate solution\n+ dilute hydrochloric acid', 560, 430),
+    I('arrow', 470, 450, { x2:-90, y2:30 }),
+    LB('paper cross under the flask', 300, 745),
+    LB('start the clock as the acid goes in;\nstop it when the cross disappears', 620, 560),
+    TITLE('Rates of reaction — turbidity', 400, 250)
+  ]
+},
+{
+  id:'rp-rates-syringe', code:'Chem RP5b', subject:'Chemistry',
+  title:'Rates: gas volume by syringe',
+  blurb:'Bunged conical flask with a delivery tube to a clamped gas syringe.',
+  build:() => [
+    I('stand', 1086, 290), I('clamp', 986, 465, {}, 180),
+    I('conical', 695, 549, { liquid:0.35, fill:'#dbeafe' }),
+    I('bung', 732, 526, { holes:1 }),
+    I('deliverytube', 760, 530, { x2:196, y2:-60, bend:-30 }),
+    I('gassyringe', 956, 437, { plunger:0.45 }),
+    I('stopwatch', 560, 604, { reading:'0:30' }),
+    LB('gas syringe — read the volume\nevery 10 seconds', 950, 320),
+    I('arrow', 1000, 350, { x2:0, y2:70 }),
+    LB('marble chips in\ndilute hydrochloric acid', 640, 400),
+    I('arrow', 660, 430, { x2:70, y2:110 }),
+    LB('the bung must go in as the\nstopwatch starts, or gas is lost', 700, 780),
+    TITLE('Rates of reaction — gas volume', 700, 220)
+  ]
+},
+{
+  id:'rp-rates-water', code:'Chem RP5c', subject:'Chemistry',
+  title:'Rates: gas collected over water',
+  blurb:'Inverted measuring cylinder in a water trough, filled by a delivery tube from the flask.',
+  build:() => [
+    I('stand', 786, 290), I('clamp', 686, 535, {}, 180),
+    I('trough', 575, 586, { liquid:0.75, fill:'#bfdbfe' }),
+    I('cylinder', 665, 494, { liquid:0.4, fill:'#bfdbfe' }, 180),
+    I('conical', 315, 549, { liquid:0.35, fill:'#dbeafe' }),
+    I('bung', 352, 526, { holes:1 }),
+    I('deliverytube', 380, 530, { x2:320, y2:130, bend:-55 }),
+    LB('the cylinder is filled with water\nfirst, then inverted', 620, 290),
+    I('arrow', 660, 318, { x2:40, y2:152 }),
+    LB('gas pushes the water down —\nread the volume off the scale', 720, 760),
+    I('arrow', 700, 732, { x2:0, y2:-70 }),
+    LB('reaction mixture', 380, 745),
+    TITLE('Collecting a gas over water', 350, 226)
+  ]
+},
+{
+  id:'rp-chromatography', code:'Chem RP6', subject:'Chemistry',
+  title:'Chromatography',
+  blurb:'Paper strip hung from a rod, pencil baseline clear of the solvent, spots separating up the paper.',
+  build:() => [
+    I('beaker', 520, 448, { liquid:0.1, fill:'#f1f5f9', grads:false }, 0, 2),
+    I('rule', 500, 462, { x2:280, y2:0 }),
+    I('clip', 614, 454),
+    I('chroma', 602, 462, { run:0.62, spots:3, colours:'#dc2626,#16a34a,#2563eb' }),
+    LB('solvent front', 880, 552),
+    I('arrow', 810, 552, { x2:-120, y2:0 }),
+    LB('pencil baseline — above the\nsolvent, or the spots wash off', 900, 646),
+    I('arrow', 790, 646, { x2:-105, y2:0 }),
+    LB('shallow depth of solvent', 300, 690),
+    I('arrow', 400, 686, { x2:110, y2:-8 }),
+    LB('Rf = distance moved by the spot ÷ distance moved by the solvent', 640, 780),
+    TITLE('Chromatography', 640, 380)
+  ]
+},
+{
+  id:'rp-ions', code:'Chem RP7', subject:'Chemistry',
+  title:'Identifying ions',
+  blurb:'Rack of tubes for the precipitate tests, with a nichrome loop in a roaring flame for the flame tests.',
+  build:() => [
+    I('rack', 190, 610),
+    I('testtube', 198, 568, { liquid:0.45, fill:'#2563eb' }),
+    I('testtube', 282, 568, { liquid:0.45, fill:'#16a34a' }),
+    I('testtube', 366, 568, { liquid:0.45, fill:'#b45309' }),
+    LB('Cu2+\nblue', 216, 738), LB('Fe2+\ngreen', 300, 738), LB('Fe3+\nbrown', 384, 738),
+    LB('add sodium hydroxide solution\nand look at the precipitate', 300, 500),
+    I('mat', 660, 694),
+    I('bunsen', 712, 494, { flame:'roaring' }),
+    I('nichrome', 747, 414),
+    LB('nichrome wire loop —\nclean it in dilute HCl first', 960, 470),
+    I('arrow', 880, 480, { x2:-100, y2:40 }),
+    LB('roaring (blue) flame', 760, 745),
+    TITLE('Tests for ions', 500, 300)
+  ]
+},
+{
+  id:'rp-distillation', code:'Chem RP8', subject:'Chemistry',
+  title:'Water purification by distillation',
+  blurb:'Heated flask, thermometer at the neck, Liebig condenser sloping down to the receiver.',
+  build:() => [
+    I('stand', 776, 290), I('clamp', 676, 465, {}, 180),
+    I('mat', 240, 694), I('bunsen', 292, 494, { flame:'safety' }),
+    I('tripod', 255, 532), I('gauze', 274, 530),
+    I('rbflask', 280, 389, { liquid:0.45, fill:'#bfdbfe' }),
+    I('bung', 312, 366, { holes:2 }),
+    I('thermometer', 318, 246, { level:0.55 }),
+    I('glasstube', 350, 370, { x2:182, y2:122, bend:-25 }),
+    I('condenser', 524, 468, {}, 14),
+    I('beaker', 720, 574, { liquid:0.2, fill:'#dbeafe' }),
+    LB('thermometer reads the\ntemperature of the vapour', 200, 300),
+    I('arrow', 250, 330, { x2:70, y2:40 }),
+    LB('sea water', 170, 480),
+    I('arrow', 210, 480, { x2:70, y2:20 }),
+    LB('water out', 470, 640),
+    I('arrow', 478, 622, { x2:90, y2:-56 }),
+    LB('cold water in', 600, 736),
+    I('arrow', 650, 718, { x2:32, y2:-128 }),
+    LB('pure water\n(the distillate)', 790, 745),
+    TITLE('Simple distillation', 560, 230)
+  ]
+},
+{
+  id:'rp-density', code:'Phys RP', subject:'Physics',
+  title:'Density of a solid',
+  blurb:'Displacement can over a measuring cylinder, with the balance for the mass.',
+  build:() => [
+    I('tripod', 248, 473, {}, 0, 1.35),
+    I('gauze', 274, 470, {}, 0, 1.35),
+    I('eureka', 308, 363, { liquid:0.75, fill:'#bfdbfe' }),
+    I('cylinder', 420, 510, { liquid:0.18, fill:'#bfdbfe' }),
+    I('balance', 740, 618, { reading:'56.4 g' }),
+    I('block', 792, 576),
+    LB('1  find the mass', 830, 745),
+    LB('2  fill the can until it stops\ndripping, then lower the solid in', 300, 300),
+    I('arrow', 330, 335, { x2:30, y2:30 }),
+    LB('3  the water pushed out is\nthe volume of the solid', 620, 560),
+    I('arrow', 540, 570, { x2:-80, y2:20 }),
+    LB('density = mass ÷ volume', 500, 790, { size:18, bold:true }),
+    TITLE('Density of an irregular solid', 400, 200)
+  ]
+},
+{
+  id:'rp-iv', code:'Phys RP', subject:'Physics',
+  title:'I–V characteristics',
+  blurb:'Series circuit with a variable resistor and ammeter, and a voltmeter across the component under test.',
+  build:() => [
+    I('battery', 340, 218), I('switch', 470, 210, { closed:true }),
+    I('varresistor', 640, 210), I('ammeter', 850, 204),
+    I('lamp', 600, 464), I('voltmeter', 600, 604),
+    I('wire', 456, 240, { x2:16, y2:0 }),
+    I('wire', 572, 240, { x2:70, y2:0 }),
+    I('wire', 756, 240, { x2:96, y2:0 }),
+    I('wire', 920, 240, { x2:0, y2:260 }),
+    I('wire', 920, 500, { x2:-250, y2:0 }),
+    I('wire', 602, 500, { x2:-262, y2:0 }),
+    I('wire', 340, 500, { x2:2, y2:-260 }),
+    I('wire', 560, 500, { x2:0, y2:140 }),
+    I('wire', 560, 640, { x2:42, y2:0 }),
+    I('wire', 712, 500, { x2:0, y2:140 }),
+    I('wire', 712, 640, { x2:-42, y2:0 }),
+    I('node', 552, 492), I('node', 704, 492),
+    LB('variable resistor —\nchanges the current', 640, 150),
+    LB('ammeter in series', 850, 150),
+    LB('voltmeter in parallel\nwith the component', 900, 640),
+    I('arrow', 800, 640, { x2:-90, y2:0 }),
+    LB('component under test:\nfilament lamp, resistor or diode', 300, 560),
+    I('arrow', 440, 558, { x2:152, y2:-42 }),
+    LB('reverse the connections to the supply to get the negative half of the graph', 630, 780),
+    TITLE('I–V characteristics', 630, 100)
+  ]
+},
+{
+  id:'rp-ripple', code:'Phys RP', subject:'Physics',
+  title:'Waves in a ripple tank',
+  blurb:'Vibrating bar in the tank, lamp above, shadow of the crests thrown onto the screen below.',
+  build:() => [
+    I('lightsource', 598, 300, {}, 180),
+    I('rule', 640, 388, { x2:-80, y2:100, dash:true }),
+    I('rule', 640, 388, { x2:80, y2:100, dash:true }),
+    I('rippletank', 480, 494, { liquid:0.42, fill:'#bfdbfe' }),
+    I('vibrator', 505, 498),
+    I('rule', 560, 574, { x2:-30, y2:70, dash:true }),
+    I('rule', 720, 574, { x2:30, y2:70, dash:true }),
+    I('screen', 470, 640),
+    I('wavelines', 530, 656, { n:8 }),
+    I('ruler', 520, 742),
+    LB('lamp above the tank', 850, 330),
+    I('arrow', 780, 336, { x2:-100, y2:20 }),
+    LB('vibrating bar — its frequency\nis the frequency of the waves', 900, 470),
+    I('arrow', 800, 480, { x2:-120, y2:30 }),
+    LB('shadows of the crests\non the screen', 950, 690),
+    I('arrow', 850, 690, { x2:-60, y2:0 }),
+    LB('measure ten wavelengths, then divide by ten', 640, 800),
+    TITLE('Ripple tank', 300, 250)
+  ]
+}
+];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7.  DRAWING AN ITEM
+   The liquid is the only clever part. It is a very large rectangle drawn
+   inside a group counter-rotated by the item's own rotation and clipped to
+   the vessel interior, with its top edge placed so that it passes through the
+   fill level. Tilt the flask and the glass turns; the surface does not.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function Body({ it }){
+  const d = DEF[it.type], p = propsOf(it);
+  const b = boxOf(it);
+  const wantsLiquid = d.interior && p.liquid !== undefined && clamp01(p.liquid) > 0.001;
+  let liquid = null;
+  if(wantsLiquid){
+    const ly0 = d.lz[0], ly1 = d.lz[1];
+    const yl  = ly1 - (ly1 - ly0) * clamp01(p.liquid);
+    const cx  = b.x + b.w/2, cy = b.y + b.h/2;
+    const r   = (it.rot || 0) * Math.PI/180;
+    const yp  = cy + Math.cos(r) * (yl - cy);
+    liquid = (
+      <g clipPath={`url(#lsclip_${it.id})`}>
+        <g transform={`rotate(${-(it.rot || 0)} ${cx} ${cy})`}>
+          <rect x={cx - 900} y={yp} width={1800} height={1800}
+            fill={p.fill || '#bfdbfe'} opacity={p.opacity === undefined ? 1 : p.opacity} />
+          <line x1={cx - 900} y1={yp} x2={cx + 900} y2={yp}
+            stroke={INK} strokeWidth={1.3} opacity={0.3} />
+        </g>
+      </g>
+    );
+  }
+  return <>
+    {d.interior && p.liquid !== undefined &&
+      <defs><clipPath id={`lsclip_${it.id}`}>{d.interior(p)}</clipPath></defs>}
+    {liquid}
+    {d.draw(p)}
+  </>;
+}
+
+/* A palette thumbnail: the same draw code, scaled into a fixed square. */
+function Thumb({ type, size }){
+  const d  = DEF[type];
+  const it = useMemo(() => mkItem(type, 0, 0), [type]);
+  const b  = boxOf(it);
+  const s  = Math.min((size - 8) / b.w, (size - 8) / b.h);
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow:'visible' }}>
+      <g transform={`translate(${size/2} ${size/2}) scale(${s}) translate(${-(b.x + b.w/2)} ${-(b.y + b.h/2)})`}>
+        <Body it={it} />
+      </g>
+    </svg>
+  );
+}
+
+function ItemView({ it, selected, onDown }){
+  const b = boxOf(it);
+  return (
+    <g transform={transformOf(it)} onPointerDown={(e) => onDown(e, it)} style={{ cursor:'move' }}>
+      <rect x={b.x} y={b.y} width={b.w} height={b.h} fill="transparent" />
+      <Body it={it} />
+      {selected && <rect x={b.x} y={b.y} width={b.w} height={b.h} fill="none"
+        stroke="#0ea5e9" strokeWidth={1.6 / (it.s || 1)} strokeDasharray="6 4"
+        vectorEffect="non-scaling-stroke" pointerEvents="none" />}
+    </g>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8.  SNAPPING
+   Bungs seat in necks, clamps clip to stand rods, delivery tubes plug into
+   bung ports, wires clip onto terminals. Every pairing is just two anchors of
+   mating kinds that happen to be near each other while the mouse is down.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SNAP_R = 26;
+
+function findSnap(moving, all){
+  const ids = {};
+  moving.forEach(i => { ids[i.id] = 1; });
+  const targets = [];
+  all.forEach(i => { if(!ids[i.id]) anchorsOf(i).forEach(a => targets.push(a)); });
+  let best = null;
+  moving.forEach(it => anchorsOf(it).forEach(a => targets.forEach(b => {
+    if(!mates(a.kind, b.kind)) return;
+    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    if(dist < SNAP_R && (!best || dist < best.dist))
+      best = { dist, dx: b.x - a.x, dy: b.y - a.y, at: b };
+  })));
+  return best;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9.  EXPORT
+   The canvas already holds a complete, self-contained vector drawing, so the
+   export is a clone of the drawing layer sized to its own bounds. PNG goes
+   through that same SVG, so the two exports can never drift apart.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function buildSVG(items, opts){
+  const pad = 30;
+  const b   = worldBounds(items);
+  const w   = Math.max(1, Math.round(b.w + pad*2));
+  const h   = Math.max(1, Math.round(b.h + pad*2));
+  const src = document.getElementById('ls-drawing');
+  const svg = document.createElementNS(SVGNS, 'svg');
+  svg.setAttribute('xmlns', SVGNS);
+  svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  svg.setAttribute('viewBox', `${b.x - pad} ${b.y - pad} ${w} ${h}`);
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+  const style = document.createElementNS(SVGNS, 'style');
+  style.textContent = "text{font-family:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif}";
+  svg.appendChild(style);
+  if(opts.white){
+    const bg = document.createElementNS(SVGNS, 'rect');
+    bg.setAttribute('x', b.x - pad); bg.setAttribute('y', b.y - pad);
+    bg.setAttribute('width', w);     bg.setAttribute('height', h);
+    bg.setAttribute('fill', '#ffffff');
+    svg.appendChild(bg);
+  }
+  if(src) svg.appendChild(src.cloneNode(true));
+  return { markup: new XMLSerializer().serializeToString(svg), w, h };
+}
+
+function saveBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function exportSVG(items, opts){
+  if(!items.length) return;
+  const { markup } = buildSVG(items, opts);
+  saveBlob(new Blob([markup], { type:'image/svg+xml;charset=utf-8' }), (opts.name || 'labsketch') + '.svg');
+}
+
+function exportPNG(items, opts){
+  if(!items.length) return;
+  const { markup, w, h } = buildSVG(items, { white:false });
+  const scale = opts.scale || 3;
+  const img = new Image();
+  const url = URL.createObjectURL(new Blob([markup], { type:'image/svg+xml;charset=utf-8' }));
+  img.onload = () => {
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+    const ctx = cv.getContext('2d');
+    if(opts.white){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height); }
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(url);
+    cv.toBlob(bl => saveBlob(bl, (opts.name || 'labsketch') + '.png'), 'image/png');
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert('The drawing could not be rasterised. Try the SVG export.'); };
+  img.src = url;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10.  THE CANVAS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function Canvas({
+  items, sel, setSel, patch, moveMany, settle, view, setView,
+  snap, grid, beginChange, endChange, tool
+}){
+  const ref  = useRef(null);
+  const drag = useRef(null);
+  const [hint, setHint] = useState(null);   // the snap indicator
+
+  const toPt = useCallback((e) => {
+    const svg = ref.current;
+    const m = svg.getScreenCTM();
+    if(!m) return { x:0, y:0 };
+    const p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    const q = p.matrixTransform(m.inverse());
+    return { x:q.x, y:q.y };
+  }, []);
+
+  const selSet = useMemo(() => { const s = {}; sel.forEach(id => { s[id] = 1; }); return s; }, [sel]);
+
+  function onItemDown(e, it){
+    if(tool === 'pan') return;
+    e.stopPropagation();
+    const add = e.shiftKey;
+    let next = sel;
+    if(add)              next = selSet[it.id] ? sel.filter(i => i !== it.id) : sel.concat(it.id);
+    else if(!selSet[it.id]) next = [it.id];
+    setSel(next);
+    const ids = next.length ? next : [it.id];
+    beginChange();
+    drag.current = {
+      mode:'move', start: toPt(e), ids,
+      base: items.filter(i => ids.indexOf(i.id) >= 0).map(i => ({ id:i.id, x:i.x, y:i.y })),
+      moved:false
+    };
+    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onBgDown(e){
+    if(e.button === 1 || tool === 'pan' || e.altKey){
+      drag.current = { mode:'pan', start:{ x:e.clientX, y:e.clientY }, view:{ ...view } };
+      return;
+    }
+    setSel([]);
+    drag.current = { mode:'marquee', start: toPt(e), now: toPt(e) };
+  }
+
+  function onMove(e){
+    const d = drag.current;
+    if(!d) return;
+    if(d.mode === 'pan'){
+      const k = view.w / (ref.current.clientWidth || 1);
+      setView({ ...d.view, x: d.view.x - (e.clientX - d.start.x) * k, y: d.view.y - (e.clientY - d.start.y) * k });
+      return;
+    }
+    const p = toPt(e);
+    if(d.mode === 'marquee'){ d.now = p; setHint(null); forceTick(x => x + 1); return; }
+
+    if(d.mode === 'move'){
+      let dx = p.x - d.start.x, dy = p.y - d.start.y;
+      if(Math.abs(dx) + Math.abs(dy) > 1.5) d.moved = true;
+      if(grid && !snap){ dx = Math.round(dx / 10) * 10; dy = Math.round(dy / 10) * 10; }
+      let proposed = d.base.map(b => {
+        const it = items.find(i => i.id === b.id);
+        return Object.assign({}, it, { x: b.x + dx, y: b.y + dy });
+      });
+      let hit = null;
+      if(snap){
+        hit = findSnap(proposed, items);
+        if(hit){ dx += hit.dx; dy += hit.dy; }
+        else if(grid){ dx = Math.round(dx / 10) * 10; dy = Math.round(dy / 10) * 10; }
+      }
+      setHint(hit ? hit.at : null);
+      moveMany(d.base.map(b => ({ id:b.id, x: Math.round(b.x + dx), y: Math.round(b.y + dy) })));
+      return;
+    }
+
+    if(d.mode === 'rotate'){
+      const it = items.find(i => i.id === d.id);
+      if(!it) return;
+      const c = toWorld(it, centreOf(it).x, centreOf(it).y);
+      let ang = Math.atan2(p.y - c.y, p.x - c.x) * 180/Math.PI + 90;
+      if(e.shiftKey) ang = Math.round(ang / 15) * 15;
+      patch(d.id, null, { rot: Math.round(ang) });
+      d.moved = true;
+      return;
+    }
+
+    if(d.mode === 'scale'){
+      const it = items.find(i => i.id === d.id);
+      if(!it) return;
+      const b = boxOf(it);
+      const o = toWorld(Object.assign({}, it, { s:1, rot:0 }), b.x, b.y);
+      const k = Math.max(0.25, Math.min(4, Math.hypot(p.x - o.x, p.y - o.y) / Math.hypot(b.w, b.h)));
+      patch(d.id, null, { s: Math.round(k * 100) / 100 });
+      d.moved = true;
+      return;
+    }
+
+    /* Legacy two-point ends: leaders and rules. */
+    if(d.mode === 'end'){
+      const it = items.find(i => i.id === d.id);
+      if(!it) return;
+      const pr = propsOf(it);
+      if(d.which === 'b'){
+        patch(d.id, { x2: Math.round(p.x - it.x), y2: Math.round(p.y - it.y) });
+      } else {
+        const bx = it.x + (pr.x2 || 0), by = it.y + (pr.y2 || 0);
+        patch(d.id, { x2: Math.round(bx - p.x), y2: Math.round(by - p.y) }, { x: Math.round(p.x), y: Math.round(p.y) });
+      }
+      d.moved = true;
+      return;
+    }
+
+    /* Moving a node of a routed tube. An end node looks for a port to clip
+       onto and records it; dragged clear of every port, it lets go. */
+    if(d.mode === 'node'){
+      const it = items.find(i => i.id === d.id);
+      if(!it) return;
+      const def = DEF[it.type], pr = propsOf(it);
+      const n = nodesOf(pr).map(q => [it.x + q[0], it.y + q[1], q[2], q[3]]);
+      const last = n.length - 1;
+      let tx = p.x, ty = p.y;
+      if(grid && !snap){ tx = Math.round(tx/10)*10; ty = Math.round(ty/10)*10; }
+      let bound = null;
+      if((d.index === 0 || d.index === last) && snap){
+        const hit = nearestPort({ x:tx, y:ty }, def.endMates, items, it.id);
+        if(hit){ tx = hit.x; ty = hit.y; bound = { id: hit.item, anchor: hit.id }; }
+      }
+      setHint(bound ? { x:tx, y:ty } : null);
+      n[d.index][0] = tx; n[d.index][1] = ty;
+      const ox = Math.round(n[0][0]), oy = Math.round(n[0][1]);
+      const bind = Object.assign({}, pr.bind || {});
+      if(d.index === 0)    bind.a = bound;
+      if(d.index === last) bind.b = bound;
+      patch(d.id, Object.assign(nodePatch(n.map(q => [q[0]-ox, q[1]-oy, q[2], q[3]])),
+        { bind: (bind.a || bind.b) ? bind : null }), { x: ox, y: oy });
+      d.moved = true;
+      return;
+    }
+
+    /* Swinging a tangent handle about its own node. This is the bend: the
+       node stays where it is - clipped to its port if it has one - and only
+       the direction and reach of the curve leaving it change. Shift holds the
+       reach and turns it into a pure rotation, in five-degree steps. */
+    if(d.mode === 'handle'){
+      const it = items.find(i => i.id === d.id);
+      if(!it) return;
+      const pr = propsOf(it);
+      const n = nodesOf(pr);
+      const node = n[d.index];
+      let hx = p.x - (it.x + node[0]), hy = p.y - (it.y + node[1]);
+      if(e.shiftKey){
+        const keep = Math.hypot(node[2], node[3]) || Math.hypot(hx, hy) || 1;
+        const step = Math.PI / 36;
+        const ang  = Math.round(Math.atan2(hy, hx) / step) * step;
+        hx = Math.cos(ang) * keep; hy = Math.sin(ang) * keep;
+      }
+      n[d.index] = [node[0], node[1], hx, hy];
+      patch(d.id, nodePatch(n));
+      d.moved = true;
+      return;
+    }
+  }
+
+  function onUp(){
+    const d = drag.current;
+    drag.current = null; setHint(null);
+    if(!d) return;
+    if(d.mode === 'marquee'){
+      const x0 = Math.min(d.start.x, d.now.x), x1 = Math.max(d.start.x, d.now.x);
+      const y0 = Math.min(d.start.y, d.now.y), y1 = Math.max(d.start.y, d.now.y);
+      if(x1 - x0 > 4 && y1 - y0 > 4){
+        const inside = items.filter(it => {
+          const cs = cornersOf(it);
+          const cx = cs.reduce((a, c) => a + c.x, 0)/4, cy = cs.reduce((a, c) => a + c.y, 0)/4;
+          return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1;
+        }).map(it => it.id);
+        setSel(inside);
+      }
+      forceTick(x => x + 1);
+      return;
+    }
+    if(d.mode === 'pan') return;
+    if(d.moved && settle) settle(d.ids || (d.id ? [d.id] : null));
+    if(d.moved) endChange(); else endChange(true);
+  }
+
+  const [, forceTick] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if(!el) return;
+    const wheel = (e) => {
+      e.preventDefault();
+      const svg = ref.current;
+      const m = svg.getScreenCTM(); if(!m) return;
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const w0 = pt.matrixTransform(m.inverse());
+      const k  = e.deltaY > 0 ? 1.12 : 1/1.12;
+      const nw = Math.max(320, Math.min(4200, view.w * k));
+      const f  = nw / view.w;
+      setView({ x: w0.x - (w0.x - view.x) * f, y: w0.y - (w0.y - view.y) * f, w: nw });
+    };
+    el.addEventListener('wheel', wheel, { passive:false });
+    return () => el.removeEventListener('wheel', wheel);
+  }, [view, setView]);
+
+  /* Handles for the current selection. */
+  const only = sel.length === 1 ? items.find(i => i.id === sel[0]) : null;
+  const handles = [];
+  if(only){
+    const d = DEF[only.type];
+    const b = boxOf(only);
+    if(d.route){
+      const pr   = propsOf(only);
+      const n    = nodesOf(pr);
+      const bind = pr.bind || {};
+      const at   = (i) => ({ x: only.x + n[i][0], y: only.y + n[i][1] });
+      const hAt  = (i) => ({ x: only.x + n[i][0] + n[i][2], y: only.y + n[i][1] + n[i][3] });
+      const dia  = (cx, cy, r) => 'M' + cx + ',' + (cy-r) + ' L' + (cx+r) + ',' + cy +
+                                  ' L' + cx + ',' + (cy+r) + ' L' + (cx-r) + ',' + cy + ' Z';
+
+      /* Add a node: the plus on each span. Pressing it drops a node on the
+         curve at that point and hands the drag straight over to it. */
+      for(let i = 0; i < n.length - 1; i++){
+        const a = at(i), b = at(i+1);
+        const ha = hAt(i), hb = { x: b.x - n[i+1][2], y: b.y - n[i+1][3] };
+        const mid = { x: 0.125*a.x + 0.375*ha.x + 0.375*hb.x + 0.125*b.x,
+                      y: 0.125*a.y + 0.375*ha.y + 0.375*hb.y + 0.125*b.y };
+        const tang = { x: (hb.x - ha.x) * 0.28, y: (hb.y - ha.y) * 0.28 };
+        handles.push(
+          <g key={'ins'+i} style={{ cursor:'copy' }} onPointerDown={(e) => {
+              e.stopPropagation(); beginChange();
+              const w = nodesOf(propsOf(only)).map(q => [only.x + q[0], only.y + q[1], q[2], q[3]]);
+              w.splice(i+1, 0, [mid.x, mid.y, tang.x, tang.y]);
+              const ox = Math.round(w[0][0]), oy = Math.round(w[0][1]);
+              patch(only.id, nodePatch(w.map(q => [q[0]-ox, q[1]-oy, q[2], q[3]])), { x:ox, y:oy });
+              drag.current = { mode:'node', id:only.id, index:i+1, moved:true };
+            }}>
+            <circle cx={mid.x} cy={mid.y} r={7} fill="#fff" stroke="#0ea5e9" strokeWidth={1.6} opacity={0.92} />
+            <path d={'M' + (mid.x-3.4) + ',' + mid.y + ' L' + (mid.x+3.4) + ',' + mid.y +
+                     ' M' + mid.x + ',' + (mid.y-3.4) + ' L' + mid.x + ',' + (mid.y+3.4)}
+              stroke="#0ea5e9" strokeWidth={1.7} />
+          </g>);
+      }
+
+      /* Tangent handles, each on its leash. */
+      n.forEach((nd, i) => {
+        if(Math.hypot(nd[2], nd[3]) < 1) return;
+        const a = at(i), h = hAt(i);
+        handles.push(<line key={'hl'+i} x1={a.x} y1={a.y} x2={h.x} y2={h.y}
+          stroke="#f59e0b" strokeWidth={1.3} opacity={0.85} />);
+        handles.push(<path key={'hh'+i} d={dia(h.x, h.y, 6.5)}
+          fill="#fbbf24" stroke="#78350f" strokeWidth={1.4} style={{ cursor:'grab' }}
+          onPointerDown={(e) => { e.stopPropagation(); beginChange();
+            drag.current = { mode:'handle', id:only.id, index:i, moved:false }; }} />);
+      });
+
+      /* Nodes. An end that has taken a port is drawn filled, so it is obvious
+         at a glance which ends are connected and which are only near. */
+      n.forEach((nd, i) => {
+        const a = at(i);
+        const isEnd = (i === 0 || i === n.length - 1);
+        const held  = i === 0 ? bind.a : (i === n.length - 1 ? bind.b : null);
+        handles.push(<path key={'nd'+i} d={dia(a.x, a.y, isEnd ? 8 : 6.5)}
+          fill={held ? '#f59e0b' : '#ffffff'} stroke={held ? '#78350f' : '#0ea5e9'} strokeWidth={2}
+          style={{ cursor:'grab' }}
+          onDoubleClick={(e) => {
+            if(isEnd) return;
+            e.stopPropagation(); beginChange();
+            const w = nodesOf(propsOf(only)).map(q => [only.x + q[0], only.y + q[1], q[2], q[3]]);
+            w.splice(i, 1);
+            const ox = Math.round(w[0][0]), oy = Math.round(w[0][1]);
+            patch(only.id, nodePatch(w.map(q => [q[0]-ox, q[1]-oy, q[2], q[3]])), { x:ox, y:oy });
+            setTimeout(() => endChange(), 0);
+          }}
+          onPointerDown={(e) => { e.stopPropagation(); beginChange();
+            drag.current = { mode:'node', id:only.id, index:i, moved:false }; }} />);
+      });
+    } else if(d.linear){
+      const pr = propsOf(only);
+      const a  = toWorld(only, 0, 0);
+      const bb = toWorld(only, pr.x2 || 0, pr.y2 || 0);
+      [['a', a], ['b', bb]].forEach(([which, pt]) => handles.push(
+        <circle key={which} cx={pt.x} cy={pt.y} r={7} fill="#0ea5e9" stroke="#fff" strokeWidth={2}
+          style={{ cursor:'grab' }}
+          onPointerDown={(e) => { e.stopPropagation(); beginChange();
+            drag.current = { mode:'end', id:only.id, which }; }} />
+      ));
+    } else {
+      const top = toWorld(only, b.x + b.w/2, b.y - 26);
+      const cnr = toWorld(only, b.x + b.w, b.y + b.h);
+      const ctr = toWorld(only, b.x + b.w/2, b.y);
+      handles.push(<line key="rl" x1={ctr.x} y1={ctr.y} x2={top.x} y2={top.y} stroke="#0ea5e9" strokeWidth={1.4} />);
+      handles.push(<circle key="rh" cx={top.x} cy={top.y} r={7} fill="#0ea5e9" stroke="#fff" strokeWidth={2}
+        style={{ cursor:'grab' }}
+        onPointerDown={(e) => { e.stopPropagation(); beginChange(); drag.current = { mode:'rotate', id:only.id }; }} />);
+      handles.push(<rect key="sh" x={cnr.x - 6} y={cnr.y - 6} width={12} height={12} rx={2}
+        fill="#fff" stroke="#0ea5e9" strokeWidth={2} style={{ cursor:'nwse-resize' }}
+        onPointerDown={(e) => { e.stopPropagation(); beginChange(); drag.current = { mode:'scale', id:only.id }; }} />);
+    }
+  }
+
+  const mq = drag.current && drag.current.mode === 'marquee' ? drag.current : null;
+  const vh = view.w * 0.62;
+
+  return (
+    <svg ref={ref} id="ls-canvas"
+      viewBox={`${view.x} ${view.y} ${view.w} ${vh}`}
+      preserveAspectRatio="xMidYMid meet"
+      className="w-full h-full touch-none"
+      style={{ background:'#ffffff', cursor: tool === 'pan' ? 'grab' : 'default' }}
+      onPointerDown={onBgDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}>
+      <defs>
+        <pattern id="lsgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0 L0 0 0 20" fill="none" stroke="#e4e4e7" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect x={view.x} y={view.y} width={view.w} height={vh} fill="#ffffff" />
+      {grid && <rect x={view.x} y={view.y} width={view.w} height={vh} fill="url(#lsgrid)" />}
+      <g id="ls-drawing">
+        {items.map(it => <ItemView key={it.id} it={it} selected={!!selSet[it.id]} onDown={onItemDown} />)}
+      </g>
+      <g id="ls-overlay" pointerEvents="none">
+        {hint && <circle cx={hint.x} cy={hint.y} r={11} fill="none" stroke="#f59e0b" strokeWidth={2.5} />}
+        {mq && <rect x={Math.min(mq.start.x, mq.now.x)} y={Math.min(mq.start.y, mq.now.y)}
+          width={Math.abs(mq.now.x - mq.start.x)} height={Math.abs(mq.now.y - mq.start.y)}
+          fill="rgba(14,165,233,.10)" stroke="#0ea5e9" strokeWidth={1.4} strokeDasharray="5 4" />}
+      </g>
+      <g pointerEvents="auto">{handles}</g>
+    </svg>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11.  SMALL UI PIECES
+   Icons come from Lucide, but every control also carries a word, so the
+   toolbar still reads correctly on a school network that blocks the CDN.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function Ic({ name, size }){
+  const data = (window.lucide && window.lucide.icons && window.lucide.icons[name]) || null;
+  if(!data) return null;
+  const kids = data[2] || [];
+  return (
+    <svg width={size || 15} height={size || 15} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {kids.map((k, i) => React.createElement(k[0], Object.assign({ key:i }, k[1])))}
+    </svg>
+  );
+}
+
+function Btn({ onClick, children, title, active, danger, disabled }){
+  return (
+    <button type="button" onClick={onClick} title={title} disabled={disabled}
+      className={'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium border transition ' +
+        (disabled ? 'opacity-35 cursor-not-allowed border-zinc-700 text-zinc-500 ' :
+          active ? 'bg-sky-500/20 border-sky-400/60 text-sky-200 ' :
+          danger ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-rose-500/70 hover:text-rose-300 ' :
+                   'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white ')}>
+      {children}
+    </button>
+  );
+}
+
+function Row({ label, children }){
+  return (
+    <div className="mb-3">
+      <div className="text-[10.5px] uppercase tracking-wider text-zinc-500 mb-1 font-semibold">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function Slider({ value, min, max, step, onChange, fmt }){
+  return (
+    <div className="flex items-center gap-2">
+      <input type="range" className="flex-1" min={min} max={max} step={step}
+        value={value} onChange={(e) => onChange(parseFloat(e.target.value))} />
+      <span className="w-12 text-right text-[11.5px] font-mono text-zinc-400">
+        {fmt ? fmt(value) : value}
+      </span>
+    </div>
+  );
+}
+
+function Seg({ value, options, onChange }){
+  return (
+    <div className="flex rounded-md overflow-hidden border border-zinc-700">
+      {options.map(o => (
+        <button key={String(o.v)} type="button" onClick={() => onChange(o.v)}
+          className={'flex-1 px-2 py-1.5 text-[11.5px] font-medium transition ' +
+            (value === o.v ? 'bg-sky-500/25 text-sky-200' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700')}>
+          {o.n}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Swatches({ value, onChange }){
+  return (
+    <>
+      <div className="grid grid-cols-5 gap-1.5 mb-2">
+        {LIQUIDS.concat(INDICATOR).map(l => (
+          <button key={l.n + l.c} type="button" title={l.n} onClick={() => onChange(l.c)}
+            className={'h-7 rounded border-2 transition ' +
+              (value === l.c ? 'border-sky-400 scale-105' : 'border-zinc-700 hover:border-zinc-500')}
+            style={{ background: l.c }} />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <input type="color" value={value || '#bfdbfe'} onChange={(e) => onChange(e.target.value)}
+          className="w-9 h-7 bg-transparent border border-zinc-700 rounded cursor-pointer" />
+        <span className="text-[11px] font-mono text-zinc-500">{value}</span>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   12.  LEFT PANEL — the library
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const TABS = [
+  { id:'preset', icon:'📋', label:'Practicals' },
+  { id:'glass',  icon:'🧪', label:'Glassware' },
+  { id:'heat',   icon:'🔥', label:'Heat' },
+  { id:'meas',   icon:'📏', label:'Measure' },
+  { id:'extra',  icon:'🔌', label:'Extras' }
+];
+
+function Library({ tab, setTab, onAdd, onPreset, itemCount }){
+  const [q, setQ] = useState('');
+  const query = q.trim().toLowerCase();
+
+  const pieces = useMemo(() => Object.keys(DEF)
+    .map(k => DEF[k])
+    .filter(d => query
+      ? (d.name + ' ' + d.tags).toLowerCase().indexOf(query) >= 0
+      : d.cat === tab), [tab, query]);
+
+  const presets = useMemo(() => PRESETS.filter(p => !query ||
+    (p.title + ' ' + p.blurb + ' ' + p.code).toLowerCase().indexOf(query) >= 0), [query]);
+
+  const showPresets = query ? presets.length > 0 : tab === 'preset';
+  const showPieces  = query ? pieces.length  > 0 : tab !== 'preset';
+
+  return (
+    <div className="noprint w-[268px] shrink-0 h-full flex flex-col bg-zinc-900 border-r border-zinc-800">
+      <div className="px-3 pt-3 pb-2 border-b border-zinc-800">
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="text-[19px]">⚗️</span>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-display font-bold text-[16px] leading-none tracking-wide text-zinc-100">LabSketch</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-[2px] rounded
+                               bg-amber-500/20 text-amber-300 border border-amber-500/40">beta</span>
+            </div>
+            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">AQA GCSE apparatus diagrams</div>
+          </div>
+        </div>
+        <div className="relative">
+          <input value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="Search apparatus or practicals…"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-md pl-2.5 pr-7 py-1.5 text-[12.5px]
+                       text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-sky-500" />
+          {q && <button type="button" onClick={() => setQ('')}
+            className="absolute right-1.5 top-1.5 text-zinc-500 hover:text-zinc-200 text-[13px]">×</button>}
+        </div>
+      </div>
+
+      {!query && (
+        <div className="grid grid-cols-5 border-b border-zinc-800">
+          {TABS.map(t => (
+            <button key={t.id} type="button" onClick={() => setTab(t.id)} title={t.label}
+              className={'py-2 text-center transition border-b-2 ' +
+                (tab === t.id ? 'border-sky-400 bg-zinc-800/70' : 'border-transparent hover:bg-zinc-800/40')}>
+              <div className="text-[15px] leading-none">{t.icon}</div>
+              <div className={'text-[9px] mt-1 ' + (tab === t.id ? 'text-sky-300' : 'text-zinc-500')}>{t.label}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-2.5">
+        {showPresets && (
+          <>
+            <div className="text-[10.5px] uppercase tracking-wider text-zinc-500 mb-2 font-semibold px-0.5">
+              Required practicals
+            </div>
+            <div className="space-y-1.5 mb-4">
+              {presets.map(p => (
+                <button key={p.id} type="button" onClick={() => onPreset(p)}
+                  className="palitem w-full text-left rounded-lg border border-zinc-700 bg-zinc-800/60
+                             hover:bg-zinc-800 hover:border-sky-500/60 px-2.5 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className={'text-[9px] px-1.5 py-0.5 rounded font-mono ' +
+                      (p.subject === 'Physics' ? 'bg-violet-500/20 text-violet-300' : 'bg-emerald-500/20 text-emerald-300')}>
+                      {p.code}
+                    </span>
+                    <span className="text-[13px] font-semibold text-zinc-100 leading-tight">{p.title}</span>
+                  </div>
+                  <div className="text-[11px] text-zinc-500 mt-1 leading-snug">{p.blurb}</div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {showPieces && (
+          <>
+            <div className="text-[10.5px] uppercase tracking-wider text-zinc-500 mb-2 font-semibold px-0.5">
+              {query ? 'Apparatus' : (TABS.find(t => t.id === tab) || {}).label}
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {pieces.map(d => (
+                <button key={d.id} type="button" onClick={() => onAdd(d.id)} title={d.name}
+                  className="palitem rounded-lg border border-zinc-700 bg-white hover:border-sky-500
+                             flex flex-col items-center justify-between pt-1.5 pb-1 px-1">
+                  <Thumb type={d.id} size={54} />
+                  <span className="text-[8.5px] text-zinc-600 leading-tight text-center mt-0.5 line-clamp-2">
+                    {d.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {query && !presets.length && !pieces.length && (
+          <div className="text-[12px] text-zinc-500 px-1 py-6 text-center">Nothing matches “{q}”.</div>
+        )}
+      </div>
+
+      <div className="px-3 py-2 border-t border-zinc-800 text-[10.5px] text-zinc-500">
+        {itemCount} item{itemCount === 1 ? '' : 's'} on the canvas · click a piece to place it
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   13.  RIGHT PANEL — the inspector
+   The controls a piece offers come from its own `schema`, so adding a new
+   piece of apparatus never means touching this file.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const LABELS = {
+  liquid:'Liquid level',   fill:'Liquid colour',  opacity:'Opacity / turbidity',
+  grads:'Graduations',     flame:'Flame',         holes:'Holes',
+  lid:'Lid on',            paper:'Filter paper',  closed:'Switch closed',
+  level:'Reading',         plunger:'Plunger',     reading:'Display text',
+  run:'Solvent run',       spots:'Spots',         colours:'Spot colours',
+  text:'Text',             size:'Text size',      chem:'Auto chemical formatting',
+  bold:'Bold',             boxed:'Boxed',         bend:'Curve',
+  dash:'Dashed',           colour:'Line colour',  n:'Number of crests',
+  curved:'Curved wavefronts'
+};
+
+const PCT = v => Math.round(v * 100) + '%';
+
+function Toggle({ on, onChange, label }){
+  return (
+    <button type="button" onClick={() => onChange(!on)}
+      className="flex items-center gap-2 w-full text-left group">
+      <span className={'w-8 h-[18px] rounded-full transition relative shrink-0 ' +
+        (on ? 'bg-sky-500' : 'bg-zinc-700')}>
+        <span className={'absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all ' +
+          (on ? 'left-[16px]' : 'left-[2px]')} />
+      </span>
+      <span className="text-[12px] text-zinc-300 group-hover:text-white">{label}</span>
+    </button>
+  );
+}
+
+function Control({ k, p, set, type }){
+  const v = p[k];
+  if(k === 'fill' || k === 'colour')
+    return <Row label={LABELS[k]}><Swatches value={v} onChange={x => set(k, x)} /></Row>;
+
+  if(k === 'liquid' || k === 'opacity' || k === 'level' || k === 'plunger' || k === 'run')
+    return <Row label={LABELS[k]}>
+      <Slider value={v === undefined ? 0.5 : v} min={0} max={1} step={0.01} fmt={PCT}
+        onChange={x => set(k, x)} />
+    </Row>;
+
+  if(k === 'bend')
+    return <Row label={LABELS[k]}>
+      <Slider value={v || 0} min={-140} max={140} step={2} onChange={x => set(k, x)} />
+    </Row>;
+
+  if(k === 'size')
+    return <Row label={LABELS[k]}>
+      <Slider value={v || 17} min={9} max={54} step={1} onChange={x => set(k, x)} />
+    </Row>;
+
+  if(k === 'n')
+    return <Row label={LABELS[k]}>
+      <Slider value={v || 7} min={2} max={14} step={1} onChange={x => set(k, Math.round(x))} />
+    </Row>;
+
+  if(k === 'flame')
+    return <Row label={LABELS[k]}>
+      <Seg value={v} onChange={x => set(k, x)} options={[
+        { v:'off', n:'Off' }, { v:'safety', n:'Yellow safety' }, { v:'roaring', n:'Blue roaring' }
+      ]} />
+    </Row>;
+
+  if(k === 'holes'){
+    const opts = type === 'rack'
+      ? [2,3,4,5,6].map(i => ({ v:i, n:String(i) }))
+      : [0,1,2].map(i => ({ v:i, n:String(i) }));
+    return <Row label={LABELS[k]}>
+      <Seg value={v|0} onChange={x => set(k, x)} options={opts} />
+    </Row>;
+  }
+
+  if(k === 'spots')
+    return <Row label={LABELS[k]}>
+      <Seg value={v|0} onChange={x => set(k, x)} options={[1,2,3,4].map(i => ({ v:i, n:String(i) }))} />
+    </Row>;
+
+  if(k === 'text')
+    return <Row label={LABELS[k]}>
+      <textarea rows={3} value={v === undefined ? '' : v} onChange={e => set(k, e.target.value)}
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1.5 text-[12.5px]
+                   text-zinc-100 focus:outline-none focus:border-sky-500 resize-none font-mono" />
+      <div className="mt-1.5 px-2 py-1.5 bg-white rounded text-zinc-900 text-[13px] leading-snug">
+        {String(v === undefined ? '' : v).split('\n').map((ln, i) =>
+          <div key={i}>{p.chem === false ? ln : chemFormat(ln)}</div>)}
+      </div>
+      <div className="text-[10.5px] text-zinc-500 mt-1 leading-snug">
+        Type CuSO4(aq), SO4^2-, 25 cm3 or {'->'} and it is formatted on the canvas.
+      </div>
+    </Row>;
+
+  if(k === 'reading' || k === 'colours')
+    return <Row label={LABELS[k]}>
+      <input value={v === undefined ? '' : v} onChange={e => set(k, e.target.value)}
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1.5 text-[12.5px]
+                   text-zinc-100 focus:outline-none focus:border-sky-500 font-mono" />
+    </Row>;
+
+  return <div className="mb-2.5"><Toggle on={!!v} label={LABELS[k] || k} onChange={x => set(k, x)} /></div>;
+}
+
+function Inspector({ items, sel, patch, act }){
+  const chosen = items.filter(i => sel.indexOf(i.id) >= 0);
+  const one    = chosen.length === 1 ? chosen[0] : null;
+  const def    = one ? DEF[one.type] : null;
+  const p      = one ? propsOf(one) : null;
+  const set    = (k, v) => patch(one.id, { [k]: v });
+
+  return (
+    <div className="noprint w-[262px] shrink-0 h-full flex flex-col bg-zinc-900 border-l border-zinc-800">
+      <div className="px-3 py-2.5 border-b border-zinc-800">
+        <div className="text-[12.5px] font-semibold text-zinc-200">
+          {one ? def.name : chosen.length ? chosen.length + ' items selected' : 'Nothing selected'}
+        </div>
+        <div className="text-[10.5px] text-zinc-500 mt-0.5">
+          {one ? 'Properties and placement' : chosen.length ? 'Move, layer or delete together' : 'Click a piece on the canvas'}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        {!chosen.length && (
+          <div className="text-[12px] text-zinc-500 leading-relaxed space-y-3">
+            <p>Pick a required practical from the left to load a full setup, or place pieces one at a time.</p>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-800/40 p-2.5 space-y-1.5">
+              <div className="text-[10.5px] uppercase tracking-wider text-zinc-500 font-semibold">Shortcuts</div>
+              <div><kbd className="font-mono text-zinc-300">Del</kbd> remove · <kbd className="font-mono text-zinc-300">Ctrl+Z</kbd> undo</div>
+              <div><kbd className="font-mono text-zinc-300">Ctrl+D</kbd> duplicate · <kbd className="font-mono text-zinc-300">Esc</kbd> deselect</div>
+              <div><kbd className="font-mono text-zinc-300">Arrows</kbd> nudge · <kbd className="font-mono text-zinc-300">Shift</kbd>+drag to add to the selection</div>
+              <div><kbd className="font-mono text-zinc-300">Alt</kbd>+drag or scroll to pan and zoom</div>
+            </div>
+            <p className="text-zinc-600">Everything on the canvas is vector, so an export drops into a worksheet or a slide at any size.</p>
+          </div>
+        )}
+
+        {one && (
+          <>
+            {def.schema.map(k => <Control key={k} k={k} p={p} set={set} type={one.type} />)}
+
+            {def.route && (() => {
+              const nodes = nodesOf(p);
+              const bind  = p.bind || {};
+              const nameOf = (bnd) => {
+                if(!bnd) return null;
+                const t = items.filter(i => i.id === bnd.id)[0];
+                return t ? DEF[t.type].name : null;
+              };
+              const endRow = (which, label) => {
+                const nm = nameOf(bind[which]);
+                return (
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[11.5px] text-zinc-400">{label}</span>
+                    {nm ? (
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[11.5px] text-amber-300 truncate">{nm}</span>
+                        <button type="button" onClick={() => patch(one.id,
+                            { bind: Object.assign({}, bind, { [which]: null }) })}
+                          className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 border
+                                     border-zinc-700 text-zinc-400 hover:text-white">detach</button>
+                      </span>
+                    ) : <span className="text-[11.5px] text-zinc-600">free</span>}
+                  </div>);
+              };
+              return (
+                <>
+                  <Row label="Connections">
+                    {endRow('a', 'Start')}
+                    {endRow('b', 'End')}
+                    <div className="text-[10.5px] text-zinc-500 mt-1 leading-snug">
+                      Drag an end onto a port and it clips on, and stays on when the
+                      apparatus is moved.
+                    </div>
+                  </Row>
+                  <Row label="Shape">
+                    {nodes.length === 2 && (
+                      <Slider value={p.bend || 0} min={-140} max={140} step={2}
+                        onChange={v => patch(one.id, Object.assign({ bend: v },
+                          nodePatch(bowNodes(nodesOf(p), v))))} />
+                    )}
+                    <div className="flex items-center justify-between gap-2 mt-1.5">
+                      <span className="text-[11.5px] text-zinc-500">
+                        {nodes.length} node{nodes.length === 1 ? '' : 's'}
+                      </span>
+                      {nodes.length > 2 && (
+                        <button type="button"
+                          onClick={() => patch(one.id, nodePatch(bowNodes(nodesOf(p), p.bend || 0)))}
+                          className="text-[10.5px] px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700
+                                     text-zinc-400 hover:text-white">straighten</button>
+                      )}
+                    </div>
+                    <div className="text-[10.5px] text-zinc-500 mt-1.5 leading-snug">
+                      Swing an amber handle to bend the run about its node. Shift keeps its
+                      reach and turns it in 5° steps. ⊕ adds a node; double-click one to drop it.
+                    </div>
+                  </Row>
+                </>);
+            })()}
+
+            {one.props && one.props.mount && (() => {
+              const host = items.filter(i => i.id === one.props.mount.host)[0];
+              if(!host) return null;
+              return (
+                <Row label="Attached to">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11.5px] text-amber-300 truncate">{DEF[host.type].name}</span>
+                    <button type="button" onClick={() => patch(one.id, { mount:null })}
+                      className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 border
+                                 border-zinc-700 text-zinc-400 hover:text-white">detach</button>
+                  </div>
+                  <div className="text-[10.5px] text-zinc-500 mt-1 leading-snug">
+                    It travels with the {DEF[host.type].name.toLowerCase()}. Drag it clear to let go.
+                  </div>
+                </Row>);
+            })()}
+
+            {!def.linear && (
+              <Row label="Rotation">
+                <Slider value={one.rot || 0} min={-180} max={180} step={1}
+                  fmt={v => v + '°'} onChange={v => patch(one.id, null, { rot: v })} />
+                <div className="flex gap-1 mt-1.5">
+                  {[0, 90, 180, 270].map(a => (
+                    <button key={a} type="button" onClick={() => patch(one.id, null, { rot: a })}
+                      className="flex-1 py-1 text-[11px] rounded bg-zinc-800 border border-zinc-700
+                                 text-zinc-400 hover:text-white hover:bg-zinc-700">{a}°</button>
+                  ))}
+                </div>
+              </Row>
+            )}
+
+            {!def.linear && (
+              <Row label="Size">
+                <Slider value={one.s === undefined ? 1 : one.s} min={0.3} max={3} step={0.05}
+                  fmt={v => v.toFixed(2) + '×'} onChange={v => patch(one.id, null, { s: v })} />
+              </Row>
+            )}
+
+            <Row label="Position">
+              <div className="flex gap-1.5">
+                <label className="flex-1 flex items-center gap-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1">
+                  <span className="text-[10px] text-zinc-500">X</span>
+                  <input type="number" value={Math.round(one.x)} onChange={e => patch(one.id, null, { x: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-transparent text-[12px] text-zinc-200 focus:outline-none font-mono" />
+                </label>
+                <label className="flex-1 flex items-center gap-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1">
+                  <span className="text-[10px] text-zinc-500">Y</span>
+                  <input type="number" value={Math.round(one.y)} onChange={e => patch(one.id, null, { y: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-transparent text-[12px] text-zinc-200 focus:outline-none font-mono" />
+                </label>
+              </div>
+            </Row>
+          </>
+        )}
+
+        {!!chosen.length && (
+          <Row label="Layer and actions">
+            <div className="grid grid-cols-2 gap-1.5">
+              <Btn onClick={() => act('front')} title="Bring to front"><Ic name="ArrowUp" /> Front</Btn>
+              <Btn onClick={() => act('back')} title="Send to back"><Ic name="ArrowDown" /> Back</Btn>
+              <Btn onClick={() => act('duplicate')} title="Duplicate (Ctrl+D)"><Ic name="Copy" /> Duplicate</Btn>
+              <Btn onClick={() => act('delete')} danger title="Delete"><Ic name="Trash2" /> Delete</Btn>
+            </div>
+          </Row>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   14.  TOP BAR
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function TopBar({ canUndo, canRedo, act, snap, setSnap, grid, setGrid, tool, setTool, count }){
+  const [menu, setMenu] = useState(null);
+  const [png, setPng]   = useState({ scale:3, white:true });
+  const close = () => setMenu(null);
+
+  return (
+    <div className="noprint h-[46px] shrink-0 flex items-center gap-1.5 px-3 bg-zinc-900 border-b border-zinc-800 relative z-20">
+      <Btn onClick={() => act('undo')} disabled={!canUndo} title="Undo (Ctrl+Z)"><Ic name="Undo2" /> Undo</Btn>
+      <Btn onClick={() => act('redo')} disabled={!canRedo} title="Redo (Ctrl+Y)"><Ic name="Redo2" /> Redo</Btn>
+      <Btn onClick={() => act('clear')} danger disabled={!count} title="Clear the canvas"><Ic name="Trash2" /> Clear</Btn>
+
+      <span className="w-px h-6 bg-zinc-800 mx-1" />
+
+      <Btn onClick={() => setSnap(!snap)} active={snap} title="Snap bungs to necks, clamps to stands, tubes to bungs">
+        <Ic name="Magnet" /> Smart snap
+      </Btn>
+      <Btn onClick={() => setGrid(!grid)} active={grid} title="Show the grid and snap to it">
+        <Ic name="Grid3x3" /> Grid
+      </Btn>
+      <Btn onClick={() => setTool(tool === 'pan' ? 'select' : 'pan')} active={tool === 'pan'} title="Pan the canvas (or hold Alt)">
+        <Ic name="Hand" /> Pan
+      </Btn>
+      <Btn onClick={() => act('fit')} title="Fit the drawing to the window"><Ic name="Maximize" /> Fit</Btn>
+
+      <span className="flex-1" />
+
+      <div className="relative">
+        <Btn onClick={() => setMenu(menu === 'file' ? null : 'file')} active={menu === 'file'} title="Save or open a drawing">
+          <Ic name="Save" /> File
+        </Btn>
+        {menu === 'file' && (
+          <div className="absolute right-0 top-[38px] w-[228px] rounded-lg border border-zinc-700 bg-zinc-900
+                          shadow-2xl p-2 space-y-1.5">
+            <button type="button" onClick={() => { act('savejson'); close(); }}
+              className="w-full text-left px-2 py-1.5 rounded text-[12.5px] text-zinc-300 hover:bg-zinc-800">
+              Save drawing as JSON
+            </button>
+            <button type="button" onClick={() => { act('openjson'); close(); }}
+              className="w-full text-left px-2 py-1.5 rounded text-[12.5px] text-zinc-300 hover:bg-zinc-800">
+              Open a saved JSON drawing
+            </button>
+            <button type="button" onClick={() => { window.print(); close(); }}
+              className="w-full text-left px-2 py-1.5 rounded text-[12.5px] text-zinc-300 hover:bg-zinc-800">
+              Print the drawing
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative">
+        <Btn onClick={() => setMenu(menu === 'exp' ? null : 'exp')} active={menu === 'exp'} title="Export the drawing">
+          <Ic name="Download" /> Export
+        </Btn>
+        {menu === 'exp' && (
+          <div className="absolute right-0 top-[38px] w-[262px] rounded-lg border border-zinc-700 bg-zinc-900
+                          shadow-2xl p-3 space-y-3">
+            <Row label="Background">
+              <Seg value={png.white} onChange={v => setPng({ ...png, white:v })}
+                options={[{ v:true, n:'White' }, { v:false, n:'Transparent' }]} />
+            </Row>
+            <Row label="PNG resolution">
+              <Seg value={png.scale} onChange={v => setPng({ ...png, scale:v })}
+                options={[{ v:2, n:'2×' }, { v:3, n:'3×' }, { v:4, n:'4×' }]} />
+            </Row>
+            <button type="button" onClick={() => { act('png', png); close(); }}
+              className="w-full py-2 rounded-md bg-sky-500 hover:bg-sky-400 text-zinc-950 text-[12.5px] font-semibold">
+              Export PNG
+            </button>
+            <button type="button" onClick={() => { act('svg', png); close(); }}
+              className="w-full py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700
+                         text-zinc-200 text-[12.5px] font-semibold">
+              Export SVG (vector)
+            </button>
+            <div className="text-[10.5px] text-zinc-500 leading-snug">
+              The drawing is cropped to its own bounds, so there is no whitespace to trim afterwards.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {menu && <div className="fixed inset-0 z-[-1]" onClick={close} />}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   15.  THE APPLICATION
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function App(){
+  const [items, setItems] = useState(() => PRESETS[1].build());
+  const [sel,   setSel]   = useState([]);
+  const [tab,   setTab]   = useState('preset');
+  const [view,  setView]  = useState({ x:0, y:0, w:1500 });
+  const [tool,  setTool]  = useState('select');
+  const [snapOn, setSnapOn] = useState(true);
+  const [grid,  setGrid]  = useState(false);
+  const [, bump] = useState(0);
+
+  const itemsRef = useRef(items);
+  useEffect(() => { itemsRef.current = items; });
+
+  const past = useRef([]), future = useRef([]), mark = useRef(null);
+  const fileIn = useRef(null);
+  const cascade = useRef(0);
+
+  const commit = useCallback((next) => {
+    const done = resolveAll(next);
+    past.current.push(itemsRef.current);
+    if(past.current.length > 120) past.current.shift();
+    future.current = [];
+    itemsRef.current = done;
+    setItems(done);
+    bump(t => t + 1);
+  }, []);
+
+  const beginChange = useCallback(() => { mark.current = itemsRef.current; }, []);
+  const endChange   = useCallback((cancel) => {
+    if(!cancel && mark.current && mark.current !== itemsRef.current){
+      past.current.push(mark.current);
+      if(past.current.length > 120) past.current.shift();
+      future.current = [];
+      bump(t => t + 1);
+    }
+    mark.current = null;
+  }, []);
+
+  const patch = useCallback((id, pp, ip) => {
+    setItems(list => {
+      /* Setting x or y by hand means the user wants it there, so a piece
+         that was mounted lets go rather than snapping back. */
+      const freed = ip && (ip.x !== undefined || ip.y !== undefined);
+      const next = resolveAll(list.map(it => it.id === id
+        ? Object.assign({}, it, ip || {}, {
+            props: Object.assign({}, it.props, pp || {}, freed ? { mount:null } : {}) })
+        : it));
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  /* Inspector edits are single actions, so they take their own history step. */
+  const patchCommit = useCallback((id, pp, ip) => { beginChange(); patch(id, pp, ip);
+    setTimeout(() => endChange(), 0); }, [patch, beginChange, endChange]);
+
+  const moveMany = useCallback((list) => {
+    setItems(cur => {
+      const by = {};
+      list.forEach(m => { by[m.id] = m; });
+      /* Dragging a mounted piece frees it; it takes a new host on the drop. */
+      const next = resolveAll(cur.map(it => by[it.id]
+        ? Object.assign({}, it, { x:by[it.id].x, y:by[it.id].y },
+            (it.props && it.props.mount) ? { props: Object.assign({}, it.props, { mount:null }) } : {})
+        : it));
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  /* Called when a drag finishes: an end left sitting on a port takes it. */
+  const settle = useCallback((ids) => {
+    setItems(cur => {
+      const next = resolveAll(autoMount(autoBind(cur, ids), ids));
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const fit = useCallback((list) => {
+    const l = list || itemsRef.current;
+    if(!l.length){ setView({ x:0, y:0, w:1500 }); return; }
+    const b = worldBounds(l), pad = 80;
+    const w = Math.max(560, b.w + pad*2, (b.h + pad*2) / 0.62);
+    setView({ x: b.x + b.w/2 - w/2, y: b.y + b.h/2 - (w*0.62)/2, w });
+  }, []);
+
+  useEffect(() => { fit(); }, []);   // frame the opening template
+
+  const add = useCallback((type) => {
+    const it = mkItem(type, 0, 0);
+    const b  = boxOf(it);
+    const k  = cascade.current % 6; cascade.current++;
+    it.x = Math.round(view.x + view.w/2      - b.w/2 - b.x + k*20);
+    it.y = Math.round(view.y + view.w*0.31   - b.h/2 - b.y + k*20);
+    commit(itemsRef.current.concat(it));
+    setSel([it.id]);
+  }, [view, commit]);
+
+  /* Loading a template replaces the canvas. No confirmation: it is a single
+     undo away, and a teacher flicking through the practicals should not have
+     to dismiss a dialog each time. */
+  const loadPreset = useCallback((preset) => {
+    const next = autoMount(autoBind(preset.build()));
+    commit(next);
+    setSel([]);
+    setTimeout(() => fit(next), 0);
+  }, [commit, fit]);
+
+  const act = useCallback((kind, arg) => {
+    const list = itemsRef.current;
+    const chosen = sel.slice();
+    switch(kind){
+      case 'undo':
+        if(!past.current.length) return;
+        future.current.push(list);
+        { const prev = past.current.pop(); itemsRef.current = prev; setItems(prev); }
+        setSel([]); bump(t => t + 1); return;
+      case 'redo':
+        if(!future.current.length) return;
+        past.current.push(list);
+        { const nxt = future.current.pop(); itemsRef.current = nxt; setItems(nxt); }
+        setSel([]); bump(t => t + 1); return;
+      case 'clear':
+        if(!list.length) return;
+        if(!window.confirm('Clear the whole canvas?')) return;
+        commit([]); setSel([]); return;
+      case 'fit': fit(); return;
+      case 'delete':
+        if(!chosen.length) return;
+        commit(list.filter(i => chosen.indexOf(i.id) < 0)); setSel([]); return;
+      case 'duplicate': {
+        if(!chosen.length) return;
+        const copies = list.filter(i => chosen.indexOf(i.id) >= 0)
+          .map(i => Object.assign({}, i, { id: uid(), x: i.x + 26, y: i.y + 26,
+                     props: Object.assign({}, i.props, { mount:null, bind:null }) }));
+        commit(list.concat(copies));
+        setSel(copies.map(c => c.id)); return;
+      }
+      case 'front': {
+        if(!chosen.length) return;
+        const keep = list.filter(i => chosen.indexOf(i.id) < 0);
+        commit(keep.concat(list.filter(i => chosen.indexOf(i.id) >= 0))); return;
+      }
+      case 'back': {
+        if(!chosen.length) return;
+        const keep = list.filter(i => chosen.indexOf(i.id) < 0);
+        commit(list.filter(i => chosen.indexOf(i.id) >= 0).concat(keep)); return;
+      }
+      case 'png': exportPNG(list, { scale: arg.scale, white: arg.white, name:'labsketch-diagram' }); return;
+      case 'svg': exportSVG(list, { white: arg.white, name:'labsketch-diagram' }); return;
+      case 'savejson':
+        saveBlob(new Blob([JSON.stringify({ app:'LabSketch', version:1, items:list }, null, 1)],
+          { type:'application/json' }), 'labsketch-drawing.json');
+        return;
+      case 'openjson': fileIn.current && fileIn.current.click(); return;
+      default: return;
+    }
+  }, [sel, commit, fit]);
+
+  const onFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        const list = (data.items || []).filter(i => i && DEF[i.type]).map(i => ({
+          id: uid(), type: i.type,
+          x: +i.x || 0, y: +i.y || 0,
+          rot: +i.rot || 0, s: i.s === undefined ? 1 : +i.s,
+          props: Object.assign({}, i.props)
+        }));
+        if(!list.length) throw new Error('empty');
+        const wired = autoMount(autoBind(list.map(i =>
+          Object.assign({}, i, { props: Object.assign({}, i.props, { bind:null, mount:null }) }))));
+        commit(wired); setSel([]); setTimeout(() => fit(wired), 0);
+      } catch(err){
+        alert('That file could not be read as a LabSketch drawing.');
+      }
+    };
+    r.readAsText(f);
+    e.target.value = '';
+  };
+
+  /* Keyboard. Text fields keep their own keys. */
+  useEffect(() => {
+    const onKey = (e) => {
+      const t = e.target;
+      if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      const meta = e.ctrlKey || e.metaKey;
+      if(meta && e.key.toLowerCase() === 'z'){ e.preventDefault(); act(e.shiftKey ? 'redo' : 'undo'); return; }
+      if(meta && e.key.toLowerCase() === 'y'){ e.preventDefault(); act('redo'); return; }
+      if(meta && e.key.toLowerCase() === 'd'){ e.preventDefault(); act('duplicate'); return; }
+      if(meta && e.key.toLowerCase() === 'a'){ e.preventDefault(); setSel(itemsRef.current.map(i => i.id)); return; }
+      if(e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); act('delete'); return; }
+      if(e.key === 'Escape'){ setSel([]); return; }
+      if(e.key.indexOf('Arrow') === 0 && sel.length){
+        e.preventDefault();
+        const d = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0;
+        const dy = e.key === 'ArrowUp'   ? -d : e.key === 'ArrowDown'  ? d : 0;
+        beginChange();
+        moveMany(itemsRef.current.filter(i => sel.indexOf(i.id) >= 0)
+          .map(i => ({ id:i.id, x:i.x + dx, y:i.y + dy })));
+        setTimeout(() => endChange(), 0);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [act, sel, moveMany, beginChange, endChange]);
+
+  const zoomPct = Math.round(1500 / view.w * 100);
+  const oneSel  = sel.length === 1 ? items.find(i => i.id === sel[0]) : null;
+  const tubeHint = oneSel && DEF[oneSel.type].route
+    ? 'Swing an amber handle to bend it · drag an end onto a port to clip it on · ⊕ adds a node, double-click removes one'
+    : null;
+
+  return (
+    <div className="h-full w-full flex flex-col">
+      <TopBar canUndo={!!past.current.length} canRedo={!!future.current.length}
+        act={act} snap={snapOn} setSnap={setSnapOn} grid={grid} setGrid={setGrid}
+        tool={tool} setTool={setTool} count={items.length} />
+
+      <div className="flex-1 flex min-h-0">
+        <Library tab={tab} setTab={setTab} onAdd={add} onPreset={loadPreset} itemCount={items.length} />
+
+        <div className="flex-1 min-w-0 flex flex-col bg-zinc-800">
+          <div id="ls-stage" className="flex-1 min-h-0 m-3 mb-1.5 rounded-lg overflow-hidden border border-zinc-700 shadow-2xl bg-white">
+            <Canvas items={items} sel={sel} setSel={setSel} patch={patch} moveMany={moveMany}
+              settle={settle} view={view} setView={setView} snap={snapOn} grid={grid}
+              beginChange={beginChange} endChange={endChange} tool={tool} />
+          </div>
+          <div className="noprint h-[26px] px-4 flex items-center justify-between text-[10.5px] text-zinc-500">
+            <span>
+              {tubeHint || (sel.length ? sel.length + ' selected'
+                : 'Drag to move · handles rotate and resize · Alt-drag to pan')}
+            </span>
+            <span className="font-mono">{zoomPct}%</span>
+          </div>
+        </div>
+
+        <Inspector items={items} sel={sel} patch={patchCommit} act={act} />
+      </div>
+
+      <input ref={fileIn} type="file" accept="application/json,.json" onChange={onFile} className="hidden" />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<!-- ── Home button, self-contained ─────────────────────────────────────────
+     Fixed bottom-left, scoped class name, sits above everything so it is
+     reachable even when a page opens a full-screen overlay. -->
+<style>
+  .sv-home{
+    position:fixed; left:14px; bottom:14px; z-index:2147483000;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%;
+    color:#efe9dd; background:#14120f;
+    border:1px solid rgba(239,233,221,.24);
+    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
+    transition:background .15s ease, transform .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
+  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
+  .sv-home svg{ width:18px; height:18px; display:block; }
+  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
+  @media print{ .sv-home{ display:none; } }
+</style>
+<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
+    <path d="M9.75 21v-6.2h4.5V21"/>
+  </svg>
+</a>
+</body>
+</html>
