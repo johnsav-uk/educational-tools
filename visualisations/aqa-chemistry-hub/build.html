@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Build app.js</title>
+<!-- build-time only, not vendored: this page is never linked from the site -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<style>body{font:14px ui-monospace,Consolas,monospace;padding:24px;white-space:pre-wrap}</style>
+</head>
+<body>
+<div id="log">compiling…</div>
+<script>
+/* Build-time page only — never linked from the site, deleted before committing.
+   Babel runs here because there is no node on this machine; the compiled output
+   is POSTed to build_writer.py, which saves it as app.js. */
+const log = (m) => { document.getElementById('log').textContent += '\n' + m; };
+(async () => {
+  try {
+    const src = await (await fetch('app.jsx?' + Date.now())).text();
+    log(`app.jsx: ${src.length.toLocaleString()} chars`);
+    const { code } = Babel.transform(src, { presets: ['react'], sourceType: 'script', compact: false });
+    log(`compiled: ${code.length.toLocaleString()} chars`);
+    const banner = '/* GENERATED from app.jsx by build.html — do not edit. */\n';
+    const res = await fetch('http://127.0.0.1:8766/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: banner + code,
+    });
+    log(res.ok ? 'WRITTEN: app.js' : 'writer refused: ' + res.status);
+  } catch (err) {
+    log('FAILED: ' + err.message);
+  }
+})();
+</script>
+</body>
+</html>

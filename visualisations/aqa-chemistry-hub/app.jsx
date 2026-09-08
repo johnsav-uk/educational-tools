@@ -1,28 +1,14 @@
-<!DOCTYPE html>
-<html lang="en-GB">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AQA Atomic Structure Toolkit — preview</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
-<style>body{margin:0}</style>
-</head>
-<body class="bg-slate-50">
-<div id="root"></div>
+/* ------------------------------------------------------------------ *
+ * GENERATED FILE — do not edit.
+ * Run `python build.py` to rebuild it from the modules in src/.
+ * ------------------------------------------------------------------ */
 
-<script type="text/babel" data-presets="react">
-const { useCallback, useEffect, useMemo, useRef, useState, Suspense } = React;
+const { useCallback, useEffect, useMemo, useRef, useState } = React;
+const { CartesianGrid, Label, Line: RLine, LineChart, ReferenceLine,
+        ResponsiveContainer, Tooltip, XAxis, YAxis } = Recharts;
 
-/* ================================================================
- * 1 — ELECTRON CONFIGURATION BUILDER
- *     (generated from src/ElectronConfigBuilder.jsx — edit that file)
- * ================================================================ */
+
+/* ===== 1 — electron configurations ===== */
 /* ------------------------------------------------------------------ *
  * AQA A-Level Chemistry 7405 — 3.1.1.2 Electron configuration
  * Scope: Aufbau, Hund, Pauli, s/p/d sub-levels to Z=36.
@@ -730,9 +716,15 @@ function ElectronConfigBuilder() {
   );
 }
 
-/* ================================================================
- * 2 — ORBITAL VIEWER (three.js build of the R3F module)
- * ================================================================ */
+/* ===== 2 — orbital shapes ===== */
+/* ------------------------------------------------------------------ *
+ * AQA A-Level Chemistry 7405 — 3.1.1.2 Atomic orbitals
+ * BROWSER BUILD. Same physics, colours and copy as ../OrbitalViewer3D.jsx,
+ * but written against plain three.js (r128 UMD) instead of react-three-fiber,
+ * because R3F ships ESM only and the site vendors its libraries as scripts.
+ * Keep the two in step when either changes.
+ * ------------------------------------------------------------------ */
+
 const ORBITALS = {
   '1s': { kind: 's', rMax: 8, extent: 3.5, radial: (r) => Math.exp(-r), label: '1s' },
   '2s': { kind: 's', rMax: 16, extent: 10, radial: (r) => (2 - r) * Math.exp(-r / 2), label: '2s' },
@@ -1122,12 +1114,7 @@ function OrbitalViewer3D() {
   );
 }
 
-/* ================================================================
- * 3 — SUCCESSIVE IONISATION ENERGY GRAPHER
- *     (generated from src/IonisationEnergyGraph.jsx — edit that file)
- * ================================================================ */
-const { CartesianGrid, Label, Line: RLine, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } = Recharts;
-
+/* ===== 3 — ionisation energies ===== */
 /* ------------------------------------------------------------------ *
  * AQA A-Level Chemistry 7405 — 3.1.1.3 Ionisation energies
  * Two views of the same data set:
@@ -1846,19 +1833,37 @@ function IonisationEnergyGraph() {
   );
 }
 
-/* ================================================================
- * PARENT HUB
- * ================================================================ */
+/* ===== hub ===== */
+
 const TABS = [
-  { id: 'config', label: 'Electron Configurations', spec: '3.1.1.2', blurb: 'Build configurations with Aufbau, Hund and Pauli — including the Cr/Cu anomalies and transition metal ions.', Component: ElectronConfigBuilder },
-  { id: 'orbitals', label: 'Orbital Shapes (3D)', spec: '3.1.1.2', blurb: 'Rotate the s and 2p probability clouds and find the nodal plane.', Component: OrbitalViewer3D },
-  { id: 'ionisation', label: 'Ionisation Energies', spec: '3.1.1.3', blurb: 'Successive IEs and the shell jumps that give the group — or first IEs across a period and the sub-level dips.', Component: IonisationEnergyGraph },
+  {
+    id: 'config',
+    label: 'Electron Configurations',
+    spec: '3.1.1.2',
+    blurb: 'Build configurations with Aufbau, Hund and Pauli — including the Cr/Cu anomalies and transition metal ions.',
+    Component: ElectronConfigBuilder,
+  },
+  {
+    id: 'orbitals',
+    label: 'Orbital Shapes (3D)',
+    spec: '3.1.1.2',
+    blurb: 'Rotate the s and 2p probability clouds and find the nodal plane.',
+    Component: OrbitalViewer3D,
+  },
+  {
+    id: 'ionisation',
+    label: 'Ionisation Energies',
+    spec: '3.1.1.3',
+    blurb: 'Successive IEs and the shell jumps that give the group — or first IEs across a period and the sub-level dips.',
+    Component: IonisationEnergyGraph,
+  },
 ];
 
 function AQAChemistryHub() {
   const [active, setActive] = useState('config');
-  const tab = TABS.find((t) => t.id === active) || TABS[0];
+  const tab = TABS.find((t) => t.id === active) ?? TABS[0];
   const { Component } = tab;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b-4 border-red-600 bg-white">
@@ -1868,12 +1873,22 @@ function AQAChemistryHub() {
           <h1 className="text-xl font-black tracking-tight">Atomic Structure Toolkit</h1>
           <span className="text-sm font-semibold text-slate-500">AQA 7405 · 3.1.1</span>
         </div>
+
         <nav className="mx-auto flex max-w-6xl gap-1 px-4" aria-label="Tools">
           {TABS.map((t) => {
             const on = t.id === active;
             return (
-              <button key={t.id} type="button" onClick={() => setActive(t.id)} aria-current={on ? 'page' : undefined}
-                className={`-mb-px rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-bold transition ${on ? 'border-slate-200 bg-slate-50 text-red-700' : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActive(t.id)}
+                aria-current={on ? 'page' : undefined}
+                className={`-mb-px rounded-t-lg border border-b-0 px-4 py-2.5 text-sm font-bold transition ${
+                  on
+                    ? 'border-slate-200 bg-slate-50 text-red-700'
+                    : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                }`}
+              >
                 {t.label}
                 <span className="ml-2 hidden text-xs font-semibold text-slate-400 sm:inline">{t.spec}</span>
               </button>
@@ -1881,18 +1896,18 @@ function AQAChemistryHub() {
           })}
         </nav>
       </header>
+
       <main className="mx-auto max-w-6xl px-4 py-6">
         <p className="mb-4 text-sm text-slate-600">{tab.blurb}</p>
         <Component />
       </main>
+
       <footer className="mx-auto max-w-6xl px-4 pb-8 text-xs text-slate-400">
-        Content limited to the AQA A-Level Chemistry (7405) specification: no quantum numbers, no d-orbital shapes.
+        Content limited to the AQA A-Level Chemistry (7405) specification: no quantum numbers,
+        no d-orbital shapes.
       </footer>
     </div>
   );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<AQAChemistryHub />);
-</script>
-</body>
-</html>

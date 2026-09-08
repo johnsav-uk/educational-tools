@@ -15,7 +15,10 @@ d-orbital geometry.
 | `src/ElectronConfigBuilder.jsx` | Two tabs: build a configuration, and the filling rules |
 | `src/OrbitalViewer3D.jsx` | s and 2p orbitals as a \|ψ\|² point cloud, a 90% boundary surface, or both |
 | `src/IonisationEnergyGraph.jsx` | Two graphs: successive IEs of one element, or first IEs H → Ca |
-| `demo.html` | Standalone preview of all three, no build step (React + Recharts + three.js from CDN) |
+| `index.html` | The live page: vendored libraries, precompiled `app.js`, standard home button |
+| `app.jsx` / `app.js` | Generated single-file build and its compiled output — never edit by hand |
+| `src/browser/OrbitalViewer3D.browser.jsx` | The 3D viewer against plain three.js, for the site build |
+| `build.py` / `build_writer.py` / `build.html` | The build: `src/` → `app.jsx` → `app.js` |
 
 Each module is a default export with no props and no shared state, so any one of
 them can be dropped into another page on its own.
@@ -75,21 +78,35 @@ Python:
 python -m http.server 8765 --directory H:/Claude/educational-tools
 ```
 
-Then open <http://localhost:8765/visualisations/aqa-chemistry-hub/demo.html>.
+Then open <http://localhost:8765/visualisations/aqa-chemistry-hub/>.
 Any file in the repo is reachable the same way — edit, refresh, and you are
 looking at exactly what GitHub Pages will serve. `.claude/launch.json` starts the
 same server from inside Claude Code.
 
-**Edit the modules in `src/`, not `demo.html`.** Sections 1 and 3 of the demo are
-generated verbatim from `ElectronConfigBuilder.jsx` and `IonisationEnergyGraph.jsx`
-(imports stripped, `ELEMENTS` renamed to `IE_ELEMENTS`, Recharts' `Line` aliased
-to `RLine`), so hand-edits there are lost on the next sync.
+**Edit the modules in `src/`, never `app.jsx` or `app.js`.** `build.py`
+concatenates the four components into `app.jsx` with imports stripped, `ELEMENTS`
+renamed to `IE_ELEMENTS` in the graph, and Recharts' `Line` aliased to `RLine`.
 
-The demo compiles JSX in the browser with Babel standalone — fine for previewing,
-slower to start than a built bundle, and it needs an internet connection for the
-CDN scripts. It also swaps `@react-three/fiber` for plain three.js (r128 UMD),
-because R3F ships ESM only and cannot be loaded from a script tag; the sampling,
-colours, geometry and copy are identical to the module.
+## Rebuilding app.js
+
+The page ships precompiled — no Babel, no CDN, nothing loaded from outside the
+repo. There is no node on this machine, so Babel runs in the browser instead:
+
+```bash
+python build.py                                    # src/ -> app.jsx
+python build_writer.py                             # POST-to-file helper on :8766
+# then open http://localhost:8765/visualisations/aqa-chemistry-hub/build.html
+```
+
+`build.html` fetches `app.jsx`, transforms it, and POSTs the result to the
+writer, which saves `app.js`. It is a build-time page, never linked from the
+site. If node is ever available, `npx babel app.jsx --presets react -o app.js`
+does the same job.
+
+The site build swaps `@react-three/fiber` for plain three.js (r128 UMD), because
+R3F ships ESM only and cannot be loaded from a script tag. That variant lives in
+`src/browser/OrbitalViewer3D.browser.jsx`; the sampling, colours, geometry and
+copy are identical to the R3F module, so keep the two in step.
 
 ## Data
 

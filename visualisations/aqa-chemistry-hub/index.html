@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atomic Structure: Configurations, Orbitals &amp; Ionisation — AQA 3.1.1</title>
+<meta name="description" content="Build electron configurations with Aufbau, Hund and Pauli, rotate the s and p orbitals, and read successive and first ionisation energies. AQA A-Level Chemistry 3.1.1.">
+
+<!-- ── Tailwind, vendored ──────────────────────────────────────────────── -->
+<script src="lib/tailwind.js"></script>
+
+<!-- ── three.js (r128), for the orbital clouds ─────────────────────────── -->
+<script src="lib/three.min.js"></script>
+
+<!-- ── React and Recharts, vendored ────────────────────────────────────── -->
+<script src="lib/react.production.min.js"></script>
+<script src="lib/react-dom.production.min.js"></script>
+<script src="lib/prop-types.min.js"></script>
+<script src="lib/recharts.min.js"></script>
+
+<style>
+  :root { color-scheme: light; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #f8fafc; }
+  /* the 3D canvas swallows wheel events for zoom; keep the page scrollable elsewhere */
+  canvas { touch-action: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- app.js is generated: python build.py, then compile app.jsx (see README) -->
+<script src="app.js"></script>
+
+<!-- ── Home button, self-contained ─────────────────────────────────────────
+     Fixed bottom-left, scoped class name, sits above everything so it is
+     reachable even when a page opens a full-screen overlay. Outside #root, so
+     React mounting cannot remove it. -->
+<style>
+  .sv-home{
+    position:fixed; left:14px; bottom:14px; z-index:2147483000;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%;
+    color:#efe9dd; background:#14120f;
+    border:1px solid rgba(239,233,221,.24);
+    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
+    transition:background .15s ease, transform .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
+  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
+  .sv-home svg{ width:18px; height:18px; display:block; }
+  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
+  @media print{ .sv-home{ display:none; } }
+</style>
+<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
+    <path d="M9.75 21v-6.2h4.5V21"/>
+  </svg>
+</a>
+</body>
+</html>
