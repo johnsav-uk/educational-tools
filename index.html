@@ -32,6 +32,17 @@
   --ultra-dark:oklch(0.45 0.2 265);
   --ultra-light:oklch(0.72 0.16 265);
   --coral:oklch(0.66 0.19 25);
+  /* Subject and level colours. The site names a subject or a qualification
+     level in a lot of places; these keep that meaning carried by colour as
+     well as by the word. Values are picked to clear 4.5:1 on both --paper
+     and --card-paper at the 11px the tags and chips are set in. The -light
+     pair is for the same words on the ink ticker. */
+  --chem:#a8281e;
+  --phys:#14509b;
+  --bio:#166534;
+  --alevel:#6b3fa0;
+  --gcse:#a04d10;
+  --alevel-light:#c4a7ff;
   --games:#14120f;
   --games-hover:#1c1a15;
   --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -64,6 +75,7 @@ button{font-family:inherit}
 .ticker .container{padding:9px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;display:flex;gap:34px;white-space:nowrap;overflow:hidden}
 .ticker .coral{color:var(--coral)}
 .ticker .ultra{color:var(--ultra-light)}
+.ticker .alevel{color:var(--alevel-light)}
 
 /* ---------- Main ---------- */
 main{max-width:1200px;margin:0 auto;padding:0 20px 90px}
@@ -127,9 +139,9 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 90px}
 #reset{border:1px solid var(--ink);background:transparent;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;cursor:pointer;color:var(--ink)}
 #reset:hover{background:var(--ink);color:var(--paper)}
 .chips{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:10px 0}
-.chip{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink)}
+.chip{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--accent,var(--ink));background:transparent;color:var(--accent,var(--ink))}
 .chip+.chip{border-left:0}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.chip[aria-pressed="true"]{background:var(--accent,var(--ink));color:var(--paper)}
 
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:22px;padding-top:30px}
 .card{display:flex;flex-direction:column;padding:22px;background:var(--card-paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);transition:transform 140ms linear,box-shadow 140ms linear}
@@ -143,6 +155,16 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 90px}
 .card h3{font-weight:700;font-size:20px;line-height:1.15;letter-spacing:-.035em;text-transform:uppercase;margin:18px 0 10px}
 .card p{margin:0 0 20px;font-size:14.5px;line-height:1.5;color:var(--ink-72);text-wrap:pretty}
 .card-tags{margin-top:auto;padding-top:14px;border-top:1px solid var(--ink-20);display:flex;flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-60)}
+
+/* Subject and level coding, applied by buildChips and buildCard. Each class
+   sets --accent as well as color, so the same class works on a plain text
+   label and on a chip that needs to fill with the colour when pressed.
+   Declared after .card-level and .card-tags so it beats their greys. */
+.subj-chem{--accent:var(--chem);color:var(--chem)}
+.subj-phys{--accent:var(--phys);color:var(--phys)}
+.subj-bio{--accent:var(--bio);color:var(--bio)}
+.lvl-alevel{--accent:var(--alevel);color:var(--alevel)}
+.lvl-gcse{--accent:var(--gcse);color:var(--gcse)}
 
 .empty{margin-top:30px;padding:54px 24px;text-align:center;border:1.5px dashed var(--ink)}
 .empty p:first-child{margin:0 0 6px;font-weight:700;font-size:19px;letter-spacing:-.03em;text-transform:uppercase}
@@ -181,7 +203,7 @@ html{scroll-behavior:smooth}
   <div class="container">
     <span>AQA &middot; OCR &middot; Edexcel</span>
     <span class="coral">Free for classroom use</span>
-    <span>KS4 &rarr; A-Level</span>
+    <span>KS4 &rarr; <span class="alevel">A-Level</span></span>
     <span class="ultra">No sign-in required</span>
   </div>
 </div>
@@ -387,6 +409,20 @@ html{scroll-behavior:smooth}
 
   var KIND_CLASS = { "Revision Game": "kind-game", "3D Model": "kind-3d", "Interactive": "kind-interactive" };
 
+  // Chemistry red, Physics blue, Biology green, A-Level purple, GCSE orange,
+  // everywhere the site names one. Matched on substring so a board-prefixed
+  // tag ("AQA Chemistry") takes the subject's colour too. Anything with no
+  // subject in it — Languages, Interactive, 3D Model — stays ink.
+  var SUBJECTS = [["Chemistry", "subj-chem"], ["Physics", "subj-phys"], ["Biology", "subj-bio"]];
+  var LEVEL_CLASS = { "A-Level": "lvl-alevel", "GCSE": "lvl-gcse" };
+
+  function subjectClass(label) {
+    for (var i = 0; i < SUBJECTS.length; i++) {
+      if (label.indexOf(SUBJECTS[i][0]) !== -1) return SUBJECTS[i][1];
+    }
+    return "";
+  }
+
   var state = { query: "", filter: "All" };
 
   var grid = document.getElementById('grid');
@@ -418,7 +454,7 @@ html{scroll-behavior:smooth}
     FILTERS.forEach(function (label) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip';
+      b.className = 'chip ' + subjectClass(label);
       b.textContent = label;
       b.dataset.filter = label;
       b.setAttribute('aria-pressed', String(label === state.filter));
@@ -440,7 +476,7 @@ html{scroll-behavior:smooth}
     kind.textContent = r.kind;
 
     var level = document.createElement('span');
-    level.className = 'card-level';
+    level.className = 'card-level ' + (LEVEL_CLASS[r.level] || '');
     level.textContent = r.level;
 
     meta.appendChild(kind);
@@ -456,6 +492,7 @@ html{scroll-behavior:smooth}
     tags.className = 'card-tags';
     r.tags.forEach(function (t) {
       var s = document.createElement('span');
+      s.className = subjectClass(t);
       s.textContent = t;
       tags.appendChild(s);
     });
