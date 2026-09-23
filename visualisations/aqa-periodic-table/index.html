@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Periodic Table Explorer (beta) — AQA GCSE &amp; A-Level Chemistry</title>
+<meta name="description" content="Interactive AQA periodic table for GCSE and A-Level Chemistry: element details, electron configurations, trend overlays, the history of the table and a presenter mode for the board.">
+<style>
+/* ── Tokens ───────────────────────────────────────────────────────────── */
+:root{
+  /* AQA sets its papers and data sheets in Arial; match it so tables and formulae look like the exam */
+  --font: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --bg:#f6f2ea; --panel:#fffdf8; --panel2:#efe9dd; --line:#d6cdbb; --line2:#b9ae98;
+  --ink:#1b1813; --dim:#51493e; --muted:#6e665a; --focus:#0b63c9;
+  --hide:#cfc6b4;
+  --chem:#a8281e; --gcse:#a04d10; --alevel:#6b3fa0;
+
+  --c-alkali:#ffd3cc; --c-alkaline:#ffe2bf; --c-trans:#f8e7a6; --c-post:#dbe3ec;
+  --c-metalloid:#d3edd6; --c-nonmetal:#cbe4fb; --c-halogen:#e1d8ff; --c-noble:#cdeeed;
+  --c-lanth:#f9d7e8; --c-act:#efd0e0;
+  --e-alkali:#b3261e; --e-alkaline:#a85a00; --e-trans:#8a6a00; --e-post:#4b5d73;
+  --e-metalloid:#2c7a3c; --e-nonmetal:#1c5fa8; --e-halogen:#6041b8; --e-noble:#11706c;
+  --e-lanth:#a3336d; --e-act:#86305d;
+
+  --b-s:#ffd3cc; --b-p:#cbe4fb; --b-d:#f8e7a6; --b-f:#d3edd6;
+  --bl-s:#b3261e; --bl-p:#1c5fa8; --bl-d:#7d6000; --bl-f:#2c7a3c;
+
+  --seq-lo:#f1f4f8; --seq-en:#23408f; --seq-ie:#0b5b51; --seq-rad:#8f3d0a; --seq-inv:#ffffff;
+  --nodata:#ebe6dc;
+  --shadow:0 10px 32px -14px rgba(40,30,10,.4);
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121316; --panel:#1a1c21; --panel2:#23262d; --line:#343843; --line2:#4a5060;
+    --ink:#eee9df; --dim:#c4bdb0; --muted:#9a9384; --focus:#7cc0ff; --hide:#4a4f5c;
+    --chem:#ff8a7a; --gcse:#f4a261; --alevel:#c4a7ff;
+    --c-alkali:#4d2420; --c-alkaline:#4a3318; --c-trans:#443b14; --c-post:#2c3440;
+    --c-metalloid:#1f3d28; --c-nonmetal:#173550; --c-halogen:#302757; --c-noble:#164244;
+    --c-lanth:#4a2240; --c-act:#3f2036;
+    --e-alkali:#ff8a7a; --e-alkaline:#ffb86b; --e-trans:#e8cf6a; --e-post:#a9b7c9;
+    --e-metalloid:#7fd394; --e-nonmetal:#7fb8f5; --e-halogen:#b9a4ff; --e-noble:#6fd6d0;
+    --e-lanth:#f59ac6; --e-act:#e38bb6;
+    --b-s:#4d2420; --b-p:#173550; --b-d:#443b14; --b-f:#1f3d28;
+    --bl-s:#ff8a7a; --bl-p:#7fb8f5; --bl-d:#e8cf6a; --bl-f:#7fd394;
+    --seq-lo:#1d2029; --seq-en:#a9c4ff; --seq-ie:#86e3d3; --seq-rad:#ffb683; --seq-inv:#0d0f14;
+    --nodata:#23262d;
+    --shadow:0 10px 32px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121316; --panel:#1a1c21; --panel2:#23262d; --line:#343843; --line2:#4a5060;
+  --ink:#eee9df; --dim:#c4bdb0; --muted:#9a9384; --focus:#7cc0ff; --hide:#4a4f5c;
+  --chem:#ff8a7a; --gcse:#f4a261; --alevel:#c4a7ff;
+  --c-alkali:#4d2420; --c-alkaline:#4a3318; --c-trans:#443b14; --c-post:#2c3440;
+  --c-metalloid:#1f3d28; --c-nonmetal:#173550; --c-halogen:#302757; --c-noble:#164244;
+  --c-lanth:#4a2240; --c-act:#3f2036;
+  --e-alkali:#ff8a7a; --e-alkaline:#ffb86b; --e-trans:#e8cf6a; --e-post:#a9b7c9;
+  --e-metalloid:#7fd394; --e-nonmetal:#7fb8f5; --e-halogen:#b9a4ff; --e-noble:#6fd6d0;
+  --e-lanth:#f59ac6; --e-act:#e38bb6;
+  --b-s:#4d2420; --b-p:#173550; --b-d:#443b14; --b-f:#1f3d28;
+  --bl-s:#ff8a7a; --bl-p:#7fb8f5; --bl-d:#e8cf6a; --bl-f:#7fd394;
+  --seq-lo:#1d2029; --seq-en:#a9c4ff; --seq-ie:#86e3d3; --seq-rad:#ffb683; --seq-inv:#0d0f14;
+  --nodata:#23262d;
+  --shadow:0 10px 32px -12px rgba(0,0,0,.7);
+}
+/* High contrast: stronger ink, heavier rules, no pastel ambiguity */
+:root[data-contrast="high"]{ --line:var(--ink); --line2:var(--ink); --dim:var(--ink); --muted:var(--ink); }
+:root[data-contrast="high"] .tile{ border-width:2px; border-color:var(--ink); }
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+*{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); font-size:15px; line-height:1.5; }
+button{ font:inherit; color:inherit; }
+:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+sub,sup{ line-height:0; }
+.sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.chem{ color:var(--chem); } .gcse{ color:var(--gcse); } .alevel{ color:var(--alevel); }
+
+/* ── Header & tabs ────────────────────────────────────────────────────── */
+.top{ position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.top-in{ max-width:1500px; margin:0 auto; padding:10px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; }
+.brand{ display:flex; align-items:center; gap:10px; min-width:0; margin-right:auto; }
+.brand-mark{ width:34px; height:34px; border-radius:8px; display:grid; place-items:center; flex:none;
+  background:var(--chem); color:#fff; font-weight:800; font-size:15px; letter-spacing:-.02em; }
+.brand h1{ margin:0; font-size:17px; line-height:1.2; letter-spacing:-.01em; }
+.brand p{ margin:0; font-size:12.5px; color:var(--muted); }
+.beta{ display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; vertical-align:2px;
+  border:1px solid currentColor; color:var(--alevel); margin-left:4px; }
+.tabs{ display:flex; gap:4px; background:var(--panel2); padding:4px; border-radius:11px; flex-wrap:wrap; }
+.tab{ border:0; background:transparent; padding:7px 13px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; color:var(--dim); }
+.tab[aria-selected="true"]{ background:var(--panel); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.tab .lv{ font-weight:700; }
+.tools{ display:flex; gap:6px; align-items:center; }
+.btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--panel);
+  padding:7px 12px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:600; min-height:36px; }
+.btn:hover{ border-color:var(--line2); }
+.btn[hidden]{ display:none; }
+.btn[aria-pressed="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.btn.primary{ background:var(--chem); color:#fff; border-color:var(--chem); }
+:root[data-theme="dark"] .btn.primary{ color:#1a0d0b; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn.primary{ color:#1a0d0b; } }
+.btn svg{ width:16px; height:16px; }
+.icon-btn{ width:36px; padding:0; justify-content:center; }
+
+main{ max-width:1500px; margin:0 auto; padding:16px 16px 70px; }
+.panel[hidden]{ display:none; }
+.intro{ display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; margin:4px 0 12px; }
+.intro h2{ margin:0; font-size:21px; letter-spacing:-.01em; }
+.intro p{ margin:0; color:var(--dim); max-width:80ch; }
+
+/* ── Toolbars, chips, legends ─────────────────────────────────────────── */
+.bar{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:0 0 12px; }
+.bar-label{ font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.04em; }
+.seg{ display:inline-flex; background:var(--panel2); padding:3px; border-radius:9px; gap:2px; flex-wrap:wrap; }
+.seg button{ border:0; background:transparent; padding:5px 10px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600; color:var(--dim); min-height:32px; }
+.seg button[aria-pressed="true"]{ background:var(--panel); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.18); }
+.chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.chip{ --accent:var(--line2); display:inline-flex; align-items:center; gap:7px; padding:5px 10px 5px 8px; border-radius:999px;
+  border:1px solid var(--line); background:var(--panel); cursor:pointer; font-size:13px; font-weight:600; min-height:32px; }
+.chip .sw{ width:14px; height:14px; border-radius:4px; background:var(--sw); border:2px solid var(--accent); flex:none; }
+.chip[aria-pressed="true"]{ border-color:var(--accent); box-shadow:inset 0 0 0 1.5px var(--accent); background:var(--sw); }
+.chip .n{ font-weight:500; color:var(--muted); font-size:12px; }
+
+.layout{ display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:14px 16px; }
+.card h3{ margin:0 0 8px; font-size:16px; }
+.note{ font-size:13px; color:var(--muted); margin:8px 0 0; }
+
+/* AQA key, drawn around the floating hydrogen tile */
+.pt-key{ position:relative; pointer-events:none; z-index:1; }
+.pt-key svg{ position:absolute; left:0; top:0; overflow:visible; }
+.pt-key text{ font-family:var(--font); fill:var(--dim); }
+.pt-key .kt{ fill:var(--ink); font-weight:700; }
+.pt-key line{ stroke:var(--dim); stroke-width:1.5; }
+.pt-key .frame{ fill:none; stroke:var(--line2); stroke-width:1.5; }
+.pt-key .tab{ fill:var(--ink); } .pt-key .tabt{ fill:var(--bg); font-weight:700; }
+.pt-key marker path{ fill:var(--dim); }
+.pt.as-list .pt-key{ display:none; }
+
+/* ── Periodic table ───────────────────────────────────────────────────── */
+.pt-wrap{ overflow-x:auto; container-type:inline-size; padding:12px 7px 10px; -webkit-overflow-scrolling:touch; }
+.pt{ --gap:3px; display:grid; grid-template-columns:minmax(20px,.42fr) repeat(18, minmax(0,1fr)); gap:var(--gap);
+  position:relative; min-width:880px; align-items:stretch; }
+.pt .gh, .pt .ph{ border:0; background:transparent; cursor:pointer; color:var(--muted); font-weight:700;
+  border-radius:6px; padding:2px 0; font-size:clamp(11px, .95cqi, 22px); line-height:1.1; }
+.pt .gh:hover, .pt .ph:hover{ background:var(--panel2); color:var(--ink); }
+.pt .gh[aria-pressed="true"], .pt .ph[aria-pressed="true"]{ background:var(--ink); color:var(--bg); }
+.pt .gh small{ display:block; font-size:.66em; font-weight:500; opacity:.8; }
+.pt .gh.span{ font-size:clamp(10px, .8cqi, 18px); align-self:end; }
+.pt .ph{ writing-mode:horizontal-tb; }
+.pt .spacer{ height:clamp(6px, 1cqi, 16px); }
+.pt .flabel{ align-self:center; justify-self:end; text-align:right; font-size:clamp(9px, .75cqi, 16px); color:var(--muted); font-weight:600; padding-right:4px; line-height:1.15; }
+
+.tile{ --tbg:var(--nodata); position:relative; display:grid; grid-template-rows:auto 1fr auto auto; justify-items:center;
+  aspect-ratio:1/1.12; min-width:0; padding:2px 1px 3px; background:var(--tbg); color:var(--ink);
+  border:1px solid color-mix(in srgb, var(--ink) 18%, transparent); border-radius:5px; cursor:pointer; overflow:hidden;
+  transition:transform .15s ease, opacity .2s ease, filter .2s ease, box-shadow .15s ease; text-align:center; }
+.tile:hover{ transform:translateY(-1px); box-shadow:0 4px 12px -4px rgba(0,0,0,.35); z-index:2; }
+.tile > span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
+.t-mass, .t-z{ font-size:clamp(9px, .78cqi, 18px); font-variant-numeric:tabular-nums; line-height:1.15; }
+.t-mass{ color:var(--dim); }
+.t-sym{ font-size:clamp(15px, 1.95cqi, 44px); font-weight:700; line-height:1.05; align-self:center; letter-spacing:-.01em; position:relative; }
+.t-name{ font-size:clamp(7.5px, .64cqi, 15px); color:var(--dim); line-height:1.15; padding:0 1px; }
+.t-z{ font-weight:700; }
+.t-val{ display:none; font-size:clamp(9px, .8cqi, 18px); font-weight:700; font-variant-numeric:tabular-nums; line-height:1.15; }
+/* hydrogen floats alone, one column wide, centred over groups 3–12 */
+.pt:not(.as-list) .tile.float-h{ justify-self:center; width:calc((100% - (var(--fh-n, 10) - 1) * var(--gap)) / var(--fh-n, 10)); }
+.pt .blk.float-h{ justify-self:center; width:calc((100% - (var(--fh-n, 10) - 1) * var(--gap)) / var(--fh-n, 10) + 10px); margin:-5px 0; }
+/* wide 32-column table: sized from its own width, so the tiles keep their proportions while it scrolls */
+.pt.long{ container-type:inline-size; min-width:1680px; grid-template-columns:minmax(20px,.42fr) repeat(32, minmax(0,1fr)); }
+.pt.long .t-sym{ font-size:clamp(14px, 1.12cqi, 40px); }
+.pt.long .t-mass, .pt.long .t-z{ font-size:clamp(9px, .45cqi, 16px); }
+.pt.long .t-name{ font-size:clamp(7.5px, .37cqi, 13px); }
+.pt.long .gh, .pt.long .ph{ font-size:clamp(11px, .55cqi, 20px); }
+.pt.long .gh.span{ font-size:clamp(10px, .48cqi, 16px); }
+.pt.long .blk::before{ font-size:clamp(10px, .5cqi, 16px); }
+.scroll-hint{ font-size:12.5px; color:var(--muted); }
+.tile.placeholder{ cursor:default; display:flex; align-items:center; justify-content:center; font-size:clamp(9px, .8cqi, 17px);
+  font-weight:600; color:var(--dim); border-style:dashed; }
+.tile.placeholder:hover{ transform:none; box-shadow:none; }
+
+.cat-alkali{ --tbg:var(--c-alkali); } .cat-alkaline{ --tbg:var(--c-alkaline); } .cat-trans{ --tbg:var(--c-trans); }
+.cat-post{ --tbg:var(--c-post); } .cat-metalloid{ --tbg:var(--c-metalloid); } .cat-nonmetal{ --tbg:var(--c-nonmetal); }
+.cat-halogen{ --tbg:var(--c-halogen); } .cat-noble{ --tbg:var(--c-noble); } .cat-lanth{ --tbg:var(--c-lanth); } .cat-act{ --tbg:var(--c-act); }
+.pt.plain .tile:not(.placeholder){ --tbg:var(--panel); border-color:var(--ink); }
+.pt.plain .tile.placeholder{ --tbg:var(--panel); }
+.pt.plain .t-mass, .pt.plain .t-name{ color:var(--ink); }
+.by-block .blk-s{ --tbg:var(--b-s); } .by-block .blk-p{ --tbg:var(--b-p); } .by-block .blk-d{ --tbg:var(--b-d); } .by-block .blk-f{ --tbg:var(--b-f); }
+
+/* overlays */
+.pt.ov .tile:not(.placeholder){ --tbg:var(--ovbg, var(--nodata)); }
+.pt.ov .t-name{ display:none; }
+.pt.ov .t-val{ display:block; }
+.pt.ov .tile.inv{ color:var(--seq-inv); }
+.pt.ov .tile.inv .t-mass, .pt.ov .tile.inv .t-name{ color:var(--seq-inv); }
+.pt.ov .tile.nd{ background-image:repeating-linear-gradient(45deg, transparent 0 5px, color-mix(in srgb, var(--ink) 10%, transparent) 5px 6px); }
+.pt.ov .tile.nd .t-val{ color:var(--muted); font-weight:500; }
+
+/* block outlines */
+.blk{ display:none; pointer-events:none; border:3px solid var(--c); border-radius:8px; margin:-5px; z-index:3; position:relative; }
+.blk::before{ content:attr(data-b); position:absolute; top:-3px; left:10px; transform:translateY(-50%); background:var(--c); color:var(--panel);
+  font-size:clamp(10px,.85cqi,17px); font-weight:800; padding:0 7px; border-radius:6px; line-height:1.5; }
+.pt.blocks .blk{ display:block; }
+.blk-s-r{ --c:var(--bl-s); } .blk-p-r{ --c:var(--bl-p); } .blk-d-r{ --c:var(--bl-d); } .blk-f-r{ --c:var(--bl-f); }
+
+/* spotlight */
+.pt.spot .tile:not(.lit){ opacity:.17; filter:grayscale(1); }
+.pt.spot .tile.lit{ box-shadow:0 0 0 2px var(--ink), 0 6px 18px -6px rgba(0,0,0,.5); z-index:2; }
+:root[data-contrast="high"] .pt.spot .tile:not(.lit){ opacity:.08; }
+
+/* quiz: redact the hidden fields */
+.pt.q-name .tile:not(.rev) .t-name,
+.pt.q-mass .tile:not(.rev) .t-mass,
+.pt.q-z .tile:not(.rev) .t-z{ color:transparent !important; background:var(--hide); border-radius:3px; min-width:55%; }
+.pt.q-sym .tile:not(.rev) .t-sym{ color:transparent !important; }
+.pt.q-sym .tile:not(.rev) .t-sym::after{ content:"?"; position:absolute; inset:0; color:var(--muted); }
+.tile.rev{ animation:flip .35s ease; }
+@keyframes flip{ from{ transform:rotateY(90deg); } to{ transform:none; } }
+
+/* list layout for phones */
+.pt.as-list{ display:flex; flex-wrap:wrap; min-width:0; gap:5px; }
+.pt.as-list .gh, .pt.as-list .ph, .pt.as-list .spacer, .pt.as-list .flabel, .pt.as-list .placeholder, .pt.as-list .blk{ display:none !important; }
+.pt.as-list .tile{ width:calc((100% - 5 * 5px) / 6); min-width:52px; flex:none; }
+.pt.as-list .t-sym{ font-size:20px; } .pt.as-list .t-mass, .pt.as-list .t-z{ font-size:11px; } .pt.as-list .t-name{ font-size:9.5px; }
+
+.foot{ font-size:12.5px; color:var(--muted); margin:6px 2px 0; }
+
+/* sequential legend */
+.seqlegend{ display:none; align-items:center; gap:10px; font-size:12.5px; color:var(--dim); }
+.seqlegend.on{ display:flex; }
+.seqlegend .ramp{ width:180px; height:12px; border-radius:6px; border:1px solid var(--line); }
+.seqlegend .ndk{ display:inline-block; width:16px; height:12px; border-radius:3px; border:1px solid var(--line); vertical-align:-2px;
+  background:var(--nodata) repeating-linear-gradient(45deg, transparent 0 5px, color-mix(in srgb, var(--ink) 18%, transparent) 5px 6px); }
+
+/* ── Charts ───────────────────────────────────────────────────────────── */
+.chart{ position:relative; max-width:820px; }
+.chart svg{ width:100%; height:auto; display:block; overflow:visible; }
+.chart .ax{ stroke:var(--line); stroke-width:1; }
+.chart .grid{ stroke:var(--line); stroke-width:1; stroke-dasharray:2 4; opacity:.8; }
+.chart text{ fill:var(--muted); font-family:var(--font); }
+.chart .lbl{ fill:var(--ink); font-weight:700; }
+.chart .bar{ fill:var(--barc, var(--seq-ie)); transition:opacity .15s; }
+.chart .bar.dip{ fill:var(--chem); }
+.chart .hit{ fill:transparent; cursor:default; }
+.chart .hit:hover + .bar, .chart .bar.hl{ opacity:.8; }
+.chart .ann{ fill:var(--chem); font-weight:700; }
+.tip{ position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); padding:6px 9px; border-radius:7px; font-size:13px;
+  white-space:nowrap; transform:translate(-50%, calc(-100% - 10px)); opacity:0; transition:opacity .12s; z-index:5; }
+.tip.on{ opacity:1; }
+details.data{ margin-top:6px; font-size:13px; }
+details.data table{ border-collapse:collapse; margin-top:6px; }
+details.data td, details.data th{ padding:3px 10px; border-bottom:1px solid var(--line); text-align:left; }
+
+/* ── Data tables (period 3 etc.) ──────────────────────────────────────── */
+.dt-wrap{ overflow-x:auto; }
+table.dt{ border-collapse:collapse; width:100%; font-size:14px; min-width:720px; }
+table.dt th, table.dt td{ padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+table.dt thead th{ font-size:12px; letter-spacing:.03em; color:var(--muted); border-bottom:2px solid var(--line2); }
+table.dt td:first-child{ font-weight:700; white-space:nowrap; }
+.pill{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:700; border:1.5px solid currentColor; white-space:nowrap; }
+.pill.basic{ color:var(--e-nonmetal); } .pill.acidic{ color:var(--chem); } .pill.amph{ color:var(--e-halogen); } .pill.neutral{ color:var(--muted); }
+.trendbar{ height:8px; border-radius:4px; background:linear-gradient(90deg, var(--e-nonmetal), var(--e-halogen), var(--chem)); margin:10px 0 4px; }
+.trendlab{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
+
+/* ── Drawer ───────────────────────────────────────────────────────────── */
+.drawer{ position:fixed; top:0; right:0; bottom:0; width:min(460px, 100vw); z-index:80; background:var(--panel);
+  border-left:1px solid var(--line); box-shadow:var(--shadow); transform:translateX(105%); transition:transform .25s ease;
+  display:flex; flex-direction:column; }
+.drawer.open{ transform:none; }
+.drawer-head{ display:flex; align-items:flex-start; gap:12px; padding:14px 16px 12px; border-bottom:1px solid var(--line); }
+.drawer-head .tile{ width:84px; flex:none; pointer-events:none; container-type:normal; }
+.drawer-head .tile .t-sym{ font-size:30px; } .drawer-head .tile .t-mass, .drawer-head .tile .t-z{ font-size:13px; } .drawer-head .tile .t-name{ font-size:11px; }
+.drawer-head h2{ margin:2px 0 4px; font-size:22px; }
+.drawer-head .meta{ display:flex; flex-wrap:wrap; gap:5px; }
+.tag{ display:inline-block; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:999px; background:var(--panel2); color:var(--dim); }
+.tag.cat{ background:var(--sw); color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--accent); }
+.drawer-close{ margin-left:auto; flex:none; }
+.drawer-body{ overflow-y:auto; padding:6px 16px 90px; }
+.drawer section{ padding:12px 0; border-bottom:1px solid var(--line); }
+.drawer section:last-child{ border-bottom:0; }
+.drawer h3{ margin:0 0 8px; font-size:13px; letter-spacing:.04em; color:var(--muted); }
+.pne{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pne div{ background:var(--panel2); border-radius:9px; padding:8px 10px; }
+.pne b{ display:block; font-size:24px; line-height:1.1; font-variant-numeric:tabular-nums; }
+.pne span{ font-size:12px; color:var(--muted); }
+.shells{ font-size:28px; font-weight:800; letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+.bohr{ display:flex; gap:14px; align-items:center; }
+.bohr svg{ width:150px; height:150px; flex:none; }
+.bohr .orb{ fill:none; stroke:var(--line2); stroke-width:1.2; }
+.bohr .e{ fill:var(--e-nonmetal); }
+.bohr .nuc{ fill:var(--chem); }
+.bohr .nt{ fill:#fff; font-weight:800; font-size:13px; font-family:var(--font); }
+.cfg{ font-family:var(--font); font-size:17px; line-height:1.7; word-spacing:2px; }
+.cfg.short{ font-size:15px; color:var(--dim); }
+.kv{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.kv div{ background:var(--panel2); border-radius:9px; padding:8px 10px; }
+.kv b{ display:block; font-size:18px; font-variant-numeric:tabular-nums; }
+.kv span{ font-size:12px; color:var(--muted); }
+.drawer ul{ margin:0; padding-left:18px; }
+.drawer li{ margin:4px 0; }
+.callout{ border-left:4px solid var(--accent, var(--chem)); background:var(--panel2); padding:8px 12px; border-radius:0 9px 9px 0; margin:8px 0; font-size:14px; }
+.ions{ display:grid; gap:4px; font-family:var(--font); font-size:14.5px; }
+
+/* ── History deck (16:9 slides, scaled like PowerPoint) ───────────────── */
+.deck-bar{ display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; justify-content:space-between; margin:4px 0 12px; }
+.deck-bar h2{ margin:0; font-size:21px; letter-spacing:-.01em; }
+.deck-bar p{ margin:2px 0 0; color:var(--dim); }
+.deck-jump{ display:flex; gap:5px; flex-wrap:wrap; }
+.deck-jump button{ border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:5px 11px; font-size:13px; font-weight:600; cursor:pointer; min-height:32px; }
+.deck-jump button[aria-current="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.deck-host{ position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:14px; background:var(--panel2);
+  border:1px solid var(--line); box-shadow:var(--shadow); cursor:pointer; user-select:none; }
+.deck-host:focus-visible{ outline:3px solid var(--focus); outline-offset:3px; }
+.deck-host.full{ aspect-ratio:auto; height:100%; border:0; border-radius:0; box-shadow:none; background:transparent; }
+.deck-ctrl{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:12px; }
+.deck-count{ font-weight:700; font-variant-numeric:tabular-nums; min-width:10ch; text-align:center; }
+.deck-count small{ display:block; font-weight:500; color:var(--muted); font-size:11.5px; }
+
+.s169-in{ --sec:var(--chem); position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0; font-size:32px; line-height:1.35;
+  padding:62px 100px 96px 110px; display:flex; flex-direction:column; background:var(--panel); color:var(--ink); overflow:hidden;
+  box-shadow:0 20px 60px -30px rgba(0,0,0,.6); }
+.s169-in::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:16px; background:var(--sec); }
+.s169-in[data-sec="dalton"]{ --sec:var(--e-noble); } .s169-in[data-sec="newlands"]{ --sec:var(--e-alkaline); }
+.s169-in[data-sec="mendeleev"]{ --sec:var(--chem); } .s169-in[data-sec="moseley"]{ --sec:var(--e-nonmetal); }
+.s169-in[data-sec="compare"]{ --sec:var(--alevel); } .s169-in[data-sec="exam"]{ --sec:var(--gcse); }
+.sl-top{ display:flex; justify-content:space-between; align-items:center; gap:1em; margin-bottom:.35em; min-height:1.2em; }
+.sl-kicker{ font-size:.56em; font-weight:800; letter-spacing:.08em; color:var(--sec); }
+.sl-years{ display:flex; gap:.25em; }
+.sl-years span{ font-size:.46em; font-weight:700; padding:.2em .7em; border-radius:99px; background:var(--panel2); color:var(--muted); white-space:nowrap; }
+.sl-years span.on{ background:var(--sec); color:var(--panel); }
+.sl-h{ font-size:1.8em; font-weight:800; line-height:1.08; letter-spacing:-.02em; margin:0 0 .55em; }
+.sl-h small{ display:block; font-size:.42em; font-weight:600; color:var(--muted); letter-spacing:0; margin-top:.3em; }
+.sl-cols{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.5em; align-items:start; }
+.sl-cols.pic{ grid-template-columns:7.6em minmax(0,1fr); gap:1.4em; }
+.sl-cols.wide{ grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); }
+.sl-pic{ width:7.6em; aspect-ratio:4/5; border-radius:.35em; overflow:hidden; background:var(--panel2); display:grid; place-items:center;
+  font-size:1.2em; font-weight:800; color:var(--muted); box-shadow:0 .3em 1em -.4em rgba(0,0,0,.5); }
+.sl-cols.pic > div > .sl-pic{ font-size:1em; }
+.sl-pic img{ width:100%; height:100%; object-fit:cover; object-position:center 15%; display:block; }
+.sl-cap{ font-size:.4em; color:var(--muted); margin-top:.5em; }
+.sl-list{ list-style:none; margin:0; padding:0; }
+.sl-list li{ position:relative; padding-left:1.05em; margin:0 0 .5em; }
+.sl-list li::before{ content:""; position:absolute; left:0; top:.42em; width:.42em; height:.42em; border-radius:50%; background:var(--sec); }
+.sl-list.good li::before{ background:var(--e-metalloid); }
+.sl-list.bad li::before{ background:var(--chem); border-radius:.08em; transform:rotate(45deg); }
+.sl-list.num{ counter-reset:mk; } .sl-list.num li{ counter-increment:mk; padding-left:1.6em; }
+.sl-list.num li::before{ content:counter(mk); width:1.2em; height:1.2em; top:.08em; font-size:.8em; line-height:1.2em; text-align:center; color:var(--panel); font-weight:800; }
+.sl-callout{ margin-top:auto; border-left:.22em solid var(--sec); background:var(--panel2); padding:.45em .8em; border-radius:0 .35em .35em 0; font-size:.78em; }
+.sl-callout b{ color:var(--sec); }
+.sl-note{ font-size:.55em; color:var(--muted); margin:.5em 0 0; }
+.sl-footer{ position:absolute; left:110px; right:100px; bottom:30px; display:flex; justify-content:space-between; font-size:.42em; color:var(--muted); }
+.step{ opacity:0; transform:translateY(.35em); transition:opacity .35s ease, transform .35s ease; }
+.step.shown{ opacity:1; transform:none; }
+.sl-table{ width:100%; border-collapse:collapse; font-size:.72em; }
+.sl-table th, .sl-table td{ padding:.45em .65em; text-align:left; border-bottom:2px solid var(--line); vertical-align:top; }
+.sl-table thead th{ font-size:.72em; color:var(--muted); letter-spacing:.05em; }
+.sl-table tbody th{ font-weight:800; white-space:nowrap; }
+.sl-table caption{ caption-side:top; text-align:left; font-weight:800; font-size:.9em; padding-bottom:.35em; color:var(--sec); }
+.sl-people{ display:grid; grid-template-columns:repeat(4,1fr); gap:1em; margin:.2em 0 1em; }
+.sl-people figure{ margin:0; text-align:center; }
+.sl-people .sl-pic{ width:5.6em; aspect-ratio:1; border-radius:50%; margin:0 auto .35em; border:.12em solid var(--line2); font-size:1em; }
+.sl-people b{ display:block; font-size:1.05em; color:var(--sec); }
+.sl-people span{ font-size:.6em; color:var(--dim); }
+.sl-oct{ display:grid; grid-template-columns:repeat(7,1fr); gap:.22em; }
+.sl-oct div{ background:var(--panel2); border-radius:.22em; padding:.25em 0 .15em; text-align:center; font-weight:800; font-size:.85em; border:.09em solid transparent; transition:all .3s; }
+.sl-oct .num{ display:block; font-size:.42em; font-weight:600; color:var(--muted); }
+.show-good .sl-oct .g{ border-color:var(--e-metalloid); background:color-mix(in srgb, var(--e-metalloid) 18%, var(--panel2)); }
+.show-bad .sl-oct .b{ border-color:var(--chem); background:color-mix(in srgb, var(--chem) 20%, var(--panel2)); }
+.sl-key{ display:flex; gap:1.2em; font-size:.5em; color:var(--dim); margin-top:.6em; }
+.sl-key i{ display:inline-block; width:1em; height:1em; border-radius:.2em; vertical-align:-.15em; margin-right:.35em; border:.15em solid; }
+.dalton.sl-dalton{ gap:.6em; margin-top:.6em; }
+.dalton.sl-dalton figure{ font-size:.45em; }
+.dalton.sl-dalton svg{ width:3.8em; height:3.8em; }
+.bt-row{ display:flex; align-items:center; gap:.6em; justify-content:center; }
+.bt{ width:5.6em; aspect-ratio:1/1.12; border-radius:.22em; background:var(--tbg); border:.06em solid color-mix(in srgb, var(--ink) 25%, transparent);
+  display:grid; grid-template-rows:auto 1fr auto auto; justify-items:center; padding:.15em 0; }
+.bt .m{ font-size:.55em; color:var(--dim); } .bt .s{ font-size:1.7em; font-weight:800; align-self:center; line-height:1; }
+.bt .n{ font-size:.4em; color:var(--dim); } .bt .z{ font-size:.55em; font-weight:800; }
+.bt-lab{ text-align:center; font-size:.48em; color:var(--muted); margin-top:.35em; }
+.bt-arrow{ font-size:1.6em; font-weight:800; color:var(--sec); }
+.sl-q{ background:var(--panel2); border-radius:.35em; padding:.6em .8em; font-size:1.02em; font-weight:700; margin-bottom:.7em; display:flex; gap:.8em; align-items:flex-start; }
+.sl-q .pill{ font-size:.55em; flex:none; color:var(--sec); margin-top:.3em; }
+
+/* phones: slides reflow instead of shrinking to unreadable text */
+.deck-host.flow{ aspect-ratio:auto; cursor:default; }
+.deck-host.flow .s169-in{ position:relative; width:auto; height:auto; font-size:15px; padding:18px 16px 18px 26px; transform:none !important; }
+.deck-host.flow .s169-in::before{ width:8px; }
+.deck-host.flow .step{ opacity:1; transform:none; }
+.deck-host.flow .sl-cols, .deck-host.flow .sl-cols.pic, .deck-host.flow .sl-cols.wide{ grid-template-columns:1fr; }
+.deck-host.flow .sl-top{ flex-wrap:wrap; } .deck-host.flow .sl-years{ flex-wrap:wrap; }
+.deck-host.flow .sl-people{ grid-template-columns:1fr 1fr; }
+.deck-host.flow .sl-footer{ position:static; margin-top:1.2em; }
+.deck-host.flow .sl-callout{ margin-top:1em; }
+.deck-host.flow .sl-table{ font-size:.85em; }
+
+.dalton{ display:flex; flex-wrap:wrap; gap:12px; margin-top:6px; }
+.dalton figure{ margin:0; text-align:center; font-size:12px; color:var(--dim); }
+.dalton svg{ width:44px; height:44px; display:block; margin:0 auto 2px; }
+.dalton svg circle, .dalton svg path, .dalton svg line{ stroke:var(--ink); stroke-width:2; fill:none; }
+.dalton svg .fill{ fill:var(--ink); }
+.dalton svg text{ fill:var(--ink); font:700 16px var(--font); }
+.swap{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+.swap .tile{ width:64px; pointer-events:none; }
+.swap .arrow{ font-size:22px; color:var(--chem); font-weight:800; }
+.pz-blank{ position:absolute; inset:0; z-index:20; background:#000; cursor:none; }
+.pz-blank.white{ background:#fff; }
+.pz-blank[hidden]{ display:none; }
+.pz-stage.deck-mode{ padding:10px; overflow:hidden; }
+
+/* ── Presenter ────────────────────────────────────────────────────────── */
+.pz{ position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; }
+.pz[hidden]{ display:none; }
+body.pz-open{ overflow:hidden; }
+.pz-top, .pz-bot{ display:flex; align-items:center; gap:8px 12px; padding:8px 16px; flex-wrap:wrap; }
+.pz-top{ border-bottom:1px solid var(--line); }
+.pz-bot{ border-top:1px solid var(--line); justify-content:space-between; padding-left:64px; }
+.pz-title{ font-weight:800; font-size:15px; margin-right:auto; }
+.pz-title .count{ color:var(--muted); font-weight:600; margin-left:8px; }
+.pz-tools{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.pz-tools[hidden]{ display:none; }
+.pz-stage{ flex:1; overflow:auto; padding:clamp(12px, 2.2vw, 44px) clamp(16px, 3vw, 64px); }
+.dots{ display:flex; gap:7px; flex-wrap:wrap; }
+.dots button{ width:12px; height:12px; border-radius:50%; border:0; background:var(--line2); cursor:pointer; padding:0; }
+.dots button[aria-current="true"]{ background:var(--chem); transform:scale(1.25); }
+.pz .keys{ font-size:13px; color:var(--muted); }
+kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); border-bottom-width:2px; border-radius:5px; padding:0 5px; background:var(--panel); color:var(--ink); }
+.slide{ max-width:1700px; margin:0 auto; font-size:clamp(17px, 1.45vw, 32px); line-height:1.45; }
+.slide h2{ font-size:clamp(28px, 3.1vw, 64px); margin:0 0 .15em; letter-spacing:-.02em; line-height:1.1; }
+.slide .kicker{ font-size:.72em; font-weight:800; letter-spacing:.06em; margin:0 0 .3em; }
+.slide .lede{ color:var(--dim); margin:0 0 .8em; }
+.slide ul{ margin:0; padding-left:1.1em; } .slide li{ margin:.35em 0; }
+.slide .two{ display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr); gap:clamp(16px, 2.5vw, 56px); align-items:start; }
+.slide .eq{ font-family:var(--font); background:var(--panel2); padding:.35em .6em; border-radius:10px; display:inline-block; font-size:.9em; margin:.2em 0; }
+.slide .pz-table .pt{ min-width:0; }
+.slide .pz-table{ max-width:calc((100vh - 200px) * 1.75); }
+.slide table.dt{ font-size:.78em; min-width:0; }
+.slide .hero{ display:grid; place-items:center; text-align:center; min-height:60vh; }
+.slide .hero h2{ font-size:clamp(40px, 5vw, 96px); }
+.slide .hero p{ color:var(--dim); max-width:40ch; margin:.4em auto; }
+.helpbox{ position:absolute; right:16px; top:60px; z-index:5; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow); padding:14px 18px; font-size:14px; max-width:min(460px, calc(100vw - 32px)); }
+.helpbox[hidden]{ display:none; }
+.helpbox dl{ display:grid; grid-template-columns:auto 1fr; gap:5px 12px; margin:0; }
+.helpbox dt{ white-space:nowrap; }
+.helpbox dd{ margin:0; color:var(--dim); }
+.spotlabel{ font-size:13px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--ink); color:var(--bg); }
+.spotlabel:empty{ display:none; }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 980px){
+  .slide .two{ grid-template-columns:1fr; }
+}
+@media (max-width: 640px){
+  .top-in{ padding:8px 12px; }
+  .brand p{ display:none; }
+  .tabs{ width:100%; } .tab{ flex:1; padding:7px 6px; font-size:13px; }
+  .pz .keys{ display:none; }
+  .cmp{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ transition:none !important; animation:none !important; }
+}
+@media print{
+  .top, .drawer, .bar .btn{ display:none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Pt</div>
+      <div>
+        <h1>Periodic Table Explorer <span class="beta">beta</span></h1>
+        <p>AQA <span class="chem">Chemistry</span> · <span class="gcse">GCSE</span> &amp; <span class="alevel">A-Level</span></p>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-gcse" aria-controls="panel-gcse" aria-selected="true"><span class="lv gcse">GCSE</span> Table</button>
+      <button class="tab" role="tab" id="tab-alevel" aria-controls="panel-alevel" aria-selected="false" tabindex="-1"><span class="lv alevel">A-Level</span> Table</button>
+      <button class="tab" role="tab" id="tab-long" aria-controls="panel-long" aria-selected="false" tabindex="-1">Wide Table</button>
+      <button class="tab" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false" tabindex="-1">History</button>
+    </div>
+    <div class="tools">
+      <button class="btn primary" id="pzOpen" title="Presenter mode (P)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg>
+        Present
+      </button>
+      <button class="btn" id="themeBtn" title="Switch between light and dark mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <span class="theme-label">Dark mode</span>
+      </button>
+      <button class="btn icon-btn" id="contrastBtn" aria-pressed="false" aria-label="High contrast" title="High contrast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ═══ GCSE ═══ -->
+  <section class="panel" id="panel-gcse" role="tabpanel" aria-labelledby="tab-gcse">
+    <div class="intro">
+      <h2><span class="gcse">GCSE</span> periodic table</h2>
+      <p>Laid out like the AQA GCSE data sheet. Pick a family to pick it out, click a group or period number to spotlight it, and click any element for its structure and reactions.</p>
+    </div>
+    <div class="bar">
+      <div class="chips" id="gcseChips" role="group" aria-label="Highlight a family"></div>
+    </div>
+    <div class="bar">
+      <span style="margin-left:auto"></span>
+      <div class="seg" role="group" aria-label="Colours" id="gcseColour"><button data-c="family" aria-pressed="true">Coloured</button><button data-c="plain" aria-pressed="false">Plain (exam sheet)</button></div>
+      <div class="seg" role="group" aria-label="Layout"><button data-layout="grid" aria-pressed="true">Table</button><button data-layout="list" aria-pressed="false">List</button></div>
+    </div>
+    <div id="gcseTable"></div>
+    <p class="foot">* The lanthanides (atomic numbers 58–71) and the actinides (90–103) are left out, as on the AQA GCSE sheet. Relative atomic masses of Cu and Cl are not rounded to whole numbers. Values in [brackets] are the mass number of the longest-lived isotope.</p>
+  </section>
+
+  <!-- ═══ A-LEVEL ═══ -->
+  <section class="panel" id="panel-alevel" role="tabpanel" aria-labelledby="tab-alevel" hidden>
+    <div class="intro">
+      <h2><span class="alevel">A-Level</span> periodic table</h2>
+      <p>Relative atomic masses to one decimal place, as on the AQA A-Level data sheet. Switch on the blocks, overlay a property to see the trend, and open any element for its full electron configuration.</p>
+    </div>
+    <div class="bar">
+      <span class="bar-label">COLOUR BY</span>
+      <div class="seg" role="group" aria-label="Colour by" id="alColour">
+        <button data-c="family" aria-pressed="true">Family</button><button data-c="block" aria-pressed="false">Block</button><button data-c="plain" aria-pressed="false">Plain (exam sheet)</button>
+      </div>
+      <button class="btn" id="alBlocks" aria-pressed="false">Outline s, p, d, f blocks</button>
+      <button class="btn" id="alP3" aria-pressed="false">Period 3 oxides &amp; chlorides</button>
+      <span style="margin-left:auto"></span>
+      <div class="seg" role="group" aria-label="Layout" id="alLayout"><button data-layout="grid" aria-pressed="true">Table</button><button data-layout="list" aria-pressed="false">List</button></div>
+    </div>
+    <div class="bar">
+      <span class="bar-label">OVERLAY</span>
+      <div class="seg" role="group" aria-label="Property overlay" id="alOverlay">
+        <button data-o="" aria-pressed="true">None</button>
+        <button data-o="en" aria-pressed="false">Electronegativity</button>
+        <button data-o="ie" aria-pressed="false">1st ionisation energy</button>
+        <button data-o="cov" aria-pressed="false">Atomic radius</button>
+        <button data-o="ion" aria-pressed="false">Ionic radius</button>
+      </div>
+      <div class="seqlegend" id="alLegend" aria-live="polite"></div>
+    </div>
+    <div class="chips" id="alChips" role="group" aria-label="Highlight a family" style="margin-bottom:10px"></div>
+    <div id="alTable"></div>
+    <p class="foot">Click a group or period number to spotlight it; the trend chart below follows the spotlight. Values in [brackets] are mass numbers of the longest-lived isotope.</p>
+    <div class="layout" style="margin-top:12px">
+      <div class="card" id="alTrend" hidden></div>
+      <div class="card" id="p3Panel" hidden></div>
+    </div>
+  </section>
+
+  <!-- ═══ WIDE (32-COLUMN) ═══ -->
+  <section class="panel" id="panel-long" role="tabpanel" aria-labelledby="tab-long" hidden>
+    <div class="intro">
+      <h2>Wide periodic table</h2>
+      <p>For illustration: the lanthanides and actinides sit in line between Groups 2 and 3, where they belong by atomic number, instead of in rows underneath. Exam data sheets use the compact layout. Scroll sideways to see the whole table.</p>
+    </div>
+    <div class="bar">
+      <span class="bar-label">COLOUR BY</span>
+      <div class="seg" role="group" aria-label="Colour by" id="longColour">
+        <button data-c="family" aria-pressed="true">Family</button><button data-c="block" aria-pressed="false">Block</button><button data-c="plain" aria-pressed="false">Plain (exam sheet)</button>
+      </div>
+      <button class="btn" id="longBlocks" aria-pressed="false">Outline s, p, d, f blocks</button>
+      <span style="margin-left:auto" class="scroll-hint">Scroll sideways →</span>
+    </div>
+    <div class="chips" id="longChips" role="group" aria-label="Highlight a family" style="margin-bottom:10px"></div>
+    <div id="longTable"></div>
+    <p class="foot">Lanthanum (57) and actinium (89) are in Group 3, as on the AQA GCSE sheet; some tables put lutetium and lawrencium there instead. Click the f-block label to spotlight the lanthanides and actinides.</p>
+  </section>
+
+  <!-- ═══ HISTORY ═══ -->
+  <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="deck-bar">
+      <div>
+        <h2>How the periodic table developed</h2>
+        <p>AQA <span class="gcse">GCSE</span> 4.1.2.1 slides. Click the slide or press <kbd>→</kbd> to build each point; <b>Present full screen</b> runs them like PowerPoint.</p>
+      </div>
+      <div class="deck-jump" id="deckJump" role="group" aria-label="Jump to section"></div>
+    </div>
+    <div class="deck-host" id="histDeck" tabindex="0" role="region" aria-roledescription="slide deck" aria-label="History of the periodic table slides"></div>
+    <div class="deck-ctrl">
+      <button class="btn" id="dPrev">← Back</button>
+      <span class="deck-count" id="dCount" aria-live="polite"></span>
+      <button class="btn" id="dNext">Next →</button>
+      <span style="margin-left:auto"></span>
+      <button class="btn" id="dAll" aria-pressed="false">Show all points at once</button>
+      <button class="btn primary" id="dPresent">Present full screen</button>
+    </div>
+  </section>
+</main>
+
+<!-- Element drawer -->
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drTitle" aria-hidden="true">
+  <div class="drawer-head" id="drHead"></div>
+  <div class="drawer-body" id="drBody"></div>
+</aside>
+
+<!-- Presenter -->
+<div class="pz" id="pz" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden tabindex="-1">
+  <div class="pz-top">
+    <div class="pz-title"><span id="pzTitle"></span><span class="count" id="pzCount"></span></div>
+    <span class="spotlabel" id="pzSpot" aria-live="polite"></span>
+    <div class="pz-tools" id="pzTools" hidden>
+      <div class="seg" role="group" aria-label="Level" id="pzLevel"><button data-l="gcse" aria-pressed="true">GCSE</button><button data-l="alevel" aria-pressed="false">A-Level</button></div>
+      <div class="seg" role="group" aria-label="Hide for quiz" id="pzQuiz">
+        <button data-q="name" aria-pressed="false" title="N">Hide names</button>
+        <button data-q="sym" aria-pressed="false" title="S">Hide symbols</button>
+        <button data-q="z" aria-pressed="false" title="Z">Hide Z</button>
+        <button data-q="mass" aria-pressed="false" title="M">Hide A<sub>r</sub></button>
+      </div>
+      <button class="btn" id="pzReveal" title="R">Reset</button>
+    </div>
+    <button class="btn" id="pzPlain" aria-pressed="false" title="Uncoloured tiles, like the exam sheet">Plain</button>
+    <button class="btn" id="pzTheme" title="Switch between light and dark mode"><span class="theme-label">Dark mode</span></button>
+    <button class="btn icon-btn" id="pzHelp" aria-label="Keyboard shortcuts" aria-expanded="false" title="Shortcuts (H)">?</button>
+    <button class="btn icon-btn" id="pzFull" aria-label="Full screen" title="Full screen (F)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+    <button class="btn" id="pzClose" title="Esc">Exit</button>
+  </div>
+  <div class="helpbox" id="pzHelpBox" hidden>
+    <dl>
+      <dt><kbd>→</kbd> <kbd>Space</kbd></dt><dd>Next slide</dd>
+      <dt><kbd>←</kbd> <kbd>Shift</kbd>+<kbd>Space</kbd></dt><dd>Previous slide</dd>
+      <dt><kbd>1</kbd>–<kbd>7</kbd>, <kbd>0</kbd></dt><dd>Spotlight Group 1–7 or Group 0</dd>
+      <dt><kbd>T</kbd></dt><dd>Spotlight the transition metals</dd>
+      <dt><kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>7</kbd></dt><dd>Spotlight a period</dd>
+      <dt>Click element</dt><dd>Spotlight it (or reveal it in quiz mode)</dd>
+      <dt><kbd>C</kbd></dt><dd>Clear spotlight</dd>
+      <dt><kbd>N</kbd> <kbd>S</kbd> <kbd>Z</kbd> <kbd>M</kbd></dt><dd>Hide names / symbols / atomic numbers / masses</dd>
+      <dt><kbd>R</kbd></dt><dd>Reset quiz (show everything)</dd>
+      <dt><kbd>L</kbd></dt><dd>Switch GCSE / A-Level table</dd>
+      <dt>Click slide</dt><dd>History slides: next point</dd>
+      <dt><kbd>B</kbd> / <kbd>W</kbd></dt><dd>Black or white screen (any key returns)</dd>
+      <dt><kbd>F</kbd></dt><dd>Full screen</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Leave presenter mode</dd>
+    </dl>
+  </div>
+  <div class="pz-stage" id="pzStage"></div>
+  <div class="pz-blank" id="pzBlank" hidden></div>
+  <div class="pz-bot">
+    <button class="btn" id="pzPrev">← Back</button>
+    <div class="dots" id="pzDots" role="group" aria-label="Slides"></div>
+    <span class="keys" id="pzKeys"><kbd>←</kbd> <kbd>→</kbd> slides · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> groups · <kbd>H</kbd> help</span>
+    <button class="btn" id="pzNext">Next →</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   DATA
+   ════════════════════════════════════════════════════════════════════════ */
+const RAW = `1 H Hydrogen 1.008
+2 He Helium 4.003
+3 Li Lithium 6.94
+4 Be Beryllium 9.012
+5 B Boron 10.81
+6 C Carbon 12.011
+7 N Nitrogen 14.007
+8 O Oxygen 15.999
+9 F Fluorine 18.998
+10 Ne Neon 20.180
+11 Na Sodium 22.990
+12 Mg Magnesium 24.305
+13 Al Aluminium 26.982
+14 Si Silicon 28.085
+15 P Phosphorus 30.974
+16 S Sulfur 32.06
+17 Cl Chlorine 35.45
+18 Ar Argon 39.95
+19 K Potassium 39.098
+20 Ca Calcium 40.078
+21 Sc Scandium 44.956
+22 Ti Titanium 47.867
+23 V Vanadium 50.942
+24 Cr Chromium 51.996
+25 Mn Manganese 54.938
+26 Fe Iron 55.845
+27 Co Cobalt 58.933
+28 Ni Nickel 58.693
+29 Cu Copper 63.546
+30 Zn Zinc 65.38
+31 Ga Gallium 69.723
+32 Ge Germanium 72.630
+33 As Arsenic 74.922
+34 Se Selenium 78.971
+35 Br Bromine 79.904
+36 Kr Krypton 83.798
+37 Rb Rubidium 85.468
+38 Sr Strontium 87.62
+39 Y Yttrium 88.906
+40 Zr Zirconium 91.224
+41 Nb Niobium 92.906
+42 Mo Molybdenum 95.95
+43 Tc Technetium [98]
+44 Ru Ruthenium 101.07
+45 Rh Rhodium 102.906
+46 Pd Palladium 106.42
+47 Ag Silver 107.868
+48 Cd Cadmium 112.414
+49 In Indium 114.818
+50 Sn Tin 118.710
+51 Sb Antimony 121.760
+52 Te Tellurium 127.60
+53 I Iodine 126.904
+54 Xe Xenon 131.293
+55 Cs Caesium 132.905
+56 Ba Barium 137.327
+57 La Lanthanum 138.905
+58 Ce Cerium 140.116
+59 Pr Praseodymium 140.908
+60 Nd Neodymium 144.242
+61 Pm Promethium [145]
+62 Sm Samarium 150.36
+63 Eu Europium 151.964
+64 Gd Gadolinium 157.25
+65 Tb Terbium 158.925
+66 Dy Dysprosium 162.500
+67 Ho Holmium 164.930
+68 Er Erbium 167.259
+69 Tm Thulium 168.934
+70 Yb Ytterbium 173.045
+71 Lu Lutetium 174.967
+72 Hf Hafnium 178.49
+73 Ta Tantalum 180.948
+74 W Tungsten 183.84
+75 Re Rhenium 186.207
+76 Os Osmium 190.23
+77 Ir Iridium 192.217
+78 Pt Platinum 195.084
+79 Au Gold 196.967
+80 Hg Mercury 200.592
+81 Tl Thallium 204.38
+82 Pb Lead 207.2
+83 Bi Bismuth 208.980
+84 Po Polonium [209]
+85 At Astatine [210]
+86 Rn Radon [222]
+87 Fr Francium [223]
+88 Ra Radium [226]
+89 Ac Actinium [227]
+90 Th Thorium 232.038
+91 Pa Protactinium 231.036
+92 U Uranium 238.029
+93 Np Neptunium [237]
+94 Pu Plutonium [244]
+95 Am Americium [243]
+96 Cm Curium [247]
+97 Bk Berkelium [247]
+98 Cf Californium [251]
+99 Es Einsteinium [252]
+100 Fm Fermium [257]
+101 Md Mendelevium [258]
+102 No Nobelium [259]
+103 Lr Lawrencium [266]
+104 Rf Rutherfordium [267]
+105 Db Dubnium [268]
+106 Sg Seaborgium [269]
+107 Bh Bohrium [270]
+108 Hs Hassium [269]
+109 Mt Meitnerium [278]
+110 Ds Darmstadtium [281]
+111 Rg Roentgenium [282]
+112 Cn Copernicium [285]
+113 Nh Nihonium [286]
+114 Fl Flerovium [289]
+115 Mc Moscovium [290]
+116 Lv Livermorium [293]
+117 Ts Tennessine [294]
+118 Og Oganesson [294]`;
+
+// Pauling electronegativity, Z = 1…103 (blank = no accepted value)
+const EN = "2.20,,0.98,1.57,2.04,2.55,3.04,3.44,3.98,,0.93,1.31,1.61,1.90,2.19,2.58,3.16,,0.82,1.00,1.36,1.54,1.63,1.66,1.55,1.83,1.88,1.91,1.90,1.65,1.81,2.01,2.18,2.55,2.96,3.00,0.82,0.95,1.22,1.33,1.6,2.16,1.9,2.2,2.28,2.20,1.93,1.69,1.78,1.96,2.05,2.1,2.66,2.6,0.79,0.89,1.10,1.12,1.13,1.14,1.13,1.17,1.2,1.2,1.1,1.22,1.23,1.24,1.25,1.1,1.27,1.3,1.5,2.36,1.9,2.2,2.20,2.28,2.54,2.00,1.62,2.33,2.02,2.0,2.2,2.2,0.7,0.9,1.1,1.3,1.5,1.38,1.36,1.28,1.13,1.28,1.3,1.3,1.3,1.3,1.3,1.3,1.3".split(',');
+// First ionisation energy / kJ mol⁻¹, Z = 1…103
+const IE = "1312,2372,520,900,801,1086,1402,1314,1681,2081,496,738,578,787,1012,1000,1251,1521,419,590,633,659,651,653,717,762,760,737,746,906,579,762,947,941,1140,1351,403,550,600,640,652,684,702,710,720,804,731,868,558,709,834,869,1008,1170,376,503,538,534,527,533,540,545,547,593,566,573,581,589,597,603,524,659,761,770,760,840,880,870,890,1007,589,716,703,812,899,1037,393,509,499,587,568,598,605,585,578,581,601,608,619,627,635,642,479".split(',').map(Number);
+// Covalent radius / pm (Cordero et al. 2008), Z = 1…96
+const COV = "31,28,128,96,84,76,71,66,57,58,166,141,121,111,107,105,102,106,203,176,170,160,153,139,139,132,126,124,132,122,122,120,119,120,120,116,220,195,190,175,164,154,147,146,142,139,145,144,142,139,139,138,139,140,244,215,207,204,203,201,199,198,198,196,194,192,192,189,190,187,187,175,170,162,151,144,141,136,136,132,145,146,148,140,150,150,260,221,215,206,200,196,190,187,180,169".split(',').map(Number);
+// Ionic radius / pm (Shannon, 6-coordinate), for the ion students meet
+const IONR = { 3:[1,76], 4:[2,45], 7:[-3,146], 8:[-2,140], 9:[-1,133], 11:[1,102], 12:[2,72], 13:[3,54], 16:[-2,184], 17:[-1,181],
+  19:[1,138], 20:[2,100], 21:[3,75], 22:[4,61], 23:[3,64], 24:[3,62], 25:[2,83], 26:[2,78], 27:[2,75], 28:[2,69], 29:[2,73], 30:[2,74],
+  31:[3,62], 34:[-2,198], 35:[-1,196], 37:[1,152], 38:[2,118], 47:[1,115], 50:[4,69], 52:[-2,221], 53:[-1,220], 55:[1,167], 56:[2,135], 82:[2,119] };
+
+// Common oxidation states (most important first)
+const OX = { H:'+1, −1', He:'0', Li:'+1', Be:'+2', B:'+3', C:'−4, +2, +4', N:'−3, +2, +3, +4, +5', O:'−2, −1', F:'−1', Ne:'0',
+  Na:'+1', Mg:'+2', Al:'+3', Si:'+4, −4', P:'−3, +3, +5', S:'−2, +4, +6', Cl:'−1, +1, +3, +5, +7', Ar:'0',
+  K:'+1', Ca:'+2', Sc:'+3', Ti:'+2, +3, +4', V:'+2, +3, +4, +5', Cr:'+2, +3, +6', Mn:'+2, +3, +4, +6, +7', Fe:'+2, +3', Co:'+2, +3',
+  Ni:'+2', Cu:'+1, +2', Zn:'+2', Ga:'+3', Ge:'+2, +4', As:'−3, +3, +5', Se:'−2, +4, +6', Br:'−1, +1, +5', Kr:'0, +2',
+  Rb:'+1', Sr:'+2', Y:'+3', Zr:'+4', Nb:'+5', Mo:'+4, +6', Tc:'+4, +7', Ru:'+3, +4', Rh:'+3', Pd:'+2, +4', Ag:'+1', Cd:'+2',
+  In:'+3', Sn:'+2, +4', Sb:'−3, +3, +5', Te:'−2, +4, +6', I:'−1, +1, +5, +7', Xe:'0, +2, +4, +6',
+  Cs:'+1', Ba:'+2', La:'+3', Ce:'+3, +4', Pr:'+3', Nd:'+3', Pm:'+3', Sm:'+2, +3', Eu:'+2, +3', Gd:'+3', Tb:'+3', Dy:'+3', Ho:'+3',
+  Er:'+3', Tm:'+3', Yb:'+2, +3', Lu:'+3', Hf:'+4', Ta:'+5', W:'+4, +6', Re:'+4, +7', Os:'+4, +8', Ir:'+3, +4', Pt:'+2, +4',
+  Au:'+1, +3', Hg:'+1, +2', Tl:'+1, +3', Pb:'+2, +4', Bi:'+3, +5', Po:'+2, +4', At:'−1, +1', Rn:'0, +2',
+  Fr:'+1', Ra:'+2', Ac:'+3', Th:'+4', Pa:'+5', U:'+3, +4, +5, +6', Np:'+5', Pu:'+4', Am:'+3', Cm:'+3', Bk:'+3, +4', Cf:'+3',
+  Es:'+3', Fm:'+3', Md:'+3', No:'+2, +3', Lr:'+3', Rf:'+4', Db:'+5', Sg:'+6', Bh:'+7', Hs:'+8' };
+
+// Mass number of the most abundant isotope, where rounding Ar gives the wrong answer
+const MAIN_ISO = { 35:79, 29:63, 31:69, 32:74, 34:80, 30:64, 28:58, 47:107, 48:114, 50:120, 51:121, 52:130, 54:132, 56:138,
+  60:142, 62:152, 63:153, 64:158, 66:164, 68:166, 70:174, 72:180, 76:192, 77:193, 80:202, 81:205, 82:208, 42:98, 44:102, 40:90, 75:187 };
+const ISO_NOTE = {
+  1:'Three isotopes: hydrogen-1 (almost all), deuterium (²H) and tritium (³H).',
+  6:'Carbon-12 (98.9%) and carbon-13; carbon-14 is radioactive and used in dating.',
+  17:'Two isotopes: chlorine-35 (≈75%) and chlorine-37 (≈25%), so A<sub>r</sub> = 35.5.',
+  29:'Two isotopes: copper-63 (≈69%) and copper-65 (≈31%), so A<sub>r</sub> = 63.5.',
+  35:'Two isotopes in almost equal amounts: bromine-79 and bromine-81, so A<sub>r</sub> ≈ 80 but no atom has mass 80.',
+  18:'Mostly argon-40, which is why argon’s A<sub>r</sub> is greater than potassium’s.',
+  52:'Mostly tellurium-128 and -130, so tellurium’s A<sub>r</sub> is greater than iodine’s.',
+  27:'Only one stable isotope, cobalt-59.', 28:'Mostly nickel-58, so nickel’s A<sub>r</sub> is less than cobalt’s.'
+};
+
+const CATS = {
+  alkali:   { label:'Group 1 · alkali metals', short:'Alkali metal' },
+  alkaline: { label:'Group 2 · alkaline earth metals', short:'Alkaline earth metal' },
+  trans:    { label:'Transition metals', short:'Transition metal' },
+  post:     { label:'Other metals', short:'Metal' },
+  metalloid:{ label:'Semi-metals (metalloids)', short:'Semi-metal' },
+  nonmetal: { label:'Other non-metals', short:'Non-metal' },
+  halogen:  { label:'Group 7 · halogens', short:'Halogen' },
+  noble:    { label:'Group 0 · noble gases', short:'Noble gas' },
+  lanth:    { label:'Lanthanides', short:'Lanthanide' },
+  act:      { label:'Actinides', short:'Actinide' }
+};
+const MAIN_GROUP = g => g <= 2 ? String(g) : g === 18 ? '0' : g >= 13 ? String(g - 10) : '';
+
+const EL = [];
+RAW.split('\n').forEach(line => {
+  const [z, sym, name, m] = line.trim().split(/\s+/);
+  const Z = +z, rad = m.startsWith('[');
+  const el = { z:Z, sym, name, mass:parseFloat(m.replace(/[\[\]]/g, '')), rad };
+  // position
+  let period, group = null, fIdx = null;
+  if (Z <= 2) { period = 1; group = Z === 1 ? 1 : 18; }
+  else if (Z <= 18) { const start = Z <= 10 ? 3 : 11; period = Z <= 10 ? 2 : 3; const o = Z - start; group = o < 2 ? o + 1 : o + 11; }
+  else if (Z <= 54) { const start = Z <= 36 ? 19 : 37; period = Z <= 36 ? 4 : 5; group = Z - start + 1; }
+  else { const start = Z <= 86 ? 55 : 87; period = Z <= 86 ? 6 : 7; const o = Z - start;
+    if (o < 2) group = o + 1; else if (o <= 16) fIdx = o - 2; else group = o - 13; }
+  el.period = period; el.group = group; el.fIdx = fIdx;
+  el.block = fIdx !== null ? 'f' : (group <= 2 || Z === 2) ? 's' : group >= 13 ? 'p' : 'd';
+  const has = (list) => list.includes(Z);
+  el.cat = group === 1 && Z !== 1 ? 'alkali' : group === 2 ? 'alkaline'
+    : has([2,10,18,36,54,86,118]) ? 'noble' : has([9,17,35,53,85,117]) ? 'halogen'
+    : has([1,6,7,8,15,16,34]) ? 'nonmetal' : has([5,14,32,33,51,52]) ? 'metalloid'
+    : fIdx !== null ? (period === 6 ? 'lanth' : 'act') : el.block === 'd' ? 'trans' : 'post';
+  el.en = EN[Z - 1] ? EN[Z - 1] : null;
+  el.ie = IE[Z - 1] || null;
+  el.cov = COV[Z - 1] || null;
+  el.ion = IONR[Z] || null;
+  el.ox = OX[sym] || '—';
+  el.predicted = Z >= 104;
+  el.state = Z >= 104 ? 'unknown' : [1,2,7,8,9,10,17,18,36,54,86].includes(Z) ? 'gas' : [35,80].includes(Z) ? 'liquid' : 'solid';
+  EL[Z] = el;
+});
+const bySym = {}; EL.forEach(e => e && (bySym[e.sym] = e));
+
+const SUPD = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const supNum = n => String(n).split('').map(d => SUPD[+d]).join('');
+const chargeLabel = c => (Math.abs(c) === 1 ? '' : supNum(Math.abs(c))) + (c > 0 ? '⁺' : '⁻');
+
+function fmtMass(el, level){
+  if (el.rad) return '[' + Math.round(el.mass) + ']';
+  if (level === 'gcse') {
+    if (el.z === 17) return '35.5';
+    if (el.z === 29) return '63.5';
+    return String(Math.round(el.mass));
+  }
+  return (Math.round(el.mass * 10 + 1e-6) / 10).toFixed(1);
+}
+const isMetal = el => !['nonmetal','halogen','noble','metalloid'].includes(el.cat);
+const isNonMetal = el => ['nonmetal','halogen','noble'].includes(el.cat);
+
+/* ── Electron configuration ───────────────────────────────────────────── */
+const ORDER = [[1,0],[2,0],[2,1],[3,0],[3,1],[4,0],[3,2],[4,1],[5,0],[4,2],[5,1],[6,0],[4,3],[5,2],[6,1],[7,0],[5,3],[6,2],[7,1]];
+const LL = 'spdf';
+const NOBLE = { He:2, Ne:10, Ar:18, Kr:36, Xe:54, Rn:86 };
+// Ground states that break the Aufbau order (Z ≤ 103; heavier ones are predictions)
+const EXC = { 24:'[Ar] 3d5 4s1', 29:'[Ar] 3d10 4s1', 41:'[Kr] 4d4 5s1', 42:'[Kr] 4d5 5s1', 44:'[Kr] 4d7 5s1', 45:'[Kr] 4d8 5s1',
+  46:'[Kr] 4d10', 47:'[Kr] 4d10 5s1', 57:'[Xe] 5d1 6s2', 58:'[Xe] 4f1 5d1 6s2', 64:'[Xe] 4f7 5d1 6s2', 78:'[Xe] 4f14 5d9 6s1',
+  79:'[Xe] 4f14 5d10 6s1', 89:'[Rn] 6d1 7s2', 90:'[Rn] 6d2 7s2', 91:'[Rn] 5f2 6d1 7s2', 92:'[Rn] 5f3 6d1 7s2',
+  93:'[Rn] 5f4 6d1 7s2', 96:'[Rn] 5f7 6d1 7s2', 103:'[Rn] 5f14 7s2 7p1' };
+const sortCfg = c => c.slice().sort((a, b) => a.n - b.n || a.l - b.l);
+function aufbau(z){
+  const out = []; let left = z;
+  for (const [n, l] of ORDER) { if (!left) break; const k = Math.min(left, 2 * (2 * l + 1)); out.push({ n, l, e:k }); left -= k; }
+  return out;
+}
+const cfgCache = {};
+function config(z){
+  if (cfgCache[z]) return cfgCache[z].map(s => ({ ...s }));
+  let cfg;
+  if (EXC[z]) {
+    const parts = EXC[z].split(' ');
+    const core = NOBLE[parts[0].slice(1, -1)];
+    cfg = config(core);
+    parts.slice(1).forEach(p => { const m = p.match(/(\d)([spdf])(\d+)/); cfg.push({ n:+m[1], l:LL.indexOf(m[2]), e:+m[3] }); });
+  } else cfg = aufbau(z);
+  cfg = sortCfg(cfg).filter(s => s.e > 0);
+  cfgCache[z] = cfg;
+  return cfg.map(s => ({ ...s }));
+}
+function nobleCore(z, orEqual){ let best = null; for (const [s, n] of Object.entries(NOBLE)) if ((n < z || (orEqual && n === z)) && (!best || n > best[1])) best = [s, n]; return best; }
+const subHTML = s => `${s.n}${LL[s.l]}<sup>${s.e}</sup>`;
+const subTXT = s => `${s.n}${LL[s.l]}${supNum(s.e)}`;
+function cfgStrings(cfg, z, isIon){
+  const full = cfg.map(subHTML).join(' ');
+  const fullTxt = cfg.map(subTXT).join(' ');
+  const core = nobleCore(z, isIon);
+  if (core && core[1] === z) return { full, fullTxt, short:`[${core[0]}]` };
+  if (!core) return { full, fullTxt, short:full };
+  const coreCfg = config(core[1]);
+  const coreKeys = {}; coreCfg.forEach(s => coreKeys[s.n + '' + s.l] = s.e);
+  const rest = cfg.map(s => ({ ...s, e:s.e - (coreKeys[s.n + '' + s.l] || 0) })).filter(s => s.e > 0);
+  return { full, fullTxt, short:`[${core[0]}] ` + rest.map(subHTML).join(' ') };
+}
+function ionConfig(z, c){
+  if (c < 0) return config(z - c);
+  const cfg = config(z);
+  for (let i = 0; i < c; i++) {
+    let pick = null;
+    cfg.forEach(s => { if (s.e > 0 && (!pick || s.n > pick.n || (s.n === pick.n && s.l > pick.l))) pick = s; });
+    if (pick) pick.e--;
+  }
+  return cfg.filter(s => s.e > 0);
+}
+const shellCounts = z => { const out = []; config(z).forEach(s => out[s.n - 1] = (out[s.n - 1] || 0) + s.e); return out.map(x => x || 0); };
+const ION_LIST = { 1:[1,-1], 3:[1], 11:[1], 19:[1], 37:[1], 55:[1], 4:[2], 12:[2], 20:[2], 38:[2], 56:[2], 13:[3], 31:[3], 7:[-3], 15:[-3],
+  8:[-2], 16:[-2], 34:[-2], 9:[-1], 17:[-1], 35:[-1], 53:[-1], 21:[3], 22:[2,3,4], 23:[2,3], 24:[2,3], 25:[2], 26:[2,3], 27:[2,3], 28:[2],
+  29:[1,2], 30:[2], 47:[1], 50:[2,4], 82:[2,4] };
+
+/* ════════════════════════════════════════════════════════════════════════
+   CONTENT: GCSE and A-Level notes
+   ════════════════════════════════════════════════════════════════════════ */
+const GCSE_GROUP = {
+  alkali:{ s:'Very reactive metals stored under oil. Soft enough to cut with a knife, with low densities and low melting points. One electron in the outer shell, lost to form a 1+ ion.',
+    r:['React with water to form a metal hydroxide (an alkali) and hydrogen.', 'React with chlorine to form white metal chlorides, and with oxygen to form metal oxides.',
+       'Reactivity increases down the group: the outer electron is further from the nucleus and more shielded, so it is lost more easily.'] },
+  alkaline:{ s:'Reactive metals with two electrons in the outer shell, lost to form 2+ ions. Less reactive than Group 1.', r:[] },
+  halogen:{ s:'Non-metals made of diatomic molecules (e.g. Cl₂). Seven outer electrons: they gain one to form 1− ions.',
+    r:['React with metals to form ionic salts, and with non-metals to form covalent molecules.',
+       'A more reactive halogen displaces a less reactive one from a solution of its salt.',
+       'Reactivity decreases down the group: the outer shell is further from the nucleus, so an electron is gained less easily.',
+       'Melting and boiling points increase down the group as the molecules get bigger.'] },
+  noble:{ s:'Unreactive, colourless, monatomic gases. The outer shell is full (8 electrons, or 2 for helium), so they do not easily gain, lose or share electrons.',
+    r:['Boiling points increase down the group as the atoms get bigger.'] },
+  trans:{ s:'Transition metal. Compared with Group 1: higher melting points and densities (except mercury), stronger and harder, and much less reactive.',
+    r:['Form ions with different charges, e.g. Fe²⁺ and Fe³⁺.', 'Form coloured compounds.', 'Many are useful catalysts.'] },
+  post:{ s:'Metal: shiny, conducts heat and electricity, forms positive ions.', r:[] },
+  metalloid:{ s:'Semi-metal, on the staircase line between metals and non-metals, with some properties of each.', r:[] },
+  nonmetal:{ s:'Non-metal: poor conductor (graphite is the exception), forms negative ions or shares electrons in covalent bonds.', r:[] },
+  lanth:{ s:'Stands in for the lanthanide series (58–71), which the GCSE sheet leaves out.', r:[] },
+  act:{ s:'Stands in for the actinide series (90–103), which the GCSE sheet leaves out. All radioactive.', r:[] }
+};
+const GCSE_EL = {
+  1:{ s:'Colourless gas made of H₂ molecules. One outer electron, but not a Group 1 metal.', r:['Test: a lit splint gives a squeaky pop (2H₂ + O₂ → 2H₂O).', 'Given off when metals react with acids and when Group 1 metals react with water.', 'Hydrogen fuel cells produce only water.'] },
+  2:{ r:['Used in balloons and airships: much less dense than air and not flammable.'] },
+  3:{ r:['Floats and fizzes steadily on water: 2Li + 2H₂O → 2LiOH + H₂', 'Burns in oxygen: 4Li + O₂ → 2Li₂O', 'Flame test: crimson.'] },
+  6:{ s:'Non-metal forming giant covalent structures (diamond, graphite, graphene) and fullerenes. The basis of organic chemistry.', r:['Complete combustion gives CO₂; incomplete combustion gives toxic CO or soot.', 'Reduces oxides of metals below it in the reactivity series: 2Fe₂O₃ + 3C → 4Fe + 3CO₂', 'Test for CO₂: limewater turns milky.'] },
+  7:{ s:'About 78% of dry air, as unreactive N₂ with a strong triple bond.', r:['Haber process: N₂ + 3H₂ ⇌ 2NH₃ (iron catalyst, about 450 °C, 200 atm).', 'Oxides of nitrogen form in hot engines and cause acid rain.'] },
+  8:{ s:'About 21% of air, as O₂.', r:['Test: relights a glowing splint.', 'Oxidation is gain of oxygen: 2Mg + O₂ → 2MgO', 'Forms O²⁻ ions in ionic compounds.'] },
+  9:{ r:['Pale yellow gas, the most reactive halogen.', 'Displaces every other halogen from its salts.'] },
+  10:{ r:['Glows red in advertising signs when electricity passes through it.'] },
+  11:{ r:['Fizzes, melts into a ball and whizzes around on water: 2Na + 2H₂O → 2NaOH + H₂', 'Burns in chlorine to form white sodium chloride: 2Na + Cl₂ → 2NaCl', 'Flame test: yellow.'] },
+  12:{ r:['Burns with a brilliant white flame: 2Mg + O₂ → 2MgO', 'Fizzes with dilute acid: Mg + 2HCl → MgCl₂ + H₂', 'Mg²⁺ gives a white precipitate with sodium hydroxide that does not dissolve in excess.'] },
+  13:{ s:'Low-density metal. A thin oxide layer protects it, so it seems less reactive than it is.', r:['Extracted by electrolysis of molten aluminium oxide dissolved in cryolite: Al³⁺ + 3e⁻ → Al at the cathode.', 'The carbon anodes burn away as CO₂ and must be replaced.', 'Al³⁺ gives a white precipitate with sodium hydroxide that dissolves in excess.'] },
+  14:{ r:['Silicon dioxide (sand) is a giant covalent structure with a very high melting point.'] },
+  15:{ r:['Phosphate compounds are used in NPK fertilisers.'] },
+  16:{ s:'Yellow solid made of S₈ molecules.', r:['Burns with a blue flame: S + O₂ → SO₂', 'Sulfur dioxide from burning fossil fuels causes acid rain.'] },
+  17:{ r:['Green, toxic gas, Cl₂.', 'Test: bleaches damp litmus paper white.', 'Displaces bromine and iodine: Cl₂ + 2KBr → 2KCl + Br₂', 'Chloride test: white precipitate with acidified silver nitrate.', 'Used to sterilise drinking water.'] },
+  18:{ r:['About 1% of air. Used in filament lamps and as a shield gas in welding, because it is unreactive.'] },
+  19:{ r:['Melts and ignites with a lilac flame on water: 2K + 2H₂O → 2KOH + H₂', 'Flame test: lilac.'] },
+  20:{ r:['Reacts steadily with cold water: Ca + 2H₂O → Ca(OH)₂ + H₂', 'Calcium hydroxide solution is limewater, the test for CO₂.', 'Flame test: orange-red.'] },
+  22:{ r:['Strong, low density and resists corrosion: aircraft and hip replacements.'] },
+  24:{ r:['Chromium(III) compounds are green; dichromate is orange. Used in stainless steel and chrome plating.'] },
+  25:{ r:['Manganese(IV) oxide catalyses the decomposition of hydrogen peroxide: 2H₂O₂ → 2H₂O + O₂'] },
+  26:{ r:['Forms Fe²⁺ and Fe³⁺ ions.', 'Fe²⁺ gives a green precipitate with sodium hydroxide; Fe³⁺ gives a brown one.', 'Iron is the catalyst in the Haber process.', 'Rusting needs water and oxygen; painting, oiling and galvanising prevent it.'] },
+  27:{ r:['Cobalt chloride paper turns from blue to pink with water.'] },
+  28:{ r:['Nickel catalyses the hydrogenation of vegetable oils to make spreads.'] },
+  29:{ r:['Below hydrogen in the reactivity series, so no reaction with dilute acids.', 'Cu²⁺ gives a blue precipitate with sodium hydroxide.', 'Flame test: green.', 'Displaced by more reactive metals: Fe + CuSO₄ → FeSO₄ + Cu', 'Used for electrical wiring.'] },
+  30:{ r:['Used to galvanise iron (sacrificial protection) and in brass.', 'Reacts with dilute acid: Zn + H₂SO₄ → ZnSO₄ + H₂'] },
+  35:{ r:['Red-brown liquid giving an orange vapour.', 'Displaces iodine: Br₂ + 2KI → 2KBr + I₂', 'Bromide test: cream precipitate with acidified silver nitrate.', 'Bromine water is decolourised by alkenes.'] },
+  37:{ r:['Reacts explosively with water.'] },
+  47:{ r:['Unreactive precious metal. Silver nitrate solution is used to test for halide ions.'] },
+  53:{ r:['Grey-black solid that gives a purple vapour.', 'Displaced by chlorine and bromine; displaces neither of them.', 'Iodide test: yellow precipitate with acidified silver nitrate.'] },
+  54:{ r:['Used in very bright lamps.'] },
+  55:{ r:['Reacts explosively with water.'] },
+  78:{ r:['Catalyst in catalytic converters.'] },
+  79:{ r:['So unreactive it is found uncombined in the ground. Jewellery and electronics.'] },
+  80:{ r:['The only metal that is liquid at room temperature.'] },
+  82:{ r:['Dense metal, extracted from its oxide by reduction with carbon.'] },
+  86:{ r:['Radioactive gas from rocks; a source of background radiation.'] },
+  87:{ r:['Predicted to be the most reactive Group 1 metal, but so radioactive that only tiny amounts have ever existed together.'] }
+};
+const REACTIVITY = ['K','Na','Li','Ca','Mg','Al','(C)','Zn','Fe','(H)','Cu','Ag','Au'];
+
+const AL_GROUP = {
+  g1:['Lowest first ionisation energy in each period: a single electron in a new shell, well shielded from the nucleus.'],
+  g2:['Down Group 2: atomic radius increases and first ionisation energy decreases.',
+      'Reactivity with water increases down the group: M + 2H₂O → M(OH)₂ + H₂ (magnesium reacts with steam to give MgO + H₂).',
+      'Hydroxides become more soluble down the group; sulfates become less soluble (BaSO₄ is insoluble).',
+      'Melting points generally decrease down the group as the metallic bonding weakens (magnesium is the exception).',
+      'Test for sulfate: acidified BaCl₂ gives a white precipitate of BaSO₄.'],
+  g17:['Down Group 7: electronegativity decreases and boiling point increases (more electrons, stronger van der Waals forces).',
+       'Oxidising ability decreases down the group; the reducing power of the halide ions increases.',
+       'With concentrated H₂SO₄: NaF and NaCl give only HX; NaBr also gives Br₂ and SO₂; NaI also gives I₂, SO₂, S and H₂S.',
+       'Silver nitrate: AgCl white (dissolves in dilute NH₃), AgBr cream (dissolves in concentrated NH₃), AgI yellow (insoluble).'],
+  g18:['Highest first ionisation energy in each period: full outer sub-shells, and the most protons for that shell.'],
+  p3:['Across Period 3: atomic radius decreases because nuclear charge increases while shielding stays about the same.',
+      'First ionisation energy generally increases, with dips at Al (3p electron, higher energy) and S (paired 3p electrons repel).',
+      'Melting point rises from Na to Si, then falls: metallic (Na, Mg, Al), macromolecular (Si), simple molecular (P₄, S₈, Cl₂), monatomic (Ar).'],
+  trans:['A transition metal forms at least one stable ion with an incomplete d sub-level, so Ti–Cu qualify but Sc (Sc³⁺ is 3d⁰) and Zn (Zn²⁺ is 3d¹⁰) do not.',
+         'Characteristic properties: variable oxidation states, complex formation, coloured ions and catalytic activity.',
+         'The 4s electrons are lost before the 3d when ions form, even though 4s fills first.']
+};
+const AL_EL = {
+  4:['Be(OH)₂ is amphoteric, unlike the other Group 2 hydroxides.'],
+  12:['Mg + H₂O(g) → MgO + H₂ with steam; with cold water only slowly to Mg(OH)₂.', 'Mg(OH)₂ is used as an antacid.', 'Extracts titanium: TiCl₄ + 2Mg → Ti + 2MgCl₂'],
+  20:['Ca(OH)₂ neutralises acidic soil; CaO or CaCO₃ removes SO₂ from flue gases.'],
+  56:['BaSO₄ “barium meal” for X-rays: insoluble, so the toxic Ba²⁺ is not absorbed.'],
+  11:['2Na + 2H₂O → 2NaOH + H₂ (pH 12–14). Burns with a yellow flame to Na₂O.'],
+  13:['Al₂O₃ is amphoteric: it reacts with both HCl and NaOH.'],
+  14:['SiO₂ is macromolecular and acidic: SiO₂ + 2NaOH → Na₂SiO₃ + H₂O'],
+  15:['P₄ burns with a white flame to P₄O₁₀, which reacts with water to give H₃PO₄.'],
+  16:['Burns with a blue flame to SO₂. SO₂ + H₂O → H₂SO₃ (weak acid).'],
+  17:['Cl₂ + H₂O ⇌ HCl + HClO: used to treat water (benefit outweighs the toxicity risk).', 'Bleach: Cl₂ + 2NaOH → NaClO + NaCl + H₂O'],
+  9:['Most electronegative element; the H–F bond is so polar that HF forms hydrogen bonds.'],
+  22:['TiO₂ pigment; extracted via TiCl₄ reduced with Mg or Na.'],
+  23:['V₂O₅ is the heterogeneous catalyst in the Contact process. Vanadium shows +5 (yellow VO₂⁺), +4 (blue VO²⁺), +3 (green) and +2 (violet) — reduce with zinc and acid.'],
+  24:['Cr₂O₇²⁻ (orange) is a strong oxidising agent, reduced to Cr³⁺ (green). Zinc and acid reduce Cr³⁺ further to Cr²⁺ (blue).', 'Configuration anomaly: a half-filled 3d⁵ sub-level with 4s¹ is more stable than 3d⁴ 4s².'],
+  25:['MnO₄⁻ titrations: MnO₄⁻ + 8H⁺ + 5Fe²⁺ → Mn²⁺ + 4H₂O + 5Fe³⁺ (self-indicating, purple to colourless).', 'Mn²⁺ autocatalyses the reaction of MnO₄⁻ with ethanedioate ions.'],
+  26:['Heterogeneous catalyst in the Haber process.', 'Fe²⁺ catalyses the reaction between S₂O₈²⁻ and I⁻ (homogeneous).', '[Fe(H₂O)₆]²⁺ is pale green; [Fe(H₂O)₆]³⁺ is more acidic because of its higher charge density.'],
+  27:['[Co(H₂O)₆]²⁺ (pink) + 4Cl⁻ ⇌ [CoCl₄]²⁻ (blue) + 6H₂O: ligand substitution with a change of coordination number from 6 to 4.'],
+  29:['[Cu(H₂O)₆]²⁺ is blue; with concentrated HCl it forms yellow [CuCl₄]²⁻; excess NH₃ gives deep blue [Cu(NH₃)₄(H₂O)₂]²⁺.', 'Configuration anomaly: a full 3d¹⁰ sub-level with 4s¹ is more stable than 3d⁹ 4s².'],
+  30:['Not a transition metal: its only ion, Zn²⁺, has a full 3d¹⁰ sub-level.'],
+  21:['Not a transition metal: its only ion, Sc³⁺, has no d electrons.'],
+  47:['Tollens’ reagent, [Ag(NH₃)₂]⁺, distinguishes aldehydes from ketones.'],
+  78:['Cisplatin, a square planar Pt(II) complex, is an anticancer drug that binds to DNA.']
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   PERIODIC TABLE COMPONENT
+   ════════════════════════════════════════════════════════════════════════ */
+const OVERLAYS = {
+  en:  { label:'Electronegativity (Pauling)', get:e => e.en ? parseFloat(e.en) : null, key:'electronegativity', show:e => e.en, min:0.7, max:4.0, hue:'--seq-en', unit:'' },
+  ie:  { label:'First ionisation energy / kJ mol⁻¹', get:e => e.ie, key:'1st ionisation energy', show:e => e.ie, min:370, max:2400, hue:'--seq-ie', unit:' kJ mol⁻¹' },
+  cov: { label:'Atomic (covalent) radius / pm', get:e => e.cov, key:'atomic radius / pm', show:e => e.cov, min:25, max:265, hue:'--seq-rad', unit:' pm' },
+  ion: { label:'Ionic radius / pm (common ion)', get:e => e.ion ? e.ion[1] : null, key:'ionic radius / pm', show:e => e.ion ? `${e.sym}${chargeLabel(e.ion[0])} ${e.ion[1]}` : null, min:40, max:225, hue:'--seq-rad', unit:' pm' }
+};
+
+function tileInner(el, level){
+  return `<span class="t-mass">${fmtMass(el, level)}</span><span class="t-sym">${el.sym}</span><span class="t-name">${el.name.toLowerCase()}</span><span class="t-z">${el.z}</span><span class="t-val"></span>`;
+}
+
+function createTable(host, opts){
+  const level = opts.level;
+  const wrap = document.createElement('div'); wrap.className = 'pt-wrap';
+  const grid = document.createElement('div'); grid.className = 'pt';
+  grid.setAttribute('role', 'group');
+  grid.setAttribute('aria-label', ({ gcse:'GCSE', alevel:'A-Level', long:'Wide 32-column' })[level] + ' periodic table');
+  // wide layout: s-block, then the 14 f-block columns in line, then groups 3–18
+  const LONG = level === 'long';
+  if (LONG) grid.classList.add('long');
+  const colOf = g => LONG ? (g <= 2 ? g + 1 : g + 15) : g + 1;
+  const lastCol = LONG ? 33 : 19;
+  const hSpan = LONG ? [4, 28, 24] : [4, 14, 10];   // where hydrogen and the key float: first col, end col, columns spanned
+  wrap.appendChild(grid); host.innerHTML = ''; host.appendChild(wrap);
+
+  const st = { spot:null, quiz:{ name:false, sym:false, z:false, mass:false }, overlay:null, colour:'family', blocks:false };
+  const tiles = {}; const pos = {};
+  const place = (node, col, row, colEnd, rowEnd) => {
+    node.style.gridColumn = colEnd ? `${col} / ${colEnd}` : col;
+    node.style.gridRow = rowEnd ? `${row} / ${rowEnd}` : row;
+    grid.appendChild(node);
+  };
+
+  // group headers
+  const heads = [];
+  for (let g = 1; g <= 18; g++) {
+    if (level === 'gcse' && g >= 3 && g <= 12) {
+      if (g === 3) {
+        const b = document.createElement('button'); b.className = 'gh span'; b.textContent = 'transition metals';
+        b.dataset.key = 'trans'; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Spotlight the transition metals');
+        place(b, 4, 4, 14); heads.push(b);
+      }
+      continue;
+    }
+    const b = document.createElement('button'); b.className = 'gh';
+    const main = MAIN_GROUP(g);
+    b.innerHTML = level === 'gcse' ? main : (main ? `${main}<small>${g}</small>` : `<small>${g}</small>`);
+    b.dataset.key = 'g' + g; b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', `Spotlight group ${main || g}`);
+    place(b, colOf(g), 1); heads.push(b);
+  }
+  if (LONG) {
+    const b = document.createElement('button'); b.className = 'gh span'; b.textContent = 'lanthanides and actinides (f-block)';
+    b.dataset.key = 'f'; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Spotlight the lanthanides and actinides');
+    place(b, 4, 6, 18); heads.push(b);
+  }
+  for (let p = 1; p <= 7; p++) {
+    const b = document.createElement('button'); b.className = 'ph'; b.textContent = p;
+    b.dataset.key = 'p' + p; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', `Spotlight period ${p}`);
+    place(b, 1, p + 1); heads.push(b);
+  }
+  heads.forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.key;
+    if (st.spot && st.spot.key === k) api.setSpot(null); else api.setSpot(spotFor(k, level));
+  }));
+
+  // element tiles
+  EL.forEach(el => {
+    if (!el) return;
+    let col, row;
+    if (el.fIdx === null) { col = colOf(el.group); row = el.period + 1; }
+    else if (LONG) { col = el.fIdx === 0 ? colOf(3) : el.fIdx + 3; row = el.period + 1; }   // La and Ac sit in group 3, as on the AQA GCSE sheet
+    else if (level === 'gcse') {
+      if (el.z !== 57 && el.z !== 89) return;
+      col = 4; row = el.period + 1;
+    } else { col = el.fIdx + 4; row = el.period === 6 ? 10 : 11; }
+    const b = document.createElement('button');
+    b.className = `tile cat-${el.cat} blk-${LONG && el.fIdx === 0 ? 'd' : el.block}`;
+    b.dataset.z = el.z; b.style.order = el.z;
+    b.innerHTML = tileInner(el, level);
+    b.addEventListener('click', ev => opts.onTile && opts.onTile(el, b, ev, api));
+    if (el.z === 1) {
+      // AQA data sheets float hydrogen on its own, centred over the transition metals
+      b.classList.add('float-h'); b.style.setProperty('--fh-n', hSpan[2]); place(b, hSpan[0], 2, hSpan[1]); col = LONG ? 16 : 9;
+    } else place(b, col, row);
+    tiles[el.z] = b; pos[`${row},${col}`] = b; b._rc = [row, col];
+  });
+  const outline = regions => regions.forEach(([b, c, r, ce, re, label, floatN]) => {
+    const d = document.createElement('div'); d.className = `blk blk-${b}-r`; d.dataset.b = label || b + '-block';
+    if (floatN) { d.classList.add('float-h'); d.style.setProperty('--fh-n', floatN); }
+    d.setAttribute('aria-hidden', 'true'); place(d, c, r, ce, re);
+  });
+  if (LONG) outline([['s', 2, 3, 4, 9], ['f', 4, 7, 18, 9], ['d', 18, 5, 28, 9], ['p', 28, 3, 34, 9], ['s', 33, 2, 34, 3, 's'], ['s', 4, 2, 28, 3, 's', 24]]);
+  if (level === 'alevel') {
+    [['57–71', 7], ['89–103', 8]].forEach(([t, row]) => {
+      const d = document.createElement('div'); d.className = 'tile placeholder blk-f cat-' + (row === 7 ? 'lanth' : 'act');
+      d.textContent = t; d.setAttribute('aria-hidden', 'true'); place(d, 4, row);
+    });
+    const sp = document.createElement('div'); sp.className = 'spacer'; place(sp, 1, 9);
+    [['lanthanides', 10], ['actinides', 11]].forEach(([t, row]) => {
+      const d = document.createElement('div'); d.className = 'flabel'; d.textContent = t; place(d, 1, row, 4);
+    });
+    outline([['s', 2, 3, 4, 9], ['p', 14, 3, 20, 9], ['d', 4, 5, 14, 9], ['f', 4, 10, 19, 12], ['s', 19, 2, 20, 3, 's'], ['s', 4, 2, 14, 3, 's', 10]]);
+  }
+
+  // AQA key: label each line of the hydrogen tile, with an arrow to it.
+  // Positions are measured from the real tile so they hold at any size.
+  const keyBox = document.createElement('div'); keyBox.className = 'pt-key'; keyBox.setAttribute('aria-hidden', 'true');
+  place(keyBox, hSpan[0], 2, hSpan[1], 3);
+  const keyId = 'k' + Math.random().toString(36).slice(2, 8);
+  function drawKey(){
+    const h = tiles[1];
+    if (!h || grid.classList.contains('as-list')) { keyBox.innerHTML = ''; return; }
+    const K = keyBox.getBoundingClientRect(), T = h.getBoundingClientRect();
+    if (!K.width || !T.width) return;
+    const mid = sel => { const r = $(sel, h).getBoundingClientRect(); return r.top + r.height / 2 - K.top; };
+    const fs = Math.max(10.5, Math.min(22, T.width * 0.19));
+    const tl = T.left - K.left, tr = T.right - K.left, len = Math.max(22, fs * 2.2), pad = fs * 0.45;
+    const ov = st.overlay && OVERLAYS[st.overlay];
+    const items = [
+      { side:-1, y:mid('.t-mass'), text:'relative atomic mass' },
+      { side:-1, y:mid(ov ? '.t-val' : '.t-name'), text:ov ? ov.key : 'name' },
+      { side:1, y:mid('.t-sym'), text:'atomic symbol' },
+      { side:1, y:mid('.t-z'), text:'atomic (proton) number' }];
+    let body = '';
+    items.forEach(it => {
+      const x2 = it.side < 0 ? tl - 3 : tr + 3, x1 = x2 + it.side * len, tx = x1 + it.side * pad;
+      body += `<line x1="${x1}" y1="${it.y}" x2="${x2}" y2="${it.y}" marker-end="url(#${keyId})"/>`;
+      body += `<text x="${tx}" y="${it.y}" dy="0.35em" font-size="${fs}" text-anchor="${it.side < 0 ? 'end' : 'start'}">${it.text}</text>`;
+    });
+    keyBox.innerHTML = `<svg width="${K.width}" height="${K.height}"><defs><marker id="${keyId}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="${fs * 0.55}" markerHeight="${fs * 0.55}" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>${body}</svg>`;
+    // frame the labels and tile, with a "Key" tab on the bottom edge
+    const svg = $('svg', keyBox), texts = $$('text', svg).map(t => t.getBBox());
+    const x0 = Math.min(...texts.map(b => b.x), tl) - pad, x1 = Math.max(...texts.map(b => b.x + b.width), tr) + pad;
+    const y0 = T.top - K.top - pad, y1 = T.bottom - K.top + pad, tw = fs * 2.6, th = fs * 1.35;
+    svg.insertAdjacentHTML('afterbegin', `<rect class="frame" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="${fs * 0.4}"/>
+      <rect class="tab" x="${x0 + fs * 0.7}" y="${y1 - th / 2}" width="${tw}" height="${th}" rx="${th / 2}"/>
+      <text class="tabt" x="${x0 + fs * 0.7 + tw / 2}" y="${y1}" dy="0.35em" font-size="${fs * 0.85}" text-anchor="middle">Key</text>`);
+  }
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => drawKey()).observe(grid);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawKey);
+
+  // keyboard: arrow keys move between tiles
+  if (!opts.presenter) grid.addEventListener('keydown', ev => {
+    const t = ev.target.closest('.tile'); if (!t || !t._rc || grid.classList.contains('as-list')) return;
+    const d = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[ev.key]; if (!d) return;
+    ev.preventDefault();
+    let [r, c] = t._rc;
+    for (let i = 0; i < 40; i++) {
+      r += d[0]; c += d[1];
+      if (d[0] && (r < 2 || r > 11)) break; if (d[1] && (c < 2 || c > lastCol)) break;
+      if (d[0] === 1 && r === 9) continue;
+      const hit = pos[`${r},${c}`] || (d[0] ? nearestInRow(r, c) : null);
+      if (hit) { hit.focus(); return; }
+    }
+  });
+  function nearestInRow(r, c){ for (let k = 1; k < lastCol; k++) { const a = pos[`${r},${c - k}`] || pos[`${r},${c + k}`]; if (a) return a; } return null; }
+
+  function ariaFor(el){
+    const hidden = Object.values(st.quiz).some(Boolean) && !tiles[el.z].classList.contains('rev');
+    if (hidden) return `Hidden element, period ${el.period}${el.group ? ', group ' + (MAIN_GROUP(el.group) || el.group) : ''}. Press to reveal.`;
+    let s = `${el.name}, ${el.sym}, atomic number ${el.z}, relative atomic mass ${fmtMass(el, level)}, ${CATS[el.cat].short}`;
+    if (st.overlay) { const v = OVERLAYS[st.overlay].show(el); s += `, ${OVERLAYS[st.overlay].label}: ${v == null ? 'no data' : v}`; }
+    return s;
+  }
+  function refreshAria(){ EL.forEach(el => el && tiles[el.z] && tiles[el.z].setAttribute('aria-label', ariaFor(el))); }
+
+  const api = {
+    grid, tiles, level, state:st,
+    setSpot(spot){
+      st.spot = spot;
+      grid.classList.toggle('spot', !!spot);
+      EL.forEach(el => { if (el && tiles[el.z]) tiles[el.z].classList.toggle('lit', !!spot && spot.test(el)); });
+      heads.forEach(b => b.setAttribute('aria-pressed', spot && spot.key === b.dataset.key ? 'true' : 'false'));
+      opts.onSpot && opts.onSpot(spot, api);
+    },
+    setQuiz(k, on){
+      st.quiz[k] = on; grid.classList.toggle('q-' + k, on);
+      if (!Object.values(st.quiz).some(Boolean)) $$('.tile.rev', grid).forEach(t => t.classList.remove('rev'));
+      refreshAria();
+    },
+    resetQuiz(){ Object.keys(st.quiz).forEach(k => { st.quiz[k] = false; grid.classList.remove('q-' + k); }); $$('.tile.rev', grid).forEach(t => t.classList.remove('rev')); refreshAria(); },
+    reveal(el){ tiles[el.z].classList.add('rev'); tiles[el.z].setAttribute('aria-label', ariaFor(el)); },
+    isHidden(el){ return Object.values(st.quiz).some(Boolean) && !tiles[el.z].classList.contains('rev'); },
+    setColour(c){ st.colour = c; grid.classList.toggle('by-block', c === 'block'); grid.classList.toggle('plain', c === 'plain'); },
+    setBlocks(on){ st.blocks = on; grid.classList.toggle('blocks', on); },
+    setList(on){ grid.classList.toggle('as-list', on); drawKey(); },
+    setOverlay(key){
+      st.overlay = key || null; grid.classList.toggle('ov', !!key);
+      EL.forEach(el => {
+        const t = el && tiles[el.z]; if (!t) return;
+        t.classList.remove('inv', 'nd'); t.style.removeProperty('--ovbg');
+        const v$ = $('.t-val', t); v$.textContent = '';
+        if (!key) return;
+        const o = OVERLAYS[key], v = o.get(el);
+        if (v == null) { t.classList.add('nd'); v$.textContent = '–'; return; }
+        const p = Math.max(0, Math.min(100, Math.round((v - o.min) / (o.max - o.min) * 100)));
+        t.style.setProperty('--ovbg', `color-mix(in oklab, var(${o.hue}) ${p}%, var(--seq-lo))`);
+        if (p > 52) t.classList.add('inv');
+        v$.textContent = key === 'ion' ? `${chargeLabel(el.ion[0])} ${el.ion[1]}` : o.show(el);
+      });
+      refreshAria(); drawKey();
+    },
+    refreshAria
+  };
+  refreshAria(); requestAnimationFrame(drawKey);
+  return api;
+}
+
+function spotFor(key, level){
+  if (key === 'f') return { key, label:'Lanthanides and actinides', test:e => e.cat === 'lanth' || e.cat === 'act' };
+  if (key === 'trans') return { key, label:'Transition metals', test:e => e.cat === 'trans' };
+  if (key === 'metal') return { key, label:'Metals', test:isMetal };
+  if (key === 'nonmetal-all') return { key, label:'Non-metals', test:isNonMetal };
+  if (key.startsWith('cat:')) { const c = key.slice(4); return { key, label:CATS[c].label, test:e => e.cat === c }; }
+  if (key[0] === 'g') { const g = +key.slice(1); const m = MAIN_GROUP(g);
+    return { key, label:m ? `Group ${m}` : `Group ${g}`, test:e => (e.group === g && !(g === 1 && e.z === 1)) || (level !== 'alevel' && g === 3 && (e.z === 57 || e.z === 89)) }; }
+  if (key[0] === 'p') { const p = +key.slice(1); return { key, label:`Period ${p}`, test:e => e.period === p }; }
+  return null;
+}
+function spotElements(zs){ const set = new Set(zs); return { key:'el:' + [...set].join(','), label:[...set].map(z => EL[z].sym).join(', '), test:e => set.has(e.z) }; }
+
+function legendChips(host, level, table){
+  const present = new Set(); EL.forEach(el => { if (el && table.tiles[el.z]) present.add(el.cat); });
+  const order = ['alkali','alkaline','trans','post','metalloid','nonmetal','halogen','noble','lanth','act'].filter(c => present.has(c));
+  const items = order.map(c => ({ key:'cat:' + c, label:CATS[c].label, sw:`var(--c-${c})`, acc:`var(--e-${c})`,
+    n:EL.filter(e => e && e.cat === c && table.tiles[e.z]).length }));
+  items.push({ key:'metal', label:'All metals', sw:'var(--panel2)', acc:'var(--ink)' }, { key:'nonmetal-all', label:'All non-metals', sw:'var(--panel2)', acc:'var(--ink)' });
+  host.innerHTML = items.map(i => `<button class="chip" data-key="${i.key}" aria-pressed="false" style="--sw:${i.sw};--accent:${i.acc}"><span class="sw" aria-hidden="true"></span>${i.label}${i.n ? ` <span class="n">${i.n}</span>` : ''}</button>`).join('');
+  host.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const k = b.dataset.key;
+    table.setSpot(table.state.spot && table.state.spot.key === k ? null : spotFor(k, level));
+  });
+  return spot => $$('.chip', host).forEach(b => b.setAttribute('aria-pressed', spot && spot.key === b.dataset.key ? 'true' : 'false'));
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CHARTS
+   ════════════════════════════════════════════════════════════════════════ */
+function barChart(items, { unit = '', colour = '--seq-ie', title = '', dips = false } = {}){
+  const W = 640, H = 300, L = 52, R = 12, T = 22, B = 34;
+  const vals = items.map(i => i.v).filter(v => v != null);
+  const max = Math.max(...vals) * 1.1, n = items.length, bw = (W - L - R) / n;
+  const y = v => T + (H - T - B) * (1 - v / max);
+  const step = max > 1500 ? 500 : max > 600 ? 200 : max > 150 ? 50 : max > 5 ? 1 : 0.5;
+  let g = '';
+  for (let v = 0; v <= max; v += step) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11">${+v.toFixed(1)}</text>`;
+  let bars = '';
+  items.forEach((it, i) => {
+    const x = L + i * bw + bw * 0.18, w = bw * 0.64;
+    const dip = dips && i > 0 && it.v != null && items[i - 1].v != null && it.v < items[i - 1].v;
+    if (it.v != null) {
+      const h = H - B - y(it.v), r = Math.min(4, w / 2, h);
+      bars += `<rect class="hit" data-i="${i}" x="${L + i * bw}" y="${T}" width="${bw}" height="${H - T - B}"/>`;
+      bars += `<path class="bar${dip ? ' dip' : ''}" d="M${x},${H - B} v${-(h - r)} q0,${-r} ${r},${-r} h${w - 2 * r} q${r},0 ${r},${r} v${h - r} z"/>`;
+      if (dip) bars += `<text class="ann" x="${x + w / 2}" y="${y(it.v) - 6}" text-anchor="middle" font-size="12">dip</text>`;
+    } else bars += `<text x="${x + w / 2}" y="${H - B - 6}" text-anchor="middle" font-size="11">n/a</text>`;
+    bars += `<text class="lbl" x="${x + w / 2}" y="${H - B + 16}" text-anchor="middle" font-size="13">${it.label}</text>`;
+  });
+  const rows = items.map(i => `<tr><td>${i.label}</td><td>${i.v == null ? '—' : i.v + unit}</td></tr>`).join('');
+  return `<div class="chart" style="--barc:var(${colour})"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+    <line class="ax" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>${g}${bars}</svg><div class="tip" role="status"></div>
+    <details class="data"><summary>Show the data</summary><table><tbody>${rows}</tbody></table></details></div>`;
+}
+function wireChart(root, items, unit){
+  $$('.chart', root).forEach(ch => {
+    const tip = $('.tip', ch), svg = $('svg', ch);
+    svg.addEventListener('pointermove', e => {
+      const h = e.target.closest('.hit');
+      $$('.bar', svg).forEach(b => b.classList.remove('hl'));
+      if (!h) { tip.classList.remove('on'); return; }
+      const it = items[+h.dataset.i];
+      h.nextElementSibling && h.nextElementSibling.classList.add('hl');
+      const rb = ch.getBoundingClientRect();
+      tip.innerHTML = `<b>${it.name || it.label}</b> · ${it.v}${unit}`;
+      tip.style.left = (e.clientX - rb.left) + 'px'; tip.style.top = (e.clientY - rb.top) + 'px';
+      tip.classList.add('on');
+    });
+    svg.addEventListener('pointerleave', () => { tip.classList.remove('on'); $$('.bar', svg).forEach(b => b.classList.remove('hl')); });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DRAWER
+   ════════════════════════════════════════════════════════════════════════ */
+const drawer = $('#drawer'); let drawerReturn = null;
+function bohrSVG(el){
+  const sh = shellCounts(el.z); const n = sh.length;
+  const R0 = 16, gap = Math.min(15, 56 / n);
+  let s = `<svg viewBox="-75 -75 150 150" aria-hidden="true"><circle class="nuc" r="${R0 - 2}"/><text class="nt" text-anchor="middle" dy="4.5">${el.sym}</text>`;
+  sh.forEach((c, i) => {
+    const r = R0 + gap * (i + 1);
+    s += `<circle class="orb" r="${r}"/>`;
+    for (let k = 0; k < c; k++) { const a = -Math.PI / 2 + k * 2 * Math.PI / c; s += `<circle class="e" cx="${(r * Math.cos(a)).toFixed(2)}" cy="${(r * Math.sin(a)).toFixed(2)}" r="${n > 4 ? 2.1 : 3}"/>`; }
+  });
+  return s + '</svg>';
+}
+function openDrawer(el, level, from){
+  drawerReturn = from || document.activeElement;
+  const cat = CATS[el.cat];
+  const massNo = el.rad ? Math.round(el.mass) : (MAIN_ISO[el.z] || Math.round(el.mass));
+  const grpName = el.group ? `Group ${MAIN_GROUP(el.group) || el.group}` : (el.period === 6 ? 'Lanthanide series' : 'Actinide series');
+  $('#drHead').innerHTML = `
+    <div class="tile cat-${el.cat}">${tileInner(el, level)}</div>
+    <div style="min-width:0">
+      <h2 id="drTitle">${el.name}</h2>
+      <div class="meta">
+        <span class="tag cat" style="--sw:var(--c-${el.cat});--accent:var(--e-${el.cat})">${cat.short}</span>
+        <span class="tag">${grpName}</span><span class="tag">Period ${el.period}</span>
+        ${level === 'alevel' ? `<span class="tag">${el.block}-block</span>` : `<span class="tag">${el.state === 'unknown' ? 'state unknown' : el.state + ' at 20 °C'}</span>`}
+      </div>
+    </div>
+    <button class="btn icon-btn drawer-close" aria-label="Close details" title="Close (Esc)">✕</button>`;
+  $('.drawer-close', drawer).addEventListener('click', closeDrawer);
+
+  const cfg = config(el.z), cs = cfgStrings(cfg, el.z), shells = shellCounts(el.z);
+  let html = '';
+  const structure = `<section><h3>ATOMIC STRUCTURE</h3>
+    <div class="pne"><div><b>${el.z}</b><span>protons</span></div><div><b>${massNo - el.z}</b><span>neutrons</span></div><div><b>${el.z}</b><span>electrons</span></div></div>
+    <p class="note">Neutrons = mass number − atomic number = ${massNo} − ${el.z}, for the ${el.rad ? 'longest-lived' : 'most common'} isotope, ${el.name.toLowerCase()}-${massNo}.</p>
+    ${ISO_NOTE[el.z] ? `<div class="callout" style="--accent:var(--e-nonmetal)">${ISO_NOTE[el.z]}</div>` : ''}</section>`;
+
+  if (level === 'gcse') {
+    const grp = GCSE_GROUP[el.cat] || { s:'', r:[] }, own = GCSE_EL[el.z] || {};
+    const reactions = (own.r || []).concat(grp.r);
+    html += structure;
+    html += `<section><h3>ELECTRONIC STRUCTURE</h3><div class="bohr">${bohrSVG(el)}<div><div class="shells">${shells.join(',')}</div>
+      <p class="note">${el.z <= 20 ? `Electrons fill the shells in order: 2 in the first, then up to 8. ${el.group ? `${shells[shells.length - 1]} outer electron${shells[shells.length - 1] > 1 ? 's' : ''} → ${el.cat === 'noble' ? 'Group 0, full outer shell' : 'Group ' + MAIN_GROUP(el.group)}; ${shells.length} shell${shells.length > 1 ? 's' : ''} → Period ${el.period}.` : ''}` : 'Beyond calcium the simple 2,8,8 rule stops working; GCSE only asks for elements 1–20. See the A-Level table for the sub-shell configuration.'}</p></div></div></section>`;
+    html += `<section><h3>WHAT YOU NEED TO KNOW</h3>${own.s || grp.s ? `<p style="margin:0 0 8px">${own.s || grp.s}</p>` : ''}
+      ${own.s && grp.s && own.s !== grp.s ? `<p class="note" style="margin:0 0 8px">${grp.s}</p>` : ''}
+      ${reactions.length ? `<ul>${reactions.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+      ${!own.s && !grp.s && !reactions.length ? '<p class="note">Not a named element in the AQA GCSE specification.</p>' : ''}</section>`;
+    const ri = REACTIVITY.indexOf(el.sym);
+    if (ri >= 0) html += `<section><h3>REACTIVITY SERIES</h3><p style="margin:0;font-size:14px;line-height:1.9">${REACTIVITY.map(s => s === el.sym ? `<b class="chem" style="font-size:17px">${s}</b>` : `<span style="color:var(--muted)">${s}</span>`).join(' › ')}</p><p class="note">Most reactive on the left. Metals above carbon are extracted by electrolysis; below it, by reduction with carbon.</p></section>`;
+    html += `<section><h3>PHYSICAL PROPERTIES</h3><div class="kv">
+      <div><b>${el.state === 'unknown' ? 'unknown' : el.state}</b><span>state at room temperature</span></div>
+      <div><b>${isMetal(el) ? 'metal' : el.cat === 'metalloid' ? 'semi-metal' : 'non-metal'}</b><span>${isMetal(el) ? 'conducts; forms positive ions' : el.cat === 'metalloid' ? 'between metals and non-metals' : 'forms negative ions or shares electrons'}</span></div></div></section>`;
+  } else {
+    const anomaly = EXC[el.z];
+    html += `<section><h3>ELECTRON CONFIGURATION${el.predicted ? ' (PREDICTED)' : ''}</h3>
+      <div class="cfg" aria-label="${cs.fullTxt}">${cs.full}</div><div class="cfg short">${cs.short}</div>
+      ${anomaly && el.z <= 30 ? `<div class="callout">Exception to the filling order: ${el.z === 24 ? 'one electron moves from 4s to give a half-filled 3d⁵ sub-level' : 'one electron moves from 4s to give a full 3d¹⁰ sub-level'}, which is more stable.</div>`
+        : anomaly ? '<p class="note">This configuration breaks the simple filling order (not required by AQA beyond Cr and Cu).</p>' : ''}
+      ${el.block === 'd' && el.period === 4 ? '<p class="note">Written with 3d before 4s: 4s fills first, but 4s electrons are lost first when ions form.</p>' : ''}
+      ${ION_LIST[el.z] ? `<h3 style="margin-top:12px">IONS</h3><div class="ions">${ION_LIST[el.z].map(c => { const ic = ionConfig(el.z, c); const s = cfgStrings(ic, el.z - c, true); return `<div><b>${el.sym}${chargeLabel(c)}</b> ${s.short}</div>`; }).join('')}</div>` : ''}
+    </section>`;
+    html += `<section><h3>DATA</h3><div class="kv">
+      <div><b>${el.ox}</b><span>common oxidation states</span></div>
+      <div><b>${el.en || '—'}</b><span>electronegativity (Pauling)</span></div>
+      <div><b>${el.ie ? el.ie + ' kJ mol⁻¹' : '—'}</b><span>first ionisation energy</span></div>
+      <div><b>${el.cov ? el.cov + ' pm' : '—'}</b><span>atomic (covalent) radius</span></div>
+      ${el.ion ? `<div><b>${el.sym}${chargeLabel(el.ion[0])}: ${el.ion[1]} pm</b><span>ionic radius</span></div>` : ''}
+      <div><b>${fmtMass(el, 'alevel')}</b><span>relative atomic mass</span></div></div>
+      ${ieNote(el)}</section>`;
+    const notes = alNotes(el);
+    if (notes.length) html += `<section><h3>SPECIFICATION NOTES &amp; TRENDS</h3><ul>${notes.map(n => `<li>${n}</li>`).join('')}</ul></section>`;
+    html += structure;
+  }
+  $('#drBody').innerHTML = html; $('#drBody').scrollTop = 0;
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false');
+  $('.drawer-close', drawer).focus({ preventScroll:true });
+}
+function ieNote(el){
+  const prev = EL[el.z - 1];
+  if (!el.ie || !prev || !prev.ie || el.period !== prev.period || el.ie >= prev.ie) return '';
+  let why = '';
+  if (el.group === 13) why = `the outer electron is in a p sub-level, which is higher in energy and partly shielded by the s electrons`;
+  else if (el.group === 16) why = `the electron is removed from a p orbital holding a pair, and the paired electrons repel`;
+  else if (el.group === 1) why = 'the outer electron starts a new shell';
+  else return `<p class="note">First ionisation energy is lower than ${prev.name.toLowerCase()}’s (${prev.ie} kJ mol⁻¹).</p>`;
+  return `<div class="callout">Lower first ionisation energy than ${prev.name.toLowerCase()} (${prev.ie} kJ mol⁻¹): ${why}.</div>`;
+}
+function alNotes(el){
+  const out = [];
+  if (el.period === 3) out.push(...AL_GROUP.p3);
+  if (el.group === 1 && el.z !== 1) out.push(...AL_GROUP.g1);
+  if (el.group === 2) out.push(...AL_GROUP.g2);
+  if (el.group === 17) out.push(...AL_GROUP.g17);
+  if (el.group === 18) out.push(...AL_GROUP.g18);
+  if (el.z >= 21 && el.z <= 30) out.push(...AL_GROUP.trans);
+  if (AL_EL[el.z]) out.unshift(...AL_EL[el.z]);
+  if (!out.length && el.group && el.group >= 13) out.push('Down a group: atomic radius increases (an extra shell) and first ionisation energy decreases (more shielding, outer electron further away).', 'Across a period: nuclear charge increases with similar shielding, so atomic radius decreases and electronegativity increases.');
+  if (el.predicted) out.push('Only a few atoms have ever been made; its chemistry is predicted, not measured.');
+  return out;
+}
+function closeDrawer(){
+  if (!drawer.classList.contains('open')) return;
+  drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true');
+  if (drawerReturn && document.contains(drawerReturn)) drawerReturn.focus({ preventScroll:true });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   TABS
+   ════════════════════════════════════════════════════════════════════════ */
+const TABS = ['gcse', 'alevel', 'long', 'history'];
+let activeTab = 'gcse';
+function showTab(id, focus){
+  activeTab = id;
+  TABS.forEach(t => {
+    const on = t === id;
+    const b = $('#tab-' + t); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    $('#panel-' + t).hidden = !on;
+  });
+  if (focus) $('#tab-' + id).focus();
+  closeDrawer();
+  try { history.replaceState(null, '', '#' + id); } catch (e) {}
+}
+TABS.forEach(t => $('#tab-' + t).addEventListener('click', () => showTab(t)));
+$('.tabs').addEventListener('keydown', e => {
+  const i = TABS.indexOf(activeTab);
+  if (e.key === 'ArrowRight') { e.preventDefault(); showTab(TABS[(i + 1) % TABS.length], true); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); showTab(TABS[(i + TABS.length - 1) % TABS.length], true); }
+});
+
+/* ── GCSE tab ─────────────────────────────────────────────────────────── */
+let gcseSync;
+const gcseTable = createTable($('#gcseTable'), { level:'gcse',
+  onTile:(el, b) => openDrawer(el, 'gcse', b), onSpot:s => gcseSync && gcseSync(s) });
+gcseSync = legendChips($('#gcseChips'), 'gcse', gcseTable);
+function restoreColour(seg, table, key){
+  const c = store.get(key);
+  if (!c || !$(`button[data-c="${c}"]`, seg)) return;
+  table.setColour(c); $$('button', seg).forEach(b => b.setAttribute('aria-pressed', b.dataset.c === c));
+}
+
+/* ── A-Level tab ──────────────────────────────────────────────────────── */
+let alSync;
+const alTable = createTable($('#alTable'), { level:'alevel',
+  onTile:(el, b) => openDrawer(el, 'alevel', b), onSpot:s => { alSync && alSync(s); renderTrend(); } });
+alSync = legendChips($('#alChips'), 'alevel', alTable);
+function segGroup(host, attr, fn){
+  host.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $$('button', host).forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    fn(b.dataset[attr]);
+  });
+}
+segGroup($('#alColour'), 'c', c => { alTable.setColour(c); $('#alChips').hidden = c === 'block'; store.set('ptx-al-colour', c); });
+segGroup($('#gcseColour'), 'c', c => { gcseTable.setColour(c); store.set('ptx-gcse-colour', c); });
+restoreColour($('#gcseColour'), gcseTable, 'ptx-gcse-colour');
+restoreColour($('#alColour'), alTable, 'ptx-al-colour');
+
+/* ── Wide tab ─────────────────────────────────────────────────────────── */
+let longSync;
+const longTable = createTable($('#longTable'), { level:'long',
+  onTile:(el, b) => openDrawer(el, 'alevel', b), onSpot:s => longSync && longSync(s) });
+longSync = legendChips($('#longChips'), 'long', longTable);
+segGroup($('#longColour'), 'c', c => { longTable.setColour(c); $('#longChips').hidden = c === 'block'; store.set('ptx-long-colour', c); });
+restoreColour($('#longColour'), longTable, 'ptx-long-colour');
+$('#longChips').hidden = longTable.state.colour === 'block';
+$('#longBlocks').addEventListener('click', e => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', on); longTable.setBlocks(on); });
+$('#alChips').hidden = alTable.state.colour === 'block';
+$('#alBlocks').addEventListener('click', e => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', on); alTable.setBlocks(on); });
+segGroup($('#alOverlay'), 'o', o => { alTable.setOverlay(o); renderLegend(o); renderTrend(); });
+function renderLegend(o){
+  const lg = $('#alLegend');
+  if (!o) { lg.classList.remove('on'); lg.innerHTML = ''; return; }
+  const ov = OVERLAYS[o];
+  lg.innerHTML = `<span>${ov.min}</span><span class="ramp" style="background:linear-gradient(90deg, var(--seq-lo), var(${ov.hue}))"></span><span>${ov.max}</span>
+    <span>${ov.label}</span><span><span class="ndk"></span> no data</span>`;
+  lg.classList.add('on');
+}
+function renderTrend(){
+  const card = $('#alTrend'), o = alTable.state.overlay;
+  if (!o) { card.hidden = true; return; }
+  let spot = alTable.state.spot;
+  if (!spot || !/^[gp]\d/.test(spot.key)) spot = spotFor('p3', 'alevel');
+  const ov = OVERLAYS[o];
+  const els = EL.filter(e => e && spot.test(e) && e.z <= 103).filter(e => o !== 'ion' || e.ion);
+  const items = els.map(e => ({ label:o === 'ion' ? e.sym + chargeLabel(e.ion[0]) : e.sym, name:e.name, v:ov.get(e) }));
+  const across = spot.key[0] === 'p';
+  let text = '';
+  if (o === 'ie') text = across ? 'Generally increases across a period (more protons, similar shielding). Red bars mark the dips: the start of a p sub-level (Group 3) and the first paired p electron (Group 6).' : 'Decreases down a group: the outer electron is further from the nucleus and more shielded, outweighing the extra protons.';
+  if (o === 'en') text = across ? 'Increases across a period: more protons attract the bonding pair more strongly, with similar shielding.' : 'Decreases down a group: the bonding pair is further from the nucleus and more shielded.';
+  if (o === 'cov') text = across ? 'Decreases across a period: nuclear charge rises while shielding stays about the same, pulling the electrons in.' : 'Increases down a group: each element has an extra shell.';
+  if (o === 'ion') text = 'Positive ions are smaller than their atoms (a whole shell is lost); negative ions are larger (extra electron repulsion). Isoelectronic ions shrink as nuclear charge rises: N³⁻ > O²⁻ > F⁻ > Na⁺ > Mg²⁺ > Al³⁺.';
+  if (!items.length) { card.hidden = false; card.innerHTML = `<h3>${ov.label}: ${spot.label}</h3><p class="note">No ions listed for ${spot.label}. Try Period 3 or Group 2.</p>`; return; }
+  card.hidden = false;
+  card.innerHTML = `<h3>${ov.label}: ${spot.label}</h3><p class="note" style="margin:0 0 8px">${text} Spotlight another group or period to change the chart.</p>
+    ${barChart(items, { unit:ov.unit, colour:ov.hue, title:`${ov.label} for ${spot.label}`, dips:o === 'ie' && across })}`;
+  wireChart(card, items, ov.unit);
+}
+
+/* Period 3 oxides & chlorides */
+const P3 = {
+  elements:{ head:['Element','Structure','Melting point / °C','With water','With oxygen'], rows:[
+    ['Na','giant metallic','98','Vigorous: 2Na + 2H₂O → 2NaOH + H₂ (pH 12–14)','Yellow flame → Na₂O'],
+    ['Mg','giant metallic','650','Very slow with cold water; with steam Mg + H₂O → MgO + H₂','Brilliant white flame → MgO'],
+    ['Al','giant metallic','660','Protected by its oxide layer','→ Al₂O₃'],
+    ['Si','macromolecular','1414','No reaction','→ SiO₂ (heated strongly)'],
+    ['P','simple molecular, P₄','44','No reaction','White flame → P₄O₁₀'],
+    ['S','simple molecular, S₈','115','No reaction','Blue flame → SO₂'],
+    ['Cl','simple molecular, Cl₂','−102','Cl₂ + H₂O ⇌ HCl + HClO','—'],
+    ['Ar','monatomic','−189','—','—']] },
+  oxides:{ head:['Oxide','Bonding & structure','Melting point / °C','With water','pH','Nature'], rows:[
+    ['Na₂O','ionic lattice','1132','Na₂O + H₂O → 2NaOH','12–14','basic'],
+    ['MgO','ionic lattice','2852','MgO + H₂O → Mg(OH)₂ (slightly soluble)','9–10','basic'],
+    ['Al₂O₃','ionic, some covalent character','2072','Insoluble','7','amphoteric'],
+    ['SiO₂','macromolecular','1710','Insoluble','7','acidic'],
+    ['P₄O₁₀','simple molecular','340','P₄O₁₀ + 6H₂O → 4H₃PO₄','0–1','acidic'],
+    ['SO₂','simple molecular','−73','SO₂ + H₂O → H₂SO₃','2–3','acidic'],
+    ['SO₃','simple molecular','17','SO₃ + H₂O → H₂SO₄','0–1','acidic']] },
+  chlorides:{ head:['Chloride','Bonding & structure','Melting point / °C','With water','pH'], rows:[
+    ['NaCl','ionic lattice','801','Dissolves','7'],
+    ['MgCl₂','ionic lattice','714','Dissolves (slight hydrolysis)','6.5'],
+    ['AlCl₃','covalent, Al₂Cl₆ dimer','sublimes 178','Hydrolyses: [Al(H₂O)₆]³⁺ is acidic; HCl fumes','3'],
+    ['SiCl₄','simple molecular','−69','SiCl₄ + 2H₂O → SiO₂ + 4HCl','1–2'],
+    ['PCl₅','simple molecular (ionic solid)','sublimes 160','PCl₅ + 4H₂O → H₃PO₄ + 5HCl','1'],
+    ['S₂Cl₂','simple molecular','−80','Hydrolyses to S, SO₂ and HCl','1–2']] }
+};
+let p3View = 'oxides';
+function renderP3(){
+  const d = P3[p3View];
+  const pill = v => ({ basic:'basic', acidic:'acidic', amphoteric:'amph' }[v] ? `<span class="pill ${{ basic:'basic', acidic:'acidic', amphoteric:'amph' }[v]}">${v}</span>` : v);
+  $('#p3Panel').innerHTML = `<div class="bar" style="margin-bottom:8px"><h3 style="margin:0 12px 0 0">Period 3 summary</h3>
+    <div class="seg" role="group" aria-label="Period 3 view" id="p3Seg">${['elements','oxides','chlorides'].map(k => `<button data-v="${k}" aria-pressed="${k === p3View}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div></div>
+    <div class="dt-wrap"><table class="dt"><thead><tr>${d.head.map(h => `<th scope="col">${h.toUpperCase()}</th>`).join('')}</tr></thead>
+    <tbody>${d.rows.map(r => `<tr>${r.map((c, i) => i === 0 ? `<th scope="row">${c}</th>` : `<td>${pill(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    ${p3View === 'oxides' ? `<div class="trendbar" aria-hidden="true"></div><div class="trendlab"><span>basic (ionic)</span><span>amphoteric</span><span>acidic (covalent)</span></div>
+      <ul class="note" style="padding-left:18px"><li>Na₂O and MgO: high melting points from strong attraction between oppositely charged ions; MgO higher because Mg²⁺ has a greater charge.</li>
+      <li>SiO₂: many strong covalent bonds must break. P₄O₁₀ and SO₂: only weak intermolecular forces between molecules.</li>
+      <li>Amphoteric Al₂O₃: Al₂O₃ + 6HCl → 2AlCl₃ + 3H₂O and Al₂O₃ + 2NaOH + 3H₂O → 2NaAl(OH)₄</li>
+      <li>Acidic oxides neutralise bases: P₄O₁₀ + 12NaOH → 4Na₃PO₄ + 6H₂O; SO₂ + 2NaOH → Na₂SO₃ + H₂O</li></ul>`
+    : p3View === 'chlorides' ? '<p class="note">Chlorides are background for the current AQA A-Level specification (not examined), but they show the same move from ionic to covalent across the period.</p>'
+    : '<p class="note">AQA 3.2.1 and 3.2.4: explain the melting points from structure and bonding, and write equations for the reactions with water and oxygen.</p>'}`;
+  $('#p3Seg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { p3View = b.dataset.v; renderP3(); } });
+}
+$('#alP3').addEventListener('click', e => {
+  const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+  e.currentTarget.setAttribute('aria-pressed', on);
+  $('#p3Panel').hidden = !on;
+  if (on) { renderP3(); alTable.setSpot(spotFor('p3', 'alevel')); $('#p3Panel').scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+  else if (alTable.state.spot && alTable.state.spot.key === 'p3') alTable.setSpot(null);
+});
+
+// layout toggles
+[[$('#panel-gcse .seg[aria-label="Layout"]'), gcseTable], [$('#alLayout'), alTable]].forEach(([seg, t]) => segGroup(seg, 'layout', v => t.setList(v === 'list')));
+if (window.matchMedia('(max-width: 560px)').matches) {
+  [[$('#panel-gcse .seg[aria-label="Layout"]'), gcseTable], [$('#alLayout'), alTable]].forEach(([seg, t]) => {
+    t.setList(true); $$('button', seg).forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'list'));
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   HISTORY
+   ════════════════════════════════════════════════════════════════════════ */
+const PORTRAIT = {
+  dalton:'https://upload.wikimedia.org/wikipedia/commons/d/d4/John_Dalton_by_Charles_Turner.jpg',
+  newlands:'https://upload.wikimedia.org/wikipedia/commons/9/90/John_Alexander_Reina_Newlands.jpg',
+  mendeleev:'https://upload.wikimedia.org/wikipedia/commons/8/8f/Dmitri_Mendeleev_1890s.jpg',
+  moseley:'https://upload.wikimedia.org/wikipedia/commons/c/c8/Henry_Moseley_%281887-1915%29.jpg'
+};
+const HIST = [
+  { id:'dalton', year:'1808', name:'John Dalton', initials:'JD' },
+  { id:'newlands', year:'1864', name:'John Newlands', initials:'JN' },
+  { id:'mendeleev', year:'1869', name:'Dmitri Mendeleev', initials:'DM' },
+  { id:'moseley', year:'1913', name:'Henry Moseley', initials:'HM' }
+];
+const EKA = {
+  ga:{ rows:[['Relative atomic mass','68','69.7'],['Density / g cm⁻³','5.9','5.9'],['Melting point','low','30 °C'],['Oxide formula','Ea₂O₃','Ga₂O₃']], p:'Predicted 1871 · discovered 1875' },
+  ge:{ rows:[['Relative atomic mass','72','72.6'],['Density / g cm⁻³','5.5','5.3'],['Oxide formula','EsO₂','GeO₂'],['Density of oxide / g cm⁻³','4.7','4.2']], p:'Predicted 1871 · discovered 1886' }
+};
+function swapTiles(a, b){
+  const t = z => `<div class="tile cat-${EL[z].cat}">${tileInner(EL[z], 'alevel')}</div>`;
+  return `${t(a)}<span class="arrow" aria-hidden="true">⇄</span>${t(b)}`;
+}
+function portraitHTML(h, cls){
+  return `<img src="${PORTRAIT[h.id]}" alt="Portrait of ${h.name}" referrerpolicy="no-referrer" data-initials="${h.initials}" class="${cls || ''}">`;
+}
+function fixPortraits(root){
+  $$('img[data-initials]', root).forEach(img => {
+    const fail = () => { const s = document.createElement('span'); s.textContent = img.dataset.initials; s.setAttribute('role', 'img'); s.setAttribute('aria-label', img.alt); img.replaceWith(s); };
+    img.addEventListener('error', fail, { once:true });
+  });
+}
+/* ── History slide deck ───────────────────────────────────────────────────
+   Slides are drawn on a fixed 1600×900 canvas and scaled to fit, like
+   PowerPoint. Anything marked data-step="n" builds in on the nth click;
+   data-hl="n" + data-hlc="class" adds a class instead of revealing. */
+const hp = id => HIST.find(h => h.id === id);
+const yearsBar = on => `<div class="sl-years">${HIST.map(h => `<span class="${h.id === on ? 'on' : ''}">${h.year} ${h.name.split(' ').pop()}</span>`).join('')}</div>`;
+const slTop = (kicker, on) => `<div class="sl-top"><span class="sl-kicker">${kicker}</span>${on ? yearsBar(on) : ''}</div>`;
+const slPic = h => `<div><div class="sl-pic">${portraitHTML(h)}</div><div class="sl-cap">${h.name}. Portrait: Wikimedia Commons, public domain.</div></div>`;
+const slList = (items, cls = '', from = 1) => `<ul class="sl-list ${cls}">${items.map((x, i) => `<li class="step" data-step="${from + i}">${x}</li>`).join('')}</ul>`;
+const slCallout = (html, step) => `<div class="sl-callout step" data-step="${step}">${html}</div>`;
+const bigTile = z => { const e = EL[z]; return `<div class="bt cat-${e.cat}"><span class="m">${fmtMass(e, 'alevel')}</span><span class="s">${e.sym}</span><span class="n">${e.name.toLowerCase()}</span><span class="z">${e.z}</span></div>`; };
+const OCT = [['H','Li','Be','B','C','N','O'],['F','Na','Mg','Al','Si','P','S'],['Cl','K','Ca','Cr','Ti','Mn','Fe'],['Co/Ni','Cu','Zn','Y','In','As','Se']];
+const OCT_G = new Set(['0-1','1-1','2-1','1-0','2-0']), OCT_B = new Set(['2-6','3-0']);
+const octGrid = () => `<div class="sl-oct">${OCT.map((r, i) => r.map((s, j) => { const k = i + '-' + j;
+  return `<div class="${OCT_G.has(k) ? 'g' : OCT_B.has(k) ? 'b' : ''}">${s}<span class="num">${i * 7 + j + 1}</span></div>`; }).join('')).join('')}</div>`;
+const DALTON_SYM = [['hydrogen','<circle cx="22" cy="22" r="18"/><circle class="fill" cx="22" cy="22" r="4"/>'],
+  ['nitrogen','<circle cx="22" cy="22" r="18"/><line x1="22" y1="4" x2="22" y2="40"/>'],
+  ['carbon','<circle class="fill" cx="22" cy="22" r="18"/>'],
+  ['oxygen','<circle cx="22" cy="22" r="18"/>'],
+  ['sulfur','<circle cx="22" cy="22" r="18"/><line x1="22" y1="4" x2="22" y2="40"/><line x1="4" y1="22" x2="40" y2="22"/>'],
+  ['copper','<circle cx="22" cy="22" r="18"/><text x="22" y="28" text-anchor="middle">C</text>'],
+  ['iron','<circle cx="22" cy="22" r="18"/><text x="22" y="28" text-anchor="middle">I</text>']];
+const ekaTable = (k, cap) => `<table class="sl-table"><caption>${cap}</caption><thead><tr><th scope="col">PROPERTY</th><th scope="col">PREDICTED</th><th scope="col">ACTUAL</th></tr></thead>
+  <tbody>${EKA[k].rows.map(r => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table>`;
+
+const HSLIDES = [
+  { sec:'intro', title:'How the periodic table developed', html:() => `${slTop('AQA GCSE CHEMISTRY · 4.1.2.1')}
+    <h2 class="sl-h">How the periodic table developed<small>From a list of atomic weights to the modern table</small></h2>
+    <div class="sl-people">${HIST.map((h, i) => `<figure class="step" data-step="${i + 1}"><div class="sl-pic">${portraitHTML(h)}</div><b>${h.year}</b><span>${h.name}</span></figure>`).join('')}</div>
+    ${slCallout('<b>Exam focus:</b> be ready to explain <em>why</em> each new table replaced the one before it.', 5)}` },
+
+  { sec:'dalton', title:'Dalton: atomic weights', html:() => `${slTop('1808', 'dalton')}
+    <h2 class="sl-h">John Dalton<small>Gave the elements atomic weights and symbols</small></h2>
+    <div class="sl-cols pic">${slPic(hp('dalton'))}<div>
+      ${slList(['Measured <b>relative atomic weights</b>, with hydrogen = 1', 'Put the known elements <b>in order of weight</b> for the first time', 'Gave each element a <b>symbol</b>: a circle with a mark inside'], 'good')}
+      <div class="dalton sl-dalton step" data-step="4">${DALTON_SYM.map(([n, sv]) => `<figure><svg viewBox="0 0 44 44" aria-hidden="true">${sv}</svg>${n}</figure>`).join('')}</div>
+    </div></div>` },
+
+  { sec:'dalton', title:'What Dalton’s list couldn’t do', html:() => `${slTop('1808', 'dalton')}
+    <h2 class="sl-h">What Dalton’s list couldn’t do</h2>
+    <div class="sl-cols">
+      ${slList(['Many of his weights were <b>wrong</b>: he assumed water was HO, so oxygen came out as 7, not 16', 'A list in weight order is <b>not a table</b>: it had no groups and no repeating pattern'], 'bad')}
+      <table class="sl-table step" data-step="3"><thead><tr><th scope="col">ELEMENT</th><th scope="col">DALTON</th><th scope="col">MODERN A<sub>r</sub></th></tr></thead>
+        <tbody><tr><th scope="row">Hydrogen</th><td>1</td><td>1</td></tr><tr><th scope="row">Nitrogen</th><td>5</td><td>14</td></tr>
+        <tr><th scope="row">Carbon</th><td>5</td><td>12</td></tr><tr><th scope="row">Oxygen</th><td>7</td><td>16</td></tr></tbody></table>
+    </div>
+    ${slCallout('<b>What came next:</b> once atomic weights were more accurate, chemists began looking for patterns in the list.', 4)}` },
+
+  { sec:'newlands', title:'Newlands: the Law of Octaves', html:() => `${slTop('1864', 'newlands')}
+    <h2 class="sl-h">John Newlands<small>The Law of Octaves</small></h2>
+    <div class="sl-cols pic">${slPic(hp('newlands'))}<div>
+      ${slList(['Arranged the elements <b>in order of atomic weight</b>', 'Noticed that every <b>eighth</b> element had similar properties, like notes in a musical octave', 'The first to show that properties <b>repeat periodically</b>'], 'good')}
+      <div class="step" data-step="4" style="margin-top:.4em">${octGrid()}<p class="sl-note">Newlands’ first 28 elements in rows of seven (modern symbols)</p></div>
+    </div></div>` },
+
+  { sec:'newlands', title:'Where the octaves broke down', html:() => `${slTop('1864', 'newlands')}
+    <h2 class="sl-h">Where the octaves broke down</h2>
+    <div class="sl-cols wide">
+      <div data-hl="1" data-hlc="show-good"><div data-hl="2" data-hlc="show-bad">${octGrid()}
+        <div class="sl-key"><span class="step" data-step="1"><i style="border-color:var(--e-metalloid)"></i>worked: Li, Na, K · F, Cl</span><span class="step" data-step="2"><i style="border-color:var(--chem)"></i>failed: Fe with O and S · Co/Ni with the halogens</span></div></div></div>
+      ${slList(['Kept <b>strictly to weight order</b> and left <b>no gaps</b>', 'The pattern only worked <b>up to calcium</b>', 'Put <b>two elements in one box</b> to make them fit', 'Other scientists <b>ridiculed</b> it and his paper was rejected'], 'bad', 3)}
+    </div>
+    ${slCallout('<b>Why it was replaced:</b> Mendeleev put properties first and left gaps.', 7)}` },
+
+  { sec:'mendeleev', title:'Mendeleev: the first modern table', html:() => `${slTop('1869', 'mendeleev')}
+    <h2 class="sl-h">Dmitri Mendeleev<small>The first modern periodic table</small></h2>
+    <div class="sl-cols pic">${slPic(hp('mendeleev'))}<div>
+      ${slList(['Ordered by atomic weight, but put elements with <b>similar properties</b> in the same group', 'Left <b>gaps</b> for elements that had not been discovered yet', 'Used the gaps to <b>predict</b> the properties of the missing elements', '<b>Swapped</b> some pairs, such as tellurium and iodine, to fit their groups'], 'good')}
+    </div></div>` },
+
+  { sec:'mendeleev', title:'Mendeleev’s predictions', html:() => `${slTop('1869', 'mendeleev')}
+    <h2 class="sl-h">His predictions came true</h2>
+    <div class="sl-cols">
+      <div class="step" data-step="1">${ekaTable('ga', 'Eka-aluminium → gallium (found 1875)')}</div>
+      <div class="step" data-step="2">${ekaTable('ge', 'Eka-silicon → germanium (found 1886)')}</div>
+    </div>
+    ${slCallout('<b>The result:</b> the missing elements were real and matched his predictions, so other scientists accepted his table.', 3)}` },
+
+  { sec:'mendeleev', title:'The tellurium–iodine swap', html:() => `${slTop('1869', 'mendeleev')}
+    <h2 class="sl-h">Properties before weight<small>The tellurium–iodine swap</small></h2>
+    <div class="sl-cols">
+      <div class="step" data-step="1"><div class="bt-row"><div>${bigTile(52)}<div class="bt-lab">with O and S</div></div><span class="bt-arrow" aria-hidden="true">⇄</span><div>${bigTile(53)}<div class="bt-lab">with F, Cl and Br</div></div></div></div>
+      ${slList(['By weight, iodine (126.9) should come <b>before</b> tellurium (127.6)', 'That would put iodine with <b>oxygen and sulfur</b>, and tellurium with the <b>halogens</b>', 'Mendeleev <b>swapped</b> them so each matched its group', 'But he <b>couldn’t explain why</b>: protons and isotopes were not yet known'], '', 2)}
+    </div>` },
+
+  { sec:'moseley', title:'Moseley: atomic number', html:() => `${slTop('1913', 'moseley')}
+    <h2 class="sl-h">Henry Moseley<small>Atomic number</small></h2>
+    <div class="sl-cols pic">${slPic(hp('moseley'))}<div>
+      ${slList(['Measured the <b>X-rays</b> given off by each element', 'Their frequency rose steadily with the <b>charge of the nucleus</b>', 'Atomic number = the number of <b>protons</b>', 'Ordering by atomic number put every swapped pair <b>in the right place</b>', 'Gaps at 43, 61, 72 and 75 showed exactly which elements were <b>still missing</b>'], 'good')}
+    </div></div>
+    ${slCallout('Moseley was killed at Gallipoli in 1915, aged 27.', 6)}` },
+
+  { sec:'moseley', title:'Why the swaps were right', html:() => `${slTop('1913', 'moseley')}
+    <h2 class="sl-h">Why Mendeleev’s swaps were right</h2>
+    <table class="sl-table" style="font-size:.8em"><thead><tr><th scope="col">PAIR</th><th scope="col">ORDER BY A<sub>r</sub></th><th scope="col">ORDER BY ATOMIC NUMBER</th><th scope="col">REASON</th></tr></thead><tbody>
+      <tr class="step" data-step="1"><th scope="row">Ar / K</th><td>K 39.1, Ar 39.9</td><td>Ar 18, K 19</td><td>Most argon atoms are argon-40</td></tr>
+      <tr class="step" data-step="2"><th scope="row">Co / Ni</th><td>Ni 58.7, Co 58.9</td><td>Co 27, Ni 28</td><td>Most nickel atoms are nickel-58</td></tr>
+      <tr class="step" data-step="3"><th scope="row">Te / I</th><td>I 126.9, Te 127.6</td><td>Te 52, I 53</td><td>Most tellurium atoms are Te-128 or Te-130</td></tr></tbody></table>
+    ${slCallout('<b>Isotopes:</b> A<sub>r</sub> is an average over isotopes, so an element with fewer protons can still have a larger A<sub>r</sub>.', 4)}` },
+
+  { sec:'moseley', title:'The modern periodic table', html:() => `${slTop('TODAY')}
+    <h2 class="sl-h">The modern periodic table</h2>
+    <div class="sl-cols">
+      ${slList(['Elements in order of <b>atomic (proton) number</b>', '<b>Group</b> = number of electrons in the outer shell', '<b>Period</b> = number of occupied shells'], 'good')}
+      ${slList(['The noble gases were discovered and added as <b>Group 0</b>', '<b>No gaps</b>: all 118 elements are now known'], 'good', 4)}
+    </div>` },
+
+  { sec:'compare', title:'Compare the tables', html:() => `${slTop('SUMMARY')}
+    <h2 class="sl-h">Newlands vs Mendeleev vs modern</h2>
+    <table class="sl-table"><thead><tr><th scope="col"></th><th scope="col">NEWLANDS 1864</th><th scope="col">MENDELEEV 1869</th><th scope="col">MODERN (MOSELEY 1913)</th></tr></thead><tbody>
+      <tr class="step" data-step="1"><th scope="row">Ordered by</th><td>Atomic weight, strictly</td><td>Atomic weight, but properties first</td><td>Atomic (proton) number</td></tr>
+      <tr class="step" data-step="2"><th scope="row">Gaps?</th><td>No: every element forced in</td><td>Yes, for undiscovered elements</td><td>None: all 118 known</td></tr>
+      <tr class="step" data-step="3"><th scope="row">Groups</th><td>Broke down after calcium</td><td>Similar properties together</td><td>Same number of outer electrons</td></tr>
+      <tr class="step" data-step="4"><th scope="row">Noble gases</th><td>Not discovered</td><td>Not discovered; added later</td><td>Group 0</td></tr>
+      <tr class="step" data-step="5"><th scope="row">Outcome</th><td>Rejected</td><td>Accepted once Ga and Ge fitted</td><td>Explains the swaps</td></tr></tbody></table>` },
+
+  { sec:'exam', title:'Exam practice', html:() => `${slTop('EXAM PRACTICE')}
+    <div class="sl-q"><span class="pill">4 MARKS</span><span>Explain why Mendeleev’s periodic table was accepted by other scientists but Newlands’ was not.</span></div>
+    <p class="sl-note step" data-step="1" style="margin:0 0 .5em;font-size:.6em;font-weight:800;letter-spacing:.06em">MARKING POINTS</p>
+    ${slList(['Newlands kept strictly to atomic-weight order and <b>left no gaps</b>', 'so some elements with <b>different properties</b> were in the same group', 'Mendeleev <b>left gaps</b> for undiscovered elements (and swapped some pairs to fit their properties)', 'his <b>predictions were confirmed</b> when elements such as gallium were discovered'], 'num', 1)}` }
+];
+const DECK_SECTIONS = [['Intro','intro'],['Dalton','dalton'],['Newlands','newlands'],['Mendeleev','mendeleev'],['Moseley','moseley'],['Compare','compare'],['Exam','exam']];
+const deck = { i:0, step:0, max:0, all:false };
+const inlineHost = $('#histDeck');
+const pzDeckHost = () => pz.open && pz.deck === 'history' ? $('#pzStage .deck-host') : null;
+
+function fitDeck(host){
+  const inn = host && $('.s169-in', host); if (!inn) return;
+  const W = host.clientWidth; if (!W) return;
+  const flow = !host.classList.contains('full') && W < 640;
+  host.classList.toggle('flow', flow);
+  if (flow) { inn.style.transform = ''; return; }
+  const H = host.clientHeight, sc = Math.min(W / 1600, H / 900);
+  inn.style.transform = `translate(${(W - 1600 * sc) / 2}px, ${(H - 900 * sc) / 2}px) scale(${sc})`;
+}
+const deckRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => fitDeck(e.target))) : null;
+function drawDeck(host){
+  const s = HSLIDES[deck.i];
+  host.innerHTML = `<div class="s169-in" data-sec="${s.sec}">${s.html()}<div class="sl-footer"><span>AQA GCSE Chemistry · development of the periodic table</span><span>${deck.i + 1} / ${HSLIDES.length}</span></div></div>`;
+  host.setAttribute('aria-label', `Slide ${deck.i + 1} of ${HSLIDES.length}: ${s.title}`);
+  fixPortraits(host);
+  deck.max = Math.max(0, ...$$('[data-step]', host).map(x => +x.dataset.step));
+  if (deck.step > deck.max) deck.step = deck.max;
+  fitDeck(host); deckRO && deckRO.observe(host);
+}
+function applySteps(host){
+  if (!host) return;
+  const upTo = deck.all ? Infinity : deck.step;
+  $$('[data-step]', host).forEach(x => x.classList.toggle('shown', +x.dataset.step <= upTo));
+  $$('[data-hl]', host).forEach(x => x.classList.toggle(x.dataset.hlc, +x.dataset.hl <= upTo));
+}
+function refreshDeck(redraw){
+  [inlineHost, pzDeckHost()].forEach(h => { if (!h) return; if (redraw) drawDeck(h); applySteps(h); });
+  const atStart = deck.i === 0 && (deck.all || deck.step === 0);
+  const atEnd = deck.i === HSLIDES.length - 1 && (deck.all || deck.step >= deck.max);
+  $('#dCount').innerHTML = `${deck.i + 1} / ${HSLIDES.length}<small>${deck.all || !deck.max ? HSLIDES[deck.i].title : `point ${deck.step} of ${deck.max}`}</small>`;
+  $('#dPrev').disabled = atStart; $('#dNext').disabled = atEnd;
+  const sec = HSLIDES[deck.i].sec === 'intro' ? 'intro' : HSLIDES[deck.i].sec;
+  $$('#deckJump button').forEach(b => b.setAttribute('aria-current', b.dataset.sec === sec ? 'true' : 'false'));
+  if (pz.open && pz.deck === 'history') {
+    $('#pzTitle').textContent = HSLIDES[deck.i].title; $('#pzCount').textContent = `${deck.i + 1} / ${HSLIDES.length}`;
+    $$('#pzDots button').forEach((b, i) => b.setAttribute('aria-current', i === deck.i ? 'true' : 'false'));
+    $('#pzPrev').disabled = atStart; $('#pzNext').disabled = atEnd;
+  }
+}
+function deckNext(){
+  if (!deck.all && deck.step < deck.max) { deck.step++; refreshDeck(false); }
+  else if (deck.i < HSLIDES.length - 1) { deck.i++; deck.step = 0; refreshDeck(true); }
+}
+function deckPrev(){
+  if (!deck.all && deck.step > 0) { deck.step--; refreshDeck(false); }
+  else if (deck.i > 0) { deck.i--; deck.step = Infinity; refreshDeck(true); }   // going back shows the whole slide, as PowerPoint does
+}
+function deckGo(i){ deck.i = Math.max(0, Math.min(HSLIDES.length - 1, i)); deck.step = 0; refreshDeck(true); }
+function deckKeys(e){
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown' || k === 'Enter' || (k === ' ' && !e.shiftKey)) deckNext();
+  else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace' || (k === ' ' && e.shiftKey)) deckPrev();
+  else if (k === 'Home') deckGo(0);
+  else if (k === 'End') deckGo(HSLIDES.length - 1);
+  else return false;
+  return true;
+}
+function deckClick(e){
+  if (e.target.closest('a, button') || (e.currentTarget.classList.contains('flow'))) return;
+  if (e.clientX < e.currentTarget.getBoundingClientRect().left + e.currentTarget.clientWidth * 0.15) deckPrev(); else deckNext();
+}
+$('#deckJump').innerHTML = DECK_SECTIONS.map(([label, sec]) => `<button data-sec="${sec}" aria-current="false">${label}</button>`).join('');
+$('#deckJump').addEventListener('click', e => { const b = e.target.closest('button'); if (b) deckGo(HSLIDES.findIndex(s => s.sec === b.dataset.sec)); });
+inlineHost.addEventListener('click', deckClick);
+inlineHost.addEventListener('keydown', e => { if (deckKeys(e)) e.preventDefault(); });
+$('#dPrev').addEventListener('click', deckPrev);
+$('#dNext').addEventListener('click', deckNext);
+$('#dAll').addEventListener('click', e => { deck.all = !deck.all; e.currentTarget.setAttribute('aria-pressed', deck.all); refreshDeck(false); });
+$('#dPresent').addEventListener('click', () => pzOpen('history'));
+
+/* ════════════════════════════════════════════════════════════════════════
+   PRESENTER
+   ════════════════════════════════════════════════════════════════════════ */
+const pz = { i:0, table:null, level:'gcse', open:false, deck:'table', plain:false };
+const p3items = [11,12,13,14,15,16,17,18].map(z => ({ label:EL[z].sym, name:EL[z].name, v:EL[z].ie }));
+const SLIDES = [
+  { title:'Periodic Table Explorer', html:() => `<div class="hero"><div><p class="kicker chem">AQA CHEMISTRY</p><h2>The Periodic Table</h2>
+      <p>Group trends, the transition metals, Mendeleev’s breakthrough and ionisation energy — then a live table to quiz the class.</p>
+      <p style="font-size:.8em"><kbd>→</kbd> next · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> spotlight a group · <kbd>H</kbd> all shortcuts</p></div></div>` },
+  { title:'Group 1 trends', table:'g1', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 1</p><h2>The alkali metals</h2>
+      <p class="lede">One outer electron, lost to form a 1+ ion.</p>
+      <ul><li>Reactivity <b>increases</b> down the group</li><li>The outer electron is further from the nucleus and more shielded, so it is lost more easily</li>
+      <li>Melting point <b>decreases</b> down the group</li><li>Li fizzes · Na melts into a ball · K burns lilac</li></ul>
+      <p><span class="eq">2Na + 2H₂O → 2NaOH + H₂</span></p></div><div class="pz-table"></div></div>` },
+  { title:'Group 7 trends', table:'g17', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 7</p><h2>The halogens</h2>
+      <p class="lede">Seven outer electrons; gain one to form a 1− ion.</p>
+      <ul><li>Reactivity <b>decreases</b> down the group: the outer shell is further from the nucleus, so an electron is gained less easily</li>
+      <li>Boiling point <b>increases</b>: bigger molecules, stronger intermolecular forces</li>
+      <li>F₂ pale yellow gas · Cl₂ green gas · Br₂ red-brown liquid · I₂ grey-black solid</li></ul>
+      <p><span class="eq">Cl₂ + 2KBr → 2KCl + Br₂</span></p></div><div class="pz-table"></div></div>` },
+  { title:'Transition metals vs Group 1', table:'g1+trans', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · 4.1.3</p><h2>Transition metals vs Group 1</h2>
+      <table class="dt"><thead><tr><th scope="col"></th><th scope="col">GROUP 1</th><th scope="col">TRANSITION</th></tr></thead><tbody>
+      <tr><th scope="row">Melting point</th><td>low</td><td>high (not Hg)</td></tr><tr><th scope="row">Density</th><td>low</td><td>high</td></tr>
+      <tr><th scope="row">Strength</th><td>soft</td><td>strong, hard</td></tr><tr><th scope="row">Reactivity</th><td>very reactive</td><td>much less reactive</td></tr>
+      <tr><th scope="row">Ions</th><td>always 1+</td><td>different charges: Fe²⁺, Fe³⁺</td></tr><tr><th scope="row">Compounds</th><td>white</td><td>coloured</td></tr>
+      <tr><th scope="row">Catalysts</th><td>no</td><td>yes: Fe (Haber), Ni, MnO₂</td></tr></tbody></table></div><div class="pz-table"></div></div>` },
+  { title:'Mendeleev’s breakthrough', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · 4.1.2.1</p><h2>Mendeleev’s breakthrough</h2>
+      <ul><li><b>Left gaps</b> for elements not yet discovered</li><li><b>Predicted</b> their properties from their neighbours</li>
+      <li><b>Swapped</b> pairs such as Te and I so they matched their groups</li><li>Gallium and germanium fitted his predictions: the table was accepted</li></ul>
+      <p class="lede" style="margin-top:.8em">Later, atomic number and isotopes explained why the swaps were right.</p></div>
+      <div><table class="dt"><thead><tr><th scope="col">EKA-ALUMINIUM</th><th scope="col">PREDICTED (1871)</th><th scope="col">GALLIUM (1875)</th></tr></thead><tbody>
+      ${EKA.ga.rows.map(r => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table>
+      <div class="swap" style="margin-top:1em;justify-content:center">${swapTiles(52, 53)}</div></div></div>` },
+  { title:'Period 3 ionisation energy', html:() => `<div class="two"><div><p class="kicker alevel">A-LEVEL · 3.1.1.3</p><h2>First ionisation energy across Period 3</h2>
+      <ul><li><b>General increase:</b> more protons, same shell, similar shielding</li>
+      <li><b>Dip at Al:</b> the electron is in 3p — higher energy and shielded by 3s</li>
+      <li><b>Dip at S:</b> the electron comes from a paired 3p orbital; the pair repel</li></ul></div>
+      <div>${barChart(p3items, { unit:' kJ mol⁻¹', colour:'--seq-ie', title:'First ionisation energy across Period 3', dips:true })}</div></div>`,
+    mount:st => wireChart(st, p3items, ' kJ mol⁻¹') },
+  { title:'Period 3 oxides', html:() => `<p class="kicker alevel">A-LEVEL · 3.2.4</p><h2>Period 3 oxides: ionic to covalent, basic to acidic</h2>
+      <div class="dt-wrap" style="margin-top:.6em"><table class="dt"><thead><tr>${P3.oxides.head.map(h => `<th scope="col">${h.toUpperCase()}</th>`).join('')}</tr></thead>
+      <tbody>${P3.oxides.rows.map(r => `<tr>${r.map((c, i) => i === 0 ? `<th scope="row">${c}</th>` : `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="trendbar" aria-hidden="true"></div><div class="trendlab"><span>basic (ionic)</span><span>amphoteric</span><span>acidic (covalent)</span></div>` },
+  { title:'Your turn', table:'', live:true, html:() => `<div class="pz-table" style="max-width:none"></div>` }
+];
+function pzSpotPreset(key){
+  if (!key) return null;
+  if (key === 'g1+trans') return { key, label:'Group 1 and the transition metals', test:e => e.cat === 'alkali' || e.cat === 'trans' };
+  return spotFor(key, pz.level);
+}
+function pzRender(){
+  const stage = $('#pzStage');
+  if (pz.deck === 'history') {
+    stage.classList.add('deck-mode'); pz.table = null;
+    stage.innerHTML = '<div class="deck-host full" aria-roledescription="slide"></div>';
+    $('.deck-host', stage).addEventListener('click', deckClick);
+    $('#pzTools').hidden = true; $('#pzPlain').hidden = true; $('#pzSpot').textContent = '';
+    refreshDeck(true);
+    return;
+  }
+  stage.classList.remove('deck-mode');
+  const s = SLIDES[pz.i];
+  $('#pzTitle').textContent = s.title; $('#pzCount').textContent = `${pz.i + 1} / ${SLIDES.length}`;
+  stage.innerHTML = `<div class="slide">${s.html()}</div>`; stage.scrollTop = 0;
+  pz.table = null;
+  const host = $('.pz-table', stage);
+  if (host) {
+    pz.table = createTable(host, { level:pz.level, presenter:true, onSpot:sp => { $('#pzSpot').textContent = sp ? sp.label : ''; },
+      onTile:(el, b, ev, t) => {
+        if (t.isHidden(el)) { t.reveal(el); return; }
+        const cur = t.state.spot && t.state.spot.key.startsWith('el:') ? t.state.spot.key.slice(3).split(',').map(Number) : [];
+        const set = new Set(ev.shiftKey || ev.ctrlKey || ev.metaKey ? cur : (cur.length === 1 && cur[0] === el.z ? [el.z] : []));
+        if (set.has(el.z)) set.delete(el.z); else set.add(el.z);
+        t.setSpot(set.size ? spotElements([...set]) : null);
+      } });
+    if (pz.plain) pz.table.setColour('plain');
+    pz.table.setSpot(pzSpotPreset(s.table));
+    if (!s.table) $('#pzSpot').textContent = '';
+    $$('#pzQuiz button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  } else $('#pzSpot').textContent = '';
+  $('#pzTools').hidden = !s.live;
+  $('#pzPlain').hidden = !host;
+  s.mount && s.mount(stage);
+  $$('#pzDots button').forEach((b, i) => b.setAttribute('aria-current', i === pz.i ? 'true' : 'false'));
+  $('#pzPrev').disabled = pz.i === 0; $('#pzNext').disabled = pz.i === SLIDES.length - 1;
+}
+function pzBuildDots(){
+  const list = pz.deck === 'history' ? HSLIDES : SLIDES;
+  $('#pzDots').innerHTML = list.map((s, i) => `<button aria-label="Slide ${i + 1}: ${s.title}"></button>`).join('');
+}
+$('#pzDots').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const i = $$('#pzDots button').indexOf(b);
+  if (pz.deck === 'history') deckGo(i); else { pz.i = i; pzRender(); }
+});
+const pzGo = d => {
+  if (pz.deck === 'history') { d > 0 ? deckNext() : deckPrev(); return; }
+  const n = Math.max(0, Math.min(SLIDES.length - 1, pz.i + d)); if (n !== pz.i) { pz.i = n; pzRender(); }
+};
+const pzEnds = end => { if (pz.deck === 'history') deckGo(end ? HSLIDES.length - 1 : 0); else { pz.i = end ? SLIDES.length - 1 : 0; pzRender(); } };
+function pzBlank(kind){
+  const bl = $('#pzBlank');
+  if (!kind || (!bl.hidden && bl.classList.contains('white') === (kind === 'white'))) { bl.hidden = true; return; }
+  bl.hidden = false; bl.classList.toggle('white', kind === 'white');
+}
+let pzReturn = null;
+function pzOpen(which){
+  pzReturn = document.activeElement; closeDrawer();
+  pz.deck = which === 'history' || which === 'table' ? which : (activeTab === 'history' ? 'history' : 'table');
+  pzBuildDots(); $('#pzBlank').hidden = true;
+  $('#pzKeys').innerHTML = pz.deck === 'history'
+    ? '<kbd>←</kbd> <kbd>→</kbd> or click: next point · <kbd>B</kbd> black screen · <kbd>H</kbd> help'
+    : '<kbd>←</kbd> <kbd>→</kbd> slides · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> groups · <kbd>H</kbd> help';
+  pz.open = true; $('#pz').hidden = false; document.body.classList.add('pz-open');
+  pzRender(); $('#pz').focus();
+  const de = document.documentElement;
+  if (de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen().catch(() => {});
+}
+function pzClose(){
+  pz.open = false; $('#pz').hidden = true; document.body.classList.remove('pz-open'); $('#pzHelpBox').hidden = true; $('#pzBlank').hidden = true;
+  if (pz.deck === 'history') refreshDeck(true);
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  pzReturn && pzReturn.focus && pzReturn.focus();
+}
+function pzToggleFull(){
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+}
+function pzHelp(show){
+  const box = $('#pzHelpBox'); const on = show === undefined ? box.hidden : show;
+  box.hidden = !on; $('#pzHelp').setAttribute('aria-expanded', on);
+}
+function pzSetLevel(l){
+  // keep the quiz and spotlight when switching level mid-lesson
+  const old = pz.table && pz.table.state, quiz = old ? { ...old.quiz } : {}, spot = old && old.spot;
+  pz.level = l; $$('#pzLevel button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l)); pzRender();
+  if (!pz.table) return;
+  Object.keys(quiz).forEach(k => { if (quiz[k]) { pz.table.setQuiz(k, true); $$('#pzQuiz button').forEach(b => { if (b.dataset.q === k) b.setAttribute('aria-pressed', 'true'); }); } });
+  if (spot) pz.table.setSpot(spot.key.startsWith('el:') ? spot : spotFor(spot.key, l));
+}
+function pzQuiz(k){
+  if (!pz.table) return;
+  const on = !pz.table.state.quiz[k]; pz.table.setQuiz(k, on);
+  $$('#pzQuiz button').forEach(b => { if (b.dataset.q === k) b.setAttribute('aria-pressed', on); });
+}
+$('#pzOpen').addEventListener('click', () => pzOpen());
+$('#pzClose').addEventListener('click', pzClose);
+$('#pzPrev').addEventListener('click', () => pzGo(-1));
+$('#pzNext').addEventListener('click', () => pzGo(1));
+$('#pzFull').addEventListener('click', pzToggleFull);
+$('#pzHelp').addEventListener('click', () => pzHelp());
+$('#pzLevel').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pzSetLevel(b.dataset.l); });
+$('#pzQuiz').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pzQuiz(b.dataset.q); });
+$('#pzPlain').addEventListener('click', e => {
+  pz.plain = !pz.plain; e.currentTarget.setAttribute('aria-pressed', pz.plain);
+  if (pz.table) pz.table.setColour(pz.plain ? 'plain' : 'family');
+});
+$('#pzReveal').addEventListener('click', () => { if (pz.table) { pz.table.resetQuiz(); $$('#pzQuiz button').forEach(b => b.setAttribute('aria-pressed', 'false')); } });
+
+document.addEventListener('keydown', e => {
+  if (e.altKey || (e.ctrlKey && !e.shiftKey) || e.metaKey) return;
+  if (!pz.open) {
+    if (e.key === 'Escape') closeDrawer();
+    if ((e.key === 'p' || e.key === 'P') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) pzOpen();
+    return;
+  }
+  const k = e.key.toLowerCase(), t = pz.table;
+  if (!$('#pzBlank').hidden && !['Shift','Control','Alt','Meta'].includes(e.key)) { pzBlank(null); e.preventDefault(); return; }
+  let handled = true;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey) || (e.key === 'Enter' && pz.deck === 'history' && e.target.id === 'pz')) pzGo(1);
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey) || (e.key === 'Backspace' && pz.deck === 'history')) pzGo(-1);
+  else if (e.key === 'Home') pzEnds(false);
+  else if (e.key === 'End') pzEnds(true);
+  else if (k === 'b' || e.key === '.') pzBlank('black');
+  else if (k === 'w' || e.key === ',') pzBlank('white');
+  else if (e.key === 'Escape') { if (!$('#pzHelpBox').hidden) pzHelp(false); else if (!document.fullscreenElement) pzClose(); }
+  else if (k === 'f') pzToggleFull();
+  else if (k === 'h' || e.key === '?') pzHelp();
+  else if (k === 'l') { if (pz.deck === 'table' && SLIDES[pz.i].live) pzSetLevel(pz.level === 'gcse' ? 'alevel' : 'gcse'); }
+  else if (t && /^Digit[0-7]$/.test(e.code)) {
+    const d = +e.code.slice(5);
+    const key = e.shiftKey ? (d >= 1 ? 'p' + d : null) : 'g' + (d === 0 ? 18 : d <= 2 ? d : d + 10);
+    if (key) t.setSpot(t.state.spot && t.state.spot.key === key ? null : spotFor(key, pz.level));
+  }
+  else if (t && k === 't') t.setSpot(t.state.spot && t.state.spot.key === 'trans' ? null : spotFor('trans', pz.level));
+  else if (t && k === 'c') t.setSpot(null);
+  else if (t && pz.deck === 'table' && SLIDES[pz.i].live && ({ n:'name', s:'sym', z:'z', m:'mass' })[k]) pzQuiz(({ n:'name', s:'sym', z:'z', m:'mass' })[k]);
+  else if (t && k === 'r') $('#pzReveal').click();
+  else handled = false;
+  if (handled) e.preventDefault();
+});
+// keep keyboard focus inside the presenter dialog
+$('#pz').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const f = $$('#pz button:not([disabled]), #pz [tabindex="0"]').filter(x => x.offsetParent !== null);
+  if (!f.length) return;
+  if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   THEME & CONTRAST
+   ════════════════════════════════════════════════════════════════════════ */
+const root = document.documentElement;
+const sysDark = () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(t){
+  if (t) root.dataset.theme = t; else delete root.dataset.theme;
+  const dark = t ? t === 'dark' : sysDark();
+  $$('.theme-label').forEach(l => l.textContent = dark ? 'Light mode' : 'Dark mode');
+}
+applyTheme(store.get('ptx-theme'));
+$$('#themeBtn, #pzTheme').forEach(b => b.addEventListener('click', () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : sysDark();
+  const t = dark ? 'light' : 'dark'; store.set('ptx-theme', t); applyTheme(t);
+}));
+function applyContrast(on){ if (on) root.dataset.contrast = 'high'; else delete root.dataset.contrast; $('#contrastBtn').setAttribute('aria-pressed', on); }
+applyContrast(store.get('ptx-contrast') === '1');
+$('#contrastBtn').addEventListener('click', () => { const on = !root.dataset.contrast; store.set('ptx-contrast', on ? '1' : '0'); applyContrast(on); });
+
+refreshDeck(true);
+
+// start on the tab named in the URL
+const h0 = location.hash.slice(1);
+if (TABS.includes(h0)) showTab(h0);
+if (h0 === 'present') pzOpen('table');
+if (h0 === 'present-history') { showTab('history'); pzOpen('history'); }
+})();
+</script>
+
+<!-- ── Home button, self-contained ─────────────────────────────────────────
+     Fixed bottom-left, scoped class name, sits above everything so it is
+     reachable even when a page opens a full-screen overlay. -->
+<style>
+  .sv-home{
+    position:fixed; left:14px; bottom:14px; z-index:2147483000;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%;
+    color:#efe9dd; background:#14120f;
+    border:1px solid rgba(239,233,221,.24);
+    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
+    transition:background .15s ease, transform .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
+  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
+  .sv-home svg{ width:18px; height:18px; display:block; }
+  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
+  @media print{ .sv-home{ display:none; } }
+</style>
+<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
+    <path d="M9.75 21v-6.2h4.5V21"/>
+  </svg>
+</a>
+</body>
+</html>
