@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Molecule Builder &amp; IUPAC Naming (beta)</title>
+<meta name="description" content="Draw an organic molecule, get its IUPAC name, formula and functional groups, and turn it round in 3D — with chiral centres and mirror images for A-Level.">
+
+<link rel="stylesheet" href="fonts/fonts.css">
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+
+<style>
+/* ── Tokens ───────────────────────────────────────────────────────────── */
+:root{
+  --chem:#a8281e; --phys:#14509b; --bio:#166534; --alevel:#6b3fa0; --gcse:#a04d10;
+
+  --bg:#eef1f6; --bg2:#e3e8f1;
+  --ink:#141a24; --ink2:#4a5566; --ink3:#7a8596;
+  --card:rgba(255,255,255,.72); --card-solid:#ffffff; --line:rgba(20,26,36,.12); --line2:rgba(20,26,36,.2);
+  --chip:rgba(20,26,36,.05); --chip-hover:rgba(20,26,36,.1);
+  --accent:#0f766e; --accent-ink:#ffffff;
+  --hl:#d97706; --star:#b45309; --err:#dc2626; --ok:#15803d;
+  --root:#0369a1; --prefix:#7c3aed; --suffix:#be123c; --unsat:#0f766e; --stereo:#b45309;
+  --sketch-bg:rgba(255,255,255,.6); --grid:rgba(20,26,36,.06);
+  --view-bg:radial-gradient(120% 100% at 50% 0%, #ffffff 0%, #e6ebf3 100%);
+  --shadow:0 10px 30px -12px rgba(20,30,60,.25);
+  --lbl-C:#1d2430; --lbl-H:#6b7684; --lbl-O:#d02b2b; --lbl-N:#2447d6; --lbl-F:#4d8c1a; --lbl-Cl:#168a16; --lbl-Br:#8a2222; --lbl-I:#7a1a8a;
+  --gcse-ui:var(--gcse); --alevel-ui:var(--alevel);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0f17; --bg2:#101624;
+    --ink:#e8edf5; --ink2:#a9b4c4; --ink3:#6f7b8d;
+    --card:rgba(22,29,42,.66); --card-solid:#161d2a; --line:rgba(232,237,245,.1); --line2:rgba(232,237,245,.2);
+    --chip:rgba(232,237,245,.06); --chip-hover:rgba(232,237,245,.12);
+    --accent:#2dd4bf; --accent-ink:#04201c;
+    --hl:#fbbf24; --star:#fcd34d; --err:#f87171; --ok:#4ade80;
+    --root:#38bdf8; --prefix:#c4a7ff; --suffix:#fb7185; --unsat:#2dd4bf; --stereo:#fcd34d;
+    --sketch-bg:rgba(10,14,22,.55); --grid:rgba(232,237,245,.05);
+    --view-bg:radial-gradient(120% 100% at 50% 0%, #1a2334 0%, #080b12 100%);
+    --shadow:0 12px 34px -14px rgba(0,0,0,.8);
+    --lbl-C:#e8edf5; --lbl-H:#9aa6b6; --lbl-O:#ff6b6b; --lbl-N:#7c9cff; --lbl-F:#a3e635; --lbl-Cl:#4ade80; --lbl-Br:#f08a6a; --lbl-I:#d58cf0;
+    --gcse-ui:#f0913f; --alevel-ui:#c4a7ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0f17; --bg2:#101624;
+  --ink:#e8edf5; --ink2:#a9b4c4; --ink3:#6f7b8d;
+  --card:rgba(22,29,42,.66); --card-solid:#161d2a; --line:rgba(232,237,245,.1); --line2:rgba(232,237,245,.2);
+  --chip:rgba(232,237,245,.06); --chip-hover:rgba(232,237,245,.12);
+  --accent:#2dd4bf; --accent-ink:#04201c;
+  --hl:#fbbf24; --star:#fcd34d; --err:#f87171; --ok:#4ade80;
+  --root:#38bdf8; --prefix:#c4a7ff; --suffix:#fb7185; --unsat:#2dd4bf; --stereo:#fcd34d;
+  --sketch-bg:rgba(10,14,22,.55); --grid:rgba(232,237,245,.05);
+  --view-bg:radial-gradient(120% 100% at 50% 0%, #1a2334 0%, #080b12 100%);
+  --shadow:0 12px 34px -14px rgba(0,0,0,.8);
+  --lbl-C:#e8edf5; --lbl-H:#9aa6b6; --lbl-O:#ff6b6b; --lbl-N:#7c9cff; --lbl-F:#a3e635; --lbl-Cl:#4ade80; --lbl-Br:#f08a6a; --lbl-I:#d58cf0;
+  --gcse-ui:#f0913f; --alevel-ui:#c4a7ff;
+  color-scheme:dark;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  font-family:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
+  color:var(--ink); background:var(--bg);
+  background-image:
+    radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--chem) 14%, transparent) 0%, transparent 70%),
+    radial-gradient(50% 50% at 100% 0%, color-mix(in srgb, var(--alevel) 16%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  background-attachment:fixed;
+  min-height:100vh; font-size:15px; line-height:1.45;
+}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.mono{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+sub{font-size:.72em;line-height:0}
+sup{font-size:.72em;line-height:0}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding:14px 20px;position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--chem),#d4553f);color:#fff;box-shadow:var(--shadow)}
+.logo svg{width:26px;height:26px}
+.brand h1{margin:0;font-family:"Archivo Narrow","Arial Narrow",sans-serif;font-weight:700;font-size:21px;letter-spacing:.2px;line-height:1.1}
+.brand p{margin:2px 0 0;color:var(--ink2);font-size:13px}
+.beta{font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:500;padding:2px 6px;border-radius:6px;
+  vertical-align:3px;margin-left:4px;border:1px solid var(--line2);color:var(--ink2)}
+.head-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.seg{display:inline-flex;padding:3px;border-radius:12px;background:var(--chip);border:1px solid var(--line);gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink2)}
+.seg button:hover{background:var(--chip-hover)}
+.seg button[aria-pressed="true"]{background:var(--card-solid);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.seg .lvl-gcse[aria-pressed="true"]{background:var(--gcse);color:#fff}
+.seg .lvl-alevel[aria-pressed="true"]{background:var(--alevel);color:#fff}
+.lvl-gcse{--accent:var(--gcse)}
+.lvl-alevel{--accent:var(--alevel)}
+
+.select{appearance:none;-webkit-appearance:none;border:1px solid var(--line2);background:var(--card-solid);
+  padding:7px 32px 7px 12px;border-radius:10px;font-weight:600;font-size:13.5px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink2) 50%),linear-gradient(135deg,var(--ink2) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat;max-width:230px}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);background:var(--card-solid);display:grid;place-items:center}
+.icon-btn:hover{background:var(--chip-hover)}
+.icon-btn svg{width:18px;height:18px}
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+.wrap{padding:16px 20px 70px;max-width:1680px;margin:0 auto}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);min-width:0}
+.panel{display:flex;flex-direction:column;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px 8px;flex-wrap:wrap}
+.panel-title{font-family:"Archivo Narrow",sans-serif;font-weight:700;font-size:16px;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.panel-title .num{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink3);font-weight:500}
+
+/* toolbar */
+.toolbar{display:flex;flex-direction:column;gap:6px;padding:0 14px 10px}
+.trow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.trow .lab{font-size:11.5px;font-weight:600;color:var(--ink3);width:48px;flex:none}
+.panel{container-type:inline-size}
+.head-tools{display:flex;align-items:center;gap:6px}
+.icon-btn.sm{width:32px;height:32px;border-radius:9px}
+.icon-btn.sm svg{width:16px;height:16px}
+.icon-btn:disabled{opacity:.35;cursor:default}
+@container (max-width: 560px){
+  .trow .lab{display:none}
+  .sketch-hint .kbd-hint{display:none}
+}
+.tbtn{border:1px solid var(--line);background:var(--chip);border-radius:9px;padding:5px 9px;min-width:34px;
+  font-weight:600;font-size:13.5px;line-height:1.2;display:inline-flex;align-items:center;gap:5px;transition:background .12s,border-color .12s}
+.tbtn:hover{background:var(--chip-hover)}
+.tbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.tbtn.el{font-family:"JetBrains Mono",monospace;min-width:36px;justify-content:center}
+.tbtn svg{width:16px;height:16px;flex:none}
+.tbtn:disabled{opacity:.4;cursor:default}
+.tbtn.util{font-size:12.5px}
+.sep{width:1px;height:22px;background:var(--line2);margin:0 2px}
+
+.sketch-wrap{position:relative;margin:0 14px 14px;border-radius:14px;overflow:hidden;border:1px solid var(--line);
+  background:var(--sketch-bg);height:clamp(340px,52vh,620px)}
+#sketch{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+#sketch text{font-family:"Source Sans 3","Segoe UI",sans-serif;pointer-events:none}
+.sketch-hint{position:absolute;left:12px;bottom:9px;right:12px;font-size:12px;color:var(--ink3);pointer-events:none;display:flex;justify-content:space-between;gap:10px;white-space:nowrap;overflow:hidden}
+.sketch-hint span:first-child{overflow:hidden;text-overflow:ellipsis}
+.sketch-hint kbd{font-family:"JetBrains Mono",monospace;font-size:11px;padding:0 4px;border:1px solid var(--line2);border-radius:4px}
+.toast{position:absolute;left:50%;top:12px;transform:translate(-50%,-8px);opacity:0;pointer-events:none;
+  background:var(--card-solid);border:1px solid var(--line2);box-shadow:var(--shadow);padding:7px 12px;border-radius:10px;font-size:13px;font-weight:600;transition:opacity .2s,transform .2s;max-width:90%}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* viewer */
+.viewbar{display:flex;gap:6px;flex-wrap:wrap}
+.views{position:relative;margin:0 14px 14px;border-radius:14px;overflow:hidden;border:1px solid var(--line);
+  background:var(--view-bg);height:clamp(340px,52vh,620px);display:flex}
+.vp{position:relative;flex:1 1 50%;min-width:0}
+.vp canvas{display:block;width:100%!important;height:100%!important;outline:none}
+.vp .vp-tag{position:absolute;top:10px;left:12px;font-size:12px;font-weight:600;color:var(--ink2);pointer-events:none;
+  background:color-mix(in srgb,var(--card-solid) 70%,transparent);padding:3px 8px;border-radius:8px;border:1px solid var(--line)}
+#vp2{display:none}
+.views.mirror #vp2{display:block}
+.mirror-plane{display:none;position:relative;width:2px;flex:none;
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--accent) 80%,transparent) 18%,color-mix(in srgb,var(--accent) 80%,transparent) 82%,transparent);
+  box-shadow:0 0 18px 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.views.mirror .mirror-plane{display:block}
+.mirror-plane span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap;
+  font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--accent);background:var(--card-solid);padding:2px 8px;border-radius:6px;border:1px solid var(--line)}
+.view-legend{position:absolute;right:10px;bottom:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;pointer-events:none;font-size:11.5px;color:var(--ink2)}
+.view-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.25)}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--ink2)}
+
+/* analysis */
+.analysis{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1.1fr);gap:16px;margin-top:16px}
+.acard{padding:14px 16px 16px}
+.acard h2{margin:0 0 8px;font-family:"Archivo Narrow",sans-serif;font-size:13px;letter-spacing:.9px;font-weight:700;color:var(--ink3)}
+.name-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.iupac{font-size:clamp(22px,2.4vw,32px);font-weight:600;line-height:1.15;word-break:break-word;flex:1 1 auto;min-width:0}
+.iupac .pt{border-radius:5px;transition:background .15s}
+.explaining .iupac .pt-prefix{color:var(--prefix)}
+.explaining .iupac .pt-root{color:var(--root)}
+.explaining .iupac .pt-unsat{color:var(--unsat)}
+.explaining .iupac .pt-suffix{color:var(--suffix)}
+.explaining .iupac .pt-stereo{color:var(--stereo)}
+.explaining .iupac .pt-alkyl{color:var(--prefix)}
+.iupac.muted{color:var(--ink3);font-size:20px}
+.alt{color:var(--ink2);font-size:13.5px;margin-top:4px}
+.scope{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid currentColor;margin-top:6px}
+.scope.lvl-gcse{color:var(--gcse-ui)}
+.scope.lvl-alevel{color:var(--alevel-ui)}
+.explain-btn{flex:none}
+.breakdown{display:none;margin-top:12px;border-top:1px dashed var(--line2);padding-top:10px}
+.explaining .breakdown{display:block}
+.bd-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.bd-list li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.bd-tok{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:500;padding:1px 7px;border-radius:6px;border:1px solid currentColor;white-space:nowrap}
+.bd-tok.prefix,.bd-tok.alkyl{color:var(--prefix)} .bd-tok.root{color:var(--root)} .bd-tok.unsat{color:var(--unsat)} .bd-tok.suffix{color:var(--suffix)} .bd-tok.stereo{color:var(--stereo)}
+.bd-list .why{color:var(--ink2);font-size:14px}
+.bd-note{margin:10px 0 0;color:var(--ink2);font-size:13.5px}
+
+.stat{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.stat:last-child{border-bottom:0}
+.stat .k{color:var(--ink2);font-size:13.5px}
+.stat .v{font-weight:600;font-size:17px;text-align:right}
+.stat .v.big{font-size:22px}
+.series{font-size:13.5px;color:var(--ink2);margin-top:8px}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:1px solid var(--line2);background:var(--chip);border-radius:999px;padding:4px 11px;font-weight:600;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.tag:hover{background:var(--chip-hover)}
+.tag .dot{width:8px;height:8px;border-radius:50%;background:var(--hl)}
+.tag .n{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink3)}
+.tag[aria-pressed="true"]{background:var(--hl);border-color:transparent;color:#1b1203}
+.tag[aria-pressed="true"] .dot{background:#1b1203}
+.tag[aria-pressed="true"] .n{color:#3b2a06}
+.tag .lvl{font-size:10px;font-weight:700;padding:0 5px;border-radius:5px;color:#fff;background:var(--alevel)}
+.muted-note{color:var(--ink3);font-size:13.5px}
+.chiral-status{display:flex;gap:10px;align-items:flex-start}
+.chiral-status .badge{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:20px;font-weight:700}
+.badge.yes{background:color-mix(in srgb,var(--star) 22%,transparent);color:var(--star)}
+.badge.no{background:var(--chip);color:var(--ink3)}
+.chiral-status p{margin:0}
+.chiral-status .sub{color:var(--ink2);font-size:13.5px;margin-top:2px}
+.iso-block{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.warnings{margin-top:10px;display:grid;gap:6px}
+.warn{font-size:13.5px;color:var(--err);font-weight:600}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+@media (max-width:1100px){
+  .analysis{grid-template-columns:1fr 1fr}
+  .analysis .acard:first-child{grid-column:1 / -1}
+}
+@media (max-width:860px){
+  .stage{grid-template-columns:1fr}
+  .analysis{grid-template-columns:1fr}
+  .wrap{padding:12px 16px 70px}
+  .topbar{padding:10px 16px}
+  .sketch-wrap,.views{height:360px}
+  .views.mirror{flex-direction:column}
+  .views.mirror .mirror-plane{width:auto;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+  .views.mirror .mirror-plane span{transform:translate(-50%,-50%)}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M16 5 25.5 10.5v11L16 27 6.5 21.5v-11Z"/><circle cx="16" cy="16" r="5"/>
+      </svg>
+    </div>
+    <div>
+      <h1>3D Molecule Builder &amp; IUPAC Naming <span class="beta">beta</span></h1>
+      <p>Draw it. Name it. Turn it round.</p>
+    </div>
+  </div>
+  <div class="head-controls">
+    <div class="seg" role="group" aria-label="Level">
+      <button type="button" class="lvl-gcse" data-mode="gcse" aria-pressed="false">GCSE</button>
+      <button type="button" class="lvl-alevel" data-mode="alevel" aria-pressed="true">A-Level</button>
+    </div>
+    <select id="preset" class="select" aria-label="Preset molecules"></select>
+    <button type="button" id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme" title="Light / dark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <!-- ── 2D builder ─────────────────────────────────────────────── -->
+    <section class="card panel" aria-label="2D molecule builder">
+      <div class="panel-head">
+        <div class="panel-title"><span class="num">01</span> Build</div>
+        <div class="head-tools">
+        <button type="button" class="icon-btn sm" id="btnUndo" aria-label="Undo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+        <button type="button" class="icon-btn sm" id="btnRedo" aria-label="Redo" title="Redo (Ctrl+Y)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+        <button type="button" class="icon-btn sm" id="btnClear" aria-label="Clear canvas" title="Clear canvas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+        <div class="seg" role="group" aria-label="2D drawing style">
+          <button type="button" data-style="labels" aria-pressed="true" title="Every carbon labelled">Structural</button>
+          <button type="button" data-style="skeletal" aria-pressed="false" title="Carbons as corners, C–H hidden">Skeletal</button>
+        </div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="trow" id="rowAtoms"><span class="lab">Atoms</span></div>
+        <div class="trow" id="rowBonds"><span class="lab">Bonds</span></div>
+        <div class="trow" id="rowGroups"><span class="lab">Groups</span></div>
+        <div class="trow" id="rowUtil"><span class="lab">Edit</span></div>
+      </div>
+      <div class="sketch-wrap" id="sketchWrap">
+        <svg id="sketch" aria-label="Molecule drawing area" role="img"></svg>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        <div class="sketch-hint" id="hint"></div>
+      </div>
+    </section>
+
+    <!-- ── 3D viewer ──────────────────────────────────────────────── -->
+    <section class="card panel" aria-label="3D model">
+      <div class="panel-head">
+        <div class="panel-title"><span class="num">02</span> 3D ball-and-stick</div>
+        <div class="viewbar">
+          <button type="button" class="tbtn util" id="btnRotate" aria-pressed="false">Auto-rotate</button>
+          <button type="button" class="tbtn util" id="btnLabels" aria-pressed="false">Labels</button>
+          <button type="button" class="tbtn util" id="btnReset">Reset view</button>
+          <button type="button" class="tbtn util" id="btnMirror" aria-pressed="false" disabled title="Needs a chiral centre (A-Level mode)">Show mirror image</button>
+          <button type="button" class="tbtn util" id="btnLink" aria-pressed="true" hidden title="When linked, the right-hand model always shows the reflection of the left">Linked</button>
+        </div>
+      </div>
+      <div class="views" id="views">
+        <div class="vp" id="vp1"><span class="vp-tag" id="tag1" hidden>Original</span></div>
+        <div class="mirror-plane"><span>MIRROR PLANE</span></div>
+        <div class="vp" id="vp2"><span class="vp-tag">Mirror image (enantiomer)</span></div>
+        <div class="view-legend" id="legend"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Analysis ───────────────────────────────────────────────────── -->
+  <div class="analysis">
+    <section class="card acard" id="nameCard" aria-live="polite">
+      <h2>NAME</h2>
+      <div class="name-row">
+        <div class="iupac" id="iupac">—</div>
+        <button type="button" class="tbtn util explain-btn" id="btnExplain" aria-pressed="false">Explain the name</button>
+      </div>
+      <div class="alt" id="altName"></div>
+      <div id="scope"></div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="warnings" id="warnings"></div>
+    </section>
+
+    <section class="card acard">
+      <h2>FORMULA</h2>
+      <div class="stat"><span class="k">Molecular formula</span><span class="v big" id="formula">—</span></div>
+      <div class="stat"><span class="k" id="mrLabel">Relative formula mass, M<sub>r</sub></span><span class="v" id="mr">—</span></div>
+      <div class="stat"><span class="k">Molar mass</span><span class="v" id="molar">—</span></div>
+      <div class="series" id="series"></div>
+    </section>
+
+    <section class="card acard">
+      <h2>FUNCTIONAL GROUPS</h2>
+      <div class="tags" id="tags"><span class="muted-note">Nothing drawn yet.</span></div>
+      <div class="iso-block" id="isoBlock"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================================
+   3D Molecule Builder & IUPAC Naming
+   One page, no build step. Sections:
+     1. Element data and small helpers
+     2. Molecule store, undo, persistence
+     3. Graph perception: hydrogens, rings, aromaticity
+     4. Functional groups, chirality, CIP priorities
+     5. IUPAC naming engine
+     6. SMILES reader (presets) and 2D layout
+     7. 3D geometry (VSEPR + constraint relaxation)
+     8. Three.js viewers
+     9. 2D sketch editor
+    10. Analysis panel and wiring
+   ========================================================================= */
+
+/* ── 1. Element data ─────────────────────────────────────────────────── */
+// Masses are the AQA data-sheet values students use in calculations.
+const EL = {
+  H:  {z:1,  val:1, mass:1.0,   cpk:0xffffff, r:0.25, cov:0.31},
+  C:  {z:6,  val:4, mass:12.0,  cpk:0x3c3c3c, r:0.38, cov:0.76},
+  N:  {z:7,  val:3, mass:14.0,  cpk:0x3050f8, r:0.37, cov:0.71},
+  O:  {z:8,  val:2, mass:16.0,  cpk:0xe0302e, r:0.36, cov:0.66},
+  F:  {z:9,  val:1, mass:19.0,  cpk:0x90e050, r:0.34, cov:0.57},
+  Cl: {z:17, val:1, mass:35.5,  cpk:0x1fd01f, r:0.46, cov:1.02},
+  Br: {z:35, val:1, mass:79.9,  cpk:0xa62929, r:0.50, cov:1.20},
+  I:  {z:53, val:1, mass:126.9, cpk:0x940094, r:0.56, cov:1.39},
+};
+const HALOGENS = new Set(['F','Cl','Br','I']);
+const HALO_PREFIX = {F:'fluoro', Cl:'chloro', Br:'bromo', I:'iodo'};
+const HALIDE = {F:'fluoride', Cl:'chloride', Br:'bromide', I:'iodide'};
+const SUBDIGIT = '₀₁₂₃₄₅₆₇₈₉';
+const toSub = n => String(n).split('').map(d => SUBDIGIT[+d]).join('');
+const BOND2D = 50;                       // px per bond in the sketch
+const HBOND = 34;                        // shorter X–H bonds, so crowded hydrogens stay apart
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lexCmp = (a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; };
+
+/* ── 2. Molecule store ───────────────────────────────────────────────── */
+// Atoms carry sketch coordinates (px). Bond order 1.5 marks an aromatic bond.
+let mol = { atoms: [], bonds: [], next: 1 };
+const undoStack = [], redoStack = [];
+const snapshot = () => JSON.stringify(mol);
+// Every hand edit goes through here, so it is also where a loaded preset stops
+// being "the preset" (its common name no longer applies).
+function pushUndo() {
+  undoStack.push(snapshot()); if (undoStack.length > 120) undoStack.shift(); redoStack.length = 0;
+  presetSmiles = null; const sel = document.getElementById('preset'); if (sel) sel.value = '';
+}
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); mol = JSON.parse(undoStack.pop()); selected = null; changed(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); mol = JSON.parse(redoStack.pop()); selected = null; changed(); }
+
+const atomById = id => mol.atoms.find(a => a.id === id);
+const bondsOf = id => mol.bonds.filter(b => b.a === id || b.b === id);
+const otherEnd = (b, id) => b.a === id ? b.b : b.a;
+const bondBetween = (x, y) => mol.bonds.find(b => (b.a === x && b.b === y) || (b.a === y && b.b === x));
+const bondSum = id => bondsOf(id).reduce((s, b) => s + b.order, 0);
+const implicitH = a => a.el === 'H' ? 0 : Math.max(0, Math.round(EL[a.el].val - bondSum(a.id)));
+const freeValence = a => EL[a.el].val - bondSum(a.id);
+
+function addAtom(el, x, y) { const a = { id: mol.next++, el, x, y }; mol.atoms.push(a); return a; }
+function addBond(a, b, order) {
+  if (a === b) return null;
+  const ex = bondBetween(a, b); if (ex) { ex.order = order; return ex; }
+  const bd = { id: mol.next++, a, b, order }; mol.bonds.push(bd); return bd;
+}
+function removeAtom(id) {
+  const hs = bondsOf(id).map(b => otherEnd(b, id)).filter(n => atomById(n).el === 'H' && bondsOf(n).length === 1);
+  mol.bonds = mol.bonds.filter(b => b.a !== id && b.b !== id);
+  mol.atoms = mol.atoms.filter(a => a.id !== id);
+  hs.forEach(h => { mol.atoms = mol.atoms.filter(a => a.id !== h); mol.bonds = mol.bonds.filter(b => b.a !== h && b.b !== h); });
+}
+function removeBond(id) { mol.bonds = mol.bonds.filter(b => b.id !== id); }
+
+const store = {
+  get(k) { try { return localStorage.getItem('mbuild.' + k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem('mbuild.' + k, v); } catch (e) {} },
+};
+
+/* ── 3. Graph perception ─────────────────────────────────────────────── */
+// Builds the "heavy graph" the chemistry runs on: hydrogens folded into counts,
+// Kekulé benzene rings perceived as aromatic, rings and fragments listed.
+function perceive(m) {
+  const A = new Map();
+  for (const a of m.atoms) A.set(a.id, { id: a.id, el: a.el, h: 0, hIds: [], nb: [], arom: false, x: a.x, y: a.y, over: false });
+  const foldedH = new Set();
+  for (const a of m.atoms) {
+    if (a.el !== 'H') continue;
+    const bs = m.bonds.filter(b => b.a === a.id || b.b === a.id);
+    if (bs.length === 1 && bs[0].order === 1) {
+      const p = A.get(bs[0].a === a.id ? bs[0].b : bs[0].a);
+      if (p.el !== 'H') { p.h++; p.hIds.push(a.id); foldedH.add(a.id); }
+    }
+  }
+  for (const id of foldedH) A.delete(id);
+  for (const b of m.bonds) {
+    if (!A.has(b.a) || !A.has(b.b)) continue;
+    A.get(b.a).nb.push({ id: b.b, order: b.order, bond: b.id });
+    A.get(b.b).nb.push({ id: b.a, order: b.order, bond: b.id });
+  }
+  for (const at of A.values()) {
+    const used = at.nb.reduce((s, n) => s + n.order, 0) + at.h;
+    const v = EL[at.el].val;
+    if (used > v + 1e-6) at.over = true;
+    at.h += Math.max(0, Math.round(v - used));         // implicit hydrogens
+  }
+  const G = { A, rings: [] };
+  G.rings = findRings(G);
+  // Kekulé benzene: six carbons, alternating single/double -> aromatic
+  for (const r of G.rings) {
+    if (r.length !== 6 || !r.every(id => A.get(id).el === 'C')) continue;
+    const ords = r.map((id, i) => orderBetween(G, id, r[(i + 1) % 6]));
+    const allArom = ords.every(o => o === 1.5);
+    const alt = ords.every((o, i) => (o === 1 || o === 2) && o !== ords[(i + 1) % 6]);
+    if (allArom || alt) {
+      r.arom = true;
+      r.forEach((id, i) => { A.get(id).arom = true; setOrder(G, id, r[(i + 1) % 6], 1.5); });
+    }
+  }
+  G.frags = fragments(G);
+  return G;
+}
+function orderBetween(G, x, y) { const n = G.A.get(x).nb.find(n => n.id === y); return n ? n.order : 0; }
+function setOrder(G, x, y, o) { G.A.get(x).nb.find(n => n.id === y).order = o; G.A.get(y).nb.find(n => n.id === x).order = o; }
+
+// Smallest ring through each bond, de-duplicated. Enough for the monocyclic
+// and simple systems this tool draws.
+function findRings(G) {
+  const rings = [], seen = new Set();
+  for (const at of G.A.values()) for (const n of at.nb) {
+    if (n.id < at.id) continue;
+    const prev = new Map([[at.id, null]]); const q = [at.id]; let found = false;
+    while (q.length && !found) {
+      const cur = q.shift();
+      for (const m of G.A.get(cur).nb) {
+        if (cur === at.id && m.id === n.id) continue;
+        if (prev.has(m.id)) continue;
+        prev.set(m.id, cur);
+        if (m.id === n.id) { found = true; break; }
+        q.push(m.id);
+      }
+    }
+    if (!found) continue;
+    const path = []; let c = n.id; while (c !== null) { path.push(c); c = prev.get(c); }
+    if (path.length > 12) continue;
+    const key = [...path].sort((a, b) => a - b).join(',');
+    if (seen.has(key)) continue; seen.add(key); rings.push(path);
+  }
+  return rings;
+}
+function fragments(G) {
+  const out = [], seen = new Set();
+  for (const id of G.A.keys()) {
+    if (seen.has(id)) continue;
+    const comp = [], st = [id]; seen.add(id);
+    while (st.length) { const c = st.pop(); comp.push(c); for (const n of G.A.get(c).nb) if (!seen.has(n.id)) { seen.add(n.id); st.push(n.id); } }
+    out.push(comp);
+  }
+  return out.sort((a, b) => b.length - a.length);
+}
+const ringsOf = (G, id) => G.rings.filter(r => r.includes(id));
+
+/* ── 4. Functional groups ────────────────────────────────────────────── */
+const GROUP_INFO = {
+  acid:      { label: 'Carboxylic acid', rank: 1, gcse: true },
+  ester:     { label: 'Ester', rank: 2, gcse: true },
+  acylhalide:{ label: 'Acyl chloride', rank: 3 },
+  amide:     { label: 'Amide', rank: 4 },
+  nitrile:   { label: 'Nitrile', rank: 5 },
+  aldehyde:  { label: 'Aldehyde', rank: 6 },
+  ketone:    { label: 'Ketone', rank: 7 },
+  alcohol:   { label: 'Alcohol', rank: 8, gcse: true },
+  phenol:    { label: 'Phenol', rank: 8.5 },
+  amine:     { label: 'Amine', rank: 9 },
+  alkene:    { label: 'Alkene', rank: 10, gcse: true },
+  alkyne:    { label: 'Alkyne', rank: 11 },
+  arene:     { label: 'Arene (benzene ring)', rank: 12 },
+  ether:     { label: 'Ether', rank: 13 },
+  halo:      { label: 'Halogenoalkane', rank: 14 },
+  haloarene: { label: 'Halogenoarene', rank: 14.5 },
+  alkane:    { label: 'Alkane', rank: 15, gcse: true },
+};
+
+function detectGroups(G, atomsIn) {
+  const inSet = atomsIn ? new Set(atomsIn) : null;
+  const groups = [];
+  const A = G.A, at = id => A.get(id);
+  const carbonylO = id => at(id).nb.find(n => n.order === 2 && at(n.id).el === 'O');
+  for (const a of A.values()) {
+    if (inSet && !inSet.has(a.id)) continue;
+    if (a.el === 'C' && !a.arom) {
+      const dO = carbonylO(a.id);
+      if (dO) {
+        const singles = a.nb.filter(n => n.order === 1);
+        const oh = singles.find(n => at(n.id).el === 'O' && at(n.id).h === 1 && at(n.id).nb.length === 1);
+        const oR = singles.find(n => at(n.id).el === 'O' && at(n.id).nb.length === 2 && at(n.id).nb.every(m => at(m.id).el === 'C'));
+        const x = singles.find(n => HALOGENS.has(at(n.id).el));
+        const nn = singles.find(n => at(n.id).el === 'N' && at(n.id).nb.every(m => m.order === 1));
+        const cN = a.nb.filter(n => at(n.id).el === 'C').length;
+        if (oh) groups.push({ type: 'acid', anchor: a.id, atoms: [a.id, dO.id, oh.id], hOf: [oh.id], char: [dO.id, oh.id] });
+        else if (oR) { const R = at(oR.id).nb.find(m => m.id !== a.id).id;
+          groups.push({ type: 'ester', anchor: a.id, atoms: [a.id, dO.id, oR.id], hOf: [], char: [dO.id, oR.id], oAlk: oR.id, alkC: R }); }
+        else if (x) groups.push({ type: 'acylhalide', anchor: a.id, atoms: [a.id, dO.id, x.id], hOf: [], char: [dO.id, x.id], X: at(x.id).el });
+        else if (nn) groups.push({ type: 'amide', anchor: a.id, atoms: [a.id, dO.id, nn.id], hOf: [nn.id], char: [dO.id, nn.id], nAtom: nn.id });
+        else if (a.h >= 1 && a.nb.every(n => n.id === dO.id || at(n.id).el === 'C')) groups.push({ type: 'aldehyde', anchor: a.id, atoms: [a.id, dO.id], hOf: [a.id], char: [dO.id] });
+        else if (cN === 2 && a.h === 0) groups.push({ type: 'ketone', anchor: a.id, atoms: [a.id, dO.id], hOf: [], char: [dO.id] });
+      }
+      const tN = a.nb.find(n => n.order === 3 && at(n.id).el === 'N');
+      if (tN) groups.push({ type: 'nitrile', anchor: a.id, atoms: [a.id, tN.id], hOf: [], char: [tN.id] });
+    }
+    if (a.el === 'O') {
+      const cs = a.nb.filter(n => at(n.id).el === 'C' && n.order === 1);
+      const isCarbonylNeighbour = cs.some(n => carbonylO(n.id));
+      if (a.h === 1 && cs.length === 1 && a.nb.length === 1 && !isCarbonylNeighbour) {
+        const c = at(cs[0].id);
+        groups.push({ type: c.arom ? 'phenol' : 'alcohol', anchor: c.id, atoms: [a.id, c.id], hOf: [a.id], char: [a.id] });
+      }
+      if (a.nb.length === 2 && cs.length === 2 && !isCarbonylNeighbour)
+        groups.push({ type: 'ether', anchor: null, atoms: [a.id, cs[0].id, cs[1].id], hOf: [], char: [] });
+    }
+    if (a.el === 'N' && a.nb.every(n => n.order === 1)) {
+      const cs = a.nb.filter(n => at(n.id).el === 'C');
+      const amideN = cs.some(n => carbonylO(n.id));
+      if (cs.length && !amideN)
+        groups.push({ type: 'amine', anchors: cs.map(n => n.id), anchor: cs[0].id, atoms: [a.id], hOf: [a.id], char: [a.id], nAtom: a.id,
+          degree: cs.length });
+    }
+    if (HALOGENS.has(a.el) && a.nb.length === 1 && at(a.nb[0].id).el === 'C' && !carbonylO(a.nb[0].id)) {
+      const c = at(a.nb[0].id);
+      groups.push({ type: c.arom ? 'haloarene' : 'halo', anchor: c.id, atoms: [a.id, c.id], hOf: [], char: [a.id], X: a.el });
+    }
+  }
+  // C=C / C≡C (non-aromatic)
+  for (const a of A.values()) for (const n of a.nb) {
+    if (n.id < a.id || (inSet && !inSet.has(a.id))) continue;
+    const b = at(n.id); if (a.el !== 'C' || b.el !== 'C') continue;
+    if (n.order === 2) groups.push({ type: 'alkene', atoms: [a.id, b.id], hOf: [a.id, b.id], char: [] });
+    if (n.order === 3) groups.push({ type: 'alkyne', atoms: [a.id, b.id], hOf: [a.id, b.id], char: [] });
+  }
+  for (const r of G.rings) if (r.arom && (!inSet || inSet.has(r[0]))) groups.push({ type: 'arene', atoms: [...r], hOf: [...r], char: [] });
+  const ids = atomsIn || [...A.keys()];
+  if (!groups.some(g => g.type !== 'halo') && ids.length && ids.every(id => at(id).el === 'C' || HALOGENS.has(at(id).el)) && ids.some(id => at(id).el === 'C')) {
+    const cs = ids.filter(id => at(id).el === 'C');
+    if (!groups.length || ids.some(id => at(id).el === 'C')) groups.push({ type: 'alkane', atoms: cs, hOf: cs, char: [] });
+  }
+  return groups;
+}
+
+// Canonical description of the branch reached by stepping from `from` to `to`.
+// Two branches with equal keys are the same group.
+function branchKey(G, from, to, seen = new Set([from]), depth = 0) {
+  const a = G.A.get(to);
+  if (depth > 40) return a.el;
+  if (seen.has(to)) return '~' + a.el;
+  const s2 = new Set(seen); s2.add(to);
+  const kids = a.nb.filter(n => n.id !== from).map(n => n.order + branchKey(G, to, n.id, s2, depth + 1)).sort();
+  return a.el + (a.arom ? 'a' : '') + 'h' + a.h + '(' + kids.join(',') + ')';
+}
+
+function chiralCentres(G) {
+  const out = [];
+  for (const a of G.A.values()) {
+    if (a.el !== 'C' || a.arom || a.over) continue;
+    if (a.nb.length + a.h !== 4 || a.h > 1 || a.nb.some(n => n.order !== 1)) continue;
+    const keys = a.nb.map(n => branchKey(G, a.id, n.id));
+    if (a.h === 1) keys.push('H');
+    if (new Set(keys).size === 4) out.push(a.id);
+  }
+  return out;
+}
+
+// CIP priority comparison of two branches off `centre` (simplified
+// hierarchical digraph: explore sphere by sphere, duplicate atoms for
+// multiple bonds, first point of difference wins). >0 means a outranks b.
+function cipCompare(G, centre, a, b) {
+  const Z = el => el === 'H' ? 1 : EL[el].z;
+  const kids = node => {
+    if (node.dup || node.el === 'H') return [];
+    const at = G.A.get(node.id), out = [];
+    for (const n of at.nb) {
+      const o = n.order === 1.5 ? 1.5 : n.order;
+      if (n.id === node.parent) { for (let k = 1; k < Math.round(o); k++) out.push({ el: G.A.get(n.id).el, dup: true }); if (o === 1.5) out.push({ el: G.A.get(n.id).el, dup: true }); continue; }
+      if (node.path.has(n.id)) { out.push({ el: G.A.get(n.id).el, dup: true }); continue; }
+      const p2 = new Set(node.path); p2.add(n.id);
+      out.push({ id: n.id, el: G.A.get(n.id).el, parent: node.id, path: p2 });
+      for (let k = 1; k < Math.round(o); k++) out.push({ el: G.A.get(n.id).el, dup: true });
+    }
+    for (let k = 0; k < at.h; k++) out.push({ el: 'H', dup: true });
+    return out;
+  };
+  const start = id => id === 'H' ? { el: 'H', dup: true } : { id, el: G.A.get(id).el, parent: centre, path: new Set([centre, id]) };
+  let fa = [start(a)], fb = [start(b)];
+  const za = Z(fa[0].el), zb = Z(fb[0].el);
+  if (za !== zb) return za - zb;
+  for (let depth = 0; depth < 14; depth++) {
+    const sets = fr => fr.map(n => kids(n).map(k => Z(k.el)).sort((x, y) => y - x));
+    const order = (fr) => { const ss = sets(fr); return fr.map((n, i) => ({ n, s: ss[i] })).sort((p, q) => Z(q.n.el) - Z(p.n.el) || -lexCmp(p.s, q.s)); };
+    const oa = order(fa), ob = order(fb);
+    for (let i = 0; i < Math.max(oa.length, ob.length); i++) {
+      const sa = oa[i] ? oa[i].s : [], sb = ob[i] ? ob[i].s : [];
+      const c = lexCmp(sa, sb);
+      if (c !== 0) return c;
+    }
+    fa = oa.flatMap(x => kids(x.n)); fb = ob.flatMap(x => kids(x.n));
+    if (!fa.length && !fb.length) return 0;
+  }
+  return 0;
+}
+
+/* ── 5. IUPAC naming ─────────────────────────────────────────────────── */
+const STEM = ['', 'meth', 'eth', 'prop', 'but', 'pent', 'hex', 'hept', 'oct', 'non', 'dec', 'undec', 'dodec', 'tridec', 'tetradec', 'pentadec', 'hexadec', 'heptadec', 'octadec', 'nonadec', 'icos'];
+const MULT = ['', '', 'di', 'tri', 'tetra', 'penta', 'hexa', 'hepta', 'octa', 'nona', 'deca'];
+const MULTX = ['', '', 'bis', 'tris', 'tetrakis', 'pentakis', 'hexakis'];
+const SUFFIX = {
+  acid:      { s: 'oic acid', terminal: true, what: 'carboxylic acid group, –COOH' },
+  ester:     { s: 'oate', terminal: true, what: 'ester group, –COO–' },
+  acylhalide:{ s: 'oyl chloride', terminal: true, what: 'acyl chloride group, –COCl' },
+  amide:     { s: 'amide', terminal: true, what: 'amide group, –CONH₂' },
+  nitrile:   { s: 'nitrile', terminal: true, what: 'nitrile group, –C≡N' },
+  aldehyde:  { s: 'al', terminal: true, what: 'aldehyde group, –CHO' },
+  ketone:    { s: 'one', terminal: false, what: 'ketone C=O group' },
+  alcohol:   { s: 'ol', terminal: false, what: 'hydroxyl group, –OH' },
+  amine:     { s: 'amine', terminal: false, what: 'amine group, –NH₂' },
+};
+const PRINCIPAL_ORDER = ['acid', 'ester', 'acylhalide', 'amide', 'nitrile', 'aldehyde', 'ketone', 'alcohol', 'amine'];
+const isVowel = c => 'aeiouy'.includes(c);
+const locStr = locs => locs.map(String).join(',');
+const sortLocs = locs => [...locs].sort((a, b) => (typeof a === 'string') - (typeof b === 'string') || (a < b ? -1 : a > b ? 1 : 0));
+
+class NameFail extends Error {}
+
+function nameFragment(G, frag, groups) {
+  const A = G.A, at = id => A.get(id);
+  const fset = new Set(frag);
+  if (frag.some(id => at(id).over)) return { fail: 'valence' };
+  const els = frag.map(id => at(id).el);
+  const hTot = frag.reduce((s, id) => s + at(id).h, 0);
+  const formulaKey = hillFormula(countAtoms(G, frag), false);
+  const INORG = { H2O: 'water', H3N: 'ammonia', H2: 'hydrogen', ClH: 'hydrogen chloride', BrH: 'hydrogen bromide', FH: 'hydrogen fluoride', HI: 'hydrogen iodide',
+    Cl2: 'chlorine', Br2: 'bromine', I2: 'iodine', F2: 'fluorine', O2: 'oxygen', N2: 'nitrogen', H2O2: 'hydrogen peroxide', CO2: 'carbon dioxide', H4N2: 'hydrazine', CHN: 'hydrogen cyanide' };
+  if (INORG[formulaKey] && !(formulaKey === 'CHN' && false)) {
+    if (formulaKey === 'CHN') return { name: 'hydrogen cyanide', parts: [{ t: 'hydrogen cyanide', role: 'root', why: 'H–C≡N is named as an inorganic compound; the systematic organic name is methanenitrile.' }], parent: [], locants: new Map(), inorganic: true };
+    if (!els.includes('C') || formulaKey === 'CO2') return { name: INORG[formulaKey], parts: [{ t: INORG[formulaKey], role: 'root', why: 'Not an organic compound — it has its own name.' }], parent: [], locants: new Map(), inorganic: true };
+  }
+  if (!els.includes('C')) return { fail: 'nocarbon' };
+  if (frag.some(id => at(id).el === 'H')) return { fail: 'unsupported' };
+  for (const id of frag) if (ringsOf(G, id).length > 1) return { fail: 'fused' };
+  for (const r of G.rings) if (fset.has(r[0]) && r.some(id => at(id).el !== 'C')) return { fail: 'hetero' };
+
+  const fgroups = groups.filter(g => g.atoms.some(id => fset.has(id)));
+  let ptype = null;
+  for (const t of PRINCIPAL_ORDER) if (fgroups.some(g => g.type === t || (t === 'alcohol' && g.type === 'phenol'))) { ptype = t; break; }
+  try {
+    if (ptype === 'ester') return nameEster(G, frag, fgroups);
+    return nameCore(G, frag, fgroups, ptype, null);
+  } catch (e) {
+    if (e instanceof NameFail) return { fail: 'unsupported', why: e.message };
+    throw e;
+  }
+}
+
+// Principal groups of the chosen type, each with the atoms its suffix uses up.
+function principals(fgroups, ptype) {
+  if (!ptype) return [];
+  return fgroups.filter(g => g.type === ptype || (ptype === 'alcohol' && g.type === 'phenol')).map(g => ({
+    ...g, anchors: g.anchors || [g.anchor],
+  }));
+}
+
+function nameCore(G, frag, fgroups, ptype, esterCtx) {
+  const A = G.A, at = id => A.get(id);
+  const P = principals(fgroups, ptype);
+  const nonPrincipalNitrileC = new Set(fgroups.filter(g => g.type === 'nitrile' && ptype !== 'nitrile').map(g => g.anchor));
+  const inRing = id => ringsOf(G, id).length > 0;
+  const eligible = id => at(id).el === 'C' && !inRing(id) && !nonPrincipalNitrileC.has(id);
+
+  const cands = [];
+  // chains: every directed simple path through eligible carbons
+  const fcarb = frag.filter(eligible);
+  for (const s of fcarb) {
+    const walk = (path, seen) => {
+      cands.push(evalParent(G, path.slice(), false, P, esterCtx));
+      for (const n of at(path[path.length - 1]).nb) {
+        if (seen.has(n.id) || !eligible(n.id)) continue;
+        seen.add(n.id); path.push(n.id); walk(path, seen); path.pop(); seen.delete(n.id);
+      }
+    };
+    walk([s], new Set([s]));
+    if (cands.length > 60000) throw new NameFail('too many chains');
+  }
+  // rings: each numbering start and direction
+  for (const r of G.rings) {
+    if (!frag.includes(r[0])) continue;
+    const n = r.length;
+    for (let s = 0; s < n; s++) for (const dir of [1, -1]) {
+      const order = []; for (let k = 0; k < n; k++) order.push(r[((s + dir * k) % n + n) % n]);
+      cands.push(evalParent(G, order, true, P, esterCtx, r.arom));
+    }
+  }
+  if (!cands.length) throw new NameFail('no parent');
+  cands.sort(cmpCand);
+  // alphabetical tie-break needs names: resolve among candidates tied so far
+  const best = cands[0];
+  const tied = cands.filter(c => cmpCand(c, best) === 0);
+  tied.forEach(c => namePrefixes(G, c));
+  tied.sort((x, y) => cmpAlpha(x, y));
+  const win = tied[0];
+  if (!win.prefixes) namePrefixes(G, win);
+  return assemble(G, win, ptype, P, esterCtx);
+}
+
+function evalParent(G, atoms, isRing, P, esterCtx, arom = false) {
+  const A = G.A, at = id => A.get(id);
+  const inP = new Set(atoms);
+  const c = { atoms, isRing, arom, len: atoms.length, pc: 0, mb: 0, db: 0, pLocs: [], mbLocs: [], dbLocs: [], enes: [], ynes: [], subs: [], nsub: 0, subLocs: [] };
+  const consumed = new Set();
+  const pAt = new Map();
+  for (const g of P) {
+    const anc = g.anchors.find(x => inP.has(x));
+    if (anc === undefined) continue;
+    c.pc++;
+    const loc = atoms.indexOf(anc) + 1;
+    c.pLocs.push(loc); pAt.set(g, loc);
+    g.char.forEach(x => consumed.add(x));
+    if (g.nAtom !== undefined) {                       // N-substituents of amines / amides
+      for (const n of at(g.nAtom).nb) if (n.id !== anc && !inP.has(n.id)) c.subs.push({ loc: 'N', root: n.id, from: g.nAtom, order: n.order });
+    }
+  }
+  if (esterCtx) esterCtx.oAlk.forEach(x => consumed.add(x));
+  const L = atoms.length;
+  for (let i = 0; i < L; i++) {
+    const j = isRing ? (i + 1) % L : i + 1;
+    if (j >= L || (isRing && L < 3)) continue;
+    if (!isRing && j === i) continue;
+    const o = orderBetween(G, atoms[i], atoms[j]);
+    if (o === 2 || o === 3) {
+      c.mb++; const loc = isRing && j === 0 ? L : i + 1; c.mbLocs.push(loc);
+      if (o === 2) { c.db++; c.dbLocs.push(loc); c.enes.push(loc); } else c.ynes.push(loc);
+    }
+  }
+  atoms.forEach((id, i) => {
+    for (const n of at(id).nb) {
+      if (inP.has(n.id) || consumed.has(n.id)) continue;
+      c.subs.push({ loc: i + 1, root: n.id, from: id, order: n.order });
+    }
+  });
+  c.nsub = c.subs.length;
+  c.subLocs = c.subs.map(s => s.loc === 'N' ? 999 : s.loc).sort((a, b) => a - b);
+  c.pLocs.sort((a, b) => a - b); c.mbLocs.sort((a, b) => a - b); c.dbLocs.sort((a, b) => a - b);
+  c.pAt = pAt;
+  return c;
+}
+
+function cmpCand(a, b) {
+  if (a.pc !== b.pc) return b.pc - a.pc;
+  if (a.isRing !== b.isRing) return a.isRing ? -1 : 1;
+  if (a.mb !== b.mb) return b.mb - a.mb;
+  if (a.len !== b.len) return b.len - a.len;
+  if (a.db !== b.db) return b.db - a.db;
+  if (a.nsub !== b.nsub) return b.nsub - a.nsub;
+  return lexCmp(a.pLocs, b.pLocs) || lexCmp(a.mbLocs, b.mbLocs) || lexCmp(a.dbLocs, b.dbLocs) || lexCmp(a.subLocs, b.subLocs);
+}
+function cmpAlpha(a, b) {
+  const sa = [...a.prefixes].sort((x, y) => x.alpha.localeCompare(y.alpha)), sb = [...b.prefixes].sort((x, y) => x.alpha.localeCompare(y.alpha));
+  for (let i = 0; i < Math.min(sa.length, sb.length); i++) {
+    const la = sa[i].loc === 'N' ? 999 : sa[i].loc, lb = sb[i].loc === 'N' ? 999 : sb[i].loc;
+    if (la !== lb) return la - lb;
+  }
+  return 0;
+}
+function namePrefixes(G, c) {
+  c.prefixes = c.subs.map(s => {
+    const r = nameSub(G, s.root, s.from, s.order, 0);
+    if (!r) throw new NameFail('substituent');
+    return { ...r, loc: s.loc, root: s.root };
+  });
+}
+
+// Name a substituent rooted at `root`, attached to the parent through `from`.
+function nameSub(G, root, from, order, depth) {
+  if (depth > 6) return null;
+  const A = G.A, at = id => A.get(id);
+  const a = at(root);
+  if (HALOGENS.has(a.el)) return simple(HALO_PREFIX[a.el], 'halogen atom, ' + a.el);
+  if (a.el === 'O') {
+    if (order === 2) return simple('oxo', 'C=O oxygen (named as a prefix because a higher group takes the suffix)');
+    if (a.nb.length === 1 && a.h === 1) return simple('hydroxy', '–OH group (a prefix because a higher group takes the suffix)');
+    if (a.nb.length === 2) {
+      const R = a.nb.find(n => n.id !== from);
+      if (at(R.id).el !== 'C' || at(R.id).nb.some(n => n.order === 2 && at(n.id).el === 'O')) return null;
+      const r = nameSub(G, R.id, root, 1, depth + 1); if (!r) return null;
+      const nm = r.name.replace(/yl(\)?)$/, 'oxy$1');
+      return { name: nm, alpha: r.alpha.replace(/yl$/, 'oxy'), complex: r.complex, why: 'an –O–alkyl (alkoxy) group' };
+    }
+    return null;
+  }
+  if (a.el === 'N') {
+    if (order === 3) return null;
+    const others = a.nb.filter(n => n.id !== from);
+    if (!others.length && a.h === 2) return simple('amino', '–NH₂ group (a prefix because a higher group takes the suffix)');
+    if (others.every(n => at(n.id).el === 'C')) {
+      const rs = others.map(n => nameSub(G, n.id, root, n.order, depth + 1)); if (rs.some(r => !r)) return null;
+      const inner = rs.length === 2 && rs[0].name === rs[1].name ? 'di' + rs[0].name : rs.map(r => r.name).sort().join('');
+      return { name: '(' + inner + 'amino)', alpha: inner + 'amino', complex: true, why: 'an N-substituted amino group' };
+    }
+    return null;
+  }
+  if (a.el !== 'C') return null;
+  const rs = ringsOf(G, root);
+  if (rs.length === 1) return nameRingSub(G, rs[0], root, from, depth);
+  if (rs.length > 1) return null;
+  const tN = a.nb.find(n => n.order === 3 && at(n.id).el === 'N');
+  if (tN && a.nb.length === 2) return simple('cyano', '–C≡N group as a prefix');
+  // alkyl chain from root
+  const elig = id => at(id).el === 'C' && ringsOf(G, id).length === 0 && id !== from;
+  let best = null;
+  const walk = (path, seen) => {
+    const c = evalSubChain(G, path, from);
+    if (!best || cmpSub(c, best) < 0) best = c;
+    for (const n of at(path[path.length - 1]).nb) {
+      if (seen.has(n.id) || !elig(n.id)) continue;
+      if (at(n.id).nb.some(m => m.order === 3 && at(m.id).el === 'N')) continue;
+      seen.add(n.id); path.push(n.id); walk(path, seen); path.pop(); seen.delete(n.id);
+    }
+  };
+  walk([root], new Set([root, from]));
+  const c = best;
+  const pre = [];
+  for (const s of c.subs) {
+    const r = nameSub(G, s.root, s.from, s.order, depth + 1); if (!r) return null;
+    pre.push({ ...r, loc: s.loc });
+  }
+  const n = c.atoms.length;
+  const citeLoc = n > 1;
+  const prefixStr = joinPrefixes(pre, citeLoc).text;
+  let unsat = '';
+  if (c.enes.length || c.ynes.length) {
+    const showU = n > 2;
+    const mk = (locs, word) => (showU ? '-' + locStr(locs) + '-' : '') + MULT[locs.length] + word;
+    const stemA = (c.enes.length > 1 || (!c.enes.length && c.ynes.length > 1)) ? 'a' : '';
+    unsat = stemA + (c.enes.length ? mk(c.enes, c.ynes.length ? 'en' : 'en') : '') + (c.ynes.length ? mk(c.ynes, 'yn') : '');
+  }
+  const tail = order === 2 ? 'ylidene' : 'yl';
+  const core = STEM[n] + unsat + tail;
+  if (!STEM[n]) return null;
+  const name = prefixStr + core;
+  const complex = pre.length > 0 || (unsat && n > 2);
+  const alpha = name.replace(/[^a-z]/g, '');
+  return { name: complex ? '(' + name + ')' : name, alpha, complex, why: describeAlkyl(n, name) };
+}
+function simple(name, why) { return { name, alpha: name, complex: false, why }; }
+function describeAlkyl(n, name) {
+  const f = ['', 'CH₃', 'C₂H₅', 'C₃H₇', 'C₄H₉', 'C₅H₁₁', 'C₆H₁₃'][n];
+  return /^[a-z]+yl$/.test(name) && f && !/en|yn/.test(name) ? `a ${f} branch (${n} carbon${n > 1 ? 's' : ''})` : `a ${n}-carbon side branch`;
+}
+function evalSubChain(G, path, from) {
+  const at = id => G.A.get(id);
+  const inP = new Set(path);
+  const c = { atoms: path.slice(), subs: [], enes: [], ynes: [] };
+  for (let i = 0; i + 1 < path.length; i++) {
+    const o = orderBetween(G, path[i], path[i + 1]);
+    if (o === 2) c.enes.push(i + 1); else if (o === 3) c.ynes.push(i + 1);
+  }
+  path.forEach((id, i) => { for (const n of at(id).nb) if (!inP.has(n.id) && n.id !== from) c.subs.push({ loc: i + 1, root: n.id, from: id, order: n.order }); });
+  c.mb = c.enes.length + c.ynes.length;
+  c.locs = c.subs.map(s => s.loc).sort((a, b) => a - b);
+  return c;
+}
+function cmpSub(a, b) {
+  if (a.atoms.length !== b.atoms.length) return b.atoms.length - a.atoms.length;
+  if (a.mb !== b.mb) return b.mb - a.mb;
+  if (a.subs.length !== b.subs.length) return b.subs.length - a.subs.length;
+  return lexCmp([...a.enes, ...a.ynes], [...b.enes, ...b.ynes]) || lexCmp(a.locs, b.locs);
+}
+function nameRingSub(G, ring, root, from, depth) {
+  const at = id => G.A.get(id);
+  const n = ring.length, i0 = ring.indexOf(root);
+  let best = null;
+  for (const dir of [1, -1]) {
+    const order = []; for (let k = 0; k < n; k++) order.push(ring[((i0 + dir * k) % n + n) % n]);
+    const inR = new Set(order), subs = [], enes = [];
+    order.forEach((id, i) => { for (const m of at(id).nb) if (!inR.has(m.id) && m.id !== from) subs.push({ loc: i + 1, root: m.id, from: id, order: m.order }); });
+    if (!ring.arom) for (let i = 0; i < n; i++) { if (orderBetween(G, order[i], order[(i + 1) % n]) === 2) enes.push(i + 1); }
+    const pre = [];
+    for (const s of subs) { const r = nameSub(G, s.root, s.from, s.order, depth + 1); if (!r) return null; pre.push({ ...r, loc: s.loc }); }
+    const cand = { pre, locs: pre.map(p => p.loc).sort((a, b) => a - b), enes };
+    if (!best || lexCmp(cand.enes, best.enes) < 0 || (lexCmp(cand.enes, best.enes) === 0 && (lexCmp(cand.locs, best.locs) < 0 ||
+       (lexCmp(cand.locs, best.locs) === 0 && alphaFirstLoc(cand.pre) < alphaFirstLoc(best.pre))))) best = cand;
+  }
+  const inner = joinPrefixes(best.pre, true).text;
+  let core;
+  if (ring.arom && n === 6) core = 'phenyl';
+  else if (!ring.arom && STEM[n]) core = 'cyclo' + STEM[n] + (best.enes.length ? '-' + locStr(best.enes) + '-' + MULT[best.enes.length] + 'en' : '') + 'yl';
+  else return null;
+  const name = inner + core;
+  const complex = !!inner || best.enes.length > 0;
+  return { name: complex ? '(' + name + ')' : name, alpha: name.replace(/[^a-z]/g, ''), complex, why: ring.arom ? 'a benzene ring as a branch (C₆H₅–)' : 'a ring of ' + n + ' carbons as a branch', phenylInner: ring.arom ? best.pre : null };
+}
+function alphaFirstLoc(pre) { const s = [...pre].sort((x, y) => x.alpha.localeCompare(y.alpha)); return s.length ? s[0].loc : 0; }
+
+// Group identical prefixes, alphabetise, add multipliers and locants.
+function joinPrefixes(prefixes, cite) {
+  const groups = new Map();
+  for (const p of prefixes) { if (!groups.has(p.name)) groups.set(p.name, { ...p, locs: [] }); groups.get(p.name).locs.push(p.loc); }
+  const list = [...groups.values()].sort((x, y) => x.alpha.localeCompare(y.alpha));
+  const parts = list.map(g => {
+    const k = g.locs.length;
+    const mult = k > 1 ? (g.complex ? MULTX[k] : MULT[k]) : '';
+    const locs = sortLocs(g.locs);
+    const loc = cite || locs.includes('N') ? locStr(locs) + '-' : '';   // N- is always cited
+    return { t: loc + mult + g.name, g, locs };
+  });
+  let text = '';
+  parts.forEach((p, i) => { text += (i && /^[0-9N]/.test(p.t) ? '-' : '') + p.t; });
+  return { text, parts };
+}
+
+function assemble(G, c, ptype, P, esterCtx) {
+  const at = id => G.A.get(id);
+  const n = c.len;
+  const sfx = ptype ? SUFFIX[ptype] : null;
+  const pk = c.pc;
+  const nonTerminalP = sfx && !sfx.terminal ? pk : 0;
+  const locants = new Map(c.atoms.map((id, i) => [id, i + 1]));
+  const parts = [];
+  const notes = [];
+
+  // ---------- which locants to cite ----------
+  const nPre = c.prefixes.length;
+  let citePre = true;
+  if (!c.isRing && n <= 2) citePre = (nPre + nonTerminalP) >= 2;
+  if (c.isRing && nPre === 1 && !nonTerminalP && !c.mb) citePre = false;
+  if (!c.isRing && n === 1) citePre = false;
+  if (c.isRing && c.arom && ptype && pk === 1 && nPre === 0) citePre = false;
+
+  let citeP = !!(sfx && !sfx.terminal);
+  if (citeP && pk === 1) {
+    if (c.isRing) citeP = nPre > 0 || c.mb > 0 ? !(c.arom) && c.pLocs[0] !== 1 ? true : !c.arom && (nPre > 0 || c.mb > 0) : false;
+    else {
+      const uniquePos = ptype === 'ketone' ? n <= 4 : n <= 2;
+      if (uniquePos && nPre === 0 && c.mb === 0) citeP = false;
+      if (n <= 2) citeP = false;        // ethanol, ethanone: only one place it can be
+    }
+  }
+  let citeU = c.mb > 0;
+  if (citeU && c.mb === 1) {
+    if (c.isRing) citeU = !(c.mbLocs[0] === 1 && !nonTerminalP && nPre <= 1) ? true : false;
+    else if (n <= 3 && !nonTerminalP) citeU = false;
+  }
+  if (c.isRing && c.mb === 1 && !nonTerminalP && c.mbLocs[0] === 1) citeU = false;
+
+  // ---------- stereo (E/Z) ----------
+  const ez = ezDescriptors(G, c);
+  if (ez.length) {
+    const t = ez.length === 1 && !(c.mb > 1) ? `(${ez[0].d})-` : `(${ez.map(e => e.loc + e.d).join(',')})-`;
+    parts.push({ t, role: 'stereo', why: ez.map(e => e.d === 'E'
+      ? `E: across the C=C${c.mb > 1 ? ' at ' + e.loc : ''}, the higher-priority groups are on opposite sides`
+      : `Z: across the C=C${c.mb > 1 ? ' at ' + e.loc : ''}, the higher-priority groups are on the same side`).join('; ') });
+  }
+
+  // ---------- ester alkyl part ----------
+  if (esterCtx) {
+    const al = esterCtx.alkyls;
+    const same = al.every(x => x.name === al[0].name);
+    const bare = x => x.name.replace(/^\((.*)\)$/, '$1');     // "1-methylethyl ethanoate", no brackets needed
+    const txt = same ? (al.length > 1 ? (al[0].complex ? MULTX[al.length] + al[0].name : MULT[al.length] + bare(al[0])) : bare(al[0]))
+      : al.map(x => x.name).sort().join(' ');
+    parts.push({ t: txt + ' ', role: 'alkyl', why: `${txt} — the alkyl group from the alcohol, bonded to the single-bonded O of the ester` });
+  }
+
+  // ---------- special benzene names ----------
+  const benzSpecial = { acid: 'benzoic acid', aldehyde: 'benzaldehyde', nitrile: 'benzonitrile', amide: 'benzamide', acylhalide: 'benzoyl ', ester: 'benzoate' };
+  if (!c.isRing && n === 1 && sfx && sfx.terminal && benzSpecial[ptype] && c.prefixes.length === 1 && c.prefixes[0].phenylInner) {
+    const inner = c.prefixes[0].phenylInner;
+    const jp = joinPrefixes(inner, inner.length > 0);
+    for (const p of jp.parts) parts.push({ t: (parts.length && parts[parts.length - 1].role === 'prefix' && /^[0-9]/.test(p.t) ? '-' : '') + p.t, role: 'prefix', why: prefixWhy(p, true) });
+    let root = benzSpecial[ptype];
+    if (ptype === 'acylhalide') root += HALIDE[P[0].X];
+    parts.push({ t: root, role: 'root', why: `${root} — a benzene ring joined directly to the ${SUFFIX[ptype].what.replace(/^./, s => s)}; ring carbon 1 carries it` });
+    const ringAtoms = ringsOf(G, c.subs[0].root)[0];
+    return finish(parts, c, locants, notes, ringAtoms);
+  }
+
+  // ---------- prefixes ----------
+  const jp = joinPrefixes(c.prefixes, citePre);
+  jp.parts.forEach((p, i) => parts.push({ t: (i && /^[0-9N]/.test(p.t) ? '-' : '') + p.t, role: 'prefix', why: prefixWhy(p, citePre, c.isRing) }));
+
+  // ---------- root, unsaturation, suffix ----------
+  let root, unsat = '', suffix = '';
+  const multS = pk > 1 ? MULT[pk] : '';
+  let sfxText = sfx ? multS + (ptype === 'acylhalide' ? 'oyl ' + (pk > 1 ? MULT[pk] : '') + HALIDE[P[0].X] : sfx.s) : '';
+
+  if (c.isRing && c.arom) {
+    if (ptype === 'alcohol' && pk === 1) { root = 'phenol'; sfxText = ''; }
+    else if (ptype === 'amine' && pk === 1) { root = 'phenylamine'; sfxText = ''; }
+    else root = 'benzene';
+    parts.push({ t: root, role: 'root', why: root === 'phenol' ? 'phenol — an –OH joined directly to a benzene ring; that ring carbon is number 1'
+      : root === 'phenylamine' ? 'phenylamine — an –NH₂ joined directly to a benzene ring; that ring carbon is number 1'
+      : 'benzene — the parent is a six-carbon aromatic ring' });
+    if (sfxText) {
+      const t = (citeP ? '-' + locStr(c.pLocs) + '-' : '') + sfxText;
+      parts.push({ t, role: 'suffix', why: suffixWhy(ptype, pk, c.pLocs, citeP) });
+    }
+    return finish(parts, c, locants, notes);
+  }
+
+  const stem = STEM[n];
+  if (!stem) throw new NameFail('chain too long');
+  root = (c.isRing ? 'cyclo' : '') + stem;
+  const enes = c.enes.slice().sort((a, b) => a - b), ynes = c.ynes.slice().sort((a, b) => a - b);
+  if (enes.length > 1 || (!enes.length && ynes.length > 1)) root += 'a';
+  parts.push({ t: root, role: 'root', why: `${root.replace(/a$/, '')} — ${n} carbon${n > 1 ? 's' : ''} in the ${c.isRing ? 'ring' : 'longest chain' + (c.pc ? ' containing the functional group' : '')}${root.endsWith('a') ? ' (the extra "a" is added before di-, tri-)' : ''}` });
+
+  if (!enes.length && !ynes.length) unsat = 'ane';
+  else {
+    if (enes.length) unsat += (citeU ? '-' + locStr(enes) + '-' : '') + MULT[enes.length] + (ynes.length ? 'en' : 'ene');
+    if (ynes.length) unsat += (citeU ? '-' + locStr(ynes) + '-' : '') + MULT[ynes.length] + 'yne';
+  }
+  if (sfxText && isVowel(sfxText[0])) unsat = unsat.replace(/e$/, '');
+  parts.push({ t: unsat, role: 'unsat', why: unsatWhy(enes, ynes, citeU) });
+
+  if (sfxText) {
+    const t = (citeP && !sfx.terminal ? '-' + locStr(c.pLocs) + '-' : '') + sfxText;
+    parts.push({ t, role: 'suffix', why: suffixWhy(ptype, pk, c.pLocs, citeP && !sfx.terminal) });
+  }
+  if (!c.isRing && n > 2 && (c.pc || c.mb || c.prefixes.length)) {
+    notes.push(c.pc ? 'Numbered from the end that gives the ' + (sfx.terminal ? 'functional-group carbon the number 1.' : 'functional group the lowest number.')
+      : c.mb ? 'Numbered from the end nearer the multiple bond.' : 'Numbered from the end that gives the branches the lowest numbers.');
+  }
+  return finish(parts, c, locants, notes);
+}
+function finish(parts, c, locants, notes, extraAtoms) {
+  const name = parts.map(p => p.t).join('');
+  return { name, parts, parent: c.atoms, locants, notes, isRing: c.isRing, extraAtoms };
+}
+function prefixWhy(p, cite, isRing) {
+  const k = p.locs.length, w = p.g.why || p.g.name;
+  if (!cite) return `${p.t} — ${k > 1 ? k + ' × ' : ''}${w}`;
+  const where = p.locs.map(l => l === 'N' ? 'the nitrogen' : (isRing ? 'ring ' : '') + 'carbon ' + l);
+  return `${p.t} — ${k > 1 ? k + ' × ' : ''}${w}, on ${where.join(' and ')}`;
+}
+function unsatWhy(enes, ynes, cite) {
+  if (!enes.length && !ynes.length) return 'an — only C–C single bonds: saturated';
+  const bits = [];
+  if (enes.length) bits.push(`${enes.length > 1 ? MULT[enes.length] : ''}ene — ${enes.length} C=C double bond${enes.length > 1 ? 's' : ''}${cite ? ' starting at carbon ' + enes.join(' and ') : ''}`);
+  if (ynes.length) bits.push(`yne — C≡C triple bond${cite ? ' starting at carbon ' + ynes.join(' and ') : ''}`);
+  return bits.join('; ');
+}
+function suffixWhy(ptype, k, locs, cite) {
+  const w = SUFFIX[ptype].what;
+  if (SUFFIX[ptype].terminal) return `${k > 1 ? MULT[k] : ''}${SUFFIX[ptype].s} — ${k > 1 ? k + ' × ' : ''}${w}; its carbon is always carbon 1, so no number is needed`;
+  return `${k > 1 ? MULT[k] : ''}${SUFFIX[ptype].s} — ${k > 1 ? k + ' × ' : ''}${w}${cite ? ' on carbon ' + locs.join(' and ') : ''}`;
+}
+
+function nameEster(G, frag, fgroups) {
+  const esters = fgroups.filter(g => g.type === 'ester');
+  const alkyls = [];
+  const exclude = new Set();
+  for (const e of esters) {
+    const r = nameSub(G, e.alkC, e.oAlk, 1, 0);
+    if (!r) throw new NameFail('ester alkyl');
+    // the alkyl side must not lead back into the acid side (cyclic esters)
+    const side = collect(G, e.alkC, e.oAlk);
+    if (side.has(e.anchor)) throw new NameFail('cyclic ester');
+    side.forEach(x => exclude.add(x));
+    alkyls.push(r);
+  }
+  const sub = frag.filter(id => !exclude.has(id));
+  const res = nameCore(G, sub, fgroups.filter(g => g.atoms.some(id => sub.includes(id))), 'ester', { alkyls, oAlk: esters.map(e => e.oAlk) });
+  res.esterAlkylAtoms = [...exclude];
+  return res;
+}
+function collect(G, start, block) {
+  const seen = new Set([start]), st = [start];
+  while (st.length) { const c = st.pop(); for (const n of G.A.get(c).nb) if (n.id !== block && !seen.has(n.id)) { seen.add(n.id); st.push(n.id); } }
+  return seen;
+}
+
+// E/Z for each non-ring C=C in the parent, from the sketch's geometry.
+function ezDescriptors(G, c) {
+  const out = [];
+  const at = id => G.A.get(id);
+  for (let i = 0; i + 1 < c.atoms.length; i++) {
+    const b = c.atoms[i], d = c.atoms[i + 1];
+    if (orderBetween(G, b, d) !== 2 || ringsOf(G, b).some(r => r.includes(d))) continue;
+    const ez = ezFor(G, b, d);
+    if (ez) out.push({ loc: i + 1, d: ez });
+  }
+  return out;
+}
+function ezFor(G, b, d) {
+  const at = id => G.A.get(id);
+  const side = (x, y) => {
+    const subs = at(x).nb.filter(n => n.id !== y).map(n => n.id);
+    for (let k = 0; k < at(x).h; k++) subs.push('H');
+    if (subs.length !== 2) return null;
+    const c = cipCompare(G, x, subs[0], subs[1]);
+    if (c === 0) return null;
+    return c > 0 ? subs[0] : subs[1];
+  };
+  const hb = side(b, d), hd = side(d, b);
+  if (!hb || !hd) return null;
+  const pos = id => {
+    if (id !== 'H') return G.A.get(id);
+    return null;
+  };
+  const pb = pos(hb), pd = pos(hd);
+  const B = at(b), D = at(d);
+  const cross = (p) => (D.x - B.x) * (p.y - B.y) - (D.y - B.y) * (p.x - B.x);
+  // If the top-priority group is an (implicit) H, use the other substituent and flip.
+  const sideOf = (x, y, hi) => {
+    if (hi !== 'H') return Math.sign(cross(G.A.get(hi)));
+    const other = G.A.get(x).nb.find(n => n.id !== y); return other ? -Math.sign(cross(G.A.get(other.id))) : 0;
+  };
+  const sb = sideOf(b, d, hb), sd = sideOf(d, b, hd);
+  if (!sb || !sd) return null;
+  return sb === sd ? 'Z' : 'E';
+}
+
+function countAtoms(G, frag) {
+  const c = {};
+  for (const id of frag) { const a = G.A.get(id); c[a.el] = (c[a.el] || 0) + 1; if (a.h) c.H = (c.H || 0) + a.h; }
+  return c;
+}
+function hillFormula(c, pretty = true) {
+  const keys = Object.keys(c).filter(k => c[k]);
+  const order = keys.includes('C') ? ['C', 'H', ...keys.filter(k => k !== 'C' && k !== 'H').sort()] : keys.sort();
+  return order.filter(k => c[k]).map(k => k + (c[k] > 1 ? (pretty ? toSub(c[k]) : c[k]) : '')).join('');
+}
+
+/* ── 6. SMILES reader and 2D layout ──────────────────────────────────── */
+function parseSmiles(s) {
+  const atoms = [], bonds = [], stack = [], rings = {};
+  let prev = null, bo = null, i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (ch === '.') { prev = null; bo = null; i++; continue; }
+    if (ch === '(') { stack.push(prev); i++; continue; }
+    if (ch === ')') { prev = stack.pop(); i++; continue; }
+    if (ch === '=') { bo = 2; i++; continue; }
+    if (ch === '#') { bo = 3; i++; continue; }
+    if (/[0-9]/.test(ch)) {
+      if (rings[ch] !== undefined) { const r = rings[ch]; bonds.push({ a: r.atom, b: prev, order: bo || r.bo || (atoms[r.atom].arom && atoms[prev].arom ? 1.5 : 1) }); delete rings[ch]; }
+      else rings[ch] = { atom: prev, bo };
+      bo = null; i++; continue;
+    }
+    let el = null, arom = false;
+    if (s.startsWith('Cl', i)) { el = 'Cl'; i += 2; } else if (s.startsWith('Br', i)) { el = 'Br'; i += 2; }
+    else if ('CNOFIH'.includes(ch)) { el = ch; i++; } else if ('cno'.includes(ch)) { el = ch.toUpperCase(); arom = true; i++; }
+    else { i++; continue; }
+    atoms.push({ el, arom });
+    const idx = atoms.length - 1;
+    if (prev !== null) bonds.push({ a: prev, b: idx, order: bo || (arom && atoms[prev].arom ? 1.5 : 1) });
+    prev = idx; bo = null;
+  }
+  return { atoms, bonds };
+}
+function loadSmiles(smi) {
+  const p = parseSmiles(smi);
+  mol = { atoms: [], bonds: [], next: 1 };
+  const ids = p.atoms.map(a => addAtom(a.el, 0, 0).id);
+  p.bonds.forEach(b => addBond(ids[b.a], ids[b.b], b.order));
+}
+
+// Tidy layout: zig-zag chains, regular polygons for rings, 120° branches,
+// a straight "displayed formula" when every hydrogen is drawn.
+function layout2D() {
+  if (!mol.atoms.length) return;
+  // Skeletal view hides C–H, so lay out the carbon skeleton as a zig-zag and
+  // tuck those hydrogens in afterwards; they would otherwise straighten the chain.
+  const skeletal = drawStyle === 'skeletal';
+  const hiddenH = new Set(skeletal ? mol.atoms.filter(a => a.el === 'H' && bondsOf(a.id).length === 1 && atomById(otherEnd(bondsOf(a.id)[0], a.id)).el === 'C').map(a => a.id) : []);
+  const ids = mol.atoms.map(a => a.id).filter(id => !hiddenH.has(id));
+  const nbr = new Map(ids.map(id => [id, []]));
+  mol.bonds.forEach(b => { if (hiddenH.has(b.a) || hiddenH.has(b.b)) return; nbr.get(b.a).push(b.b); nbr.get(b.b).push(b.a); });
+  const G = perceive(mol);
+  // rings in terms of all atoms (H never in rings)
+  const rings = G.rings.map(r => r.slice());
+  const ringOf = id => rings.find(r => r.includes(id));
+  const isH = id => atomById(id).el === 'H';
+  // every hydrogen drawn (and shown) = a displayed formula, drawn with straight chains
+  const displayed = !skeletal && mol.atoms.some(a => a.el === 'H' && bondsOf(a.id).some(b => atomById(otherEnd(b, a.id)).el === 'C'));
+  const pos = new Map(), turn = new Map();
+  const comps = [], seen = new Set();
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    const comp = [], st = [id]; seen.add(id);
+    while (st.length) { const c = st.pop(); comp.push(c); for (const n of nbr.get(c)) if (!seen.has(n)) { seen.add(n); st.push(n); } }
+    comps.push(comp);
+  }
+  const weight = (start, block) => {       // subtree size, heavy atoms count more
+    let w = 0; const s = new Set([block, start]), st = [start];
+    while (st.length) { const c = st.pop(); w += isH(c) ? 0.1 : 1; for (const n of nbr.get(c)) if (!s.has(n)) { s.add(n); st.push(n); } }
+    return w;
+  };
+  const placedRings = new Set();
+  let xOffset = 0;
+  for (const comp of comps) {
+    const q = [];
+    const place = (id, p) => { pos.set(id, p); q.push(id); };
+    const placeRing = (r, anchor, dir) => {
+      const n = r.length, R = BOND2D / (2 * Math.sin(Math.PI / n));
+      const ap = pos.get(anchor);
+      const cen = [ap[0] + dir[0] * R, ap[1] + dir[1] * R];
+      const i0 = r.indexOf(anchor);
+      const a0 = Math.atan2(ap[1] - cen[1], ap[0] - cen[0]);
+      for (let k = 1; k < n; k++) {
+        const id = r[(i0 + k) % n];
+        if (pos.has(id)) continue;
+        const ang = a0 + k * 2 * Math.PI / n;
+        place(id, [cen[0] + R * Math.cos(ang), cen[1] + R * Math.sin(ang)]);
+      }
+      r.center = cen; placedRings.add(r);
+    };
+    // start: a ring atom, else one end of the longest heavy path
+    const heavy = comp.filter(id => !isH(id));
+    let start = heavy.find(id => ringOf(id)) ?? null;
+    if (start === null) {
+      const far = (s) => { const d = new Map([[s, 0]]), qq = [s]; let last = s;
+        while (qq.length) { const c = qq.shift(); last = c; for (const n of nbr.get(c)) if (!d.has(n) && !isH(n)) { d.set(n, d.get(c) + 1); qq.push(n); } } return last; };
+      start = heavy.length ? far(far(heavy[0])) : comp[0];
+    }
+    place(start, [0, 0]); turn.set(start, 1);
+    if (ringOf(start)) placeRing(ringOf(start), start, [0, 1]);
+    const parent = new Map([[start, null]]);
+    while (q.length) {
+      const id = q.shift();
+      const p = pos.get(id);
+      const kids = nbr.get(id).filter(n => !pos.has(n));
+      kids.sort((x, y) => weight(y, id) - weight(x, id));
+      if (!kids.length) continue;
+      const r = ringOf(id);
+      const placedN = nbr.get(id).filter(n => pos.has(n));
+      let angles = [];
+      if (r && r.center) {
+        const out = [p[0] - r.center[0], p[1] - r.center[1]]; const L = Math.hypot(...out); const u = [out[0] / L, out[1] / L];
+        angles = kids.length === 1 ? [u] : kids.length === 2 ? [rot(u, -30), rot(u, 30)] : kids.map((_, i) => rot(u, -45 + 90 * i / (kids.length - 1)));
+      } else if (placedN.length === 1) {
+        const pp = pos.get(placedN[0]); const d = [p[0] - pp[0], p[1] - pp[1]]; const L = Math.hypot(...d); const u = [d[0] / L, d[1] / L];
+        const t = turn.get(id) || 1;
+        const bo = bondBetween(id, placedN[0]).order;
+        const linear = bo === 3 || bondsOf(id).some(b => b.order === 3) || bondsOf(id).filter(b => b.order === 2).length === 2;
+        if (linear && kids.length === 1) angles = [u];
+        else if (kids.length === 1) angles = [rot(u, -t * 60)];
+        else if (kids.length === 2) angles = [rot(u, -t * 60), rot(u, t * 60)];
+        else if (displayed) angles = [rot(u, 0), rot(u, -90), rot(u, 90)];   // displayed formula: straight chain, branches square on
+        else { const main = rot(u, -t * 60); angles = [main, ...splay([-u[0], -u[1]], main)]; }
+      } else if (placedN.length === 0) {
+        const k = kids.length;
+        angles = k === 1 ? [[Math.cos(-Math.PI / 6), Math.sin(-Math.PI / 6)]] : kids.map((_, i) => [Math.cos(i * 2 * Math.PI / k), Math.sin(i * 2 * Math.PI / k)]);
+        if (k === 3 && kids.every(isH)) angles = kids.map((_, i) => [Math.cos(Math.PI / 2 + i * 2 * Math.PI / 3), Math.sin(Math.PI / 2 + i * 2 * Math.PI / 3)]);
+      } else {
+        // biggest gap between placed neighbours
+        const angs = placedN.map(n => Math.atan2(pos.get(n)[1] - p[1], pos.get(n)[0] - p[0])).sort((a, b) => a - b);
+        let bestGap = -1, bestA = 0;
+        for (let i = 0; i < angs.length; i++) { const a = angs[i], b = i + 1 < angs.length ? angs[i + 1] : angs[0] + 2 * Math.PI; if (b - a > bestGap) { bestGap = b - a; bestA = a; } }
+        angles = kids.map((_, i) => { const a = bestA + bestGap * (i + 1) / (kids.length + 1); return [Math.cos(a), Math.sin(a)]; });
+      }
+      kids.forEach((k, i) => {
+        const u = angles[i] || angles[angles.length - 1];
+        const L2 = isH(k) || isH(id) ? HBOND : BOND2D;
+        const np = [p[0] + u[0] * L2, p[1] + u[1] * L2];
+        parent.set(k, id);
+        const t = turn.get(id) || 1;
+        turn.set(k, kids.length === 3 && displayed ? t : (i === 0 ? -t : t));
+        const kr = ringOf(k);
+        place(k, np);
+        if (kr && !placedRings.has(kr)) placeRing(kr, k, u);
+      });
+    }
+    // de-overlap. Heavy atoms that collide are pushed apart; a crowded hydrogen
+    // instead swings round its own atom (bond length kept) to the clearest angle
+    // that is not too close to that atom's other bonds.
+    const heavy2 = comp.filter(id => !isH(id));
+    for (let it = 0; it < 60; it++) {
+      let moved = false;
+      for (let i = 0; i < heavy2.length; i++) for (let j = i + 1; j < heavy2.length; j++) {
+        if (bondBetween(heavy2[i], heavy2[j])) continue;
+        const a = pos.get(heavy2[i]), b = pos.get(heavy2[j]);
+        let dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy);
+        if (d < 0.5) { dx = Math.cos(i * 2.4 + j); dy = Math.sin(i * 2.4 + j); d = 1; }
+        const min = BOND2D * 0.8; if (d >= min) continue;
+        const f = (min - d) / d * 0.5; a[0] -= dx * f; a[1] -= dy * f; b[0] += dx * f; b[1] += dy * f; moved = true;
+      }
+      if (!moved) break;
+    }
+    const clearance = (id, pt, skip) => {
+      let m = Infinity;
+      for (const o of comp) { if (o === id || o === skip) continue; const q = pos.get(o); m = Math.min(m, Math.hypot(q[0] - pt[0], q[1] - pt[1]) - (isH(o) ? 0 : 6)); }
+      return m;
+    };
+    for (let pass = 0; pass < 3; pass++) for (const h of comp.filter(isH)) {
+      const c = nbr.get(h)[0]; if (c === undefined) continue;
+      const pc = pos.get(c), ph = pos.get(h);
+      if (clearance(h, ph, c) >= 26) continue;
+      const others = nbr.get(c).filter(n => n !== h).map(n => Math.atan2(pos.get(n)[1] - pc[1], pos.get(n)[0] - pc[0]));
+      let best = null, bestScore = -Infinity;
+      for (let deg = 0; deg < 360; deg += 5) {
+        const t = deg * Math.PI / 180;
+        if (others.some(o => angDiff(o, t) < Math.PI / 5)) continue;          // keep 36°+ from the other bonds
+        const pt = [pc[0] + Math.cos(t) * HBOND, pc[1] + Math.sin(t) * HBOND];
+        const now = Math.atan2(ph[1] - pc[1], ph[0] - pc[0]);
+        const score = Math.min(clearance(h, pt, c), 30) - angDiff(t, now) * 2;   // prefer small moves
+        if (score > bestScore) { bestScore = score; best = pt; }
+      }
+      if (best) pos.set(h, best);
+    }
+    // centre this component and set it beside the previous one
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    comp.forEach(id => { const p = pos.get(id); minx = Math.min(minx, p[0]); maxx = Math.max(maxx, p[0]); miny = Math.min(miny, p[1]); maxy = Math.max(maxy, p[1]); });
+    const cy = (miny + maxy) / 2;
+    comp.forEach(id => { const p = pos.get(id); const a = atomById(id); a.x = p[0] - minx + xOffset; a.y = p[1] - cy; });
+    xOffset += (maxx - minx) + BOND2D * 1.6;
+  }
+  const w = xOffset - BOND2D * 1.6;
+  mol.atoms.forEach(a => { if (!hiddenH.has(a.id)) a.x -= w / 2; });
+  for (const h of hiddenH) {                // widest free gap round the carbon
+    const H = atomById(h), C = atomById(otherEnd(bondsOf(h)[0], h));
+    const angs = bondsOf(C.id).map(b => otherEnd(b, C.id)).filter(n => n !== h && !hiddenH.has(n)).map(n => Math.atan2(atomById(n).y - C.y, atomById(n).x - C.x)).sort((p, q) => p - q);
+    let ang = -Math.PI / 2;
+    if (angs.length === 1) ang = angs[0] + Math.PI;
+    else if (angs.length > 1) { let gap = -1; angs.forEach((p, i) => { const q = i + 1 < angs.length ? angs[i + 1] : angs[0] + 2 * Math.PI; if (q - p > gap) { gap = q - p; ang = (p + q) / 2; } }); }
+    H.x = C.x + Math.cos(ang) * BOND2D * 0.7; H.y = C.y + Math.sin(ang) * BOND2D * 0.7;
+  }
+}
+
+/* ── 7. 3D geometry ──────────────────────────────────────────────────── */
+const BLEN = { 'CC1': 1.54, 'CC2': 1.34, 'CC3': 1.20, 'CC1.5': 1.40, 'CH1': 1.09, 'CO1': 1.43, 'CO2': 1.21, 'HO1': 0.96, 'CN1': 1.47, 'CN2': 1.28, 'CN3': 1.16,
+  'HN1': 1.01, 'CF1': 1.35, 'CCl1': 1.77, 'BrC1': 1.94, 'CI1': 2.14, 'OO1': 1.48, 'NN1': 1.45, 'HH1': 0.74 };
+function bondLength(e1, e2, o) {
+  const k = [e1, e2].sort().join('') + o;
+  return BLEN[k] || (EL[e1].cov + EL[e2].cov - (o - 1) * 0.1);
+}
+
+function build3D(m) {
+  const atoms = [], idx = new Map();
+  const S = 1.45 / BOND2D;
+  m.atoms.forEach((a, i) => { idx.set(a.id, atoms.length); atoms.push({ key: 'a' + a.id, el: a.el, id: a.id, heavy: a.el !== 'H' ? a.id : null, p: [a.x * S, -a.y * S, 0.06 * Math.sin(i * 1.7 + 0.4)] }); });
+  const bonds = m.bonds.map(b => ({ i: idx.get(b.a), j: idx.get(b.b), order: b.order }));
+  const nb = atoms.map(() => []);
+  bonds.forEach(b => { nb[b.i].push({ j: b.j, o: b.order }); nb[b.j].push({ j: b.i, o: b.order }); });
+  const hyb = i => {
+    const a = atoms[i], os = nb[i].map(n => n.o);
+    if (a.el === 'C') { if (os.includes(3) || os.filter(o => o === 2).length >= 2) return 180; if (os.includes(2) || os.includes(1.5)) return 120; return 109.47; }
+    if (a.el === 'N') { if (os.includes(3)) return 180; if (os.includes(2)) return 120;
+      if (nb[i].some(n => atoms[n.j].el === 'C' && nb[n.j].some(q => q.o === 2 && atoms[q.j].el === 'O'))) return 120; return 107; }
+    if (a.el === 'O') { if (nb[i].some(n => atoms[n.j].el === 'C' && nb[n.j].some(q => q.o === 2 && atoms[q.j].el === 'O'))) return 116; return 105; }
+    return 109.47;
+  };
+  // implicit hydrogens
+  const nHeavy = atoms.length;
+  for (let i = 0; i < nHeavy; i++) {
+    const a = atoms[i]; if (a.el === 'H') continue;
+    const k = implicitH(atomById(a.id)); if (!k) continue;
+    const ang = hyb(i);
+    const dirs = nb[i].map(n => { const d = sub3(atoms[n.j].p, a.p); d[2] = 0; return norm3(d); });
+    let free = [0, 0, 0]; dirs.forEach(d => { free = add3(free, d); }); free = scale3(free, -1);
+    if (len3(free) < 0.15) free = dirs.length ? norm3([-dirs[0][1], dirs[0][0], 0]) : [1, 0, 0]; else free = norm3(free);
+    const perp = norm3([-free[1], free[0], 0]), Z = [0, 0, 1];
+    const m0 = dirs.length;
+    let vs = [];
+    const rotIn = (v, deg) => { const r = deg * Math.PI / 180; return [v[0] * Math.cos(r) - v[1] * Math.sin(r), v[0] * Math.sin(r) + v[1] * Math.cos(r), 0]; };
+    if (ang > 170) vs = [free];
+    else if (ang > 115 && ang < 125) vs = k === 1 ? [free] : k === 2 ? (m0 ? [rotIn(free, 60), rotIn(free, -60)] : [free, scale3(free, -1)]) : [free, rotIn(free, 120), rotIn(free, -120)];
+    else {
+      if (m0 === 0) {
+        vs = k === 4 ? [[0, 0.943, -0.333], [-0.816, -0.471, -0.333], [0.816, -0.471, -0.333], [0, 0, 1]]
+          : k === 3 ? [[0, 0.94, -0.34], [-0.81, -0.47, -0.34], [0.81, -0.47, -0.34]] : k === 2 ? [rotIn([1, 0, 0], 52), rotIn([1, 0, 0], -52)] : [[1, 0, 0]];
+      } else if (k === 1) vs = m0 >= 3 ? [norm3(add3(scale3(free, 0.35), Z))] : a.el === 'O' || a.el === 'N' ? [rotIn(free, m0 === 1 ? 60 : 0)] : [norm3(add3(scale3(free, 0.4), scale3(Z, 0.9)))];
+      else if (k === 2) vs = a.el === 'N' && m0 === 1 ? [norm3(add3(rotIn(free, 55), [0, 0, -0.5])), norm3(add3(rotIn(free, -55), [0, 0, -0.5]))]
+        : [norm3(add3(scale3(free, 0.55), scale3(Z, 0.83))), norm3(add3(scale3(free, 0.55), scale3(Z, -0.83)))];
+      else vs = [norm3(add3(scale3(free, 0.33), scale3(perp, 0.94))), norm3(add3(add3(scale3(free, 0.33), scale3(perp, -0.47)), scale3(Z, 0.82))), norm3(add3(add3(scale3(free, 0.33), scale3(perp, -0.47)), scale3(Z, -0.82)))];
+    }
+    const L = bondLength(a.el, 'H', 1);
+    for (let h = 0; h < k; h++) {
+      const v = vs[h] || vs[vs.length - 1];
+      const j = atoms.length;
+      atoms.push({ key: 'h' + a.id + '_' + h, el: 'H', id: null, parentId: a.id, heavy: null, p: add3(a.p, scale3(v, L)) });
+      bonds.push({ i, j, order: 1 }); nb.push([]); nb[i].push({ j, o: 1 }); nb[j].push({ j: i, o: 1 });
+    }
+  }
+  // drawn hydrogens on tetrahedral centres: nudge out of the paper plane
+  atoms.forEach((a, i) => {
+    if (a.el !== 'H' || a.id === null || !nb[i].length) return;
+    const p = nb[i][0].j; if (hyb(p) < 115) { const hs = nb[p].filter(n => atoms[n.j].el === 'H').map(n => n.j); const r = hs.indexOf(i); a.p[2] += (r % 2 ? -0.9 : 0.9) * (r === 2 ? 0.2 : 1); }
+  });
+  const init = atoms.map(a => a.p.slice());
+  // constraints
+  const N = atoms.length, cons = [];
+  bonds.forEach(b => cons.push([b.i, b.j, bondLength(atoms[b.i].el, atoms[b.j].el, b.order), 1]));
+  const L0 = (i, j) => { const b = bonds.find(b => (b.i === i && b.j === j) || (b.i === j && b.j === i)); return bondLength(atoms[i].el, atoms[j].el, b.order); };
+  for (let c = 0; c < N; c++) {
+    const ns = nb[c]; if (ns.length < 2) continue;
+    const th = hyb(c) * Math.PI / 180;
+    for (let x = 0; x < ns.length; x++) for (let y = x + 1; y < ns.length; y++) {
+      const a = L0(c, ns[x].j), b = L0(c, ns[y].j);
+      cons.push([ns[x].j, ns[y].j, Math.sqrt(a * a + b * b - 2 * a * b * Math.cos(th)), ns.length > 4 ? 0.2 : 0.6]);
+    }
+  }
+  const constrained14 = new Set();
+  bonds.forEach(b => {
+    if (!(b.order === 2 || b.order === 1.5)) return;
+    const B = b.i, C = b.j; if (hyb(B) !== 120 && !(b.order === 1.5)) return;
+    const axis = norm3(sub3(init[C], init[B]));
+    for (const na of nb[B]) { if (na.j === C) continue;
+      for (const nd of nb[C]) { if (nd.j === B) continue;
+        const va = sub3(init[na.j], init[B]), vd = sub3(init[nd.j], init[C]);
+        const pa = sub3(va, scale3(axis, dot3(va, axis))), pd = sub3(vd, scale3(axis, dot3(vd, axis)));
+        const cis = dot3(pa, pd) > 0;
+        const Lbc = L0(B, C), la = L0(B, na.j), ld = L0(C, nd.j);
+        const A2 = [-la / 2, la * 0.866], D2 = [Lbc + ld / 2, (cis ? 1 : -1) * ld * 0.866];
+        cons.push([na.j, nd.j, Math.hypot(D2[0] - A2[0], D2[1] - A2[1]), 0.5]);
+        constrained14.add(Math.min(na.j, nd.j) + ':' + Math.max(na.j, nd.j));
+      } }
+  });
+  // topological distances for non-bonded repulsion
+  const topo = atoms.map((_, s) => { const d = new Array(N).fill(99); d[s] = 0; const q = [s]; while (q.length) { const c = q.shift(); for (const n of nb[c]) if (d[n.j] === 99) { d[n.j] = d[c] + 1; q.push(n.j); } } return d; });
+  const rep = [];
+  for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+    const t = topo[i][j]; if (t < 3 || constrained14.has(i + ':' + j)) continue;
+    const hi = atoms[i].el === 'H', hj = atoms[j].el === 'H';
+    const rmin = t === 3 ? (hi && hj ? 2.35 : hi || hj ? 2.55 : 2.95) : t === 99 ? 3.2 : (hi && hj ? 2.2 : hi || hj ? 2.6 : 3.1);
+    rep.push([i, j, rmin]);
+  }
+  const P = atoms.map(a => a.p);
+  const relax = (iters, withRep) => {
+    for (let it = 0; it < iters; it++) {
+      for (const [i, j, d0, k] of cons) {
+        const d = sub3(P[j], P[i]); let L = len3(d); if (L < 1e-6) { d[0] = 0.01; L = 0.01; }
+        const f = 0.5 * k * (L - d0) / L;
+        P[i][0] += d[0] * f; P[i][1] += d[1] * f; P[i][2] += d[2] * f;
+        P[j][0] -= d[0] * f; P[j][1] -= d[1] * f; P[j][2] -= d[2] * f;
+      }
+      if (withRep) for (const [i, j, rmin] of rep) {
+        const d = sub3(P[j], P[i]); const L = len3(d) || 0.01; if (L >= rmin) continue;
+        const f = 0.5 * 0.25 * (L - rmin) / L;
+        P[i][0] += d[0] * f; P[i][1] += d[1] * f; P[i][2] += d[2] * f;
+        P[j][0] -= d[0] * f; P[j][1] -= d[1] * f; P[j][2] -= d[2] * f;
+      }
+    }
+  };
+  relax(260, true); relax(60, false);
+  // orient to match the sketch (proper rotation only, so handedness is kept)
+  const drawn = atoms.map((a, i) => i).filter(i => atoms[i].id !== null);
+  alignTo(P, init, drawn.length >= 3 ? drawn : atoms.map((_, i) => i));
+  return { atoms, bonds, nb };
+}
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const scale3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const len3 = a => Math.hypot(a[0], a[1], a[2]);
+const norm3 = a => { const l = len3(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+
+// Horn's quaternion method: rotate P (in place) onto Q over the listed indices,
+// then centre everything on the origin.
+function alignTo(P, Q, use) {
+  const cen = (X) => { const c = [0, 0, 0]; use.forEach(i => { c[0] += X[i][0]; c[1] += X[i][1]; c[2] += X[i][2]; }); return scale3(c, 1 / use.length); };
+  const cp = cen(P), cq = cen(Q);
+  const S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  use.forEach(i => { const p = sub3(P[i], cp), q = sub3(Q[i], cq); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) S[r][c] += p[r] * q[c]; });
+  const [[xx, xy, xz], [yx, yy, yz], [zx, zy, zz]] = S;
+  const Nm = [[xx + yy + zz, yz - zy, zx - xz, xy - yx], [yz - zy, xx - yy - zz, xy + yx, zx + xz], [zx - xz, xy + yx, -xx + yy - zz, yz + zy], [xy - yx, zx + xz, yz + zy, -xx - yy + zz]];
+  const shift = Nm.flat().reduce((s, v) => s + Math.abs(v), 0) + 1;
+  for (let i = 0; i < 4; i++) Nm[i][i] += shift;
+  let q = [1, 0.01, 0.02, 0.03];
+  for (let it = 0; it < 300; it++) { const n = Nm.map(r => r[0] * q[0] + r[1] * q[1] + r[2] * q[2] + r[3] * q[3]); const l = Math.hypot(...n); q = n.map(v => v / l); }
+  const [w, x, y, z] = q;
+  const R = [[w * w + x * x - y * y - z * z, 2 * (x * y - w * z), 2 * (x * z + w * y)], [2 * (x * y + w * z), w * w - x * x + y * y - z * z, 2 * (y * z - w * x)], [2 * (x * z - w * y), 2 * (y * z + w * x), w * w - x * x - y * y + z * z]];
+  let all = [0, 0, 0]; P.forEach(p => { all = add3(all, p); }); all = scale3(all, 1 / P.length);
+  for (let i = 0; i < P.length; i++) {
+    const p = sub3(P[i], cp);
+    const r = [R[0][0] * p[0] + R[0][1] * p[1] + R[0][2] * p[2], R[1][0] * p[0] + R[1][1] * p[1] + R[1][2] * p[2], R[2][0] * p[0] + R[2][1] * p[1] + R[2][2] * p[2]];
+    P[i][0] = r[0]; P[i][1] = r[1]; P[i][2] = r[2];
+  }
+  let c2 = [0, 0, 0]; P.forEach(p => { c2 = add3(c2, p); }); c2 = scale3(c2, 1 / P.length);
+  P.forEach(p => { p[0] -= c2[0]; p[1] -= c2[1]; p[2] -= c2[2]; });
+}
+
+// R/S from 3D coordinates: look down the C→lowest bond; clockwise = R.
+function rsLabel(G, model, cid) {
+  const at = G.A.get(cid);
+  const subs = at.nb.map(n => n.id); if (at.h) subs.push('H');
+  if (subs.length !== 4) return null;
+  const sorted = subs.slice().sort((a, b) => -cipCompare(G, cid, a, b));
+  for (let i = 0; i + 1 < 4; i++) if (cipCompare(G, cid, sorted[i], sorted[i + 1]) === 0) return null;
+  const P = id => {
+    if (id !== 'H') return model.atoms.find(a => a.id === id).p;
+    const h = model.atoms.find(a => a.parentId === cid) || model.atoms.find(a => a.id === at.hIds[0]);
+    return h.p;
+  };
+  const [a, b, c, d] = sorted.map(P);
+  const det = dot3(sub3(a, d), cross3(sub3(b, d), sub3(c, d)));
+  return det < 0 ? 'R' : 'S';
+}
+
+/* ── 8. Three.js viewers ─────────────────────────────────────────────── */
+const hasGL = (() => { try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); } catch (e) { return false; } })();
+const SPH = hasGL ? new THREE.SphereGeometry(1, 32, 22) : null;
+const CYL = hasGL ? new THREE.CylinderGeometry(1, 1, 1, 18, 1) : null;
+const TOR = hasGL ? new THREE.TorusGeometry(1, 0.05, 10, 60) : null;
+const matCache = new Map();
+function atomMat(el) {
+  if (!matCache.has(el)) matCache.set(el, new THREE.MeshStandardMaterial({ color: EL[el].cpk, roughness: el === 'H' ? 0.45 : 0.35, metalness: 0.05 }));
+  return matCache.get(el);
+}
+function labelSprite(text, color, size = 64) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const g = cv.getContext('2d');
+  g.font = `700 ${size}px "Source Sans 3", "Segoe UI", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(text, 64, 68);
+  g.fillStyle = color; g.fillText(text, 64, 68);
+  const tex = new THREE.CanvasTexture(cv);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  sp.renderOrder = 10;
+  return sp;
+}
+
+class Viewer {
+  constructor(host, mirror) {
+    this.host = host; this.mirror = mirror;
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    host.appendChild(this.renderer.domElement);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+    this.camera.position.set(0, 0, 14);
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true; this.controls.dampingFactor = 0.09; this.controls.autoRotateSpeed = 1.6;
+    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x4a5568, 0.75));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.85); d1.position.set(5, 8, 10); this.scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xbfd4ff, 0.35); d2.position.set(-8, -4, -6); this.scene.add(d2);
+    this.group = new THREE.Group(); this.scene.add(this.group);
+    this.atomMeshes = []; this.bondMeshes = []; this.halos = []; this.extras = [];
+    this.prev = new Map(); this.anim = null; this.radius = 4;
+    new ResizeObserver(() => this.resize()).observe(host);
+    this.resize();
+  }
+  resize() {
+    const w = this.host.clientWidth, h = this.host.clientHeight; if (!w || !h) return;
+    this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+  }
+  clear() {
+    [...this.atomMeshes, ...this.bondMeshes, ...this.halos, ...this.extras].forEach(o => { this.group.remove(o); if (o.material && o.material.map) o.material.map.dispose(); });
+    this.atomMeshes = []; this.bondMeshes = []; this.halos = []; this.extras = [];
+  }
+  setModel(model, opts) {
+    const f = this.mirror ? -1 : 1;
+    const target = model.atoms.map(a => new THREE.Vector3(a.p[0] * f, a.p[1], a.p[2]));
+    const old = this.prev;
+    this.clear();
+    this.model = model; this.opts = opts;
+    const start = model.atoms.map((a, i) => {
+      if (old.has(a.key)) return old.get(a.key).clone();
+      if (a.parentId != null && old.has('a' + a.parentId)) return old.get('a' + a.parentId).clone();
+      return target[i].clone();
+    });
+    const fresh = model.atoms.map(a => !old.has(a.key));
+    model.atoms.forEach((a, i) => {
+      const m = new THREE.Mesh(SPH, atomMat(a.el));
+      m.scale.setScalar(EL[a.el].r); m.position.copy(start[i]);
+      this.group.add(m); this.atomMeshes.push(m);
+    });
+    this.pieces = model.bonds.map(b => {
+      const n = b.order === 1.5 ? 1 : b.order;
+      const pieces = [];
+      for (let k = 0; k < n; k++) for (const end of [0, 1]) {
+        const el = model.atoms[end ? b.j : b.i].el;
+        const mm = new THREE.Mesh(CYL, atomMat(el)); this.group.add(mm); pieces.push(mm);
+      }
+      this.bondMeshes.push(...pieces);
+      return pieces;
+    });
+    // aromatic rings get a delocalisation ring
+    (opts.aromRings || []).forEach(r => {
+      const t = new THREE.Mesh(TOR, new THREE.MeshStandardMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.55, roughness: 0.5 }));
+      t.userData.ring = r.map(id => model.atoms.findIndex(a => a.id === id));
+      this.group.add(t); this.extras.push(t);
+    });
+    // chiral stars
+    (opts.chiral || []).forEach(cid => {
+      const i = model.atoms.findIndex(a => a.id === cid);
+      const sp = labelSprite('✱', '#fcd34d', 76); sp.scale.setScalar(0.62); sp.center.set(-0.35, -0.35);
+      sp.userData.atom = i; this.group.add(sp); this.extras.push(sp);
+    });
+    if (opts.labels) model.atoms.forEach((a, i) => {
+      if (a.el === 'C' || a.el === 'H') return;
+      const sp = labelSprite(a.el, '#ffffff', 58); sp.scale.setScalar(0.55); sp.userData.atom = i; this.group.add(sp); this.extras.push(sp);
+    });
+    if (opts.locants) opts.locants.forEach((loc, id) => {
+      const i = model.atoms.findIndex(a => a.id === id); if (i < 0) return;
+      const sp = labelSprite(String(loc), '#7dd3fc', 60); sp.scale.setScalar(0.5); sp.center.set(1.2, -0.3); sp.userData.atom = i; this.group.add(sp); this.extras.push(sp);
+    });
+    this.target = target; this.startPos = start; this.fresh = fresh;
+    this.anim = { t0: performance.now(), dur: old.size ? 520 : 1 };
+    this.setHighlight(opts.highlight || new Set());
+    let r = 0; target.forEach(p => { r = Math.max(r, p.length()); });
+    const before = this.radius; this.radius = Math.max(r + 0.55, 2);
+    // big change in size (methane -> a long chain): move the camera in or out, keep the angle
+    if (old.size && (this.radius / before > 1.3 || this.radius / before < 0.7)) {
+      const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+      this.controls.target.set(0, 0, 0); this.camera.position.copy(dir.multiplyScalar(this.fitDistance()));
+    }
+    this.step(performance.now());
+  }
+  setHighlight(ids) {
+    this.halos.forEach(h => this.group.remove(h)); this.halos = [];
+    if (!this.model) return;
+    this.model.atoms.forEach((a, i) => {
+      const on = (a.id !== null && ids.has(a.id)) || (a.parentId != null && ids.has('H' + a.parentId)) || (a.id !== null && a.el === 'H' && ids.has('Hx' + a.id));
+      if (!on) return;
+      const h = new THREE.Mesh(SPH, new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.32, depthWrite: false }));
+      h.userData.atom = i; h.userData.r = EL[a.el].r * 1.85; this.group.add(h); this.halos.push(h);
+    });
+    this.hl = ids;
+  }
+  step(now) {
+    if (!this.model) return;
+    let t = 1;
+    if (this.anim) { t = Math.min(1, (now - this.anim.t0) / this.anim.dur); if (t >= 1) this.anim = null; }
+    const e = 1 - Math.pow(1 - t, 3);
+    const P = this.atomMeshes.map((m, i) => { m.position.lerpVectors(this.startPos[i], this.target[i], e); m.scale.setScalar(EL[this.model.atoms[i].el].r * (this.fresh[i] ? 0.2 + 0.8 * e : 1)); return m.position; });
+    this.model.bonds.forEach((b, i) => this.placeBond(b, P, this.pieces[i]));
+    const pulse = 0.26 + 0.1 * Math.sin(now / 260);
+    this.halos.forEach(h => { h.position.copy(P[h.userData.atom]); h.scale.setScalar(h.userData.r); h.material.opacity = pulse; });
+    this.extras.forEach(x => {
+      if (x.userData.atom !== undefined) x.position.copy(P[x.userData.atom]);
+      if (x.userData.ring) {
+        const pts = x.userData.ring.map(i => P[i]); const c = new THREE.Vector3(); pts.forEach(p => c.add(p)); c.multiplyScalar(1 / pts.length);
+        const n = new THREE.Vector3().subVectors(pts[0], c).cross(new THREE.Vector3().subVectors(pts[1], c)).normalize();
+        x.position.copy(c); x.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
+        x.scale.setScalar(pts[0].distanceTo(c) * 0.62);
+      }
+    });
+  }
+  placeBond(b, P, pieces) {
+    const A = P[b.i], B = P[b.j];
+    const n = b.order === 1.5 ? 1 : b.order;
+    const dir = new THREE.Vector3().subVectors(B, A); const L = dir.length(); if (L < 1e-6) return; dir.normalize();
+    let off = new THREE.Vector3();
+    if (n > 1) {
+      // offset in the plane of a neighbouring atom so double bonds lie flat with the sp2 plane
+      const nbs = this.model.nb[b.i].filter(q => q.j !== b.j).concat(this.model.nb[b.j].filter(q => q.j !== b.i));
+      let ref = nbs.length ? new THREE.Vector3().subVectors(P[nbs[0].j], A) : new THREE.Vector3(0, 1, 0);
+      let nrm = new THREE.Vector3().crossVectors(dir, ref); if (nrm.lengthSq() < 1e-6) nrm = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 0, 1));
+      if (nrm.lengthSq() < 1e-6) nrm = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(1, 0, 0));
+      off = new THREE.Vector3().crossVectors(nrm.normalize(), dir).normalize();
+    }
+    const rad = n === 1 ? 0.11 : n === 2 ? 0.075 : 0.06, gap = n === 2 ? 0.13 : 0.17;
+    let k = 0;
+    for (let s = 0; s < n; s++) {
+      const shift = n === 1 ? 0 : n === 2 ? (s ? gap : -gap) : (s - 1) * gap;
+      const a2 = A.clone().addScaledVector(off, shift), b2 = B.clone().addScaledVector(off, shift);
+      const mid = a2.clone().lerp(b2, 0.5);
+      for (const [p, q] of [[a2, mid], [mid, b2]]) {
+        const m = pieces[k++]; if (!m) continue;
+        m.position.copy(p).lerp(q, 0.5);
+        m.scale.set(rad, p.distanceTo(q), rad);
+        m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      }
+    }
+  }
+  remember() { this.prev = new Map(); if (!this.model) return; this.model.atoms.forEach((a, i) => this.prev.set(a.key, this.atomMeshes[i].position.clone())); }
+  fitDistance() {
+    const d = this.radius / Math.sin((this.camera.fov * Math.PI / 180) / 2) * (this.camera.aspect < 1 ? 1.1 / Math.max(this.camera.aspect, 0.5) : 1.0);
+    return Math.max(5, d * 0.85);
+  }
+  fit() {
+    this.controls.target.set(0, 0, 0);
+    this.camera.position.set(0, 0, this.fitDistance()); this.camera.up.set(0, 1, 0);
+    this.camera.lookAt(0, 0, 0); this.controls.update();
+  }
+  render(now) { this.step(now); this.controls.update(); this.renderer.render(this.scene, this.camera); }
+}
+
+/* ── 9. Sketch editor ────────────────────────────────────────────────── */
+const svg = $('#sketch');
+let tool = { kind: 'atom', el: 'C' };
+let bondOrder = 1;
+let selected = null;
+let view = { k: 1, tx: 0, ty: 0 };
+let drawStyle = store.get('style') || 'labels';
+let mode = store.get('mode') || 'alevel';
+let highlight = { type: null, atoms: new Set() };
+let explain = false;
+let lastAnalysis = null;
+let presetSmiles = null;
+
+const ATOM_BTNS = ['C', 'H', 'O', 'N', 'F', 'Cl', 'Br', 'I'];
+const BOND_BTNS = [[1, 'Single', '<line x1="3" y1="12" x2="21" y2="12"/>'], [2, 'Double', '<line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>'], [3, 'Triple', '<line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/>']];
+const GROUP_BTNS = [['OH', '–OH', 'Hydroxyl'], ['CO', 'C=O', 'Carbonyl'], ['COOH', '–COOH', 'Carboxyl'], ['COOR', '–COOCH₃', 'Ester'], ['NH2', '–NH₂', 'Amine'], ['BENZ', '⌬ Benzene', 'Benzene ring']];
+
+function buildToolbar() {
+  const ra = $('#rowAtoms'), rb = $('#rowBonds'), rg = $('#rowGroups'), ru = $('#rowUtil');
+  ATOM_BTNS.forEach(el => ra.insertAdjacentHTML('beforeend', `<button type="button" class="tbtn el" data-tool="atom" data-el="${el}" title="${el}: click to place, click an atom to change it or grow from it">${el}</button>`));
+  BOND_BTNS.forEach(([o, n, ic]) => rb.insertAdjacentHTML('beforeend', `<button type="button" class="tbtn" data-tool="bond" data-order="${o}" title="${n} bond: click a bond to set it, drag between atoms to join them"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">${ic}</svg>${n}</button>`));
+  GROUP_BTNS.forEach(([g, lbl, t]) => rg.insertAdjacentHTML('beforeend', `<button type="button" class="tbtn" data-tool="group" data-g="${g}" title="${t}: click an atom to attach it (or empty space to start with it)">${lbl}</button>`));
+  ru.insertAdjacentHTML('beforeend', `
+    <button type="button" class="tbtn util" data-tool="move" title="Drag atoms to move them (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>Move</button>
+    <button type="button" class="tbtn util" data-tool="erase" title="Click an atom or bond to delete it (E)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 20H9L4 15l10-10 7 7-6 6M8 11l6 6"/></svg>Erase</button>
+    <span class="sep"></span>
+    <button type="button" class="tbtn util" id="btnCap" title="Auto-cap hydrogens: draw every H as an atom (displayed formula), or fold them back">Show all H</button>
+    <button type="button" class="tbtn util" id="btnClean" title="Clean up layout: tidy into zig-zag chains and regular rings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8Z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9Z"/></svg>Tidy up</button>`);
+  document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.tool;
+    if (k === 'atom') tool = { kind: 'atom', el: b.dataset.el };
+    else if (k === 'bond') { bondOrder = +b.dataset.order; tool = { kind: 'bond', order: bondOrder }; }
+    else if (k === 'group') {
+      tool = { kind: 'group', g: b.dataset.g };
+      if (selected && atomById(selected)) { attachGroup(b.dataset.g, selected); }
+    }
+    else tool = { kind: k };
+    syncToolbar();
+  }));
+  $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
+  $('#btnClean').onclick = () => { if (!mol.atoms.length) return; pushUndo(); layout2D(); fitView(); changed(); };
+  $('#btnClear').onclick = () => { if (!mol.atoms.length) return; pushUndo(); mol = { atoms: [], bonds: [], next: 1 }; selected = null; $('#preset').value = ''; changed(); };
+  $('#btnCap').onclick = toggleCap;
+}
+function syncToolbar() {
+  document.querySelectorAll('[data-tool]').forEach(b => {
+    const k = b.dataset.tool;
+    const on = k === tool.kind && (k !== 'atom' || b.dataset.el === tool.el) && (k !== 'bond' || +b.dataset.order === tool.order) && (k !== 'group' || b.dataset.g === tool.g);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length;
+  const capped = mol.atoms.some(a => a.el === 'H' && bondsOf(a.id).length === 1 && atomById(otherEnd(bondsOf(a.id)[0], a.id)).el !== 'H');
+  $('#btnCap').textContent = capped ? 'Hide H' : 'Show all H';
+  const hints = {
+    atom: `Click to place <b>${tool.el}</b> · click an atom to grow or change it · drag to bond`,
+    bond: 'Click a bond to make it ' + ['', 'single', 'double', 'triple'][tool.order] + ' · drag between atoms to join them',
+    group: 'Click an atom to attach the group',
+    move: 'Drag atoms to move them · drag the background to pan',
+    erase: 'Click an atom or a bond to delete it',
+  };
+  $('#hint').innerHTML = `<span>${hints[tool.kind] || ''}</span><span class="kbd-hint"><kbd>scroll</kbd> zoom</span>`;
+}
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function toggleCap() {
+  if (!mol.atoms.length) return;
+  pushUndo();
+  const capped = mol.atoms.filter(a => a.el === 'H' && bondsOf(a.id).length === 1 && atomById(otherEnd(bondsOf(a.id)[0], a.id)).el !== 'H');
+  if (capped.length) capped.forEach(h => removeAtomOnly(h.id));
+  else mol.atoms.filter(a => a.el !== 'H').forEach(a => { const k = implicitH(a); for (let i = 0; i < k; i++) { const h = addAtom('H', a.x + 1, a.y); addBond(a.id, h.id, 1); } });
+  layout2D(); fitView(); changed();
+}
+function removeAtomOnly(id) { mol.bonds = mol.bonds.filter(b => b.a !== id && b.b !== id); mol.atoms = mol.atoms.filter(a => a.id !== id); }
+
+// Best free direction to grow a new bond from an atom.
+function growPos(a, order = 1, len = BOND2D) {
+  const ns = bondsOf(a.id).map(b => atomById(otherEnd(b, a.id)));
+  const angs = ns.map(n => Math.atan2(n.y - a.y, n.x - a.x));
+  let cands = [];
+  if (!ns.length) cands = [-Math.PI / 6];
+  else if (ns.length === 1) {
+    const th = angs[0];
+    const lin = order === 3 || bondsOf(a.id).some(b => b.order === 3) || (order === 2 && bondsOf(a.id)[0].order === 2);
+    if (lin) cands = [th + Math.PI];
+    else {
+      const n = ns[0];
+      const g = bondsOf(n.id).map(b => atomById(otherEnd(b, n.id))).find(x => x.id !== a.id);
+      const opts = [th + 2 * Math.PI / 3, th - 2 * Math.PI / 3];
+      if (g) { const ref = Math.atan2(n.y - g.y, n.x - g.x); opts.sort((p, q) => angDiff(p, ref) - angDiff(q, ref)); }
+      else opts.sort((p, q) => Math.abs(Math.cos(q)) - Math.abs(Math.cos(p)));   // keep a new chain running across, not climbing
+      cands = opts;
+    }
+  }
+  const all = [];
+  for (let d = 0; d < 360; d += 15) all.push(d * Math.PI / 180);
+  all.sort((p, q) => minGap(q, angs) - minGap(p, angs));
+  cands = cands.concat(all);
+  for (const c of cands) {
+    const p = { x: a.x + Math.cos(c) * len, y: a.y + Math.sin(c) * len };
+    if (!mol.atoms.some(o => Math.hypot(o.x - p.x, o.y - p.y) < BOND2D * 0.5)) return p;
+  }
+  return { x: a.x + Math.cos(cands[0]) * len, y: a.y + Math.sin(cands[0]) * len };
+}
+const rot = (v, deg) => { const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r); return [v[0] * c - v[1] * s, v[0] * s + v[1] * c]; };
+const angDiff = (a, b) => { let d = Math.abs(a - b) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; };
+const minGap = (a, list) => list.length ? Math.min(...list.map(b => angDiff(a, b))) : Math.PI;
+
+// Two side groups on a chain carbon: both on the open side, 70° apart, the way
+// a skeletal formula draws a quaternary carbon. Takes the directions to the two
+// chain neighbours and returns the two side directions.
+function splay(d1, d2) {
+  const s = [d1[0] + d2[0], d1[1] + d2[1]], L = Math.hypot(s[0], s[1]);
+  const b = L > 0.3 ? [-s[0] / L, -s[1] / L] : [-d1[1], d1[0]];
+  return [rot(b, -35), rot(b, 35)];
+}
+function grow(a, el, order) {
+  if (freeValence(a) < order) { toast(`${a.el} has no room for another ${order > 1 ? ['', '', 'double', 'triple'][order] + ' ' : ''}bond`); return null; }
+  const ns = bondsOf(a.id).map(b => atomById(otherEnd(b, a.id)));
+  if (ns.length === 3) {
+    const deg = n => bondsOf(n.id).length;
+    const [c1, c2, side] = ns.slice().sort((x, y) => deg(y) - deg(x));
+    if (deg(side) === 1) {
+      const u = n => { const dx = n.x - a.x, dy = n.y - a.y, L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; };
+      const [r1, r2] = splay(u(c1), u(c2)), us = u(side);
+      const [keep, fresh] = us[0] * r1[0] + us[1] * r1[1] >= us[0] * r2[0] + us[1] * r2[1] ? [r1, r2] : [r2, r1];
+      side.x = a.x + keep[0] * BOND2D; side.y = a.y + keep[1] * BOND2D;
+      const n = addAtom(el, a.x + fresh[0] * BOND2D, a.y + fresh[1] * BOND2D); addBond(a.id, n.id, order); return n;
+    }
+  }
+  const p = growPos(a, order, el === 'H' || a.el === 'H' ? HBOND : BOND2D);
+  const n = addAtom(el, p.x, p.y); addBond(a.id, n.id, order); return n;
+}
+
+// Functional-group templates: each attaches to a target atom (replacing H).
+function attachGroup(g, targetId) {
+  pushUndo();
+  let t = targetId ? atomById(targetId) : null;
+  const need = { OH: 1, CO: 2, COOH: 1, COOR: 1, NH2: 1, BENZ: 1 }[g];
+  if (t && t.el === 'H') { toast('Attach groups to a carbon, not a hydrogen'); undoStack.pop(); return; }
+  if (t && freeValence(t) < need) { toast(`That ${t.el} has no free bonding position for ${g === 'CO' ? 'a C=O' : 'this group'}`); undoStack.pop(); return; }
+  if (!t) {
+    const c = centreWorld();
+    if (g === 'BENZ') { addBenzene(null, c); selected = null; changed(); return; }
+    t = addAtom('C', c.x - 20, c.y);
+  }
+  if (g === 'OH') selected = grow(t, 'O', 1).id;
+  else if (g === 'NH2') selected = grow(t, 'N', 1).id;
+  else if (g === 'CO') { if (t.el !== 'C') { toast('A carbonyl C=O goes on a carbon'); undoStack.pop(); return; } grow(t, 'O', 2); selected = t.id; }
+  else if (g === 'COOH') { const c = grow(t, 'C', 1); grow(c, 'O', 2); grow(c, 'O', 1); selected = c.id; }
+  else if (g === 'COOR') { const c = grow(t, 'C', 1); grow(c, 'O', 2); const o = grow(c, 'O', 1); const r = grow(o, 'C', 1); selected = r.id; }
+  else if (g === 'BENZ') { addBenzene(t, null); }
+  changed();
+}
+function addBenzene(t, c) {
+  const R = BOND2D;
+  let cen, a0;
+  if (t) {
+    const p = growPos(t); const dx = p.x - t.x, dy = p.y - t.y, L = Math.hypot(dx, dy);
+    const first = { x: p.x, y: p.y }; cen = { x: first.x + dx / L * R, y: first.y + dy / L * R };
+    a0 = Math.atan2(first.y - cen.y, first.x - cen.x);
+  } else { cen = c; a0 = -Math.PI / 2; }
+  const ids = [];
+  for (let k = 0; k < 6; k++) { const ang = a0 + k * Math.PI / 3; ids.push(addAtom('C', cen.x + R * Math.cos(ang), cen.y + R * Math.sin(ang)).id); }
+  for (let k = 0; k < 6; k++) addBond(ids[k], ids[(k + 1) % 6], 1.5);
+  if (t) addBond(t.id, ids[0], 1);
+  selected = ids[0];
+}
+
+// View transform (world px -> screen px)
+function toWorld(ev) {
+  const r = svg.getBoundingClientRect();
+  return { x: (ev.clientX - r.left - view.tx) / view.k, y: (ev.clientY - r.top - view.ty) / view.k };
+}
+function centreWorld() { const r = svg.getBoundingClientRect(); return { x: (r.width / 2 - view.tx) / view.k, y: (r.height / 2 - view.ty) / view.k }; }
+function fitView() {
+  const r = svg.getBoundingClientRect(); if (!r.width) return;
+  if (!mol.atoms.length) { view = { k: 1, tx: r.width / 2, ty: r.height / 2 }; return; }
+  let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+  mol.atoms.forEach(a => { minx = Math.min(minx, a.x); maxx = Math.max(maxx, a.x); miny = Math.min(miny, a.y); maxy = Math.max(maxy, a.y); });
+  const w = maxx - minx + 110, h = maxy - miny + 110;
+  const k = Math.max(0.35, Math.min(1.5, r.width / w, (r.height - 30) / h));
+  view = { k, tx: r.width / 2 - k * (minx + maxx) / 2, ty: (r.height - 24) / 2 - k * (miny + maxy) / 2 };
+}
+
+// ---------- drawing ----------
+function labelFor(a, G) {
+  const at = G && G.A.get(a.id);
+  const h = at && a.el !== 'H' ? at.h - at.hIds.length : 0;
+  return { h };
+}
+function renderSketch() {
+  const G = lastAnalysis ? lastAnalysis.G : perceive(mol);
+  const r = svg.getBoundingClientRect();
+  svg.setAttribute('viewBox', `0 0 ${Math.max(1, r.width)} ${Math.max(1, r.height)}`);
+  const skeletal = drawStyle === 'skeletal';
+  const cs = getComputedStyle(document.documentElement);
+  const col = el => cs.getPropertyValue('--lbl-' + el).trim() || '#888';
+  const showLabel = a => !(skeletal && a.el === 'C' && bondsOf(a.id).length > 0);
+  const hideH = a => skeletal && a.el === 'H' && bondsOf(a.id).length === 1 && atomById(otherEnd(bondsOf(a.id)[0], a.id)).el === 'C';
+  const trim = a => showLabel(a) ? (a.el.length > 1 ? 13 : 10.5) : 0;
+  const hl = highlight.atoms;
+  const chir = new Set(lastAnalysis ? lastAnalysis.chiral : []);
+  const locs = explain && lastAnalysis && lastAnalysis.naming && lastAnalysis.naming.locants ? lastAnalysis.naming.locants : new Map();
+  const parentSet = new Set(explain && lastAnalysis && lastAnalysis.naming ? lastAnalysis.naming.parent || [] : []);
+  let out = `<defs><pattern id="gridp" width="25" height="25" patternUnits="userSpaceOnUse" patternTransform="translate(${view.tx % (25 * view.k)} ${view.ty % (25 * view.k)}) scale(${view.k})"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern></defs>`;
+  out += `<rect x="0" y="0" width="100%" height="100%" fill="url(#gridp)" data-bg="1"/>`;
+  out += `<g transform="translate(${view.tx} ${view.ty}) scale(${view.k})">`;
+  // highlight underlays
+  let under = '';
+  mol.bonds.forEach(b => {
+    const A = atomById(b.a), B = atomById(b.b);
+    const hA = hl.has(A.id) || (A.el === 'H' && hl.has('Hx' + A.id)), hB = hl.has(B.id) || (B.el === 'H' && hl.has('Hx' + B.id));
+    if (hA && hB) under += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="var(--hl)" stroke-opacity=".35" stroke-width="14" stroke-linecap="round"/>`;
+    if (parentSet.has(A.id) && parentSet.has(B.id)) under += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="var(--root)" stroke-opacity=".14" stroke-width="7" stroke-linecap="round"/>`;
+  });
+  mol.atoms.forEach(a => { if (hl.has(a.id) || (a.el === 'H' && hl.has('Hx' + a.id))) under += `<circle cx="${a.x}" cy="${a.y}" r="15" fill="var(--hl)" fill-opacity=".3"/>`; });
+  out += under;
+  // aromatic ring circles
+  if (G) G.rings.filter(rg => rg.arom).forEach(rg => {
+    const allArom = rg.every((id, i) => { const b = bondBetween(id, rg[(i + 1) % rg.length]); return b && b.order === 1.5; });
+    if (!allArom) return;
+    const pts = rg.map(atomById); const cx = pts.reduce((s, p) => s + p.x, 0) / 6, cy = pts.reduce((s, p) => s + p.y, 0) / 6;
+    const rr = Math.hypot(pts[0].x - cx, pts[0].y - cy) * 0.58;
+    out += `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="var(--lbl-C)" stroke-width="1.8"/>`;
+  });
+  // bonds
+  mol.bonds.forEach(b => {
+    const A = atomById(b.a), B = atomById(b.b);
+    if (hideH(A) || hideH(B)) return;
+    const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    const ta = trim(A), tb = trim(B);
+    const x1 = A.x + ux * ta, y1 = A.y + uy * ta, x2 = B.x - ux * tb, y2 = B.y - uy * tb;
+    const nx = -uy, ny = ux;
+    const stroke = `stroke="var(--lbl-C)" stroke-width="2" stroke-linecap="round"`;
+    let s = '';
+    const ring = G && G.rings.find(rg => rg.includes(b.a) && rg.includes(b.b));
+    if (b.order === 1 || b.order === 1.5) s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${stroke}/>`;
+    else if (b.order === 2) {
+      if (ring) {
+        const pts = ring.map(atomById); const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length, cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+        const side = Math.sign((cx - A.x) * nx + (cy - A.y) * ny) || 1;
+        const o = 6 * side, sh = 0.16 * L;
+        s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${stroke}/>`;
+        s += `<line x1="${A.x + ux * Math.max(ta, sh) + nx * o}" y1="${A.y + uy * Math.max(ta, sh) + ny * o}" x2="${B.x - ux * Math.max(tb, sh) + nx * o}" y2="${B.y - uy * Math.max(tb, sh) + ny * o}" ${stroke}/>`;
+      } else for (const o of [-3.2, 3.2]) s += `<line x1="${x1 + nx * o}" y1="${y1 + ny * o}" x2="${x2 + nx * o}" y2="${y2 + ny * o}" ${stroke}/>`;
+    } else if (b.order === 3) for (const o of [-4.5, 0, 4.5]) s += `<line x1="${x1 + nx * o}" y1="${y1 + ny * o}" x2="${x2 + nx * o}" y2="${y2 + ny * o}" ${stroke}/>`;
+    out += s + `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="transparent" stroke-width="14" data-bond="${b.id}" style="cursor:pointer"/>`;
+  });
+  // atoms
+  mol.atoms.forEach(a => {
+    if (hideH(a)) return;
+    const at = G.A.get(a.id);
+    const over = at && at.over;
+    const sel = selected === a.id;
+    let s = '';
+    if (sel) s += `<circle cx="${a.x}" cy="${a.y}" r="15" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3"/>`;
+    if (over) s += `<circle cx="${a.x}" cy="${a.y}" r="14" fill="var(--err)" fill-opacity=".18" stroke="var(--err)" stroke-width="1.6"/>`;
+    if (showLabel(a)) {
+      const h = at ? at.h - at.hIds.length : 0;
+      const ns = bondsOf(a.id).map(b => atomById(otherEnd(b, a.id)));
+      const avg = ns.reduce((s, n) => s + (n.x - a.x) / (Math.hypot(n.x - a.x, n.y - a.y) || 1), 0) / (ns.length || 1);
+      const left = ns.length > 0 && avg > 0.3;
+      const c = col(a.el);
+      s += `<text x="${a.x}" y="${a.y + 6}" text-anchor="middle" font-size="18" font-weight="600" fill="${over ? 'var(--err)' : c}">${a.el}</text>`;
+      if (h > 0 && a.el !== 'H') {
+        const hx = left ? a.x - (a.el.length > 1 ? 11 : 7) : a.x + (a.el.length > 1 ? 11 : 7);
+        s += `<text x="${hx}" y="${a.y + 6}" text-anchor="${left ? 'end' : 'start'}" font-size="18" font-weight="600" fill="${c}">H${h > 1 ? `<tspan dy="4" font-size="12">${h}</tspan>` : ''}</text>`;
+      }
+    } else if (!bondsOf(a.id).length) s += `<circle cx="${a.x}" cy="${a.y}" r="3" fill="var(--lbl-C)"/>`;
+    if (chir.has(a.id) && mode === 'alevel') s += `<text x="${a.x + 12}" y="${a.y - 9}" font-size="17" font-weight="700" fill="var(--star)">*</text>`;
+    if (locs.has(a.id)) {
+      const angs = bondsOf(a.id).map(b => atomById(otherEnd(b, a.id))).filter(n => !hideH(n)).map(n => Math.atan2(n.y - a.y, n.x - a.x)).sort((p, q) => p - q);
+      let ang = -Math.PI / 2;
+      if (angs.length === 1) ang = angs[0] + Math.PI;
+      else if (angs.length > 1) {
+        let gap = -1;
+        angs.forEach((p, i) => { const q = i + 1 < angs.length ? angs[i + 1] : angs[0] + 2 * Math.PI; if (q - p > gap) { gap = q - p; ang = (p + q) / 2; } });
+      }
+      const lx = a.x + Math.cos(ang) * 22, ly = a.y + Math.sin(ang) * 22;
+      s += `<circle cx="${lx}" cy="${ly}" r="8" fill="var(--root)"/><text x="${lx}" y="${ly + 3.8}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">${locs.get(a.id)}</text>`;
+    }
+    s += `<circle cx="${a.x}" cy="${a.y}" r="13" fill="transparent" data-atom="${a.id}" style="cursor:pointer"/>`;
+    out += s;
+  });
+  if (drag && drag.preview) {
+    const { x1, y1, x2, y2, el } = drag.preview;
+    out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>`;
+    if (el) out += `<circle cx="${x2}" cy="${y2}" r="11" fill="var(--accent)" fill-opacity=".15" stroke="var(--accent)"/><text x="${x2}" y="${y2 + 5}" text-anchor="middle" font-size="15" font-weight="600" fill="var(--accent)">${el}</text>`;
+  }
+  out += '</g>';
+  if (!mol.atoms.length) {
+    out += `<text x="${r.width / 2}" y="${r.height / 2 - 12}" text-anchor="middle" font-size="17" font-weight="600" fill="var(--ink2)">Pick an atom and click here to start</text>
+            <text x="${r.width / 2}" y="${r.height / 2 + 14}" text-anchor="middle" font-size="14" fill="var(--ink3)">or choose a preset molecule at the top</text>`;
+  }
+  svg.innerHTML = out;
+}
+
+// ---------- pointer interaction ----------
+let drag = null;
+svg.addEventListener('pointerdown', ev => {
+  if (ev.button === 1 || ev.button === 2) { drag = { kind: 'pan', sx: ev.clientX, sy: ev.clientY, tx: view.tx, ty: view.ty }; try { svg.setPointerCapture(ev.pointerId); } catch (e) {} return; }
+  const tA = ev.target.closest('[data-atom]'), tB = ev.target.closest('[data-bond]');
+  const w = toWorld(ev);
+  drag = { sx: ev.clientX, sy: ev.clientY, w0: w, moved: false, atom: tA ? +tA.dataset.atom : null, bond: tB ? +tB.dataset.bond : null, tx: view.tx, ty: view.ty };
+  try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+});
+svg.addEventListener('pointermove', ev => {
+  if (!drag) return;
+  const dist = Math.hypot(ev.clientX - drag.sx, ev.clientY - drag.sy);
+  if (dist > 4) drag.moved = true;
+  if (!drag.moved) return;
+  const w = toWorld(ev);
+  if (drag.kind === 'pan' || (drag.atom === null && drag.bond === null) || (drag.atom === null && tool.kind === 'move')) {
+    view.tx = drag.tx + ev.clientX - drag.sx; view.ty = drag.ty + ev.clientY - drag.sy; renderSketch(); return;
+  }
+  if (drag.atom !== null && tool.kind === 'move') {
+    if (!drag.undoPushed) { pushUndo(); drag.undoPushed = true; }
+    const a = atomById(drag.atom); a.x = w.x; a.y = w.y; renderSketch(); return;
+  }
+  if (drag.atom !== null && (tool.kind === 'atom' || tool.kind === 'bond')) {
+    const a = atomById(drag.atom);
+    const over = mol.atoms.find(o => o.id !== a.id && Math.hypot(o.x - w.x, o.y - w.y) < 16);
+    let x2, y2, el = null;
+    if (over) { x2 = over.x; y2 = over.y; }
+    else {
+      let ang = Math.atan2(w.y - a.y, w.x - a.x); ang = Math.round(ang / (Math.PI / 6)) * (Math.PI / 6);
+      x2 = a.x + Math.cos(ang) * BOND2D; y2 = a.y + Math.sin(ang) * BOND2D; el = tool.kind === 'atom' ? tool.el : 'C';
+    }
+    drag.preview = { x1: a.x, y1: a.y, x2, y2, el, over: over ? over.id : null };
+    renderSketch();
+  }
+});
+svg.addEventListener('pointerup', ev => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'pan') { renderSketch(); return; }
+  if (d.moved) {
+    if (d.preview) {
+      const a = atomById(d.atom), order = tool.kind === 'bond' ? tool.order : bondOrder;
+      pushUndo();
+      if (d.preview.over) {
+        const o = atomById(d.preview.over);
+        if (freeValence(a) < order || freeValence(o) < order) { toast('Not enough free bonds for that'); undoStack.pop(); renderSketch(); return; }
+        addBond(a.id, o.id, order); selected = o.id;
+      } else {
+        if (freeValence(a) < order) { toast(`${a.el} has no room for another bond`); undoStack.pop(); renderSketch(); return; }
+        const n = addAtom(d.preview.el, d.preview.x2, d.preview.y2); addBond(a.id, n.id, order); selected = n.id;
+      }
+      changed(); return;
+    }
+    if (d.undoPushed) { changed(); return; }
+    renderSketch(); return;
+  }
+  handleClick(d, d.w0);
+});
+svg.addEventListener('pointercancel', () => { drag = null; renderSketch(); });
+svg.addEventListener('contextmenu', ev => ev.preventDefault());
+svg.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  const r = svg.getBoundingClientRect(); const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  const k2 = Math.max(0.3, Math.min(3, view.k * Math.exp(-ev.deltaY * 0.0015)));
+  view.tx = mx - (mx - view.tx) * k2 / view.k; view.ty = my - (my - view.ty) * k2 / view.k; view.k = k2;
+  renderSketch();
+}, { passive: false });
+
+function handleClick(d, w) {
+  const a = d.atom !== null ? atomById(d.atom) : null;
+  const b = d.bond !== null ? mol.bonds.find(x => x.id === d.bond) : null;
+  if (tool.kind === 'erase') {
+    if (a) { pushUndo(); removeAtom(a.id); if (selected === a.id) selected = null; changed(); }
+    else if (b) { pushUndo(); removeBond(b.id); changed(); }
+    return;
+  }
+  if (tool.kind === 'move') { selected = a ? a.id : null; renderSketch(); return; }
+  if (tool.kind === 'group') {
+    if (a) attachGroup(tool.g, a.id);
+    else if (!b) { selected = null; attachGroup(tool.g, null); }
+    return;
+  }
+  if (b) {
+    const A = atomById(b.a), B = atomById(b.b);
+    let next = tool.kind === 'bond' ? (b.order === tool.order ? (b.order % 3) + 1 : tool.order) : (b.order === 1.5 ? 1 : (b.order % 3) + 1);
+    const extra = next - b.order;
+    if (extra > 0 && (freeValence(A) < extra - 1e-6 || freeValence(B) < extra - 1e-6)) {
+      if (tool.kind !== 'bond') next = 1; else { toast('Not enough free bonds on those atoms for a ' + ['', 'single', 'double', 'triple'][next] + ' bond'); return; }
+    }
+    pushUndo(); b.order = next; changed(); return;
+  }
+  if (a) {
+    if (tool.kind === 'atom') {
+      if (a.el !== tool.el) {
+        pushUndo(); a.el = tool.el; selected = a.id;
+        if (bondSum(a.id) > EL[a.el].val) toast(`${a.el} can only make ${EL[a.el].val} bond${EL[a.el].val > 1 ? 's' : ''} — fix the red atom`);
+        changed(); return;
+      }
+      pushUndo(); const n = grow(a, tool.el, 1); if (!n) { undoStack.pop(); return; } selected = n.id; changed(); return;
+    }
+    if (tool.kind === 'bond') { pushUndo(); const n = grow(a, 'C', tool.order); if (!n) { undoStack.pop(); return; } selected = n.id; changed(); return; }
+  }
+  // empty space
+  if (tool.kind === 'atom') { pushUndo(); const n = addAtom(tool.el, w.x, w.y); selected = n.id; changed(); }
+  else if (tool.kind === 'bond') { pushUndo(); const c1 = addAtom('C', w.x - BOND2D / 2 * 0.87, w.y + BOND2D / 4); const c2 = addAtom('C', w.x + BOND2D / 2 * 0.87, w.y - BOND2D / 4); addBond(c1.id, c2.id, tool.order); selected = c2.id; changed(); }
+  else { selected = null; renderSketch(); }
+}
+
+document.addEventListener('keydown', ev => {
+  if (ev.target.closest('input,select,textarea')) return;
+  const k = ev.key;
+  if ((ev.ctrlKey || ev.metaKey) && k.toLowerCase() === 'z') { ev.preventDefault(); ev.shiftKey ? redo() : undo(); return; }
+  if ((ev.ctrlKey || ev.metaKey) && k.toLowerCase() === 'y') { ev.preventDefault(); redo(); return; }
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if ((k === 'Delete' || k === 'Backspace') && selected) { ev.preventDefault(); pushUndo(); removeAtom(selected); selected = null; changed(); return; }
+  const map = { c: 'C', h: 'H', o: 'O', n: 'N', f: 'F', i: 'I' };
+  if (map[k]) { tool = { kind: 'atom', el: map[k] }; syncToolbar(); }
+  if (k === '1' || k === '2' || k === '3') { bondOrder = +k; tool = { kind: 'bond', order: +k }; syncToolbar(); }
+  if (k === 'm') { tool = { kind: 'move' }; syncToolbar(); }
+  if (k === 'e') { tool = { kind: 'erase' }; syncToolbar(); }
+});
+
+/* ── 10. Analysis panel and wiring ───────────────────────────────────── */
+const PRESETS = [
+  ['GCSE — alkanes, alkenes, alcohols, acids', [
+    ['Methane', 'C'], ['Ethane', 'CC'], ['Propane', 'CCC'], ['Butane', 'CCCC'],
+    ['Ethene', 'C=C'], ['Propene', 'C=CC'], ['Ethanol', 'CCO'], ['Propan-1-ol', 'CCCO'],
+    ['Ethanoic acid', 'CC(=O)O', 'acetic acid'], ['Ethyl ethanoate', 'CCOC(=O)C', 'ethyl acetate']]],
+  ['A-Level — naming and isomers', [
+    ['2-Methylpropane', 'CC(C)C'], ['(E)-But-2-ene', 'CC=CC'], ['Buta-1,3-diene', 'C=CC=C'], ['Propan-2-ol', 'CC(O)C'], ['2-Methylpropan-2-ol', 'CC(C)(C)O'],
+    ['Propanal', 'CCC=O'], ['Propanone', 'CC(=O)C', 'acetone'], ['Butan-2-ol (chiral)', 'CCC(C)O'], ['2-Bromobutane (chiral)', 'CCC(C)Br'],
+    ['Chloroethane', 'CCCl'], ['Ethylamine', 'CCN', 'ethylamine'], ['Ethanenitrile', 'CC#N', 'acetonitrile'], ['Ethanoyl chloride', 'CC(=O)Cl', 'acetyl chloride'],
+    ['Ethanamide', 'CC(=O)N', 'acetamide'], ['Lactic acid (2-hydroxypropanoic acid)', 'CC(O)C(=O)O', 'lactic acid'], ['Alanine (2-aminopropanoic acid)', 'CC(N)C(=O)O', 'alanine'],
+    ['Propane-1,2,3-triol', 'OCC(O)CO', 'glycerol'], ['Methyl propanoate', 'CCC(=O)OC']]],
+  ['A-Level — rings', [
+    ['Benzene', 'c1ccccc1'], ['Methylbenzene', 'Cc1ccccc1', 'toluene'], ['Phenol', 'Oc1ccccc1'], ['Phenylamine', 'Nc1ccccc1', 'aniline'],
+    ['Benzoic acid', 'OC(=O)c1ccccc1'], ['Methyl benzoate', 'COC(=O)c1ccccc1'], ['Cyclohexane', 'C1CCCCC1'], ['Cyclohexene', 'C1CCC=CC1']]],
+];
+const COMMON = new Map(PRESETS.flatMap(g => g[1]).filter(p => p[2]).map(p => [p[1], p[2]]));
+
+function buildPresets() {
+  const sel = $('#preset');
+  let html = '<option value="">Preset molecules…</option>';
+  PRESETS.forEach(([g, list]) => {
+    const gc = g.startsWith('GCSE');
+    if (mode === 'gcse' && !gc) return;
+    html += `<optgroup label="${esc(g)}">` + list.map(p => `<option value="${esc(p[1])}">${esc(p[0])}</option>`).join('') + '</optgroup>';
+  });
+  sel.innerHTML = html;
+  if (presetSmiles && [...sel.options].some(o => o.value === presetSmiles)) sel.value = presetSmiles;
+}
+$('#preset').addEventListener('change', e => {
+  const s = e.target.value; if (!s) return;
+  pushUndo(); loadSmiles(s); presetSmiles = s; e.target.value = s;
+  if (mode === 'gcse' && drawStyle !== 'skeletal') mol.atoms.filter(a => a.el !== 'H').forEach(a => { const k = implicitH(a); for (let i = 0; i < k; i++) { const h = addAtom('H', a.x, a.y); addBond(a.id, h.id, 1); } });
+  layout2D(); selected = null; highlight = { type: null, atoms: new Set() };
+  fitView(); changed({ fresh: true });
+});
+
+function analyse() {
+  const G = perceive(mol);
+  const groups = detectGroups(G);
+  const chiral = chiralCentres(G);
+  const names = G.frags.map(f => ({ frag: f, res: nameFragment(G, f, groups) }));
+  const counts = countAtoms(G, [...G.A.keys()]);
+  return { G, groups, chiral, names, counts, naming: names[0] ? names[0].res : null };
+}
+
+function renderAnalysis(A, model) {
+  const card = $('#nameCard');
+  const iu = $('#iupac'), alt = $('#altName'), bd = $('#breakdown'), warn = $('#warnings'), scope = $('#scope');
+  warn.innerHTML = ''; scope.innerHTML = ''; alt.textContent = '';
+  const overs = [...A.G.A.values()].filter(a => a.over);
+  overs.forEach(a => warn.insertAdjacentHTML('beforeend', `<div class="warn">✕ ${a.el} has too many bonds — it can make only ${EL[a.el].val}. Fix the red atom.</div>`));
+  if (!mol.atoms.length) {
+    iu.className = 'iupac muted'; iu.textContent = 'Draw a molecule or pick a preset'; bd.innerHTML = '';
+  } else {
+    const okNames = A.names.filter(n => n.res && n.res.name);
+    if (okNames.length === A.names.length) {
+      iu.className = 'iupac';
+      iu.innerHTML = A.names.map(n => n.res.parts.map(p => `<span class="pt pt-${p.role}">${esc(p.t)}</span>`).join('')).join('<span class="pt"> + </span>');
+      const common = presetSmiles && COMMON.get(presetSmiles);
+      if (common && A.names.length === 1 && common !== A.names[0].res.name) alt.textContent = 'Also known as ' + common;
+      else if (A.names.length === 1 && A.groups.some(g => g.type === 'amine') && /an-\d-amine$|anamine$/.test(A.names[0].res.name)) {
+        const m = A.names[0].res.name.match(/^(\w+?)an(?:-1-)?amine$/); if (m) alt.textContent = 'Also written ' + m[1] + 'ylamine';
+      }
+    } else {
+      iu.className = 'iupac muted';
+      const f = A.names.find(n => !n.res || !n.res.name).res;
+      iu.textContent = f.fail === 'valence' ? 'Fix the bonding first' : f.fail === 'nocarbon' ? 'No carbon — not an organic molecule' :
+        f.fail === 'fused' ? 'Fused rings are beyond this tool' : f.fail === 'hetero' ? 'Rings containing O or N are beyond this tool' : 'Beyond this tool’s naming rules';
+    }
+    // breakdown
+    const first = A.names[0] && A.names[0].res;
+    if (first && first.parts) {
+      bd.innerHTML = `<ul class="bd-list">${first.parts.filter(p => p.t.trim()).map(p => `<li><span class="bd-tok ${p.role}">${esc(p.t.trim())}</span><span class="why">${esc(p.why.replace(/^[^—]*— /, ''))}</span></li>`).join('')}</ul>`
+        + (first.notes && first.notes.length ? `<p class="bd-note">${esc(first.notes.join(' '))} The numbers on the drawing show the numbering used.</p>` : (first.parent && first.parent.length > 1 ? '<p class="bd-note">The numbers on the drawing show the parent chain.</p>' : ''));
+    } else bd.innerHTML = '';
+    // scope badge
+    const nonGcse = A.groups.filter(g => !(GROUP_INFO[g.type] || {}).gcse);
+    const branched = first && first.parts && first.parts.some(p => p.role === 'prefix');
+    if (mode === 'gcse') {
+      if (nonGcse.length || branched || (first && first.isRing)) scope.innerHTML = `<span class="scope lvl-alevel">Beyond GCSE — ${nonGcse.length ? esc(GROUP_INFO[nonGcse[0].type].label.toLowerCase()) + 's are' : 'branched and ring molecules are'} an A-Level topic</span>`;
+      else scope.innerHTML = `<span class="scope lvl-gcse">GCSE</span>`;
+    }
+  }
+  // formula
+  const c = A.counts;
+  if (mol.atoms.length) {
+    $('#formula').innerHTML = hillFormula(c, false).replace(/(\d+)/g, '<sub>$1</sub>');
+    const mr = Object.entries(c).reduce((s, [el, n]) => s + EL[el].mass * n, 0);
+    $('#mr').textContent = mr.toFixed(1);
+    $('#molar').innerHTML = mr.toFixed(1) + ' g mol<sup>−1</sup>';
+  } else { $('#formula').textContent = '—'; $('#mr').textContent = '—'; $('#molar').textContent = '—'; }
+  $('#mrLabel').innerHTML = mode === 'gcse' ? 'Relative formula mass, M<sub>r</sub>' : 'Relative molecular mass, M<sub>r</sub>';
+  $('#series').innerHTML = seriesText(A);
+  // tags
+  const tagsEl = $('#tags');
+  const byType = new Map();
+  A.groups.forEach(g => { if (!byType.has(g.type)) byType.set(g.type, []); byType.get(g.type).push(g); });
+  if (!byType.size) tagsEl.innerHTML = `<span class="muted-note">${mol.atoms.length ? 'No functional groups recognised.' : 'Nothing drawn yet.'}</span>`;
+  else {
+    const types = [...byType.keys()].sort((a, b) => GROUP_INFO[a].rank - GROUP_INFO[b].rank);
+    tagsEl.innerHTML = types.map(t => {
+      const n = byType.get(t).length, info = GROUP_INFO[t];
+      const lvl = mode === 'gcse' && !info.gcse ? '<span class="lvl">A</span>' : '';
+      return `<button type="button" class="tag" data-type="${t}" aria-pressed="${highlight.type === t}"><span class="dot"></span>${esc(info.label)}${n > 1 ? `<span class="n">×${n}</span>` : ''}${lvl}</button>`;
+    }).join('');
+    tagsEl.querySelectorAll('.tag').forEach(b => b.onclick = () => toggleHighlight(b.dataset.type));
+  }
+  // isomerism
+  renderIsomerism(A, model);
+}
+function seriesText(A) {
+  if (A.names.length !== 1 || !A.names[0].res || !A.names[0].res.name || A.names[0].res.inorganic) return '';
+  const types = new Set(A.groups.map(g => g.type));
+  const only = t => types.size === 1 && types.has(t);
+  const S = {
+    alkane: ['alkanes', 'C<sub>n</sub>H<sub>2n+2</sub>'], alkene: ['alkenes', 'C<sub>n</sub>H<sub>2n</sub>'], alcohol: ['alcohols', 'C<sub>n</sub>H<sub>2n+1</sub>OH'],
+    acid: ['carboxylic acids', 'C<sub>n</sub>H<sub>2n+1</sub>COOH'], aldehyde: ['aldehydes', 'C<sub>n</sub>H<sub>2n+1</sub>CHO'], ketone: ['ketones', 'C<sub>n</sub>H<sub>2n</sub>O'],
+    halo: ['halogenoalkanes', 'C<sub>n</sub>H<sub>2n+1</sub>X'], amine: ['amines', 'C<sub>n</sub>H<sub>2n+1</sub>NH<sub>2</sub>'], ester: ['esters', 'C<sub>n</sub>H<sub>2n</sub>O<sub>2</sub>'],
+  };
+  for (const t of Object.keys(S)) if (only(t) && (t !== 'alcohol' || A.groups.length === 1) && (t !== 'acid' || A.groups.length === 1)) {
+    const cyc = A.G.rings.length > 0; if (cyc) return '';
+    return `Homologous series: <b>${S[t][0]}</b> · general formula ${S[t][1]}`;
+  }
+  if (types.size === 1 && types.has('arene')) return 'An <b>arene</b> — an aromatic hydrocarbon.';
+  return '';
+}
+function renderIsomerism(A, model) {
+  const el = $('#isoBlock');
+  const btn = $('#btnMirror');
+  if (!mol.atoms.length) { el.innerHTML = ''; btn.disabled = true; setMirror(false); return; }
+  if (mode === 'gcse') {
+    el.innerHTML = `<h2>OPTICAL ISOMERISM</h2><p class="muted-note">Chiral centres and mirror-image molecules are an A-Level topic. Switch to <b>A-Level</b> mode to explore them.</p>`;
+    btn.disabled = true; setMirror(false); return;
+  }
+  const ch = A.chiral;
+  const nm = A.naming && A.naming.locants;
+  const locOf = id => nm && nm.has(id) ? 'C' + nm.get(id) : 'a carbon';
+  let html = '<h2>OPTICAL ISOMERISM</h2>';
+  if (ch.length) {
+    const rs = model ? ch.map(id => rsLabel(A.G, model, id)) : [];
+    html += `<div class="chiral-status"><div class="badge yes">✱</div><div><p><b>${ch.length} chiral centre${ch.length > 1 ? 's' : ''}</b> (${ch.map(locOf).join(', ')}) — optical isomers exist.</p>
+      <p class="sub">A chiral carbon has four different groups around it, so the molecule and its mirror image cannot be superimposed.${ch.length === 1 && rs[0] ? ` The model shown is the <b>(${rs[0]})</b> form; its mirror image is <b>(${rs[0] === 'R' ? 'S' : 'R'})</b>. (R/S labels go beyond AQA A-Level.)` : ''}</p></div></div>`;
+    btn.disabled = !hasGL; btn.title = 'Show the enantiomer beside the original';
+  } else {
+    html += `<div class="chiral-status"><div class="badge no">–</div><div><p><b>No chiral centres.</b></p><p class="sub">No carbon here has four different groups attached, so the molecule is superimposable on its mirror image.</p></div></div>`;
+    btn.disabled = true; btn.title = 'Needs a chiral centre'; setMirror(false);
+  }
+  // E/Z
+  const ez = [];
+  for (const a of A.G.A.values()) for (const n of a.nb) {
+    if (n.id < a.id || n.order !== 2 || a.el !== 'C' || A.G.A.get(n.id).el !== 'C' || ringsOf(A.G, a.id).some(r => r.includes(n.id))) continue;
+    const d = ezFor(A.G, a.id, n.id); if (d) ez.push(d);
+  }
+  if (ez.length) html += `<div class="chiral-status" style="margin-top:10px"><div class="badge yes" style="font-size:14px">E/Z</div><div><p><b>E/Z stereoisomerism</b> — this is the <b>${ez.join(', ')}</b> isomer.</p><p class="sub">Each carbon of the C=C has two different groups and the double bond cannot rotate. Redraw a group on the other side to see the other isomer.</p></div></div>`;
+  el.innerHTML = html;
+}
+
+function toggleHighlight(type) {
+  if (highlight.type === type) highlight = { type: null, atoms: new Set() };
+  else {
+    const s = new Set();
+    const G = lastAnalysis.G;
+    lastAnalysis.groups.filter(g => g.type === type).forEach(g => {
+      g.atoms.forEach(id => s.add(id));
+      g.hOf.forEach(id => { s.add('H' + id); (G.A.get(id).hIds || []).forEach(h => s.add('Hx' + h)); });
+    });
+    highlight = { type, atoms: s };
+  }
+  document.querySelectorAll('.tag').forEach(b => b.setAttribute('aria-pressed', b.dataset.type === highlight.type));
+  renderSketch();
+  viewers.forEach(v => v.setHighlight(highlight.atoms));
+}
+
+// ---------- 3D viewers ----------
+const viewers = [];
+let mirrorOn = false, linked = true, syncing = false, model3d = null;
+if (hasGL) {
+  viewers.push(new Viewer($('#vp1'), false));
+  viewers.push(new Viewer($('#vp2'), true));
+  const [v1, v2] = viewers;
+  const mirrorCam = (src, dst) => {
+    if (syncing || !linked || !mirrorOn) return;
+    syncing = true;
+    dst.camera.position.set(-src.camera.position.x, src.camera.position.y, src.camera.position.z);
+    dst.camera.up.set(-src.camera.up.x, src.camera.up.y, src.camera.up.z);
+    dst.controls.target.set(-src.controls.target.x, src.controls.target.y, src.controls.target.z);
+    dst.camera.lookAt(dst.controls.target);
+    syncing = false;
+  };
+  v1.controls.addEventListener('change', () => mirrorCam(v1, v2));
+  v2.controls.addEventListener('change', () => mirrorCam(v2, v1));
+  const loop = now => { v1.render(now); if (mirrorOn) v2.render(now); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else {
+  $('#vp1').innerHTML = '<div class="nogl">This browser could not start WebGL, so the 3D model is unavailable. The builder and naming still work.</div>';
+}
+function setMirror(on) {
+  if (!hasGL) return;
+  mirrorOn = on;
+  $('#views').classList.toggle('mirror', on);
+  $('#btnMirror').setAttribute('aria-pressed', on);
+  $('#btnMirror').textContent = on ? 'Hide mirror image' : 'Show mirror image';
+  $('#btnLink').hidden = !on; $('#tag1').hidden = !on;
+  requestAnimationFrame(() => { viewers.forEach(v => v.resize()); if (on) { viewers[1].camera.position.copy(viewers[0].camera.position); viewers[0].controls.dispatchEvent({ type: 'change' }); } });
+}
+$('#btnMirror').onclick = () => setMirror(!mirrorOn);
+$('#btnLink').onclick = () => {
+  linked = !linked; $('#btnLink').setAttribute('aria-pressed', linked); $('#btnLink').textContent = linked ? 'Linked' : 'Unlinked — try to superimpose';
+  if (linked) viewers[0].controls.dispatchEvent({ type: 'change' });
+};
+$('#btnRotate').onclick = () => {
+  const on = !viewers[0]?.controls.autoRotate;
+  viewers.forEach((v, i) => { v.controls.autoRotate = on && (i === 0 || !linked); v.controls.autoRotateSpeed = 1.6; });
+  $('#btnRotate').setAttribute('aria-pressed', on);
+};
+let showLabels = false;
+$('#btnLabels').onclick = () => { showLabels = !showLabels; $('#btnLabels').setAttribute('aria-pressed', showLabels); update3D(false); };
+$('#btnReset').onclick = () => { viewers.forEach(v => v.fit()); if (mirrorOn) viewers[0].controls.dispatchEvent({ type: 'change' }); };
+
+function legendHTML() {
+  const els = [...new Set(mol.atoms.map(a => a.el))];
+  if (mol.atoms.some(a => a.el !== 'H' && implicitH(a) > 0)) els.push('H');
+  return [...new Set(els)].sort((a, b) => EL[a].z - EL[b].z).map(e => `<span><i style="background:#${EL[e].cpk.toString(16).padStart(6, '0')}"></i>${e}</span>`).join('');
+}
+
+function update3D(fitIfFresh) {
+  if (!hasGL) return;
+  if (!mol.atoms.length) { viewers.forEach(v => { v.remember(); v.clear(); v.model = null; }); $('#legend').innerHTML = ''; model3d = null; return; }
+  model3d = build3D(mol);
+  const aromRings = lastAnalysis.G.rings.filter(r => r.arom);
+  const opts = { aromRings, chiral: mode === 'alevel' ? lastAnalysis.chiral : [], labels: showLabels, highlight: highlight.atoms,
+    locants: explain && lastAnalysis.naming && lastAnalysis.naming.locants ? lastAnalysis.naming.locants : null };
+  viewers.forEach(v => { v.remember(); v.setModel(model3d, opts); });
+  if (fitIfFresh) viewers.forEach(v => v.fit());
+  $('#legend').innerHTML = legendHTML();
+}
+
+// ---------- the one place every edit goes through ----------
+function changed(opts = {}) {
+  lastAnalysis = analyse();
+  if (highlight.type && !lastAnalysis.groups.some(g => g.type === highlight.type)) highlight = { type: null, atoms: new Set() };
+  else if (highlight.type) { const t = highlight.type; highlight = { type: null, atoms: new Set() }; toggleHighlightSilent(t); }
+  const wasEmpty = !model3d;
+  update3D(opts.fresh || wasEmpty);
+  renderAnalysis(lastAnalysis, model3d);
+  renderSketch(); syncToolbar();
+  store.set('mol', JSON.stringify(mol));
+}
+function toggleHighlightSilent(type) {
+  const s = new Set(), G = lastAnalysis.G;
+  lastAnalysis.groups.filter(g => g.type === type).forEach(g => { g.atoms.forEach(id => s.add(id)); g.hOf.forEach(id => { s.add('H' + id); (G.A.get(id).hIds || []).forEach(h => s.add('Hx' + h)); }); });
+  highlight = { type, atoms: s };
+}
+
+
+// ---------- header controls ----------
+function setMode(m) {
+  mode = m; store.set('mode', m);
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  buildPresets();
+  if (lastAnalysis) { update3D(false); renderAnalysis(lastAnalysis, model3d); renderSketch(); }
+}
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+document.querySelectorAll('[data-style]').forEach(b => b.onclick = () => {
+  drawStyle = b.dataset.style; store.set('style', drawStyle);
+  if (mol.atoms.some(a => a.el === 'H' && bondsOf(a.id).length === 1)) { layout2D(); fitView(); changed(); }
+  document.querySelectorAll('[data-style]').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === drawStyle));
+  renderSketch();
+});
+$('#btnExplain').onclick = () => {
+  explain = !explain;
+  $('#btnExplain').setAttribute('aria-pressed', explain);
+  $('#nameCard').classList.toggle('explaining', explain);
+  renderSketch(); update3D(false);
+};
+function applyTheme(t) {
+  if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+  renderSketch();
+}
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark'; store.set('theme', next); applyTheme(next);
+};
+new ResizeObserver(() => renderSketch()).observe($('#sketchWrap'));
+
+// ---------- start ----------
+(function init() {
+  const th = store.get('theme'); if (th) applyTheme(th);
+  buildToolbar();
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+  document.querySelectorAll('[data-style]').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === drawStyle));
+  buildPresets();
+  let saved = null; try { saved = JSON.parse(store.get('mol') || 'null'); } catch (e) {}
+  if (saved && Array.isArray(saved.atoms) && saved.atoms.length) mol = saved;
+  else { loadSmiles('CC(O)C(=O)O'); presetSmiles = 'CC(O)C(=O)O'; layout2D(); }
+  requestAnimationFrame(() => { fitView(); changed({ fresh: true }); buildPresets(); });
+})();
+
+// Test hook for the naming engine (console: __mb.name('CC(O)C'))
+window.__mb = {
+  name(smi) { const keep = mol; loadSmiles(smi); layout2D(); const A = analyse(); mol = keep; return A.names.map(n => n.res.name || ('FAIL:' + n.res.fail)).join(' + '); },
+  analyse: () => lastAnalysis,
+};
+</script>
+
+<!-- ── Home button, self-contained ─────────────────────────────────────────
+     Fixed bottom-left, scoped class name, sits above everything so it is
+     reachable even when a page opens a full-screen overlay. -->
+<style>
+  .sv-home{
+    position:fixed; left:14px; bottom:14px; z-index:2147483000;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%;
+    color:#efe9dd; background:#14120f;
+    border:1px solid rgba(239,233,221,.24);
+    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
+    transition:background .15s ease, transform .15s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
+  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
+  .sv-home svg{ width:18px; height:18px; display:block; }
+  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
+  @media print{ .sv-home{ display:none; } }
+</style>
+<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
+    <path d="M9.75 21v-6.2h4.5V21"/>
+  </svg>
+</a>
+</body>
+</html>
