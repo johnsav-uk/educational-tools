@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Waves Required Practical — Ripple Tank &amp; Stretched String</title>
-<meta name="description" content="AQA GCSE Physics Required Practical 8: a live ripple tank with a virtual ruler and strobe, a vibrating string with adjustable tension and length, plus the method, error analysis and exam practice.">
+<title>Measuring Waves — AQA Required Practical 8 &amp; BTEC Applied Science</title>
+<meta name="description" content="AQA GCSE Physics Required Practical 8 and BTEC Applied Science Unit 1 C1: a live ripple tank with a virtual ruler, strobe and two-dipper interference, a vibrating string with adjustable tension and length, plus the method, error analysis and exam practice.">
 
 <!-- ── Fonts ───────────────────────────────────────────────────────────── -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -437,7 +437,7 @@ if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D
    PART A — RIPPLE TANK
    ═══════════════════════════════════════════════════════════════════ */
 
-const TANK_DEFAULTS = { freq: 8, depth: 5, source: 'plane', timeMode: 'strobe', waves: 10 };
+const TANK_DEFAULTS = { freq: 8, depth: 5, source: 'plane', timeMode: 'strobe', waves: 10, sep: 6 };
 const DIPPER_X = 74;              // straight dipper / point dipper, in canvas px
 const SOURCE_Y = TANK.H / 2;
 const FIELD_SCALE = 2;            // the wave field is computed at half resolution
@@ -447,6 +447,29 @@ const FIELD_H = TANK.H / FIELD_SCALE;
 function defaultTankRuler() {
   return { x: 90, y: 330, span: 600, a: 60, b: 360 };
 }
+function defaultProbe() {
+  return { x: 560, y: 150 };
+}
+
+/* Two-source interference (BTEC Applied Science, and the AQA higher-tier
+   wave treatment). Path difference decides everything: a whole number of
+   wavelengths and the two crests arrive together, a half-number and a crest
+   meets a trough. Everything the tank draws and every readout comes from
+   this one function, so the picture and the numbers cannot disagree. */
+function interferenceAt(x, y, sepPx, lamPx) {
+  const r1 = Math.hypot(x - DIPPER_X, y - (SOURCE_Y - sepPx / 2));
+  const r2 = Math.hypot(x - DIPPER_X, y - (SOURCE_Y + sepPx / 2));
+  const pd = Math.abs(r1 - r2);
+  const n = lamPx > 0 ? pd / lamPx : 0;                 // path difference, in wavelengths
+  const off = Math.abs(n - Math.round(n));              // 0 at a maximum, 0.5 at a minimum
+  // One whole wavelength of path difference is one whole cycle out of step,
+  // so the phase difference follows straight from n. BTEC names both terms.
+  const phaseDeg = ((n * 360) % 360 + 360) % 360;
+  return {
+    r1, r2, pd, n, off, phaseDeg,
+    verdict: off < 0.12 ? 'constructive' : off > 0.38 ? 'destructive' : 'partial'
+  };
+}
 
 function RippleTank() {
   const [freq, setFreq]     = useState(TANK_DEFAULTS.freq);
@@ -454,8 +477,11 @@ function RippleTank() {
   const [source, setSource] = useState(TANK_DEFAULTS.source);
   const [timeMode, setMode] = useState(TANK_DEFAULTS.timeMode);
   const [waves, setWaves]   = useState(TANK_DEFAULTS.waves);
+  const [sep, setSep]       = useState(TANK_DEFAULTS.sep);
   const [showRuler, setShowRuler] = useState(true);
+  const [showFringes, setShowFringes] = useState(true);
   const [ruler, setRuler]   = useState(defaultTankRuler);
+  const [probe, setProbe]   = useState(defaultProbe);
 
   const canvasRef = useRef(null);
   const fieldRef  = useRef(null);     // offscreen half-resolution canvas
@@ -472,15 +498,27 @@ function RippleTank() {
   const vMeasured = freq * lambdaMeasured;
   const pctErr = lambdaCm > 0 ? ((lambdaMeasured - lambdaCm) / lambdaCm) * 100 : 0;
 
+  /* --- two-source interference ---------------------------------------- */
+  const sepPx = sep * TANK.pxPerCm;
+  const probeInfo = interferenceAt(probe.x, probe.y, sepPx, lambdaPx);
+  // a maximum exists for every whole number of wavelengths up to the
+  // separation itself, on both sides of the central one
+  const orderMax = lambdaCm > 0 ? Math.floor(sep / lambdaCm) : 0;
+  const maximaCount = 2 * orderMax + 1;
+
   /* The draw loop reads parameters through a ref so it can be mounted
      once and still see the newest slider values. */
   const params = useRef({});
-  params.current = { freq, depth, source, timeMode, ruler, showRuler, lambdaPx, lambdaCm, vCmS };
+  params.current = { freq, depth, source, timeMode, ruler, showRuler, lambdaPx, lambdaCm, vCmS,
+                     sepPx, sepCm: sep, showFringes, probe };
 
   /* --- pointer interaction ------------------------------------------- */
   const hitTest = useCallback((p) => {
-    const r = params.current.ruler;
-    if (!params.current.showRuler) return null;
+    const P = params.current;
+    // the interference probe sits on top of everything, so it is grabbed first
+    if (P.source === 'two' && Math.hypot(p.x - P.probe.x, p.y - P.probe.y) < 18) return { kind: 'probe' };
+    const r = P.ruler;
+    if (!P.showRuler) return null;
     const near = (px) => Math.abs(p.x - px) < GRAB && p.y > r.y - 22 && p.y < r.y + RULER_H + 6;
     if (near(r.x + r.a)) return { kind: 'a' };
     if (near(r.x + r.b)) return { kind: 'b' };
@@ -491,6 +529,10 @@ function RippleTank() {
   }, []);
 
   const onDrag = useCallback((hit, p) => {
+    if (hit.kind === 'probe') {
+      setProbe({ x: clamp(p.x, DIPPER_X + 10, TANK.W - 10), y: clamp(p.y, 10, TANK.H - 10) });
+      return;
+    }
     setRuler(prev => {
       if (hit.kind === 'body') {
         return {
@@ -508,19 +550,39 @@ function RippleTank() {
 
   /* --- auto-measure: park the markers on crests ----------------------- */
   const autoMeasure = () => {
-    const { lambdaPx: lp, source: src, freq: f } = params.current;
+    const { lambdaPx: lp, source: src, freq: f, sepPx: sp } = params.current;
     if (!(lp > 2)) return;
     const frac = (f * simT.current) % 1;                     // crest phase drift
     const next = { ...params.current.ruler };
-    if (src === 'point') next.y = SOURCE_Y + 24;             // lay the rule along a radius from the source
-    // crest n sits a distance lp*(n + frac) from the dipper
-    const originToRuler = next.x - DIPPER_X;
-    let n = Math.ceil((originToRuler + 8) / lp - frac);
-    let aPx = lp * (n + frac) - originToRuler;
-    while (aPx < 8) { n += 1; aPx = lp * (n + frac) - originToRuler; }
-    const count = Math.max(1, Math.min(waves, Math.floor((next.span - aPx) / lp)));
+    // circular waves have to be measured outwards along an axis: a radius from
+    // a single dipper, or the centre line between a pair of them
+    if (src === 'point' || src === 'two') next.y = SOURCE_Y + 24;
+
+    // Crest n sits at a distance lp*(n + frac) from the source. On the centre
+    // line of a pair that distance is the slant range, so the crest lands a
+    // little further along the ruler than lp*(n + frac) would suggest.
+    const half = src === 'two' ? sp / 2 : 0;
+    const crestX = (n) => {
+      const r = lp * (n + frac);
+      const q = r * r - half * half;
+      return q <= 0 ? -Infinity : DIPPER_X + Math.sqrt(q);
+    };
+    // Along the centre line of a pair, the crest spacing only settles down to λ
+    // a few wavelengths out — close in, the slant range stretches it. Start the
+    // measurement in the far field whenever the ruler is long enough to do so.
+    let minX = next.x + 8;
+    if (src === 'two') {
+      const far = DIPPER_X + 3 * lp;
+      if (far + 2 * lp < next.x + next.span) minX = Math.max(minX, far);
+    }
+    let n = 0;
+    while (crestX(n) < minX && n < 4000) n += 1;
+    const aPx = crestX(n) - next.x;
+    let count = Math.min(waves, 40);
+    while (count > 1 && crestX(n + count) - next.x > next.span) count -= 1;
+
     next.a = clamp(aPx, 0, next.span);
-    next.b = clamp(aPx + count * lp, 0, next.span);
+    next.b = clamp(crestX(n + count) - next.x, 0, next.span);
     setShowRuler(true);
     setRuler(next);
     setWaves(count);
@@ -530,6 +592,7 @@ function RippleTank() {
     setFreq(TANK_DEFAULTS.freq); setDepth(TANK_DEFAULTS.depth);
     setSource(TANK_DEFAULTS.source); setMode(TANK_DEFAULTS.timeMode);
     setWaves(TANK_DEFAULTS.waves); setRuler(defaultTankRuler()); setShowRuler(true);
+    setSep(TANK_DEFAULTS.sep); setShowFringes(true); setProbe(defaultProbe());
     simT.current = 0;
   };
 
@@ -571,15 +634,24 @@ function RippleTank() {
       {/* ── LEFT: controls and dashboard ─────────────────────────────── */}
       <div className="space-y-5">
         <Card title="Dipper controls" icon="waves" accent="cyan">
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <Btn active={source === 'plane'} onClick={() => setSource('plane')}>Plane waves</Btn>
-            <Btn active={source === 'point'} onClick={() => setSource('point')}>Point source</Btn>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <Btn active={source === 'plane'} onClick={() => setSource('plane')} className="!px-1 text-[13px]">Plane</Btn>
+            <Btn active={source === 'point'} onClick={() => setSource('point')} className="!px-1 text-[13px]">One dipper</Btn>
+            <Btn active={source === 'two'}   onClick={() => setSource('two')}   className="!px-1 text-[13px]">Two dippers</Btn>
           </div>
           <p className="text-xs text-slate-400 mb-4 leading-snug">
             {source === 'plane'
               ? 'A straight dipper bar makes parallel wavefronts — the easy case for measuring wavelength.'
-              : 'A single dipper ball makes circular wavefronts spreading out from one point.'}
+              : source === 'point'
+              ? 'A single dipper ball makes circular wavefronts spreading out from one point.'
+              : 'Two dipper balls on the same beam are coherent: same frequency, same wavelength, always in step. Where their waves overlap they interfere.'}
           </p>
+
+          {source === 'two' && (
+            <Slider label="Dipper separation d" value={sep} min={2} max={14} step={0.5}
+                    onChange={setSep} unit="cm" accent="#22d3ee" dp={1}
+                    hint="Move the dippers further apart and the fringes crowd together; closer and they fan out." />
+          )}
 
           <Slider label="Frequency f" value={freq} min={1} max={20} step={0.5}
                   onChange={setFreq} unit="Hz" accent="#22d3ee" dp={1}
@@ -607,6 +679,61 @@ function RippleTank() {
           </Btn>
         </Card>
 
+        {source === 'two' && (
+          <Card title="Interference" icon="git-merge" accent="cyan"
+                right={<Badge tone={probeInfo.verdict === 'constructive' ? 'green'
+                                  : probeInfo.verdict === 'destructive' ? 'rose' : 'amber'}>
+                  {probeInfo.verdict}
+                </Badge>}>
+            <Toggle label="Show maxima and minima lines" checked={showFringes} onChange={setShowFringes} />
+
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Metric label="Separation d" value={fmt(sep, 1)} unit="cm" />
+              <Metric label="Wavelength λ" value={fmt(lambdaCm, 2)} unit="cm" />
+              <Metric label="Lines of maxima" value={maximaCount} unit=""
+                      accent="text-emerald-300" sub={'orders 0 to ±' + orderMax} />
+              <Metric label="d ÷ λ" value={fmt(sep / Math.max(lambdaCm, 0.01), 2)} unit=""
+                      accent="text-slate-200" sub="how many orders fit" />
+            </div>
+
+            <div className="mt-3 text-xs bg-slate-900/60 border border-slate-700 rounded-lg p-3 space-y-1 leading-relaxed">
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 mb-1">At the probe ✛</div>
+              <div className="flex justify-between text-slate-300">
+                <span>Distance from dipper 1</span>
+                <span className="font-mono text-slate-100">{fmt(probeInfo.r1 / TANK.pxPerCm, 2)} cm</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>Distance from dipper 2</span>
+                <span className="font-mono text-slate-100">{fmt(probeInfo.r2 / TANK.pxPerCm, 2)} cm</span>
+              </div>
+              <div className="flex justify-between text-slate-300 pt-1 mt-1 border-t border-slate-700">
+                <span>Path difference</span>
+                <span className="font-mono text-cyan-300">{fmt(probeInfo.pd / TANK.pxPerCm, 2)} cm</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>which is</span>
+                <span className="font-mono text-amber-300">{fmt(probeInfo.n, 2)} λ</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>Phase difference</span>
+                <span className="font-mono text-amber-300">
+                  {Math.round(probeInfo.phaseDeg)}°
+                  <span className="text-slate-500 ml-1">
+                    {probeInfo.verdict === 'constructive' ? '(in phase)' : probeInfo.verdict === 'destructive' ? '(antiphase)' : ''}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] leading-snug text-slate-500 mt-2">
+              Drag the probe around the tank. A path difference of a <b className="text-emerald-300">whole</b> number
+              of wavelengths puts the two waves in step, so they add: <b>constructive</b>. A
+              <b className="text-rose-300"> half</b> number puts a crest on a trough, so they cancel: <b>destructive</b>.
+              One whole wavelength of path difference is one whole cycle, or 360°, of phase difference.
+            </p>
+          </Card>
+        )}
+
         <Card title="Measurement" icon="ruler" accent="cyan">
           <Toggle label="Show virtual ruler" checked={showRuler} onChange={setShowRuler} />
           <div className="mt-3 mb-3">
@@ -629,6 +756,7 @@ function RippleTank() {
             Drag the ruler by its body; drag the <span className="text-cyan-300 font-semibold">A</span> and
             <span className="text-amber-300 font-semibold"> B</span> tabs to line them up with crests.
             {source === 'point' && ' For circular waves, measure outwards along a line from the source.'}
+            {source === 'two' && ' With two dippers, measure along the centre line, and stay a few wavelengths out from them: close in, the slant distance to each dipper stretches the crest spacing and you will overestimate λ.'}
           </p>
         </Card>
 
@@ -642,6 +770,10 @@ function RippleTank() {
             <Metric label="Speed v = fλ" value={fmt(freq * lambdaMeasured, 1)} unit="cm s⁻¹" accent="text-emerald-300" />
           </div>
           <div className="mt-3 text-xs bg-slate-900/60 border border-slate-700 rounded-lg p-3 leading-relaxed">
+            <div className="flex justify-between text-slate-300">
+              <span>Periodic time T = 1 ÷ f</span>
+              <span className="font-mono text-slate-100">{fmt(1 / freq, 3)} s</span>
+            </div>
             <div className="flex justify-between text-slate-300">
               <span>True wavelength</span>
               <span className="font-mono text-slate-100">{fmt(lambdaCm, 2)} cm</span>
@@ -671,16 +803,20 @@ function RippleTank() {
               ref={canvasRef} className="sim no-sel"
               style={{ aspectRatio: TANK.W + ' / ' + TANK.H, cursor: showRuler ? 'grab' : 'default' }}
               {...canvasProps}
-              aria-label="Ripple tank viewed from above, with a draggable ruler"
+              aria-label="Ripple tank viewed from above, with a draggable ruler and interference probe"
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 mt-3 px-1">
             <p className="text-xs text-slate-400">
-              Viewed from above — bright bands are crests focusing the lamp onto the screen below, dark bands are troughs.
+              {source === 'two'
+                ? 'Viewed from above — the two sets of ripples overlap. Drag the ✛ probe to read the path difference anywhere in the tank.'
+                : 'Viewed from above — bright bands are crests focusing the lamp onto the screen below, dark bands are troughs.'}
             </p>
             <div className="flex items-center gap-2">
               <Badge tone="cyan">{fmt(TANK.widthCm, 0)} cm tank</Badge>
-              <Badge tone="slate">{lambdaCm > 0 ? fmt(TANK.widthCm / lambdaCm, 1) : '—'} waves across</Badge>
+              {source === 'two'
+                ? <Badge tone="green">{maximaCount} lines of maxima</Badge>
+                : <Badge tone="slate">{lambdaCm > 0 ? fmt(TANK.widthCm / lambdaCm, 1) : '—'} waves across</Badge>}
             </div>
           </div>
         </Card>
@@ -697,8 +833,53 @@ function RippleTank() {
               <span>Try <b>Live</b> at 15 Hz: the pattern is a blur. This is the whole reason a stroboscope, or a phone camera at a matched frame rate, is used.</span></li>
             <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
               <span>Measuring one crest-to-crest gap gives a huge percentage uncertainty. Ten gaps divided by ten cuts it by a factor of ten.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+              <span>Switch to <b>Two dippers</b> for the interference pattern. Follow one dark line outwards and drag the probe along it: the path difference stays half a wavelength the whole way, which is why the cancellation holds.</span></li>
           </ul>
         </Card>
+
+        {source === 'two' && (
+          <Card title="Reading the interference pattern" icon="git-merge" accent="cyan">
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              Two dippers on one beam are <b>coherent</b>: identical frequency, identical wavelength, and a phase
+              difference that never changes. Every point in the tank receives a wave from each of them, and the two
+              displacements simply add. What arrives depends only on how much further one wave has travelled than
+              the other — the <b className="text-cyan-300">path difference</b>.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-lg p-3">
+                <div className="text-xs uppercase tracking-wider text-emerald-300 mb-1">Constructive</div>
+                <p className="font-mono text-sm text-emerald-200 mb-1">path difference = n λ</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  A whole number of wavelengths. Crest lands on crest, so the displacements add and the water
+                  heaves up and down hardest. These are the solid green lines, n = 0, 1, 2 …
+                </p>
+              </div>
+              <div className="bg-rose-500/10 border border-rose-500/40 rounded-lg p-3">
+                <div className="text-xs uppercase tracking-wider text-rose-300 mb-1">Destructive</div>
+                <p className="font-mono text-sm text-rose-200 mb-1">path difference = (n + ½) λ</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  A half number of wavelengths. Crest lands on trough, they cancel, and the water is almost still.
+                  These are the dashed red lines, and on the projection they are the grey channels of dead water.
+                </p>
+              </div>
+            </div>
+            <ul className="text-sm text-slate-300 space-y-2 leading-relaxed mt-3">
+              <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+                <span>The central line is always a maximum: it is equally far from both dippers, so the path difference is zero.</span></li>
+              <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+                <span>Widen <b>d</b> or raise <b>f</b> and more orders fit, so the fringes crowd together. Narrow the dippers to under one wavelength apart and only the central maximum survives.</span></li>
+              <li className="flex gap-2"><span className="text-cyan-400 mt-0.5">▸</span>
+                <span>Nothing is destroyed at a minimum. The energy is simply redistributed into the maxima, which is why they are brighter than a single dipper on its own.</span></li>
+            </ul>
+
+            <p className="text-xs text-slate-400 leading-relaxed mt-3 bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+              Doing BTEC Applied Science? These five words — displacement, coherence, path difference, phase
+              difference, superposition — are Unit 1 C1 almost verbatim. The <b className="text-indigo-300">🎓 BTEC
+              Addendum</b> tab sets out exactly how the spec words it and where it is examined.
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -707,7 +888,7 @@ function RippleTank() {
 /* --- the ripple tank renderer ----------------------------------------- */
 function drawTank(ctx, fieldPair, img, P, t) {
   const { field, fctx } = fieldPair;
-  const { source, freq, lambdaPx, ruler, showRuler } = P;
+  const { source, freq, lambdaPx, ruler, showRuler, sepPx, showFringes, probe } = P;
   const data = img.data;
 
   // Crest colour ramp: deep water blue through to a bright cyan highlight.
@@ -731,6 +912,30 @@ function drawTank(ctx, fieldPair, img, P, t) {
       for (let px = 0; px < FIELD_W; px++) {
         let b = 0.5 + 0.5 * col[px];
         b = b * b * (3 - 2 * b);                       // smoothstep sharpens the bands
+        data[i++] = TROUGH[0] + (CREST[0] - TROUGH[0]) * b;
+        data[i++] = TROUGH[1] + (CREST[1] - TROUGH[1]) * b;
+        data[i++] = TROUGH[2] + (CREST[2] - TROUGH[2]) * b;
+        data[i++] = 255;
+      }
+    }
+  } else if (source === 'two') {
+    // Two coherent sources. The displacements simply add at every point —
+    // that superposition is the whole of interference.
+    const y1 = (SOURCE_Y - sepPx / 2) / FIELD_SCALE;
+    const y2 = (SOURCE_Y + sepPx / 2) / FIELD_SCALE;
+    let i = 0;
+    for (let py = 0; py < FIELD_H; py++) {
+      const dy1 = (py - y1) * FIELD_SCALE, dy2 = (py - y2) * FIELD_SCALE;
+      for (let px = 0; px < FIELD_W; px++) {
+        const dx = (px - x0) * FIELD_SCALE;
+        const r1 = Math.sqrt(dx * dx + dy1 * dy1);
+        const r2 = Math.sqrt(dx * dx + dy2 * dy2);
+        const a1 = Math.min(1, 30 / Math.sqrt(Math.max(r1, 8)));
+        const a2 = Math.min(1, 30 / Math.sqrt(Math.max(r2, 8)));
+        let v = 0.55 * (a1 * Math.cos(k * r1 - phase) + a2 * Math.cos(k * r2 - phase));
+        if (v > 1) v = 1; else if (v < -1) v = -1;
+        let b = 0.5 + 0.5 * v;
+        b = b * b * (3 - 2 * b);
         data[i++] = TROUGH[0] + (CREST[0] - TROUGH[0]) * b;
         data[i++] = TROUGH[1] + (CREST[1] - TROUGH[1]) * b;
         data[i++] = TROUGH[2] + (CREST[2] - TROUGH[2]) * b;
@@ -783,6 +988,22 @@ function drawTank(ctx, fieldPair, img, P, t) {
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(DIPPER_X - 2, 30); ctx.lineTo(DIPPER_X - 2, 8); ctx.stroke();
+  } else if (source === 'two') {
+    const yA = SOURCE_Y - sepPx / 2, yB = SOURCE_Y + sepPx / 2;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    // one beam carries both dippers, which is what makes them coherent
+    ctx.beginPath(); ctx.moveTo(DIPPER_X, yA); ctx.lineTo(DIPPER_X, yB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(DIPPER_X, yA); ctx.lineTo(DIPPER_X, 8); ctx.stroke();
+    [[yA, '1'], [yB, '2']].forEach(([y, tag]) => {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath(); ctx.arc(DIPPER_X, y, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 10px JetBrains Mono, monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(tag, DIPPER_X, y);
+    });
   } else {
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 4;
@@ -794,8 +1015,109 @@ function drawTank(ctx, fieldPair, img, P, t) {
   ctx.fillStyle = 'rgba(226,232,240,.85)';
   ctx.font = '11px JetBrains Mono, monospace';
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText(source === 'plane' ? 'straight dipper' : 'point dipper', 12, TANK.H - 20);
+  ctx.fillText(source === 'plane' ? 'straight dipper' : source === 'two' ? 'two coherent dippers' : 'point dipper',
+               12, TANK.H - 20);
   ctx.restore();
+
+  /* --- lines of maxima and minima -------------------------------------- */
+  /* Every point on one of these curves keeps the same path difference from
+     the two dippers, so they are hyperbolae with the dippers as foci:
+     (y - cy)²/a² - (x - x_s)²/b² = 1, where 2a is the path difference and
+     2·(half) is the separation. a = 0 gives the straight central maximum. */
+  if (source === 'two' && showFringes && lam > 2 && sepPx > 6) {
+    const half = sepPx / 2;
+    const top = Math.min(8, Math.floor((2 * half) / lam));   // beyond 8 orders it is just clutter
+    const label = top <= 5;
+    ctx.save();
+    for (let o = -top; o <= top; o += 0.5) {
+      const a = (o * lam) / 2;
+      if (Math.abs(a) >= half - 0.5) continue;
+      const isMax = Math.abs(o - Math.round(o)) < 1e-6;
+      const b2 = half * half - a * a;
+      ctx.beginPath();
+      for (let x = DIPPER_X; x <= TANK.W - 6; x += 5) {
+        const dx = x - DIPPER_X;
+        const y = SOURCE_Y + a * Math.sqrt(1 + (dx * dx) / b2);
+        if (x === DIPPER_X) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.lineWidth = isMax ? 1.8 : 1.3;
+      ctx.strokeStyle = isMax ? 'rgba(52,211,153,.85)' : 'rgba(251,113,133,.7)';
+      ctx.setLineDash(isMax ? [] : [7, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (label && isMax) {
+        const dx = (TANK.W - 34) - DIPPER_X;
+        const y = SOURCE_Y + a * Math.sqrt(1 + (dx * dx) / b2);
+        if (y > 14 && y < TANK.H - 14) {
+          ctx.fillStyle = 'rgba(2,6,23,.85)';
+          ctx.beginPath(); ctx.roundRect(TANK.W - 46, y - 9, 30, 18, 5); ctx.fill();
+          ctx.fillStyle = '#6ee7b7';
+          ctx.font = 'bold 11px JetBrains Mono, monospace';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('n=' + Math.abs(Math.round(o)), TANK.W - 31, y);
+        }
+      }
+    }
+    // legend
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(52,211,153,.95)';
+    ctx.fillText('—— maxima, constructive', 12, TANK.H - 26);
+    ctx.fillStyle = 'rgba(251,113,133,.9)';
+    ctx.fillText('- -  minima, destructive', 230, TANK.H - 26);
+    ctx.restore();
+  }
+
+  /* --- the interference probe ------------------------------------------ */
+  if (source === 'two' && probe) {
+    const yA = SOURCE_Y - sepPx / 2, yB = SOURCE_Y + sepPx / 2;
+    const info = interferenceAt(probe.x, probe.y, sepPx, lam);
+    const colour = info.verdict === 'constructive' ? '#34d399'
+                 : info.verdict === 'destructive' ? '#fb7185' : '#fbbf24';
+    ctx.save();
+    ctx.strokeStyle = 'rgba(226,232,240,.8)';
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(DIPPER_X, yA); ctx.lineTo(probe.x, probe.y);
+    ctx.moveTo(DIPPER_X, yB); ctx.lineTo(probe.x, probe.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = colour; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(probe.x, probe.y, 9, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(probe.x - 15, probe.y); ctx.lineTo(probe.x - 4, probe.y);
+    ctx.moveTo(probe.x + 4, probe.y); ctx.lineTo(probe.x + 15, probe.y);
+    ctx.moveTo(probe.x, probe.y - 15); ctx.lineTo(probe.x, probe.y - 4);
+    ctx.moveTo(probe.x, probe.y + 4); ctx.lineTo(probe.x, probe.y + 15);
+    ctx.stroke();
+
+    const head = info.verdict === 'constructive' ? 'CONSTRUCTIVE'
+               : info.verdict === 'destructive' ? 'DESTRUCTIVE' : 'PARTIAL';
+    const body = 'path difference = ' + (info.pd / TANK.pxPerCm).toFixed(2) + ' cm = ' + info.n.toFixed(2) + ' λ';
+    const body2 = 'phase difference = ' + Math.round(info.phaseDeg) + '°';
+    ctx.font = 'bold 12px JetBrains Mono, monospace';
+    const w = ctx.measureText(head).width + 20;
+    ctx.font = '11px JetBrains Mono, monospace';
+    const boxW = Math.max(w, ctx.measureText(body).width + 20, ctx.measureText(body2).width + 20);
+    const boxH = 52;
+    const bx = clamp(probe.x - boxW / 2, 6, TANK.W - boxW - 6);
+    const by = probe.y > 84 ? probe.y - 22 - boxH : probe.y + 22;
+    ctx.fillStyle = 'rgba(2,6,23,.92)';
+    ctx.strokeStyle = colour; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect(bx, by, boxW, boxH, 7); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = colour;
+    ctx.font = 'bold 12px JetBrains Mono, monospace';
+    ctx.fillText(head, bx + boxW / 2, by + 13);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.fillText(body, bx + boxW / 2, by + 29);
+    ctx.fillText(body2, bx + boxW / 2, by + 42);
+    ctx.restore();
+  }
 
   /* --- tank walls ----------------------------------------------------- */
   ctx.save();
@@ -856,6 +1178,12 @@ function paintPaper(ctx, P, t) {
       let val;
       if (P.source === 'plane') {
         val = dx < 0 ? -0.6 : Math.cos(k * dx - phase);
+      } else if (P.source === 'two') {
+        const half = (P.sepCm || 6) / 2;
+        const r1 = Math.sqrt(dx * dx + (wz - half) * (wz - half));
+        const r2 = Math.sqrt(dx * dx + (wz + half) * (wz + half));
+        val = clamp(0.62 * (Math.min(1, 6 / Math.sqrt(Math.max(r1, 2))) * Math.cos(k * r1 - phase)
+                          + Math.min(1, 6 / Math.sqrt(Math.max(r2, 2))) * Math.cos(k * r2 - phase)), -1, 1);
       } else {
         const r = Math.sqrt(dx * dx + wz * wz);
         val = Math.min(1, 5 / Math.sqrt(Math.max(r, 1.5))) * Math.cos(k * r - phase);
@@ -962,6 +1290,9 @@ function ApparatusScene({ paramsRef, timeRef }) {
     const beam = add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 30), wood), DIP_X, 29.5, 0);
     const barDipper = add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.4, 22), mat(0xe2e8f0)), DIP_X, 23.4, 0);
     const ballDipper = add(new THREE.Mesh(new THREE.SphereGeometry(1.15, 20, 16), mat(0xe2e8f0)), DIP_X, 23.4, 0);
+    // the coherent pair: same beam, so same frequency and always in step
+    const pairA = add(new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 14), mat(0xe2e8f0)), DIP_X, 23.4, -3);
+    const pairB = add(new THREE.Mesh(new THREE.SphereGeometry(1.0, 18, 14), mat(0xe2e8f0)), DIP_X, 23.4, 3);
     [-9, 9].forEach(z => {
       const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5.4, 8), metal);
       rod.position.set(DIP_X, 26.4, z);
@@ -1096,6 +1427,12 @@ function ApparatusScene({ paramsRef, timeRef }) {
         let h;
         if (P.source === 'plane') {
           h = dx < 0 ? 0 : amp * Math.cos(k * dx - phase);
+        } else if (P.source === 'two') {
+          const half = (P.sepCm || 6) / 2;
+          const r1 = Math.sqrt(dx * dx + (wz - half) * (wz - half));
+          const r2 = Math.sqrt(dx * dx + (wz + half) * (wz + half));
+          h = amp * 0.62 * (Math.min(1, 6 / Math.sqrt(Math.max(r1, 2))) * Math.cos(k * r1 - phase)
+                          + Math.min(1, 6 / Math.sqrt(Math.max(r2, 2))) * Math.cos(k * r2 - phase));
         } else {
           const r = Math.sqrt(dx * dx + wz * wz);
           h = amp * Math.min(1, 5 / Math.sqrt(Math.max(r, 1.5))) * Math.cos(k * r - phase);
@@ -1108,8 +1445,12 @@ function ApparatusScene({ paramsRef, timeRef }) {
       /* dipper, motor, projected pattern */
       barDipper.visible = P.source === 'plane';
       ballDipper.visible = P.source === 'point';
+      pairA.visible = pairB.visible = P.source === 'two';
       const bob = Math.sin(phase) * 0.32;
       barDipper.position.y = ballDipper.position.y = 23.4 + bob;
+      const half3d = clamp((P.sepCm || 6) / 2, 1, 11);
+      pairA.position.set(DIP_X, 23.4 + bob, half3d);
+      pairB.position.set(DIP_X, 23.4 + bob, -half3d);
       beam.position.y = 29.5 + bob * 0.5;
       motor.rotation.x = -phase;
 
@@ -1791,7 +2132,7 @@ const RISKS = [
 const rnd = (lo, hi, step) => lo + step * Math.floor(Math.random() * ((hi - lo) / step + 1));
 
 function makeProblem() {
-  const kind = Math.floor(Math.random() * 5);
+  const kind = Math.floor(Math.random() * 6);
 
   if (kind === 0) {
     const f = rnd(4, 20, 1), lamCm = rnd(10, 40, 1) / 10;
@@ -1833,14 +2174,35 @@ function makeProblem() {
                 'v = f λ = ' + f + ' × ' + (totalCm / n / 100).toFixed(4) + ' = ' + (f * (totalCm / n) / 100).toFixed(3) + ' m/s']
     };
   }
-  const loops = rnd(2, 5, 1), f = rnd(30, 120, 5), loopCm = rnd(15, 40, 1);
-  const totalCm = loops * loopCm;
+  if (kind === 4) {
+    const loops = rnd(2, 5, 1), f = rnd(30, 120, 5), loopCm = rnd(15, 40, 1);
+    const totalCm = loops * loopCm;
+    return {
+      stem: 'A string resonates with ' + loops + ' loops. The ' + loops + ' loops span ' + totalCm + ' cm and the signal generator reads ' + f + ' Hz. Calculate the speed of the wave on the string.',
+      answer: f * (2 * loopCm / 100), unit: 'm/s', dp: 1,
+      working: ['One loop = ' + totalCm + ' ÷ ' + loops + ' = ' + loopCm + ' cm',
+                'A loop is half a wavelength, so λ = 2 × ' + loopCm + ' = ' + (2 * loopCm) + ' cm = ' + (2 * loopCm / 100).toFixed(2) + ' m',
+                'v = f λ = ' + f + ' × ' + (2 * loopCm / 100).toFixed(2) + ' = ' + (f * 2 * loopCm / 100).toFixed(1) + ' m/s']
+    };
+  }
+  // two-source interference: is this point a maximum or a minimum?
+  // keep the path difference smaller than a dipper separation that would
+  // actually fit in a 30 cm tank
+  const lamCm = rnd(10, 20, 5) / 10;
+  const whole = rnd(1, 3, 1);
+  const half = Math.random() < 0.5;
+  const orders = half ? whole + 0.5 : whole;
+  const r1 = rnd(90, 150, 1) / 10;
+  const r2 = r1 + orders * lamCm;
   return {
-    stem: 'A string resonates with ' + loops + ' loops. The ' + loops + ' loops span ' + totalCm + ' cm and the signal generator reads ' + f + ' Hz. Calculate the speed of the wave on the string.',
-    answer: f * (2 * loopCm / 100), unit: 'm/s', dp: 1,
-    working: ['One loop = ' + totalCm + ' ÷ ' + loops + ' = ' + loopCm + ' cm',
-              'A loop is half a wavelength, so λ = 2 × ' + loopCm + ' = ' + (2 * loopCm) + ' cm = ' + (2 * loopCm / 100).toFixed(2) + ' m',
-              'v = f λ = ' + f + ' × ' + (2 * loopCm / 100).toFixed(2) + ' = ' + (f * 2 * loopCm / 100).toFixed(1) + ' m/s']
+    stem: 'Two dippers in a ripple tank make waves of wavelength ' + lamCm.toFixed(1) + ' cm. A point P is '
+        + r1.toFixed(1) + ' cm from one dipper and ' + r2.toFixed(1) + ' cm from the other. '
+        + 'How many wavelengths is the path difference at P?',
+    answer: orders, unit: 'wavelengths', dp: 1,
+    working: ['Path difference = ' + r2.toFixed(1) + ' − ' + r1.toFixed(1) + ' = ' + (r2 - r1).toFixed(1) + ' cm',
+              'In wavelengths: ' + (r2 - r1).toFixed(1) + ' ÷ ' + lamCm.toFixed(1) + ' = ' + orders.toFixed(1),
+              half ? 'A half number of wavelengths, so a crest meets a trough: DESTRUCTIVE, and P sits on a minimum.'
+                   : 'A whole number of wavelengths, so crest meets crest: CONSTRUCTIVE, and P sits on a maximum.']
   };
 }
 
@@ -2092,13 +2454,226 @@ function NotesAndExam() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   PART D — BTEC ADDENDUM
+   This page is built around AQA Required Practical 8, but the two-dipper
+   mode and the vibrating string both land squarely on BTEC Applied Science
+   Unit 1, Section C1. This tab says exactly how much of C1 is covered and,
+   just as importantly, how much is not — checked against the specification
+   and against the formulae sheet printed at the back of the Unit 1 paper.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const BTEC_C1 = [
+  { spec: 'Features common to all waves, using the terms periodic time, speed, wavelength, frequency, amplitude and oscillation.',
+    state: 'full', where: 'Ripple Tank — live readings', tab: 'ripple' },
+  { spec: 'Graphical representation of wave features.',
+    state: 'none',
+    note: 'The tank is a view from above, not a displacement–distance graph. Sketch one beside it.' },
+  { spec: 'The difference between the two main types of wave: transverse and longitudinal.',
+    state: 'part', where: 'both simulations',
+    note: 'Water ripples and the string are both transverse. Longitudinal waves are not modelled here.' },
+  { spec: 'Displacement, coherence, path difference, phase difference and superposition, as applied to diffraction gratings.',
+    state: 'part', where: 'Ripple Tank — Two dippers', tab: 'ripple',
+    note: 'Every one of those five ideas is on screen, but on two sources rather than a grating. See below.' },
+  { spec: 'The industrial application of diffraction gratings: emission spectra and identifying gases.',
+    state: 'none' },
+  { spec: 'Be able to use the wave equation v = f λ.',
+    state: 'full', where: 'Method & Exam — equation practice', tab: 'notes' },
+  { spec: 'The concept and applications of stationary wave resonance.',
+    state: 'full', where: 'Stretched String', tab: 'string' },
+  { spec: 'Musical instruments.',
+    state: 'part', where: 'Stretched String', tab: 'string',
+    note: 'A vibrating string is the physics of a guitar or violin. Pipes and air columns are not modelled.' },
+  { spec: 'Be able to use the equation v = √(T/μ).',
+    state: 'full', where: 'Stretched String — live readings', tab: 'string' }
+];
+
+const BTEC_FORMULAE = [
+  { name: 'Wave speed',                             eq: 'v = f λ',                 here: true },
+  { name: 'Speed of a transverse wave on a string', eq: 'v = √(T / μ)',            here: true },
+  { name: 'Refractive index',                       eq: 'n = c / v = sin i / sin r', here: false },
+  { name: 'Critical angle',                         eq: 'sin C = 1 / n',           here: false },
+  { name: 'Inverse square law for intensity',       eq: 'I = k / r²',              here: false }
+];
+
+const BTEC_TERMS = [
+  { term: 'Displacement', body: 'How far a point on the water sits from its rest position, and in which direction. Two waves arriving at a point each bring their own displacement.' },
+  { term: 'Superposition', body: 'Where waves meet, the displacements simply add. That is all interference is — the tank computes nothing else.' },
+  { term: 'Coherence', body: 'The two dippers sit on one beam driven by one motor, so they have the same frequency and a phase relationship that never changes. Without that, the pattern would not hold still.' },
+  { term: 'Path difference', body: 'How much further one wave has travelled than the other to reach a point. A whole number of wavelengths gives a maximum, a half number gives a minimum.' },
+  { term: 'Phase difference', body: 'The same thing counted in degrees instead of wavelengths: one whole wavelength of path difference is 360°. In phase means constructive, antiphase means destructive.' }
+];
+
+function BtecAddendum({ onGo }) {
+  const STATE = {
+    full: { tone: 'green', label: 'Covered' },
+    part: { tone: 'amber', label: 'Partly' },
+    none: { tone: 'rose',  label: 'Not here' }
+  };
+
+  return (
+    <div className="space-y-5 max-w-[1100px]">
+
+      <Card title="BTEC Applied Science — Unit 1, Section C1" icon="graduation-cap" accent="indigo"
+            right={<Badge tone="indigo">Working with waves</Badge>}>
+        <p className="text-sm text-slate-300 leading-relaxed">
+          This page was built for <b>AQA GCSE Required Practical 8</b>. Two parts of it happen to land almost
+          word for word on BTEC Unit 1 Section C1: the <b>two-dipper interference</b> mode in the ripple tank,
+          and the <b>vibrating string</b>, whose equation is printed on the BTEC formulae sheet. This tab is the
+          honest account of what that does and does not give you.
+        </p>
+        <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 my-4">
+          <p className="text-slate-200 leading-relaxed">
+            “Understand concepts of displacement, coherence, path difference, phase difference, superposition
+            as applied to diffraction gratings.”
+          </p>
+          <p className="text-xs text-slate-400 mt-1">Unit 1, C1 Working with waves</p>
+        </blockquote>
+        <p className="text-sm text-slate-300 leading-relaxed">
+          Read the end of that sentence carefully. The five concepts are the assessed content, but the spec
+          hangs them on <b className="text-amber-300">diffraction gratings</b>, not on a ripple tank. The tank is
+          how you see them; the grating is where the exam will ask about them. Do not walk into the paper having
+          only ever met them in water.
+        </p>
+      </Card>
+
+      <Card title="The five concepts, in the tank" icon="git-merge" accent="cyan"
+            right={<Btn onClick={() => onGo('ripple')} className="!py-1.5 !px-3 text-xs">Open the tank →</Btn>}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {BTEC_TERMS.map(t => (
+            <div key={t.term} className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+              <p className="font-semibold text-cyan-300 text-sm mb-1">{t.term}</p>
+              <p className="text-xs text-slate-300 leading-relaxed">{t.body}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+          Switch the tank to <b>Two dippers</b> and drag the probe: it reads the path difference in centimetres,
+          in wavelengths and in degrees of phase, and names the result constructive or destructive. Every number
+          on that panel comes from the same calculation that draws the fringes, so the picture and the figures
+          always agree.
+        </p>
+      </Card>
+
+      <Card title="From two dippers to a diffraction grating" icon="scan-line" accent="amber">
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          A grating is this same experiment with thousands of coherent sources instead of two. Every slit sends
+          out a wave, and a bright order appears in exactly the directions where the path difference between
+          <i> neighbouring</i> slits is a whole number of wavelengths — the identical condition you can see
+          holding along each green line in the tank.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+            <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">Two dippers</div>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Two sources, so the maxima are broad and blurry, fading gradually into the minima between them.
+            </p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+            <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">A grating</div>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Thousands of sources, so every direction except the exact maxima has some pair of slits cancelling
+              it. The orders become razor sharp — which is what makes a grating able to split a lamp into
+              separate emission lines and identify the gas inside it.
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+          The grating itself, emission spectra and gas identification are <b>not</b> simulated on this page. This
+          tab exists so you know the link, not so you can skip them.
+        </p>
+      </Card>
+
+      <Card title="What C1 asks for, and where it is here" icon="clipboard-list" accent="indigo">
+        <ul className="space-y-2">
+          {BTEC_C1.map((row, i) => {
+            const st = STATE[row.state];
+            return (
+              <li key={i} className="bg-slate-900/60 border border-slate-700 rounded-lg p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-slate-200 leading-relaxed flex-1">{row.spec}</p>
+                  <Badge tone={st.tone}>{st.label}</Badge>
+                </div>
+                {(row.where || row.note) && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {row.where && (
+                      row.tab
+                        ? <button type="button" onClick={() => onGo(row.tab)}
+                                  className="text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 rounded">
+                            {row.where} →
+                          </button>
+                        : <span className="text-xs text-cyan-300">{row.where}</span>
+                    )}
+                    {row.note && <span className="text-xs text-slate-400 leading-relaxed">{row.note}</span>}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        <Card title="The Unit 1 formulae sheet" icon="calculator" accent="cyan">
+          <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+            Five equations are printed at the back of the Unit 1 paper. Two of them belong to this topic, and
+            both are live in this tool. There is no grating equation on the sheet, so path difference and phase
+            difference are examined as ideas, in words, rather than as a calculation.
+          </p>
+          <ul className="space-y-2">
+            {BTEC_FORMULAE.map(f => (
+              <li key={f.name} className={'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ' +
+                    (f.here ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-slate-900/60 border-slate-700')}>
+                <div>
+                  <p className="text-xs text-slate-400">{f.name}</p>
+                  <p className={'font-mono text-sm ' + (f.here ? 'text-emerald-200' : 'text-slate-300')}>{f.eq}</p>
+                </div>
+                <Badge tone={f.here ? 'green' : 'slate'}>{f.here ? 'In this tool' : 'Elsewhere'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card title="What this page does not cover" icon="triangle-alert" accent="amber">
+          <p className="text-sm text-slate-300 leading-relaxed mb-3">
+            Section C is bigger than this page. Everything below is examinable and is <b>not</b> here — revise it
+            somewhere else and do not let a good simulation give you false confidence.
+          </p>
+          <ul className="text-sm text-slate-300 space-y-2 leading-relaxed">
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span><b>C1, the rest:</b> diffraction gratings themselves, emission spectra, identifying gases, and displacement–distance graphs.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span><b>C2 Waves in communication:</b> fibre optics — refractive index, total internal reflection, critical angle at a glass–air interface, endoscopes, analogue and digital signals, broadband.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span><b>C3 Electromagnetic waves:</b> that all EM waves share one speed in a vacuum, the inverse square law for intensity, how the spectrum is grouped by frequency, and the applications — satellite, mobile, Bluetooth, infrared and Wi-Fi.</span></li>
+            <li className="flex gap-2"><span className="text-amber-400 mt-0.5">▸</span>
+              <span><b>Longitudinal waves</b>, which C1 asks you to contrast with transverse ones. Nothing on this page is longitudinal.</span></li>
+          </ul>
+        </Card>
+      </div>
+
+      <Card title="Worth knowing" icon="lightbulb" accent="indigo">
+        <ul className="text-sm text-slate-300 space-y-2 leading-relaxed">
+          <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>
+            <span>The string equation <span className="font-mono text-slate-100">v = √(T/μ)</span> is given to you in the exam, so the marks are in choosing it and substituting correctly, not in recalling it. Part B lets you change T and μ and watch every harmonic move.</span></li>
+          <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>
+            <span>C1 lists <b>periodic time</b> among the terms, and it is the one students forget. It is on the ripple tank readings panel: T = 1 ÷ f.</span></li>
+          <li className="flex gap-2"><span className="text-indigo-400 mt-0.5">▸</span>
+            <span>AQA students can ignore this tab entirely — two-source interference is not on GCSE Physics. It will not hurt you to understand it, but it will not be asked.</span></li>
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    APP SHELL
    ═══════════════════════════════════════════════════════════════════ */
 
 const TABS = [
   { id: 'ripple', label: 'Ripple Tank',    emoji: '🌊', sub: 'Part A — water waves' },
   { id: 'string', label: 'Stretched String', emoji: '🎸', sub: 'Part B — standing waves' },
-  { id: 'notes',  label: 'Method & Exam',  emoji: '📝', sub: 'Part C — the write-up' }
+  { id: 'notes',  label: 'Method & Exam',  emoji: '📝', sub: 'Part C — the write-up' },
+  { id: 'btec',   label: 'BTEC Addendum',  emoji: '🎓', sub: 'Part D — Applied Science' }
 ];
 
 function App() {
@@ -2110,7 +2685,11 @@ function App() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[.18em] text-cyan-400 font-semibold">AQA GCSE Physics · Required Practical 8</p>
+              <p className="text-xs uppercase tracking-[.18em] text-cyan-400 font-semibold">
+                AQA GCSE Physics · Required Practical 8
+                <span className="text-slate-600 mx-2">|</span>
+                <span className="text-indigo-300">BTEC Applied Science · Unit 1 C1</span>
+              </p>
               <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-wide text-slate-50">
                 Measuring Waves — Ripple Tank &amp; Stretched String
               </h1>
@@ -2118,6 +2697,7 @@ function App() {
             <div className="flex items-center gap-2">
               <Badge tone="cyan">v = f λ</Badge>
               <Badge tone="amber">λ = 2 × loop</Badge>
+              <Badge tone="green">path diff = n λ</Badge>
               <Badge tone="slate">4.6.1.2</Badge>
             </div>
           </div>
@@ -2147,11 +2727,13 @@ function App() {
         {tab === 'ripple' && <RippleTank />}
         {tab === 'string' && <VibratingString />}
         {tab === 'notes'  && <NotesAndExam />}
+        {tab === 'btec'   && <BtecAddendum onGo={setTab} />}
       </main>
 
       <footer className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        Both halves of Required Practical 8 in one place. Everything is simulated from
-        v = √(gh) for shallow water and v = √(T/μ) for the string, so the numbers behave the way the apparatus does.
+        Both halves of AQA Required Practical 8 in one place, plus the two-source interference BTEC Unit 1 asks for.
+        Everything is simulated from v = √(gh) for shallow water and v = √(T/μ) for the string, so the numbers
+        behave the way the apparatus does.
       </footer>
     </div>
   );
