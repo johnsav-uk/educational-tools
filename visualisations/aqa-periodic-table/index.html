@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Periodic Table Explorer (beta) — AQA GCSE &amp; A-Level Chemistry</title>
+<title>Periodic Table Explorer — AQA GCSE &amp; A-Level Chemistry</title>
 <meta name="description" content="Interactive AQA periodic table for GCSE and A-Level Chemistry: element details, electron configurations, trend overlays, the history of the table and a presenter mode for the board.">
 <style>
 /* ── Tokens ───────────────────────────────────────────────────────────── */
@@ -88,8 +88,6 @@ sub,sup{ line-height:0; }
   background:var(--chem); color:#fff; font-weight:800; font-size:15px; letter-spacing:-.02em; }
 .brand h1{ margin:0; font-size:17px; line-height:1.2; letter-spacing:-.01em; }
 .brand p{ margin:0; font-size:12.5px; color:var(--muted); }
-.beta{ display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; vertical-align:2px;
-  border:1px solid currentColor; color:var(--alevel); margin-left:4px; }
 .tabs{ display:flex; gap:4px; background:var(--panel2); padding:4px; border-radius:11px; flex-wrap:wrap; }
 .tab{ border:0; background:transparent; padding:7px 13px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; color:var(--dim); }
 .tab[aria-selected="true"]{ background:var(--panel); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.15); }
@@ -139,7 +137,6 @@ main{ max-width:1500px; margin:0 auto; padding:16px 16px 70px; }
 .pt-key .frame{ fill:none; stroke:var(--line2); stroke-width:1.5; }
 .pt-key .tab{ fill:var(--ink); } .pt-key .tabt{ fill:var(--bg); font-weight:700; }
 .pt-key marker path{ fill:var(--dim); }
-.pt.as-list .pt-key{ display:none; }
 
 /* ── Periodic table ───────────────────────────────────────────────────── */
 .pt-wrap{ overflow-x:auto; container-type:inline-size; padding:12px 7px 10px; -webkit-overflow-scrolling:touch; }
@@ -168,7 +165,7 @@ main{ max-width:1500px; margin:0 auto; padding:16px 16px 70px; }
 .t-z{ font-weight:700; }
 .t-val{ display:none; font-size:clamp(9px, .8cqi, 18px); font-weight:700; font-variant-numeric:tabular-nums; line-height:1.15; }
 /* hydrogen floats alone, one column wide, centred over groups 3–12 */
-.pt:not(.as-list) .tile.float-h{ justify-self:center; width:calc((100% - (var(--fh-n, 10) - 1) * var(--gap)) / var(--fh-n, 10)); }
+.pt .tile.float-h{ justify-self:center; width:calc((100% - (var(--fh-n, 10) - 1) * var(--gap)) / var(--fh-n, 10)); }
 .pt .blk.float-h{ justify-self:center; width:calc((100% - (var(--fh-n, 10) - 1) * var(--gap)) / var(--fh-n, 10) + 10px); margin:-5px 0; }
 /* wide 32-column table: sized from its own width, so the tiles keep their proportions while it scrolls */
 .pt.long{ container-type:inline-size; min-width:1680px; grid-template-columns:minmax(20px,.42fr) repeat(32, minmax(0,1fr)); }
@@ -222,10 +219,6 @@ main{ max-width:1500px; margin:0 auto; padding:16px 16px 70px; }
 @keyframes flip{ from{ transform:rotateY(90deg); } to{ transform:none; } }
 
 /* list layout for phones */
-.pt.as-list{ display:flex; flex-wrap:wrap; min-width:0; gap:5px; }
-.pt.as-list .gh, .pt.as-list .ph, .pt.as-list .spacer, .pt.as-list .flabel, .pt.as-list .placeholder, .pt.as-list .blk{ display:none !important; }
-.pt.as-list .tile{ width:calc((100% - 5 * 5px) / 6); min-width:52px; flex:none; }
-.pt.as-list .t-sym{ font-size:20px; } .pt.as-list .t-mass, .pt.as-list .t-z{ font-size:11px; } .pt.as-list .t-name{ font-size:9.5px; }
 
 .foot{ font-size:12.5px; color:var(--muted); margin:6px 2px 0; }
 
@@ -476,7 +469,7 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">Pt</div>
       <div>
-        <h1>Periodic Table Explorer <span class="beta">beta</span></h1>
+        <h1>Periodic Table Explorer</h1>
         <p>AQA <span class="chem">Chemistry</span> · <span class="gcse">GCSE</span> &amp; <span class="alevel">A-Level</span></p>
       </div>
     </div>
@@ -515,7 +508,6 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
     <div class="bar">
       <span style="margin-left:auto"></span>
       <div class="seg" role="group" aria-label="Colours" id="gcseColour"><button data-c="family" aria-pressed="true">Coloured</button><button data-c="plain" aria-pressed="false">Plain (exam sheet)</button></div>
-      <div class="seg" role="group" aria-label="Layout"><button data-layout="grid" aria-pressed="true">Table</button><button data-layout="list" aria-pressed="false">List</button></div>
     </div>
     <div id="gcseTable"></div>
     <p class="foot">* The lanthanides (atomic numbers 58–71) and the actinides (90–103) are left out, as on the AQA GCSE sheet. Relative atomic masses of Cu and Cl are not rounded to whole numbers. Values in [brackets] are the mass number of the longest-lived isotope.</p>
@@ -534,8 +526,6 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
       </div>
       <button class="btn" id="alBlocks" aria-pressed="false">Outline s, p, d, f blocks</button>
       <button class="btn" id="alP3" aria-pressed="false">Period 3 oxides &amp; chlorides</button>
-      <span style="margin-left:auto"></span>
-      <div class="seg" role="group" aria-label="Layout" id="alLayout"><button data-layout="grid" aria-pressed="true">Table</button><button data-layout="list" aria-pressed="false">List</button></div>
     </div>
     <div class="bar">
       <span class="bar-label">OVERLAY</span>
@@ -1132,7 +1122,7 @@ function createTable(host, opts){
     } else { col = el.fIdx + 4; row = el.period === 6 ? 10 : 11; }
     const b = document.createElement('button');
     b.className = `tile cat-${el.cat} blk-${LONG && el.fIdx === 0 ? 'd' : el.block}`;
-    b.dataset.z = el.z; b.style.order = el.z;
+    b.dataset.z = el.z;
     b.innerHTML = tileInner(el, level);
     b.addEventListener('click', ev => opts.onTile && opts.onTile(el, b, ev, api));
     if (el.z === 1) {
@@ -1166,7 +1156,7 @@ function createTable(host, opts){
   const keyId = 'k' + Math.random().toString(36).slice(2, 8);
   function drawKey(){
     const h = tiles[1];
-    if (!h || grid.classList.contains('as-list')) { keyBox.innerHTML = ''; return; }
+    if (!h) { keyBox.innerHTML = ''; return; }
     const K = keyBox.getBoundingClientRect(), T = h.getBoundingClientRect();
     if (!K.width || !T.width) return;
     const mid = sel => { const r = $(sel, h).getBoundingClientRect(); return r.top + r.height / 2 - K.top; };
@@ -1198,7 +1188,7 @@ function createTable(host, opts){
 
   // keyboard: arrow keys move between tiles
   if (!opts.presenter) grid.addEventListener('keydown', ev => {
-    const t = ev.target.closest('.tile'); if (!t || !t._rc || grid.classList.contains('as-list')) return;
+    const t = ev.target.closest('.tile'); if (!t || !t._rc) return;
     const d = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[ev.key]; if (!d) return;
     ev.preventDefault();
     let [r, c] = t._rc;
@@ -1240,7 +1230,6 @@ function createTable(host, opts){
     isHidden(el){ return Object.values(st.quiz).some(Boolean) && !tiles[el.z].classList.contains('rev'); },
     setColour(c){ st.colour = c; grid.classList.toggle('by-block', c === 'block'); grid.classList.toggle('plain', c === 'plain'); },
     setBlocks(on){ st.blocks = on; grid.classList.toggle('blocks', on); },
-    setList(on){ grid.classList.toggle('as-list', on); drawKey(); },
     setOverlay(key){
       st.overlay = key || null; grid.classList.toggle('ov', !!key);
       EL.forEach(el => {
@@ -1589,14 +1578,6 @@ $('#alP3').addEventListener('click', e => {
   if (on) { renderP3(); alTable.setSpot(spotFor('p3', 'alevel')); $('#p3Panel').scrollIntoView({ behavior:'smooth', block:'nearest' }); }
   else if (alTable.state.spot && alTable.state.spot.key === 'p3') alTable.setSpot(null);
 });
-
-// layout toggles
-[[$('#panel-gcse .seg[aria-label="Layout"]'), gcseTable], [$('#alLayout'), alTable]].forEach(([seg, t]) => segGroup(seg, 'layout', v => t.setList(v === 'list')));
-if (window.matchMedia('(max-width: 560px)').matches) {
-  [[$('#panel-gcse .seg[aria-label="Layout"]'), gcseTable], [$('#alLayout'), alTable]].forEach(([seg, t]) => {
-    t.setList(true); $$('button', seg).forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'list'));
-  });
-}
 
 /* ════════════════════════════════════════════════════════════════════════
    HISTORY

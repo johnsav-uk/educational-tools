@@ -1,4 +1,4 @@
-# Periodic Table Explorer (beta)
+# Periodic Table Explorer
 
 A single-file periodic table for AQA GCSE and A-Level Chemistry. No build step and no libraries.
 
@@ -16,7 +16,7 @@ Deep links: `#gcse`, `#alevel`, `#long`, `#history`, `#present` (table slides), 
 
 Standard atomic weights come from IUPAC. Bracketed values are the mass numbers of the longest-lived isotopes. Electronegativities are Pauling values, first ionisation energies are from NIST (kJ mol⁻¹), atomic radii are covalent radii (Cordero et al., 2008) and ionic radii are Shannon's 6-coordinate values. Portraits are public-domain images hotlinked from Wikimedia Commons. If one fails to load, the scientist's initials show instead.
 
-## Still to check (why it's beta)
+## Still to check
 
 - A teacher should proofread the element notes and the Period 3 tables.
 - Newlands' octave grid is simplified and uses modern symbols.
