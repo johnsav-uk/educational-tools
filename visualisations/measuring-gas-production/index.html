@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measuring Gas in Reactions (beta)</title>
+<meta name="description" content="AQA GCSE Chemistry 4.6.1.1 / Combined Science 5.6.1.1: animated gas syringe, mass-loss and downward-displacement setups with live graphs, presenter mode, revision notes and a printable worksheet and exam questions.">
+<link rel="stylesheet" href="gas.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top">
+  <div class="grow">
+    <h1>Measuring Gas in Reactions <span class="chip beta">beta</span></h1>
+    <p class="lede">Three ways to follow a reaction that gives off a gas: catch it in a syringe, weigh what escapes, or collect it over water. Run each one, watch the graph build, then work out the rate.</p>
+    <div class="meta">
+      <span class="chip chem">AQA Chemistry 4.6.1.1</span>
+      <span class="chip chem">Combined Science 5.6.1.1</span>
+      <span class="chip chem">Required practical: rates</span>
+      <span class="chip gcse">GCSE</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="presentBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+      Presenter mode
+    </button>
+    <button class="btn" id="pdfNotes" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Revision worksheet &amp; notes (PDF)
+    </button>
+    <button class="btn" id="pdfExam" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Exam questions + mark scheme (PDF)
+    </button>
+  </div>
+</header>
+
+<nav class="jump" aria-label="On this page">
+  <a href="#overview">Overview</a>
+  <a href="#m-syringe">1 · Gas syringe</a>
+  <a href="#m-mass">2 · Mass loss</a>
+  <a href="#m-water">3 · Over water</a>
+  <a href="#compare">Compare</a>
+  <a href="#notes">Revision notes</a>
+  <a href="#maths">Rate maths</a>
+  <a href="#quiz">Quick quiz</a>
+  <a href="#exam">Exam questions</a>
+</nav>
+
+<main>
+
+<div class="print-only print-head-wrap">
+  <div class="print-head">
+    <div>
+      <h1>Measuring Gas in Reactions</h1>
+      <div class="sub"><span class="for-notes">Revision notes &amp; worksheet</span><span class="for-exam">Exam-style questions</span> · AQA GCSE Chemistry 4.6.1.1 · Combined Science 5.6.1.1</div>
+    </div>
+    <div class="sub">Savage Science Tools</div>
+  </div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+</div>
+
+<!-- ═══════════════════ OVERVIEW ═══════════════════ -->
+<section class="sect" id="overview">
+  <h2>Overview</h2>
+  <div class="overview" id="overviewBody">
+    <div class="panel">
+      <h3>Learning objectives</h3>
+      <ol class="lo">
+        <li>Describe how to measure the gas given off in a reaction with a <span class="kw">gas syringe</span>, by <span class="kw">mass loss</span> and by <span class="kw">collecting over water</span>.</li>
+        <li>Choose the right method for a gas, using its <span class="kw">solubility</span> and <span class="kw">density</span>.</li>
+        <li>Spot the sources of error in each method and suggest improvements.</li>
+        <li>Calculate a <span class="kw">mean rate</span> from results, with the correct units.</li>
+        <li><span class="tag ht">HT</span> Draw a <span class="kw">tangent</span> to a curve and use its gradient to find the rate at a given time.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="cards3">
+        <a class="mcard" href="#m-syringe"><span class="n">Method 1</span><b>Gas syringe</b><span class="d">Gas pushes the plunger out. Read the volume in cm³.</span></a>
+        <a class="mcard" href="#m-mass"><span class="n">Method 2</span><b>Mass loss</b><span class="d">Gas escapes through cotton wool. The balance reading falls.</span></a>
+        <a class="mcard" href="#m-water"><span class="n">Method 3</span><b>Over water</b><span class="d">Gas pushes water out of an upturned measuring cylinder.</span></a>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h3>Why measure a gas?</h3>
+        <p style="margin:.2em 0;color:var(--body)">When a reaction gives off a gas, the amount of gas made tells you how far the reaction has gone. Taking a reading every 10 seconds lets you plot a graph and work out the <span class="kw">rate of reaction</span>:</p>
+        <div class="eqn-list">
+          <span class="eq">mean rate = <span class="frac"><span>quantity of product formed</span><span>time taken</span></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ METHODS ═══════════════════ -->
+<section class="sect" id="methods">
+  <h2>The three setups</h2>
+  <p class="sect-lede">Press <b>Play</b> to start the reaction, or drag the time slider to any moment. Tick <b>Live graph</b> to plot the results as they come in, and <b>Tangent</b> to see the rate at that instant.</p>
+
+  <article class="method" id="m-syringe">
+    <div class="method-head">
+      <h3><span class="kicker">Method 1</span><br>Gas syringe: volume of gas against time</h3>
+    </div>
+    <div class="method-body" id="body-syringe">
+      <div class="sim" data-method="syringe"></div>
+      <aside class="keypoints">
+        <p class="eqn eq">Mg + 2HCl → MgCl<sub>2</sub> + H<sub>2</sub></p>
+        <h4>How it works</h4>
+        <ul>
+          <li>The gas travels along the delivery tube and <span class="kw">pushes the plunger out</span>.</li>
+          <li>Read the <span class="kw">volume in cm³</span> from the scale on the barrel every 10&nbsp;s.</li>
+          <li>Start the stopwatch the moment the bung goes in.</li>
+        </ul>
+        <h4>Strengths</h4>
+        <ul class="pro">
+          <li>Measures the volume of <span class="kw">any gas</span> directly, including soluble ones like CO<sub>2</sub>.</li>
+          <li>Accurate: readings to the nearest 1&nbsp;cm³.</li>
+        </ul>
+        <h4>Limitations</h4>
+        <ul class="con">
+          <li>Holds only about <span class="kw">100 cm³</span>; a fast reaction can push the plunger out.</li>
+          <li>The plunger can <span class="kw">stick</span>, then jump.</li>
+        </ul>
+      </aside>
+    </div>
+  </article>
+
+  <article class="method" id="m-mass">
+    <div class="method-head">
+      <h3><span class="kicker">Method 2</span><br>Mass loss: balance and cotton wool</h3>
+    </div>
+    <div class="method-body" id="body-mass">
+      <div class="sim" data-method="mass"></div>
+      <aside class="keypoints">
+        <p class="eqn eq">CaCO<sub>3</sub> + 2HCl → CaCl<sub>2</sub> + H<sub>2</sub>O + CO<sub>2</sub></p>
+        <h4>How it works</h4>
+        <ul>
+          <li>The flask sits on a <span class="kw">digital balance</span>. Gas escapes, so the <span class="kw">mass falls</span>.</li>
+          <li>The <span class="kw">cotton wool</span> lets the gas out but stops acid spray escaping.</li>
+          <li>Mass lost = mass of gas produced.</li>
+        </ul>
+        <h4>Strengths</h4>
+        <ul class="pro">
+          <li>Simple, and the balance can be read very precisely (0.01&nbsp;g).</li>
+          <li>Works well for a <span class="kw">dense gas like CO<sub>2</sub></span> (M<sub>r</sub>&nbsp;=&nbsp;44).</li>
+        </ul>
+        <h4>Limitations</h4>
+        <ul class="con">
+          <li><span class="kw">Useless for hydrogen</span>: H<sub>2</sub> is so light the mass barely changes.</li>
+          <li>The gas goes into the room, so avoid it for toxic gases.</li>
+        </ul>
+      </aside>
+    </div>
+  </article>
+
+  <article class="method" id="m-water">
+    <div class="method-head">
+      <h3><span class="kicker">Method 3</span><br>Downward displacement of water</h3>
+    </div>
+    <div class="method-body" id="body-water">
+      <div class="sim" data-method="water"></div>
+      <aside class="keypoints">
+        <p class="eqn eq">2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O + O<sub>2</sub> <small style="font-family:var(--sst-font);font-size:.7em">(MnO<sub>2</sub> catalyst)</small></p>
+        <h4>How it works</h4>
+        <ul>
+          <li>A measuring cylinder is filled with water and turned upside down in a trough.</li>
+          <li>Gas bubbles up into it and <span class="kw">pushes the water down</span>.</li>
+          <li>Read the volume at the <span class="kw">water level</span>. The scale is upside down.</li>
+        </ul>
+        <h4>Strengths</h4>
+        <ul class="pro">
+          <li>Cheap, simple apparatus; you can <span class="kw">see</span> the gas collect.</li>
+          <li>Good for gases that are <span class="kw">insoluble</span> in water: H<sub>2</sub>, O<sub>2</sub>.</li>
+        </ul>
+        <h4>Limitations</h4>
+        <ul class="con">
+          <li><span class="kw">Soluble gases dissolve</span> (CO<sub>2</sub> a little, NH<sub>3</sub> and HCl a lot), so the volume reads low.</li>
+          <li>Upside-down scale; less precise than a syringe.</li>
+        </ul>
+      </aside>
+    </div>
+  </article>
+</section>
+
+<!-- ═══════════════════ COMPARE ═══════════════════ -->
+<section class="sect" id="compare">
+  <h2>Comparing the three methods</h2>
+  <p class="sect-lede">Each method measures the same thing, how much gas has been made, but each one suits some gases better than others.</p>
+  <div id="compareBody">
+    <div class="tablewrap">
+      <table class="cmp">
+        <thead><tr><th>Method</th><th>What you measure</th><th>Advantages</th><th>Disadvantages &amp; limitations</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td>Gas syringe</td><td>Volume of gas (cm³)</td>
+            <td><ul><li>Works for any gas, soluble or not</li><li>Accurate to about 1&nbsp;cm³</li><li>Gas is contained</li></ul></td>
+            <td><ul><li>Maximum about 100&nbsp;cm³</li><li>Plunger can stick or be pushed out</li><li>Glass syringes are fragile and expensive</li></ul></td>
+            <td>CO<sub>2</sub>, H<sub>2</sub>, O<sub>2</sub>; the most versatile</td></tr>
+          <tr><td>Mass loss</td><td>Mass of the flask and contents (g)</td>
+            <td><ul><li>Very precise balance (0.01&nbsp;g)</li><li>Easy to set up and read</li><li>No need to collect the gas</li></ul></td>
+            <td><ul><li>Change is tiny for light gases like H<sub>2</sub></li><li>Gas escapes into the room</li><li>Draughts make the reading drift</li></ul></td>
+            <td>Dense gases: CO<sub>2</sub></td></tr>
+          <tr><td>Over water</td><td>Volume of gas (cm³)</td>
+            <td><ul><li>Cheap, simple apparatus</li><li>Easy to see the gas collect</li><li>Can collect more than 100&nbsp;cm³ with a bigger cylinder</li></ul></td>
+            <td><ul><li>Soluble gases dissolve, so readings are low</li><li>Upside-down scale is easy to misread</li><li>Air can be left in the cylinder at the start</li></ul></td>
+            <td>Insoluble gases: H<sub>2</sub>, O<sub>2</sub></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel keep">
+      <h3>Which method for which gas?</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Gas</th><th>Solubility in water</th><th>Density (M<sub>r</sub>)</th><th>Good choices</th></tr></thead>
+          <tbody>
+            <tr><td>Hydrogen, H<sub>2</sub></td><td>Insoluble</td><td>Very light (2)</td><td>Syringe or over water. <b>Not</b> mass loss.</td></tr>
+            <tr><td>Oxygen, O<sub>2</sub></td><td>Almost insoluble</td><td>Medium (32)</td><td>Syringe or over water</td></tr>
+            <tr><td>Carbon dioxide, CO<sub>2</sub></td><td>Slightly soluble</td><td>Heavy (44)</td><td>Syringe or mass loss. Over water reads low.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel keep">
+      <h3>Two questions to ask</h3>
+      <p style="color:var(--body)"><b>1. Does the gas dissolve in water?</b> If it does, collecting it over water loses some of it, so use a gas syringe.</p>
+      <p style="color:var(--body)"><b>2. Is the gas heavy enough to weigh?</b> A mole of H<sub>2</sub> weighs only 2&nbsp;g, so the mass change is too small to measure accurately. A mole of CO<sub>2</sub> weighs 44&nbsp;g, which a balance picks up easily.</p>
+      <p style="color:var(--body)">Whichever method you use, the <b>shape of the graph</b> is the same: steep at first, then levelling off when a reactant is used up.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ NOTES ═══════════════════ -->
+<section class="sect doc" id="notes">
+  <h2>Revision notes</h2>
+  <div class="spec">
+    <b>Specification link.</b> AQA GCSE Chemistry 4.6.1.1 and Combined Science: Trilogy 5.6.1.1, <i>Calculating rates of reactions</i>, and the rates required practical (Chemistry RP5; Trilogy RP11). The rate of a reaction can be found by measuring the quantity of a reactant used or a product formed over time.
+  </div>
+
+  <div class="method-note">
+    <h3><span class="n">1</span>Gas syringe</h3>
+    <figure class="print-only fig"><img data-fig="syringe" alt="Conical flask of magnesium and hydrochloric acid connected by a delivery tube to a gas syringe"><figcaption>Figure 1. Collecting hydrogen in a gas syringe.</figcaption></figure>
+    <div class="two">
+      <div>
+        <h4>Equipment</h4>
+        <ul>
+          <li>Conical flask with a one-hole bung and delivery tube</li>
+          <li>Gas syringe (100&nbsp;cm³), clamped</li>
+          <li>Stopwatch</li>
+          <li>Measuring cylinder for the acid</li>
+          <li>Magnesium ribbon and dilute hydrochloric acid</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Method</h4>
+        <ol>
+          <li>Check the syringe plunger is pushed fully in and reads 0&nbsp;cm³.</li>
+          <li>Measure 50&nbsp;cm³ of acid into the flask.</li>
+          <li>Add the magnesium, put the bung in straight away and start the stopwatch.</li>
+          <li>Record the volume on the syringe every 10&nbsp;s until it stops changing.</li>
+          <li>Repeat with a different concentration of acid, keeping everything else the same.</li>
+        </ol>
+      </div>
+    </div>
+    <h4>Sources of error and improvements</h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Problem</th><th>Effect</th><th>Improvement</th></tr></thead>
+      <tbody>
+        <tr><td>Gas escapes before the bung is in</td><td>Volumes too low</td><td>Put the acid in a small tube inside the flask and tip it over after the bung is in</td></tr>
+        <tr><td>Plunger sticks</td><td>Volume jumps instead of rising smoothly</td><td>Check the syringe moves freely before starting</td></tr>
+        <tr><td>Reaction too fast</td><td>Syringe fills before the end</td><td>Use less magnesium or more dilute acid</td></tr>
+        <tr><td>Leaky bung or joints</td><td>Volumes too low</td><td>Check the seals are airtight</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="method-note page">
+    <h3><span class="n">2</span>Mass loss</h3>
+    <figure class="print-only fig"><img data-fig="mass" alt="Conical flask of marble chips and acid, plugged with cotton wool, standing on a digital balance"><figcaption>Figure 2. Following the loss of carbon dioxide on a balance.</figcaption></figure>
+    <div class="two">
+      <div>
+        <h4>Equipment</h4>
+        <ul>
+          <li>Conical flask and cotton wool plug</li>
+          <li>Digital balance reading to 0.01&nbsp;g</li>
+          <li>Stopwatch</li>
+          <li>Marble chips (calcium carbonate) and dilute hydrochloric acid</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Method</h4>
+        <ol>
+          <li>Put the acid in the flask and the chips beside it on the balance, with the cotton wool.</li>
+          <li>Add the chips to the acid, plug the neck with cotton wool and start the stopwatch.</li>
+          <li>Record the mass every 10&nbsp;s until it stops falling.</li>
+          <li>Work out the <b>mass lost</b> at each time: starting mass − reading.</li>
+        </ol>
+      </div>
+    </div>
+    <h4>Sources of error and improvements</h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Problem</th><th>Effect</th><th>Improvement</th></tr></thead>
+      <tbody>
+        <tr><td>Acid spray escapes from the flask</td><td>Mass loss too big</td><td>Use a cotton wool plug</td></tr>
+        <tr><td>Draughts push on the pan</td><td>Readings drift</td><td>Use a draught shield; close windows</td></tr>
+        <tr><td>Gas is very light (H<sub>2</sub>)</td><td>Change too small to measure</td><td>Use a gas syringe instead</td></tr>
+        <tr><td>Some CO<sub>2</sub> stays dissolved in the acid</td><td>Mass loss slightly low at first</td><td>Swirl the flask the same way each time</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="method-note page">
+    <h3><span class="n">3</span>Downward displacement of water</h3>
+    <figure class="print-only fig"><img data-fig="water" alt="Conical flask of hydrogen peroxide with a delivery tube leading under an upturned measuring cylinder in a trough of water"><figcaption>Figure 3. Collecting oxygen over water in an upturned measuring cylinder.</figcaption></figure>
+    <div class="two">
+      <div>
+        <h4>Equipment</h4>
+        <ul>
+          <li>Conical flask, bung and delivery tube</li>
+          <li>Trough (or large bowl) of water</li>
+          <li>100&nbsp;cm³ measuring cylinder, clamped upside down</li>
+          <li>Stopwatch</li>
+          <li>Hydrogen peroxide solution and manganese(IV) oxide catalyst</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Method</h4>
+        <ol>
+          <li>Fill the measuring cylinder <b>completely</b> with water, cover the top and turn it upside down in the trough.</li>
+          <li>Clamp it with the open end under the water and place the end of the delivery tube underneath.</li>
+          <li>Add the catalyst, put the bung in and start the stopwatch.</li>
+          <li>Record the volume of gas every 10&nbsp;s. Read at the water level; the scale runs <b>downwards</b>.</li>
+        </ol>
+      </div>
+    </div>
+    <h4>Sources of error and improvements</h4>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Problem</th><th>Effect</th><th>Improvement</th></tr></thead>
+      <tbody>
+        <tr><td>Gas dissolves in the water</td><td>Volumes too low</td><td>Use a gas syringe for soluble gases such as CO<sub>2</sub></td></tr>
+        <tr><td>Air left in the cylinder at the start</td><td>Volumes too high, or start reading not 0</td><td>Fill completely; record the starting level</td></tr>
+        <tr><td>Reading the upside-down scale</td><td>Misread volumes</td><td>Read at eye level at the bottom of the meniscus</td></tr>
+        <tr><td>Water sucked back into the flask</td><td>Experiment ruined</td><td>Remove the delivery tube from the water before anything cools</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout mistake"><b>Common mistake</b><p>“The gas displaces the water <i>downwards</i>” describes what happens in the cylinder. Don't confuse it with <i>downward delivery</i>, a different way of collecting dense gases in a gas jar.</p></div>
+  </div>
+
+  <div class="page" id="maths">
+    <h3><span class="n">4</span>Calculating rate from results</h3>
+    <h4>Mean rate</h4>
+    <p>The mean (average) rate over a time interval is the change in quantity divided by the time taken:</p>
+    <p><span class="eq block">rate = <span class="frac"><span>ΔVolume</span><span>ΔTime</span></span> &nbsp;(cm³/s) &nbsp;&nbsp;or&nbsp;&nbsp; rate = <span class="frac"><span>ΔMass</span><span>ΔTime</span></span> &nbsp;(g/s)</span></p>
+    <div class="callout tip"><b>Worked example</b>
+      <p>A gas syringe reads 0&nbsp;cm³ at the start and 36&nbsp;cm³ after 30&nbsp;s. Mean rate = 36 ÷ 30 = <b>1.2&nbsp;cm³/s</b>.</p>
+      <p>A flask on a balance falls from 125.40&nbsp;g to 124.80&nbsp;g in 60&nbsp;s. Mass lost = 0.60&nbsp;g, so mean rate = 0.60 ÷ 60 = <b>0.010&nbsp;g/s</b>.</p>
+    </div>
+    <p>Units always come from the quantity divided by the time: cm³/s, g/s, and at Higher Tier mol/s. Rate can also be given per minute if time was measured in minutes.</p>
+
+    <h4>Reading the graph</h4>
+    <ul>
+      <li>The <b>steeper</b> the line, the <b>faster</b> the reaction.</li>
+      <li>The curve is steepest at the start, when the reactants are most concentrated.</li>
+      <li>It gets less steep as reactants are used up, and goes <b>flat</b> when the reaction stops.</li>
+      <li>The height of the flat part is the <b>total amount of gas</b>. It depends on the amount of the limiting reactant, not on the rate.</li>
+    </ul>
+
+    <h4>Rate at a particular time: tangents <span class="tag ht">HT</span></h4>
+    <div class="two">
+      <div>
+        <ol>
+          <li>Find the point on the curve at the time you want.</li>
+          <li>Place a ruler so it just touches the curve there, without cutting across it, and draw the <b>tangent</b>.</li>
+          <li>Make a large right-angled triangle under the tangent.</li>
+          <li>Gradient = <span class="frac"><span>change in y</span><span>change in x</span></span> = rate at that time.</li>
+        </ol>
+        <div class="callout ht"><b>Worked example</b><p>From the tangent at 20&nbsp;s: Δy = 68 − 12 = 56&nbsp;cm³ and Δx = 40 − 0 = 40&nbsp;s. Rate = 56 ÷ 40 = <b>1.4&nbsp;cm³/s</b>.</p></div>
+      </div>
+      <figure class="keep" style="margin:0">
+        <div id="tangentFig"></div>
+        <figcaption>Oxygen from hydrogen peroxide. The tangent at 20&nbsp;s has a gradient of 1.4&nbsp;cm³/s.</figcaption>
+      </figure>
+    </div>
+    <div class="callout mistake"><b>Common mistakes</b>
+      <p>Reading the gradient from a tiny triangle: draw it as big as the tangent allows.</p>
+      <p>Using the curve's own value at that time (for example 40&nbsp;cm³ ÷ 20&nbsp;s). That gives the <i>mean</i> rate from the start, not the rate at 20&nbsp;s.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ WORKSHEET (print) ═══════════════════ -->
+<section class="print-only doc" id="worksheet">
+  <h2>Worksheet</h2>
+  <h3><span class="n">A</span>Compare the methods</h3>
+  <p>Complete the table.</p>
+  <div class="tablewrap"><table class="ws-table">
+    <thead><tr><th style="width:22%">Method</th><th>What is measured, and in what unit?</th><th>One advantage</th><th>One limitation</th></tr></thead>
+    <tbody><tr><td>Gas syringe</td><td></td><td></td><td></td></tr><tr><td>Mass loss</td><td></td><td></td><td></td></tr><tr><td>Over water</td><td></td><td></td><td></td></tr></tbody>
+  </table></div>
+
+  <h3><span class="n">B</span>Choose a method</h3>
+  <p>For each reaction, name the best method and give a reason.</p>
+  <div class="keep"><p>(a) Zinc + sulfuric acid → zinc sulfate + <b>hydrogen</b></p><div class="ws-lines"><div class="ln"></div><div class="ln"></div></div></div>
+  <div class="keep"><p>(b) Calcium carbonate + hydrochloric acid → calcium chloride + water + <b>carbon dioxide</b></p><div class="ws-lines"><div class="ln"></div><div class="ln"></div></div></div>
+  <div class="keep"><p>(c) A student collects carbon dioxide over water and a gas syringe in two identical experiments. Which gives the larger final volume? Explain why.</p><div class="ws-lines"><div class="ln"></div><div class="ln"></div></div></div>
+
+  <div class="page">
+  <h3><span class="n">C</span>Plot and analyse</h3>
+  <p>A student decomposed hydrogen peroxide with a catalyst and collected the oxygen in a gas syringe.</p>
+  <div class="tablewrap datawrap"><table class="data"><tr><th>Time (s)</th><td>0</td><td>10</td><td>20</td><td>30</td><td>40</td><td>50</td><td>60</td><td>70</td><td>80</td></tr>
+    <tr><th>Volume (cm³)</th><td>0</td><td>20</td><td>33</td><td>42</td><td>48</td><td>52</td><td>55</td><td>56</td><td>58</td></tr></table></div>
+  <p>(a) Plot the results on the grid. Label the axes, choose a sensible scale and draw a smooth curve of best fit.</p>
+  <div id="blankGrid" class="keep"></div>
+  <div class="keep"><p>(b) Calculate the mean rate of reaction over the first 20&nbsp;s. Give the unit.</p><div class="ws-lines"><div class="ln"></div><div class="ln"></div></div></div>
+  <div class="keep"><p>(c) <span class="tag ht">HT</span> Draw a tangent to your curve at 30&nbsp;s and use it to find the rate at 30&nbsp;s.</p><div class="ws-lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+  </div>
+
+  <div class="keep"><h3><span class="n">D</span>Spot the error</h3>
+  <p>A student added the acid, then took 5&nbsp;s to put the bung in and start the stopwatch. Explain how this affects the results and how to prevent it.</p>
+  <div class="ws-lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+</section>
+
+<section class="print-only doc" id="wsAnswers">
+  <h2>Worksheet answers (teacher copy)</h2>
+  <p><b>A.</b> Syringe: volume, cm³; any gas / accurate; max 100 cm³ / plunger sticks. Mass loss: mass, g; precise balance / simple; no good for light gases (H<sub>2</sub>) / gas released into room. Over water: volume, cm³; cheap / see gas collect; soluble gases dissolve / upside-down scale.</p>
+  <p><b>B.</b> (a) Gas syringe or over water: hydrogen is insoluble but too light for mass loss. (b) Mass loss or gas syringe: CO<sub>2</sub> is dense (M<sub>r</sub> 44) but slightly soluble in water. (c) The syringe: some CO<sub>2</sub> dissolves in the water, so less is collected over water.</p>
+  <p><b>C.</b> (b) 33 ÷ 20 = 1.65 ≈ 1.7 cm³/s. (c) About 0.7 cm³/s (accept 0.5–0.9), from a large triangle on a correctly drawn tangent.</p>
+  <p><b>D.</b> Gas made in the first 5 s is lost / not measured, so every volume is too low (a systematic error) and the early rate looks slower. Tip the reactants together after the bung is in, e.g. acid in a small tube inside the flask, or start the stopwatch as the reactants meet.</p>
+</section>
+
+<!-- ═══════════════════ QUICK QUIZ ═══════════════════ -->
+<section class="sect" id="quiz">
+  <h2>Check for understanding</h2>
+  <p class="sect-lede">Six quick questions. Pick an answer to see whether you are right and why.</p>
+  <div id="quizBody">
+    <div class="quiz-bar"><span class="score" id="quizScore">0 / 6</span><button class="btn sm" id="quizReset" type="button">Try again</button></div>
+    <div class="qq-list" id="quizList"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ EXAM QUESTIONS ═══════════════════ -->
+<section class="sect doc" id="exam">
+  <h2>Exam-style questions</h2>
+  <p class="sect-lede no-print">Write your answer in each box, then open the mark scheme and tick every point you got. Your score adds up at the top.</p>
+  <p class="print-only">Answer all questions in the spaces provided. Total: <b id="totalMarksPrint">29</b> marks. <span class="tag ht">HT</span> marks a Higher Tier part.</p>
+  <div class="scorebar">
+    <span class="score" id="examScore">Score: 0 / 29</span>
+    <button class="btn sm" id="openAll" type="button">Open all mark schemes</button>
+    <button class="btn sm" id="resetExam" type="button">Reset</button>
+  </div>
+  <div id="examList"></div>
+</section>
+
+<section class="print-only doc" id="msPrint">
+  <h2>Mark scheme</h2>
+  <div id="msPrintList"></div>
+</section>
+</main>
+
+<!-- ═══════════════════ PRESENTER ═══════════════════ -->
+<div id="presenter" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden>
+  <div class="p-top">
+    <span class="p-title" id="pTitle">Measuring Gas in Reactions</span>
+    <span class="p-count" id="pCount">1 / 6</span>
+    <button class="btn sm" id="pExit" type="button">Exit <kbd style="font:inherit;opacity:.7">Esc</kbd></button>
+  </div>
+  <div class="p-stage" id="pStage">
+    <section class="pslide" data-title="Learning objectives">
+      <div class="kicker">Measuring gas in reactions</div>
+      <h2>Learning objectives &amp; overview</h2>
+      <div data-borrow="overviewBody"></div>
+    </section>
+    <section class="pslide" data-title="Method 1: Gas syringe">
+      <div class="kicker">Method 1</div>
+      <h2>Gas syringe: volume against time</h2>
+      <div data-borrow="body-syringe"></div>
+    </section>
+    <section class="pslide" data-title="Method 2: Mass loss">
+      <div class="kicker">Method 2</div>
+      <h2>Mass loss: balance and cotton wool</h2>
+      <div data-borrow="body-mass"></div>
+    </section>
+    <section class="pslide" data-title="Method 3: Downward displacement">
+      <div class="kicker">Method 3</div>
+      <h2>Downward displacement of water</h2>
+      <div data-borrow="body-water"></div>
+    </section>
+    <section class="pslide" data-title="Comparing the methods">
+      <div class="kicker">Summary</div>
+      <h2>Comparing the three methods</h2>
+      <div data-borrow="compareBody"></div>
+    </section>
+    <section class="pslide" data-title="Check for understanding">
+      <div class="kicker">Quick quiz</div>
+      <h2>Check for understanding</h2>
+      <div data-borrow="quizBody"></div>
+    </section>
+  </div>
+  <div class="p-nav">
+    <button class="btn sm" id="pPrev" type="button" aria-label="Previous slide">← Back</button>
+    <div class="p-dots" id="pDots"></div>
+    <span class="p-hint">→ / Space next · ← back · Esc exit</span>
+    <button class="btn sm primary" id="pNext" type="button" aria-label="Next slide">Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ PRINT DIALOG ═══════════════════ -->
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Download PDF</h2>
+    <p>Formatted for A4 portrait. In the print window, choose <b>Save as PDF</b> as the destination to download it, or pick a printer.</p>
+    <div id="optNotes">
+      <label><input type="checkbox" id="pWsAns"> <span><b>Worksheet answers</b> on a final page (teacher copy)</span></label>
+    </div>
+    <div id="optExam">
+      <label><input type="checkbox" id="pMs" checked> <span><b>Mark scheme</b>, starting on a new page</span></label>
+      <p style="font-size:.88rem">Any answers typed on screen are printed in place of the answer lines.</p>
+    </div>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" id="doPrint" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="gas.js"></script>
+</body>
+</html>
