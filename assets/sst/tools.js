@@ -89,6 +89,12 @@ window.SST_TOOLS = [
     image: "rate-of-reaction.png",
     keywords: "rates of reaction collision theory activation energy catalyst concentration temperature surface area particles 4.6.1" },
 
+  { title: "Measuring Gas in Reactions", url: "visualisations/measuring-gas-production/",
+    blurb: "Run the gas syringe, mass-loss and over-water setups, watch the live graphs build, then find the rate from a tangent.",
+    kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+    image: "measuring-gas.png",
+    keywords: "measuring gas produced gas collection rates of reaction required practical rp5 rp11 gas syringe plunger volume of gas cm3 mass loss balance cotton wool marble chips calcium carbonate hydrochloric acid carbon dioxide co2 magnesium ribbon hydrogen h2 hydrogen peroxide manganese dioxide mno2 catalyst oxygen o2 downward displacement of water collecting gas over water upturned inverted measuring cylinder burette trough solubility soluble insoluble density mean rate cm3/s g/s tangent gradient rate at a time volume time graph mass time graph sources of error improvements presenter mode slides worksheet printable pdf exam questions mark scheme higher tier 4.6.1.1 5.6.1.1" },
+
   { title: "Waves: Ripple Tank & Stretched String", url: "visualisations/waves-required-practical/",
     blurb: "Orbit the 3D apparatus, freeze the tank with a strobe, interfere two dippers and tune a string to resonance. AQA RP8 plus a BTEC addendum.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Physics", "Physics", "3D Model", "Interactive"],
