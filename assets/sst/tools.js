@@ -89,7 +89,7 @@ window.SST_TOOLS = [
     image: "rate-of-reaction.png",
     keywords: "rates of reaction collision theory activation energy catalyst concentration temperature surface area particles 4.6.1" },
 
-  { title: "Measuring Gas in Reactions", url: "visualisations/measuring-gas-production/",
+  { title: "Measuring Gas in Reactions (beta)", url: "visualisations/measuring-gas-production/",
     blurb: "Run the gas syringe, mass-loss and over-water setups, watch the live graphs build, then find the rate from a tangent.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
     image: "measuring-gas.png",
