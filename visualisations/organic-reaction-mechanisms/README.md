@@ -58,6 +58,15 @@ the end of it green), `rad` (a radical's unpaired electron, as a single dot),
 (delay in seconds before it appears). A scene may declare `uv: {x, y, tx, ty}`
 for an ultraviolet lamp whose rays travel towards the bond it breaks.
 
+Three rules govern where an arrowhead may sit, and they are worth checking
+whenever an anchor is moved. The head must be at least 18 px clear of every
+bond segment, or the arrow reads as pointing at the bond rather than at the
+atom; the curve's tangent where it ends must be within about 40 degrees of the
+direction to the target atom, or the arrow curls past its target and points
+away; and the bow must be under roughly 0.6 of the chord length, or the curve
+folds into a loop. Placing a head on the bearing that runs back along the bond
+breaks the first two at once, which is the easiest mistake to make here.
+
 Scene captions are never uppercased: `text-transform` would turn AlCl₃ into
 ALCL₃ and NaBH₄ into NABH₄, so the style relies on colour and letter-spacing
 instead. The benzene horseshoe derives its two ends from the ring vertex

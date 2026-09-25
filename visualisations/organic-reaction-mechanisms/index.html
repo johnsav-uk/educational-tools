@@ -496,7 +496,7 @@ MECHANISMS.push({
           N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
         ],
         bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('h', 'br')],
-        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,30', 24, { delay: 0.5 })],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,25', 24, { delay: 0.5 })],
         notes: [NAME(355, 350, 'ethene'), NAME(600, 110, 'hydrogen bromide')]
       }
     },
@@ -569,7 +569,7 @@ MECHANISMS.push({
         ],
         bonds: [BD('c1', 'c2', 2), BD('c1', 'me'), BD('c1', 'h2'),
                 ...alkRightB(), BD('h', 'br')],
-        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,30', 24, { delay: 0.5 })],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|br', 'br@0,25', 24, { delay: 0.5 })],
         notes: [NAME(355, 350, 'propene')]
       }
     },
@@ -640,7 +640,7 @@ MECHANISMS.push({
           N('br2', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
         ],
         bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('br1', 'br2')],
-        arrows: [AR('c1|c2', 'br1@138,26', -26), AR('br1|br2', 'br2@0,30', 24, { delay: 0.5 })],
+        arrows: [AR('c1|c2', 'br1@138,26', -26), AR('br1|br2', 'br2@0,25', 24, { delay: 0.5 })],
         notes: [NAME(355, 350, 'ethene'),
                 TX(650, 225, 'the dipole is induced, not permanent', { col: '#fbbf24' })]
       }
@@ -706,13 +706,13 @@ MECHANISMS.push({
           N('c1', 'C', 300, 235), N('c2', 'C', 410, 235),
           ...alkLeftH(), ...alkRightH(),
           N('h', 'H', 400, 132, { delta: 'δ+', dx: 28, dy: 4 }),
-          N('o', 'O', 300, 45, { delta: 'δ−', dx: 34, dy: -8, lp: [250, 300] }),
+          N('o', 'O', 300, 45, { delta: 'δ−', dx: -30, dy: 26, lp: [250, 300] }),
           N('s', 'SO₂', 200, 45), N('o2', 'O', 105, 45, { lp: [270, 90] }),
           N('sh', 'H', 40, 45)
         ],
         bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(),
                 BD('h', 'o'), BD('o', 's'), BD('s', 'o2'), BD('o2', 'sh')],
-        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|o', 'o@0,30', 24, { delay: 0.5 })],
+        arrows: [AR('c1|c2', 'h@135,24', -26), AR('h|o', 'o@0,25', 24, { delay: 0.5 })],
         notes: [NAME(355, 350, 'ethene'), NAME(170, 112, 'sulfuric acid')]
       }
     },
@@ -790,7 +790,7 @@ const haloSkeleton = () => [
   N('br', 'Br', 500, 190, { delta: 'δ−', dy: -30, lp: [40, 90, 140] })
 ];
 const haloBonds = () => [BD('c1', 'c2'), BD('c2', 'br')];
-const expelBromide = () => AR('c2|br', 'br@148,26', -22, { delay: 0.5 });
+const expelBromide = () => AR('c2|br', 'br@230,26', -22, { delay: 0.5 });
 
 MECHANISMS.push({
   id: 'ns-hydroxide',
@@ -935,8 +935,8 @@ MECHANISMS.push({
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'n'), BD('n', 'ha'), BD('n', 'hb'), BD('n', 'hc')],
         arrows: [
-          AR('nh3@195,32', 'hb@25,22', 26),
-          AR('n|hb', 'n@42,30', -28, { delay: 0.5 })
+          AR('nh3@195,32', 'hb@290,26', 22),
+          AR('n|hb', 'n@340,26', 18, { delay: 0.5 })
         ],
         notes: [NAME(230, 378, 'bromide ion — a spectator here')]
       }
@@ -997,9 +997,9 @@ MECHANISMS.push({
         ],
         bonds: [BD('o', 'oh'), BD('h', 'c1'), BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'br')],
         arrows: [
-          AR('o@15,26', 'h@185,24', -22),
+          AR('o@15,26', 'h@230,26', -26),
           AR('c1|h', 'c1|c2@-90,16', 26, { delay: 0.5 }),
-          AR('c2|br', 'br@148,26', -22, { delay: 1.0 })
+          AR('c2|br', 'br@230,26', -22, { delay: 1.0 })
         ],
         notes: [NAME(150, 175, 'OH⁻ as a base'), NAME(330, 378, '2-bromopropane')]
       }
@@ -1049,7 +1049,7 @@ MECHANISMS.push({
       scene: {
         nodes: [
           N('c1', 'H₃C', 195, 240), N('c2', 'CH', 300, 240), N('c3', 'CH₃', 300, 345),
-          N('o', 'O', 390, 185, { lp: [125, 215] }), N('oh', 'H', 390, 110),
+          N('o', 'O', 390, 185, { lp: [-30, 100] }), N('oh', 'H', 390, 110),
           N('hp', 'H', 540, 110, { chg: '+' })
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('o', 'oh')],
@@ -1072,7 +1072,7 @@ MECHANISMS.push({
           N('h1', 'H', 465, 145), N('h2', 'H', 350, 110)
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('o', 'h1'), BD('o', 'h2')],
-        arrows: [AR('c2|o', 'o@210,26', -24)],
+        arrows: [AR('c2|o', 'o@90,26', 26)],
         notes: [NAME(560, 235, 'water is a good leaving group')]
       }
     },
@@ -1097,7 +1097,7 @@ MECHANISMS.push({
         bonds: [BD('o', 's'), BD('s', 'o2'), BD('o2', 'h2'),
                 BD('h', 'c1'), BD('c1', 'c2'), BD('c2', 'c3')],
         arrows: [
-          AR('o@10,26', 'h@185,24', -22),
+          AR('o@10,26', 'h@240,26', -30),
           AR('c1|h', 'c1|c2@-90,16', 26, { delay: 0.5 })
         ],
         notes: [NAME(150, 380, 'HSO₄⁻ acting as a base')]
@@ -1156,7 +1156,7 @@ MECHANISMS.push({
           N('hyd', 'H', 240, 355, { chg: '−', cdx: -20, cdy: -18, lp: [-45] })
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'h')],
-        arrows: [AR('hyd@-45,24', 'c2@165,28', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+        arrows: [AR('hyd@-45,24', 'c2@110,26', 22), AR('c2|o', 'o@40,26', 22, { delay: 0.5 })],
         notes: [NAME(215, 388, 'hydride ion from NaBH₄')]
       }
     },
@@ -1175,7 +1175,7 @@ MECHANISMS.push({
           N('wo', 'O', 640, 302, { lp: [90, 0] }), N('wh', 'H', 640, 372)
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'h'), BD('c2', 'o'), BD('hw', 'wo'), BD('wo', 'wh')],
-        arrows: [AR('o@-8,28', 'hw@172,24', -26), AR('hw|wo', 'wo@200,26', -22, { delay: 0.5 })],
+        arrows: [AR('o@-8,28', 'hw@250,26', -26), AR('hw|wo', 'wo@260,26', -22, { delay: 0.5 })],
         notes: [NAME(400, 100, 'alkoxide intermediate')]
       }
     },
@@ -1229,7 +1229,7 @@ MECHANISMS.push({
           N('nn', 'N', 162, 358, { lp: [180] })
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o', 2), BD('cn', 'nn', 3)],
-        arrows: [AR('cn@-45,24', 'c2@175,30', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+        arrows: [AR('cn@-45,24', 'c2@100,26', 22), AR('c2|o', 'o@40,26', 22, { delay: 0.5 })],
         notes: [NAME(206, 390, 'cyanide ion')]
       }
     },
@@ -1247,7 +1247,7 @@ MECHANISMS.push({
           N('hp', 'H', 520, 95, { chg: '+' })
         ],
         bonds: [BD('c1', 'c2'), BD('c2', 'c3'), BD('c2', 'o'), BD('c2', 'cq'), BD('cq', 'nq', 3)],
-        arrows: [AR('o@-20,28', 'hp@190,22', -26)],
+        arrows: [AR('o@0,28', 'hp@190,22', -26)],
         notes: [NAME(620, 165, 'H⁺ from the dilute acid')]
       }
     },
@@ -1308,7 +1308,7 @@ function acylMech(cfg) {
             ...cfg.nuc1.nodes
           ],
           bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'cl'), ...(cfg.nuc1.bonds || [])],
-          arrows: [AR(cfg.nuc1.from, 'c2@165,30', 26), AR('c2|o', 'o@250,26', 26, { delay: 0.5 })],
+          arrows: [AR(cfg.nuc1.from, 'c2@110,26', 22), AR('c2|o', 'o@40,26', 22, { delay: 0.5 })],
           notes: [NAME(660, 420, cfg.nuc1.label), NAME(238, 148, 'ethanoyl chloride')]
         }
       },
@@ -1330,7 +1330,7 @@ function acylMech(cfg) {
             ...cfg.nuc2.nodes
           ],
           bonds: [BD('c1', 'c2'), BD('c2', 'o'), BD('c2', 'cl'), ...(cfg.nuc2.bonds || [])],
-          arrows: [AR('o@-45,28', 'c2|o^13', 24), AR('c2|cl', 'cl@205,26', -24, { delay: 0.5 })],
+          arrows: [AR('o@0,26', 'c2|o^13', -26), AR('c2|cl', 'cl@260,26', -30, { delay: 0.5 })],
           notes: [NAME(600, 130, 'tetrahedral intermediate')]
         }
       },
@@ -1381,7 +1381,7 @@ MECHANISMS.push(acylMech({
         N('cl', 'Cl', 640, 300, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
       ],
       bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'w'), BD('w', 'wh1'), BD('w', 'wh2')],
-      arrows: [AR('cl@172,30', 'wh2@22,24', -26), AR('w|wh2', 'w@52,28', 28, { delay: 0.5 })]
+      arrows: [AR('cl@180,30', 'wh2@22,24', -26), AR('w|wh2', 'w@80,26', -22, { delay: 0.5 })]
     }
   },
   step4: {
@@ -1444,7 +1444,7 @@ MECHANISMS.push(acylMech({
       ],
       bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'n'),
               BD('n', 'nh1'), BD('n', 'nh2'), BD('n', 'nh3')],
-      arrows: [AR('base@193,32', 'nh2@25,24', -26), AR('n|nh2', 'n@48,28', 28, { delay: 0.5 })]
+      arrows: [AR('base@193,32', 'nh2@25,24', -26), AR('n|nh2', 'n@340,26', 22, { delay: 0.5 })]
     }
   },
   step4: {
@@ -1506,7 +1506,7 @@ MECHANISMS.push(acylMech({
         N('cl', 'Cl', 645, 300, { chg: '−', cdx: 30, cdy: -26, lp: [0, 90, 180, 270] })
       ],
       bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'mo'), BD('mo', 'mc'), BD('mo', 'mh')],
-      arrows: [AR('cl@172,30', 'mh@22,24', -26), AR('mo|mh', 'mo@50,28', 28, { delay: 0.5 })]
+      arrows: [AR('cl@180,30', 'mh@22,24', -26), AR('mo|mh', 'mo@80,26', -22, { delay: 0.5 })]
     }
   },
   step4: {
@@ -1566,7 +1566,7 @@ MECHANISMS.push(acylMech({
       ],
       bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'mn'),
               BD('mn', 'mc'), BD('mn', 'mh1'), BD('mn', 'mh2'), BD('bn', 'bc')],
-      arrows: [AR('bn@198,32', 'mh1@25,24', -26), AR('mn|mh1', 'mn@48,28', 28, { delay: 0.5 })]
+      arrows: [AR('bn@198,32', 'mh1@25,24', -26), AR('mn|mh1', 'mn@340,26', 22, { delay: 0.5 })]
     }
   },
   step4: {
@@ -1743,7 +1743,7 @@ MECHANISMS.push({
         ],
         bonds: [BD('me', 'c'), BD('c', 'o', 2), BD('c', 'cl'),
                 BD('pme', 'pc'), BD('pc', 'po', 2)],
-        arrows: [AR('cl@30,28', 'al@180,40', 26), AR('c|cl', 'cl@213,30', 20, { delay: 0.5 })],
+        arrows: [AR('cl@30,28', 'al@180,40', 26), AR('c|cl', 'cl@260,26', -30, { delay: 0.5 })],
         notes: [
           NAME(700, 150, 'AlCl₃ has an empty orbital'),
           NAME(200, 262, 'ethanoyl chloride'),
@@ -1791,7 +1791,7 @@ MECHANISMS.push({
         bonds: [...ringBonds(), BD('v0', 'h'), BD('v0', 'ac'), BD('ac', 'acm'), BD('ac', 'aco', 2)],
         arcs: [HORSESHOE],
         arrows: [
-          AR('bo@12,30', 'h@188,24', -24),
+          AR('bo@12,44', 'h@188,24', -24),
           AR('v0|h', RING.cx + ',' + (RING.cy - 52), 26, { delay: 0.5 })
         ],
         notes: [
@@ -2147,7 +2147,7 @@ const FLAWED = [
         N('br', 'Br', 300, 42, { delta: 'δ−', dx: -34, dy: 2, lp: [132, 250, 312] })
       ],
       bonds: [BD('c1', 'c2', 2), ...alkLeftB(), ...alkRightB(), BD('h', 'br')],
-      arrows: [AR('c1|c2', 'br@70,30', -30), AR('h|br', 'br@0,30', 24, { delay: 0.5 })]
+      arrows: [AR('c1|c2', 'br@100,26', -30), AR('h|br', 'br@0,25', 24, { delay: 0.5 })]
     },
     hotspots: [
       { x: 310, y: 70, r: 26, correct: true,
@@ -2201,7 +2201,7 @@ const FLAWED = [
         N('hyd', 'H', 240, 355, { chg: '−', cdx: -20, cdy: -18, lp: [-45] })
       ],
       bonds: [BD('c1', 'c2'), BD('c2', 'o', 2), BD('c2', 'h')],
-      arrows: [AR('hyd@-45,24', 'c2@165,28', 26), AR('o@200,26', 'c2@125,26', -30, { delay: 0.5 })]
+      arrows: [AR('hyd@-45,24', 'c2@110,26', 22), AR('o@180,26', 'c2@320,26', -22, { delay: 0.5 })]
     },
     hotspots: [
       { x: 332, y: 131, r: 26, correct: true,
@@ -2303,7 +2303,7 @@ const QUESTIONS = [
       { id: 'a', label: 'the C=C bond', anchor: 'c1|c2', role: 'bond' },
       { id: 'b', label: 'the H atom', anchor: 'h@135,24', role: 'atom' },
       { id: 'c', label: 'the H–Br bond', anchor: 'h|br', role: 'bond' },
-      { id: 'd', label: 'the Br atom', anchor: 'br@0,30', role: 'atom' },
+      { id: 'd', label: 'the Br atom', anchor: 'br@0,25', role: 'atom' },
       { id: 'e', label: 'empty space beside the molecule', anchor: '620,320', role: 'space' },
       { id: 'f', label: 'the left-hand carbon', anchor: 'c1', role: 'atom' }
     ],
@@ -2336,7 +2336,7 @@ const QUESTIONS = [
       { id: 'a', label: 'the lone pair on the C of CN⁻', anchor: 'cn@-55,26', role: 'lonePair' },
       { id: 'b', label: 'the δ+ carbon', anchor: 'c2@130,26', role: 'atom' },
       { id: 'c', label: 'the C–Br bond', anchor: 'c2|br', role: 'bond' },
-      { id: 'd', label: 'the Br atom', anchor: 'br@148,26', role: 'atom' },
+      { id: 'd', label: 'the Br atom', anchor: 'br@230,26', role: 'atom' },
       { id: 'e', label: 'the negative sign on CN⁻', anchor: 'cn@-160,22', role: 'charge' },
       { id: 'f', label: 'the nitrogen of CN⁻', anchor: 'nn', role: 'atom' }
     ],
@@ -2368,15 +2368,15 @@ const QUESTIONS = [
     },
     points: [
       { id: 'a', label: 'the lone pair on H⁻', anchor: 'hyd@-45,24', role: 'lonePair' },
-      { id: 'b', label: 'the carbonyl carbon', anchor: 'c2@165,28', role: 'atom' },
+      { id: 'b', label: 'the carbonyl carbon', anchor: 'c2@110,26', role: 'atom' },
       { id: 'c', label: 'the C=O bond', anchor: 'c2|o', role: 'bond' },
-      { id: 'd', label: 'the oxygen atom', anchor: 'o@250,26', role: 'atom' },
+      { id: 'd', label: 'the oxygen atom', anchor: 'o@40,26', role: 'atom' },
       { id: 'e', label: 'the negative sign on H⁻', anchor: 'hyd@-140,24', role: 'charge' },
       { id: 'f', label: 'the aldehyde hydrogen', anchor: 'h', role: 'atom' }
     ],
     answers: [
-      { from: 'a', to: 'b', bow: 26, note: 'The hydride lone pair forms the new C–H bond.' },
-      { from: 'c', to: 'd', bow: 26, note: 'The π electrons move onto the oxygen, so carbon keeps four bonds.' }
+      { from: 'a', to: 'b', bow: 22, note: 'The hydride lone pair forms the new C–H bond.' },
+      { from: 'c', to: 'd', bow: 22, note: 'The π electrons move onto the oxygen, so carbon keeps four bonds.' }
     ],
     marks: [
       'M1  Curly arrow from the lone pair on H⁻ to the carbon of C=O',
@@ -2405,11 +2405,11 @@ const QUESTIONS = [
     },
     points: [
       { id: 'a', label: 'a lone pair on OH⁻', anchor: 'o@15,26', role: 'lonePair' },
-      { id: 'b', label: 'the hydrogen on the adjacent carbon', anchor: 'h@185,24', role: 'atom' },
+      { id: 'b', label: 'the hydrogen on the adjacent carbon', anchor: 'h@230,26', role: 'atom' },
       { id: 'c', label: 'the C–H bond', anchor: 'c1|h', role: 'bond' },
       { id: 'd', label: 'between the two carbons', anchor: 'c1|c2@-90,16', role: 'bond' },
       { id: 'e', label: 'the C–Br bond', anchor: 'c2|br', role: 'bond' },
-      { id: 'f', label: 'the Br atom', anchor: 'br@148,26', role: 'atom' },
+      { id: 'f', label: 'the Br atom', anchor: 'br@230,26', role: 'atom' },
       { id: 'g', label: 'the negative sign on OH⁻', anchor: 'o@200,24', role: 'charge' },
       { id: 'h', label: 'the carbon bearing the Br', anchor: 'c2', role: 'atom' }
     ],
