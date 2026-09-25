@@ -4,77 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Fractionating Column</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-/* ── Tokens ────────────────────────────────────────────────────────────── */
+/* ── Tokens ──────────────────────────────────────────────────────────────
+   Dark is the bare :root set, on the site-wide palette (assets/sst/sst.css).
+   Values stay hex: the scene code reads them through tok() and parses hex. */
 :root{
   --ui: 1;
 
-  --ground:      #E4E9ED;
-  --ground-2:    #D3DBE2;
-  --surface:     #FBFCFD;
-  --surface-2:   #EEF2F5;
-  --line:        #C0CAD3;
-  --line-soft:   #DBE2E8;
-  --ink:         #0F1A21;
-  --ink-2:       #34434E;
-  --muted:       #62727D;
+  --ground:#050e1a; --ground-2:#030915; --surface:#091321; --surface-2:#0d1928;
+  --line:#182535; --line-soft:#111c2b; --ink:#edf2f8; --ink-2:#bbc5d1; --muted:#8693a5;
+  --accent:#0086dd; --accent-ink:#ffffff; --accent-text:#47b5fa; --accent-soft:rgba(71,181,250,.14);
+  --scene-a:#0d1928; --scene-b:#030915;
+  --shadow: none;
+  --stroke-shift: 0.10;   /* lighten fraction hues for strokes on dark ground */
 
-  --accent:      #F2C200;
-  --accent-ink:  #17222A;
-  --accent-text: #7E6300;
-  --accent-soft: rgba(242,194,0,.16);
-
-  --scene-a:     #DDE5EB;
-  --scene-b:     #AFBFCB;
-
-  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
-  --stroke-shift: -0.22;   /* darken fraction hues for strokes on light ground */
-
-  --f-display: "Saira Condensed", "Arial Narrow", Helvetica, sans-serif;
-  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --f-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
   font-size: calc(17px * var(--ui));
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
-    --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
-    --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
-    --scene-a:#0E1A24; --scene-b:#04080C;
-    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-    --stroke-shift: 0.10;
-  }
-}
-:root[data-theme="dark"]{
-  --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
-  --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
-  --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
-  --scene-a:#0E1A24; --scene-b:#04080C;
-  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
-  --stroke-shift: 0.10;
+:root[data-theme="light"]{
+  --ground:#E4E9ED; --ground-2:#D3DBE2; --surface:#FBFCFD; --surface-2:#EEF2F5;
+  --line:#C0CAD3; --line-soft:#DBE2E8; --ink:#0F1A21; --ink-2:#34434E; --muted:#62727D;
+  --accent:#0070b8; --accent-ink:#ffffff; --accent-text:#005a94; --accent-soft:rgba(0,112,184,.12);
+  --scene-a:#DDE5EB; --scene-b:#AFBFCB;
+  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
+  --stroke-shift: -0.22;
 }
 
 /* The page's own theme choice. It lives on <body> rather than :root so that a
    host restamping data-theme on the root element cannot undo the viewer's
    pick here; with no class set, the :root rules above still decide.        */
 body.theme-dark{
-  --ground:#080D12; --ground-2:#05090D; --surface:#101922; --surface-2:#16232D;
-  --line:#263743; --line-soft:#1A2731; --ink:#E9F1F6; --ink-2:#BACAD5; --muted:#7C919F;
-  --accent:#FFD400; --accent-ink:#141C22; --accent-text:#FFD400; --accent-soft:rgba(255,212,0,.14);
-  --scene-a:#0E1A24; --scene-b:#04080C;
-  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -20px rgba(0,0,0,.9);
+  --ground:#050e1a; --ground-2:#030915; --surface:#091321; --surface-2:#0d1928;
+  --line:#182535; --line-soft:#111c2b; --ink:#edf2f8; --ink-2:#bbc5d1; --muted:#8693a5;
+  --accent:#0086dd; --accent-ink:#ffffff; --accent-text:#47b5fa; --accent-soft:rgba(71,181,250,.14);
+  --scene-a:#0d1928; --scene-b:#030915;
+  --shadow: none;
+  --stroke-shift: 0.10;
 }
 body.theme-light{
   --ground:#E4E9ED; --ground-2:#D3DBE2; --surface:#FBFCFD; --surface-2:#EEF2F5;
   --line:#C0CAD3; --line-soft:#DBE2E8; --ink:#0F1A21; --ink-2:#34434E; --muted:#62727D;
-  --accent:#F2C200; --accent-ink:#17222A; --accent-text:#7E6300; --accent-soft:rgba(242,194,0,.16);
+  --accent:#0070b8; --accent-ink:#ffffff; --accent-text:#005a94; --accent-soft:rgba(0,112,184,.12);
   --scene-a:#DDE5EB; --scene-b:#AFBFCB;
   --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
+  --stroke-shift: -0.22;
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -92,7 +69,7 @@ button{ font:inherit; color:inherit; }
   grid-template-columns: minmax(0,1fr) var(--panel, min(40vw, 21rem));
   grid-template-rows: auto minmax(0,1fr) auto;
   grid-template-areas: "top top" "main aside" "trans aside";
-  height:100dvh; min-height:34rem;
+  height:calc(100dvh - var(--sst-bar-h)); min-height:34rem;
 }
 
 /* ── Top bar ───────────────────────────────────────────────────────────── */
@@ -343,12 +320,10 @@ button{ font:inherit; color:inherit; }
 .trend li + li{ border-top:1px solid var(--line-soft); }
 .arrow{ font-family:var(--f-mono); font-size:.76rem; font-weight:600; letter-spacing:.02em; }
 .arrow.up{ color:#C43D3D; }
-.arrow.dn{ color:#2E8C6A; }
+.arrow.dn{ color:#58D2A4; }
 .arrow.neutral{ color:var(--ink-2); }
-:root[data-theme="dark"] .arrow.dn{ color:#58D2A4; }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .arrow.dn{ color:#58D2A4; } }
 body.theme-dark .arrow.dn{ color:#58D2A4; }
-body.theme-light .arrow.dn{ color:#2E8C6A; }
+body.theme-light .arrow.dn, :root[data-theme="light"] .arrow.dn{ color:#2E8C6A; }
 
 /* Exam cards */
 .markcard{
@@ -415,8 +390,10 @@ body.present #theme-txt{ display:none; }
   *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
 }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 
 <div class="app">
 
@@ -767,7 +744,7 @@ function isDark(){
   const t = document.documentElement.getAttribute("data-theme");
   if (t === "dark") return true;
   if (t === "light") return false;
-  return matchMedia("(prefers-color-scheme: dark)").matches;
+  return true;   /* site default */
 }
 function tok(name){
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -1314,13 +1291,13 @@ function makeSprite(f){
 
   g.textBaseline = "top";
   g.fillStyle = ink;
-  g.font = '600 60px "Saira Condensed", "Arial Narrow", sans-serif';
+  g.font = '700 52px "Plus Jakarta Sans", sans-serif';
   g.fillText(f.name, 48, 34);
   g.fillStyle = mut;
-  g.font = '400 34px "IBM Plex Mono", monospace';
+  g.font = '400 34px "JetBrains Mono", monospace';
   g.fillText(f.carbons || "", 48, 106);
   if (f.alt){
-    g.font = '400 32px "IBM Plex Sans", sans-serif';
+    g.font = '400 32px "Plus Jakarta Sans", sans-serif';
     g.fillText(f.alt, 48, 150);
   }
   drawIcon(g, f.id, 486, 45, 120, dark ? "#C8D6E0" : "#3D4C57", plate);
@@ -1339,11 +1316,11 @@ function makeTempSprite(f, tag){
 
   g.textBaseline = "top";
   g.fillStyle = dark ? "#E9F1F6" : "#0F1A21";
-  g.font = '500 62px "IBM Plex Mono", monospace';
+  g.font = '500 62px "JetBrains Mono", monospace';
   g.textAlign = "right";
   g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), W - 34, tag ? 26 : 30);
   if (tag){
-    g.font = '600 40px "Saira Condensed", sans-serif';
+    g.font = '600 40px "Plus Jakarta Sans", sans-serif';
     g.fillStyle = legible(f);
     g.fillText(tag, W - 34, 106);
   }
@@ -1383,9 +1360,9 @@ function restyleFractionMaterials(){
 function applySceneTheme(){
   if (!three.ok) return;
   const dark = isDark();
-  three.scene.background = new THREE.Color(dark ? 0x070C11 : 0xC8D3DC);
-  three.scene.fog = new THREE.Fog(dark ? 0x070C11 : 0xC8D3DC, 24, 56);
-  three.pad.material.color.set(dark ? 0x1B242C : 0x93A2AE);
+  three.scene.background = new THREE.Color(dark ? 0x030915 : 0xC8D3DC);
+  three.scene.fog = new THREE.Fog(dark ? 0x030915 : 0xC8D3DC, 24, 56);
+  three.pad.material.color.set(dark ? 0x0a1626 : 0x93A2AE);
   three.shellMat.opacity = dark ? 0.17 : 0.22;
   three.domeMat.opacity = dark ? 0.17 : 0.22;
   three.shellMat.color.set(dark ? 0xa9b8c4 : 0x8b9aa7);
@@ -1578,7 +1555,7 @@ function render2D(){
   const dark = isDark();
 
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.fillStyle = dark ? "#070C11" : "#F4F7F9";
+  g.fillStyle = dark ? "#030915" : "#F4F7F9";
   g.fillRect(0, 0, w, h);
 
   const s = Math.min(w / VW, h / VH) * view2.zoom;
@@ -1586,13 +1563,13 @@ function render2D(){
 
   const ink   = dark ? "#E9F1F6" : "#0F1A21";
   const mut   = dark ? "#7C919F" : "#62727D";
-  const line  = dark ? "#334755" : "#A9B7C2";
-  const panel = dark ? "#0E1821" : "#FFFFFF";
+  const line  = dark ? "#253447" : "#A9B7C2";
+  const panel = dark ? "#0d1928" : "#FFFFFF";
   const dim   = state.following;
 
   g.lineJoin = "round"; g.lineCap = "round";
 
-  const ground2 = dark ? "#070C11" : "#F4F7F9";
+  const ground2 = dark ? "#030915" : "#F4F7F9";
   const pcolOf = {};
   FRACTIONS.forEach(f => { pcolOf[f.id] = contrastSafe(f, ground2); });
   buildPuffs(pcolOf, dark);
@@ -1668,22 +1645,22 @@ function render2D(){
 
   /* labels */
   g.fillStyle = ink;
-  g.font = '600 25px "Saira Condensed", sans-serif'; g.textAlign = "center"; g.textBaseline = "alphabetic";
-  g.fillText("FURNACE", fx + fw / 2, fy - 34);
+  g.font = '700 21px "Plus Jakarta Sans", sans-serif'; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillText("Furnace", fx + fw / 2, fy - 34);
   g.textAlign = "left";
-  g.font = '600 22px "Saira Condensed", sans-serif';
-  g.fillText("CRUDE OIL IN", 40, fy - 34);
-  g.fillStyle = mut; g.font = '400 17px "IBM Plex Sans", sans-serif';
+  g.font = '700 19px "Plus Jakarta Sans", sans-serif';
+  g.fillText("Crude oil in", 40, fy - 34);
+  g.fillStyle = mut; g.font = '400 17px "Plus Jakarta Sans", sans-serif';
   g.fillText("a mixture of hydrocarbons", 40, fy - 12);
   g.textAlign = "center";
   fitText(g, "the burners heat the tubes, not the oil", fx + fw / 2, fBot + 26, 320, 17,
-          '400 %Spx "IBM Plex Sans", sans-serif');
+          '400 %Spx "Plus Jakarta Sans", sans-serif');
   fitText(g, "crude oil vaporises at about 350 °C", fx + fw / 2, fBot + 48, 320, 17,
-          '400 %Spx "IBM Plex Sans", sans-serif');
+          '400 %Spx "Plus Jakarta Sans", sans-serif');
   g.globalAlpha = 1;
 
   /* ── Tower shell ── */
-  g.fillStyle = dark ? "#0C141C" : "#FBFCFD";
+  g.fillStyle = dark ? "#091321" : "#FBFCFD";
   g.strokeStyle = ink; g.lineWidth = 5;
   g.beginPath();
   g.moveTo(TX0, TY1);
@@ -1763,7 +1740,7 @@ function render2D(){
 
     /* temperature on the left */
     g.fillStyle = on ? ink : mut;
-    g.font = '500 23px "IBM Plex Mono", monospace';
+    g.font = '500 23px "JetBrains Mono", monospace';
     g.textAlign = "right"; g.textBaseline = "middle";
     g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), TX0 - 22, y);
 
@@ -1789,12 +1766,12 @@ function render2D(){
 
     g.textAlign = "left";
     g.fillStyle = on ? ink : mut;
-    g.font = '600 27px "Saira Condensed", sans-serif'; g.textBaseline = "alphabetic";
-    g.fillText(f.name.toUpperCase(), px + 24, py + 27);
+    g.textBaseline = "alphabetic";
+    fitText(g, f.name, px + 24, py + 27, pw - 130, 24, '700 %Spx "Plus Jakarta Sans", sans-serif');
     g.fillStyle = mut;
-    fitText(g, f.useShort, px + 24, py + 50, pw - 44, 17, '400 %Spx "IBM Plex Sans", sans-serif');
+    fitText(g, f.useShort, px + 24, py + 50, pw - 44, 17, '400 %Spx "Plus Jakarta Sans", sans-serif');
     g.fillStyle = on ? ink : mut;
-    g.font = '500 19px "IBM Plex Mono", monospace'; g.textAlign = "right";
+    g.font = '500 19px "JetBrains Mono", monospace'; g.textAlign = "right";
     g.fillText(f.carbons, px + pw - 14, py + 27);
 
     /* what it is used for, as an icon beside the label */
@@ -1845,8 +1822,8 @@ function render2D(){
   g.beginPath(); g.moveTo(TX0 - 118, TY0 + 24); g.lineTo(TX0 - 126, TY0 + 44); g.lineTo(TX0 - 110, TY0 + 44); g.closePath(); g.fill();
   g.save();
   g.translate(TX0 - 130, (TY0 + TY1) / 2 - 30); g.rotate(-Math.PI/2);
-  g.textAlign = "center"; g.font = '600 21px "Saira Condensed", sans-serif';
-  g.fillText("VAPOURS RISE AND COOL", 0, 0);
+  g.textAlign = "center"; g.font = '600 18px "Plus Jakarta Sans", sans-serif';
+  g.fillText("Vapours rise and cool", 0, 0);
   g.restore();
   g.globalAlpha = 1;
 
@@ -2382,32 +2359,5 @@ if (document.fonts && document.fonts.ready){
 requestAnimationFrame(frame);
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extraction of Aluminium (beta)</title>
+<meta name="description" content="AQA GCSE Chemistry 4.4.3.3: a slide-by-slide lesson, animated electrolysis cell, revision notes and self-marked exam questions on extracting aluminium by electrolysis.">
+<style>
+  /* Site-wide dark palette (assets/sst/sst.css). The light set is kept for
+     an explicit data-theme="light" and for print, below. */
+  :root{
+    --paper:#050e1a; --card:#0d1928; --ink:#edf2f8; --muted:#8693a5; --line:#182535;
+    --chem:#5cd5c7; --gcse:#f3b94c; --ht:#b199f4;
+    --tip:#63d18f; --tipbg:#0f2a22; --warn:#f66d67; --warnbg:#2c1418;
+    --cath:#47b5fa; --anod:#f0995a; --eqbg:#142132;
+    --btn:#0086dd; --btnink:#ffffff;
+    color-scheme:dark;
+  }
+  :root[data-theme="light"]{
+    --paper:#efe9dd; --card:#fbf8f1; --ink:#14120f; --muted:#5d564b; --line:#d9d0bf;
+    --chem:#a8281e; --gcse:#a04d10; --ht:#5b3f9e;
+    --tip:#1f6f5c; --tipbg:#e3f0ea; --warn:#a8281e; --warnbg:#f6e2dd;
+    --cath:#2f5fa7; --anod:#b4541a; --eqbg:#f1ebde;
+    --btn:#14120f; --btnink:#efe9dd;
+    color-scheme:light;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{
+    background:var(--paper); color:var(--ink);
+    font:16px/1.55 var(--sst-font);
+    -webkit-text-size-adjust:100%;
+  }
+  sub,sup{ font-size:.72em; line-height:0; }
+  button{ font:inherit; color:inherit; }
+  a{ color:inherit; }
+
+  /* ── Header & tabs ─────────────────────────────────────────────── */
+  .top{
+    display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px;
+    padding:18px clamp(16px,4vw,40px) 10px;
+  }
+  .top h1{ margin:0; font-size:clamp(1.35rem,3.2vw,1.9rem); line-height:1.15; letter-spacing:-.01em; }
+  .meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip{
+    display:inline-block; padding:2px 9px; border-radius:999px; font-size:.78rem; font-weight:600;
+    border:1px solid currentColor; color:var(--accent,var(--muted));
+  }
+  .subj-chem{ --accent:var(--chem); color:var(--chem); }
+  .lvl-gcse{ --accent:var(--gcse); color:var(--gcse); }
+  .beta{ color:var(--muted); }
+  .top .grow{ flex:1 1 280px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    padding:9px 16px; border-radius:10px; border:1px solid var(--line);
+    background:var(--card); font-weight:600; font-size:.95rem;
+  }
+  .btn:hover{ border-color:var(--muted); }
+  .btn:focus-visible, .tab:focus-visible, .dot:focus-visible{ outline:3px solid #7dd3fc; outline-offset:2px; }
+  .btn.primary{ background:var(--btn); color:var(--btnink); border-color:var(--btn); }
+  .btn.primary:hover{ opacity:.9; }
+  .btn[disabled]{ opacity:.4; cursor:default; }
+  .btn svg{ width:18px; height:18px; flex:none; }
+
+  .tabs{
+    display:flex; gap:4px; overflow-x:auto; padding:0 clamp(16px,4vw,40px);
+    border-bottom:1px solid var(--line);
+  }
+  .tab{
+    background:none; border:0; border-bottom:3px solid transparent; cursor:pointer;
+    padding:10px 14px; font-weight:600; color:var(--muted); white-space:nowrap;
+  }
+  .tab[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--chem); }
+
+  main{ padding:22px clamp(16px,4vw,40px) 80px; }
+  .panel[hidden]{ display:none; }
+
+  /* ── Presentation ──────────────────────────────────────────────── */
+  .deck{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:clamp(16px,3vw,32px); min-height:520px;
+  }
+  .deck:fullscreen{ overflow:auto; border-radius:0; padding:3vw 4vw; }
+  .slide{ display:none; }
+  .slide.on{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:clamp(18px,3vw,40px); align-items:start; }
+  .slide.text-wide.on{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  @media (max-width:900px){ .slide.on, .slide.text-wide.on{ grid-template-columns:1fr; } }
+  .step{ font-size:.8rem; font-weight:700; color:var(--chem); letter-spacing:.04em; }
+  .slide h2{ margin:.2em 0 .5em; font-size:clamp(1.4rem,2.8vw,2rem); line-height:1.15; }
+  .slide p, .slide li{ font-size:clamp(1rem,1.35vw,1.12rem); }
+  .slide ul{ padding-left:1.2em; margin:.4em 0 1em; }
+  .slide li{ margin:.35em 0; }
+  .kw{ font-weight:700; }
+  .eq{
+    display:inline-block; font-family:"Cambria Math","STIX Two Math","Times New Roman",Georgia,serif;
+    font-size:1.18em; background:var(--eqbg); border:1px solid var(--line); border-radius:8px;
+    padding:4px 12px; margin:4px 0; white-space:nowrap;
+  }
+  .eq.big{ font-size:1.45em; padding:8px 16px; }
+  .eqline{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:.5em 0; }
+  .tag{ font-size:.75rem; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid currentColor; }
+  .tag.ht{ color:var(--ht); }
+  .tag.red{ color:var(--cath); }
+  .tag.ox{ color:var(--anod); }
+  .cath{ color:var(--cath); font-weight:700; }
+  .anod{ color:var(--anod); font-weight:700; }
+
+  .deck-nav{ display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
+  .deck-nav .count{ font-variant-numeric:tabular-nums; color:var(--muted); min-width:4.5em; text-align:center; }
+  .dots{ display:flex; gap:6px; flex:1; justify-content:center; flex-wrap:wrap; }
+  .dot{ width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:none; padding:0; cursor:pointer; }
+  .dot.on{ background:var(--chem); border-color:var(--chem); }
+  .hint{ color:var(--muted); font-size:.85rem; }
+
+  /* flow diagram on slide 1 */
+  .flow{ display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; }
+  .flow .box{
+    flex:1 1 110px; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center;
+    background:var(--paper);
+  }
+  .flow .box b{ display:block; font-size:1.05rem; }
+  .flow .box small{ color:var(--muted); }
+  .flow .arr{ align-self:center; font-size:1.4rem; color:var(--muted); }
+  .swatch{ width:46px; height:34px; border-radius:8px; margin:0 auto 6px; }
+  .series{ margin-top:22px; }
+  .series h3{ margin:0 0 8px; font-size:1rem; }
+  .rs-box{ display:inline-block; max-width:100%; }
+  .rs{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .rs span{
+    padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:var(--paper); font-weight:600;
+  }
+  .rs .al{ background:var(--chem); color:#fff; border-color:var(--chem); }
+  .rs .c{ border-style:dashed; border-color:var(--ink); }
+  .rs-cap{ display:flex; justify-content:space-between; color:var(--muted); font-size:.82rem; margin-top:6px; }
+
+  /* thermometer on slide 2 */
+  .thermo-wrap{ display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:center; }
+  .thermo{ position:relative; width:74px; height:330px; }
+  .thermo .tube{ position:absolute; left:26px; top:0; width:22px; height:300px; border:2px solid var(--muted); border-radius:12px 12px 0 0; border-bottom:0; overflow:hidden; background:var(--paper); }
+  .thermo .fill{ position:absolute; left:0; right:0; bottom:0; background:linear-gradient(#f59e0b,#dc2626); transition:height 1.2s cubic-bezier(.3,.8,.3,1); }
+  .thermo .bulb{ position:absolute; left:15px; top:290px; width:44px; height:44px; border-radius:50%; background:#dc2626; border:2px solid var(--muted); }
+  .thermo .tick{ position:absolute; left:52px; font-size:.72rem; color:var(--muted); transform:translateY(-50%); white-space:nowrap; }
+  .thermo .tick::before{ content:""; display:inline-block; width:6px; border-top:1px solid var(--muted); vertical-align:middle; margin-right:3px; }
+  .temp-read{ font-size:2.4rem; font-weight:800; font-variant-numeric:tabular-nums; line-height:1; }
+  .temp-read small{ font-size:1rem; font-weight:600; color:var(--muted); display:block; margin-top:6px; }
+  .energy{ margin:16px 0; }
+  .energy .bar{ height:14px; border-radius:7px; background:var(--line); overflow:hidden; }
+  .energy .bar i{ display:block; height:100%; background:var(--chem); transition:width 1.2s ease; }
+  .energy .lbl{ font-size:.85rem; color:var(--muted); margin-bottom:4px; }
+
+  /* visualiser */
+  .vis{ background:#091321; border-radius:14px; padding:10px; color:#efe9dd; }
+  .vis canvas{ display:block; width:100%; height:auto; border-radius:8px; }
+  .vis-ctrl{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+  .vis .btn{ background:#142132; border-color:#253447; color:#efe9dd; }
+  .vis .btn:hover{ border-color:#8a8070; }
+  .vis .btn.power{ min-width:150px; justify-content:center; }
+  .vis .btn.power[aria-pressed="true"]{ background:#f59e0b; border-color:#f59e0b; color:#14120f; }
+  .vis .btn.power.nudge{ animation:nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge{ 50%{ box-shadow:0 0 0 6px rgba(245,158,11,.35); } }
+  @media (prefers-reduced-motion:reduce){ .vis .btn.power.nudge{ animation:none; } .thermo .fill,.energy .bar i{ transition:none; } }
+  .vis label{ display:inline-flex; align-items:center; gap:6px; font-size:.88rem; color:#bbc5d1; cursor:pointer; }
+  .vis label[hidden]{ display:none; }
+  .vis input[type=range]{ width:90px; accent-color:#f59e0b; }
+  .vis input[type=checkbox]{ accent-color:#f59e0b; }
+  .stats{ display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:10px; font-size:.88rem; color:#bbc5d1; }
+  .stats b{ color:#fff; font-variant-numeric:tabular-nums; }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:8px; font-size:.82rem; color:#bfb6a6; }
+  .legend i{ display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px; margin-right:5px; }
+  .vis-msg{ min-height:1.4em; margin-top:6px; font-size:.9rem; color:#fbbf24; }
+
+  .summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .summary .card{ border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--paper); }
+  .summary .card h3{ margin:0 0 6px; font-size:1.02rem; }
+  .summary .card p, .summary .card li{ font-size:.95rem; margin:.3em 0; }
+  .summary .card ul{ margin:0; padding-left:1.1em; }
+
+  /* ── Notes ─────────────────────────────────────────────────────── */
+  .doc{ max-width:860px; margin:0 auto; }
+  .doc h2{ font-size:1.7rem; margin:0 0 .3em; }
+  .doc h3{ font-size:1.22rem; margin:1.8em 0 .5em; padding-bottom:4px; border-bottom:2px solid var(--line); }
+  .doc h3 .n{ color:var(--chem); margin-right:6px; }
+  .doc p, .doc li{ margin:.45em 0; }
+  .doc ul{ padding-left:1.25em; }
+  .spec{ border:1px solid var(--line); background:var(--card); border-radius:12px; padding:12px 16px; font-size:.95rem; }
+  .callout{ border-left:5px solid; border-radius:0 10px 10px 0; padding:10px 16px; margin:14px 0; break-inside:avoid; }
+  .callout > b:first-child{ display:block; margin-bottom:2px; }
+  .callout.tip{ border-color:var(--tip); background:var(--tipbg); }
+  .callout.tip > b:first-child{ color:var(--tip); }
+  .callout.mistake{ border-color:var(--warn); background:var(--warnbg); }
+  .callout.mistake > b:first-child{ color:var(--warn); }
+  .callout.mem{ border-color:var(--ht); background:var(--card); }
+  .callout.mem > b:first-child{ color:var(--ht); }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:.95rem; }
+  th,td{ border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--card); }
+  .tablewrap{ overflow-x:auto; }
+  figure{ margin:14px 0; }
+  .diagram{ background:#fbf8f1; border:1px solid var(--line); border-radius:12px; padding:8px; break-inside:avoid; }
+  .diagram svg{ display:block; width:100%; height:auto; }
+  figcaption{ font-size:.85rem; color:var(--muted); margin-top:6px; }
+  .glossary dt{ font-weight:700; margin-top:8px; }
+  .glossary dd{ margin:0 0 0 1em; }
+  .checklist li{ list-style:none; margin-left:-1.2em; }
+  .checklist li::before{ content:"☐  "; }
+
+  /* ── Practice ─────────────────────────────────────────────────── */
+  .scorebar{
+    position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center;
+    background:var(--paper); padding:10px 0; border-bottom:1px solid var(--line); margin-bottom:10px;
+  }
+  .scorebar .score{ font-weight:800; font-size:1.15rem; font-variant-numeric:tabular-nums; }
+  .q{ border:1px solid var(--line); background:var(--card); border-radius:12px; padding:14px 18px; margin:14px 0; break-inside:avoid; }
+  .q-head{ display:flex; gap:10px; align-items:baseline; }
+  .q-num{ font-weight:800; color:var(--chem); }
+  .q-stem{ flex:1; }
+  .q-marks{ font-weight:700; white-space:nowrap; color:var(--muted); }
+  .q textarea{
+    width:100%; min-height:70px; margin-top:10px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--paper); color:var(--ink); font:inherit; resize:vertical;
+  }
+  .q-lines, .q-typed{ display:none; }
+  details.ms{ margin-top:10px; }
+  details.ms summary{ cursor:pointer; font-weight:600; color:var(--tip); }
+  details.ms ul{ list-style:none; padding:0; margin:8px 0; }
+  details.ms li{ margin:4px 0; }
+  details.ms label{ display:flex; gap:8px; align-items:flex-start; cursor:pointer; }
+  details.ms input{ margin-top:5px; accent-color:var(--tip); }
+  .ms-note{ font-size:.9rem; color:var(--muted); margin:6px 0 0; }
+  .q-got{ font-size:.85rem; font-weight:700; color:var(--tip); margin-left:6px; }
+
+  /* print dialog */
+  dialog{ border:1px solid var(--line); border-radius:14px; background:var(--card); color:var(--ink); padding:20px 22px; max-width:440px; width:calc(100% - 32px); }
+  dialog::backdrop{ background:rgba(0,0,0,.45); }
+  dialog h2{ margin:0 0 8px; font-size:1.2rem; }
+  dialog label{ display:flex; gap:10px; align-items:flex-start; margin:10px 0; cursor:pointer; }
+  dialog .row{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap; }
+
+  .print-only{ display:none; }
+
+  /* ── Print: A4 worksheet ───────────────────────────────────────── */
+  @page{ size:A4; margin:14mm 14mm 16mm; }
+  @media print{
+    :root, :root[data-theme="dark"], :root:not([data-theme="light"]){
+      --paper:#fff; --card:#fff; --ink:#000; --muted:#444; --line:#bbb;
+      --chem:#a8281e; --gcse:#a04d10; --ht:#5b3f9e; --tip:#1f6f5c; --tipbg:#eef6f2;
+      --warn:#a8281e; --warnbg:#fbeeeb; --cath:#2f5fa7; --anod:#b4541a; --eqbg:#f4f1ea;
+    }
+    body{ font-size:10.5pt; line-height:1.45; background:#fff; color:#000; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .top, .tabs, #present, .no-print, dialog, .scorebar, details.ms, .q textarea, .btn{ display:none !important; }
+    main{ padding:0; }
+    .print-only{ display:block; }
+    .panel[hidden]{ display:block; }
+    body.print-no-notes #notes, body.print-no-qs #practice{ display:none !important; }
+    body:not(.print-ms) #msPrint{ display:none !important; }
+    #practice, #msPrint{ break-before:page; }
+    body.print-no-notes #practice{ break-before:auto; }
+    .doc{ max-width:none; }
+    .doc h2{ font-size:16pt; }
+    .doc h3{ font-size:12.5pt; margin-top:1.2em; break-after:avoid; }
+    .callout, .q, figure, table, .spec{ break-inside:avoid; }
+    .q{ border:1px solid #bbb; padding:8px 12px; margin:10px 0; }
+    .q-lines{ display:block; margin-top:6px; }
+    .q-lines .ln{ height:9mm; border-bottom:1px solid #999; }
+    .q.has-typed .q-lines{ display:none; }
+    .q.has-typed .q-typed{ display:block; white-space:pre-wrap; margin-top:6px; padding:6px 8px; border:1px dashed #999; }
+    .eq{ white-space:normal; }
+    .print-head{ display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:12px; }
+    .print-head h1{ font-size:17pt; margin:0; }
+    .print-head .sub{ font-size:9.5pt; color:#444; }
+    .fill-in{ display:flex; gap:18px; font-size:10pt; margin:0 0 12px; }
+    .fill-in span{ flex:1; border-bottom:1px solid #000; padding-bottom:2px; }
+    a[href]{ text-decoration:none; }
+  }
+</style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top">
+  <div class="grow">
+    <h1>Extraction of Aluminium by Electrolysis <span class="chip beta">beta</span></h1>
+    <div class="meta">
+      <span class="chip subj-chem">AQA Chemistry 4.4.3.3</span>
+      <span class="chip subj-chem">Trilogy 5.4.3.3</span>
+      <span class="chip lvl-gcse">GCSE</span>
+    </div>
+  </div>
+  <button class="btn primary" id="printBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+    Download printable PDF worksheet &amp; notes
+  </button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab" role="tab" id="tab-present" aria-controls="present" aria-selected="true">1 · Presentation</button>
+  <button class="tab" role="tab" id="tab-notes" aria-controls="notes" aria-selected="false">2 · Revision notes</button>
+  <button class="tab" role="tab" id="tab-practice" aria-controls="practice" aria-selected="false">3 · Practice questions</button>
+</nav>
+
+<main>
+<div class="print-only">
+  <div class="print-head">
+    <div>
+      <h1>Extraction of Aluminium by Electrolysis</h1>
+      <div class="sub">AQA GCSE Chemistry 4.4.3.3 · Combined Science: Trilogy 5.4.3.3 · Notes &amp; worksheet</div>
+    </div>
+    <div class="sub">Savage Science Tools</div>
+  </div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+</div>
+
+<!-- ═════════════════════════ SECTION 1: PRESENTATION ═════════════════════════ -->
+<section class="panel" id="present" role="tabpanel" aria-labelledby="tab-present">
+  <div class="deck" id="deck" tabindex="-1">
+
+    <!-- Slide 1 -->
+    <article class="slide" data-title="Raw material">
+      <div>
+        <div class="step">Step 1 · Raw material &amp; ore</div>
+        <h2>From bauxite to alumina</h2>
+        <ul>
+          <li>Aluminium is extracted from the ore <span class="kw">bauxite</span>.</li>
+          <li>Bauxite contains <span class="kw">aluminium oxide</span> mixed with impurities, mostly iron oxide, which makes it red-brown.</li>
+          <li>It is purified to give white, powdery aluminium oxide, <span class="eq">Al<sub>2</sub>O<sub>3</sub></span>, called <span class="kw">alumina</span>.</li>
+          <li>Aluminium is <span class="kw">more reactive than carbon</span>, so carbon cannot reduce aluminium oxide. We have to use <span class="kw">electrolysis</span>, which is much more expensive.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="flow" aria-label="Process flow from bauxite to aluminium">
+          <div class="box"><div class="swatch" style="background:#9a4a2a"></div><b>Bauxite</b><small>ore, mined</small></div>
+          <div class="arr" aria-hidden="true">→</div>
+          <div class="box"><div class="swatch" style="background:#8a8378"></div><b>Purify</b><small>remove iron oxide</small></div>
+          <div class="arr" aria-hidden="true">→</div>
+          <div class="box"><div class="swatch" style="background:#f4f1ea;border:1px solid #bbb"></div><b>Alumina</b><small>Al<sub>2</sub>O<sub>3</sub></small></div>
+          <div class="arr" aria-hidden="true">→</div>
+          <div class="box"><div class="swatch" style="background:linear-gradient(135deg,#e6e9ee,#9aa3ad)"></div><b>Aluminium</b><small>by electrolysis</small></div>
+        </div>
+        <div class="series">
+          <h3>Why not heat it with carbon?</h3>
+          <div class="rs-box"><div class="rs" aria-label="Reactivity series">
+            <span>K</span><span>Na</span><span>Ca</span><span>Mg</span><span class="al">Al</span><span class="c">C</span><span>Zn</span><span>Fe</span><span>Pb</span><span>Cu</span>
+          </div>
+          <div class="rs-cap"><span>← more reactive</span><span>less reactive →</span></div></div>
+          <p class="hint">Metals below carbon can be reduced by heating with carbon. Aluminium sits above carbon, so electrolysis is the only way.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Slide 2 -->
+    <article class="slide" data-title="Melting point">
+      <div>
+        <div class="step">Step 2 · The melting-point problem</div>
+        <h2>Why cryolite is added</h2>
+        <ul>
+          <li>Aluminium oxide is an <span class="kw">ionic compound</span>, made of Al<sup>3+</sup> and O<sup>2−</sup> ions in a giant lattice.</li>
+          <li>Strong electrostatic forces between the ions give it a <span class="kw">very high melting point</span>: over 2000&nbsp;°C.</li>
+          <li>For electrolysis the ions must be <span class="kw">free to move</span>, so the aluminium oxide has to be molten.</li>
+          <li>Instead, it is dissolved in molten <span class="kw">cryolite</span>. The mixture melts at about <span class="kw">950&nbsp;°C</span>.</li>
+          <li>A lower temperature means <span class="kw">less energy is needed</span>, which <span class="kw">reduces costs</span>.</li>
+        </ul>
+        <p class="hint">Bonus fact: the molten mixture also conducts electricity well. The AQA marks are for <em>lower melting point → less energy → lower cost</em>.</p>
+      </div>
+      <div>
+        <div class="thermo-wrap">
+          <div class="thermo" aria-hidden="true">
+            <div class="tube"><div class="fill" id="thermoFill" style="height:94%"></div></div>
+            <div class="bulb"></div>
+            <div class="tick" style="top:0">2200 °C</div>
+            <div class="tick" style="top:27.3%">1600 °C</div>
+            <div class="tick" style="top:54.5%">1000 °C</div>
+            <div class="tick" style="top:81.8%">400 °C</div>
+          </div>
+          <div>
+            <div class="temp-read" id="tempRead" aria-live="polite">2072 °C<small>pure aluminium oxide melts</small></div>
+            <div class="energy">
+              <div class="lbl">Energy needed to keep the electrolyte molten</div>
+              <div class="bar"><i id="energyBar" style="width:100%"></i></div>
+            </div>
+            <button class="btn primary" id="cryoBtn" type="button" aria-pressed="false">Dissolve in cryolite</button>
+            <p class="hint" id="cryoNote">Pure Al<sub>2</sub>O<sub>3</sub> would have to be held above 2000&nbsp;°C, all day, every day.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Slide 3 -->
+    <article class="slide" data-title="The cell" data-vis="structure">
+      <div>
+        <div class="step">Step 3 · The electrolytic cell</div>
+        <h2>Inside the cell</h2>
+        <ul>
+          <li>A <span class="kw">steel</span> case holds everything.</li>
+          <li>The case is lined with <span class="kw">carbon (graphite)</span>. The lining is the <span class="cath">negative electrode (cathode)</span>.</li>
+          <li>Large <span class="kw">carbon (graphite)</span> blocks dip into the top. They are the <span class="anod">positive electrodes (anodes)</span>.</li>
+          <li>The <span class="kw">electrolyte</span> is molten aluminium oxide dissolved in cryolite, at about 950&nbsp;°C.</li>
+          <li>A huge direct current flows through it.</li>
+        </ul>
+        <p class="hint">Remember <b>PANIC</b>: <b>P</b>ositive is <b>A</b>node, <b>N</b>egative <b>I</b>s <b>C</b>athode.</p>
+      </div>
+      <div class="vis-slot"></div>
+    </article>
+
+    <!-- Slide 4 -->
+    <article class="slide" data-title="Cathode" data-vis="cathode">
+      <div>
+        <div class="step">Step 4a · At the negative electrode</div>
+        <h2>Aluminium is made at the cathode</h2>
+        <ul>
+          <li>Positive Al<sup>3+</sup> ions are attracted to the <span class="cath">negative electrode</span>.</li>
+          <li>Each ion <span class="kw">gains 3 electrons</span> and becomes an aluminium atom.</li>
+        </ul>
+        <div class="eqline"><span class="eq big">Al<sup>3+</sup> + 3e<sup>−</sup> → Al</span><span class="tag ht">HT</span></div>
+        <ul>
+          <li>Gaining electrons is <span class="kw">reduction</span>, so the aluminium ions are <span class="kw">reduced</span>.</li>
+          <li>Aluminium melts at 660&nbsp;°C, so it forms as a <span class="kw">liquid</span>. It is denser than the electrolyte, so it <span class="kw">sinks to the bottom</span> of the cell.</li>
+          <li>The molten aluminium is <span class="kw">siphoned (tapped) off</span> regularly.</li>
+        </ul>
+        <p class="hint">Switch the current on and watch the pool grow, then tap it off.</p>
+      </div>
+      <div class="vis-slot"></div>
+    </article>
+
+    <!-- Slide 5 -->
+    <article class="slide" data-title="Anode" data-vis="anode">
+      <div>
+        <div class="step">Step 4b · At the positive electrode</div>
+        <h2>Oxygen is made at the anodes</h2>
+        <ul>
+          <li>Negative O<sup>2−</sup> ions are attracted to the <span class="anod">positive electrodes</span>.</li>
+          <li>Each ion <span class="kw">loses 2 electrons</span>. Two oxygen atoms join to form an oxygen molecule.</li>
+        </ul>
+        <div class="eqline"><span class="eq big">2O<sup>2−</sup> → O<sub>2</sub> + 4e<sup>−</sup></span><span class="tag ht">HT</span></div>
+        <ul>
+          <li>Losing electrons is <span class="kw">oxidation</span>, so the oxide ions are <span class="kw">oxidised</span>.</li>
+          <li>Check the balance: 2 oxide ions carry 4 negative charges, so 4 electrons are released.</li>
+        </ul>
+        <p class="hint">In the model, every 3 oxide ions that are discharged release exactly enough electrons for 2 aluminium ions. The counters stay at 4 Al : 3 O<sub>2</sub>.</p>
+      </div>
+      <div class="vis-slot"></div>
+    </article>
+
+    <!-- Slide 6 -->
+    <article class="slide" data-title="Anode replacement" data-vis="anode">
+      <div>
+        <div class="step">Step 4c · Anode replacement</div>
+        <h2>Why the anodes burn away</h2>
+        <ul>
+          <li>The anodes are made of <span class="kw">carbon</span>.</li>
+          <li>At about 950&nbsp;°C, the <span class="kw">oxygen</span> made at the anodes <span class="kw">reacts with the carbon</span>.</li>
+        </ul>
+        <div class="eqline"><span class="eq big">C + O<sub>2</sub> → CO<sub>2</sub></span></div>
+        <ul>
+          <li>This produces <span class="kw">carbon dioxide</span> gas, so the anodes <span class="kw">burn away</span>.</li>
+          <li>The positive electrodes must be <span class="kw">replaced regularly</span>, which adds to the cost.</li>
+        </ul>
+        <p class="hint">Leave the current on until the anodes wear out. Once they stop dipping into the electrolyte the circuit is broken. Then press <b>Replace anodes</b>.</p>
+      </div>
+      <div class="vis-slot"></div>
+    </article>
+
+    <!-- Slide 7 -->
+    <article class="slide text-wide" data-title="Summary">
+      <div>
+        <div class="step">Step 5 · Putting it together</div>
+        <h2>The whole process</h2>
+        <p>Overall, aluminium oxide is split into aluminium and oxygen:</p>
+        <div class="eqline"><span class="eq big">2Al<sub>2</sub>O<sub>3</sub> → 4Al + 3O<sub>2</sub></span></div>
+        <div class="callout mem">
+          <b>OIL RIG</b>
+          <b>O</b>xidation <b>I</b>s <b>L</b>oss of electrons: O<sup>2−</sup> at the anode.<br>
+          <b>R</b>eduction <b>I</b>s <b>G</b>ain of electrons: Al<sup>3+</sup> at the cathode.
+        </div>
+      </div>
+      <div class="summary">
+        <div class="card"><h3>Electrolyte</h3><p>Al<sub>2</sub>O<sub>3</sub> dissolved in molten cryolite at about 950&nbsp;°C, not over 2000&nbsp;°C.</p></div>
+        <div class="card"><h3><span class="cath">Cathode (−)</span></h3><p>Carbon lining. Al<sup>3+</sup> gains electrons (reduced) to give molten Al, which is tapped off.</p></div>
+        <div class="card"><h3><span class="anod">Anode (+)</span></h3><p>Carbon blocks. O<sup>2−</sup> loses electrons (oxidised) to give O<sub>2</sub>, which then burns the carbon to CO<sub>2</sub>.</p></div>
+        <div class="card"><h3>Why it is expensive</h3>
+          <ul><li>Huge amounts of electricity</li><li>Energy to melt the electrolyte</li><li>Anodes replaced regularly</li></ul></div>
+        <div class="card"><h3>Environment</h3>
+          <ul><li>CO<sub>2</sub> released from the anodes</li><li>Electricity often from fossil fuels</li><li>Recycling uses about 5% of the energy</li></ul></div>
+      </div>
+    </article>
+
+    <nav class="deck-nav" aria-label="Slide controls">
+      <button class="btn" id="prevBtn" type="button" aria-label="Previous slide">← Prev</button>
+      <span class="count" id="slideCount" aria-live="polite">1 / 7</span>
+      <div class="dots" id="dots"></div>
+      <button class="btn" id="fsBtn" type="button" title="Full screen">⛶ Full screen</button>
+      <button class="btn primary" id="nextBtn" type="button" aria-label="Next slide">Next →</button>
+    </nav>
+    <p class="hint" style="margin:8px 0 0">Tip: use the ← and → keys to move between slides.</p>
+  </div>
+
+  <!-- The one visualiser. It moves into whichever slide needs it. -->
+  <div class="vis" id="vis" hidden>
+    <canvas id="cell" width="720" height="460" role="img"
+      aria-label="Animated electrolysis cell: carbon anodes dip into molten aluminium oxide and cryolite inside a carbon-lined steel case. With the current on, aluminium ions move to the lining and form molten aluminium, and oxide ions move to the anodes, where carbon dioxide bubbles form."></canvas>
+    <div class="vis-ctrl">
+      <button class="btn power" id="powerBtn" type="button" aria-pressed="false">⚡ Current: OFF</button>
+      <button class="btn" id="tapBtn" type="button">Tap off aluminium</button>
+      <button class="btn" id="replaceBtn" type="button">Replace anodes</button>
+      <label><input type="checkbox" id="chkLabels" checked> Labels</label>
+      <label><input type="checkbox" id="chkEqs" checked> Equations</label>
+      <label>Speed <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1" aria-label="Animation speed"></label>
+    </div>
+    <div class="stats" aria-live="off">
+      <span>Al atoms made: <b id="stAl">0</b></span>
+      <span>O<sub>2</sub> formed → CO<sub>2</sub>: <b id="stO2">0</b></span>
+      <span>Anode left: <b id="stAnode">100%</b></span>
+    </div>
+    <div class="legend">
+      <span><i style="background:#cfd8e3"></i>Al<sup>3+</sup> (small)</span>
+      <span><i style="background:#e0473a"></i>O<sup>2−</sup> (large)</span>
+      <span><i style="background:#fff;opacity:.8"></i>CO<sub>2</sub> bubble</span>
+      <span><i style="background:#7dd3fc"></i>electrons in the wires</span>
+    </div>
+    <div class="vis-msg" id="visMsg" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ SECTION 2: REVISION NOTES ═════════════════════════ -->
+<section class="panel" id="notes" role="tabpanel" aria-labelledby="tab-notes" hidden>
+  <article class="doc">
+    <h2>Revision notes: extracting aluminium</h2>
+    <div class="spec">
+      <b>AQA specification.</b> GCSE Chemistry 4.4.3.3, Combined Science: Trilogy 5.4.3.3.
+      “Aluminium is manufactured by the electrolysis of a molten mixture of aluminium oxide and cryolite using carbon as the positive electrode (anode).”
+      You should be able to <b>explain why a mixture is used as the electrolyte</b> and <b>explain why the positive electrode must be continually replaced</b>.
+      Half-equations are <span class="tag ht">HT</span> Higher Tier only.
+    </div>
+
+    <h3><span class="n">1</span>Why electrolysis?</h3>
+    <ul>
+      <li>Metals <b>less reactive than carbon</b> can be extracted by <b>reduction with carbon</b>, which is cheap.</li>
+      <li>Metals <b>more reactive than carbon</b>, like aluminium, cannot be reduced by carbon. They are extracted by <b>electrolysis</b>.</li>
+      <li>Electrolysis is <b>expensive</b>. It needs large amounts of energy to melt the compound and to produce the electric current.</li>
+    </ul>
+
+    <h3><span class="n">2</span>The ore</h3>
+    <ul>
+      <li>An <b>ore</b> is a rock that contains enough of a metal or metal compound to make extraction economical.</li>
+      <li>The ore of aluminium is <b>bauxite</b>. It contains aluminium oxide and impurities, mainly iron oxide.</li>
+      <li>Bauxite is purified to give pure <b>aluminium oxide</b>, <span class="eq">Al<sub>2</sub>O<sub>3</sub></span>, also called <b>alumina</b>.</li>
+    </ul>
+
+    <h3><span class="n">3</span>The electrolyte and the job of cryolite</h3>
+    <ul>
+      <li>Aluminium oxide is <b>ionic</b>. It contains Al<sup>3+</sup> and O<sup>2−</sup> ions.</li>
+      <li>A solid ionic compound cannot be electrolysed because its ions are held in a lattice. The compound must be <b>molten</b> so the <b>ions are free to move</b> to the electrodes.</li>
+      <li>Aluminium oxide has a <b>very high melting point</b>, over 2000&nbsp;°C, because of the strong electrostatic forces between its oppositely charged ions.</li>
+      <li>It is dissolved in molten <b>cryolite</b>. The mixture melts at about <b>950&nbsp;°C</b>.</li>
+      <li>This <b>lowers the melting point</b>, so <b>less energy is needed</b>, which <b>reduces the cost</b>.</li>
+    </ul>
+    <div class="callout mistake">
+      <b>Common mistake</b>
+      Cryolite is <b>not a catalyst</b>. It does not speed up the reaction. It also lowers the melting point of the <b>electrolyte</b> (the aluminium oxide), <b>not</b> the melting point of aluminium.
+    </div>
+    <div class="callout tip">
+      <b>Examiner tip</b>
+      “Explain why a mixture is used” is usually worth 3 marks, and each link in the chain earns one: <i>cryolite lowers the melting point</i> → <i>so less energy is needed</i> → <i>so it is cheaper</i>. Don’t stop after the first link.
+    </div>
+
+    <h3><span class="n">4</span>The electrolytic cell</h3>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="-44 0 734 360" role="img" aria-labelledby="dgTitle">
+          <title id="dgTitle">Labelled diagram of the cell used to extract aluminium</title>
+          <g font-family="system-ui,Segoe UI,Arial,sans-serif" font-size="12" fill="#14120f">
+            <!-- power supply -->
+            <rect x="290" y="6" width="60" height="24" rx="4" fill="#fff" stroke="#14120f"/>
+            <text x="320" y="22" text-anchor="middle" font-weight="700">d.c.</text>
+            <path d="M290 18 H200 V42" fill="none" stroke="#14120f" stroke-width="2"/>
+            <path d="M350 18 H676 V250 H520" fill="none" stroke="#14120f" stroke-width="2"/>
+            <text x="186" y="36" font-weight="700" font-size="16">+</text>
+            <text x="656" y="244" font-weight="700" font-size="16">−</text>
+            <!-- steel case -->
+            <path d="M120 150 H520 V330 H120 Z" fill="#9aa0a6" stroke="#14120f"/>
+            <!-- carbon lining -->
+            <path d="M132 150 H508 V318 H132 Z" fill="#2e2e2e"/>
+            <!-- electrolyte -->
+            <rect x="146" y="166" width="348" height="118" fill="#f6b36b"/>
+            <!-- molten aluminium -->
+            <rect x="146" y="284" width="348" height="20" fill="#c9ced6"/>
+            <!-- busbar + anodes -->
+            <rect x="170" y="42" width="300" height="10" fill="#555"/>
+            <g fill="#3a3a3a">
+              <rect x="205" y="52" width="10" height="18"/><rect x="315" y="52" width="10" height="18"/><rect x="425" y="52" width="10" height="18"/>
+              <rect x="175" y="70" width="70" height="150"/><rect x="285" y="70" width="70" height="150"/><rect x="395" y="70" width="70" height="150"/>
+            </g>
+            <!-- bubbles -->
+            <g fill="#fff" stroke="#555" stroke-width=".8">
+              <circle cx="252" cy="200" r="4"/><circle cx="256" cy="182" r="3"/><circle cx="364" cy="196" r="4"/><circle cx="366" cy="178" r="3"/><circle cx="472" cy="204" r="4"/><circle cx="476" cy="184" r="3"/>
+            </g>
+            <!-- labels, left -->
+            <g stroke="#14120f" stroke-width="1" fill="none">
+              <path d="M112 96 H190"/><path d="M112 226 H170"/><path d="M112 294 H170"/>
+              <path d="M528 180 H478"/><path d="M528 110 H465"/><path d="M528 300 H500"/><path d="M528 336 H500 V328"/>
+            </g>
+            <text x="108" y="92" text-anchor="end" font-weight="700">Carbon anodes</text>
+            <text x="108" y="106" text-anchor="end">positive electrode (+)</text>
+            <text x="108" y="214" text-anchor="end" font-weight="700">Electrolyte</text>
+            <text x="108" y="228" text-anchor="end">Al₂O₃ dissolved in</text>
+            <text x="108" y="242" text-anchor="end">cryolite, ≈ 950 °C</text>
+            <text x="108" y="292" text-anchor="end" font-weight="700">Molten aluminium</text>
+            <text x="108" y="306" text-anchor="end">sinks, then tapped off</text>
+            <!-- labels, right -->
+            <text x="532" y="106" font-weight="700">Anode burns:</text>
+            <text x="532" y="120">C + O₂ → CO₂</text>
+            <text x="532" y="176" font-weight="700">CO₂ bubbles</text>
+            <text x="532" y="296" font-weight="700">Carbon lining</text>
+            <text x="532" y="310">negative electrode (−)</text>
+            <text x="532" y="340" font-weight="700">Steel case</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption>The cell. The carbon lining is the cathode (−) and the carbon blocks are the anodes (+).</figcaption>
+    </figure>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Part</th><th>Made of</th><th>Job</th></tr></thead>
+      <tbody>
+        <tr><td>Positive electrode (anode)</td><td>Carbon (graphite) blocks</td><td>Oxide ions are discharged here to give oxygen</td></tr>
+        <tr><td>Negative electrode (cathode)</td><td>Carbon (graphite) lining of the cell</td><td>Aluminium ions are discharged here to give aluminium</td></tr>
+        <tr><td>Electrolyte</td><td>Aluminium oxide dissolved in molten cryolite</td><td>Its ions move and carry the charge</td></tr>
+        <tr><td>Case</td><td>Steel</td><td>Holds the cell together</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3><span class="n">5</span>The electrode reactions</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Electrode</th><th>What happens</th><th>Half-equation <span class="tag ht">HT</span></th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cath">Negative (cathode)</span></td><td>Al<sup>3+</sup> ions are attracted and each gains 3 electrons. Molten aluminium sinks to the bottom and is tapped off.</td>
+            <td><span class="eq">Al<sup>3+</sup> + 3e<sup>−</sup> → Al</span></td><td>Reduction</td></tr>
+        <tr><td><span class="anod">Positive (anode)</span></td><td>O<sup>2−</sup> ions are attracted and each loses 2 electrons. Oxygen gas forms.</td>
+            <td><span class="eq">2O<sup>2−</sup> → O<sub>2</sub> + 4e<sup>−</sup></span></td><td>Oxidation</td></tr>
+      </tbody>
+    </table></div>
+    <p>Overall: <span class="eq">2Al<sub>2</sub>O<sub>3</sub> → 4Al + 3O<sub>2</sub></span></p>
+    <div class="callout tip">
+      <b>Examiner tip: balancing the oxygen half-equation</b>
+      Oxygen is a <b>diatomic</b> gas, so write O<sub>2</sub>, never O. That needs <b>two</b> oxide ions, which carry 2 × 2− = 4− in total, so <b>four</b> electrons are released. Check that the charge is the same on both sides: left −4, right 0 + 4(−1) = −4. ✓
+      <br>You can also write it as <span class="eq">2O<sup>2−</sup> − 4e<sup>−</sup> → O<sub>2</sub></span>. AQA accepts both.
+    </div>
+    <div class="callout mistake">
+      <b>Common mistakes</b>
+      <ul>
+        <li>Writing O instead of O<sub>2</sub>, or writing 2e<sup>−</sup> instead of 4e<sup>−</sup>.</li>
+        <li>Putting the electrons on the wrong side. At the cathode electrons are <b>gained</b>, so they go on the left. At the anode electrons are <b>lost</b>, so they go on the right.</li>
+        <li>Mixing up the electrodes. Positive ions (cations) go to the cathode; negative ions (anions) go to the anode.</li>
+        <li>Saying electrons flow through the electrolyte. It is the <b>ions</b> that move in the electrolyte. Electrons only flow in the wires and electrodes.</li>
+      </ul>
+    </div>
+
+    <h3><span class="n">6</span>Oxidation and reduction: OIL RIG</h3>
+    <div class="callout mem">
+      <b>OIL RIG</b>
+      <b>O</b>xidation <b>I</b>s <b>L</b>oss of electrons. <b>R</b>eduction <b>I</b>s <b>G</b>ain of electrons.
+      <ul>
+        <li>Al<sup>3+</sup> ions <b>gain</b> electrons at the cathode, so they are <b>reduced</b>.</li>
+        <li>O<sup>2−</sup> ions <b>lose</b> electrons at the anode, so they are <b>oxidised</b>.</li>
+        <li>In terms of oxygen, aluminium oxide loses its oxygen, so it is reduced too.</li>
+      </ul>
+      Use <b>PANIC</b> to remember the electrodes: <b>P</b>ositive is <b>A</b>node, <b>N</b>egative <b>I</b>s <b>C</b>athode.
+    </div>
+
+    <h3><span class="n">7</span>Why the positive electrodes must be replaced</h3>
+    <ul>
+      <li>Oxygen is produced at the positive electrode.</li>
+      <li>The positive electrode is made of carbon.</li>
+      <li>At the high temperature, the carbon reacts with the oxygen: <span class="eq">C + O<sub>2</sub> → CO<sub>2</sub></span></li>
+      <li>Carbon dioxide is formed, so the anode <b>burns away</b> and must be <b>replaced regularly</b>.</li>
+    </ul>
+    <div class="callout tip">
+      <b>Examiner tip: the 4-mark answer</b>
+      Give every step of the chain: <i>oxygen is formed at the anode</i> → <i>the anode is made of carbon</i> → <i>the carbon reacts with the oxygen</i> → <i>to form carbon dioxide, so the anode wears away</i>. Answers that only say “it burns away” get 1 mark at most.
+    </div>
+    <div class="callout mistake">
+      <b>Common mistake</b>
+      Saying the anodes “dissolve”, “melt” or “corrode in the electrolyte”. They react with the <b>oxygen</b> that is produced at them.
+    </div>
+
+    <h3><span class="n">8</span>Economic and environmental factors</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Factor</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>Electricity</td><td>A very large current is needed, so the electricity is the biggest cost. Plants are often built near cheap hydroelectric power.</td></tr>
+        <tr><td>Heat</td><td>Energy is needed to melt the electrolyte and keep it at about 950&nbsp;°C.</td></tr>
+        <tr><td>Anode replacement</td><td>Carbon anodes have to be made and replaced regularly, which costs money and releases CO<sub>2</sub>.</td></tr>
+        <tr><td>Carbon dioxide</td><td>CO<sub>2</sub> from the anodes, and from any fossil fuels burned to make the electricity, is a greenhouse gas.</td></tr>
+        <tr><td>Mining</td><td>Bauxite quarries scar the landscape, and purifying bauxite leaves waste.</td></tr>
+        <tr><td>Recycling</td><td>Recycling aluminium uses only about 5% of the energy of extraction and saves the ore.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3><span class="n">9</span>Key words</h3>
+    <dl class="glossary">
+      <dt>Ore</dt><dd>A rock containing enough metal or metal compound to make extraction economical.</dd>
+      <dt>Electrolysis</dt><dd>Using electricity to break down an ionic compound that is molten or dissolved.</dd>
+      <dt>Electrolyte</dt><dd>The molten or dissolved ionic compound that is broken down.</dd>
+      <dt>Cathode</dt><dd>The negative electrode. Positive ions go here and are reduced.</dd>
+      <dt>Anode</dt><dd>The positive electrode. Negative ions go here and are oxidised.</dd>
+      <dt>Cryolite</dt><dd>An aluminium compound added to lower the melting point of the electrolyte.</dd>
+      <dt>Half-equation</dt><dd>An equation showing what happens at one electrode, including the electrons.</dd>
+    </dl>
+
+    <h3><span class="n">10</span>Checklist</h3>
+    <ul class="checklist">
+      <li>I can explain why aluminium is extracted by electrolysis and not by reduction with carbon.</li>
+      <li>I can name the ore and explain why the electrolyte must be molten.</li>
+      <li>I can explain why a mixture with cryolite is used as the electrolyte.</li>
+      <li>I can label the cell and name what forms at each electrode.</li>
+      <li>I can write both half-equations and say which is oxidation and which is reduction. (HT)</li>
+      <li>I can explain why the positive electrodes must be replaced.</li>
+      <li>I can give reasons why aluminium is expensive to extract.</li>
+    </ul>
+  </article>
+</section>
+
+<!-- ═════════════════════════ SECTION 3: PRACTICE ═════════════════════════ -->
+<section class="panel" id="practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
+  <div class="doc">
+    <h2>Practice questions</h2>
+    <p class="no-print">Write your answer in each box, then open the mark scheme and tick every point you got. Your score adds up at the top.</p>
+    <p class="print-only">Answer every question. Total: <b id="totalMarksPrint">18</b> marks. <span class="tag ht">HT</span> marks Higher Tier questions.</p>
+    <div class="scorebar">
+      <span class="score" id="score">Score: 0 / 18</span>
+      <button class="btn" id="openAll" type="button">Open all mark schemes</button>
+      <button class="btn" id="resetQs" type="button">Reset</button>
+    </div>
+    <div id="qList"></div>
+  </div>
+</section>
+
+<section id="msPrint" class="print-only">
+  <div class="doc">
+    <h2>Mark scheme</h2>
+    <div id="msPrintList"></div>
+  </div>
+</section>
+</main>
+
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Printable worksheet &amp; notes</h2>
+    <p class="hint" style="margin:0">Formatted for A4. In the print window, choose <b>Save as PDF</b> as the destination to download a PDF.</p>
+    <label><input type="checkbox" id="pNotes" checked> <span><b>Revision notes</b> with the labelled diagram</span></label>
+    <label><input type="checkbox" id="pQs" checked> <span><b>Practice questions</b> with answer lines. Any answers typed on screen are printed in place of the lines.</span></label>
+    <label><input type="checkbox" id="pMs"> <span><b>Mark scheme</b> on a separate page (teacher copy)</span></label>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" id="doPrint" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── Tabs ─────────────────────────────────────────────────────── */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  function showTab(id){
+    tabs.forEach(function(t){
+      var on = t.getAttribute('aria-controls') === id;
+      t.setAttribute('aria-selected', on);
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    try { history.replaceState(null, '', '#' + id); } catch(e){}
+  }
+  // Arrow keys are left to the slides, so a presenter who has just clicked a
+  // tab can still press → to advance. Tabs are reached with Tab instead.
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ showTab(t.getAttribute('aria-controls')); });
+  });
+  var initial = (location.hash || '').slice(1);
+  if (['present','notes','practice'].indexOf(initial) !== -1) showTab(initial);
+
+  /* ── Slides ───────────────────────────────────────────────────── */
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var dotsEl = document.getElementById('dots');
+  var vis = document.getElementById('vis');
+  var cur = 0;
+  slides.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.className = 'dot'; b.type = 'button';
+    b.setAttribute('aria-label', 'Slide ' + (i + 1) + ': ' + s.dataset.title);
+    b.addEventListener('click', function(){ go(i); });
+    dotsEl.appendChild(b);
+  });
+  function go(i){
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === cur); });
+    Array.prototype.forEach.call(dotsEl.children, function(d, k){
+      d.classList.toggle('on', k === cur);
+      if (k === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+    });
+    document.getElementById('slideCount').textContent = (cur + 1) + ' / ' + slides.length;
+    document.getElementById('prevBtn').disabled = cur === 0;
+    document.getElementById('nextBtn').disabled = cur === slides.length - 1;
+    var mode = slides[cur].dataset.vis;
+    if (mode){
+      slides[cur].querySelector('.vis-slot').appendChild(vis);
+      vis.hidden = false;
+      Cell.setFocus(mode);
+    } else {
+      vis.hidden = true;
+    }
+  }
+  document.getElementById('prevBtn').addEventListener('click', function(){ go(cur - 1); });
+  document.getElementById('nextBtn').addEventListener('click', function(){ go(cur + 1); });
+  document.addEventListener('keydown', function(e){
+    if (document.getElementById('present').hidden) return;
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
+    if (document.querySelector('dialog[open]')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); go(cur - 1); }
+  });
+  var tx = null;
+  var deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', function(e){ if (e.target.closest('canvas,input,.vis-ctrl')) { tx = null; return; } tx = e.touches[0].clientX; }, {passive:true});
+  deck.addEventListener('touchend', function(e){
+    if (tx === null) return;
+    var dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 60) go(cur + (dx < 0 ? 1 : -1));
+  });
+  var fsBtn = document.getElementById('fsBtn');
+  if (!deck.requestFullscreen) fsBtn.hidden = true;
+  fsBtn.addEventListener('click', function(){
+    if (document.fullscreenElement) document.exitFullscreen();
+    else deck.requestFullscreen().catch(function(){});
+  });
+
+  /* ── Slide 2: cryolite thermometer ────────────────────────────── */
+  var cryoOn = false;
+  document.getElementById('cryoBtn').addEventListener('click', function(){
+    cryoOn = !cryoOn;
+    this.setAttribute('aria-pressed', cryoOn);
+    this.textContent = cryoOn ? 'Remove cryolite' : 'Dissolve in cryolite';
+    var t = cryoOn ? 950 : 2072;
+    document.getElementById('thermoFill').style.height = (t / 2200 * 100) + '%';
+    document.getElementById('energyBar').style.width = cryoOn ? '46%' : '100%';
+    document.getElementById('tempRead').innerHTML = (cryoOn ? '≈ 950 °C' : '2072 °C') +
+      '<small>' + (cryoOn ? 'Al<sub>2</sub>O<sub>3</sub> dissolved in molten cryolite' : 'pure aluminium oxide melts') + '</small>';
+    document.getElementById('cryoNote').innerHTML = cryoOn
+      ? 'Over 1100&nbsp;°C cooler: <b>lower melting point → less energy needed → lower costs</b>. The ions are still free to move.'
+      : 'Pure Al<sub>2</sub>O<sub>3</sub> would have to be held above 2000&nbsp;°C, all day, every day.';
+  });
+
+  /* ── The electrolysis cell ────────────────────────────────────── */
+  var Cell = (function(){
+    var cv = document.getElementById('cell');
+    var ctx = cv.getContext('2d');
+    var W = 720, H = 460;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    // On a narrow screen the label column is unreadable, so crop it off and
+    // let the cell fill the width; the slide text and legend do the labelling.
+    var CROP = 150, cropped = null;
+    var lblWrap = document.getElementById('chkLabels').parentNode;
+    function fit(){
+      var w = vis.clientWidth || cv.parentNode.clientWidth;
+      if (!w) return;
+      var c = w < 560;
+      if (c === cropped) return;
+      cropped = c;
+      cv.width = (W - (c ? CROP : 0)) * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, c ? -CROP * dpr : 0, 0);
+      lblWrap.hidden = c;
+    }
+    window.addEventListener('resize', fit);
+
+    // Geometry, in canvas units.
+    var G = { caseL:170, caseR:640, caseT:200, caseB:440, linL:182, linR:628, linB:420, inL:196, inR:614, inB:406, surf:222 };
+    var AW = 104, ATOP = 90, LMAX = 200;
+    var USABLE = LMAX - (G.surf + 2 - ATOP);      // wear allowed before an anode leaves the bath
+    var WEAR = 0.3;                               // wear per CO2 molecule
+    var anodes = [275, 405, 535].map(function(cx){ return { cx:cx, wear:0, o:0, glow:0 }; });
+    function aBot(a){ return ATOP + LMAX - a.wear; }
+    function aActive(a){ return aBot(a) > G.surf + 2; }
+
+    var on = false, labels = true, eqs = true, speed = 1, focus = 'structure';
+    var poolH = 16, draining = false;
+    var credit = 0;           // electrons released at the anodes, not yet taken up at the cathode
+    var nAl = 0, nO2 = 0;
+    var eFlow = 0, tClock = 0, lastEqAl = -9, lastEqO = -9;
+    var ions = [], bubbles = [], floats = [], drips = [];
+
+    function poolTop(){ return G.inB - poolH; }
+    function rnd(a, b){ return a + Math.random() * (b - a); }
+    function clampOut(p){
+      for (var i = 0; i < anodes.length; i++){
+        var a = anodes[i], b = aBot(a);
+        if (b > G.surf && Math.abs(p.x - a.cx) < AW / 2 + 5 && p.y < b + 6) p.y = b + 6;
+      }
+    }
+    function place(p, lowerHalf){
+      var pt = poolTop();
+      p.x = rnd(G.inL + 10, G.inR - 10);
+      p.y = lowerHalf ? rnd((G.surf + pt) / 2 + 20, pt - 12) : rnd(G.surf + 10, pt - 12);
+      p.vx = 0; p.vy = 0; p.a = 0;
+      clampOut(p);
+      if (p.y > pt - 8) p.y = pt - 8;
+    }
+    for (var i = 0; i < 28; i++){ var p = { type:'Al' }; place(p); p.a = 1; ions.push(p); }
+    for (i = 0; i < 42; i++){ var q = { type:'O' }; place(q); q.a = 1; ions.push(q); }
+
+    function float(text, x, y, col){ floats.push({ t:text, x:x, y:y, a:1, col:col }); }
+
+    function step(dt){
+      tClock += dt;
+      var pt = poolTop();
+      var anyActive = anodes.some(aActive);
+      var damp = Math.exp(-2.5 * dt);
+      for (var i = 0; i < ions.length; i++){
+        var p = ions[i];
+        p.a = Math.min(1, p.a + dt * 2);
+        p.vx = p.vx * damp + (Math.random() - .5) * 700 * dt;
+        p.vy = p.vy * damp + (Math.random() - .5) * 700 * dt;
+        var dx = 0, dy = 0;
+        if (on){
+          if (p.type === 'Al'){ dy = 34; }
+          else if (anyActive){
+            var best = null, bd = 1e9, bx = 0, by = 0;
+            for (var k = 0; k < anodes.length; k++){
+              var a = anodes[k]; if (!aActive(a)) continue;
+              var tx = Math.max(a.cx - AW / 2 + 4, Math.min(a.cx + AW / 2 - 4, p.x)), ty = aBot(a);
+              var d = Math.hypot(tx - p.x, ty - p.y);
+              if (d < bd){ bd = d; best = a; bx = tx; by = ty; }
+            }
+            if (best && bd > 0.1){ dx = (bx - p.x) / bd * 40; dy = (by - p.y) / bd * 40; }
+          }
+        }
+        p.x += (p.vx + dx) * dt;
+        p.y += (p.vy + dy) * dt;
+        if (p.x < G.inL + 7){ p.x = G.inL + 7; p.vx = Math.abs(p.vx); }
+        if (p.x > G.inR - 7){ p.x = G.inR - 7; p.vx = -Math.abs(p.vx); }
+        if (p.y < G.surf + 7){ p.y = G.surf + 7; p.vy = Math.abs(p.vy); }
+
+        if (p.type === 'Al'){
+          if (p.y > pt - 7){
+            if (on && credit >= 3 && !draining){
+              credit -= 3; nAl++;
+              poolH = Math.min(86, poolH + 0.09);
+              if (eqs && tClock - lastEqAl > 2.2){ lastEqAl = tClock; float('Al³⁺ + 3e⁻ → Al', p.x, pt - 14, '#dbeafe'); }
+              place(p, false);
+              continue;
+            }
+            p.y = pt - 7; p.vy = -Math.abs(p.vy);
+          }
+          clampOut(p);
+        } else {
+          if (p.y > pt - 9){ p.y = pt - 9; p.vy = -Math.abs(p.vy); }
+          for (var j = 0; j < anodes.length; j++){
+            var an = anodes[j], b = aBot(an);
+            if (b <= G.surf || Math.abs(p.x - an.cx) >= AW / 2 + 5 || p.y >= b + 8) continue;
+            if (on && aActive(an) && credit < 12){
+              credit += 2; an.o++; an.glow = 1;
+              if (an.o >= 2){
+                an.o = 0; nO2++;
+                an.wear = Math.min(LMAX - 20, an.wear + WEAR);
+                bubbles.push({ x: rnd(an.cx - AW / 2 + 8, an.cx + AW / 2 - 8), y: b + 4, r: rnd(3, 5.5), vx: 0, vy: 0, a: 1, cx: an.cx });
+                if (eqs && tClock - lastEqO > 2.6){
+                  lastEqO = tClock;
+                  float(Math.random() < .5 ? '2O²⁻ → O₂ + 4e⁻' : 'C + O₂ → CO₂', an.cx, b + 26, '#fde68a');
+                }
+              }
+              place(p, true);
+            } else {
+              p.y = b + 8;
+            }
+            break;
+          }
+        }
+      }
+
+      for (i = bubbles.length - 1; i >= 0; i--){
+        var bb = bubbles[i];
+        var under = Math.abs(bb.x - bb.cx) < AW / 2 + 2 && bb.y > G.surf;
+        var worn = anodes.filter(function(a){ return a.cx === bb.cx; })[0];
+        if (under && bb.y > aBot(worn) - 2){ bb.vx = (bb.x < bb.cx ? -1 : 1) * 55; bb.vy = -4; }
+        else { bb.vx *= 0.9; bb.vy = -70; }
+        if (under && bb.y <= aBot(worn) - 2){ bb.vx = (bb.x < bb.cx ? -1 : 1) * 60; bb.vy = 0; }
+        bb.x += bb.vx * dt; bb.y += bb.vy * dt;
+        if (bb.y < G.surf){ bb.a -= dt * 1.6; bb.r += dt * 2; }
+        if (bb.a <= 0) bubbles.splice(i, 1);
+      }
+
+      for (i = floats.length - 1; i >= 0; i--){
+        var f = floats[i]; f.y -= 12 * dt; f.a -= dt * 0.45;
+        if (f.a <= 0) floats.splice(i, 1);
+      }
+
+      anodes.forEach(function(a){ a.glow = Math.max(0, a.glow - dt * 2); });
+      if (on && anyActive) eFlow += dt * 70;
+
+      if (draining){
+        poolH = Math.max(16, poolH - 26 * dt);
+        if (Math.random() < 0.6) drips.push({ x: 672, y: 404, vy: 20 });
+        if (poolH <= 16){ draining = false; msg('Aluminium tapped off. It is cast into ingots.'); }
+      }
+      for (i = drips.length - 1; i >= 0; i--){
+        var dr = drips[i]; dr.vy += 400 * dt; dr.y += dr.vy * dt;
+        if (dr.y > 436) drips.splice(i, 1);
+      }
+    }
+
+    /* drawing */
+    function rr(x, y, w, h, r){
+      ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    var WIRE = [[580, 50], [682, 50], [682, 330], [640, 330]];
+    function wirePoint(d){
+      for (var i = 0; i < WIRE.length - 1; i++){
+        var a = WIRE[i], b = WIRE[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (d <= L) return [a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L];
+        d -= L;
+      }
+      return null;
+    }
+    function wireLen(){ var s = 0; for (var i = 0; i < WIRE.length - 1; i++) s += Math.hypot(WIRE[i+1][0] - WIRE[i][0], WIRE[i+1][1] - WIRE[i][1]); return s; }
+    var WL = wireLen();
+
+    function label(text, sub, ty, px, py){
+      ctx.strokeStyle = 'rgba(239,233,221,.55)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(152, ty - 4); ctx.lineTo(px, py); ctx.stroke();
+      ctx.fillStyle = '#efe9dd'; ctx.textAlign = 'right';
+      ctx.font = '600 12.5px system-ui,Segoe UI,Arial,sans-serif'; ctx.fillText(text, 148, ty);
+      if (sub){ ctx.fillStyle = '#b3aa9a'; ctx.font = '11.5px system-ui,Segoe UI,Arial,sans-serif'; ctx.fillText(sub, 148, ty + 14); }
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 7); ctx.fillStyle = '#efe9dd'; ctx.fill();
+    }
+
+    function draw(){
+      var pt = poolTop();
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#091321'; ctx.fillRect(0, 0, W, H);
+
+      // tap and ladle
+      ctx.fillStyle = '#6b7079'; ctx.fillRect(628, 396, 50, 9);
+      ctx.fillStyle = '#4b4f56'; rr(650, 424, 60, 30, 5); ctx.fill();
+      ctx.fillStyle = '#c9ced6';
+      drips.forEach(function(d){ ctx.beginPath(); ctx.arc(d.x, d.y, 2.6, 0, 7); ctx.fill(); });
+
+      // steel case
+      var sg = ctx.createLinearGradient(0, G.caseT, 0, G.caseB);
+      sg.addColorStop(0, '#8d949c'); sg.addColorStop(1, '#6c7279');
+      ctx.fillStyle = sg; ctx.fillRect(G.caseL, G.caseT, G.caseR - G.caseL, G.caseB - G.caseT);
+      // carbon lining
+      ctx.fillStyle = '#2b2b2d'; ctx.fillRect(G.linL, G.caseT, G.linR - G.linL, G.linB - G.caseT);
+      // electrolyte
+      var flick = 0.04 * Math.sin(tClock * 3);
+      var eg = ctx.createLinearGradient(0, G.surf, 0, G.inB);
+      eg.addColorStop(0, 'rgb(' + Math.round(245 + 10 * flick) + ',150,58)');
+      eg.addColorStop(1, '#d9651a');
+      ctx.fillStyle = eg; ctx.fillRect(G.inL, G.surf, G.inR - G.inL, G.inB - G.surf);
+      // crust
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(G.inL, G.surf - 3, G.inR - G.inL, 3);
+      // molten aluminium
+      var ag = ctx.createLinearGradient(0, pt, 0, G.inB);
+      ag.addColorStop(0, '#eef1f5'); ag.addColorStop(1, '#9aa3ad');
+      ctx.fillStyle = ag; ctx.fillRect(G.inL, pt, G.inR - G.inL, poolH);
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var x = G.inL; x <= G.inR; x += 8) ctx.lineTo(x, pt + Math.sin(x * 0.07 + tClock * 2) * 0.8);
+      ctx.stroke();
+
+      // ions
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (var i = 0; i < ions.length; i++){
+        var p = ions[i];
+        ctx.globalAlpha = p.a;
+        if (p.type === 'Al'){
+          ctx.fillStyle = '#cfd8e3'; ctx.strokeStyle = '#334155';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, 7); ctx.fill(); ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = '#0f172a'; ctx.font = '700 7.5px system-ui,Arial,sans-serif'; ctx.fillText('3+', p.x, p.y + .5);
+        } else {
+          ctx.fillStyle = '#e0473a'; ctx.strokeStyle = '#5b0f0a';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 8.5, 0, 7); ctx.fill(); ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.font = '700 8px system-ui,Arial,sans-serif'; ctx.fillText('2−', p.x, p.y + .5);
+        }
+      }
+      ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+
+      // busbar, rods, anodes
+      ctx.fillStyle = '#8a7a5c'; ctx.fillRect(240, 44, 340, 12);
+      anodes.forEach(function(a){
+        var b = aBot(a), x0 = a.cx - AW / 2;
+        ctx.fillStyle = '#9aa0a6'; ctx.fillRect(a.cx - 5, 56, 10, ATOP - 56);
+        var g = ctx.createLinearGradient(x0, 0, x0 + AW, 0);
+        g.addColorStop(0, '#2a2a2c'); g.addColorStop(.5, '#3d3d40'); g.addColorStop(1, '#262628');
+        ctx.fillStyle = g; ctx.fillRect(x0, ATOP, AW, b - ATOP);
+        if (on && aActive(a)){
+          var hg = ctx.createLinearGradient(0, b - 10, 0, b);
+          hg.addColorStop(0, 'rgba(255,140,40,0)'); hg.addColorStop(1, 'rgba(255,170,60,' + (0.35 + 0.5 * a.glow) + ')');
+          ctx.fillStyle = hg; ctx.fillRect(x0, b - 10, AW, 10);
+        }
+        ctx.fillStyle = aActive(a) ? '#efe9dd' : '#fbbf24';
+        ctx.font = '700 13px system-ui,Arial,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('+', a.cx, ATOP + 22);
+        ctx.font = '11px system-ui,Arial,sans-serif';
+        ctx.fillText('carbon', a.cx, ATOP + 38);
+        var left = Math.max(0, Math.round(100 * (1 - a.wear / USABLE)));
+        if (left < 35) ctx.fillText(left > 0 ? 'wearing thin' : 'out of the bath', a.cx, ATOP + 54);
+      });
+
+      // bubbles
+      bubbles.forEach(function(bb){
+        ctx.globalAlpha = Math.max(0, bb.a) * 0.9;
+        ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.strokeStyle = 'rgba(80,60,40,.8)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.r, 0, 7); ctx.fill(); ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+
+      // wires and supply
+      ctx.strokeStyle = '#b9b1a2'; ctx.lineWidth = 3;
+      ctx.beginPath(); WIRE.forEach(function(w, k){ if (k) ctx.lineTo(w[0], w[1]); else ctx.moveTo(w[0], w[1]); }); ctx.stroke();
+      ctx.fillStyle = '#6b7079'; ctx.fillRect(628, 326, 14, 8);
+      if (on && anodes.some(aActive)){
+        ctx.fillStyle = '#7dd3fc';
+        for (var d = eFlow % 24; d < WL; d += 24){
+          var wp = wirePoint(d); if (!wp) continue;
+          ctx.beginPath(); ctx.arc(wp[0], wp[1], 2.6, 0, 7); ctx.fill();
+        }
+      }
+      rr(656, 112, 52, 58, 6); ctx.fillStyle = on ? '#3a2f14' : '#142132'; ctx.fill();
+      ctx.strokeStyle = on ? '#f59e0b' : '#6b6356'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#efe9dd'; ctx.textAlign = 'center';
+      ctx.font = '700 12px system-ui,Arial,sans-serif'; ctx.fillText('d.c.', 682, 138);
+      ctx.font = '11px system-ui,Arial,sans-serif'; ctx.fillText(on ? 'ON' : 'OFF', 682, 155);
+      ctx.font = '700 17px system-ui,Arial,sans-serif';
+      ctx.fillStyle = '#fca5a5'; ctx.fillText('+', 596, 42);
+      ctx.fillStyle = '#93c5fd'; ctx.fillText('−', 660, 322);
+
+      // temperature tag
+      ctx.fillStyle = '#7a2e0e'; rr(588, 172, 64, 20, 5); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '600 11.5px system-ui,Arial,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('≈ 950 °C', 620, 186);
+
+      // focus outline
+      if (focus === 'cathode' || focus === 'anode'){
+        ctx.save();
+        ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]); ctx.lineDashOffset = -tClock * 20;
+        if (focus === 'cathode'){
+          ctx.beginPath(); ctx.moveTo(G.linL - 3, G.caseT); ctx.lineTo(G.linL - 3, G.linB + 3); ctx.lineTo(G.linR + 3, G.linB + 3); ctx.lineTo(G.linR + 3, G.caseT); ctx.stroke();
+          ctx.strokeRect(G.inL + 2, pt - 2, G.inR - G.inL - 4, poolH);
+        } else {
+          anodes.forEach(function(a){ ctx.strokeRect(a.cx - AW / 2 - 3, ATOP - 3, AW + 6, aBot(a) - ATOP + 6); });
+        }
+        ctx.restore();
+      }
+
+      // labels
+      if (labels && !cropped){
+        label('Carbon anodes', 'positive electrode (+)', 118, 223, 140);
+        label('CO₂ gas', 'anodes burn away', 186, 214, G.surf - 6);
+        label('Molten Al₂O₃', 'dissolved in cryolite', 258, 205, 300);
+        label('Carbon lining', 'negative electrode (−)', 336, 189, 360);
+        label('Molten aluminium', 'sinks, then tapped off', 396, 212, pt + poolH / 2);
+        label('Steel case', null, 444, 176, 432);
+      }
+
+      // floating equations
+      ctx.font = '600 13px "Cambria Math","Times New Roman",serif'; ctx.textAlign = 'center';
+      floats.forEach(function(f){
+        ctx.globalAlpha = Math.max(0, f.a);
+        var w = ctx.measureText(f.t).width + 12;
+        ctx.fillStyle = 'rgba(20,18,15,.78)'; rr(f.x - w / 2, f.y - 14, w, 20, 5); ctx.fill();
+        ctx.fillStyle = f.col; ctx.fillText(f.t, f.x, f.y);
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    var last = 0, statT = 0;
+    function frame(t){
+      var dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
+      var visible = !document.hidden && !vis.hidden && vis.offsetParent !== null;
+      if (visible){
+        fit();
+        var sdt = dt * speed;
+        // sub-step at high speed so ions can't tunnel past an electrode
+        var n = Math.ceil(sdt / 0.02);
+        for (var i = 0; i < n; i++) step(sdt / n);
+        draw();
+        statT += dt;
+        if (statT > 0.2){ statT = 0; stats(); }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    var stAl = document.getElementById('stAl'), stO2 = document.getElementById('stO2'), stAn = document.getElementById('stAnode');
+    var msgEl = document.getElementById('visMsg'), msgT = null;
+    var wornWarned = false;
+    function msg(t, sticky){ msgEl.textContent = t; clearTimeout(msgT); if (!sticky) msgT = setTimeout(function(){ msgEl.textContent = ''; }, 6000); }
+    function stats(){
+      stAl.textContent = nAl; stO2.textContent = nO2;
+      var minLeft = Math.min.apply(null, anodes.map(function(a){ return Math.max(0, Math.round(100 * (1 - a.wear / USABLE))); }));
+      stAn.textContent = minLeft + '%';
+      if (on && !anodes.some(aActive) && !wornWarned){
+        wornWarned = true;
+        msg('The anodes have burned away and no longer reach the electrolyte, so the circuit is broken. Press Replace anodes.', true);
+      }
+      if (poolH > 70 && !draining && on && !wornWarned) msg('The aluminium pool is getting deep. Tap it off.');
+    }
+
+    var powerBtn = document.getElementById('powerBtn');
+    function setPower(v){
+      on = v;
+      powerBtn.setAttribute('aria-pressed', on);
+      powerBtn.textContent = on ? '⚡ Current: ON' : '⚡ Current: OFF';
+      powerBtn.classList.toggle('nudge', !on && focus !== 'structure');
+      if (on && !anodes.some(aActive)) msg('No anode is dipping into the electrolyte. Replace the anodes first.');
+    }
+    powerBtn.addEventListener('click', function(){ setPower(!on); });
+    document.getElementById('tapBtn').addEventListener('click', function(){
+      if (poolH <= 17){ msg('There is not enough aluminium to tap off yet.'); return; }
+      draining = true; msg('Siphoning off the molten aluminium…');
+    });
+    document.getElementById('replaceBtn').addEventListener('click', function(){
+      anodes.forEach(function(a){ a.wear = 0; a.o = 0; });
+      wornWarned = false;
+      ions.forEach(function(p){ if (p.type === 'O') clampOut(p); else clampOut(p); });
+      msg('New carbon anodes fitted. In a real plant they last a few weeks.');
+    });
+    document.getElementById('chkLabels').addEventListener('change', function(){ labels = this.checked; });
+    document.getElementById('chkEqs').addEventListener('change', function(){ eqs = this.checked; });
+    document.getElementById('speed').addEventListener('input', function(){ speed = parseFloat(this.value) || 1; });
+
+    requestAnimationFrame(frame);
+    return {
+      setFocus: function(f){ focus = f; powerBtn.classList.toggle('nudge', !on && f !== 'structure'); }
+    };
+  })();
+
+  go(0);
+
+  /* ── Practice questions ───────────────────────────────────────── */
+  var QS = [
+    { marks:1, stem:'Name the ore that aluminium is extracted from.', lines:1,
+      scheme:['bauxite'] },
+    { marks:1, stem:'Aluminium cannot be extracted by heating aluminium oxide with carbon. Give the reason why.', lines:2,
+      scheme:['aluminium is more reactive than carbon'],
+      note:'Allow “carbon cannot reduce / displace aluminium”. Do not accept “aluminium is very reactive” with no comparison to carbon.' },
+    { marks:2, stem:'Aluminium oxide must be molten for electrolysis to work. Explain why.', lines:3,
+      scheme:['aluminium oxide is made of ions', 'the ions must be free to move (to the electrodes)'],
+      note:'Allow “in the solid the ions are in fixed positions”. Do not accept “electrons are free to move”, which scores 0.' },
+    { marks:3, stem:'A mixture of aluminium oxide and cryolite is used as the electrolyte. Explain why a mixture is used instead of pure aluminium oxide.', lines:4,
+      scheme:['cryolite lowers the melting point (of the electrolyte)', 'so less energy is needed (to melt it and keep it molten)', 'so the process costs less'],
+      note:'Allow correct temperatures, e.g. “from over 2000 °C to about 950 °C”, for the first mark. “Cryolite is a catalyst” scores 0 for that point.' },
+    { marks:2, ht:true, stem:'Complete the half-equation for the reaction at the negative electrode.<br><span class="eq">Al<sup>3+</sup> + ______ → Al</span><br>State whether this is oxidation or reduction, and give a reason.', lines:2,
+      scheme:['3e<sup>−</sup>', 'reduction, because electrons are gained'],
+      note:'The second mark needs both “reduction” and the reason.' },
+    { marks:2, ht:true, stem:'Write a balanced half-equation for the reaction at the positive electrode.', lines:2,
+      scheme:['correct species: O<sup>2−</sup>, O<sub>2</sub> and e<sup>−</sup> on the correct sides', 'correctly balanced: <span class="eq">2O<sup>2−</sup> → O<sub>2</sub> + 4e<sup>−</sup></span>'],
+      note:'Allow <span class="eq">2O<sup>2−</sup> − 4e<sup>−</sup> → O<sub>2</sub></span> and multiples. Ignore state symbols.' },
+    { marks:4, stem:'The positive electrodes must be replaced regularly. Explain why.', lines:5,
+      scheme:['oxygen is produced at the positive electrode', 'the positive electrode is made of carbon (graphite)', 'the carbon reacts with the oxygen (at the high temperature)', 'forming carbon dioxide, so the electrode burns / wears away'],
+      note:'Allow C + O<sub>2</sub> → CO<sub>2</sub> for the third and fourth marks. “The electrode dissolves” scores 0 for the fourth mark.' },
+    { marks:3, stem:'Aluminium is expensive to extract. Give three reasons why.', lines:4,
+      scheme:['large amounts of electricity (energy) are needed for electrolysis', 'energy (heat) is needed to melt the electrolyte and keep it at about 950 °C', 'the carbon anodes must be replaced regularly', 'the bauxite must be mined and purified first'],
+      note:'Any three points for 1 mark each.' }
+  ];
+  var TOTAL = QS.reduce(function(s, q){ return s + q.marks; }, 0);
+  var qList = document.getElementById('qList'), msList = document.getElementById('msPrintList');
+  document.getElementById('totalMarksPrint').textContent = TOTAL;
+
+  QS.forEach(function(q, i){
+    var n = i + 1;
+    var box = document.createElement('div');
+    box.className = 'q';
+    var lines = '';
+    for (var k = 0; k < q.lines + 1; k++) lines += '<div class="ln"></div>';
+    var sch = q.scheme.map(function(s, k){
+      return '<li><label><input type="checkbox" data-q="' + i + '"> <span>' + s + '</span></label></li>';
+    }).join('');
+    box.innerHTML =
+      '<div class="q-head"><span class="q-num">' + n + '</span><div class="q-stem">' + q.stem +
+      (q.ht ? ' <span class="tag ht">HT</span>' : '') + '</div><span class="q-marks">[' + q.marks + ' mark' + (q.marks > 1 ? 's' : '') + ']</span></div>' +
+      '<textarea aria-label="Your answer to question ' + n + '" rows="' + Math.min(5, q.lines + 1) + '"></textarea>' +
+      '<div class="q-lines" aria-hidden="true">' + lines + '</div><div class="q-typed"></div>' +
+      '<details class="ms"><summary>Mark scheme <span class="q-got" data-got="' + i + '"></span></summary><ul>' + sch + '</ul>' +
+      (q.note ? '<p class="ms-note">' + q.note + '</p>' : '') + '</details>';
+    qList.appendChild(box);
+
+    var p = document.createElement('div');
+    p.className = 'q';
+    p.innerHTML = '<div class="q-head"><span class="q-num">' + n + '</span><div class="q-stem"><ul style="margin:0;padding-left:1.1em">' +
+      q.scheme.map(function(s){ return '<li>' + s + '</li>'; }).join('') + '</ul>' +
+      (q.note ? '<p class="ms-note">' + q.note + '</p>' : '') + '</div><span class="q-marks">[' + q.marks + ']</span></div>';
+    msList.appendChild(p);
+  });
+
+  function score(){
+    var tot = 0;
+    QS.forEach(function(q, i){
+      var got = Math.min(q.marks, qList.querySelectorAll('input[data-q="' + i + '"]:checked').length);
+      tot += got;
+      var tag = qList.querySelector('[data-got="' + i + '"]');
+      var any = qList.querySelectorAll('input[data-q="' + i + '"]:checked').length;
+      tag.textContent = any ? '· ' + got + ' / ' + q.marks : '';
+    });
+    document.getElementById('score').textContent = 'Score: ' + tot + ' / ' + TOTAL;
+  }
+  qList.addEventListener('change', score);
+  score();
+  document.getElementById('openAll').addEventListener('click', function(){
+    var all = qList.querySelectorAll('details.ms');
+    var anyClosed = Array.prototype.some.call(all, function(d){ return !d.open; });
+    Array.prototype.forEach.call(all, function(d){ d.open = anyClosed; });
+    this.textContent = anyClosed ? 'Close all mark schemes' : 'Open all mark schemes';
+  });
+  document.getElementById('resetQs').addEventListener('click', function(){
+    if (!confirm('Clear your answers and ticks?')) return;
+    qList.querySelectorAll('textarea').forEach(function(t){ t.value = ''; });
+    qList.querySelectorAll('input[type=checkbox]').forEach(function(c){ c.checked = false; });
+    qList.querySelectorAll('details').forEach(function(d){ d.open = false; });
+    score();
+  });
+
+  /* ── Print / PDF ──────────────────────────────────────────────── */
+  var dlg = document.getElementById('printDlg');
+  document.getElementById('printBtn').addEventListener('click', function(){
+    if (dlg.showModal) dlg.showModal(); else doPrint();
+  });
+  dlg.addEventListener('close', function(){
+    if (dlg.returnValue === 'print') setTimeout(doPrint, 60);
+  });
+  function doPrint(){
+    var b = document.body.classList;
+    b.toggle('print-no-notes', !document.getElementById('pNotes').checked);
+    b.toggle('print-no-qs', !document.getElementById('pQs').checked);
+    b.toggle('print-ms', document.getElementById('pMs').checked);
+    window.print();
+  }
+  window.addEventListener('beforeprint', function(){
+    qList.querySelectorAll('.q').forEach(function(box){
+      var t = box.querySelector('textarea').value.trim();
+      box.classList.toggle('has-typed', !!t);
+      box.querySelector('.q-typed').textContent = t;
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

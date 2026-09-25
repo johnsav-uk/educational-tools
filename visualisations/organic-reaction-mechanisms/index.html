@@ -6,10 +6,6 @@
 <title>Organic Reaction Mechanisms — AQA 3.3.2–3.3.13</title>
 <meta name="description" content="Every curly-arrow mechanism on the AQA A-level Chemistry specification, animated step by step, with an arrow-rules guide and exam practice.">
 
-<!-- ── Fonts ───────────────────────────────────────────────────────────── -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
 <!-- ── Tailwind ────────────────────────────────────────────────────────── -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -18,8 +14,8 @@
     theme: {
       extend: {
         fontFamily: {
-          sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
-          display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
+          sans:    ['Plus Jakarta Sans','Segoe UI','system-ui','-apple-system','sans-serif'],
+          display: ['Plus Jakarta Sans','Helvetica','sans-serif'],
           mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
         }
       }
@@ -37,7 +33,8 @@
 
 <style>
   :root { color-scheme: dark; }
-  html, body, #root { height: 100%; }
+  html, body { height: 100%; }
+  #root { height: calc(100% - var(--sst-bar-h)); }   /* the site bar sits above */
   body {
     margin: 0;
     background:
@@ -46,7 +43,7 @@
       #070b12;
     background-attachment: fixed;
     color: #e6edf3;
-    font-family: 'Source Sans 3','Segoe UI',system-ui,sans-serif;
+    font-family: 'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   .glass {
@@ -61,7 +58,7 @@
   }
 
   /* ── Chemical rendering ───────────────────────────────────────────── */
-  .atom      { font-family:'Source Sans 3',system-ui,sans-serif; font-weight:600;
+  .atom      { font-family:'Plus Jakarta Sans',system-ui,sans-serif; font-weight:600;
                fill:#e8f1fb; font-size:21px; text-anchor:middle; dominant-baseline:middle; }
   .atom-key  { fill:#f8fafc; }
   .bond      { stroke:#7dd3fc; stroke-width:2.4; stroke-linecap:round; }
@@ -71,7 +68,7 @@
   .delta     { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
                fill:#fbbf24; text-anchor:middle; dominant-baseline:middle; }
   .chg-ring  { fill:none; stroke-width:1.6; }
-  .chg-txt   { font-family:'Source Sans 3',sans-serif; font-size:14px; font-weight:700;
+  .chg-txt   { font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700;
                text-anchor:middle; dominant-baseline:central; }
   .curly     { fill:none; stroke:#fb923c; stroke-width:2.6; stroke-linecap:round; }
   .curly-h   { fill:#fb923c; stroke:none; }
@@ -80,14 +77,14 @@
                animation:ray 1.1s linear infinite; }
   @keyframes ray { to { stroke-dashoffset:-22; } }
   .lamp      { fill:rgba(167,139,250,.15); stroke:#a78bfa; stroke-width:2; }
-  .lamp-txt  { font-family:'Archivo Narrow',sans-serif; font-size:16px; font-weight:700;
+  .lamp-txt  { font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; font-weight:700;
                fill:#c4b5fd; text-anchor:middle; dominant-baseline:middle;
                letter-spacing:.06em; }
   .annot     { font-family:'JetBrains Mono',monospace; font-size:12px; fill:#94a3b8;
                text-anchor:middle; }
   /* No text-transform here. Captions carry formulae as well as names, and
      uppercasing turns AlCl₃ into ALCL₃ and NaBH₄ into NABH₄. */
-  .caption   { font-family:'Archivo Narrow',sans-serif; font-size:16px; fill:#7dd3fc;
+  .caption   { font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; fill:#7dd3fc;
                text-anchor:middle; letter-spacing:.03em; }
 
   /* Arrow draw-on animation */
@@ -121,8 +118,11 @@
   details > summary { list-style:none; cursor:pointer; }
   details > summary::-webkit-details-marker { display:none; }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+<link rel="stylesheet" href="../../assets/sst/skin.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div id="root"></div>
 <noscript class="block p-8 text-center">This app needs JavaScript enabled.</noscript>
 
@@ -3214,32 +3214,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

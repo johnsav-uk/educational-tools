@@ -4,71 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Time of Flight Tube</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { theme: { extend: { fontFamily: {
-    display: ['"Archivo Narrow"', 'Arial Narrow', 'sans-serif'],
-    body: ['"Source Sans 3"', 'Segoe UI', 'system-ui', 'sans-serif'],
+    display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+    body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
     mono: ['"JetBrains Mono"', 'ui-monospace', 'Consolas', 'monospace']
   } } } };
 </script>
 <style>
 /* ── Tokens ─────────────────────────────────────────────────────────────
-   Light is the bare :root set. prefers-color-scheme redefines tokens only,
-   guarded so an explicit light choice beats a dark OS. The page's own
-   toggle lives on <body> so a host restamping data-theme can't undo it. */
+   Dark is the bare :root set, on the site-wide palette (assets/sst/sst.css).
+   Light is only the explicit choice from the page's own toggle, which lives
+   on <body> so a host restamping data-theme can't undo it. Scene colours
+   stay hex: three.js reads them and can't parse oklch(). */
 :root{
-  --ground:#E2E7EA; --ground-2:#CED6DC; --surface:#FAFBFC; --surface-2:#EFF3F5;
-  --line:#C3CCD2;   --line-soft:#DCE3E7; --ink:#101A21; --ink-2:#33444F; --muted:#647380;
-  --accent:#D6480E; --accent-text:#A83708; --accent-ink:#FFF6F2; --accent-soft:rgba(214,72,14,.11);
-  --good:#1F7A5C;   --warn:#B26A00;
-  --scene-a:#DFE6EA; --scene-b:#B4C0C9;
-  --metal:#9AA7B0;  --metal-dark:#6E7C86; --glass:#8DA4B3; --edge:#4A5A66; --plate:#B8862F;
-  --ion-a:#0E93B8;  --ion-b:#6B4FD6; --ion-c:#D62E5C;
-  --beam:#1FA0C4;
-  --shadow: 0 1px 0 rgba(16,26,33,.04), 0 12px 28px -20px rgba(16,26,33,.5);
-  --f-display:"Archivo Narrow","Arial Narrow",Helvetica,sans-serif;
-  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --ground:#050e1a; --ground-2:#030915; --surface:#091321; --surface-2:#0d1928;
+  --line:#182535;   --line-soft:#111c2b; --ink:#edf2f8; --ink-2:#bbc5d1; --muted:#8693a5;
+  --accent:#0086dd; --accent-text:#47b5fa; --accent-ink:#ffffff; --accent-soft:rgba(71,181,250,.14);
+  --good:#63d18f;   --warn:#f3b94c;
+  --scene-a:#0d1928; --scene-b:#030915;
+  --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
+  --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
+  --beam:#42D7FF;
+  --shadow: none;
+  --f-display:'Plus Jakarta Sans',system-ui,sans-serif;
+  --f-body:'Plus Jakarta Sans',system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
-    --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
-    --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
-    --good:#3ECFA0;   --warn:#E8A33D;
-    --scene-a:#101C24; --scene-b:#05090C;
-    --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
-    --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
-    --beam:#42D7FF;
-    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
-  }
-}
-:root[data-theme="dark"]{
-  --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
-  --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
-  --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
-  --good:#3ECFA0;   --warn:#E8A33D;
-  --scene-a:#101C24; --scene-b:#05090C;
-  --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
-  --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
-  --beam:#42D7FF;
-  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
-}
-body.theme-dark{
-  --ground:#0A0F14; --ground-2:#05090C; --surface:#111A21; --surface-2:#17232B;
-  --line:#25333D;   --line-soft:#1A262E; --ink:#E8F0F5; --ink-2:#B7C6D0; --muted:#7A8B98;
-  --accent:#FF6A2B; --accent-text:#FF8A54; --accent-ink:#1A0D06; --accent-soft:rgba(255,106,43,.14);
-  --good:#3ECFA0;   --warn:#E8A33D;
-  --scene-a:#101C24; --scene-b:#05090C;
-  --metal:#61707B;  --metal-dark:#38454E; --glass:#4E6a7C; --edge:#93AABA; --plate:#D9A648;
-  --ion-a:#33C6EC;  --ion-b:#9B82FF; --ion-c:#FF6E92;
-  --beam:#42D7FF;
-  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 16px 34px -24px rgba(0,0,0,.95);
 }
 body.theme-light{
   --ground:#E2E7EA; --ground-2:#CED6DC; --surface:#FAFBFC; --surface-2:#EFF3F5;
@@ -92,7 +55,7 @@ h1,h2,h3,h4{ font-family:var(--f-display); font-weight:700; text-wrap:balance; m
 :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
 
 /* ── Shell ─────────────────────────────────────────────────────────────── */
-.app{ display:grid; grid-template-rows:auto 1fr; height:100dvh; }
+.app{ display:grid; grid-template-rows:auto 1fr; height:calc(100dvh - var(--sst-bar-h)); }
 .console{
   display:grid; grid-template-columns:296px minmax(0,1fr) 344px;
   gap:12px; padding:12px; min-height:0;
@@ -287,8 +250,10 @@ table.data tr:last-child td{ border-bottom:0; }
   *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
 }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div class="app">
 
   <header class="bar">
@@ -1757,7 +1722,7 @@ function setTheme(t){
 function currentTheme(){
   if (document.body.classList.contains("theme-dark")) return "dark";
   if (document.body.classList.contains("theme-light")) return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark"; // site default
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1856,32 +1821,5 @@ else window.addEventListener("load", () => {
 });
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

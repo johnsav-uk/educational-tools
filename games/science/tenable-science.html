@@ -663,8 +663,11 @@ body::before {
 }
 .new-q-btn:hover { background: #aa00ff; color: #fff; box-shadow: 0 0 25px #aa00ff; }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+<link rel="stylesheet" href="tenable-sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div id="app">
 
   <!-- ======================================================
@@ -1348,7 +1351,7 @@ function startGame() {
     const lvlClass = GameState.level === 'Both' ? 'lvl-Both' : 'lvl-' + GameState.level;
     const lvlLabel = GameState.level === 'Both' ? 'KS3 / GCSE' : GameState.level;
     meta.innerHTML = `
-      <span style="color:#aa00ff">${GameState.topic}</span>
+      <span style="color:#b199f4">${GameState.topic}</span>
       ${GameState.level ? `<span class="q-card-diff ${lvlClass}">${lvlLabel}</span>` : ''}
       <span class="q-card-diff diff-${GameState.difficulty}">${GameState.difficulty}</span>`;
   } else {
@@ -1478,7 +1481,7 @@ function renderLives() {
     const s = document.createElement('span');
     s.className = 'life';
     s.textContent = i < GameState.lives ? '♥' : '✕';
-    s.style.color  = i < GameState.lives ? '#00ff88' : '#aa00ff';
+    s.style.color  = i < GameState.lives ? '#63d18f' : '#3a4a5e';
     d.appendChild(s);
   }
 }
@@ -1568,8 +1571,8 @@ function endGame(won) {
   GameState.isOver = true;
   const title = $('end-title');
   title.textContent = won ? '🎉 BOARD CLEARED!' : 'GAME OVER';
-  title.style.color      = won ? '#00ff88' : '#ff0055';
-  title.style.textShadow = won ? '0 0 20px #00ff88' : '0 0 20px #ff0055';
+  title.style.color      = won ? '#63d18f' : '#f66d67';
+  title.style.textShadow = 'none';
   $('end-score').textContent =
     `Found ${GameState.foundSet.size} of 10 · ${GameState.lives} ${GameState.lives === 1 ? 'life' : 'lives'} remaining`;
 
@@ -1640,32 +1643,5 @@ window.addEventListener('resize', () => {
 });
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

@@ -1,0 +1,87 @@
+/* Savage Science Tools — shared design tokens and site bar.
+   Every page links this file. Tools map their own custom properties onto the
+   --sst-* tokens below, so the whole site shifts together from one place. */
+@import url('fonts.css');   /* vendored: works where fonts.googleapis.com is blocked */
+
+:root {
+  --sst-bg: oklch(0.16 0.03 255);
+  --sst-bg-deep: oklch(0.14 0.03 255);
+  --sst-panel: oklch(0.185 0.032 255);
+  --sst-card: oklch(0.21 0.035 255);
+  --sst-raised: oklch(0.245 0.038 255);
+  --sst-input: oklch(0.15 0.03 255);
+  --sst-line: oklch(0.26 0.035 255);
+  --sst-line-strong: oklch(0.32 0.04 255);
+  --sst-text: oklch(0.96 0.01 250);
+  --sst-text-body: oklch(0.82 0.02 250);
+  --sst-text-muted: oklch(0.66 0.03 255);
+  --sst-blue: oklch(0.74 0.14 240);
+  --sst-blue-btn: oklch(0.6 0.17 245);
+  --sst-blue-soft: oklch(0.3 0.07 245);
+  --sst-violet: oklch(0.74 0.13 295);
+  --sst-violet-btn: oklch(0.52 0.17 295);
+  --sst-violet-soft: oklch(0.3 0.08 295);
+  --sst-green: oklch(0.78 0.14 155);
+  --sst-amber: oklch(0.82 0.14 80);
+  --sst-red: oklch(0.7 0.17 25);
+  /* Subject hues, matching the homepage pills. */
+  --sst-chem: oklch(0.8 0.11 185);
+  --sst-phys: oklch(0.8 0.11 295);
+  --sst-bio: oklch(0.8 0.12 145);
+
+  --sst-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sst-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --sst-bar-h: 52px;
+}
+
+/* ---------- Site bar ---------- */
+.sst-bar, .sst-bar * { box-sizing: border-box; }
+.sst-bar {
+  position: relative; z-index: 2147483000;
+  display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 16px;
+  /* Tools style bare header/nav elements and lay body out as flex or grid;
+     pin everything that could leak in so the bar looks the same everywhere. */
+  flex: none; align-self: stretch; width: 100%; max-width: none; margin: 0; box-shadow: none;
+  text-align: left; grid-column: 1 / -1;
+  height: var(--sst-bar-h); padding: 0 clamp(12px, 2.4vw, 24px);
+  background: var(--sst-bg-deep); border-bottom: 1px solid var(--sst-line);
+  color: var(--sst-text); font: 500 14px/1 var(--sst-font);
+  -webkit-font-smoothing: antialiased; letter-spacing: normal; text-transform: none;
+}
+.sst-bar a { color: var(--sst-text); text-decoration: none; transition: color 150ms ease, box-shadow 150ms ease; }
+.sst-bar a:hover { color: var(--sst-blue); }
+.sst-bar a:focus-visible { outline: 2px solid var(--sst-blue); outline-offset: 2px; border-radius: 4px; }
+
+.sst-brand { display: flex; align-items: center; gap: 10px; flex: none; }
+.sst-atom { position: relative; width: 30px; height: 30px; flex: none; }
+.sst-atom i { position: absolute; inset: 9px 1px; border: 1.5px solid var(--sst-blue); border-radius: 50%; }
+.sst-atom i:nth-child(2) { transform: rotate(60deg); }
+.sst-atom i:nth-child(3) { transform: rotate(-60deg); }
+.sst-atom i:nth-child(4) { inset: 12.5px; border: 0; background: var(--sst-blue); }
+.sst-word { display: flex; flex-direction: column; line-height: 1.05; letter-spacing: 0.08em; font-size: 12px; font-weight: 700; }
+.sst-word span:last-child { font-weight: 500; color: var(--sst-blue); }
+
+.sst-crumb {
+  display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;
+  color: var(--sst-text-body); font-size: 14px; font-weight: 600;
+}
+.sst-crumb::before { content: ""; width: 1px; height: 22px; background: var(--sst-line-strong); flex: none; }
+.sst-crumb span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sst-kind {
+  flex: none; font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px;
+  background: var(--sst-blue-soft); color: oklch(0.88 0.08 240);
+}
+.sst-kind--play { background: var(--sst-violet-soft); color: oklch(0.88 0.08 295); }
+
+.sst-nav { display: flex; align-items: center; gap: 2px; flex: none; margin-left: auto; }
+.sst-nav a { display: flex; align-items: center; height: var(--sst-bar-h); padding: 0 12px; }
+.sst-nav a:hover { box-shadow: inset 0 -2px 0 var(--sst-blue); }
+
+@media (max-width: 720px) {
+  .sst-word, .sst-kind { display: none; }
+  .sst-nav a:not(:last-child) { display: none; }
+}
+@media print { .sst-bar { display: none; } }
+
+/* Presenter mode: tools that go full screen hide the bar with it. */
+:fullscreen .sst-bar { display: none; }

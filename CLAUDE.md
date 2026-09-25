@@ -2,55 +2,94 @@
 
 Site conventions for anything added to this repo. Read before adding a tool.
 
-## Every page links back to the index
+## One design system
 
-**Any new page in `visualisations/` or `games/` must carry the home button.**
-It is a small fixed icon in the bottom-left that returns the reader to the site
-index. Without it a tool is a dead end: pupils reach it from a link, a QR code or
-a shared URL, and there is nothing to click to see everything else.
+Every page shares one look: a dark navy palette, Plus Jakarta Sans, flat
+surfaces (no gradients, glows or drop shadows), hairline borders, blue for
+Explore tools and violet for Play tools. The tokens live in
+`assets/sst/sst.css` as `--sst-*` custom properties. Tools map their own
+variables onto those tokens rather than inventing colours.
 
-Copy the block verbatim from any existing page — for example
-`visualisations/rate-of-reaction-simulator/index.html`. It is self-contained: a
-scoped `.sv-home` class so it cannot collide with the page's own CSS or Tailwind,
-a high `z-index` so it stays reachable under a full-screen overlay, and a
-relative `href` so it works locally as well as on the domain. Adjust only the
-number of `../` segments to suit the page's depth.
+Where a canvas or three.js reads a colour through `getPropertyValue`, write it
+as hex: three.js r128 cannot parse `oklch()`. The hex equivalents of the main
+tokens are `#050e1a` (page), `#091321` (panel), `#0d1928` (card), `#182535`
+(line), `#edf2f8` (text), `#8693a5` (muted), `#47b5fa` / `#0086dd` (blue) and
+`#b199f4` / `#734dbe` (violet).
 
-On a React page put the anchor **outside `#root`**, so mounting cannot remove it.
+Some tools keep a light theme as an explicit choice from their own toggle. Dark
+is always the default.
+
+Fonts are vendored in `assets/sst/fonts/` (Plus Jakarta Sans and JetBrains Mono,
+variable woff2, OFL) and declared in `assets/sst/fonts.css`, which `sst.css`
+imports. Don't link fonts.googleapis.com: school filters often block it, and
+the site has to keep its typography there.
+
+## Every page carries the site bar
+
+**Any new page in `visualisations/` or `games/` must load the site bar.** It
+is the header across the top of every tool: logo home, the tool's name and
+kind, and Explore / Play / All tools. Without it a tool is a dead end: pupils
+reach it from a link, a QR code or a shared URL, and there is nothing to
+click to see everything else.
+
+Two lines, adjusting the number of `../` to the page's depth:
+
+```html
+<link rel="stylesheet" href="../../assets/sst/sst.css">   <!-- last thing in <head> -->
+<script src="../../assets/sst/sst.js"></script>            <!-- first thing in <body> -->
+```
+
+The script inserts the bar before anything else in `<body>`, so React mounting
+into `#root` cannot remove it, and it reads the tool's title and kind from
+`assets/sst/tools.js`. The bar is `var(--sst-bar-h)` (52px) tall, in flow: a
+tool that fills the viewport sizes itself to `calc(100dvh - var(--sst-bar-h))`,
+and a body laid out as a grid needs a row for it.
+
+Shared skins sit beside the pages they serve, linked after `sst.css`:
+`assets/sst/skin.css` for the dark "glass" template tools,
+`games/science/gameshow-sst.css` for Jeopardy, Blockbusters and Who Dares Wins,
+`games/languages/connect4-sst.css` for the Connect 4 games, plus
+`tenable-sst.css` and `retrieval-sst.css`.
 
 ## Subject and level colours
 
-Defined once as custom properties in `index.html` and applied through the
-`.subj-*` / `.lvl-*` classes:
+Carried in `assets/sst/sst.css` and on the homepage pills, by oklch hue:
 
 | | |
 | --- | --- |
-| Chemistry | `--chem` red |
-| Physics | `--phys` blue |
-| Biology | `--bio` green |
-| A-Level | `--alevel` purple |
-| GCSE | `--gcse` orange |
+| Chemistry | `--sst-chem` teal (hue 185) |
+| Physics | `--sst-phys` violet (hue 295) |
+| Biology | `--sst-bio` green (hue 145) |
+| Mixed | amber (hue 75) |
+| Languages | coral (hue 25) |
 
-Each class sets `--accent` as well as `color`, so the same class works on a plain
-text label and on a chip that fills with the colour when pressed. Keep the
-meaning consistent inside tools too.
+Keep the meaning consistent inside tools too.
 
 ## Adding a tool to the index
 
-Add one entry to the `RESOURCES` array in `index.html`:
+Add one entry to `assets/sst/tools.js`. The homepage catalogue, its counts and
+filters, the featured row and every tool's site bar all read from this one list:
 
 ```js
 { title: "...", url: "visualisations/<folder>/",
   blurb: "One sentence, active voice, what the reader will actually do.",
-  kind: "Interactive", level: "A-Level", tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+  kind: "Interactive", levels: ["A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+  image: "<folder>.png",
   keywords: "hidden synonym string — exam language, spec codes, common misspellings" },
 ```
 
-- `kind` is `"Revision Game"`, `"3D Model"` or `"Interactive"`, and drives the
-  card's accent colour.
+- `kind` is `"Revision Game"` (a Play tool) or `"3D Model"` / `"Interactive"`
+  (Explore tools).
+- `levels` lists every key stage the tool genuinely serves: `"KS3"`, `"GCSE"`,
+  `"A-Level"`. One level shows on its tile as that level; two or more show as
+  **Multi**, and the tool appears under each of its levels in the homepage's
+  level filter as well as under Multi.
 - `keywords` is never rendered. It is what makes exam-language searches land
   ("mass spec", "crude oil", "plum pudding"), so make it generous and include
   spec references.
+- `image` is a 1600×1000 screenshot in `assets/img/tools/`, taken with the site
+  bar cropped off. A missing file falls back to a striped placeholder.
+- `featured: true` puts it in the homepage's "Featured tools" row.
 - Label a tool that is not finished `(beta)` in its title.
 
 ## Tools that need a build step

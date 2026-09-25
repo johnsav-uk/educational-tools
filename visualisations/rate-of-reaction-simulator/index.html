@@ -7,17 +7,18 @@
 <style>
 *{box-sizing:border-box}
 :root{
-  --bg:#070b12; --panel-a:#0f1728; --panel-b:#0a1020; --line:#1c2740; --line-2:#243352;
-  --text:#e9effb; --muted:#93a6c4; --dim:#67799b;
-  --accent:#22d3ee; --accent-2:#38bdf8;
+  /* site-wide palette, assets/sst/sst.css */
+  --bg:#050e1a; --panel-a:#0d1928; --panel-b:#091321; --line:#182535; --line-2:#253447;
+  --text:#edf2f8; --muted:#bbc5d1; --dim:#8693a5;
+  --accent:#47b5fa; --accent-2:#0086dd;
   --cA:#ff5f7e; --cB:#4cc9ff; --cP:#4ade80; --cCat:#c084fc; --cSolid:#f5b13d;
   --warn:#fb923c; --good:#4ade80; --bad:#f87171;
 }
 html,body{margin:0;padding:0}
 body{
-  background:radial-gradient(1100px 640px at 15% -12%, #142441 0%, #070b12 62%) fixed, var(--bg);
+  background:var(--bg);
   color:var(--text);
-  font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  font-family:var(--sst-font);
   font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
 }
 h1,h2,h3,h4,p,ul,ol,dl,dd,dt{margin:0}
@@ -28,14 +29,14 @@ em{color:#fff;font-style:normal;font-weight:600}
 header.top{
   display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
   padding:12px 16px;margin-bottom:14px;
-  background:linear-gradient(180deg,rgba(23,36,62,.92),rgba(12,18,32,.92));
-  border:1px solid var(--line);border-radius:16px;
+  background:var(--panel-a);
+  border:1px solid var(--line);border-radius:14px;
 }
 .brand{display:flex;align-items:center;gap:13px;min-width:0}
 .mark{
   width:42px;height:42px;border-radius:12px;flex:0 0 auto;position:relative;
   background:radial-gradient(circle at 32% 30%, #22d3ee, #0e7490 60%, #062b36);
-  box-shadow:0 0 0 1px #164e5b,0 6px 18px rgba(34,211,238,.22);
+  box-shadow:0 0 0 1px #164e5b,0 6px 18px rgba(71,181,250,.22);
 }
 .mark::after{content:"";position:absolute;inset:0;border-radius:12px;
   background:radial-gradient(circle at 70% 72%, rgba(255,95,126,.95) 0 5px, transparent 6px),
@@ -43,7 +44,7 @@ header.top{
 .brand h1{font-size:17px;letter-spacing:-.2px;line-height:1.1}
 .brand p{font-size:11.5px;color:var(--muted);letter-spacing:.04em;margin-top:3px}
 .spec{display:inline-block;margin-left:8px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700;
-  letter-spacing:.09em;background:rgba(34,211,238,.13);color:#67e8f9;border:1px solid rgba(34,211,238,.35);vertical-align:2px}
+  letter-spacing:.09em;background:rgba(71,181,250,.13);color:#8fd0fb;border:1px solid rgba(71,181,250,.35);vertical-align:2px}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px}
 
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
@@ -54,8 +55,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 }
 .btn:hover{background:#1a2a47;border-color:#33507f}
 .btn:active{transform:translateY(1px)}
-.btn.primary{background:linear-gradient(180deg,#0e7490,#0b5c72);border-color:rgba(34,211,238,.4);color:#e8feff}
-.btn.primary:hover{background:linear-gradient(180deg,#0f8aa9,#0b6a83)}
+.btn.primary{background:#0086dd;border-color:#0086dd;color:#fff}
+.btn.primary:hover{background:#1f95e6}
 
 .seg{display:inline-flex;background:#0a1120;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .seg button{padding:6px 11px;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted)}
@@ -80,7 +81,7 @@ canvas{display:block;width:100%}
 .stage .float{position:absolute;top:9px;left:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
 .chip{font-size:10.5px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:999px;
   background:rgba(8,14,26,.78);border:1px solid var(--line-2);color:var(--muted)}
-.chip.hot{color:#a5f3fc;border-color:rgba(34,211,238,.4)}
+.chip.hot{color:#8fd0fb;border-color:rgba(71,181,250,.4)}
 .chip.cat{color:#e9d5ff;border-color:rgba(192,132,252,.45)}
 
 .keys{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
@@ -105,7 +106,7 @@ canvas{display:block;width:100%}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;margin:4px 0 0;background:transparent;cursor:pointer}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:#17233a;border:1px solid #223354}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;margin-top:-6px;border-radius:50%;
-  background:var(--accent);border:2px solid #052a34;box-shadow:0 0 0 3px rgba(34,211,238,.16)}
+  background:var(--accent);border:2px solid #052a34;box-shadow:0 0 0 3px rgba(71,181,250,.16)}
 input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#17233a;border:1px solid #223354}
 input[type=range]::-moz-range-thumb{width:15px;height:15px;border:2px solid #052a34;border-radius:50%;background:var(--accent)}
 .switch{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
@@ -145,7 +146,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:2px solid #052
 .phrase h3 .marks{margin-left:auto;font-size:10px;color:var(--dim);letter-spacing:.05em;text-transform:none;
   border:1px solid var(--line-2);border-radius:999px;padding:1px 7px}
 .phrase .txt{font-size:12.3px;color:#dce7f7;line-height:1.6}
-.phrase .txt strong{color:#fff;background:rgba(34,211,238,.12);padding:0 3px;border-radius:3px}
+.phrase .txt strong{color:#fff;background:rgba(71,181,250,.12);padding:0 3px;border-radius:3px}
 .copy{margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);
   border:1px solid var(--line);border-radius:7px;padding:3px 8px}
 .copy:hover{color:#fff;border-color:var(--line-2)}
@@ -156,7 +157,7 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:2px solid #052
 .trap p{font-size:12.1px;color:#e3d7c8;line-height:1.55;margin-top:4px}
 .trap .x{color:#fca5a5;font-weight:700}
 .trap .t{color:#86efac;font-weight:700}
-.callout{background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.26);border-radius:11px;padding:10px 12px;
+.callout{background:rgba(71,181,250,.06);border:1px solid rgba(71,181,250,.26);border-radius:11px;padding:10px 12px;
   margin-bottom:11px;font-size:12.1px;color:#c8e6f4;line-height:1.55}
 .study h4{font-size:12.5px;color:#fff;margin:14px 0 6px}
 .study ul{padding-left:17px;font-size:12.1px;color:#b9c8de;line-height:1.6}
@@ -178,8 +179,10 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
   padding:9px 16px;border-radius:999px;transition:opacity .2s,transform .2s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div class="wrap">
 
 <header class="top">
@@ -1346,32 +1349,5 @@ requestAnimationFrame(frame);
 })();
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

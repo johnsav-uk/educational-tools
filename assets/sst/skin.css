@@ -1,0 +1,30 @@
+/* Savage Science Tools — skin for the dark "glass" tools.
+   Load after sst.css on pages built from the shared glass template
+   (.glass / .glass-soft panels, .viewport / .stage canvases, Tailwind
+   font-sans / font-display). It flattens them onto the site palette: solid
+   navy surfaces, one hairline border colour, Plus Jakarta Sans, and no
+   gradients, blur or drop shadows. Colours inside diagrams are left alone. */
+
+html, body {
+  background: var(--sst-bg) !important;
+  background-image: none !important;
+}
+body {
+  color: var(--sst-text);
+  font-family: var(--sst-font) !important;
+}
+.font-sans, .font-display { font-family: var(--sst-font) !important; }
+.font-display { letter-spacing: -0.01em; }
+
+.glass {
+  background: var(--sst-panel) !important;
+  border-color: var(--sst-line) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+.glass-soft {
+  background: var(--sst-card) !important;
+  border-color: var(--sst-line) !important;
+}
+.viewport, .stage { background: #091321 !important; }

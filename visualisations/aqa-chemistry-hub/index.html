@@ -19,46 +19,88 @@
 <script src="lib/recharts.min.js"></script>
 
 <style>
-  :root { color-scheme: light; }
+  :root { color-scheme: dark; }
   html, body { height: 100%; }
-  body { margin: 0; background: #f8fafc; }
+  body { margin: 0; background: #050e1a; }
   /* the 3D canvas swallows wheel events for zoom; keep the page scrollable elsewhere */
   canvas { touch-action: none; }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+<!-- ── Site palette ─────────────────────────────────────────────────────────
+     The components are written with Tailwind's light utilities (app.jsx is a
+     generated build, so it is not edited). This block repaints exactly the
+     utilities they use onto the site's dark navy palette (assets/sst/sst.css):
+     slate greys become the navy scale, the red accent becomes the site blue,
+     A-Level purple stays purple, and pale tints become low-alpha washes. -->
+<style>
+  html, body, .font-sans { font-family: var(--sst-font) !important; }
+  body { color: #edf2f8; }
+  .bg-white { background-color: #0d1928 !important; }
+  .bg-white\/60 { background-color: rgba(13,25,40,.6) !important; }
+  .bg-slate-50 { background-color: #091321 !important; }
+  .bg-slate-100 { background-color: #142132 !important; }
+  .bg-slate-800 { background-color: #0086dd !important; }
+  .bg-slate-950 { background-color: #030915 !important; }
+  .border-slate-200, .divide-slate-100 > * + * { border-color: #182535 !important; }
+  .border-slate-300 { border-color: #253447 !important; }
+  .border-slate-500, .border-slate-700 { border-color: #3a4a5e !important; }
+  .border-slate-800 { border-color: #0086dd !important; }
+  .text-slate-900 { color: #edf2f8 !important; }
+  .text-slate-800 { color: #dfe6ef !important; }
+  .text-slate-700 { color: #bbc5d1 !important; }
+  .text-slate-600 { color: #a3afbf !important; }
+  .text-slate-500 { color: #8693a5 !important; }
+  .text-slate-400 { color: #66758a !important; }
+
+  .bg-red-600 { background-color: #0086dd !important; }
+  .bg-red-700, .hover\:bg-red-700:hover { background-color: #0070b8 !important; }
+  .bg-red-50 { background-color: rgba(71,181,250,.10) !important; }
+  .text-red-700 { color: #47b5fa !important; }
+  .text-red-800 { color: #8fd0fb !important; }
+  .border-red-600, .border-red-500 { border-color: #0086dd !important; }
+  .border-red-400, .border-red-300 { border-color: rgba(71,181,250,.45) !important; }
+  .ring-red-200 { --tw-ring-color: rgba(71,181,250,.35) !important; }
+  .accent-red-600 { accent-color: #0086dd !important; }
+
+  .bg-purple-50 { background-color: rgba(177,153,244,.10) !important; }
+  .bg-purple-100 { background-color: rgba(177,153,244,.18) !important; }
+  .text-purple-700 { color: #b199f4 !important; }
+  .text-purple-800 { color: #c9b8f8 !important; }
+  .text-purple-900 { color: #dcd0fb !important; }
+
+  .bg-emerald-50 { background-color: rgba(99,209,143,.10) !important; }
+  .text-emerald-700, .text-emerald-800 { color: #63d18f !important; }
+  .border-emerald-300 { border-color: rgba(99,209,143,.4) !important; }
+  .bg-amber-50 { background-color: rgba(243,185,76,.10) !important; }
+  .text-amber-900 { color: #f3b94c !important; }
+  .border-amber-300 { border-color: rgba(243,185,76,.4) !important; }
+  .bg-rose-50 { background-color: rgba(246,109,103,.10) !important; }
+  .border-rose-300 { border-color: rgba(246,109,103,.4) !important; }
+  .bg-orange-50 { background-color: rgba(240,153,90,.10) !important; }
+  .border-orange-300 { border-color: rgba(240,153,90,.4) !important; }
+  .shadow-sm, .shadow, .shadow-md { box-shadow: none !important; }
+
+  .hover\:bg-slate-50:hover { background-color: #142132 !important; }
+  .hover\:bg-slate-100:hover { background-color: #1b2a3e !important; }
+  .hover\:bg-red-50:hover { background-color: rgba(71,181,250,.12) !important; }
+  .hover\:text-slate-800:hover { color: #edf2f8 !important; }
+  .hover\:text-red-700:hover { color: #47b5fa !important; }
+  .hover\:border-red-400:hover, .hover\:border-red-500:hover { border-color: #47b5fa !important; }
+  .hover\:border-slate-500:hover { border-color: #66758a !important; }
+
+  /* Recharts draws with presentation attributes, which CSS outranks */
+  .recharts-cartesian-grid line { stroke: #182535 !important; }
+  .recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line { stroke: #3a4a5e !important; }
+  .recharts-text, .recharts-label { fill: #8693a5 !important; }
+  .recharts-tooltip-wrapper .recharts-default-tooltip { background: #0d1928 !important; border-color: #253447 !important; }
+</style>
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div id="root"></div>
 
 <!-- app.js is generated: python build.py, then compile app.jsx (see README) -->
 <script src="app.js"></script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. Outside #root, so
-     React mounting cannot remove it. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

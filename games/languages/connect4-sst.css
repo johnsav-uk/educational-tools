@@ -1,0 +1,100 @@
+/* Connect 4 (French / German / Spanish) on the site palette.
+   Linked after each page's own <style>, so these rules win on equal
+   specificity. The page chrome moves onto the flat navy system in
+   assets/sst/sst.css; the board keeps its toy blue and the red and yellow
+   counters, because those are the game. */
+
+:root {
+  color-scheme: dark;
+  --ink: var(--sst-text);
+  --paper: var(--sst-panel);
+  --panel: var(--sst-card);
+  --blue-dark: #0f3a82;
+}
+
+body {
+  font-family: var(--sst-font);
+  background: var(--sst-bg);
+  display: block;
+  padding: 0;
+  color: var(--sst-text);
+}
+.container {
+  margin: clamp(20px, 4vw, 40px) auto 60px;
+  width: calc(100% - 32px);
+  background: var(--sst-panel);
+  border: 1px solid var(--sst-line);
+  border-radius: 14px;
+  padding: clamp(20px, 3vw, 32px);
+  box-shadow: none;
+}
+
+/* Title: the game's own red/yellow lettering, set in the site face */
+.title-plaque { background: none; box-shadow: none; padding: 0; }
+.title-plaque h1 {
+  font-family: var(--sst-font); font-weight: 800; font-size: clamp(2em, 4vw, 2.6em);
+  letter-spacing: -0.02em; text-transform: none;
+}
+.title-plaque h1 span.c-red, .title-plaque h1 span.c-yellow { text-shadow: none; }
+.subtitle { color: var(--sst-text-muted); font-weight: 500; }
+
+/* Panels */
+.picker-card, .topic-bar, .status-bar, .game-header, .score {
+  background: var(--sst-card);
+  border: 1px solid var(--sst-line);
+  box-shadow: none;
+}
+.picker-card .topic-bar { border: 0; }
+.score { background: var(--sst-raised); border: 0; }
+.topic-bar label, .game-header-topic,
+.board-section h2, .vocab-section-wrap h2 { font-family: var(--sst-font); font-weight: 700; color: var(--sst-text); }
+.game-header-label, .score h3, .vocab-columns h3 { font-family: var(--sst-font); color: var(--sst-text-muted); }
+.topic-bar select {
+  font-family: var(--sst-font); font-size: 16px; font-weight: 600;
+  background: var(--sst-input); color: var(--sst-text);
+  border: 1px solid var(--sst-line-strong); border-radius: 8px;
+}
+.topic-bar select:focus { outline: none; border-color: var(--sst-blue); }
+.topic-meta { color: var(--sst-text-muted); font-weight: 500; }
+.instructions {
+  background: rgba(71, 181, 250, .08); border-left: 3px solid var(--sst-blue);
+  color: var(--sst-text-body); font-weight: 500;
+}
+
+.status-text, .score .value { font-family: var(--sst-font); font-weight: 700; }
+.status-text { color: var(--sst-text); }
+.status-text.player2, .score.player2 .value { color: var(--yellow); }
+.status-text.winner { color: var(--sst-green); }
+
+/* Board: the toy stays blue, flattened; holes read as navy */
+.board-frame { box-shadow: 0 8px 0 var(--blue-darker); }
+.hole { background: var(--sst-bg); box-shadow: inset 0 3px 6px rgba(0,0,0,.55); }
+.col-arrow { font-family: var(--sst-font); }
+.col-arrow:disabled { background: #25406e; color: #7f93bb; }
+
+/* Word lists */
+.word-item {
+  background: var(--sst-raised); color: var(--sst-text); font-weight: 600;
+  border-left: 3px solid var(--sst-blue); box-shadow: none;
+}
+.word-item:nth-child(even) { border-left-color: var(--sst-violet); }
+.word-item:hover:not(.used) { box-shadow: none; background: #1b2a3e; }
+.word-item.selected { background: var(--sst-blue-btn); border-left-color: var(--sst-blue); }
+.word-item.correct-flash { background: #1f8a4c; border-left-color: var(--sst-green); }
+
+/* Buttons: flat, the site's blue and violet */
+button.main-btn { font-family: var(--sst-font); font-weight: 600; border-radius: 8px; min-height: 44px; }
+.btn-primary { background: var(--sst-blue-btn); box-shadow: none; }
+.btn-primary:hover { background: #1f95e6; }
+.btn-secondary { background: transparent; border: 1px solid oklch(0.45 0.04 255) !important; box-shadow: none; }
+.btn-secondary:hover { border-color: var(--sst-violet-btn) !important; }
+.btn-small { box-shadow: none; }
+.btn-play { background: var(--sst-violet-btn); box-shadow: none; letter-spacing: 0; }
+.btn-play:hover { background: #8360d0; }
+button.main-btn:hover, button.main-btn:active, .btn-play:active { transform: none; }
+
+/* Win card */
+#congratsOverlay { background: rgba(3, 9, 21, .7); }
+.congrats-card { background: var(--sst-card); border: 1px solid var(--sst-line-strong); box-shadow: none; }
+.congrats-card h2 { font-family: var(--sst-font); font-weight: 800; color: var(--sst-text); }
+.congrats-card p { font-family: var(--sst-font); color: var(--sst-text-body); font-weight: 500; }

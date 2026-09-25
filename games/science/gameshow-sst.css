@@ -1,0 +1,96 @@
+/* Science Jeopardy, Science Blockbusters and Who Dares Wins on the site palette.
+   The three share one game-show template (titlebar, setup card, chips, start
+   button, score cards, question modal, win overlay), so one sheet moves them
+   all onto the flat navy system in assets/sst/sst.css. Linked after each
+   page's own <style>. What makes each show recognisable stays: Jeopardy's
+   yellow values, the Blockbusters hex board, the Who Dares Wins gold ladder,
+   and every team colour. */
+
+:root {
+  color-scheme: dark;
+  --stage1: var(--sst-bg); --stage2: var(--sst-bg); --stage3: var(--sst-bg);
+  --panel: var(--sst-card); --panel-edge: var(--sst-line-strong);
+  --text: var(--sst-text); --muted: var(--sst-text-muted);
+  --amber: var(--sst-blue);
+  --display: var(--sst-font);
+  --body: var(--sst-font);
+}
+
+/* Stage: flat navy. The body's own padding moves onto .wrap so the site bar
+   can run edge to edge. */
+body { background: var(--sst-bg) !important; padding: 0 !important; }
+body::before { display: none !important; }
+.wrap { padding: clamp(20px, 4vw, 40px) 16px 48px; }
+
+/* Title: the show's name in the site face, no plaque */
+.titlebar {
+  background: none !important; box-shadow: none !important; border: 0 !important;
+  padding: 4px 0 !important;
+}
+.titlebar::before { display: none !important; }
+.titlebar h1 {
+  font-family: var(--sst-font) !important; font-weight: 800 !important;
+  letter-spacing: -0.02em !important; text-shadow: none !important;
+}
+.titlebar .sub { letter-spacing: .06em; font-weight: 500; }
+
+/* Setup card */
+.setup {
+  background: var(--sst-panel) !important; border: 1px solid var(--sst-line) !important;
+  border-radius: 14px; box-shadow: none !important;
+}
+.setup .step {
+  font-family: var(--sst-font) !important; font-weight: 700; font-size: 12px;
+  letter-spacing: .08em; color: var(--sst-text-muted) !important;
+}
+.chip {
+  min-height: 44px; background: transparent !important; border: 1px solid var(--sst-line-strong) !important;
+  color: oklch(0.8 0.02 250) !important; font: 500 14px var(--sst-font) !important;
+  box-shadow: none !important; transform: none !important;
+}
+.chip:hover { border-color: oklch(0.45 0.06 245) !important; }
+.chip.on {
+  background: var(--sst-blue-soft) !important; border-color: oklch(0.6 0.14 245) !important;
+  color: oklch(0.9 0.06 240) !important; font-weight: 600 !important;
+}
+.team-field input, .answer-input-row input {
+  background: var(--sst-input) !important; border: 1px solid var(--sst-line-strong) !important;
+  border-radius: 8px !important; font-family: var(--sst-font) !important; font-size: 16px !important;
+}
+.team-field input:focus, .answer-input-row input:focus { border-color: var(--sst-blue) !important; }
+.start, .win .again {
+  min-height: 50px; border-radius: 8px !important; border: 0 !important;
+  background: var(--sst-violet-btn) !important; color: #fff !important; box-shadow: none !important;
+  font: 600 16px var(--sst-font) !important; letter-spacing: 0 !important; filter: none !important;
+}
+.start:hover, .win .again:hover { background: #8360d0 !important; }
+.tune-btn, .rules, .answer-key {
+  background: var(--sst-card) !important; border-color: var(--sst-line-strong) !important;
+  font-family: var(--sst-font) !important;
+}
+
+/* Game */
+.scard, .win .fscard, .catcard, .bid-status, .bank-prompt {
+  background: var(--sst-card) !important; box-shadow: none !important; border-color: var(--sst-line) !important;
+}
+.scard .who, .win .fscard .who, .m-cat { font-family: var(--sst-font) !important; font-weight: 700 !important; }
+.ctrl {
+  min-height: 44px; background: transparent !important; border: 1px solid var(--sst-line-strong) !important;
+  color: var(--sst-text-body) !important; font: 500 13px var(--sst-font) !important;
+}
+.ctrl:hover { border-color: var(--sst-blue) !important; color: var(--sst-text) !important; }
+
+/* Question modal */
+.backdrop { background: rgba(3, 9, 21, .85) !important; backdrop-filter: none !important; }
+.modal {
+  background: var(--sst-panel) !important; border: 1px solid var(--sst-line-strong) !important;
+  border-radius: 14px !important; box-shadow: none !important;
+}
+.m-ans, .m-note { background: var(--sst-card) !important; }
+.mbtn { font-family: var(--sst-font) !important; border-radius: 8px !important; min-height: 44px; }
+.mbtn.reveal { background: var(--sst-blue-btn) !important; color: #fff !important; }
+.mbtn.none { border-color: var(--sst-line-strong) !important; }
+
+/* Win overlay */
+.win { background: rgba(3, 9, 21, .94) !important; }
+.win h2 { font-family: var(--sst-font) !important; font-weight: 800 !important; text-shadow: none !important; }

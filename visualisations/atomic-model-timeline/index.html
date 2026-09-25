@@ -4,22 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Development of the Model of the Atom — AQA GCSE Chemistry (Higher Tier)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap">
 <style>
 :root{
-  --font:'Roboto','Segoe UI',Arial,Helvetica,sans-serif;
-  --bg:#05080e;
-  --bg2:#0a111c;
-  --panel:#0b1320;
-  --panel2:#101b2b;
-  --line:#1c2a3c;
-  --txt:#e2ecf7;
-  --dim:#8ea4bd;
-  --accent:#3ddcff;
-  --accent2:#8b6bff;
+  /* site-wide palette, assets/sst/sst.css */
+  --font:var(--sst-font);
+  --bg:#050e1a;
+  --bg2:#091321;
+  --panel:#0d1928;
+  --panel2:#142132;
+  --line:#182535;
+  --txt:#edf2f8;
+  --dim:#8693a5;
+  --accent:#47b5fa;
+  --accent2:#b199f4;
   --gold:#f2c14e;
   --pos:#ff5f6d;
   --neg:#4da6ff;
@@ -32,11 +29,11 @@
 html,body{height:100%}
 body{
   margin:0;
-  background:radial-gradient(1200px 700px at 15% -10%,#0e1a2b 0%,var(--bg) 60%);
+  background:var(--bg);
   color:var(--txt);
   font-family:var(--font);
   font-size:15px;line-height:1.55;
-  display:grid;grid-template-rows:auto auto 1fr;height:100vh;overflow:hidden;
+  display:grid;grid-template-rows:auto auto auto 1fr;height:100vh;overflow:hidden;   /* site bar, header, timeline, main */
 }
 h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em}
 button{font-family:inherit}
@@ -83,7 +80,7 @@ button{font-family:inherit}
 .tl-line{position:absolute;left:8%;right:8%;top:32px;height:2px;background:#1a2636;border-radius:2px}
 .tl-fill{position:absolute;left:8%;top:32px;height:2px;border-radius:2px;width:0;
   background:linear-gradient(90deg,var(--accent),var(--accent2));
-  box-shadow:0 0 12px rgba(61,220,255,.5);transition:width .5s cubic-bezier(.4,0,.2,1)}
+  box-shadow:0 0 12px rgba(71,181,250,.5);transition:width .5s cubic-bezier(.4,0,.2,1)}
 .tl-nodes{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .tl-node{
   background:none;border:0;padding:0;cursor:pointer;color:var(--dim);
@@ -98,7 +95,7 @@ button{font-family:inherit}
 .tl-model{font-size:11px;color:#63788f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tl-node.done .tl-dot{border-color:#2f6f88;background:#123040}
 .tl-node.active .tl-dot{border-color:var(--accent);background:var(--accent);
-  box-shadow:0 0 0 5px rgba(61,220,255,.14),0 0 18px rgba(61,220,255,.75)}
+  box-shadow:0 0 0 5px rgba(71,181,250,.14),0 0 18px rgba(71,181,250,.75)}
 .tl-node.active .tl-name{color:#fff}
 .tl-node.active .tl-year{color:var(--accent)}
 .tl-node.active .tl-model{color:#8fa8c2}
@@ -168,8 +165,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
 .p-head{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}
 .p-eyebrow{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--dim);
   letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.p-eyebrow .num{width:22px;height:22px;border-radius:6px;background:rgba(61,220,255,.12);
-  color:var(--accent);display:grid;place-items:center;font-size:11px;border:1px solid rgba(61,220,255,.3)}
+.p-eyebrow .num{width:22px;height:22px;border-radius:6px;background:rgba(71,181,250,.12);
+  color:var(--accent);display:grid;place-items:center;font-size:11px;border:1px solid rgba(71,181,250,.3)}
 .p-title{font-size:24px;margin-top:8px;letter-spacing:-.025em}
 .p-sub{color:var(--accent);font-size:13.5px;font-weight:600;margin-top:3px}
 .p-lede{color:#a9bdd3;font-size:13.5px;margin-top:10px}
@@ -190,7 +187,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
 .card.replaced{border-left:3px solid var(--pos)}
 .card.replaced h3 .ic{background:rgba(255,95,109,.14);color:var(--pos)}
 .card.concept{border-left:3px solid var(--accent)}
-.card.concept h3 .ic{background:rgba(61,220,255,.14);color:var(--accent)}
+.card.concept h3 .ic{background:rgba(71,181,250,.14);color:var(--accent)}
 .card.keywords{border-left:3px solid var(--accent2)}
 .card.keywords h3 .ic{background:rgba(139,107,255,.16);color:#b9a4ff}
 
@@ -205,7 +202,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
 .kw dt span{background:linear-gradient(180deg,transparent 58%,rgba(139,107,255,.38) 58%);padding:0 2px}
 .kw dd{margin:2px 0 0;font-size:13px;color:#a9bdd3}
 
-.tip{background:linear-gradient(135deg,rgba(139,107,255,.14),rgba(61,220,255,.06));
+.tip{background:linear-gradient(135deg,rgba(139,107,255,.14),rgba(71,181,250,.06));
   border:1px solid rgba(139,107,255,.35);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
 .tip h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:#c3b2ff;
   display:flex;align-items:center;gap:8px;margin-bottom:9px}
@@ -217,10 +214,10 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
   border-left:2px solid var(--ok);font-size:12.5px;color:#a8e8cd;font-style:italic}
 
 .spec{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:#93a8bf;
-  background:rgba(61,220,255,.05);border:1px dashed rgba(61,220,255,.28);
+  background:rgba(71,181,250,.05);border:1px dashed rgba(71,181,250,.28);
   border-radius:12px;padding:11px 13px;margin-bottom:16px}
 .sp-tag{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--accent);
-  text-transform:uppercase;background:rgba(61,220,255,.1);border-radius:5px;padding:3px 6px;margin-top:1px}
+  text-transform:uppercase;background:rgba(71,181,250,.1);border-radius:5px;padding:3px 6px;margin-top:1px}
 .spec q{font-style:italic;color:#b8cde2}
 
 .pfoot{display:flex;gap:10px;margin-top:18px}
@@ -245,7 +242,7 @@ body.present main{grid-template-columns:minmax(0,1fr) 46%}
   transition:opacity .4s ease,transform .4s cubic-bezier(.2,.7,.3,1)}
 .pr-list li.in{opacity:1;transform:none}
 .pr-list li::before{content:'';position:absolute;left:0;top:.56em;width:.42em;height:.42em;
-  border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(61,220,255,.55)}
+  border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(71,181,250,.55)}
 .pr-list li.ms-item::before{background:var(--ok);box-shadow:0 0 10px rgba(61,220,151,.55)}
 .pr-list li.ms-item{color:#a8e8cd}
 .pr-list b,.pr-list strong{color:#fff;font-weight:700}
@@ -254,7 +251,7 @@ body.present main{grid-template-columns:minmax(0,1fr) 46%}
   padding-top:clamp(8px,.8vw,14px);margin-top:8px;font-size:clamp(11px,.85vw,15px);color:var(--dim)}
 .pr-dots{display:flex;gap:7px;flex:0 0 auto}
 .pr-dot{width:9px;height:9px;border-radius:50%;background:#22344a;transition:.25s}
-.pr-dot.on{background:var(--accent);box-shadow:0 0 10px rgba(61,220,255,.7)}
+.pr-dot.on{background:var(--accent);box-shadow:0 0 10px rgba(71,181,250,.7)}
 .pr-keys{margin-left:auto;opacity:.75;white-space:nowrap}
 
 body.present .app-header h1{font-size:clamp(17px,1.4vw,26px)}
@@ -280,7 +277,7 @@ body.present .stage-note{display:none}
 /* ---------- RESPONSIVE ---------- */
 @media (max-width:1180px){main{grid-template-columns:minmax(0,1fr) 390px}}
 @media (max-width:1000px){
-  body{overflow:auto;height:auto;grid-template-rows:auto auto auto}
+  body{overflow:auto;height:auto;grid-template-rows:auto auto auto auto}
   main{grid-template-columns:1fr}
   .stage{height:58vh;min-height:430px;border-right:0;border-bottom:1px solid var(--line)}
   .panel{overflow:visible}
@@ -298,8 +295,10 @@ body.present .stage-note{display:none}
   .legend{display:none}
 }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <header class="app-header">
   <div class="brand">
     <div class="atom-mark"><b></b><s></s><i></i></div>
@@ -884,7 +883,7 @@ function label(text, color, scale){
   color = color || '#d6e8fa';
   const c = document.createElement('canvas');
   const ctx = c.getContext('2d');
-  const font = "600 44px Roboto, 'Segoe UI', Arial, sans-serif";
+  const font = "600 44px 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif";
   ctx.font = font;
   const w = Math.ceil(ctx.measureText(text).width) + 44;
   c.width = w; c.height = 76;
@@ -1762,7 +1761,7 @@ function renderFlat(d){
   $('flatSvg').innerHTML =
    `<svg viewBox="0 0 ${F.W} ${F.H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
       <style>
-        text{font-family:'Roboto','Segoe UI',Arial,Helvetica,sans-serif}
+        text{font-family:'Plus Jakarta Sans','Segoe UI',Arial,sans-serif}
         .lbl{fill:#dfe9f5;font-size:15px;font-weight:600}
         .big{fill:#eaf3fb;font-size:23px;font-weight:700}
         .nuc{fill:#fff;font-size:13px;font-weight:700}
@@ -2090,32 +2089,5 @@ function boot(){
 window.addEventListener('load', boot);
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

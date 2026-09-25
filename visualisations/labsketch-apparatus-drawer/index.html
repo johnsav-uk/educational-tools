@@ -7,17 +7,19 @@
 <meta name="description" content="Free lab apparatus diagram drawer with one-click pre-drawn templates for every AQA GCSE Chemistry and Physics required practical. Export high-resolution PNG or vector SVG.">
 
 <!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Source+Sans+3:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
 <!-- Tailwind -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = { theme: { extend: { fontFamily: {
-    sans:    ['Source Sans 3','Segoe UI','system-ui','-apple-system','sans-serif'],
-    display: ['Archivo Narrow','Arial Narrow','Helvetica','sans-serif'],
-    mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
+  // zinc is remapped onto the site's navy scale (assets/sst/sst.css) so the studio
+  // chrome matches every other tool; the drawing canvas itself stays white.
+  tailwind.config = { theme: { extend: {
+    colors: { zinc: { 50:'#edf2f8', 100:'#dfe6ef', 200:'#bbc5d1', 300:'#a3afbf', 400:'#8693a5',
+                      500:'#66758a', 600:'#3a4a5e', 700:'#253447', 800:'#142132', 900:'#0d1928', 950:'#050e1a' } },
+    fontFamily: {
+      sans:    ['Plus Jakarta Sans','system-ui','-apple-system','sans-serif'],
+      display: ['Plus Jakarta Sans','system-ui','sans-serif'],
+      mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
   } } } };
 </script>
 
@@ -31,18 +33,19 @@
 
 <style>
   :root { color-scheme: dark; }
-  html, body, #root { height: 100%; }
+  html, body { height: 100%; }
+  #root { height: calc(100% - var(--sst-bar-h)); }   /* the site bar sits above */
   body {
-    margin: 0; background: #18181b; color: #e4e4e7;
-    font-family: 'Source Sans 3','Segoe UI',system-ui,sans-serif;
+    margin: 0; background: #050e1a; color: #edf2f8;
+    font-family: 'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
     -webkit-font-smoothing: antialiased; overflow: hidden;
   }
   ::-webkit-scrollbar { width:9px; height:9px; }
-  ::-webkit-scrollbar-track { background:#1f1f23; }
-  ::-webkit-scrollbar-thumb { background:#52525b; border-radius:5px; }
-  ::-webkit-scrollbar-thumb:hover { background:#71717a; }
+  ::-webkit-scrollbar-track { background:#0d1928; }
+  ::-webkit-scrollbar-thumb { background:#253447; border-radius:5px; }
+  ::-webkit-scrollbar-thumb:hover { background:#3a4a5e; }
 
-  input[type=range]{ -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:#52525b; outline:none; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:#253447; outline:none; }
   input[type=range]::-webkit-slider-thumb{
     -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%;
     background:#38bdf8; border:2px solid #0f172a; cursor:pointer;
@@ -53,7 +56,7 @@
   .palitem { transition: border-color .12s ease, background .12s ease, transform .12s ease; }
   .palitem:hover { transform: translateY(-1px); }
   .no-sel { user-select:none; -webkit-user-select:none; }
-  svg text { font-family:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif; }
+  svg text { font-family:'Plus Jakarta Sans','Segoe UI',Helvetica,Arial,sans-serif; }
   /* Printing gives the drawing the whole page: the dark studio chrome is
      hidden and the canvas loses its frame. */
   @media print {
@@ -63,8 +66,11 @@
                 border-radius:0 !important; box-shadow:none !important; }
   }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+<link rel="stylesheet" href="../../assets/sst/skin.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
@@ -3134,32 +3140,5 @@ function App(){
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

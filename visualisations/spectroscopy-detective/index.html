@@ -7,23 +7,24 @@
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
   :root{
-    --bg:#0b0f14;
-    --panel:#141b24;
-    --panel-border:#26323f;
-    --text:#e6edf3;
-    --muted:#8b98a5;
-    --accent:#4fd1c5;
-    --accent2:#f0b429;
-    --danger:#f87171;
-    --success:#4ade80;
-    --input-bg:#0f1620;
+    /* site-wide palette, assets/sst/sst.css */
+    --bg:#050e1a;
+    --panel:#0d1928;
+    --panel-border:#182535;
+    --text:#edf2f8;
+    --muted:#8693a5;
+    --accent:#47b5fa;
+    --accent2:#f3b94c;
+    --danger:#f66d67;
+    --success:#63d18f;
+    --input-bg:#040b18;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:var(--bg);
     color:var(--text);
-    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family:var(--sst-font);
   }
   header{
     display:flex;
@@ -31,7 +32,7 @@
     justify-content:space-between;
     padding:14px 20px;
     border-bottom:1px solid var(--panel-border);
-    background:linear-gradient(180deg, #131b24, #0d131a);
+    background:#091321;
   }
   header h1{
     font-size:20px;
@@ -41,8 +42,8 @@
   header h1 span{color:var(--accent);}
   #caseCounter{color:var(--muted); font-size:13px; margin-top:2px;}
   .btn{
-    background:var(--accent);
-    color:#04201d;
+    background:#0086dd;
+    color:#fff;
     border:none;
     padding:8px 14px;
     border-radius:8px;
@@ -88,7 +89,7 @@
   }
   .formula-badge{
     display:inline-block;
-    background:#1c2733;
+    background:#142132;
     border:1px solid var(--accent);
     color:var(--accent);
     padding:4px 10px;
@@ -148,7 +149,7 @@
   }
   .peak-row.correct{border-color:var(--success);}
   .peak-row .peak-num{
-    background:#1c2733;
+    background:#142132;
     color:var(--accent2);
     font-weight:700;
     width:24px; height:24px;
@@ -296,8 +297,10 @@
     line-height:1.5;
   }
 </style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
+<script src="../../assets/sst/sst.js"></script>
 
 <header>
   <div>
@@ -802,7 +805,7 @@ function renderChart(){
       shapes.push({type:'line', x0:p.x, x1:p.x, y0:0, y1:100, line:{color:'#f0b429', width:1, dash:'dot'}});
       annotations.push({x:p.x, y:104, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.ir.xlabel, autorange:'reversed', range:[4000,400], gridcolor:'#1f2933'}, yaxis:{title:'Transmittance / %', range:[0,110], gridcolor:'#1f2933'} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ir.xlabel, autorange:'reversed', range:[4000,400], gridcolor:'#182535'}, yaxis:{title:'Transmittance / %', range:[0,110], gridcolor:'#182535'} };
   } else if(instr === 'ms'){
     const xVals = mol.ms.peaks.map(p=>p.mz);
     const stickX = [], stickY = [];
@@ -814,7 +817,7 @@ function renderChart(){
     mol.ms.peaks.forEach((p,i)=>{
       annotations.push({x:p.mz, y:p.intensity+6, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.ms.xlabel, range:[0, Math.max(...xVals)+15], gridcolor:'#1f2933'}, yaxis:{title:'Relative intensity / %', range:[0,115], gridcolor:'#1f2933'} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ms.xlabel, range:[0, Math.max(...xVals)+15], gridcolor:'#182535'}, yaxis:{title:'Relative intensity / %', range:[0,115], gridcolor:'#182535'} };
   } else if(instr === 'nmr1h'){
     const {needle, broad} = build1HTrace(mol.nmr1h.peaks);
     if(broad){
@@ -825,7 +828,7 @@ function renderChart(){
       shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:95, line:{color:'#4fd1c5', width:1, dash:'dot'}});
       annotations.push({x:p.delta, y:99, text:String(i+1), showarrow:false, font:{color:'#4fd1c5', size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr1h.xlabel, autorange:'reversed', range:[12.5,-0.5], gridcolor:'#1f2933'}, yaxis:{title:'Intensity', range:[0,105], gridcolor:'#1f2933', showticklabels:false} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr1h.xlabel, autorange:'reversed', range:[12.5,-0.5], gridcolor:'#182535'}, yaxis:{title:'Intensity', range:[0,105], gridcolor:'#182535', showticklabels:false} };
   } else if(instr === 'nmr13c'){
     const {x,y} = build13CTrace(mol.nmr13c.peaks);
     traces.push({x:x, y:y, mode:'lines', line:{color:'#34d399', width:2.5}, hoverinfo:'skip'});
@@ -833,11 +836,11 @@ function renderChart(){
       shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:80, line:{color:'#f0b429', width:1, dash:'dot'}});
       annotations.push({x:p.delta, y:85, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr13c.xlabel, autorange:'reversed', range:[225,-5], gridcolor:'#1f2933'}, yaxis:{title:'Intensity', range:[0,95], gridcolor:'#1f2933', showticklabels:false} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr13c.xlabel, autorange:'reversed', range:[225,-5], gridcolor:'#182535'}, yaxis:{title:'Intensity', range:[0,95], gridcolor:'#182535', showticklabels:false} };
   }
 
   const layout = Object.assign({
-    paper_bgcolor:'#141b24', plot_bgcolor:'#0f1620',
+    paper_bgcolor:'#0d1928', plot_bgcolor:'#091321',
     font:{color:'#e6edf3', size:12},
     margin:{l:55,r:20,t:20,b:45},
     shapes:shapes, annotations:annotations,
@@ -1106,32 +1109,5 @@ showView();
 
 </script>
 
-<!-- ── Home button, self-contained ─────────────────────────────────────────
-     Fixed bottom-left, scoped class name, sits above everything so it is
-     reachable even when a page opens a full-screen overlay. -->
-<style>
-  .sv-home{
-    position:fixed; left:14px; bottom:14px; z-index:2147483000;
-    display:inline-flex; align-items:center; justify-content:center;
-    width:38px; height:38px; border-radius:50%;
-    color:#efe9dd; background:#14120f;
-    border:1px solid rgba(239,233,221,.24);
-    box-shadow:0 4px 14px -4px rgba(0,0,0,.7);
-    transition:background .15s ease, transform .15s ease;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .sv-home:hover{ background:#26221b; transform:translateY(-1px); }
-  .sv-home:focus-visible{ outline:3px solid #7dd3fc; outline-offset:3px; }
-  .sv-home svg{ width:18px; height:18px; display:block; }
-  @media (prefers-reduced-motion:reduce){ .sv-home{ transition:none; } }
-  @media print{ .sv-home{ display:none; } }
-</style>
-<a class="sv-home" href="../../index.html" aria-label="Home" title="Back to Savage Science Tools">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.6V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.6"/>
-    <path d="M9.75 21v-6.2h4.5V21"/>
-  </svg>
-</a>
 </body>
 </html>

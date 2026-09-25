@@ -1,0 +1,120 @@
+/* Tenable Science on the site palette.
+   Linked after the page's own <style>. The neon arcade look (glows, scanline
+   gradients, uppercase Arial Black) moves onto the flat navy system in
+   assets/sst/sst.css: violet is the accent, as on every Play tool, green is a
+   found answer, red a wrong one. The pyramid and its states are unchanged. */
+
+:root { color-scheme: dark; }
+body { font-family: var(--sst-font); background: var(--sst-bg); color: var(--sst-text); }
+body::before { display: none; }
+.screen { padding: clamp(20px, 4vw, 40px) 16px 48px; }
+
+/* Glows and neon text shadows off everywhere on the page chrome */
+.setup-header, .setup-header h1, .setup-header .subtitle, .mode-tab.active,
+.q-card:hover, .q-card.selected, .random-btn:hover, .q-input, .q-input:focus, .ans-num, .ans-input,
+.ans-input:focus, .start-btn, .start-btn:hover, .game-header, .game-title, .question-box,
+.speed-control, .speed-slider, .pyramid-wrap, .pyramid-wrap::before, .guess-input, .guess-input:focus,
+.guess-btn, .guess-btn:hover, .status-msg, .bottom-bar .pass-btn, .bottom-bar .pass-btn:hover,
+.end-answers, .end-found, .play-again-btn, .play-again-btn:hover, .new-q-btn, .new-q-btn:hover {
+  box-shadow: none; text-shadow: none;
+}
+.life { filter: none; }
+
+/* Setup */
+.setup-header { border-bottom: 1px solid var(--sst-line); }
+.setup-header h1 {
+  font-family: var(--sst-font); font-weight: 800; letter-spacing: -0.02em; font-size: clamp(38px, 6vw, 52px);
+  color: var(--sst-text);
+}
+.setup-header .subtitle { color: var(--sst-text-muted); letter-spacing: .08em; font-weight: 600; }
+
+.mode-tabs { border: 1px solid var(--sst-line-strong); border-radius: 999px; padding: 3px; gap: 4px; }
+.mode-tab {
+  font-family: var(--sst-font); font-weight: 600; font-size: 13px; letter-spacing: 0; text-transform: none;
+  background: transparent; color: var(--sst-text-body); border: 0 !important; border-radius: 999px; min-height: 38px;
+}
+.mode-tab.active { background: var(--sst-violet-btn); color: #fff; }
+.mode-tab:hover:not(.active) { background: transparent; color: var(--sst-text); }
+
+.bank-section-label { color: var(--sst-text-muted); font-family: var(--sst-font); font-weight: 700; letter-spacing: .08em; }
+.bank-loading { color: var(--sst-text-muted); }
+.filter-btn {
+  font-family: var(--sst-font); font-weight: 500; font-size: 13px; letter-spacing: 0; text-transform: none;
+  min-height: 36px; border-radius: 999px; border: 1px solid var(--sst-line-strong);
+  background: transparent; color: oklch(0.8 0.02 250);
+}
+.filter-btn:hover { background: transparent; border-color: oklch(0.45 0.06 295); color: var(--sst-text); }
+.filter-btn.active { background: var(--sst-violet-soft); border-color: oklch(0.6 0.14 295); color: oklch(0.9 0.06 295); }
+
+.question-cards::-webkit-scrollbar-track { background: var(--sst-card); }
+.question-cards::-webkit-scrollbar-thumb { background: var(--sst-line-strong); }
+.q-card { background: var(--sst-card); border: 1px solid var(--sst-line); border-radius: 10px; }
+.q-card:hover { border-color: oklch(0.5 0.08 295); }
+.q-card.selected { border-color: var(--sst-violet); background: #161a38; }
+.q-card.selected::after { color: var(--sst-violet); }
+.q-card-topic { color: var(--sst-violet); font-family: var(--sst-font); font-weight: 700; }
+.q-card-question { color: var(--sst-text); font-family: var(--sst-font); font-weight: 600; }
+.q-card-diff { border-radius: 999px; font-family: var(--sst-font); font-weight: 600; padding: 2px 8px; }
+
+.random-btn, .reset-btn, .new-q-btn {
+  font-family: var(--sst-font); font-weight: 600; letter-spacing: 0; text-transform: none;
+  border: 1px solid oklch(0.45 0.04 255); background: transparent; color: var(--sst-text); border-radius: 8px;
+}
+.random-btn { min-height: 44px; font-size: 14px; }
+.random-btn:hover, .reset-btn:hover, .new-q-btn:hover { background: transparent; border-color: var(--sst-violet-btn); color: var(--sst-text); }
+
+.q-input, .ans-input, .guess-input {
+  font-family: var(--sst-font); font-size: 16px; font-weight: 500;
+  background: var(--sst-input); color: var(--sst-text);
+  border: 1px solid var(--sst-line-strong); border-radius: 8px;
+}
+.q-input::placeholder, .ans-input::placeholder, .guess-input::placeholder { color: oklch(0.62 0.03 255); }
+.q-input:focus, .ans-input:focus, .guess-input:focus { border-color: var(--sst-violet); color: var(--sst-text); }
+.ans-num { color: var(--sst-text-muted); font-family: var(--sst-font); }
+
+.start-btn, .play-again-btn, .guess-btn {
+  font-family: var(--sst-font); font-weight: 600; letter-spacing: 0; text-transform: none;
+  border: 0; border-radius: 8px; background: var(--sst-violet-btn); color: #fff; min-height: 50px;
+}
+.guess-btn { min-height: 0; }
+.start-btn:hover, .play-again-btn:hover, .guess-btn:hover { background: #8360d0; color: #fff; }
+.start-btn:disabled { background: var(--sst-raised); color: var(--sst-text-muted); opacity: 1; }
+
+/* Game */
+.game-header { border-bottom: 1px solid var(--sst-line); }
+.game-title { font-family: var(--sst-font); font-weight: 800; letter-spacing: -0.02em; color: var(--sst-text); }
+.question-box {
+  background: var(--sst-card); border: 1px solid var(--sst-line); border-radius: 12px;
+  color: var(--sst-text); font-family: var(--sst-font); font-weight: 600;
+}
+.question-meta { font-family: var(--sst-font); }
+.speed-control { background: var(--sst-card); border: 1px solid var(--sst-line); border-radius: 10px; }
+.speed-label { color: var(--sst-text-body); font-family: var(--sst-font); font-weight: 600; text-transform: none; }
+.speed-slider { background: var(--sst-line-strong); }
+.speed-slider::-webkit-slider-thumb { background: var(--sst-violet); box-shadow: none; }
+.speed-slider::-moz-range-thumb { background: var(--sst-violet); box-shadow: none; }
+.speed-val { color: var(--sst-text-muted); font-family: var(--sst-font); }
+
+.pyramid-wrap { background: var(--sst-panel); border: 1px solid var(--sst-line); border-radius: 14px; }
+.pyramid-wrap::before { display: none; }
+.cell { border-width: 1px; border-radius: 8px; font-family: var(--sst-font); }
+.cell::before { display: none; }
+.cell-inner { font-family: var(--sst-font); font-weight: 700; letter-spacing: 0; text-shadow: none; }
+.cell.st-empty { background: var(--sst-card); border-color: var(--sst-line-strong); }
+.cell.st-found { background: #1f8a4c; border-color: var(--sst-green); box-shadow: none; }
+.cell.st-ac    { background: var(--sst-violet-btn); color: #fff; border-color: var(--sst-violet); box-shadow: none; }
+.cell.st-rw    { background: #c4403b; border-color: var(--sst-red); box-shadow: none; }
+
+.status-msg { color: var(--sst-green); font-family: var(--sst-font); font-weight: 600; }
+.bottom-bar { color: var(--sst-text-muted); border-top: 1px solid var(--sst-line); font-family: var(--sst-font); }
+.bottom-bar .pass-btn { color: var(--sst-violet); font-family: var(--sst-font); font-weight: 600; min-height: 44px; }
+.bottom-bar .pass-btn:hover { color: var(--sst-text); }
+
+/* End */
+.end-title { font-family: var(--sst-font); font-weight: 800; letter-spacing: -0.02em; }
+.end-score { color: var(--sst-text-body); font-family: var(--sst-font); }
+.end-answers { background: var(--sst-card); border: 1px solid var(--sst-line); border-radius: 12px; }
+.end-answer-row { border-bottom-color: var(--sst-line); font-family: var(--sst-font); font-weight: 600; }
+.end-pos { color: var(--sst-text-muted); }
+.end-found { color: var(--sst-green); }
+.end-missed { color: var(--sst-text-muted); }
