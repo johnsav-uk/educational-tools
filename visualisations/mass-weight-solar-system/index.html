@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mass vs Weight across the Solar System — Savage Science Tools</title>
+<meta name="description" content="KS3 Physics: gravity, mass and weight (W = m × g). Weigh anything on eleven worlds, watch a spring balance stretch and an astronaut jump, then check understanding with a quiz. Includes presenter mode for the whiteboard.">
+<link rel="stylesheet" href="mw.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top">
+  <div class="grow">
+    <h1>Mass vs Weight across the Solar System</h1>
+    <p class="lede">Pick something to weigh, fly it to another world and watch what changes. Your mass is the same everywhere. Your weight is not.</p>
+    <div class="meta">
+      <span class="chip phys">KS3 Physics</span>
+      <span class="chip phys">Forces: gravity</span>
+      <span class="chip phys">W = m × g</span>
+      <span class="chip ks3">KS3</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="presentBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+      Presenter mode
+    </button>
+  </div>
+</header>
+
+<nav class="jump" aria-label="On this page">
+  <a href="#definitions">Mass or weight?</a>
+  <a href="#formula">W = m × g</a>
+  <a href="#explore">Planet explorer</a>
+  <a href="#planets">Every world</a>
+  <a href="#quiz">Quick check</a>
+</nav>
+
+<main>
+  <!-- ── 1. Definitions ───────────────────────────────────────────── -->
+  <section class="sect" id="definitions">
+    <div class="kicker">Key idea</div>
+    <h2>Mass and weight are not the same thing</h2>
+    <div id="defBody">
+      <p class="bigidea">Mass stays the same everywhere, but <strong>weight</strong> changes depending on gravity!</p>
+      <div class="defs">
+        <article class="def mass">
+          <div class="def-head"><span class="def-sym">m</span><h3>Mass</h3><span class="unit">kilograms (kg)</span></div>
+          <ul>
+            <li>The <span class="kw">amount of matter</span> (stuff) in an object.</li>
+            <li>Measured with a <span class="kw">balance</span>.</li>
+            <li><span class="kw">Stays the same</span> wherever you go in the Universe.</li>
+            <li>It is not a force.</li>
+          </ul>
+        </article>
+        <article class="def weight">
+          <div class="def-head"><span class="def-sym">W</span><h3>Weight</h3><span class="unit">newtons (N)</span></div>
+          <ul>
+            <li>The <span class="kw">force of gravity</span> pulling on an object's mass.</li>
+            <li>Measured with a <span class="kw">newtonmeter</span> (spring balance).</li>
+            <li><span class="kw">Changes</span> when the gravitational field strength changes.</li>
+            <li>It is a force, so it acts in a direction: towards the centre of the planet.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="note"><strong>Watch out:</strong> in everyday life people say “I weigh 45 kg”. In science that number is your <em>mass</em>. Your weight on Earth is about 441 N.</p>
+    </div>
+  </section>
+
+  <!-- ── 2. Formula & worked examples ─────────────────────────────── -->
+  <section class="sect" id="formula">
+    <div class="kicker">The equation</div>
+    <h2>Working out weight: W = m × g</h2>
+    <div id="formulaBody">
+      <div class="formula-row">
+        <div class="formula" aria-label="Weight equals mass times gravitational field strength">
+          <span class="f-w">W</span><span class="f-op">=</span><span class="f-m">m</span><span class="f-op">×</span><span class="f-g">g</span>
+        </div>
+        <dl class="f-key">
+          <div><dt class="f-w">W</dt><dd>weight, in newtons (N)</dd></div>
+          <div><dt class="f-m">m</dt><dd>mass, in kilograms (kg)</dd></div>
+          <div><dt class="f-g">g</dt><dd>gravitational field strength, in newtons per kilogram (N/kg)</dd></div>
+        </dl>
+      </div>
+      <p class="note">On Earth <strong>g = 9.8 N/kg</strong>: every kilogram is pulled down with a force of 9.8 newtons. Many KS3 questions round this to <strong>10 N/kg</strong>, so read the question.</p>
+
+      <div class="worked" id="worked">
+        <div class="worked-head">
+          <h3>Worked example</h3>
+          <div class="seg" role="group" aria-label="Question type">
+            <button type="button" class="seg-b on" data-wtype="W">Find the weight</button>
+            <button type="button" class="seg-b" data-wtype="m">Find the mass</button>
+            <button type="button" class="seg-b" data-wtype="g">Find g</button>
+          </div>
+        </div>
+        <p class="w-q" id="wQ"></p>
+        <ol class="w-steps" id="wSteps"></ol>
+        <div class="w-actions">
+          <button type="button" class="btn primary" id="wNext">Show next step</button>
+          <button type="button" class="btn" id="wNew">New example</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. Explorer ──────────────────────────────────────────────── -->
+  <section class="sect" id="explore">
+    <div class="kicker">Planet explorer</div>
+    <h2>Weigh it on another world</h2>
+    <p class="sect-lede">Choose a mass and a place. The spring balance shows its weight there, and the astronaut shows how high a jump goes when gravity changes.</p>
+
+    <div id="explorer" class="explorer">
+      <div class="panel controls">
+        <div class="ctl">
+          <label for="massNum" class="ctl-label">Mass <span class="muted">(kg)</span></label>
+          <div class="mass-row">
+            <input type="range" id="massRange" min="0" max="1000" step="1" aria-label="Mass slider">
+            <input type="number" id="massNum" min="0.1" max="1000000" step="any" inputmode="decimal">
+          </div>
+          <div class="presets" id="presets"></div>
+        </div>
+        <div class="ctl">
+          <span class="ctl-label" id="bodyLabel">Where are you?</span>
+          <div class="bodies" id="bodies" role="radiogroup" aria-labelledby="bodyLabel"></div>
+        </div>
+      </div>
+
+      <div class="panel result" aria-live="polite">
+        <div class="res-top">
+          <div class="res-planet" id="resPlanetArt" aria-hidden="true"></div>
+          <div>
+            <div class="res-where" id="resWhere">On Earth</div>
+            <div class="res-g">g = <strong id="resG">9.8</strong> N/kg</div>
+          </div>
+        </div>
+        <div class="calc" id="calc"></div>
+        <div class="res-pair">
+          <div class="stat mass">
+            <div class="stat-l">Mass</div>
+            <div class="stat-v" id="resMass">45 kg</div>
+            <div class="stat-s">the same everywhere</div>
+          </div>
+          <div class="stat weight">
+            <div class="stat-l">Weight</div>
+            <div class="stat-v" id="resWeight">441 N</div>
+            <div class="stat-s" id="resRel">same as on Earth</div>
+          </div>
+        </div>
+        <p class="res-fact" id="resFact"></p>
+        <p class="res-scales" id="resScales"></p>
+      </div>
+
+      <figure class="panel sim">
+        <figcaption><span class="sim-t">Spring balance (newtonmeter)</span><span class="muted" id="springRange"></span></figcaption>
+        <canvas id="springCv" class="stage" width="600" height="440" role="img" aria-label="Spring balance: a mass hangs from a spring and the pointer shows its weight in newtons"></canvas>
+      </figure>
+
+      <figure class="panel sim">
+        <figcaption>
+          <span class="sim-t">Jump and drop</span>
+          <span class="sim-btns">
+            <button type="button" class="btn sm primary" id="jumpBtn">Jump!</button>
+            <button type="button" class="btn sm" id="dropBtn">Drop a hammer</button>
+          </span>
+        </figcaption>
+        <canvas id="jumpCv" class="stage" width="600" height="440" role="img" aria-label="An astronaut jumps on the chosen world; a dashed line marks the height of the same jump on Earth"></canvas>
+        <div class="jump-read" id="jumpRead"></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── 4. Planets ───────────────────────────────────────────────── -->
+  <section class="sect" id="planets">
+    <div class="kicker">Every world</div>
+    <h2>The same mass, eleven different weights</h2>
+    <p class="sect-lede">Each card shows the weight of <strong id="cardsMass">45 kg</strong> there. Tap a card to go there in the explorer.</p>
+    <div class="cards" id="cards"></div>
+
+    <div class="panel chart">
+      <h3 class="chart-t">Weight of <span id="chartMass">45 kg</span> on each world <span class="muted">(newtons)</span></h3>
+      <div class="bars" id="bars"></div>
+      <p class="muted small">The Sun's bar is cut short: its pull is about 11 times Jupiter's, so it would run far off the edge.</p>
+    </div>
+  </section>
+
+  <!-- ── 5. Quiz ──────────────────────────────────────────────────── -->
+  <section class="sect" id="quiz">
+    <div class="kicker">Quick check</div>
+    <h2>KS3 quick check</h2>
+    <div id="quizBody">
+      <div class="scorebar"><span>Score: <strong id="qScore">0</strong> / <span id="qTotal">0</span></span><button type="button" class="btn sm" id="qReset">Reset quiz</button></div>
+      <ol class="qq-list" id="qList"></ol>
+    </div>
+  </section>
+</main>
+
+<!-- ── Presenter mode ───────────────────────────────────────────────── -->
+<div id="presenter" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden>
+  <div class="p-top">
+    <span class="p-title" id="pTitle">Mass vs Weight</span>
+    <span class="p-count" id="pCount">1 / 5</span>
+    <button class="btn sm" id="pExit" type="button">Exit <kbd>Esc</kbd></button>
+  </div>
+  <div class="p-stage" id="pStage">
+    <section class="pslide hook" data-title="Starter">
+      <div class="kicker">Starter</div>
+      <h2>Are mass and weight the same thing?</h2>
+      <div class="hook-grid">
+        <div class="hook-q">
+          <p>An astronaut steps on bathroom scales on Earth. They read <strong>80 kg</strong>.</p>
+          <p>She flies to the Moon and stands on the same scales.</p>
+          <ol class="hook-opts">
+            <li><span>A</span> The scales still read 80 kg.</li>
+            <li><span>B</span> The scales read less than 80 kg.</li>
+            <li><span>C</span> The scales read more than 80 kg.</li>
+          </ol>
+          <p class="muted">Think, pair, share: which is it, and has anything about the astronaut really changed?</p>
+          <button type="button" class="btn primary" id="hookReveal">Reveal</button>
+          <div class="hook-ans" id="hookAns" hidden>
+            <p><strong>B.</strong> The scales read about <strong>13 kg</strong>. Scales really measure the push of your weight, then divide by Earth's 9.8 N/kg.</p>
+            <p>But she is <strong>not</strong> made of less stuff. Her <strong>mass is still 80 kg</strong>. It's her <strong>weight</strong> that dropped, from 784 N to 128 N, because the Moon's gravity is weaker.</p>
+          </div>
+        </div>
+        <svg class="hook-art" viewBox="0 0 320 300" aria-hidden="true">
+          <circle cx="60" cy="40" r="1.6" fill="#8693a5"/><circle cx="280" cy="30" r="1.2" fill="#8693a5"/><circle cx="200" cy="70" r="1.4" fill="#edf2f8"/><circle cx="30" cy="150" r="1.1" fill="#edf2f8"/><circle cx="300" cy="140" r="1.6" fill="#8693a5"/><circle cx="140" cy="20" r="1" fill="#edf2f8"/>
+          <circle cx="250" cy="80" r="38" fill="#3b82c4"/><path d="M228 62c10 6 12 16 4 22s-4 16 8 18M262 50c-6 10 4 16 12 20" fill="none" stroke="#5fae6e" stroke-width="7" stroke-linecap="round"/>
+          <path d="M0 300V238c60-18 120-22 170-16s110 12 150 2v76z" fill="#9aa0a8"/>
+          <circle cx="60" cy="262" r="10" fill="#80868f"/><circle cx="250" cy="270" r="7" fill="#80868f"/>
+          <rect x="112" y="220" width="96" height="18" rx="5" fill="#edf2f8"/><rect x="138" y="224" width="44" height="10" rx="2" fill="#091321"/><text x="160" y="232.5" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono, monospace" fill="#47b5fa">?? kg</text>
+          <g transform="translate(160 150)">
+            <rect x="-26" y="-12" width="52" height="58" rx="16" fill="#edf2f8"/>
+            <rect x="-32" y="-6" width="12" height="42" rx="6" fill="#d7dee8"/><rect x="20" y="-6" width="12" height="42" rx="6" fill="#d7dee8"/>
+            <rect x="-22" y="42" width="18" height="30" rx="7" fill="#d7dee8"/><rect x="4" y="42" width="18" height="30" rx="7" fill="#d7dee8"/>
+            <circle cx="0" cy="-34" r="26" fill="#edf2f8"/><rect x="-18" y="-46" width="36" height="24" rx="11" fill="#182535"/>
+            <rect x="-8" y="6" width="16" height="12" rx="3" fill="#b199f4"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+    <section class="pslide" data-title="Definitions">
+      <div class="kicker">Definitions</div>
+      <h2>Mass (kg) vs weight (N)</h2>
+      <div data-borrow="defBody"></div>
+    </section>
+    <section class="pslide" data-title="The formula">
+      <div class="kicker">The equation</div>
+      <h2>W = m × g</h2>
+      <div data-borrow="formulaBody"></div>
+    </section>
+    <section class="pslide" data-title="Planet explorer">
+      <div class="kicker">Planet explorer</div>
+      <h2>Weigh it, then jump on another world</h2>
+      <div data-borrow="explorer"></div>
+    </section>
+    <section class="pslide" data-title="Quick check quiz">
+      <div class="kicker">KS3 quick check</div>
+      <h2>Quick check quiz</h2>
+      <div data-borrow="quizBody"></div>
+    </section>
+  </div>
+  <div class="p-nav">
+    <button class="btn" id="pPrev" type="button" aria-label="Previous slide">← Back</button>
+    <div class="p-dots" id="pDots"></div>
+    <span class="p-hint">← → or Space to move · Esc to exit</span>
+    <button class="btn primary" id="pNext" type="button" aria-label="Next slide">Next →</button>
+  </div>
+</div>
+
+<script src="mw.js"></script>
+</body>
+</html>

@@ -101,6 +101,12 @@ window.SST_TOOLS = [
     image: "waves-practical.png",
     keywords: "required practical 8 rp8 waves ripple tank water waves wavelength frequency wave speed v = f lambda stroboscope strobe dipper plane waves point source wavefront stretched string standing wave stationary wave vibration generator signal generator node antinode harmonic fundamental resonance tension pulley hanging masses mass per unit length metre rule apparatus set up diagram 3d lamp white screen projection two dippers two source interference superposition coherent coherence path difference phase difference constructive destructive maxima minima fringes btec applied science unit 1 c1 working with waves diffraction grating 4.6.1.2 4.6.1.3" },
 
+  { title: "Mass vs Weight across the Solar System", url: "visualisations/mass-weight-solar-system/",
+    blurb: "Weigh anything from a cat to a school bus on eleven worlds, then watch a spring balance stretch and an astronaut jump.",
+    kind: "Interactive", levels: ["KS3"], tags: ["Physics", "Interactive"],
+    image: "mass-weight.png",
+    keywords: "mass weight difference w = m x g w=mg weight equals mass times gravitational field strength g n/kg newtons per kilogram 9.8 10 n/kg kilograms kg newtons n force of gravity gravity gravitational pull solar system planets sun mercury venus earth moon mars jupiter saturn uranus neptune pluto dwarf planet surface gravity weigh on other planets weightless weightlessness astronaut space newtonmeter newton meter spring balance forcemeter bathroom scales jump height moon jump dropping hammer feather apollo calculator worked examples rearrange quiz presenter mode whiteboard ks3 physics forces year 7 year 8 year 9" },
+
   { title: "Science Retrieval Presenter", url: "games/science/retrieval-quiz.html",
     blurb: "Timed recall across biology, chemistry and physics, mixing in earlier topics and required practicals.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
