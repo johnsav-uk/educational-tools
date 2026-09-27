@@ -309,7 +309,7 @@ export default function OrbitalViewer3D() {
     }`;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

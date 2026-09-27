@@ -56,6 +56,12 @@
   .palitem { transition: border-color .12s ease, background .12s ease, transform .12s ease; }
   .palitem:hover { transform: translateY(-1px); }
   .no-sel { user-select:none; -webkit-user-select:none; }
+  #ls-stage svg { touch-action: none; }   /* finger drags move apparatus, not the page */
+  /* Phones: the three columns stack (canvas, library, inspector) and the page scrolls. */
+  @media (max-width: 767px) {
+    body { overflow: auto; }
+    #root { height: auto; }
+  }
   svg text { font-family:'Plus Jakarta Sans','Segoe UI',Helvetica,Arial,sans-serif; }
   /* Printing gives the drawing the whole page: the dark studio chrome is
      hidden and the canvas loses its frame. */
@@ -2430,7 +2436,7 @@ function Library({ tab, setTab, onAdd, onPreset, itemCount }){
   const showPieces  = query ? pieces.length  > 0 : tab !== 'preset';
 
   return (
-    <div className="noprint w-[268px] shrink-0 h-full flex flex-col bg-zinc-900 border-r border-zinc-800">
+    <div className="noprint w-[268px] shrink-0 h-full flex flex-col bg-zinc-900 border-r border-zinc-800 max-md:order-2 max-md:w-full max-md:h-[60vh] max-md:border-r-0 max-md:border-t">
       <div className="px-3 pt-3 pb-2 border-b border-zinc-800">
         <div className="flex items-center gap-2 mb-2.5">
           <span className="text-[19px]">⚗️</span>
@@ -2636,7 +2642,7 @@ function Inspector({ items, sel, patch, act }){
   const set    = (k, v) => patch(one.id, { [k]: v });
 
   return (
-    <div className="noprint w-[262px] shrink-0 h-full flex flex-col bg-zinc-900 border-l border-zinc-800">
+    <div className="noprint w-[262px] shrink-0 h-full flex flex-col bg-zinc-900 border-l border-zinc-800 max-md:order-3 max-md:w-full max-md:h-auto max-md:border-l-0 max-md:border-t">
       <div className="px-3 py-2.5 border-b border-zinc-800">
         <div className="text-[12.5px] font-semibold text-zinc-200">
           {one ? def.name : chosen.length ? chosen.length + ' items selected' : 'Nothing selected'}
@@ -2804,7 +2810,7 @@ function TopBar({ canUndo, canRedo, act, snap, setSnap, grid, setGrid, tool, set
   const close = () => setMenu(null);
 
   return (
-    <div className="noprint h-[46px] shrink-0 flex items-center gap-1.5 px-3 bg-zinc-900 border-b border-zinc-800 relative z-20">
+    <div className="noprint h-[46px] shrink-0 flex items-center gap-1.5 px-3 bg-zinc-900 border-b border-zinc-800 relative z-20 max-md:h-auto max-md:flex-wrap max-md:py-1.5 max-md:px-2">
       <Btn onClick={() => act('undo')} disabled={!canUndo} title="Undo (Ctrl+Z)"><Ic name="Undo2" /> Undo</Btn>
       <Btn onClick={() => act('redo')} disabled={!canRedo} title="Redo (Ctrl+Y)"><Ic name="Redo2" /> Redo</Btn>
       <Btn onClick={() => act('clear')} danger disabled={!count} title="Clear the canvas"><Ic name="Trash2" /> Clear</Btn>
@@ -2829,7 +2835,7 @@ function TopBar({ canUndo, canRedo, act, snap, setSnap, grid, setGrid, tool, set
           <Ic name="Save" /> File
         </Btn>
         {menu === 'file' && (
-          <div className="absolute right-0 top-[38px] w-[228px] rounded-lg border border-zinc-700 bg-zinc-900
+          <div className="absolute right-0 top-[38px] w-[228px] max-md:right-auto max-md:left-0 max-md:max-w-[calc(100vw-16px)] rounded-lg border border-zinc-700 bg-zinc-900
                           shadow-2xl p-2 space-y-1.5">
             <button type="button" onClick={() => { act('savejson'); close(); }}
               className="w-full text-left px-2 py-1.5 rounded text-[12.5px] text-zinc-300 hover:bg-zinc-800">
@@ -2852,7 +2858,7 @@ function TopBar({ canUndo, canRedo, act, snap, setSnap, grid, setGrid, tool, set
           <Ic name="Download" /> Export
         </Btn>
         {menu === 'exp' && (
-          <div className="absolute right-0 top-[38px] w-[262px] rounded-lg border border-zinc-700 bg-zinc-900
+          <div className="absolute right-0 top-[38px] w-[262px] max-md:right-auto max-md:left-0 max-md:max-w-[calc(100vw-16px)] rounded-lg border border-zinc-700 bg-zinc-900
                           shadow-2xl p-3 space-y-3">
             <Row label="Background">
               <Seg value={png.white} onChange={v => setPng({ ...png, white:v })}
@@ -3111,10 +3117,10 @@ function App(){
         act={act} snap={snapOn} setSnap={setSnapOn} grid={grid} setGrid={setGrid}
         tool={tool} setTool={setTool} count={items.length} />
 
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 max-md:flex-col max-md:flex-none">
         <Library tab={tab} setTab={setTab} onAdd={add} onPreset={loadPreset} itemCount={items.length} />
 
-        <div className="flex-1 min-w-0 flex flex-col bg-zinc-800">
+        <div className="flex-1 min-w-0 flex flex-col bg-zinc-800 max-md:order-1 max-md:flex-none max-md:h-[62vh]">
           <div id="ls-stage" className="flex-1 min-h-0 m-3 mb-1.5 rounded-lg overflow-hidden border border-zinc-700 shadow-2xl bg-white">
             <Canvas items={items} sel={sel} setSel={setSel} patch={patch} moveMany={moveMany}
               settle={settle} view={view} setView={setView} snap={snapOn} grid={grid}

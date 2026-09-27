@@ -79,7 +79,8 @@
 
 @media (max-width: 720px) {
   .sst-word, .sst-kind { display: none; }
-  .sst-nav a:not(:last-child) { display: none; }
+  .sst-nav a:not(.sst-keep) { display: none; }
+  .sst-nav a { padding: 0 9px; }
 }
 @media print { .sst-bar { display: none; } }
 

@@ -200,4 +200,41 @@
   buildChoices(subjectHost, SUBJECTS, 'subject', 'chip');
   buildChoices(levelHost, LEVELS, 'level', 'chip');
   render();
+
+  // Feedback form: opens in a dialog, posts to Formspree without leaving the page.
+  var dialog = $('feedback-dialog');
+  var form = dialog.querySelector('form');
+  var status = dialog.querySelector('.feedback-status');
+  var send = form.querySelector('[type=submit]');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-feedback]'), function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      status.textContent = '';
+      form.hidden = false;
+      dialog.showModal();
+    });
+  });
+  Array.prototype.forEach.call(dialog.querySelectorAll('[data-close]'), function (b) {
+    b.addEventListener('click', function () { dialog.close(); });
+  });
+  // Clicking the backdrop closes it too.
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    form.elements.page.value = location.href;
+    send.disabled = true;
+    status.textContent = 'Sending…';
+    fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        form.reset();
+        status.textContent = 'Thank you, your message has been sent.';
+        setTimeout(function () { dialog.close(); }, 2200);
+      })
+      .catch(function () {
+        status.textContent = 'Sorry, that didn’t send. Please try again in a moment.';
+      })
+      .then(function () { send.disabled = false; });
+  });
 })();

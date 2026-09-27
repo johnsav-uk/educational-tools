@@ -311,9 +311,9 @@ function EnergyDiagram({
     d: 1.9
   };
   return /*#__PURE__*/React.createElement("div", {
-    className: "pl-8 pr-2"
+    className: "overflow-x-auto pl-8 pr-2 pb-1"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "mb-2 flex gap-3"
+    className: "mb-2 flex min-w-[34rem] gap-3"
   }, COLUMNS.map(col => /*#__PURE__*/React.createElement("div", {
     key: col,
     style: {
@@ -321,7 +321,7 @@ function EnergyDiagram({
     },
     className: "text-center text-xs font-black uppercase tracking-widest text-slate-400"
   }, col, " sub-levels"))), /*#__PURE__*/React.createElement("div", {
-    className: "relative h-[26rem]"
+    className: "relative h-[26rem] min-w-[34rem]"
   }, /*#__PURE__*/React.createElement("div", {
     className: "absolute -left-7 bottom-0 top-0 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400"
   }, /*#__PURE__*/React.createElement("span", {
@@ -602,7 +602,7 @@ function ElectronConfigBuilder() {
     },
     className: `px-4 py-2 text-sm font-semibold transition ${manual === val ? 'bg-red-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`
   }, label))))), /*#__PURE__*/React.createElement("div", {
-    className: "grid gap-5 lg:grid-cols-[1fr_20rem]"
+    className: "grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_20rem]"
   }, /*#__PURE__*/React.createElement("div", {
     className: "space-y-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
   }, /*#__PURE__*/React.createElement("div", {
@@ -1137,7 +1137,7 @@ function OrbitalViewer3D() {
   }, [worldScale, pointSize, axisLength, orb, merged, showPlane]);
   const btn = on => `rounded-lg border px-3 py-2 text-sm font-semibold transition ${on ? 'border-red-600 bg-red-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-red-400'}`;
   return /*#__PURE__*/React.createElement("div", {
-    className: "grid gap-5 lg:grid-cols-[1fr_20rem]"
+    className: "grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_20rem]"
   }, /*#__PURE__*/React.createElement("div", {
     className: "space-y-4"
   }, /*#__PURE__*/React.createElement("div", {

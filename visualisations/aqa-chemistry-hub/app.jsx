@@ -235,8 +235,8 @@ function EnergyDiagram({ boxes, interactive, onBoxClick, showFillOrder }) {
   // the d column needs room for five boxes
   const flex = { s: 1, p: 1.3, d: 1.9 };
   return (
-    <div className="pl-8 pr-2">
-      <div className="mb-2 flex gap-3">
+    <div className="overflow-x-auto pl-8 pr-2 pb-1">
+      <div className="mb-2 flex min-w-[34rem] gap-3">
         {COLUMNS.map((col) => (
           <div
             key={col}
@@ -248,7 +248,7 @@ function EnergyDiagram({ boxes, interactive, onBoxClick, showFillOrder }) {
         ))}
       </div>
 
-      <div className="relative h-[26rem]">
+      <div className="relative h-[26rem] min-w-[34rem]">
         {/* energy axis */}
         <div className="absolute -left-7 bottom-0 top-0 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
           <span className="text-sm leading-none">↑</span>
@@ -605,7 +605,7 @@ function ElectronConfigBuilder() {
           </div>
 
           {/* ---------------- Diagram + written strings ---------------- */}
-          <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_20rem]">
             <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="mb-1 flex items-baseline justify-between">
                 <h3 className="text-sm font-bold text-slate-700">
@@ -1019,7 +1019,7 @@ function OrbitalViewer3D() {
   const btn = (on) => `rounded-lg border px-3 py-2 text-sm font-semibold transition ${on ? 'border-red-600 bg-red-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-red-400'}`;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

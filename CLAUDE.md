@@ -28,7 +28,8 @@ the site has to keep its typography there.
 
 **Any new page in `visualisations/` or `games/` must load the site bar.** It
 is the header across the top of every tool: logo home, the tool's name and
-kind, and Explore / Play / All tools. Without it a tool is a dead end: pupils
+kind, and Explore / Play / Support / All tools (Support links to the homepage's
+feedback form and Ko-fi). Without it a tool is a dead end: pupils
 reach it from a link, a QR code or a shared URL, and there is nothing to
 click to see everything else.
 

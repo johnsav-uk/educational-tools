@@ -23,6 +23,7 @@
       <a href="#top" aria-current="page">Home</a>
       <a href="#all" data-type-filter="explore">Explore</a>
       <a href="#all" data-type-filter="play">Play</a>
+      <a href="#support">Support</a>
       <a href="#all" data-type-filter="all">All Tools</a>
       <a href="#all" class="icon-link" id="search-jump" aria-label="Search tools"><span class="search-icon" aria-hidden="true"></span></a>
     </nav>
@@ -113,11 +114,12 @@
     </div>
   </section>
 
-  <section class="support" id="feedback" aria-label="Feedback and support">
+  <section class="support" id="support" aria-label="Feedback and support">
+    <span id="feedback" aria-hidden="true"></span>
     <div class="support-card">
       <h2>Feedback or a tool idea?</h2>
       <p>Spotted a mistake, used a tool in a lesson, or wish something existed? I read every message, and many of these tools started as a teacher’s request.</p>
-      <a class="btn btn--ghost" href="mailto:john@johnsav.co.uk?subject=Savage%20Science%20Tools%20feedback">Email john@johnsav.co.uk</a>
+      <button type="button" class="btn btn--ghost" data-feedback>Send feedback</button>
     </div>
     <div class="support-card">
       <h2>Support the site</h2>
@@ -136,12 +138,45 @@
       <a href="#all" data-type-filter="explore">Explore</a>
       <a href="#all" data-type-filter="play">Play</a>
       <a href="#all" data-type-filter="all">All Tools</a>
-      <a href="mailto:john@johnsav.co.uk?subject=Savage%20Science%20Tools%20feedback">Feedback</a>
+      <a href="#feedback" data-feedback>Feedback</a>
       <a href="https://ko-fi.com/johnsav" target="_blank" rel="noopener">Ko-fi</a>
     </nav>
     <small>Free for classroom use · No sign-in required</small>
   </div>
 </footer>
+
+<!-- Feedback form. Submissions go to Formspree, which emails them on; the
+     form ID in action="" is the only thing to change if the account moves. -->
+<dialog class="feedback" id="feedback-dialog" aria-labelledby="feedback-title">
+  <form class="feedback-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+    <div class="feedback-head">
+      <h2 id="feedback-title">Send feedback</h2>
+      <button type="button" class="feedback-close" data-close aria-label="Close">×</button>
+    </div>
+    <label>What’s it about?
+      <select name="type">
+        <option>A tool idea</option>
+        <option>Something isn’t working</option>
+        <option>A mistake in the science</option>
+        <option>Just saying thanks</option>
+        <option>Something else</option>
+      </select>
+    </label>
+    <label>Message
+      <textarea name="message" rows="5" required placeholder="Which tool, and what happened or what you’d like…"></textarea>
+    </label>
+    <label>Your email <span>(optional, only if you’d like a reply)</span>
+      <input type="email" name="email" autocomplete="email">
+    </label>
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="feedback-trap" aria-hidden="true">
+    <input type="hidden" name="page" value="">
+    <p class="feedback-status" role="status" aria-live="polite"></p>
+    <div class="feedback-actions">
+      <button type="button" class="btn btn--ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn--primary">Send</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="assets/sst/tools.js"></script>
 <script src="assets/home/home.js"></script>

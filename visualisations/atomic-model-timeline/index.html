@@ -33,7 +33,7 @@ body{
   color:var(--txt);
   font-family:var(--font);
   font-size:15px;line-height:1.55;
-  display:grid;grid-template-rows:auto auto auto 1fr;height:100vh;overflow:hidden;   /* site bar, header, timeline, main */
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto 1fr;height:100vh;overflow:hidden;   /* site bar, header, timeline, main */
 }
 h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em}
 button{font-family:inherit}
@@ -81,7 +81,7 @@ button{font-family:inherit}
 .tl-fill{position:absolute;left:8%;top:32px;height:2px;border-radius:2px;width:0;
   background:linear-gradient(90deg,var(--accent),var(--accent2));
   box-shadow:0 0 12px rgba(71,181,250,.5);transition:width .5s cubic-bezier(.4,0,.2,1)}
-.tl-nodes{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tl-nodes{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
 .tl-node{
   background:none;border:0;padding:0;cursor:pointer;color:var(--dim);
   display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;transition:.2s color;
@@ -278,7 +278,7 @@ body.present .stage-note{display:none}
 @media (max-width:1180px){main{grid-template-columns:minmax(0,1fr) 390px}}
 @media (max-width:1000px){
   body{overflow:auto;height:auto;grid-template-rows:auto auto auto auto}
-  main{grid-template-columns:1fr}
+  main{grid-template-columns:minmax(0,1fr)}
   .stage{height:58vh;min-height:430px;border-right:0;border-bottom:1px solid var(--line)}
   .panel{overflow:visible}
   .tl-model{display:none}
@@ -290,9 +290,16 @@ body.present .stage-note{display:none}
   .tl-nodes{gap:2px}
   .tl-name{font-size:11px}
   .hint,.stage-note{display:none}
-  .app-header{padding:10px 14px}
+  .app-header{padding:10px 14px;flex-wrap:wrap;gap:10px}
+  .brand{flex:1 1 100%}
+  .header-actions{flex-wrap:wrap}
+  .tl-year{font-size:10.5px}
   .timeline{padding:14px 12px 12px}
   .legend{display:none}
+}
+@media (max-width:480px){
+  .tl-name{display:none}
+  .tl-year{font-size:11px}
 }
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">

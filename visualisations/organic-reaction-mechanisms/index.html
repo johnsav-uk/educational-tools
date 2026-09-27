@@ -2633,7 +2633,7 @@ function Player() {
               {mech.steps.map((_, i) => (
                 <button key={i} onClick={() => { setPlaying(false); setStep(i); }}
                         title={'Stage ' + (i + 1)}
-                        className={'h-2 rounded-full transition-all ' +
+                        className={'relative h-2 rounded-full transition-all after:absolute after:-inset-x-1 after:-inset-y-3 ' +
                           (i === step ? 'w-7 bg-sky-400' : 'w-2 bg-white/20 hover:bg-white/40')} />
               ))}
             </div>

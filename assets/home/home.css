@@ -277,6 +277,38 @@ button { font: inherit; cursor: pointer; }
 .support-card h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
 .support-card p { margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: var(--text-body); text-wrap: pretty; flex: 1; }
 .support-card .btn { max-width: 100%; overflow-wrap: anywhere; }
+.support { scroll-margin-top: 16px; }
+button.btn { font: inherit; font-weight: 600; font-size: 15px; color: var(--text); background: transparent; cursor: pointer; }
+button.btn--primary { background: var(--blue-btn); color: #fff; }
+button.btn--primary:disabled { opacity: 0.6; cursor: default; }
+
+.feedback {
+  width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0;
+  background: var(--bg-panel); color: var(--text-body); border: 1px solid var(--line); border-radius: 14px;
+}
+.feedback::backdrop { background: oklch(0.1 0.03 255 / 0.75); }
+.feedback-form { display: flex; flex-direction: column; gap: 16px; padding: clamp(20px, 4vw, 28px); }
+.feedback-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.feedback-head h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.feedback-close {
+  width: 44px; height: 44px; margin: -8px -10px -8px 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text-muted); font-size: 26px; line-height: 1; cursor: pointer;
+}
+.feedback-close:hover { color: var(--text); }
+.feedback label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); }
+.feedback label span { font-weight: 400; color: var(--text-muted); }
+.feedback select, .feedback textarea, .feedback input {
+  width: 100%; min-height: 46px; padding: 10px 12px; border-radius: 8px;
+  background: oklch(0.15 0.03 255); border: 1px solid oklch(0.32 0.04 255);
+  color: var(--text); font: inherit; font-size: 16px; font-weight: 400;
+}
+.feedback textarea { resize: vertical; line-height: 1.5; }
+.feedback select:focus, .feedback textarea:focus, .feedback input:focus { outline: none; border-color: var(--blue); }
+.feedback-trap { position: absolute; left: -9999px; width: 1px; height: 1px; }
+.feedback-status { margin: 0; min-height: 1.4em; font-size: 14px; color: var(--text-body); }
+.feedback-status:empty { display: none; }
+.feedback-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+@media (max-width: 480px) { .nav a { padding: 0 10px; } }
 
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--line); }

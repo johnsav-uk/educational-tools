@@ -22,7 +22,8 @@
     '<nav class="sst-nav" aria-label="Site">' +
       '<a href="' + root + 'index.html?type=explore#all">Explore</a>' +
       '<a href="' + root + 'index.html?type=play#all">Play</a>' +
-      '<a href="' + root + 'index.html#all">All tools</a>' +
+      '<a class="sst-keep" href="' + root + 'index.html#support">Support</a>' +
+      '<a class="sst-keep" href="' + root + 'index.html#all">All tools</a>' +
     '</nav>';
   document.body.insertBefore(bar, document.body.firstChild);
 

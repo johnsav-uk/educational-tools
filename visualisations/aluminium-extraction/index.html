@@ -111,6 +111,9 @@
   .dots{ display:flex; gap:6px; flex:1; justify-content:center; flex-wrap:wrap; }
   .dot{ width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:none; padding:0; cursor:pointer; }
   .dot.on{ background:var(--chem); border-color:var(--chem); }
+  /* A bigger invisible hit area, so the dots can be tapped on a phone. */
+  .dot{ position:relative; }
+  .dot::after{ content:""; position:absolute; inset:-12px -4px; }
   .hint{ color:var(--muted); font-size:.85rem; }
 
   /* flow diagram on slide 1 */
