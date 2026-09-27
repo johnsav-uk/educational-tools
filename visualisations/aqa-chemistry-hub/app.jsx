@@ -1219,6 +1219,40 @@ function findJumps(series) {
   return jumps;
 }
 
+/** True below 640px wide, and kept up to date as the window resizes. */
+function useNarrow() {
+  const query = '(max-width: 640px)';
+  const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setNarrow(mq.matches);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return narrow;
+}
+
+/**
+ * Label for a shell-change line, drawn just inside the top of the plot. Each
+ * line's label has its own row, so neighbouring labels never overlap, and reads
+ * away from the nearer edge so it is never clipped on a narrow screen.
+ */
+function JumpTag({ viewBox, text, row, anchor }) {
+  if (!viewBox) return null;
+  return (
+    <text
+      x={viewBox.x + (anchor === 'end' ? -6 : 6)}
+      y={viewBox.y + 14 + row * 16}
+      textAnchor={anchor}
+      fill="#6d28d9"
+      fontSize={11}
+      fontWeight={700}
+    >
+      {text}
+    </text>
+  );
+}
+
 /** First IE of every element, tagged with its period. */
 function buildTrend() {
   return IE_ELEMENTS.map((el) => ({
@@ -1323,6 +1357,8 @@ function IonisationEnergyGraph() {
   const element = IE_ELEMENTS[(quizMode ? quizZ : z) - 1];
   const series = useMemo(() => buildSeries(element), [element]);
   const jumps = useMemo(() => findJumps(series), [series]);
+  // Phones get a short jump label; the full wording runs off a narrow plot.
+  const narrow = useNarrow();
 
   const firstJump = jumps[0];
   const trend = useMemo(() => buildTrend(), []);
@@ -1507,14 +1543,18 @@ function IonisationEnergyGraph() {
                   domain={[0, successiveTicks[successiveTicks.length - 1]]}
                 />
                 <Tooltip content={<SuccessiveTooltip hideShells={hideShells} />} />
-                {!hideShells && jumps.map((j) => (
+                {!hideShells && jumps.map((j, i) => (
                   <ReferenceLine key={j.at} x={j.at} stroke="#7c3aed" strokeDasharray="6 4" strokeWidth={2}>
                     <Label
-                      value={`shell change n=${j.from} → n=${j.to} (×${j.factor.toFixed(1)})`}
-                      position="top"
-                      fill="#6d28d9"
-                      fontSize={11}
-                      fontWeight={700}
+                      content={
+                        <JumpTag
+                          text={narrow
+                            ? `n=${j.from}→${j.to} ×${j.factor.toFixed(1)}`
+                            : `shell change n=${j.from} → n=${j.to} (×${j.factor.toFixed(1)})`}
+                          row={i}
+                          anchor={j.at > (series.length + 1) / 2 ? 'end' : 'start'}
+                        />
+                      }
                     />
                   </ReferenceLine>
                 ))}
