@@ -113,6 +113,12 @@ window.SST_TOOLS = [
     image: "retrieval-presenter.png", featured: true,
     keywords: "retrieval practice recall starter plenary do now flashcard spaced interleaving quiz required practical rp paper 1 paper 2 foundation higher tier combined separate question bank editor timer" },
 
+  { title: "Interleaved Science Grid Challenge (beta)", url: "games/science/interleaved-grid.html",
+    blurb: "Pick cards from a 4×4 or 5×5 grid where older units score more, then chase the +1 higher-tier bonus.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
+    image: "interleaved-grid-science.png",
+    keywords: "interleaving interleaved spaced retrieval practice grid challenge recency points last month last year ks3 foundations higher tier bonus team game starter plenary whiteboard aqa 8461 8462 8463 8464 trilogy combined science edexcel 1bi0 1ch0 1ph0 1sc0 cell biology organisation infection bioenergetics homeostasis inheritance ecology atomic structure bonding quantitative moles energy changes rates equilibrium organic analysis atmosphere resources electricity particle model radioactivity forces waves magnetism space balanced symbol equations calculations" },
+
   { title: "Science Jeopardy", url: "games/science/science-jeopardy.html",
     blurb: "Board-style quiz across six categories, from cell biology to waves, electricity and space.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],

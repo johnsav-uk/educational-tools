@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interleaved Science Grid Challenge (beta) — GCSE Biology, Chemistry &amp; Physics</title>
+<meta name="description" content="A spaced-retrieval team game for the classroom board: a 4×4 or 5×5 grid of GCSE Biology, Chemistry and Physics questions, worth more points the longer ago the unit was taught.">
+<style>
+  /* Tokens fall back to the site's hex values so the page still works opened
+     on its own, without assets/sst/. */
+  :root {
+    --bg: var(--sst-bg, #050e1a);
+    --panel: var(--sst-panel, #091321);
+    --card: var(--sst-card, #0d1928);
+    --raised: var(--sst-raised, #13202f);
+    --input: var(--sst-input, #07101c);
+    --line: var(--sst-line, #182535);
+    --line-strong: var(--sst-line-strong, #243446);
+    --text: var(--sst-text, #edf2f8);
+    --body: var(--sst-text-body, #c3cdd9);
+    --muted: var(--sst-text-muted, #8693a5);
+    /* Violet: a Play tool. */
+    --accent: var(--sst-violet, #b199f4);
+    --accent-btn: var(--sst-violet-btn, #734dbe);
+    --accent-soft: var(--sst-violet-soft, #2c2346);
+    --font: var(--sst-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+
+    /* Subject colours, as on the homepage pills. */
+    --bio: var(--sst-bio, oklch(0.8 0.12 145));
+    --chem: var(--sst-chem, oklch(0.8 0.11 185));
+    --phys: var(--sst-phys, oklch(0.8 0.11 295));
+
+    /* The four recency tiers. */
+    --t1: oklch(0.78 0.16 150);
+    --t2: oklch(0.87 0.15 95);
+    --t3: oklch(0.77 0.16 55);
+    --t4: oklch(0.69 0.19 25);
+    --team-a: oklch(0.76 0.13 240);
+    --team-b: oklch(0.76 0.13 340);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  sub, sup { font-size: 0.68em; line-height: 0; }
+  /* Nuclide notation: mass number over atomic number, left of the symbol. */
+  .nuc { white-space: nowrap; }
+  .nuc .an {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 0.6em;
+    line-height: 1.05;
+    vertical-align: text-bottom;
+    padding-bottom: 0.05em;
+    margin-right: 0.08em;
+  }
+
+  .app {
+    height: calc(100dvh - var(--sst-bar-h, 0px));
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 16px 16px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+  }
+  .heading { margin-right: auto; min-width: 0; }
+  .heading h1 {
+    margin: 0;
+    font-size: clamp(1.15rem, 1.6vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .heading p { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  select {
+    min-height: 48px;
+    padding: 0 38px 0 14px;
+    background: var(--input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238693a5' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    appearance: none;
+  }
+  #unit { max-width: 280px; }
+  .btn {
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--raised);
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn-primary { background: var(--accent-btn); border-color: var(--accent-btn); color: #fff; }
+  .btn-primary:hover { border-color: var(--accent); }
+  .controls .btn { align-self: flex-end; }
+
+  /* ---------- Scoreboard ---------- */
+  .scores { display: flex; gap: 8px; align-items: stretch; }
+  .team {
+    display: grid;
+    grid-template-columns: 48px auto 48px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 6px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--tc);
+  }
+  .team input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+    border: 0;
+    background: transparent;
+    color: var(--tc);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 0 2px;
+  }
+  .team output {
+    min-width: 2.2ch;
+    text-align: center;
+    font-size: clamp(1.8rem, 2.6vw, 2.4rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .team .step {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .team .step:hover { border-color: var(--tc); }
+  .team-a { --tc: var(--team-a); }
+  .team-b { --tc: var(--team-b); }
+  .team.bump output { animation: bump 0.35s ease-out; }
+  @keyframes bump { 40% { transform: scale(1.25); color: var(--tc); } }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--body);
+  }
+  .legend .key { display: inline-flex; align-items: center; gap: 8px; }
+  .legend .dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    font-weight: 800;
+    display: grid; place-items: center;
+    font-size: 0.85rem;
+    flex: none;
+  }
+  .legend .units { color: var(--muted); font-size: 0.85em; }
+  .legend .key:first-child .units { color: var(--text); font-weight: 700; }
+  .legend .hint { margin-left: auto; color: var(--muted); }
+  .legend .hint b { color: var(--accent); }
+  .legend .note { flex-basis: 100%; color: var(--t2); font-weight: 600; font-size: 0.85rem; }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: clamp(6px, 0.9vw, 12px);
+    min-height: 0;
+  }
+  .card {
+    --c: var(--t1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+    padding: clamp(8px, 1vw, 14px);
+    text-align: left;
+    background: var(--card);
+    border: 2px solid color-mix(in oklch, var(--c) 55%, transparent);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+  .card:hover { border-color: var(--c); background: var(--raised); }
+  .card:active { transform: scale(0.98); }
+  .card[data-tier="2"], .modal[data-tier="2"] { --c: var(--t2); }
+  .card[data-tier="3"], .modal[data-tier="3"] { --c: var(--t3); }
+  .card[data-tier="4"], .modal[data-tier="4"] { --c: var(--t4); }
+  .card .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card .recency {
+    color: var(--c);
+    font-weight: 800;
+    font-size: clamp(0.62rem, 0.85vw, 0.82rem);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .card .badge {
+    flex: none;
+    width: clamp(34px, 3.6vw, 54px);
+    height: clamp(34px, 3.6vw, 54px);
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: clamp(1.1rem, 1.9vw, 1.8rem);
+    line-height: 1;
+  }
+  .card .topic {
+    font-weight: 800;
+    font-size: clamp(0.95rem, 1.5vw, 1.45rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  .card .unitline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: clamp(0.64rem, 0.8vw, 0.8rem);
+    line-height: 1.25;
+    min-width: 0;
+  }
+  .card .unitline .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .chip {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--sc);
+    color: var(--sc);
+    font-weight: 800;
+    font-size: 0.95em;
+    line-height: 1.35;
+  }
+  .s-B { --sc: var(--bio); }
+  .s-C { --sc: var(--chem); }
+  .s-P { --sc: var(--phys); }
+
+  /* Mystery card: the tier stays hidden until it is opened. */
+  .card.mystery {
+    --c: var(--accent);
+    border-style: dashed;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .card.mystery .q { font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 800; color: var(--accent); line-height: 1; }
+  .card.mystery .recency { color: var(--muted); }
+
+  .card.claimed {
+    background: var(--panel);
+    border-color: var(--line);
+    border-style: solid;
+  }
+  .card.claimed > :not(.claim) { opacity: 0.22; filter: grayscale(1); }
+  .card .claim {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+    font-weight: 800;
+  }
+  .card.claimed .claim { display: flex; }
+  .card .claim .who { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: var(--wc, var(--muted)); text-transform: uppercase; letter-spacing: 0.05em; }
+  .card .claim .pts { font-size: clamp(0.8rem, 1vw, 1rem); color: var(--muted); }
+
+  /* ---------- Modals ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483600; /* above the site bar, which uses 2147483000 */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in oklch, var(--bg) 82%, transparent);
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    --c: var(--t1);
+    width: min(1040px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-top: 6px solid var(--c);
+    border-radius: 18px;
+    padding: clamp(16px, 2.4vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.6vw, 20px);
+  }
+  .m-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .m-head .badge {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    display: grid; place-items: center;
+    font-weight: 800;
+    font-size: 2rem;
+    flex: none;
+  }
+  .m-meta { flex: 1; min-width: 200px; }
+  .m-meta .recency { color: var(--c); font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; font-size: 0.9rem; }
+  .m-meta .topic { font-weight: 800; font-size: 1.35rem; }
+  .m-meta .theme { color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+  .close-x {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    font-size: 1.6rem;
+    line-height: 1;
+    flex: none;
+  }
+  .label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .prompt {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .bonus {
+    border: 1px solid color-mix(in oklch, var(--accent) 45%, transparent);
+    border-left: 6px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .bonus .label { color: var(--accent); }
+  .bonus p { margin: 0; font-size: clamp(1.1rem, 1.9vw, 1.6rem); font-weight: 600; line-height: 1.4; }
+
+  .answer { display: none; flex-direction: column; gap: 12px; }
+  .answer.shown { display: flex; }
+  .ans-row {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--c);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .ans-row .tl { margin: 0; font-size: clamp(1.2rem, 2.2vw, 1.9rem); font-weight: 700; line-height: 1.4; }
+  .ans-row.b { border-left-color: var(--accent); }
+  .ans-row.b .tl { font-size: clamp(1.05rem, 1.8vw, 1.55rem); }
+  .reveal { min-height: 60px; font-size: 1.2rem; }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .toggle .box {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid currentColor;
+    display: grid; place-items: center;
+    font-size: 0.9rem;
+  }
+  .toggle[aria-pressed="true"] .box::after { content: "✓"; }
+  .award { min-height: 60px; font-size: 1.15rem; flex: 1 1 180px; border-width: 2px; }
+  .award.a { border-color: var(--team-a); color: var(--team-a); }
+  .award.b { border-color: var(--team-b); color: var(--team-b); }
+  .award.a:hover { background: color-mix(in oklch, var(--team-a) 16%, var(--raised)); }
+  .award.b:hover { background: color-mix(in oklch, var(--team-b) 16%, var(--raised)); }
+  .claimed-note { margin: 0; color: var(--muted); font-size: 1rem; flex: 1 1 260px; }
+  .claimed-note b { color: var(--text); }
+
+  /* ---------- Units set-up ---------- */
+  .setup { --c: var(--accent); width: min(860px, 100%); }
+  .setup h2 { margin: 0; font-size: 1.4rem; font-weight: 800; flex: 1; }
+  .setup .intro { margin: 0; color: var(--body); line-height: 1.5; }
+  .setup .intro b { color: var(--text); }
+  .u-list { display: flex; flex-direction: column; gap: 6px; }
+  .u-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .u-row .u-name { flex: 1 1 220px; display: flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; }
+  .u-row .u-name small { color: var(--muted); font-weight: 500; }
+  .seg { display: flex; gap: 4px; }
+  .seg button {
+    min-width: 48px; height: 44px;
+    padding: 0 10px;
+    border-radius: 9px;
+    border: 1px solid var(--line-strong);
+    background: var(--raised);
+    font-weight: 800;
+    color: var(--muted);
+  }
+  .seg button[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #0a0f18; }
+  .seg button[data-t="0"][aria-pressed="true"] { background: var(--line-strong); border-color: var(--muted); color: var(--text); }
+  .seg button[data-t="1"] { --c: var(--t1); }
+  .seg button[data-t="2"] { --c: var(--t2); }
+  .seg button[data-t="3"] { --c: var(--t3); }
+  .seg button[data-t="4"] { --c: var(--t4); }
+  .setup .fine { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+  /* Short screens (a phone on its side, a small laptop): the board can't fit in
+     one screen without squashing the cards, so let the page scroll instead. */
+  @media (max-height: 620px) {
+    .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); }
+    .grid { grid-auto-rows: minmax(104px, auto); }
+  }
+
+  /* Phones and narrow windows. */
+  @media (max-width: 760px) {
+    .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); gap: 10px; padding: 10px 12px 16px; }
+    .grid { grid-auto-rows: minmax(118px, auto); }
+    .grid[style*="--n: 5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card .topic { font-size: 0.92rem; overflow-wrap: normal; }
+    .card .recency { font-size: 0.6rem; letter-spacing: 0.04em; }
+    .heading { margin-right: 0; width: 100%; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+    .controls .field:has(#unit), .controls #newBoard { grid-column: 1 / -1; }
+    .controls select, .controls #unit { width: 100%; min-height: 44px; max-width: none; }
+    .controls .btn { min-height: 44px; }
+    .scores { width: 100%; }
+    .team { flex: 1; grid-template-columns: 44px 1fr 44px; }
+    .team .step { width: 44px; height: 44px; }
+
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 0.82rem; }
+    .legend .units, .legend .hint { display: none; }
+    .legend .note { grid-column: 1 / -1; }
+    .legend .dot { width: 22px; height: 22px; font-size: 0.75rem; }
+
+    .overlay { padding: 8px; }
+    .modal { position: relative; padding: 16px 14px; }
+    .m-head { padding-right: 52px; gap: 10px; }
+    .m-head .badge { width: 52px; height: 52px; font-size: 1.6rem; }
+    .close-x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
+    .award { flex: 1 1 140px; min-height: 52px; }
+    .ans-row { padding: 10px 12px; }
+    .seg button { min-width: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .team.bump output { animation: none; }
+    .card { transition: none; }
+  }
+</style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<main class="app">
+  <div class="top">
+    <div class="heading">
+      <h1>Interleaved Science Grid Challenge <small style="color: var(--accent); font-size: 0.6em;">beta</small></h1>
+      <p id="subtitle">Spaced retrieval · GCSE</p>
+    </div>
+
+    <div class="controls">
+      <label class="field"><span>Course</span>
+        <select id="course">
+          <option value="combined">Combined Science</option>
+          <option value="separates">Separate Science</option>
+        </select>
+      </label>
+      <label class="field"><span>Subject</span>
+        <select id="subject">
+          <option value="bio">Biology</option>
+          <option value="chem">Chemistry</option>
+          <option value="phys">Physics</option>
+          <option value="mixed">All three</option>
+        </select>
+      </label>
+      <label class="field"><span>Specification</span>
+        <select id="spec">
+          <option value="AQA">AQA</option>
+          <option value="Edexcel">Edexcel</option>
+        </select>
+      </label>
+      <label class="field"><span>Current unit</span>
+        <select id="unit"></select>
+      </label>
+      <label class="field"><span>Grid</span>
+        <select id="size">
+          <option value="4">4 × 4</option>
+          <option value="5">5 × 5</option>
+        </select>
+      </label>
+      <button class="btn" id="unitsBtn" type="button">Units…</button>
+      <button class="btn btn-primary" id="newBoard" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+        New board
+      </button>
+    </div>
+
+    <div class="scores" aria-label="Scoreboard">
+      <div class="team team-a" id="teamA">
+        <input id="nameA" value="Team A" aria-label="Team A name" maxlength="16">
+        <button class="step" type="button" data-team="A" data-d="-1" aria-label="Take a point from Team A">−</button>
+        <output id="scoreA" aria-live="polite">0</output>
+        <button class="step" type="button" data-team="A" data-d="1" aria-label="Give Team A a point">+</button>
+      </div>
+      <div class="team team-b" id="teamB">
+        <input id="nameB" value="Team B" aria-label="Team B name" maxlength="16">
+        <button class="step" type="button" data-team="B" data-d="-1" aria-label="Take a point from Team B">−</button>
+        <output id="scoreB" aria-live="polite">0</output>
+        <button class="step" type="button" data-team="B" data-d="1" aria-label="Give Team B a point">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="grid" id="grid" role="list"></div>
+</main>
+
+<!-- Challenge card -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mPrompt">
+    <div class="m-head">
+      <div class="badge" id="mBadge">1</div>
+      <div class="m-meta">
+        <div class="recency" id="mRecency"></div>
+        <div class="topic" id="mTopic"></div>
+        <div class="theme" id="mTheme"></div>
+      </div>
+      <button class="close-x" id="mClose" type="button" aria-label="Close without scoring">×</button>
+    </div>
+
+    <div>
+      <p class="label">Retrieval question</p>
+      <p class="prompt" id="mPrompt"></p>
+    </div>
+
+    <div class="bonus">
+      <p class="label">Higher tier · +1 bonus point</p>
+      <p id="mBonus"></p>
+    </div>
+
+    <button class="btn reveal" id="mReveal" type="button">Reveal answer &amp; working</button>
+
+    <div class="answer" id="mAnswer">
+      <div class="ans-row">
+        <p class="label">Answer</p>
+        <p class="tl" id="mAns"></p>
+      </div>
+      <div class="ans-row b">
+        <p class="label">Bonus · model answer</p>
+        <p class="tl" id="mBonusAns"></p>
+      </div>
+    </div>
+
+    <div class="actions" id="mActions">
+      <button class="btn toggle" id="mBonusToggle" type="button" aria-pressed="false"><span class="box"></span>Bonus earned (+1)</button>
+      <button class="btn award a" id="mAwardA" type="button">Team A +1</button>
+      <button class="btn award b" id="mAwardB" type="button">Team B +1</button>
+      <button class="btn" id="mNobody" type="button">No points</button>
+    </div>
+    <div class="actions" id="mClaimed" hidden>
+      <p class="claimed-note" id="mClaimedNote"></p>
+      <button class="btn" id="mUndo" type="button">Undo and reopen card</button>
+      <button class="btn btn-primary" id="mDone" type="button">Back to the board</button>
+    </div>
+  </div>
+</div>
+
+<!-- Units set-up -->
+<div class="overlay" id="setupOverlay">
+  <div class="modal setup" id="setup" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+    <div class="m-head">
+      <h2 id="sTitle">When did you teach each unit?</h2>
+      <button class="close-x" id="sClose" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="intro">Choosing a <b>current unit</b> fills this in for you in AQA teaching order. Change any row to match your own scheme of work: <b>1</b> this unit, <b>2</b> last month, <b>3</b> earlier this year, <b>4</b> last year, <b>–</b> not taught yet. KS3 foundations are always worth 4.</p>
+    <div class="u-list" id="uList"></div>
+    <p class="fine">Units are listed in AQA order; with Edexcel selected, each shows its nearest Edexcel topic.</p>
+    <div class="actions">
+      <button class="btn" id="sReset" type="button">Reset to current unit</button>
+      <button class="btn btn-primary" id="sDeal" type="button" style="margin-left: auto;">Deal a board with these units</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Tiers: points go up the longer ago a unit was taught.
+  // ---------------------------------------------------------------------------
+  var TIERS = {
+    1: { pts: 1, name: 'Current unit', short: 'This unit' },
+    2: { pts: 2, name: 'Last month’s unit', short: 'Last month' },
+    3: { pts: 3, name: 'Earlier this year', short: 'Earlier this year' },
+    4: { pts: 4, name: 'Last year / KS3', short: 'Last year · KS3' }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Units, in AQA order: [id, name, Edexcel nearest topic]. AQA section numbers
+  // are worked out from the position: 4.n in the separate sciences, and
+  // offset by subject in Combined Science Trilogy.
+  // ---------------------------------------------------------------------------
+  var UNIT_LIST = [
+    ['B1', 'Cell biology', 'Topics 1–2 · Key concepts; cells and control'],
+    ['B2', 'Organisation', 'Topics 1 & 8 · Enzymes; exchange and transport'],
+    ['B3', 'Infection and response', 'Topic 5 · Health, disease and medicines'],
+    ['B4', 'Bioenergetics', 'Topics 6 & 8 · Photosynthesis; respiration'],
+    ['B5', 'Homeostasis and response', 'Topic 7 · Coordination, control and homeostasis'],
+    ['B6', 'Inheritance, variation and evolution', 'Topics 3–4 · Genetics; natural selection'],
+    ['B7', 'Ecology', 'Topic 9 · Ecosystems and material cycles'],
+    ['C1', 'Atomic structure and the periodic table', 'Topics 1 & 6 · Key concepts; groups'],
+    ['C2', 'Bonding, structure and properties', 'Topic 1 · Key concepts in chemistry'],
+    ['C3', 'Quantitative chemistry', 'Topic 1 · Key concepts (calculations)'],
+    ['C4', 'Chemical changes', 'Topics 3–4 · Chemical changes; extracting metals'],
+    ['C5', 'Energy changes', 'Topic 7 · Rates of reaction and energy changes'],
+    ['C6', 'Rate and extent of chemical change', 'Topics 4 & 7 · Equilibria; rates'],
+    ['C7', 'Organic chemistry', 'Topic 8 · Fuels and Earth science'],
+    ['C8', 'Chemical analysis', 'Topics 2 & 6 · Mixtures; tests for gases'],
+    ['C9', 'Chemistry of the atmosphere', 'Topic 8 · Fuels and Earth science'],
+    ['C10', 'Using resources', 'Topics 2 & 4 · Water; life-cycle assessment'],
+    ['P1', 'Energy', 'Topic 3 · Conservation of energy'],
+    ['P2', 'Electricity', 'Topic 10 · Electricity and circuits'],
+    ['P3', 'Particle model of matter', 'Topic 14 · Particle model'],
+    ['P4', 'Atomic structure', 'Topic 6 · Radioactivity'],
+    ['P5', 'Forces', 'Topics 2 & 9 · Motion and forces; forces and their effects'],
+    ['P6', 'Waves', 'Topics 4–5 · Waves; light and the EM spectrum'],
+    ['P7', 'Magnetism and electromagnetism', 'Topics 12–13 · Magnetism; induction'],
+    ['P8', 'Space physics', 'Topic 7 · Astronomy']
+  ];
+  var UNITS = {};
+  UNIT_LIST.forEach(function (u) {
+    UNITS[u[0]] = { id: u[0], subj: u[0].charAt(0), n: +u[0].slice(1), name: u[1], edexcel: u[2] };
+  });
+  ['B', 'C', 'P'].forEach(function (s) {
+    UNITS['KS3' + s] = { id: 'KS3' + s, subj: s, n: 0, name: 'KS3 foundations', edexcel: 'KS3 foundations', ks3: true };
+  });
+  var SUBJ_NAME = { B: 'Biology', C: 'Chemistry', P: 'Physics' };
+  var TRILOGY_OFFSET = { B: 0, C: 7, P: 17 };
+
+  // Two choices, as on the Retrieval Presenter: the course (Combined or
+  // Separate Science) and the subject (one science, or all three). A board
+  // is keyed by the pair, e.g. "chem-combined", so each keeps its own units.
+  var SUBJECTS = {
+    bio:   { name: 'Biology', subj: ['B'], def: 3 },
+    chem:  { name: 'Chemistry', subj: ['C'], def: 4 },
+    phys:  { name: 'Physics', subj: ['P'], def: 3 },
+    mixed: { name: 'Biology, Chemistry & Physics', subj: ['B', 'C', 'P'], def: 3, mixed: true }
+  };
+  var COURSES = {
+    combined:  { name: 'Combined Science', codes: { AQA: { B: '8464', C: '8464', P: '8464' }, Edexcel: '1SC0' } },
+    separates: { name: 'Separate Science', codes: { AQA: { B: '8461', C: '8462', P: '8463' }, Edexcel: { B: '1BI0', C: '1CH0', P: '1PH0' } } }
+  };
+  var DISCS = {};
+  Object.keys(SUBJECTS).forEach(function (s) {
+    Object.keys(COURSES).forEach(function (c) {
+      var S = SUBJECTS[s];
+      DISCS[s + '-' + c] = { subject: s, course: c, subj: S.subj, def: S.def, mixed: !!S.mixed, combined: c === 'combined' };
+    });
+  });
+  function discCodes(D, spec) {
+    var codes = COURSES[D.course].codes[spec];
+    if (typeof codes === 'string') return codes;
+    return D.subj.map(function (s) { return codes[s]; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(' · ');
+  }
+
+  // Teaching "steps". One science steps through its units one at a time; all
+  // three step through blocks of B1 + C1 + P1, B2 + C2 + P2…
+  // (Space physics is separate-physics only.)
+  function stepsFor(disc) {
+    var D = DISCS[disc];
+    var ids = UNIT_LIST.map(function (u) { return u[0]; }).filter(function (id) {
+      return D.subj.indexOf(id.charAt(0)) !== -1 && !(D.combined && id === 'P8');
+    });
+    if (!D.mixed) return ids.map(function (id) { return [id]; });
+    var steps = [];
+    for (var n = 1; n <= 10; n++) {
+      var block = ids.filter(function (id) { return UNITS[id].n === n; });
+      if (block.length) steps.push(block);
+    }
+    return steps;
+  }
+  function stepLabel(disc, i) {
+    var s = stepsFor(disc)[i];
+    if (s.length === 1) return s[0] + ' ' + UNITS[s[0]].name;
+    return s.join(' + ');
+  }
+  // Default recency from how many steps back a unit was taught.
+  function defaultMap(disc, cur) {
+    var map = {};
+    stepsFor(disc).forEach(function (ids, i) {
+      var d = cur - i;
+      var t = d < 0 ? 0 : d === 0 ? 1 : d === 1 ? 2 : d <= 3 ? 3 : 4;
+      ids.forEach(function (id) { map[id] = t; });
+    });
+    return map;
+  }
+  function specRef(unit) {
+    if (unit.ks3) return 'KS3 foundations';
+    if (state.spec === 'Edexcel') return 'Edexcel ' + unit.edexcel;
+    var D = DISCS[state.disc];
+    var n = D.combined ? unit.n + TRILOGY_OFFSET[unit.subj] : unit.n;
+    return 'AQA ' + COURSES[D.course].codes.AQA[unit.subj] + ' · 4.' + n;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Question bank. Each entry:
+  //   [unit, topic, question, answer, higher-tier bonus task, bonus model answer]
+  // Markup: _2 or _{2n+2} subscript, ^{2−} superscript, [[mass|atomic|X]] nuclide.
+  // Points are not stored here: they depend on when the class met the unit.
+  // ---------------------------------------------------------------------------
+  var BANK = [
+    // ---------- B1 Cell biology ----------
+    ['B1', 'Cell structure', 'Name the organelle where aerobic respiration takes place, and the organelle where proteins are made.',
+      'Mitochondria (aerobic respiration); ribosomes (protein synthesis).',
+      'A cell is 0.02 mm long. Convert this length into micrometres (µm).',
+      '1 mm = 1000 µm, so 0.02 × 1000 = 20 µm.'],
+    ['B1', 'Microscopy', 'Give the equation that links magnification, image size and real size.',
+      'magnification = size of image ÷ size of real object',
+      'An image of a cell is 45 mm wide at ×1500 magnification. Calculate the real width in µm.',
+      'real size = 45 ÷ 1500 = 0.03 mm = 0.03 × 1000 = 30 µm.'],
+    ['B1', 'Prokaryotes', 'Give two differences between a prokaryotic (bacterial) cell and a eukaryotic cell.',
+      'Prokaryotic cells have no nucleus: their genetic material is a single loop of DNA free in the cytoplasm. They may contain plasmids, and they are much smaller.',
+      'One bacterium divides every 20 minutes. How many bacteria are there after 2 hours? Give your answer in standard form.',
+      '2 hours = 120 ÷ 20 = 6 divisions. 2^{6} = 64 = 6.4 × 10^{1} bacteria.'],
+    ['B1', 'Mitosis', 'Why must a cell copy its DNA before it divides by mitosis?',
+      'So that each of the two daughter cells gets a full set of chromosomes, genetically identical to the parent cell.',
+      'Describe what happens to the chromosomes during mitosis itself.',
+      'The chromosomes line up at the centre of the cell. One set of chromosomes is pulled to each end of the cell. The nucleus divides, then the cytoplasm and cell membrane divide to form two identical cells.'],
+    ['B1', 'Diffusion', 'Define diffusion.',
+      'The net movement of particles from an area of higher concentration to an area of lower concentration.',
+      'A cube-shaped cell has sides of 2 µm. Calculate its surface area : volume ratio.',
+      'Surface area = 6 × 2 × 2 = 24 µm^{2}. Volume = 2^{3} = 8 µm^{3}. Ratio = 24 : 8 = 3 : 1.'],
+    ['B1', 'Active transport', 'How is active transport different from diffusion?',
+      'Active transport moves substances from a more dilute solution to a more concentrated one (against the concentration gradient), and it needs energy from respiration.',
+      'Explain why root hair cells contain many mitochondria.',
+      'Mineral ions are absorbed from the soil by active transport, against a concentration gradient. This needs energy, which is released by respiration in the mitochondria.'],
+
+    // ---------- B2 Organisation ----------
+    ['B2', 'Enzymes', 'Why does an enzyme only catalyse one specific reaction?',
+      'The active site has a specific shape that only the substrate fits into (the lock and key model).',
+      'Explain, at the molecular level, why an enzyme stops working above its optimum temperature.',
+      'The bonds holding the protein’s shape break, so the shape of the active site changes: the enzyme is denatured. The substrate no longer fits the active site, so no enzyme–substrate complexes form.'],
+    ['B2', 'Digestion', 'Which enzyme breaks down starch, and what does it break it into?',
+      'Amylase (carbohydrase) breaks starch into sugars.',
+      'Name the enzyme that digests lipids, the products, and the substance that neutralises stomach acid and emulsifies fats.',
+      'Lipase breaks lipids into fatty acids and glycerol. Bile (made in the liver, stored in the gall bladder) is alkaline and emulsifies fats into small droplets, increasing the surface area for lipase.'],
+    ['B2', 'The heart', 'Why does the left ventricle have a thicker muscular wall than the right ventricle?',
+      'It pumps blood around the whole body at high pressure; the right ventricle only pumps blood to the lungs.',
+      'A heart beats 72 times per minute with a stroke volume of 70 cm^{3}. Calculate the cardiac output in dm^{3} per minute.',
+      '72 × 70 = 5040 cm^{3} per minute = 5040 ÷ 1000 = 5.04 dm^{3} per minute.'],
+    ['B2', 'Blood vessels', 'Give two ways that arteries are adapted to carry blood at high pressure.',
+      'Thick muscular walls; thick layers of elastic fibres; a narrow lumen.',
+      'Explain how capillaries are adapted for exchanging substances with the tissues.',
+      'Walls only one cell thick give a short diffusion distance; a huge network gives a large surface area; they pass close to every cell.'],
+    ['B2', 'Plant transport', 'Name the tissue that transports water and the tissue that transports dissolved sugars.',
+      'Xylem transports water and mineral ions; phloem transports dissolved sugars (translocation).',
+      'Explain why the rate of transpiration increases on a windy day.',
+      'Wind removes water vapour from around the leaf, keeping the concentration gradient steep, so water vapour diffuses out of the stomata faster.'],
+    ['B2', 'Food tests', 'Which reagent tests for starch, and what is a positive result?',
+      'Iodine solution: it turns from orange-brown to blue-black.',
+      'Describe the tests for sugars and for protein, including the colour changes.',
+      'Sugars: Benedict’s reagent, heat in a water bath – blue to green, yellow or brick red. Protein: Biuret reagent – blue to purple.'],
+
+    // ---------- B3 Infection and response ----------
+    ['B3', 'Viral disease', 'Which type of pathogen causes measles, and how is it spread?',
+      'A virus. It is spread by inhaling droplets from sneezes and coughs.',
+      'Explain why antibiotics cannot be used to treat measles.',
+      'Antibiotics kill bacteria. Viruses live and reproduce inside the body’s cells, so they cannot be killed by antibiotics without damaging the body’s tissues.'],
+    ['B3', 'Bacterial disease', 'How is Salmonella food poisoning spread?',
+      'By eating food contaminated with the bacteria, e.g. undercooked food or food prepared in unhygienic conditions.',
+      'Explain why someone infected with Salmonella feels ill.',
+      'The bacteria secrete toxins, which cause fever, abdominal cramps, vomiting and diarrhoea.'],
+    ['B3', 'White blood cells', 'Give three ways white blood cells defend the body against pathogens.',
+      'Phagocytosis (engulfing pathogens); producing antibodies; producing antitoxins.',
+      'Explain why you do not usually become ill the second time the same pathogen infects you.',
+      'The white blood cells can respond rapidly, producing the correct antibodies quickly and in large amounts, so the pathogen is destroyed before it causes illness.'],
+    ['B3', 'Vaccination', 'What does a vaccine contain?',
+      'Small quantities of a dead or inactive form of a pathogen.',
+      'Explain how vaccinating a large proportion of a population protects people who are not vaccinated.',
+      'Fewer people can catch and pass on the pathogen, so the spread of the pathogen is reduced (herd immunity).'],
+    ['B3', 'Drug trials', 'What is a placebo, and why is one used in a clinical trial?',
+      'A substance that looks like the drug but has no active ingredient. It is used as a control, so the effect of the drug can be compared.',
+      'What is a double-blind trial, and why is it used?',
+      'Neither the patients nor the doctors know who has received the drug and who the placebo, until the end. This removes bias.'],
+    ['B3', 'Plant disease', 'Name a fungal disease of plants and give one symptom.',
+      'Rose black spot: purple or black spots on the leaves, which turn yellow and drop early.',
+      'Explain why rose black spot reduces the growth of the plant.',
+      'Leaves drop early, so there is less leaf area for photosynthesis. Less glucose is made, so less is available for growth.'],
+
+    // ---------- B4 Bioenergetics ----------
+    ['B4', 'Photosynthesis', 'Write the word equation for photosynthesis.',
+      'carbon dioxide + water → glucose + oxygen (light energy is needed)',
+      'Write the balanced symbol equation for photosynthesis.',
+      '6CO_2 + 6H_2O → C_6H_12O_6 + 6O_2'],
+    ['B4', 'Photosynthesis', 'Is photosynthesis endothermic or exothermic? Explain.',
+      'Endothermic: energy is transferred from the environment to the chloroplasts by light.',
+      'Light intensity ∝ 1 / distance^{2}. A lamp is moved from 10 cm to 20 cm away from a plant. By what factor does light intensity change?',
+      'The distance doubles, so light intensity is multiplied by 1 / 2^{2} = ¼. It falls to a quarter.'],
+    ['B4', 'Limiting factors', 'Name three factors that can limit the rate of photosynthesis.',
+      'Temperature, light intensity, carbon dioxide concentration (and the amount of chlorophyll).',
+      'Explain why the rate of photosynthesis falls when the temperature rises above about 45 °C.',
+      'The enzymes that control photosynthesis are denatured: their active sites change shape, so fewer reactions can be catalysed.'],
+    ['B4', 'Respiration', 'Write the word equation for aerobic respiration.',
+      'glucose + oxygen → carbon dioxide + water',
+      'Write the balanced symbol equation for aerobic respiration.',
+      'C_6H_12O_6 + 6O_2 → 6CO_2 + 6H_2O'],
+    ['B4', 'Anaerobic respiration', 'What is produced by anaerobic respiration in muscles?',
+      'Lactic acid.',
+      'What is oxygen debt, and why does breathing stay fast after exercise?',
+      'The amount of extra oxygen needed after exercise to react with the lactic acid that built up and remove it from cells. Blood carries the lactic acid to the liver, where it is converted back into glucose.'],
+    ['B4', 'Fermentation', 'What does anaerobic respiration in yeast produce, and what is the process called?',
+      'Ethanol and carbon dioxide; fermentation.',
+      'Explain why anaerobic respiration transfers much less energy than aerobic respiration.',
+      'The oxidation of glucose is incomplete: lactic acid (or ethanol) still contains a lot of chemical energy.'],
+
+    // ---------- B5 Homeostasis and response ----------
+    ['B5', 'Reflex arc', 'Put the parts of a reflex arc in order, starting from the stimulus.',
+      'Stimulus → receptor → sensory neurone → relay neurone → motor neurone → effector → response.',
+      'Explain how a nerve impulse crosses a synapse.',
+      'When the impulse arrives, a chemical is released. It diffuses across the gap and binds to receptors on the next neurone, which starts a new electrical impulse.'],
+    ['B5', 'Endocrine system', 'Which gland is called the “master gland”, and why?',
+      'The pituitary gland: it secretes several hormones that act on other glands, stimulating them to release their hormones.',
+      'Explain how thyroxine levels are kept stable by negative feedback.',
+      'Thyroxine stimulates the basal metabolic rate. When thyroxine is high, the pituitary releases less TSH, so less thyroxine is made; when it is low, more TSH is released, so more thyroxine is made.'],
+    ['B5', 'Blood glucose', 'Which organ monitors blood glucose, and which hormone does it release when glucose is too high?',
+      'The pancreas releases insulin.',
+      'Explain how blood glucose is brought back up to normal when it falls too low.',
+      'The pancreas releases glucagon. Glucagon causes glycogen in the liver to be converted into glucose, which is released into the blood.'],
+    ['B5', 'Diabetes', 'Give the difference in cause between Type 1 and Type 2 diabetes.',
+      'Type 1: the pancreas produces too little insulin. Type 2: the body’s cells no longer respond to insulin.',
+      'Explain why a person with Type 1 diabetes has high blood glucose after a meal, and how it is treated.',
+      'Too little insulin is made, so glucose is not moved from the blood into cells or stored as glycogen in the liver and muscles. It is treated with insulin injections.'],
+    ['B5', 'Menstrual cycle', 'Which hormone causes an egg to mature, and which triggers its release?',
+      'FSH causes an egg to mature in the ovary; LH stimulates its release (ovulation).',
+      'Describe the roles of oestrogen and progesterone in the menstrual cycle.',
+      'Oestrogen makes the lining of the uterus build up and inhibits FSH (and stimulates LH). Progesterone maintains the uterus lining and inhibits FSH and LH.'],
+    ['B5', 'Adrenaline', 'Where is adrenaline produced, and give one of its effects.',
+      'The adrenal glands. It increases heart rate, boosting the delivery of oxygen and glucose to the brain and muscles.',
+      'Explain why hormonal responses are slower and last longer than nervous responses.',
+      'Hormones are carried in the blood to their target organs, which takes time, and they stay in the blood for a while. Nerve impulses are electrical and travel quickly along neurones.'],
+
+    // ---------- B6 Inheritance, variation and evolution ----------
+    ['B6', 'Meiosis', 'What is a gamete, and how many chromosomes does a human gamete contain?',
+      'A sex cell (egg or sperm). It contains 23 chromosomes – one from each pair.',
+      'Explain why meiosis produces gametes that are genetically different.',
+      'The chromosomes are copied and the cell divides twice, making four gametes. Each gets a random mixture of chromosomes from each pair.'],
+    ['B6', 'Genetic terms', 'Define genotype and phenotype.',
+      'Genotype: the combination of alleles an organism has (e.g. Ff). Phenotype: the characteristic that is expressed (e.g. brown eyes).',
+      'Both parents are carriers of cystic fibrosis (Ff). What is the probability that their child has cystic fibrosis?',
+      'Ff × Ff gives FF, Ff, Ff, ff. Only ff has the disorder: 1 in 4, a probability of 0.25 (25%).'],
+    ['B6', 'DNA', 'What is DNA, and where is it found in the cell?',
+      'A polymer of two strands forming a double helix. It is found in the chromosomes, in the nucleus.',
+      'Explain how the sex of a child is determined.',
+      'The mother’s eggs all carry an X chromosome; the father’s sperm carry an X or a Y. XX gives a girl and XY a boy, so there is a 50% chance of each.'],
+    ['B6', 'Natural selection', 'Summarise natural selection in one sentence.',
+      'Individuals with characteristics best suited to the environment are more likely to survive and breed, passing on their alleles.',
+      'Explain how a population of antibiotic-resistant bacteria develops.',
+      'A random mutation makes some bacteria resistant. The antibiotic kills the non-resistant bacteria; the resistant ones survive and reproduce, passing on the resistance, so the resistant strain spreads.'],
+    ['B6', 'Selective breeding', 'Define selective breeding.',
+      'Humans choose parents with a desired characteristic and breed them together, over many generations.',
+      'Explain one risk of selective breeding.',
+      'Inbreeding reduces variation: some breeds become prone to disease or inherited defects, and a new disease could affect them all.'],
+    ['B6', 'Genetic engineering', 'What is genetic engineering?',
+      'Modifying an organism’s genome by introducing a gene from another organism to give a desired characteristic.',
+      'Describe how the gene for human insulin is put into bacteria.',
+      'Enzymes cut the insulin gene out. It is inserted into a vector (usually a bacterial plasmid) using enzymes. The vector is put into a bacterium, which then makes human insulin.'],
+
+    // ---------- B7 Ecology ----------
+    ['B7', 'Biodiversity', 'Define biodiversity.',
+      'The variety of all the different species of organisms on Earth, or within an ecosystem.',
+      'Give two human activities that reduce biodiversity and explain the effect of one.',
+      'Deforestation, peat bog destruction, pollution, land use for building. E.g. deforestation destroys habitats, removing food and shelter, so species die or leave.'],
+    ['B7', 'Sampling', 'Which piece of equipment is used to estimate a plant population in a field?',
+      'A quadrat, placed at random positions.',
+      'The mean is 6 daisies per 0.25 m^{2} quadrat. The field is 40 m × 50 m. Estimate the daisy population.',
+      '6 ÷ 0.25 = 24 daisies per m^{2}. Area = 40 × 50 = 2000 m^{2}. 24 × 2000 = 48 000 daisies.'],
+    ['B7', 'Carbon cycle', 'Name one process that removes carbon dioxide from the atmosphere.',
+      'Photosynthesis.',
+      'Explain the role of microorganisms in the carbon cycle.',
+      'Decomposers break down dead organisms and waste. They respire, releasing carbon dioxide back into the atmosphere, and mineral ions return to the soil.'],
+    ['B7', 'Predator–prey', 'In a food chain, what is a secondary consumer?',
+      'An animal that eats primary consumers (herbivores).',
+      'Explain why predator and prey populations rise and fall in cycles, with the predator peak coming after the prey peak.',
+      'More prey means more food, so predators increase. More predators eat more prey, so prey fall. Then there is less food, so predators fall – always a step behind.'],
+    ['B7', 'Abiotic factors', 'Give two abiotic factors that affect a community.',
+      'Any two of: light intensity, temperature, moisture, soil pH and mineral content, wind, CO_2 level, O_2 level (in water).',
+      'Suggest how the soil becoming more acidic could reduce the number of rabbits in a field.',
+      'Fewer plants can grow in the acidic soil, so there is less food for the rabbits. Competition increases and some rabbits starve or move away.'],
+    ['B7', 'Adaptations', 'Name the three types of adaptation.',
+      'Structural, behavioural and functional.',
+      'What is an extremophile? Give an example.',
+      'An organism that lives in extreme conditions: high temperature, pressure or salt concentration. E.g. bacteria living in deep-sea vents.'],
+
+    // ---------- KS3 Biology ----------
+    ['KS3B', 'Food chains', 'In a food chain, what do the arrows show?',
+      'The transfer of energy (the direction of feeding: from the organism eaten to the one that eats it).',
+      'In a food web, the number of rabbits falls. Explain the effect on foxes and on grass.',
+      'Foxes have less food, so their numbers may fall (or they eat more of other prey). With fewer rabbits eating it, the grass increases.'],
+    ['KS3B', 'Plant cells', 'Name the organelle where photosynthesis takes place.',
+      'The chloroplast.',
+      'Name two structures found in plant cells but not in animal cells, and give their functions.',
+      'Cell wall (made of cellulose – strengthens the cell); chloroplasts (photosynthesis); permanent vacuole (filled with cell sap – keeps the cell rigid).'],
+    ['KS3B', 'Gas exchange', 'Where in the lungs does gas exchange take place?',
+      'In the alveoli (air sacs).',
+      'Explain two ways the alveoli are adapted for gas exchange.',
+      'Huge surface area; walls one cell thick for a short diffusion distance; a good blood supply keeps the concentration gradient steep; moist lining.'],
+    ['KS3B', 'Life processes', 'List the seven life processes (MRS GREN).',
+      'Movement, respiration, sensitivity, growth, reproduction, excretion, nutrition.',
+      'Explain the difference between excretion and egestion.',
+      'Excretion removes waste made by the cells’ metabolism (e.g. carbon dioxide, urea). Egestion removes undigested food (faeces), which never entered cells.'],
+    ['KS3B', 'Skeleton', 'Give three functions of the skeleton.',
+      'Support, protection of organs, movement, making blood cells.',
+      'Explain how an antagonistic pair of muscles bends and straightens the arm.',
+      'Muscles can only pull. The biceps contracts while the triceps relaxes to bend the arm; the triceps contracts while the biceps relaxes to straighten it.'],
+    ['KS3B', 'Plant reproduction', 'Name the male and female gametes of a flowering plant.',
+      'The pollen (male) and the ovule, which contains the egg cell (female).',
+      'Describe two adaptations of an insect-pollinated flower.',
+      'Brightly coloured petals and scent to attract insects; nectar as a reward; sticky pollen; stamens and stigma inside the flower so insects brush against them.'],
+    ['KS3B', 'Nutrition', 'Which nutrient group is used for growth and repair?',
+      'Protein.',
+      'What is a deficiency disease? Give an example and its cause.',
+      'A disease caused by a lack of a vitamin or mineral. E.g. scurvy (vitamin C), rickets (vitamin D or calcium), anaemia (iron).'],
+    ['KS3B', 'Variation', 'Name the two causes of variation.',
+      'Genetic (inherited) and environmental.',
+      'Explain why height shows continuous variation but blood group shows discontinuous variation.',
+      'Height can take any value within a range (affected by many genes and the environment). Blood group falls into a few distinct categories (controlled by genes only).'],
+
+    // ---------- C1 Atomic structure and the periodic table ----------
+    ['C1', 'Subatomic particles', 'Give the relative mass and relative charge of a proton, a neutron and an electron.',
+      'Proton: mass 1, charge +1. Neutron: mass 1, charge 0. Electron: mass very small (about 1/1840), charge −1.',
+      'Chlorine is 75% ^{35}Cl and 25% ^{37}Cl. Calculate its relative atomic mass.',
+      'A_r = (35 × 75 + 37 × 25) ÷ 100 = (2625 + 925) ÷ 100 = 35.5'],
+    ['C1', 'Isotopes', 'What are isotopes?',
+      'Atoms of the same element with the same number of protons but different numbers of neutrons.',
+      'How many protons, neutrons and electrons are in the aluminium ion [[27|13|Al]]^{3+}?',
+      '13 protons, 27 − 13 = 14 neutrons, and 13 − 3 = 10 electrons.'],
+    ['C1', 'Electronic structure', 'Write the electronic structure of sodium (atomic number 11).',
+      '2,8,1',
+      'Sodium and potassium are both in Group 1. Explain why potassium is more reactive.',
+      'Both have one outer electron. Potassium’s outer electron is further from the nucleus, with more shielding, so it is less strongly attracted and is lost more easily.'],
+    ['C1', 'Group 1', 'Describe what you would see when a small piece of sodium is added to water.',
+      'It fizzes, floats, melts into a ball, moves around on the surface and gets smaller until it disappears.',
+      'Write a balanced symbol equation, with state symbols, for sodium reacting with water.',
+      '2Na(s) + 2H_2O(l) → 2NaOH(aq) + H_2(g)'],
+    ['C1', 'Group 7', 'What is the trend in reactivity going down Group 7?',
+      'Reactivity decreases going down the group.',
+      'Chlorine water is added to potassium bromide solution. Write the ionic equation for the displacement.',
+      'Cl_2 + 2Br^{−} → 2Cl^{−} + Br_2'],
+    ['C1', 'Atomic models', 'Why are the noble gases unreactive?',
+      'They have a full (stable) outer shell of electrons, so they do not easily gain, lose or share electrons.',
+      'Describe the plum pudding model and explain how the alpha scattering experiment changed it.',
+      'Plum pudding: a ball of positive charge with electrons embedded in it. Most alpha particles passed straight through, but a few were deflected or bounced back, so the mass and positive charge must be concentrated in a tiny nucleus: the nuclear model.'],
+
+    // ---------- C2 Bonding, structure and properties ----------
+    ['C2', 'Ionic bonding', 'What type of bonding is found in sodium chloride? Describe it.',
+      'Ionic bonding: strong electrostatic attraction between oppositely charged ions (Na^{+} and Cl^{−}).',
+      'Explain why sodium chloride has a high melting point.',
+      'It is a giant ionic lattice. There are strong electrostatic forces between oppositely charged ions in all directions, and a lot of energy is needed to overcome them.'],
+    ['C2', 'Ions', 'Give the formula of the ion formed by magnesium and the ion formed by oxygen.',
+      'Mg^{2+} and O^{2−}',
+      'Work out the formula of aluminium sulfate, given the ions Al^{3+} and SO_4^{2−}.',
+      'Charges must balance: 2 × (3+) = 3 × (2−). Formula: Al_2(SO_4)_3'],
+    ['C2', 'Covalent bonding', 'What is a covalent bond?',
+      'A shared pair of electrons between two atoms (usually non-metals).',
+      'Explain why methane, CH_4, has a low boiling point.',
+      'It is a simple molecular substance. Only the weak intermolecular forces between molecules have to be overcome, which needs little energy. The covalent bonds do not break.'],
+    ['C2', 'Giant covalent', 'Why can graphite conduct electricity?',
+      'Each carbon atom forms three covalent bonds, leaving one delocalised electron per atom that can move through the structure.',
+      'Explain why diamond is very hard and has a very high melting point.',
+      'Each carbon atom forms four strong covalent bonds in a giant covalent structure. A lot of energy is needed to break these bonds.'],
+    ['C2', 'Metals', 'Describe metallic bonding.',
+      'A giant structure of positive metal ions surrounded by a sea of delocalised electrons, held by strong electrostatic attraction.',
+      'Explain why alloys are harder than pure metals.',
+      'Atoms of a different size distort the regular layers, so the layers cannot slide over each other as easily.'],
+    ['C2', 'State symbols', 'What do the state symbols (s), (l), (g) and (aq) mean?',
+      'Solid, liquid, gas, aqueous (dissolved in water).',
+      'Explain why ionic compounds conduct electricity when molten or dissolved, but not when solid.',
+      'When molten or dissolved, the ions are free to move and carry charge. In the solid, the ions are held in fixed positions in the lattice.'],
+
+    // ---------- C3 Quantitative chemistry ----------
+    ['C3', 'Relative formula mass', 'Calculate the relative formula mass (M_r) of CO_2. (A_r: C = 12, O = 16)',
+      '12 + (2 × 16) = 44',
+      'Calculate the percentage by mass of carbon in CO_2.',
+      '(12 ÷ 44) × 100 = 27.3%'],
+    ['C3', 'Conservation of mass', 'State the law of conservation of mass.',
+      'No atoms are lost or made during a chemical reaction, so the mass of the products equals the mass of the reactants.',
+      'Explain why the mass goes down when a metal carbonate is heated in an open tube.',
+      'The carbonate decomposes and carbon dioxide gas is produced, which escapes into the air.'],
+    ['C3', 'Moles', 'Calculate the M_r of H_2SO_4. (A_r: H = 1, S = 32, O = 16)',
+      '(2 × 1) + 32 + (4 × 16) = 98',
+      'How many moles are there in 49 g of H_2SO_4?',
+      'moles = mass ÷ M_r = 49 ÷ 98 = 0.5 mol'],
+    ['C3', 'Avogadro constant', 'What is the value of the Avogadro constant, and what does it tell you?',
+      '6.02 × 10^{23}: the number of atoms, molecules or ions in one mole of a substance.',
+      'How many molecules are there in 0.25 mol of water?',
+      '0.25 × 6.02 × 10^{23} = 1.505 × 10^{23} ≈ 1.51 × 10^{23} molecules'],
+    ['C3', 'Concentration', 'Give the units of concentration.',
+      'g/dm^{3} (or mol/dm^{3}).',
+      '10 g of sodium hydroxide is dissolved to make 250 cm^{3} of solution. Calculate the concentration in g/dm^{3}.',
+      '250 cm^{3} = 250 ÷ 1000 = 0.25 dm^{3}. Concentration = 10 ÷ 0.25 = 40 g/dm^{3}.'],
+    ['C3', 'Reacting masses', 'In 2Mg + O_2 → 2MgO, how many moles of MgO form from 2 moles of Mg?',
+      '2 moles (the ratio Mg : MgO is 2 : 2, i.e. 1 : 1).',
+      'Calculate the mass of MgO formed from 6 g of magnesium. (A_r: Mg = 24, O = 16)',
+      'Moles of Mg = 6 ÷ 24 = 0.25 mol, so 0.25 mol MgO. M_r of MgO = 40. Mass = 0.25 × 40 = 10 g.'],
+
+    // ---------- C4 Chemical changes ----------
+    ['C4', 'Metals and acids', 'Write the word equation for magnesium reacting with hydrochloric acid.',
+      'magnesium + hydrochloric acid → magnesium chloride + hydrogen',
+      'Write the balanced symbol equation, with state symbols.',
+      'Mg(s) + 2HCl(aq) → MgCl_2(aq) + H_2(g)'],
+    ['C4', 'Neutralisation', 'What is the pH of a neutral solution, and which ion makes a solution acidic?',
+      'pH 7. Hydrogen ions, H^{+}.',
+      'Write the ionic equation for neutralisation, with state symbols.',
+      'H^{+}(aq) + OH^{−}(aq) → H_2O(l)'],
+    ['C4', 'Redox', 'Define oxidation and reduction in terms of oxygen.',
+      'Oxidation is the gain of oxygen; reduction is the loss of oxygen.',
+      'Zn + Cu^{2+} → Zn^{2+} + Cu. Which species is oxidised? Explain in terms of electrons.',
+      'Zinc is oxidised: it loses electrons (Zn → Zn^{2+} + 2e^{−}). Oxidation Is Loss of electrons.'],
+    ['C4', 'Extraction', 'Why can iron be extracted by heating its oxide with carbon, but aluminium cannot?',
+      'Carbon is more reactive than iron, so it can reduce iron oxide. Aluminium is more reactive than carbon.',
+      'Write the half equation for the reaction at the cathode when molten aluminium oxide is electrolysed.',
+      'Al^{3+} + 3e^{−} → Al'],
+    ['C4', 'Electrolysis', 'Molten lead bromide is electrolysed. What forms at each electrode?',
+      'Lead at the cathode (negative electrode); bromine at the anode (positive electrode).',
+      'Predict the products of electrolysing sodium chloride solution, and explain the product at the cathode.',
+      'Hydrogen at the cathode, because sodium is more reactive than hydrogen so H^{+} ions are discharged instead. Chlorine at the anode. Sodium hydroxide solution is left.'],
+    ['C4', 'Strong and weak acids', 'What is the difference between a strong acid and a weak acid?',
+      'A strong acid is completely ionised in aqueous solution; a weak acid is only partially ionised.',
+      'The pH of an acid falls from 3 to 1. By what factor has the H^{+} concentration changed?',
+      'Each fall of 1 pH unit is a ×10 increase, so 10 × 10 = 100 times greater.'],
+
+    // ---------- C5 Energy changes ----------
+    ['C5', 'Exothermic', 'What is an exothermic reaction? Give one example.',
+      'A reaction that transfers energy to the surroundings, so the temperature rises. E.g. combustion, neutralisation, most oxidation reactions.',
+      'Describe the reaction profile for an exothermic reaction.',
+      'The products are lower in energy than the reactants. The line rises to a peak (the activation energy) and then falls; the drop from reactants to products is the energy given out.'],
+    ['C5', 'Endothermic', 'What is an endothermic reaction? Give one example.',
+      'A reaction that takes in energy from the surroundings, so the temperature falls. E.g. thermal decomposition, citric acid + sodium hydrogencarbonate.',
+      'Explain, in terms of bonds, why a reaction is endothermic.',
+      'More energy is needed to break the bonds in the reactants than is released when new bonds form in the products.'],
+    ['C5', 'Bond energies', 'What is activation energy?',
+      'The minimum amount of energy that particles must have to react when they collide.',
+      'Bond energies (kJ/mol): H–H 436, Cl–Cl 243, H–Cl 432. Calculate the energy change for H_2 + Cl_2 → 2HCl.',
+      'Bonds broken: 436 + 243 = 679 kJ. Bonds made: 2 × 432 = 864 kJ. Energy change = 679 − 864 = −185 kJ/mol (exothermic).'],
+    ['C5', 'Temperature practical', 'Give one everyday use of an exothermic reaction.',
+      'Self-heating cans or hand warmers.',
+      'In a practical, the temperature rises from 21.0 °C to 28.5 °C. Give the temperature change, and explain why a polystyrene cup with a lid is used.',
+      'Change = 7.5 °C. Polystyrene is a good insulator and the lid reduces energy transferred to the surroundings, so the result is more accurate.'],
+    ['C5', 'Catalysts', 'On a reaction profile, what does the arrow from the reactants up to the peak show?',
+      'The activation energy.',
+      'Explain, using a reaction profile, how a catalyst increases the rate of reaction.',
+      'It provides a different pathway with a lower activation energy, so the peak is lower. The energy of the reactants and products is unchanged.'],
+    ['C5', 'Thermal decomposition', 'Is the thermal decomposition of calcium carbonate exothermic or endothermic?',
+      'Endothermic: it needs continuous heating.',
+      'Write the balanced symbol equation for the thermal decomposition of calcium carbonate.',
+      'CaCO_3 → CaO + CO_2'],
+
+    // ---------- C6 Rate and extent of chemical change ----------
+    ['C6', 'Rates', 'Name four factors that affect the rate of a reaction.',
+      'Concentration (or pressure of gases), surface area, temperature, and a catalyst.',
+      'Explain, using collision theory, why increasing the temperature increases the rate.',
+      'Particles move faster, so they collide more frequently, and a greater proportion of collisions have energy equal to or greater than the activation energy: more successful collisions per second.'],
+    ['C6', 'Mean rate', 'Give the equation for the mean rate of a reaction.',
+      'mean rate = quantity of reactant used (or product formed) ÷ time taken',
+      '48 cm^{3} of gas is collected in 2 minutes. Calculate the mean rate in cm^{3}/s.',
+      '2 minutes = 120 s. 48 ÷ 120 = 0.4 cm^{3}/s'],
+    ['C6', 'Surface area', 'Why does powdered calcium carbonate react faster with acid than lumps?',
+      'The powder has a larger surface area to volume ratio, so more particles are exposed and collisions are more frequent.',
+      'How do you find the rate at a particular time from a curved graph of volume against time?',
+      'Draw a tangent to the curve at that time and calculate its gradient (change in y ÷ change in x).'],
+    ['C6', 'Reversible reactions', 'What does the symbol ⇌ mean?',
+      'The reaction is reversible.',
+      'N_2 + 3H_2 ⇌ 2NH_3. Predict and explain the effect of increasing the pressure on the yield of ammonia.',
+      'The yield increases. The position of equilibrium shifts to the side with fewer molecules of gas (4 on the left, 2 on the right).'],
+    ['C6', 'Equilibrium', 'What is meant by dynamic equilibrium?',
+      'In a closed system, the forward and reverse reactions happen at exactly the same rate, so the amounts of reactants and products stay constant.',
+      'The forward reaction is exothermic. Explain what happens to the equilibrium if the temperature is increased.',
+      'The equilibrium shifts in the endothermic (reverse) direction, to oppose the change, so the yield of products decreases.'],
+    ['C6', 'Energy and equilibrium', 'What is a catalyst?',
+      'A substance that increases the rate of a reaction without being used up.',
+      'CuSO_4·5H_2O ⇌ CuSO_4 + 5H_2O. The forward reaction is endothermic. What can you say about the reverse reaction?',
+      'It is exothermic, and exactly the same amount of energy is transferred (given out) as is taken in by the forward reaction.'],
+
+    // ---------- C7 Organic chemistry ----------
+    ['C7', 'Hydrocarbons', 'What is a hydrocarbon?',
+      'A compound made of hydrogen and carbon atoms only.',
+      'Give the general formula of the alkanes and the formula of the alkane with five carbon atoms.',
+      'C_{n}H_{2n+2}; pentane is C_5H_12.'],
+    ['C7', 'Alkanes', 'Name the first four alkanes.',
+      'Methane, ethane, propane, butane.',
+      'Write a balanced symbol equation for the complete combustion of propane, C_3H_8.',
+      'C_3H_8 + 5O_2 → 3CO_2 + 4H_2O'],
+    ['C7', 'Crude oil', 'How does fractional distillation separate crude oil?',
+      'The oil is heated so it evaporates. The column is hotter at the bottom and cooler at the top; fractions condense at different heights according to their boiling points.',
+      'Explain why long-chain hydrocarbons have higher boiling points than short-chain ones.',
+      'Larger molecules have stronger intermolecular forces between them, so more energy is needed to overcome them.'],
+    ['C7', 'Cracking', 'Why are long-chain hydrocarbons cracked?',
+      'To make shorter, more useful molecules such as petrol, which are in higher demand, and alkenes for making polymers.',
+      'Complete the cracking equation: C_10H_22 → C_8H_18 + ___',
+      'C_2H_4 (ethene). The atoms must balance: 10 − 8 = 2 carbon, 22 − 18 = 4 hydrogen.'],
+    ['C7', 'Alkenes', 'What is the test for an alkene, and the positive result?',
+      'Add bromine water: it turns from orange to colourless.',
+      'Give the formula of ethene and explain why alkenes are described as unsaturated.',
+      'C_2H_4. Alkenes contain a carbon–carbon double bond (C=C), so they have two fewer hydrogen atoms than the alkane with the same number of carbons.'],
+    ['C7', 'Fuels', 'Crude oil is described as a finite resource. What does this mean?',
+      'It is being used up much faster than it is formed, so it will run out.',
+      'Give three properties that make short-chain hydrocarbons useful as fuels.',
+      'Low boiling point (volatile), low viscosity (runny) and high flammability, so they ignite and burn easily.'],
+
+    // ---------- C8 Chemical analysis ----------
+    ['C8', 'Purity', 'What does “pure” mean in chemistry?',
+      'A single element or compound, not mixed with any other substance.',
+      'How can melting point data show whether a substance is pure?',
+      'A pure substance melts at a specific, sharp temperature. An impure one melts over a range of temperatures (usually lower).'],
+    ['C8', 'Formulations', 'What is a formulation? Give an example.',
+      'A mixture designed as a useful product, with each part in a measured quantity. E.g. paints, fuels, medicines, alloys, fertilisers.',
+      'In a chromatogram, a spot moves 3.6 cm and the solvent front moves 8.0 cm. Calculate the R_f value.',
+      'R_f = distance moved by substance ÷ distance moved by solvent = 3.6 ÷ 8.0 = 0.45'],
+    ['C8', 'Chromatography', 'Why is the start line on chromatography paper drawn in pencil?',
+      'Pencil (graphite) is insoluble, so it will not dissolve and move with the solvent.',
+      'Explain why different substances travel different distances up the paper.',
+      'Each substance is distributed differently between the mobile phase (solvent) and the stationary phase (paper). The more time it spends in the mobile phase, the further it moves.'],
+    ['C8', 'Gas tests', 'Describe the test for hydrogen and the positive result.',
+      'Hold a lighted splint at the mouth of the tube: it burns with a squeaky pop.',
+      'Write the balanced symbol equation for the reaction that causes the pop.',
+      '2H_2 + O_2 → 2H_2O'],
+    ['C8', 'Gas tests', 'Describe the test for oxygen and the positive result.',
+      'Put a glowing splint into the gas: it relights.',
+      'Describe the test for chlorine and the positive result.',
+      'Hold damp litmus paper in the gas: it is bleached and turns white.'],
+    ['C8', 'Gas tests', 'Describe the test for carbon dioxide and the positive result.',
+      'Bubble the gas through limewater: it turns milky (cloudy).',
+      'Write the balanced symbol equation for carbon dioxide reacting with limewater.',
+      'Ca(OH)_2 + CO_2 → CaCO_3 + H_2O'],
+
+    // ---------- C9 Chemistry of the atmosphere ----------
+    ['C9', 'The atmosphere today', 'Give the approximate percentages of nitrogen and oxygen in the atmosphere today.',
+      'About 80% (four-fifths) nitrogen and about 20% (one-fifth) oxygen.',
+      'Explain how the amount of oxygen in the atmosphere increased.',
+      'Algae and plants produced oxygen by photosynthesis: 6CO_2 + 6H_2O → C_6H_12O_6 + 6O_2'],
+    ['C9', 'Greenhouse effect', 'Name two greenhouse gases.',
+      'Any two of: carbon dioxide, methane, water vapour.',
+      'Explain how greenhouse gases keep the Earth warm.',
+      'Short-wavelength radiation from the Sun passes through the atmosphere. The Earth emits longer-wavelength infrared radiation, which greenhouse gases absorb and re-emit, warming the atmosphere.'],
+    ['C9', 'Early atmosphere', 'Give two ways the carbon dioxide in the early atmosphere decreased.',
+      'It dissolved in the oceans; it was used by algae and plants for photosynthesis; it was locked up in sedimentary rocks (e.g. limestone) and fossil fuels.',
+      'Describe how the Earth’s early atmosphere is thought to have formed.',
+      'Intense volcanic activity released gases – mainly carbon dioxide, with water vapour and small amounts of nitrogen, methane and ammonia. The water vapour condensed to form the oceans.'],
+    ['C9', 'Pollutants', 'Name a pollutant produced by incomplete combustion.',
+      'Carbon monoxide (or soot – solid carbon particulates).',
+      'Explain why carbon monoxide is so dangerous.',
+      'It is toxic, colourless and odourless. It combines with haemoglobin in red blood cells, reducing the blood’s capacity to carry oxygen.'],
+    ['C9', 'Acid rain', 'Which problem is caused by sulfur dioxide and oxides of nitrogen?',
+      'Acid rain (they also cause respiratory problems).',
+      'Explain how oxides of nitrogen are produced in car engines.',
+      'The very high temperature in the engine makes nitrogen and oxygen from the air react together.'],
+    ['C9', 'Carbon footprint', 'Give two possible effects of global climate change.',
+      'Rising sea levels; more frequent or severe storms; changes in rainfall; changes to the distribution of species; changes in food production.',
+      'What is a carbon footprint? Give one way to reduce it.',
+      'The total amount of carbon dioxide and other greenhouse gases emitted over the full life cycle of a product, service or event. E.g. using renewable energy, energy conservation, carbon capture.'],
+
+    // ---------- C10 Using resources ----------
+    ['C10', 'Potable water', 'What is potable water?',
+      'Water that is safe to drink, with low levels of dissolved salts and microbes.',
+      'Describe how fresh water in the UK is made potable.',
+      'Choose a suitable source; pass it through filter beds to remove solids; sterilise it with chlorine, ozone or ultraviolet light.'],
+    ['C10', 'Desalination', 'What is desalination? Name one method.',
+      'Removing salt from sea water; by distillation or reverse osmosis.',
+      'Explain why desalination is only used where fresh water is scarce.',
+      'It needs large amounts of energy, so it is expensive.'],
+    ['C10', 'Life cycle assessment', 'What is a life cycle assessment (LCA)?',
+      'An assessment of the environmental impact of a product at each stage: extracting raw materials, manufacture, use, and disposal.',
+      'Explain why LCAs are not always objective.',
+      'Some effects (e.g. of pollutants) are hard to put a number on, so value judgements are needed. Selective or shortened LCAs can be used to support claims, e.g. in advertising.'],
+    ['C10', 'Recycling', 'Give one benefit of recycling metals.',
+      'It uses less energy than extracting new metal; it conserves ores; it reduces mining and waste in landfill.',
+      'Describe how phytomining is used to extract copper.',
+      'Plants absorb copper compounds from the soil. They are harvested and burned; the ash contains copper compounds. Copper is extracted by displacement with scrap iron or by electrolysis.'],
+    ['C10', 'Waste water', 'What is the first stage of treating sewage?',
+      'Screening and grit removal.',
+      'Describe what happens to the sewage sludge and to the effluent.',
+      'The sludge undergoes anaerobic digestion (producing biogas and fertiliser). The effluent undergoes aerobic biological treatment before it is released.'],
+    ['C10', 'Bioleaching', 'What is a finite resource? Give an example.',
+      'A resource that will run out because it is not replaced as fast as it is used, e.g. crude oil or metal ores.',
+      'Describe how bioleaching is used to extract copper.',
+      'Bacteria produce leachate solutions that contain copper compounds. Copper is extracted from the leachate by displacement with scrap iron or by electrolysis.'],
+
+    // ---------- KS3 Chemistry ----------
+    ['KS3C', 'Elements and compounds', 'What is the difference between an element and a compound?',
+      'An element contains only one type of atom. A compound contains two or more elements chemically bonded together.',
+      'How many atoms of each element are in one formula unit of Ca(OH)_2?',
+      '1 calcium, 2 oxygen and 2 hydrogen – 5 atoms in total.'],
+    ['KS3C', 'Periodic table', 'Where are metals and non-metals found on the periodic table?',
+      'Metals on the left and in the centre; non-metals on the right.',
+      'Give three typical properties of metals.',
+      'Any three of: shiny, good conductors of heat and electricity, malleable, ductile, high melting point, sonorous.'],
+    ['KS3C', 'States of matter', 'Describe the arrangement and movement of particles in a gas.',
+      'Far apart, randomly arranged, moving quickly in all directions.',
+      'Explain why gases can be compressed but liquids cannot.',
+      'There are large spaces between gas particles, so they can be pushed closer together. Liquid particles are already touching.'],
+    ['KS3C', 'Symbols and names', 'What are the chemical symbols for sodium and potassium?',
+      'Na and K.',
+      'Name the compounds NaCl, CuO and MgSO_4.',
+      'Sodium chloride, copper oxide, magnesium sulfate.'],
+    ['KS3C', 'Acids and alkalis', 'What colour is universal indicator in a strong acid, a neutral solution and a strong alkali?',
+      'Red; green; purple.',
+      'Complete the general equation: acid + metal hydroxide → ?',
+      'acid + metal hydroxide → salt + water'],
+    ['KS3C', 'Chemical change', 'What is a chemical change? Give one sign that one has happened.',
+      'A change in which a new substance is made. Signs: colour change, fizzing (gas given off), temperature change, precipitate forming.',
+      'Explain why dissolving salt in water is a physical change.',
+      'No new substance is made, and the salt can be recovered by evaporating the water.'],
+    ['KS3C', 'Separating mixtures', 'How would you separate sand from salty water?',
+      'Filtration.',
+      'How would you then collect pure water from the salty filtrate?',
+      'Simple distillation: heat the solution so the water evaporates, then cool the vapour in a condenser and collect the liquid water.'],
+    ['KS3C', 'Reactivity series', 'What does the reactivity series show?',
+      'Metals ranked in order of how reactive they are.',
+      'Iron is added to copper sulfate solution. Write the word equation and say what you would see.',
+      'iron + copper sulfate → iron sulfate + copper. The blue colour fades and a brown/pink coating of copper forms.'],
+
+    // ---------- P1 Energy ----------
+    ['P1', 'Energy stores', 'Name four energy stores.',
+      'Any four of: kinetic, gravitational potential, elastic potential, thermal (internal), chemical, magnetic, electrostatic, nuclear.',
+      'A 2.0 kg ball moves at 3.0 m/s. Calculate its kinetic energy.',
+      'E_k = ½mv^{2} = 0.5 × 2.0 × 3.0^{2} = 9.0 J'],
+    ['P1', 'GPE', 'Give the equation for gravitational potential energy.',
+      'E_p = mgh (mass × gravitational field strength × height)',
+      'A 50 kg student climbs 4.0 m of stairs. Calculate the gain in GPE. (g = 9.8 N/kg)',
+      'E_p = 50 × 9.8 × 4.0 = 1960 J'],
+    ['P1', 'Efficiency', 'Give the equation for efficiency.',
+      'efficiency = useful output energy transfer ÷ total input energy transfer',
+      'A motor is supplied with 800 J and wastes 200 J. Calculate its efficiency as a percentage.',
+      'Useful output = 800 − 200 = 600 J. 600 ÷ 800 = 0.75 = 75%'],
+    ['P1', 'Power', 'Define power, and give its unit.',
+      'The rate at which energy is transferred (or work is done). Unit: watt, W (1 W = 1 J/s).',
+      'A 2.0 kW kettle is switched on for 3 minutes. Calculate the energy transferred.',
+      'E = Pt = 2000 × (3 × 60) = 2000 × 180 = 360 000 J (360 kJ)'],
+    ['P1', 'Energy resources', 'Name two renewable energy resources.',
+      'Any two of: solar, wind, hydro-electricity, tides, waves, geothermal, bio-fuel.',
+      'Give one advantage and one disadvantage of generating electricity with wind turbines.',
+      'Advantage: renewable, no CO_2 released while generating. Disadvantage: unreliable (no wind, no electricity), visual and noise pollution.'],
+    ['P1', 'Specific heat capacity', 'What is specific heat capacity?',
+      'The amount of energy needed to raise the temperature of 1 kg of a substance by 1 °C.',
+      'How much energy is needed to heat 0.50 kg of water by 20 °C? (c = 4200 J/kg °C)',
+      'ΔE = mcΔθ = 0.50 × 4200 × 20 = 42 000 J'],
+
+    // ---------- P2 Electricity ----------
+    ['P2', 'Charge and current', 'Give the equation that links charge, current and time.',
+      'Q = It (charge = current × time)',
+      'A current of 0.5 A flows for 2 minutes. Calculate the charge that flows.',
+      'Q = 0.5 × 120 = 60 C'],
+    ['P2', 'Resistance', 'Give the equation that links potential difference, current and resistance.',
+      'V = IR',
+      'A 12 V supply drives a current of 0.4 A through a resistor. Calculate its resistance.',
+      'R = V ÷ I = 12 ÷ 0.4 = 30 Ω'],
+    ['P2', 'Series circuits', 'How does the current compare at different points in a series circuit?',
+      'It is the same everywhere in the circuit.',
+      'A 4 Ω and a 6 Ω resistor are in series with a 5 V supply. Calculate the current.',
+      'R_{total} = 4 + 6 = 10 Ω. I = V ÷ R = 5 ÷ 10 = 0.5 A'],
+    ['P2', 'Components', 'What happens to the resistance of a thermistor as its temperature increases?',
+      'The resistance decreases.',
+      'Explain why the resistance of a filament lamp increases as the current through it increases.',
+      'The filament gets hotter, so the ions in the metal vibrate more. The electrons collide with the ions more often, so the resistance increases.'],
+    ['P2', 'Mains electricity', 'Give the frequency and potential difference of the UK mains supply.',
+      '50 Hz and about 230 V (alternating current).',
+      'Explain why touching the live wire is dangerous even when a switch is off.',
+      'The live wire is still at 230 V and your body is at 0 V. The potential difference drives a current through your body.'],
+    ['P2', 'Plugs and power', 'Give the colours of the live, neutral and earth wires.',
+      'Live: brown. Neutral: blue. Earth: green and yellow stripes.',
+      'A 3.0 kW heater runs on 230 V mains. Calculate the current.',
+      'P = VI, so I = P ÷ V = 3000 ÷ 230 = 13 A'],
+
+    // ---------- P3 Particle model of matter ----------
+    ['P3', 'Density', 'Give the equation for density.',
+      'ρ = m ÷ V (density = mass ÷ volume)',
+      'A block has a mass of 540 g and a volume of 200 cm^{3}. Calculate its density in kg/m^{3}.',
+      '540 ÷ 200 = 2.7 g/cm^{3}. × 1000 = 2700 kg/m^{3}'],
+    ['P3', 'Latent heat', 'What is specific latent heat?',
+      'The energy needed to change the state of 1 kg of a substance, with no change in temperature.',
+      'Calculate the energy needed to melt 0.20 kg of ice. (L_f = 334 000 J/kg)',
+      'E = mL = 0.20 × 334 000 = 66 800 J'],
+    ['P3', 'Internal energy', 'Why does the temperature stay the same while a substance melts?',
+      'The energy is used to break the bonds between particles (increasing their potential energy), not to increase their kinetic energy.',
+      'Define internal energy.',
+      'The total kinetic energy and potential energy of all the particles that make up a system.'],
+    ['P3', 'Gas pressure', 'How does a gas exert pressure on the walls of its container?',
+      'Its particles collide with the walls, exerting a force at right angles to the surface.',
+      'Explain why the pressure of a gas in a sealed container of fixed volume increases when it is heated.',
+      'The particles gain kinetic energy and move faster, so they hit the walls more often and with more force.'],
+    ['P3', 'Measuring density', 'Is a change of state a physical or a chemical change?',
+      'A physical change: it is reversible and mass is conserved.',
+      'Describe how to measure the density of an irregularly shaped stone.',
+      'Measure its mass on a balance. Lower it into a full displacement (eureka) can and collect the water in a measuring cylinder: that volume is the stone’s volume. Density = mass ÷ volume.'],
+    ['P3', 'Changes of state', 'What is the name of the change of state from gas to liquid?',
+      'Condensation.',
+      'Describe the heating curve for ice turning into steam, and explain the flat sections.',
+      'Temperature rises, then stays flat at 0 °C (melting), rises, then stays flat at 100 °C (boiling), then rises. On the flat sections energy is used to break bonds (latent heat), not to raise the temperature.'],
+
+    // ---------- P4 Atomic structure ----------
+    ['P4', 'Nuclear radiation', 'Name the three types of nuclear radiation, from most to least ionising.',
+      'Alpha, beta, gamma.',
+      'Complete the equation for alpha decay: [[238|92|U]] → [[234|90|Th]] + ?',
+      'An alpha particle, [[4|2|He]]. Mass: 238 = 234 + 4. Charge: 92 = 90 + 2.'],
+    ['P4', 'Half-life', 'What is meant by the half-life of a radioactive isotope?',
+      'The time it takes for the number of unstable nuclei in a sample to halve (or for the count rate to fall to half).',
+      'A sample has an activity of 800 Bq and a half-life of 3 days. Calculate its activity after 9 days.',
+      '9 ÷ 3 = 3 half-lives. 800 → 400 → 200 → 100 Bq'],
+    ['P4', 'Hazards', 'What is the difference between irradiation and contamination?',
+      'Irradiation is exposure to radiation; the object does not become radioactive. Contamination is the unwanted presence of radioactive atoms on or in other materials.',
+      'Explain why alpha sources are the most dangerous inside the body but the least dangerous outside it.',
+      'Alpha is the most ionising, so inside the body it causes the most damage to cells. Outside, it is stopped by the skin (or a few cm of air), so it cannot reach living cells.'],
+    ['P4', 'Beta decay', 'What is a beta particle, and where does it come from?',
+      'A high-speed electron emitted from the nucleus when a neutron turns into a proton.',
+      'Write the nuclear equation for carbon-14 undergoing beta decay.',
+      '[[14|6|C]] → [[14|7|N]] + [[0|−1|e]]'],
+    ['P4', 'Penetration', 'What stops alpha, beta and gamma radiation?',
+      'Alpha: a sheet of paper (or a few cm of air). Beta: a few mm of aluminium. Gamma: several cm of lead or metres of concrete.',
+      'What effect does gamma emission have on the mass number and atomic number of the nucleus? Explain.',
+      'No change to either. Gamma is an electromagnetic wave, not a particle, so the nucleus loses energy but no protons or neutrons.'],
+    ['P4', 'Size of atoms', 'Roughly what is the radius of an atom?',
+      'About 1 × 10^{−10} m (0.1 nm).',
+      'The radius of a nucleus is about 1/10 000 of the radius of the atom. Estimate the radius of the nucleus.',
+      '1 × 10^{−10} ÷ 10 000 = 1 × 10^{−14} m'],
+
+    // ---------- P5 Forces ----------
+    ['P5', 'Scalars and vectors', 'What is the difference between a scalar and a vector quantity?',
+      'A scalar has magnitude only (e.g. speed, mass). A vector has magnitude and direction (e.g. velocity, force).',
+      'Forces of 12 N east and 5 N north act on an object. Calculate the size of the resultant force.',
+      '√(12^{2} + 5^{2}) = √169 = 13 N'],
+    ['P5', 'Weight', 'Give the equation for weight.',
+      'W = mg (weight = mass × gravitational field strength)',
+      'Calculate the weight of a 70 kg astronaut on the Moon. (g = 1.6 N/kg)',
+      'W = 70 × 1.6 = 112 N'],
+    ['P5', 'Newton’s second law', 'State Newton’s second law as an equation.',
+      'F = ma (resultant force = mass × acceleration)',
+      'A 1200 kg car accelerates from rest to 20 m/s in 8.0 s. Calculate the resultant force.',
+      'a = Δv ÷ t = 20 ÷ 8.0 = 2.5 m/s^{2}. F = 1200 × 2.5 = 3000 N'],
+    ['P5', 'Terminal velocity', 'State Newton’s third law.',
+      'Whenever two objects interact, the forces they exert on each other are equal and opposite.',
+      'Explain why a skydiver reaches terminal velocity.',
+      'As speed increases, air resistance increases until it equals the weight. The resultant force is then zero, so there is no acceleration: the speed stays constant.'],
+    ['P5', 'Stopping distance', 'What two distances make up the stopping distance of a car?',
+      'Thinking distance + braking distance.',
+      'Give two factors that increase braking distance, and explain one.',
+      'Greater speed; wet or icy roads; worn brakes or tyres. E.g. icy roads mean less friction between tyres and road, so a smaller deceleration and a longer braking distance.'],
+    ['P5', 'Work and springs', 'Give the equation for work done by a force.',
+      'W = Fs (work done = force × distance moved along the line of the force)',
+      'A spring with k = 40 N/m is stretched by 5.0 cm. Calculate the elastic potential energy stored.',
+      'e = 0.050 m. E_e = ½ke^{2} = 0.5 × 40 × 0.050^{2} = 0.050 J'],
+
+    // ---------- P6 Waves ----------
+    ['P6', 'Types of wave', 'What is the difference between transverse and longitudinal waves?',
+      'Transverse: oscillations are perpendicular to the direction of energy transfer. Longitudinal: oscillations are parallel to it, with compressions and rarefactions.',
+      'Explain why sound cannot travel through a vacuum.',
+      'Sound is a longitudinal wave carried by vibrating particles. A vacuum has no particles to vibrate.'],
+    ['P6', 'Wave equation', 'Give the wave equation.',
+      'v = fλ (wave speed = frequency × wavelength)',
+      'A sound wave has a frequency of 500 Hz and a wavelength of 0.68 m. Calculate its speed.',
+      'v = 500 × 0.68 = 340 m/s'],
+    ['P6', 'EM spectrum', 'List the electromagnetic spectrum in order of increasing frequency.',
+      'Radio waves, microwaves, infrared, visible light, ultraviolet, X-rays, gamma rays.',
+      'Give one use and one hazard of ultraviolet radiation.',
+      'Use: energy-efficient lamps, sun tanning. Hazard: skin ages prematurely and there is an increased risk of skin cancer.'],
+    ['P6', 'EM waves', 'What is the speed of all electromagnetic waves in a vacuum?',
+      '3 × 10^{8} m/s',
+      'A radio wave has a frequency of 1.5 × 10^{8} Hz. Calculate its wavelength.',
+      'λ = v ÷ f = 3 × 10^{8} ÷ 1.5 × 10^{8} = 2 m'],
+    ['P6', 'Refraction', 'What is refraction?',
+      'The change in direction of a wave when it passes from one medium into another at an angle, because its speed changes.',
+      'Use wavefronts to explain why light bends towards the normal as it enters glass.',
+      'Light slows down in glass. The part of each wavefront that enters the glass first slows down first, so the wavefront changes direction, towards the normal.'],
+    ['P6', 'Period', 'Define the period of a wave and give the equation linking it to frequency.',
+      'The time for one complete wave to pass a point. T = 1 ÷ f',
+      'Calculate the period of a wave with a frequency of 50 Hz.',
+      'T = 1 ÷ 50 = 0.02 s'],
+
+    // ---------- P7 Magnetism and electromagnetism ----------
+    ['P7', 'Magnets', 'What is the difference between a permanent magnet and an induced magnet?',
+      'A permanent magnet produces its own magnetic field. An induced magnet only becomes magnetic when placed in a magnetic field, and loses most or all of its magnetism when removed.',
+      'Describe how to plot the magnetic field around a bar magnet using a plotting compass.',
+      'Place the compass near the magnet and mark where the needle points. Move the compass so its tail is at that mark and repeat. Join the marks into a line, and add arrows from N to S.'],
+    ['P7', 'Magnetic fields', 'In which direction do magnetic field lines point?',
+      'From the north pole to the south pole.',
+      'Explain why a compass needle points north.',
+      'The Earth has its own magnetic field (its core is magnetic). The compass needle lines up with the Earth’s magnetic field.'],
+    ['P7', 'Electromagnets', 'Give two ways to increase the strength of an electromagnet.',
+      'Increase the current; add more turns to the coil; add an iron core.',
+      'Describe the magnetic field around a straight wire carrying a current.',
+      'Concentric circles around the wire, in a direction given by the right-hand grip rule. It is stronger closer to the wire and with a larger current.'],
+    ['P7', 'Motor effect', 'What is the motor effect?',
+      'A current-carrying wire in a magnetic field experiences a force.',
+      'A 0.20 m wire carrying 3.0 A is at right angles to a 0.50 T magnetic field. Calculate the force on it.',
+      'F = BIl = 0.50 × 3.0 × 0.20 = 0.30 N'],
+    ['P7', 'Fleming’s left-hand rule', 'Which rule shows the direction of the force in the motor effect?',
+      'Fleming’s left-hand rule.',
+      'State what the thumb, first finger and second finger each represent.',
+      'Thumb: force (motion). First finger: magnetic field (N to S). Second finger: current (+ to −).'],
+    ['P7', 'Electric motors', 'Give two ways to make an electric motor spin faster.',
+      'Increase the current; use a stronger magnet; add more turns to the coil.',
+      'Explain why a d.c. motor needs a split-ring commutator.',
+      'It reverses the direction of the current in the coil every half turn, so the forces keep turning the coil the same way.'],
+
+    // ---------- P8 Space physics (separate Physics only) ----------
+    ['P8', 'Orbits', 'Which force keeps planets in orbit around the Sun?',
+      'Gravity.',
+      'Explain why a satellite in a circular orbit is accelerating, even though its speed is constant.',
+      'Its direction is always changing, so its velocity is changing. There is a resultant force (gravity) towards the centre of the orbit.'],
+    ['P8', 'Star formation', 'What is a nebula?',
+      'A cloud of dust and gas, where stars form.',
+      'Explain why a main sequence star is stable.',
+      'The inward force of gravity is balanced by the outward pressure from the energy released by fusion.'],
+    ['P8', 'Massive stars', 'What happens to a star much bigger than the Sun at the end of its life?',
+      'Red supergiant → supernova → neutron star or black hole.',
+      'How are elements heavier than iron formed, and how do they spread through the universe?',
+      'They are formed in a supernova, which also distributes them throughout the universe.'],
+    ['P8', 'Red-shift', 'What is red-shift?',
+      'An observed increase in the wavelength of light from galaxies that are moving away from us.',
+      'Explain how red-shift supports the Big Bang theory.',
+      'More distant galaxies show greater red-shift, so they are moving away faster. The universe is expanding, which suggests it began from a very small, extremely hot and dense region.'],
+    ['P8', 'Life cycle of a star', 'Give the life cycle of a star about the size of the Sun.',
+      'Nebula → protostar → main sequence star → red giant → white dwarf → black dwarf.',
+      'What process releases energy in a star, and what element is formed from hydrogen?',
+      'Nuclear fusion of hydrogen nuclei forms helium.'],
+    ['P8', 'The universe', 'What is the name of our galaxy?',
+      'The Milky Way.',
+      'What is dark matter, and what evidence suggests it exists?',
+      'Matter that we cannot see. Galaxies rotate faster than can be explained by the mass we can see, so there must be extra, unseen mass.'],
+
+    // ---------- KS3 Physics ----------
+    ['KS3P', 'Light', 'Roughly how fast does light travel?',
+      'About 300 000 km/s (3 × 10^{8} m/s).',
+      'Explain why you see lightning before you hear the thunder.',
+      'Light travels far faster than sound (about 340 m/s in air), so it reaches you almost instantly.'],
+    ['KS3P', 'Reflection', 'State the law of reflection.',
+      'The angle of incidence equals the angle of reflection, both measured from the normal.',
+      'Explain why a red object looks black under blue light.',
+      'A red object reflects only red light and absorbs all other colours. There is no red light to reflect, so no light reaches your eye from it.'],
+    ['KS3P', 'Forces', 'What unit is force measured in?',
+      'Newtons (N).',
+      'A car’s driving force is 3000 N and the resistive forces total 2200 N. Give the resultant force and describe the motion.',
+      'Resultant = 3000 − 2200 = 800 N forwards, so the car accelerates.'],
+    ['KS3P', 'Speed', 'Give the equation for speed.',
+      'speed = distance ÷ time',
+      'A runner covers 400 m in 80 s. Calculate the speed in m/s, then in km/h.',
+      '400 ÷ 80 = 5 m/s. 5 × 3600 ÷ 1000 = 18 km/h'],
+    ['KS3P', 'Sound', 'What is different about a higher-pitched sound?',
+      'It has a higher frequency (more vibrations per second).',
+      'What is the range of human hearing?',
+      'About 20 Hz to 20 000 Hz (20 kHz).'],
+    ['KS3P', 'Mass and weight', 'What is the difference between mass and weight?',
+      'Mass is the amount of matter (kg) and is the same everywhere. Weight is the force of gravity on a mass (N).',
+      'Explain why an astronaut weighs less on the Moon than on Earth.',
+      'The Moon has a smaller mass, so its gravitational field strength is weaker (1.6 N/kg compared with 9.8 N/kg). Their mass stays the same.'],
+    ['KS3P', 'Circuits', 'What happens to the current at a junction in a parallel circuit?',
+      'It splits: the total current going in equals the total current coming out.',
+      '0.6 A enters a junction and 0.2 A goes down one branch. How much goes down the other?',
+      '0.6 − 0.2 = 0.4 A'],
+    ['KS3P', 'Heat transfer', 'Name the three ways thermal energy is transferred.',
+      'Conduction, convection and radiation.',
+      'Explain how a vacuum flask reduces thermal energy transfer.',
+      'The vacuum stops conduction and convection (no particles). Silvered surfaces reduce radiation. The stopper reduces convection and evaporation from the top.']
+  ].map(function (a) {
+    return { unit: a[0], topic: a[1], q: a[2], a: a[3], bonus: a[4], bonusA: a[5] };
+  });
+
+  // ---------------------------------------------------------------------------
+  // Formatting: subscripts, superscripts and nuclide notation.
+  // ---------------------------------------------------------------------------
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+  function fmt(s) {
+    return esc(s)
+      .replace(/\[\[([^|\]]+)\|([^|\]]+)\|([^\]]+)\]\]/g, '<span class="nuc"><span class="an"><span>$1</span><span>$2</span></span>$3</span>')
+      .replace(/\^\{([^}]*)\}/g, function (m, x) { return '<sup>' + x.replace(/-/g, '−') + '</sup>'; })
+      .replace(/_\{([^}]*)\}/g, '<sub>$1</sub>')
+      .replace(/_([0-9]+|[a-z]\b)/g, '<sub>$1</sub>');
+  }
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  var KEY = 'sst-interleaved-science-grid-v1';
+  var state = {
+    disc: 'chem-combined',  // subject-course
+    spec: 'AQA', size: 4,
+    cur: {},                // current step per subject-course
+    maps: {},               // unit id -> tier (0 = not yet taught) per subject-course
+    cards: [],              // { i: bank index, mystery: bool, by: 'A'|'B'|'-'|null, pts }
+    note: '',
+    scores: { A: 0, B: 0 },
+    names: { A: 'Team A', B: 'Team B' }
+  };
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (!s || !DISCS[s.disc] || !s.cards || !s.cards.length) return false;
+      if (s.cards.some(function (c) { return !BANK[c.i]; })) return false;
+      s.cur = s.cur || {};
+      s.maps = s.maps || {};
+      state = s;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function curStep(disc) {
+    var n = stepsFor(disc).length;
+    var c = state.cur[disc];
+    return c >= 0 && c < n ? c : DISCS[disc].def;
+  }
+  function tierMap(disc) {
+    if (!state.maps[disc]) state.maps[disc] = defaultMap(disc, curStep(disc));
+    return state.maps[disc];
+  }
+  function tierOf(item) {
+    if (UNITS[item.unit].ks3) return 4;
+    return tierMap(state.disc)[item.unit] || 0;
+  }
+  function inDisc(item) {
+    var D = DISCS[state.disc];
+    var u = UNITS[item.unit];
+    return D.subj.indexOf(u.subj) !== -1 && !(D.combined && item.unit === 'P8');
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // An equal number of cards from each tier, each tier as interleaved across
+  // units as the pool allows. A 5×5 board has 6 per tier plus a mystery card
+  // in the centre whose tier is only shown when it is opened. If a tier has
+  // too few questions (no unit marked for it), cards are borrowed from the
+  // nearest other tier and the legend says so.
+  function newBoard() {
+    var per = state.size === 5 ? 6 : 4;
+    var pools = {};
+    [1, 2, 3, 4].forEach(function (t) {
+      pools[t] = spread(shuffle(BANK.map(function (q, i) { return i; }).filter(function (i) {
+        return inDisc(BANK[i]) && tierOf(BANK[i]) === t;
+      })));
+    });
+    // Last resort early in the course: KS3 foundations from the other sciences.
+    pools.extra = shuffle(BANK.map(function (q, i) { return i; }).filter(function (i) {
+      return UNITS[BANK[i].unit].ks3 && !inDisc(BANK[i]);
+    }));
+    var cards = [];
+    var short = [];
+    var have = {};
+    [1, 2, 3, 4].forEach(function (t) {
+      var got = pools[t].splice(0, per);
+      have[t] = got.length;
+      cards = cards.concat(got);
+    });
+    [1, 2, 3, 4].forEach(function (t) {
+      if (have[t] >= per) return;
+      short.push(TIERS[t].name);
+      var order = [4, 3, 2, 1].sort(function (a, b) { return Math.abs(a - t) - Math.abs(b - t) || b - a; }).concat('extra');
+      for (var k = 0; k < order.length && have[t] < per; k++) {
+        while (pools[order[k]].length && have[t] < per) { cards.push(pools[order[k]].shift()); have[t]++; }
+      }
+    });
+    cards = shuffle(cards).map(function (i) { return { i: i, mystery: false, by: null, pts: 0 }; });
+    if (state.size === 5) {
+      var spare = [].concat(pools[3], pools[4], pools[2], pools[1], pools.extra);
+      if (spare.length) cards.splice(12, 0, { i: spare[Math.floor(Math.random() * Math.min(spare.length, 8))], mystery: true, by: null, pts: 0 });
+    }
+    state.cards = cards;
+    state.note = short.length ? 'Not enough questions for “' + short.join('”, “') + '”: some cards were borrowed from other tiers. Set your units with Units….' : '';
+    save();
+    render();
+  }
+
+  // Reorder a shuffled pool so consecutive picks come from different units.
+  function spread(pool) {
+    var byUnit = {};
+    pool.forEach(function (i) { (byUnit[BANK[i].unit] = byUnit[BANK[i].unit] || []).push(i); });
+    var lists = shuffle(Object.keys(byUnit).map(function (k) { return byUnit[k]; }));
+    var out = [];
+    while (lists.some(function (l) { return l.length; })) {
+      lists.forEach(function (l) { if (l.length) out.push(l.shift()); });
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------------
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $('grid');
+
+  function q(card) { return BANK[card.i]; }
+  function teamName(t) { return state.names[t] || ('Team ' + t); }
+  function unitCode(u) { return u.ks3 ? 'KS3' : u.id; }
+
+  function fillUnitSelect() {
+    var steps = stepsFor(state.disc);
+    $('unit').innerHTML = steps.map(function (s, i) {
+      return '<option value="' + i + '">' + esc(stepLabel(state.disc, i)) + '</option>';
+    }).join('') + (state.maps[state.disc] && isCustom() ? '<option value="custom">Custom (set in Units…)</option>' : '');
+    $('unit').value = isCustom() ? 'custom' : String(curStep(state.disc));
+  }
+  function isCustom() {
+    var def = defaultMap(state.disc, curStep(state.disc));
+    var m = tierMap(state.disc);
+    return Object.keys(def).some(function (k) { return (m[k] || 0) !== def[k]; });
+  }
+
+  function render() {
+    var D = DISCS[state.disc];
+    $('course').value = D.course;
+    $('subject').value = D.subject;
+    $('spec').value = state.spec;
+    $('size').value = String(state.size);
+    fillUnitSelect();
+    $('subtitle').textContent = 'Spaced retrieval · ' + state.spec + ' GCSE ' + COURSES[D.course].name +
+      (D.combined && state.spec === 'AQA' ? ' Trilogy' : '') + ' (' + discCodes(D, state.spec) + ')' +
+      (D.mixed ? '' : ' · ' + SUBJECTS[D.subject].name + ' only');
+    $('nameA').value = teamName('A');
+    $('nameB').value = teamName('B');
+    $('scoreA').textContent = state.scores.A;
+    $('scoreB').textContent = state.scores.B;
+
+    var map = tierMap(state.disc);
+    $('legend').innerHTML = [1, 2, 3, 4].map(function (t) {
+      var ids = Object.keys(map).filter(function (id) { return map[id] === t; });
+      ids.sort(function (a, b) { return UNIT_LIST.findIndex(function (u) { return u[0] === a; }) - UNIT_LIST.findIndex(function (u) { return u[0] === b; }); });
+      if (t === 4) ids.push('KS3');
+      var units = t === 1 && ids.length === 1 && !D.mixed ? ids[0] + ' ' + UNITS[ids[0]].name : ids.join(' · ');
+      return '<span class="key" style="--c: var(--t' + t + ')"><span class="dot">' + t + '</span>' +
+        '<span>' + TIERS[t].name + ' <span class="units">' + esc(units || 'none set') + '</span></span></span>';
+    }).join('') + '<span class="hint">Every card has a <b>+1 higher-tier bonus</b></span>' +
+      (state.note ? '<span class="note">' + esc(state.note) + '</span>' : '');
+
+    grid.setAttribute('style', '--n: ' + state.size);
+    grid.innerHTML = state.cards.map(function (c, idx) {
+      var item = q(c);
+      var tier = tierOf(item);
+      var u = UNITS[item.unit];
+      var claim = '';
+      if (c.by) {
+        var who = c.by === '-' ? 'No points' : esc(teamName(c.by));
+        var wc = c.by === 'A' ? 'var(--team-a)' : c.by === 'B' ? 'var(--team-b)' : 'var(--muted)';
+        claim = '<span class="claim" style="--wc:' + wc + '"><span class="who">' + who + '</span>' +
+          (c.by === '-' ? '' : '<span class="pts">+' + c.pts + '</span>') + '</span>';
+      }
+      if (c.mystery && !c.by) {
+        return '<button class="card mystery" type="button" role="listitem" data-idx="' + idx + '" aria-label="Mystery card, 1 to 4 points">' +
+          '<span class="recency">Mystery · 1–4 pts</span><span class="q">?</span><span class="recency">Any tier</span></button>';
+      }
+      var label = TIERS[tier].pts + ' points, ' + TIERS[tier].name + ', ' + SUBJ_NAME[u.subj] + ', ' + item.topic + (c.by ? ', claimed' : '');
+      return '<button class="card' + (c.by ? ' claimed' : '') + '" type="button" role="listitem" data-idx="' + idx + '" data-tier="' + tier + '" aria-label="' + esc(label) + '">' +
+        '<span class="row"><span class="recency">' + TIERS[tier].short + (c.mystery ? ' · mystery' : '') + '</span><span class="badge">' + TIERS[tier].pts + '</span></span>' +
+        '<span><span class="topic">' + fmt(item.topic) + '</span>' +
+        '<span class="unitline"><span class="chip s-' + u.subj + '">' + unitCode(u) + '</span><span class="nm">' + esc(u.ks3 ? SUBJ_NAME[u.subj] : u.name) + '</span></span></span>' +
+        claim + '</button>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scores
+  // ---------------------------------------------------------------------------
+  function addScore(team, d) {
+    state.scores[team] = Math.max(0, state.scores[team] + d);
+    $('score' + team).textContent = state.scores[team];
+    var el = $('team' + team);
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    save();
+  }
+
+  document.querySelectorAll('.step').forEach(function (b) {
+    b.addEventListener('click', function () { addScore(b.dataset.team, +b.dataset.d); });
+  });
+  ['A', 'B'].forEach(function (t) {
+    $('name' + t).addEventListener('input', function (e) {
+      state.names[t] = e.target.value.trim() || ('Team ' + t);
+      updateAwardLabels();
+      save();
+    });
+    $('name' + t).addEventListener('change', render);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Challenge modal
+  // ---------------------------------------------------------------------------
+  var overlay = $('overlay');
+  var modal = $('modal');
+  var current = -1;
+  var bonusOn = false;
+  var lastFocus = null;
+
+  function cardPts(c) { return TIERS[tierOf(q(c))].pts; }
+  function updateAwardLabels() {
+    if (current < 0) return;
+    var pts = cardPts(state.cards[current]) + (bonusOn ? 1 : 0);
+    $('mAwardA').textContent = teamName('A') + ' +' + pts;
+    $('mAwardB').textContent = teamName('B') + ' +' + pts;
+  }
+
+  function openCard(idx) {
+    current = idx;
+    var c = state.cards[idx];
+    var item = q(c);
+    var tier = tierOf(item);
+    var u = UNITS[item.unit];
+    bonusOn = false;
+
+    modal.dataset.tier = tier;
+    $('mBadge').textContent = TIERS[tier].pts;
+    $('mRecency').textContent = (c.mystery ? 'Mystery card · ' : '') + TIERS[tier].name + ' · ' + TIERS[tier].pts + (TIERS[tier].pts === 1 ? ' point' : ' points');
+    $('mTopic').innerHTML = fmt(item.topic);
+    $('mTheme').innerHTML = '<span class="chip s-' + u.subj + '">' + unitCode(u) + '</span>' +
+      '<span>' + esc(u.ks3 ? 'KS3 ' + SUBJ_NAME[u.subj] + ' foundations' : u.name) + ' · ' + esc(specRef(u)) + '</span>';
+    $('mPrompt').innerHTML = fmt(item.q);
+    $('mBonus').innerHTML = fmt(item.bonus);
+    $('mAns').innerHTML = fmt(item.a);
+    $('mBonusAns').innerHTML = fmt(item.bonusA);
+    $('mBonusToggle').setAttribute('aria-pressed', 'false');
+
+    var claimed = !!c.by;
+    $('mAnswer').classList.toggle('shown', claimed);
+    $('mReveal').hidden = claimed;
+    $('mActions').hidden = claimed;
+    $('mClaimed').hidden = !claimed;
+    if (claimed) {
+      $('mClaimedNote').innerHTML = c.by === '-' ? 'Claimed with <b>no points</b> awarded.' :
+        '<b>' + esc(teamName(c.by)) + '</b> scored <b>+' + c.pts + '</b> on this card.';
+    }
+    updateAwardLabels();
+
+    lastFocus = document.activeElement;
+    overlay.classList.add('open');
+    modal.scrollTop = 0;
+    (claimed ? $('mDone') : $('mReveal')).focus();
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+    current = -1;
+    if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+  }
+
+  function reveal() {
+    $('mAnswer').classList.add('shown');
+    $('mReveal').hidden = true;
+    $('mAwardA').focus();
+  }
+
+  function claim(team) {
+    var idx = current;
+    var c = state.cards[idx];
+    var pts = cardPts(c) + (bonusOn ? 1 : 0);
+    c.by = team;
+    c.pts = team === '-' ? 0 : pts;
+    if (team !== '-') addScore(team, pts);
+    save();
+    closeModal();
+    render();
+    var el = grid.querySelector('[data-idx="' + idx + '"]');
+    if (el) el.focus();
+  }
+
+  function undo() {
+    var idx = current;
+    var c = state.cards[idx];
+    if (c.by === 'A' || c.by === 'B') addScore(c.by, -c.pts);
+    c.by = null;
+    c.pts = 0;
+    save();
+    render();
+    openCard(idx);
+  }
+
+  grid.addEventListener('click', function (e) {
+    var card = e.target.closest('.card');
+    if (card) openCard(+card.dataset.idx);
+  });
+  $('mReveal').addEventListener('click', reveal);
+  $('mBonusToggle').addEventListener('click', function () {
+    bonusOn = !bonusOn;
+    this.setAttribute('aria-pressed', String(bonusOn));
+    updateAwardLabels();
+  });
+  $('mAwardA').addEventListener('click', function () { claim('A'); });
+  $('mAwardB').addEventListener('click', function () { claim('B'); });
+  $('mNobody').addEventListener('click', function () { claim('-'); });
+  $('mUndo').addEventListener('click', undo);
+  $('mDone').addEventListener('click', closeModal);
+  $('mClose').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+
+  // ---------------------------------------------------------------------------
+  // Units set-up
+  // ---------------------------------------------------------------------------
+  var sOverlay = $('setupOverlay');
+  var draft = null;
+
+  function renderSetup() {
+    var ids = [].concat.apply([], stepsFor(state.disc));
+    $('uList').innerHTML = ids.map(function (id) {
+      var u = UNITS[id];
+      var t = draft[id] || 0;
+      return '<div class="u-row"><span class="u-name"><span class="chip s-' + u.subj + '">' + id + '</span>' +
+        '<span>' + esc(u.name) + (state.spec === 'Edexcel' ? ' <small>· ' + esc(u.edexcel) + '</small>' : '') + '</span></span>' +
+        '<span class="seg" role="group" aria-label="' + esc(id + ' ' + u.name) + '">' +
+        [0, 1, 2, 3, 4].map(function (n) {
+          var lbl = n === 0 ? 'Not taught yet' : TIERS[n].name + ', ' + n + (n === 1 ? ' point' : ' points');
+          return '<button type="button" data-u="' + id + '" data-t="' + n + '" aria-pressed="' + (t === n) + '" aria-label="' + esc(lbl) + '" title="' + esc(lbl) + '">' + (n === 0 ? '–' : n) + '</button>';
+        }).join('') + '</span></div>';
+    }).join('');
+  }
+  function openSetup() {
+    draft = JSON.parse(JSON.stringify(tierMap(state.disc)));
+    renderSetup();
+    lastFocus = document.activeElement;
+    sOverlay.classList.add('open');
+    $('sDeal').focus();
+  }
+  function closeSetup() {
+    sOverlay.classList.remove('open');
+    if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+  }
+  $('uList').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-u]');
+    if (!b) return;
+    draft[b.dataset.u] = +b.dataset.t;
+    b.parentNode.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+  });
+  $('sReset').addEventListener('click', function () {
+    draft = defaultMap(state.disc, curStep(state.disc));
+    renderSetup();
+  });
+  $('sDeal').addEventListener('click', function () {
+    if (inProgress() && !confirm('Deal a new board with these units? Scores are kept.')) return;
+    state.maps[state.disc] = draft;
+    closeSetup();
+    newBoard();
+  });
+  $('sClose').addEventListener('click', closeSetup);
+  sOverlay.addEventListener('click', function (e) { if (e.target === sOverlay) closeSetup(); });
+  $('unitsBtn').addEventListener('click', openSetup);
+
+  document.addEventListener('keydown', function (e) {
+    var open = overlay.classList.contains('open') ? modal : sOverlay.classList.contains('open') ? $('setup') : null;
+    if (!open) return;
+    if (e.key === 'Escape') { if (open === modal) closeModal(); else closeSetup(); return; }
+    if (e.key === 'Tab') {
+      var f = Array.prototype.filter.call(open.querySelectorAll('button, [tabindex]'), function (el) {
+        return !el.hidden && el.offsetParent !== null;
+      });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------
+  function inProgress() { return state.cards.some(function (c) { return c.by; }); }
+
+  $('newBoard').addEventListener('click', function () {
+    if (inProgress() && !confirm('Deal a new board? Scores are kept.')) return;
+    newBoard();
+  });
+  ['course', 'subject'].forEach(function (id) {
+    $(id).addEventListener('change', function () {
+      var D = DISCS[state.disc];
+      if (inProgress() && !confirm('Switch ' + (id === 'course' ? 'course' : 'subject') + ' and deal a new board? Scores are kept.')) {
+        $('course').value = D.course;
+        $('subject').value = D.subject;
+        return;
+      }
+      state.disc = $('subject').value + '-' + $('course').value;
+      newBoard();
+    });
+  });
+  $('size').addEventListener('change', function (e) {
+    if (inProgress() && !confirm('Change the grid size and deal a new board? Scores are kept.')) { e.target.value = String(state.size); return; }
+    state.size = +e.target.value;
+    newBoard();
+  });
+  $('unit').addEventListener('change', function (e) {
+    if (e.target.value === 'custom') return;
+    if (inProgress() && !confirm('Change the current unit and deal a new board? Scores are kept.')) { fillUnitSelect(); return; }
+    state.cur[state.disc] = +e.target.value;
+    state.maps[state.disc] = defaultMap(state.disc, +e.target.value);
+    newBoard();
+  });
+  $('spec').addEventListener('change', function (e) {
+    state.spec = e.target.value;
+    save();
+    render();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Start: ?course=combined|separates&subject=bio|chem|phys|mixed
+  // &spec=aqa|edexcel presets a shared link.
+  // ---------------------------------------------------------------------------
+  var params = new URLSearchParams(location.search);
+  var pSpec = (params.get('spec') || '').toLowerCase();
+  var restored = load();
+  var pDisc = (SUBJECTS[params.get('subject')] ? params.get('subject') : DISCS[state.disc].subject) + '-' +
+    (COURSES[params.get('course')] ? params.get('course') : DISCS[state.disc].course);
+  if (pDisc !== state.disc) { state.disc = pDisc; restored = false; }
+  if (pSpec === 'aqa') state.spec = 'AQA';
+  if (pSpec === 'edexcel') state.spec = 'Edexcel';
+  if (restored) render(); else newBoard();
+})();
+</script>
+</body>
+</html>
