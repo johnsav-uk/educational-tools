@@ -139,6 +139,9 @@ input[type=range]{ width:100%; accent-color:var(--accent); }
 }
 #gl{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab; }
 #gl.dragging{ cursor:grabbing; }
+/* Touchscreens: vertical swipes scroll the page (the view is half a phone
+   screen tall, so capturing them traps the reader); sideways swipes orbit. */
+@media (pointer:coarse){ #gl{ touch-action:pan-y; } }
 .overlay{ position:absolute; inset:0; pointer-events:none; }
 .pin{
   position:absolute; transform:translate(-50%,-100%); pointer-events:auto; cursor:pointer;

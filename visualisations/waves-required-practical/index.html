@@ -83,6 +83,8 @@
   input[type="range"]:focus-visible { outline: none; }
 
   canvas.sim { touch-action: none; display: block; width: 100%; height: auto; }
+  /* Touchscreens: vertical swipes over the 3D string scroll the page; sideways ones turn it. */
+  @media (pointer: coarse) { .no-sel > canvas:not(.sim) { touch-action: pan-y !important; } }
   .no-sel { user-select: none; -webkit-user-select: none; }
 
   ::-webkit-scrollbar { width: 10px; height: 10px; }

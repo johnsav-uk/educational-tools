@@ -27,6 +27,23 @@
 <!-- ── Three.js + OrbitControls ────────────────────────────────────────── -->
 <script src="lib/three.min.js"></script>
 <script src="lib/OrbitControls.js"></script>
+<script>
+  /* Touchscreens: one finger scrolls the page past the model, two fingers turn
+     and zoom it. The model is over half a phone screen tall, so letting it take
+     every swipe traps the reader on the page. */
+  if (matchMedia('(pointer: coarse)').matches) {
+    THREE.OrbitControls = class extends THREE.OrbitControls {
+      constructor(camera, el) { super(camera, el); this.touches.TWO = THREE.TOUCH.DOLLY_ROTATE; }
+    };
+    const oneFinger = e => {
+      if (e.target.tagName === 'CANVAS' && e.touches.length < 2) e.stopPropagation();
+    };
+    addEventListener('touchstart', oneFinger, true);
+    addEventListener('touchmove', oneFinger, true);
+    document.documentElement.classList.add('touch');
+  }
+</script>
+<style>.touch #root canvas { touch-action: pan-y !important; }</style>
 
 <!-- ── React, vendored ─────────────────────────────────────────────────── -->
 <script src="lib/react.production.min.js"></script>
