@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google Translate's speech endpoint refuses requests that say which site sent them. -->
+<meta name="referrer" content="no-referrer">
+<title>Interleaved Grid Challenge (beta) — GCSE French, Spanish &amp; German</title>
+<meta name="description" content="A spaced-retrieval team game for the classroom board: a 4×4 or 5×5 grid of GCSE French, Spanish and German translation prompts, worth more points the longer ago the topic was taught.">
+<style>
+  /* Tokens fall back to the site's hex values so the page still works opened
+     on its own, without assets/sst/. */
+  :root {
+    --bg: var(--sst-bg, #050e1a);
+    --panel: var(--sst-panel, #091321);
+    --card: var(--sst-card, #0d1928);
+    --raised: var(--sst-raised, #13202f);
+    --input: var(--sst-input, #07101c);
+    --line: var(--sst-line, #182535);
+    --line-strong: var(--sst-line-strong, #243446);
+    --text: var(--sst-text, #edf2f8);
+    --body: var(--sst-text-body, #c3cdd9);
+    --muted: var(--sst-text-muted, #8693a5);
+    --accent: var(--sst-violet, #b199f4);
+    --accent-btn: var(--sst-violet-btn, #734dbe);
+    --accent-soft: var(--sst-violet-soft, #2c2346);
+    --font: var(--sst-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+
+    /* The four recency tiers. */
+    --t1: oklch(0.78 0.16 150);
+    --t2: oklch(0.87 0.15 95);
+    --t3: oklch(0.77 0.16 55);
+    --t4: oklch(0.69 0.19 25);
+    --team-a: oklch(0.76 0.13 240);
+    --team-b: oklch(0.76 0.13 340);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .app {
+    height: calc(100dvh - var(--sst-bar-h, 0px));
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 16px 16px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+  }
+  .heading { margin-right: auto; min-width: 0; }
+  .heading h1 {
+    margin: 0;
+    font-size: clamp(1.15rem, 1.6vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .heading h1 .beta {
+    font-size: 0.6em;
+    font-weight: 700;
+    color: var(--accent);
+    border: 1px solid var(--accent-soft);
+    border-radius: 999px;
+    padding: 2px 8px;
+    vertical-align: middle;
+  }
+  .heading p { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  select {
+    min-height: 48px;
+    padding: 0 38px 0 14px;
+    background: var(--input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238693a5' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    appearance: none;
+  }
+  .btn {
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--raised);
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn-primary { background: var(--accent-btn); border-color: var(--accent-btn); color: #fff; }
+  .btn-primary:hover { border-color: var(--accent); }
+  .controls .btn { align-self: flex-end; }
+
+  /* ---------- Scoreboard ---------- */
+  .scores { display: flex; gap: 8px; align-items: stretch; }
+  .team {
+    display: grid;
+    grid-template-columns: 48px auto 48px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 6px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--tc);
+  }
+  .team input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+    border: 0;
+    background: transparent;
+    color: var(--tc);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 0 2px;
+  }
+  .team output {
+    min-width: 2.2ch;
+    text-align: center;
+    font-size: clamp(1.8rem, 2.6vw, 2.4rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .team .step {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .team .step:hover { border-color: var(--tc); }
+  .team-a { --tc: var(--team-a); }
+  .team-b { --tc: var(--team-b); }
+  .team.bump output { animation: bump 0.35s ease-out; }
+  @keyframes bump { 40% { transform: scale(1.25); color: var(--tc); } }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--body);
+  }
+  .legend .key { display: inline-flex; align-items: center; gap: 8px; }
+  .legend .dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    font-weight: 800;
+    display: grid; place-items: center;
+    font-size: 0.85rem;
+  }
+  .legend .units { color: var(--muted); font-size: 0.85em; }
+  .legend .key:first-child .units { color: var(--text); font-weight: 700; }
+  .legend .hint { margin-left: auto; color: var(--muted); }
+  .legend .hint b { color: var(--accent); }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: clamp(6px, 0.9vw, 12px);
+    min-height: 0;
+  }
+  .card {
+    --c: var(--t1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+    padding: clamp(8px, 1vw, 14px);
+    text-align: left;
+    background: var(--card);
+    border: 2px solid color-mix(in oklch, var(--c) 55%, transparent);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  }
+  .card:hover { border-color: var(--c); background: var(--raised); }
+  .card:active { transform: scale(0.98); }
+  .card[data-tier="2"] { --c: var(--t2); }
+  .card[data-tier="3"] { --c: var(--t3); }
+  .card[data-tier="4"] { --c: var(--t4); }
+  .card .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card .recency {
+    color: var(--c);
+    font-weight: 800;
+    font-size: clamp(0.62rem, 0.85vw, 0.82rem);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .card .badge {
+    flex: none;
+    width: clamp(34px, 3.6vw, 54px);
+    height: clamp(34px, 3.6vw, 54px);
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: clamp(1.1rem, 1.9vw, 1.8rem);
+    line-height: 1;
+  }
+  .card .topic {
+    font-weight: 800;
+    font-size: clamp(0.95rem, 1.55vw, 1.5rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  .card .theme {
+    color: var(--muted);
+    font-size: clamp(0.64rem, 0.8vw, 0.8rem);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grid[style*="--n: 5"] .card .theme { -webkit-line-clamp: 1; }
+
+  /* Mystery card: the tier stays hidden until it is opened. */
+  .card.mystery {
+    --c: var(--accent);
+    border-style: dashed;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .card.mystery .q { font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 800; color: var(--accent); line-height: 1; }
+  .card.mystery .recency { color: var(--muted); }
+
+  .card.claimed {
+    background: var(--panel);
+    border-color: var(--line);
+    border-style: solid;
+  }
+  .card.claimed > :not(.claim) { opacity: 0.22; filter: grayscale(1); }
+  .card .claim {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+    font-weight: 800;
+  }
+  .card.claimed .claim { display: flex; }
+  .card .claim .who { font-size: clamp(0.9rem, 1.4vw, 1.3rem); color: var(--wc, var(--muted)); text-transform: uppercase; letter-spacing: 0.05em; }
+  .card .claim .pts { font-size: clamp(0.8rem, 1vw, 1rem); color: var(--muted); }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in oklch, var(--bg) 82%, transparent);
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    --c: var(--t1);
+    width: min(1040px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-top: 6px solid var(--c);
+    border-radius: 18px;
+    padding: clamp(16px, 2.4vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.6vw, 20px);
+  }
+  .modal[data-tier="2"] { --c: var(--t2); }
+  .modal[data-tier="3"] { --c: var(--t3); }
+  .modal[data-tier="4"] { --c: var(--t4); }
+  .m-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .m-head .badge {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--c);
+    color: #0a0f18;
+    display: grid; place-items: center;
+    font-weight: 800;
+    font-size: 2rem;
+    flex: none;
+  }
+  .m-meta { flex: 1; min-width: 200px; }
+  .m-meta .recency { color: var(--c); font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; font-size: 0.9rem; }
+  .m-meta .topic { font-weight: 800; font-size: 1.35rem; }
+  .m-meta .theme { color: var(--muted); font-size: 0.9rem; }
+  .focus {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    color: var(--body);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .close-x {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .prompt {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.3vw, 2.9rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .bonus {
+    border: 1px solid color-mix(in oklch, var(--accent) 45%, transparent);
+    border-left: 6px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .bonus .label { color: var(--accent); }
+  .bonus p { margin: 0; font-size: clamp(1.1rem, 1.9vw, 1.6rem); font-weight: 600; line-height: 1.35; }
+
+  .answer { display: none; flex-direction: column; gap: 12px; }
+  .answer.shown { display: flex; }
+  .ans-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .ans-row .txt { flex: 1; min-width: 0; }
+  .ans-row .tl { margin: 0; font-size: clamp(1.35rem, 2.6vw, 2.3rem); font-weight: 800; line-height: 1.25; color: var(--c); }
+  .ans-row.b .tl { color: var(--accent); font-size: clamp(1.1rem, 2vw, 1.7rem); }
+  .ans-row .alt { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
+  .speak {
+    flex: none;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: var(--raised);
+    display: grid; place-items: center;
+  }
+  .speak svg { width: 28px; height: 28px; fill: none; stroke: var(--text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .speak.talking { border-color: var(--c); }
+  .speak.talking svg { stroke: var(--c); }
+
+  .voice-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; color: var(--muted); font-size: 0.95rem; }
+  .voice-row label { display: flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; }
+  .voice-row select { min-height: 44px; max-width: min(420px, 70vw); font-size: 0.95rem; }
+  .voice-row .btn { min-height: 44px; font-size: 0.95rem; }
+  .voice-tip { flex: 1 1 260px; font-size: 0.85rem; }
+  .voice-tip.warn { color: var(--t2); font-weight: 600; }
+  .reveal { min-height: 60px; font-size: 1.2rem; }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .toggle .box {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid currentColor;
+    display: grid; place-items: center;
+    font-size: 0.9rem;
+  }
+  .toggle[aria-pressed="true"] .box::after { content: "✓"; }
+  .award { min-height: 60px; font-size: 1.15rem; flex: 1 1 180px; border-width: 2px; }
+  .award.a { border-color: var(--team-a); color: var(--team-a); }
+  .award.b { border-color: var(--team-b); color: var(--team-b); }
+  .award.a:hover { background: color-mix(in oklch, var(--team-a) 16%, var(--raised)); }
+  .award.b:hover { background: color-mix(in oklch, var(--team-b) 16%, var(--raised)); }
+  .claimed-note { margin: 0; color: var(--muted); font-size: 1rem; flex: 1 1 260px; }
+  .claimed-note b { color: var(--text); }
+
+  /* Phones and narrow windows: let the page scroll instead of squeezing the grid. */
+  @media (max-width: 760px) {
+    .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); }
+    .grid { grid-auto-rows: minmax(118px, auto); }
+    .grid[style*="--n: 5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .legend .hint { display: none; }
+    .card .topic { font-size: 0.92rem; overflow-wrap: normal; }
+    .scores { width: 100%; }
+    .team { flex: 1; grid-template-columns: 48px 1fr 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .team.bump output { animation: none; }
+    .card { transition: none; }
+  }
+</style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<main class="app">
+  <div class="top">
+    <div class="heading">
+      <h1>Interleaved Grid Challenge <span class="beta">beta</span></h1>
+      <p id="subtitle">Spaced retrieval · GCSE</p>
+    </div>
+
+    <div class="controls">
+      <label class="field"><span>Language</span>
+        <select id="lang">
+          <option value="fr">French</option>
+          <option value="es">Spanish</option>
+          <option value="de">German</option>
+        </select>
+      </label>
+      <label class="field"><span>Current unit</span>
+        <select id="unit"></select>
+      </label>
+      <label class="field"><span>Specification</span>
+        <select id="spec">
+          <option value="AQA">AQA</option>
+          <option value="Edexcel">Edexcel</option>
+        </select>
+      </label>
+      <label class="field"><span>Grid</span>
+        <select id="size">
+          <option value="4">4 × 4</option>
+          <option value="5">5 × 5</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" id="newBoard" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+        New board
+      </button>
+    </div>
+
+    <div class="scores" aria-label="Scoreboard">
+      <div class="team team-a" id="teamA">
+        <input id="nameA" value="Team A" aria-label="Team A name" maxlength="16">
+        <button class="step" type="button" data-team="A" data-d="-1" aria-label="Take a point from Team A">−</button>
+        <output id="scoreA" aria-live="polite">0</output>
+        <button class="step" type="button" data-team="A" data-d="1" aria-label="Give Team A a point">+</button>
+      </div>
+      <div class="team team-b" id="teamB">
+        <input id="nameB" value="Team B" aria-label="Team B name" maxlength="16">
+        <button class="step" type="button" data-team="B" data-d="-1" aria-label="Take a point from Team B">−</button>
+        <output id="scoreB" aria-live="polite">0</output>
+        <button class="step" type="button" data-team="B" data-d="1" aria-label="Give Team B a point">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="grid" id="grid" role="list"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mPrompt">
+    <div class="m-head">
+      <div class="badge" id="mBadge">1</div>
+      <div class="m-meta">
+        <div class="recency" id="mRecency"></div>
+        <div class="topic" id="mTopic"></div>
+        <div class="theme" id="mTheme"></div>
+      </div>
+      <span class="focus" id="mFocus"></span>
+      <button class="close-x" id="mClose" type="button" aria-label="Close without scoring">×</button>
+    </div>
+
+    <div>
+      <p class="label" id="mTask">Translate into French</p>
+      <p class="prompt" id="mPrompt"></p>
+    </div>
+
+    <div class="bonus">
+      <p class="label">Higher tier · +1 bonus point</p>
+      <p id="mBonus"></p>
+    </div>
+
+    <button class="btn reveal" id="mReveal" type="button">Reveal answer</button>
+
+    <div class="answer" id="mAnswer">
+      <div class="ans-row">
+        <div class="txt">
+          <p class="tl" id="mTl" lang="fr"></p>
+          <p class="alt" id="mAlt"></p>
+        </div>
+        <button class="speak" id="mSpeak" type="button" aria-label="Hear the answer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        </button>
+      </div>
+      <div class="ans-row b">
+        <div class="txt">
+          <p class="label">Bonus model answer</p>
+          <p class="tl" id="mBonusTl" lang="fr"></p>
+        </div>
+        <button class="speak" id="mSpeakB" type="button" aria-label="Hear the bonus answer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        </button>
+      </div>
+      <div class="voice-row" id="mVoiceRow">
+        <label>Voice <select id="mVoice" aria-label="Voice used to read the answer"></select></label>
+        <button class="btn toggle" id="mSlow" type="button" aria-pressed="false"><span class="box"></span>Slower</button>
+        <span class="voice-tip" id="mVoiceTip"></span>
+      </div>
+    </div>
+
+    <div class="actions" id="mActions">
+      <button class="btn toggle" id="mBonusToggle" type="button" aria-pressed="false"><span class="box"></span>Bonus earned (+1)</button>
+      <button class="btn award a" id="mAwardA" type="button">Team A +1</button>
+      <button class="btn award b" id="mAwardB" type="button">Team B +1</button>
+      <button class="btn" id="mNobody" type="button">No points</button>
+    </div>
+    <div class="actions" id="mClaimed" hidden>
+      <p class="claimed-note" id="mClaimedNote"></p>
+      <button class="btn" id="mUndo" type="button">Undo and reopen card</button>
+      <button class="btn btn-primary" id="mDone" type="button">Back to the board</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Tiers: points go up the longer ago a topic was taught.
+  // ---------------------------------------------------------------------------
+  var TIERS = {
+    1: { pts: 1, name: 'Current unit', short: 'This unit' },
+    2: { pts: 2, name: 'Last unit', short: 'Last unit' },
+    3: { pts: 3, name: 'Earlier units', short: 'Earlier unit' },
+    4: { pts: 4, name: 'Longest ago / KS3', short: 'Longest ago · KS3' }
+  };
+
+  // The course as a cycle of units. The teacher picks the current unit; the one
+  // before it is last unit, the two before that are earlier units, and the
+  // remaining two are the longest ago (last year, or met at KS3).
+  var UNITS = [
+    { name: 'Identity & relationships', topics: ['family', 'friends'] },
+    { name: 'School & future plans', topics: ['school', 'rules', 'future'] },
+    { name: 'Free time & healthy living', topics: ['freetime', 'routine'] },
+    { name: 'Media & technology', topics: ['tech'] },
+    { name: 'Holidays & travel', topics: ['holidays', 'travel'] },
+    { name: 'Home, town & environment', topics: ['home', 'local', 'environ'] }
+  ];
+  var TIER_BY_DISTANCE = [1, 2, 3, 3, 4, 4];
+
+  function unitOf(topic) {
+    for (var u = 0; u < UNITS.length; u++) if (UNITS[u].topics.indexOf(topic) !== -1) return u;
+    return 0;
+  }
+  function tierOfUnit(u) { return TIER_BY_DISTANCE[(state.unit - u + UNITS.length) % UNITS.length]; }
+  function tierOf(item) { return tierOfUnit(unitOf(item.topic)); }
+
+  var LANGS = {
+    fr: { name: 'French', voice: 'fr-FR', codes: { AQA: '8652', Edexcel: '1FR1' } },
+    es: { name: 'Spanish', voice: 'es-ES', codes: { AQA: '8692', Edexcel: '1SP1' } },
+    de: { name: 'German', voice: 'de-DE', codes: { AQA: '8662', Edexcel: '1GN1' } }
+  };
+
+  // Topic -> [display name, AQA theme and topic, Edexcel theme] for the
+  // specifications first taught from September 2024.
+  var TOPICS = {
+    routine:  ['Daily routine', 'Theme 1 · Healthy living and lifestyle', 'Lifestyle and wellbeing'],
+    freetime: ['Free time', 'Theme 2 · Free-time activities', 'Lifestyle and wellbeing'],
+    tech:     ['Technology', 'Theme 3 · Media and technology', 'Media and technology'],
+    school:   ['School life', 'Theme 1 · Education and work', 'Studying and my future'],
+    rules:    ['School rules', 'Theme 1 · Education and work', 'Studying and my future'],
+    future:   ['Future plans', 'Theme 1 · Education and work', 'Studying and my future'],
+    family:   ['Family', 'Theme 1 · Identity and relationships with others', 'My personal world'],
+    friends:  ['Relationships', 'Theme 1 · Identity and relationships with others', 'My personal world'],
+    home:     ['Home', 'Theme 3 · The environment and where people live', 'My neighbourhood'],
+    local:    ['Local area', 'Theme 3 · The environment and where people live', 'My neighbourhood'],
+    holidays: ['Holidays', 'Theme 3 · Travel and tourism', 'Travel and tourism'],
+    travel:   ['Travel', 'Theme 3 · Travel and tourism', 'Travel and tourism'],
+    environ:  ['Environment', 'Theme 3 · The environment and where people live', 'My neighbourhood']
+  };
+
+  // ---------------------------------------------------------------------------
+  // Question bank, eight per unit per language. Each entry:
+  //   [topic, grammar focus, English prompt, answer,
+  //    higher-tier bonus task, bonus model answer, also accept (optional)]
+  // Points are not stored here: they depend on the unit the class is on now.
+  // (e) / (in) / /a mark gendered endings; they are dropped when read aloud.
+  // ---------------------------------------------------------------------------
+  var BANK = {
+    fr: [
+      ['routine', 'Reflexive verb · present', 'I get up at seven o’clock.', 'Je me lève à sept heures.',
+        'Put it in the past: “This morning I got up at seven o’clock.”', 'Ce matin, je me suis levé(e) à sept heures.'],
+      ['routine', 'Reflexive · être in the perfect', 'Yesterday I went to bed late.', 'Hier, je me suis couché(e) tard.',
+        'Add “because I was watching a series” (imperfect).', 'Hier, je me suis couché(e) tard parce que je regardais une série.'],
+      ['freetime', 'Present tense · jouer à', 'At the weekend I play football with my friends.', 'Le week-end, je joue au foot avec mes amis.',
+        'Add “even though it is tiring” with bien que + subjunctive.', 'Le week-end, je joue au foot avec mes amis, bien que ce soit fatigant.',
+        'Le week-end, je joue au football avec mes copains.'],
+      ['freetime', 'Perfect tense with être', 'Last Saturday I went to the cinema.', 'Samedi dernier, je suis allé(e) au cinéma.',
+        'Add “and I saw a comedy which was really funny”.', 'Samedi dernier, je suis allé(e) au cinéma et j’ai vu une comédie qui était vraiment drôle.'],
+      ['freetime', 'Être agreement · feminine plural', 'My sister went out with her (girl) friends on Friday.', 'Ma sœur est sortie avec ses copines vendredi.',
+        'Add “and they came home at midnight”.', 'Ma sœur est sortie avec ses copines vendredi et elles sont rentrées à minuit.',
+        'Vendredi, ma sœur est sortie avec ses amies.'],
+      ['tech', 'Verb + infinitive', 'I use my phone to chat with my friends.', 'J’utilise mon portable pour discuter avec mes amis.',
+        'Add “but my parents think that I spend too much time online”.', 'J’utilise mon portable pour discuter avec mes amis, mais mes parents pensent que je passe trop de temps en ligne.'],
+      ['tech', 'Perfect tense with avoir', 'Yesterday I downloaded an app.', 'Hier, j’ai téléchargé une appli.',
+        'Add “that my brother recommended to me” (watch the agreement).', 'Hier, j’ai téléchargé une appli que mon frère m’a recommandée.',
+        'Hier, j’ai téléchargé une application.'],
+      ['tech', 'Modal verb pouvoir', 'Social media can be dangerous.', 'Les réseaux sociaux peuvent être dangereux.',
+        'Add “so young people must be careful” with il faut que + subjunctive.', 'Les réseaux sociaux peuvent être dangereux, donc il faut que les jeunes fassent attention.'],
+
+      ['school', 'Opinion + parce que', 'My favourite subject is history because the teacher is kind.', 'Ma matière préférée est l’histoire parce que le prof est gentil.',
+        'Add “although we have too much homework” (bien que + subjunctive).', 'Ma matière préférée est l’histoire parce que le prof est gentil, bien que nous ayons trop de devoirs.'],
+      ['rules', 'Avoir le droit de + infinitive', 'We are not allowed to use our phones in class.', 'On n’a pas le droit d’utiliser nos portables en classe.',
+        'Add “I think it’s unfair because we need them for research”.', 'On n’a pas le droit d’utiliser nos portables en classe. Je trouve ça injuste parce qu’on en a besoin pour faire des recherches.',
+        'Il est interdit d’utiliser son portable en classe.'],
+      ['school', 'Perfect tense with être', 'This morning I arrived late at school.', 'Ce matin, je suis arrivé(e) en retard au collège.',
+        'Add “because I missed the bus” (avoir).', 'Ce matin, je suis arrivé(e) en retard au collège parce que j’ai raté le bus.',
+        'Ce matin, je suis arrivé(e) en retard à l’école.'],
+      ['rules', 'Il faut + infinitive', 'You have to wear a uniform.', 'Il faut porter un uniforme.',
+        'Add “When I was at primary school, I didn’t have to wear one” (imperfect + en).', 'Il faut porter un uniforme. Quand j’étais à l’école primaire, je ne devais pas en porter.',
+        'On doit porter un uniforme.'],
+      ['future', 'Near future', 'Next year I am going to study science.', 'L’année prochaine, je vais étudier les sciences.',
+        'Add “so that I can become a doctor” (afin de + infinitive).', 'L’année prochaine, je vais étudier les sciences afin de pouvoir devenir médecin.'],
+      ['school', 'Être agreement · nous', 'Last week we went to Paris on a school trip.', 'La semaine dernière, nous sommes allé(e)s à Paris en voyage scolaire.',
+        'Add “and we visited the Louvre” (avoir).', 'La semaine dernière, nous sommes allé(e)s à Paris en voyage scolaire et nous avons visité le Louvre.',
+        'La semaine dernière, on est allés à Paris en sortie scolaire.'],
+      ['rules', 'Penser que · subjunctive after negative', 'I think that the school day is too long.', 'Je pense que la journée scolaire est trop longue.',
+        'Make it negative: “I don’t think that the school day is too long” (subjunctive).', 'Je ne pense pas que la journée scolaire soit trop longue.'],
+      ['school', 'Être agreement · rester', 'My friends and I stayed at school after lessons.', 'Mes amis et moi, nous sommes resté(e)s au collège après les cours.',
+        'Add “to rehearse for the school play”.', 'Mes amis et moi, nous sommes resté(e)s au collège après les cours pour répéter la pièce de théâtre.'],
+
+      ['family', 'Reflexive · s’entendre', 'I get on well with my mother.', 'Je m’entends bien avec ma mère.',
+        'Add “but I argue with my brother because he is annoying”.', 'Je m’entends bien avec ma mère, mais je me dispute avec mon frère parce qu’il est énervant.'],
+      ['friends', 'Relative pronoun qui', 'My best friend is someone who listens to me.', 'Mon meilleur ami est quelqu’un qui m’écoute.',
+        'Add “We met at primary school” (reflexive perfect).', 'Mon meilleur ami est quelqu’un qui m’écoute. Nous nous sommes rencontrés à l’école primaire.',
+        'Ma meilleure amie est quelqu’un qui m’écoute.'],
+      ['home', 'Prepositions of place', 'I live in a small house in the countryside.', 'J’habite dans une petite maison à la campagne.',
+        'Add “but if I were rich, I would live in a flat in town”.', 'J’habite dans une petite maison à la campagne, mais si j’étais riche, j’habiterais dans un appartement en ville.'],
+      ['local', 'Il y a · ne…pas de', 'In my town there is a cinema but there isn’t a swimming pool.', 'Dans ma ville, il y a un cinéma mais il n’y a pas de piscine.',
+        'Add “It’s a shame because I love swimming”.', 'Dans ma ville, il y a un cinéma mais il n’y a pas de piscine. C’est dommage parce que j’adore nager.'],
+      ['family', 'Naître · être in the perfect', 'My grandparents were born in Morocco.', 'Mes grands-parents sont nés au Maroc.',
+        'Add “and they moved to France in 1980” (s’installer).', 'Mes grands-parents sont nés au Maroc et ils se sont installés en France en 1980.'],
+      ['friends', 'Imperfect · reflexive', 'When I was younger, I used to argue with my sister.', 'Quand j’étais plus jeune, je me disputais avec ma sœur.',
+        'Add “but now we get on really well”.', 'Quand j’étais plus jeune, je me disputais avec ma sœur, mais maintenant nous nous entendons très bien.'],
+      ['home', 'Perfect tense with avoir', 'Last weekend I helped my parents at home.', 'Le week-end dernier, j’ai aidé mes parents à la maison.',
+        'Add “I did the washing-up and tidied my room”.', 'Le week-end dernier, j’ai aidé mes parents à la maison : j’ai fait la vaisselle et j’ai rangé ma chambre.'],
+      ['local', 'Venir · être in the perfect', 'My cousin came to visit my town last summer.', 'Mon cousin est venu visiter ma ville l’été dernier.',
+        'Add “and I showed him the castle” (indirect object pronoun).', 'Mon cousin est venu visiter ma ville l’été dernier et je lui ai montré le château.'],
+
+      ['holidays', 'Aller · être in the perfect', 'Last year I went to Spain with my family.', 'L’année dernière, je suis allé(e) en Espagne avec ma famille.',
+        'Add “It was sunny every day” (imperfect).', 'L’année dernière, je suis allé(e) en Espagne avec ma famille. Il faisait beau tous les jours.'],
+      ['travel', 'Partir / arriver · être agreement', 'We left at six o’clock and we arrived at midnight.', 'Nous sommes parti(e)s à six heures et nous sommes arrivé(e)s à minuit.',
+        'Add “The journey was long but we slept on the plane”.', 'Nous sommes parti(e)s à six heures et nous sommes arrivé(e)s à minuit. Le voyage était long mais nous avons dormi dans l’avion.'],
+      ['holidays', 'Imperfect for habits', 'Every day we used to go to the beach.', 'Tous les jours, on allait à la plage.',
+        'Add “but one day it rained” (perfect for a single event).', 'Tous les jours, on allait à la plage, mais un jour, il a plu.',
+        'Tous les jours, nous allions à la plage.'],
+      ['environ', 'Modal verb devoir', 'We must protect the environment.', 'Nous devons protéger l’environnement.',
+        'Add “It is essential that everyone recycles” (subjunctive).', 'Nous devons protéger l’environnement. Il est essentiel que tout le monde recycle.',
+        'On doit protéger l’environnement.'],
+      ['environ', 'Adverb placement', 'I always switch off the light.', 'J’éteins toujours la lumière.',
+        'Add “If everyone did the same, we would save energy”.', 'J’éteins toujours la lumière. Si tout le monde faisait pareil, on économiserait de l’énergie.'],
+      ['travel', 'Rester · être in the perfect', 'I stayed in a hotel near the sea.', 'Je suis resté(e) dans un hôtel près de la mer.',
+        'Add “Next year I would like to go camping” (conditional).', 'Je suis resté(e) dans un hôtel près de la mer. L’année prochaine, j’aimerais faire du camping.'],
+      ['holidays', 'Reflexive · se reposer', 'My parents relaxed by the pool.', 'Mes parents se sont reposés au bord de la piscine.',
+        'Add “while I was swimming in the sea” (imperfect).', 'Mes parents se sont reposés au bord de la piscine pendant que je nageais dans la mer.',
+        'Mes parents se sont détendus au bord de la piscine.'],
+      ['environ', 'Present vs imperfect', 'Pollution is a big problem in cities.', 'La pollution est un gros problème dans les villes.',
+        'Add “In the past, people used to walk more” (imperfect).', 'La pollution est un gros problème dans les villes. Autrefois, les gens marchaient plus.'],
+
+      ['family', 'Comparatives · plus…que', 'My brother is older than me.', 'Mon frère est plus âgé que moi.',
+        'Add “When he was little, he was very shy” (imperfect).', 'Mon frère est plus âgé que moi. Quand il était petit, il était très timide.',
+        'Mon frère est plus grand que moi.'],
+      ['friends', 'Reflexive · être agreement', 'My friend and I met at the park.', 'Mon ami(e) et moi, nous nous sommes rencontré(e)s au parc.',
+        'Add “Since that day, we have been inseparable” (depuis + present).', 'Mon ami(e) et moi, nous nous sommes rencontré(e)s au parc. Depuis ce jour-là, nous sommes inséparables.'],
+      ['friends', 'Relative pronoun que', 'The person I admire most is my grandmother.', 'La personne que j’admire le plus, c’est ma grand-mère.',
+        'Add “because she has always helped me” (perfect with avoir).', 'La personne que j’admire le plus, c’est ma grand-mère, parce qu’elle m’a toujours aidé(e).'],
+      ['family', 'Reflexive · se disputer (perfect)', 'Yesterday I argued with my parents.', 'Hier, je me suis disputé(e) avec mes parents.',
+        'Add “because I came home too late” (être).', 'Hier, je me suis disputé(e) avec mes parents parce que je suis rentré(e) trop tard.'],
+      ['routine', 'Reflexive verbs · present', 'I brush my teeth and I get dressed.', 'Je me brosse les dents et je m’habille.',
+        'Put it in the past, starting “This morning…”.', 'Ce matin, je me suis brossé les dents et je me suis habillé(e).'],
+      ['freetime', 'Faire de + activity', 'I go swimming twice a week.', 'Je fais de la natation deux fois par semaine.',
+        'Add “and I have been doing it for five years” (depuis + present).', 'Je fais de la natation deux fois par semaine, et j’en fais depuis cinq ans.',
+        'Je nage deux fois par semaine.'],
+      ['routine', 'Negatives · ne…jamais', 'I never eat fast food.', 'Je ne mange jamais de fast-food.',
+        'Add “because I want to stay healthy” (vouloir + infinitive).', 'Je ne mange jamais de fast-food parce que je veux rester en bonne santé.'],
+      ['tech', 'Perfect tense · negative', 'I didn’t send the message.', 'Je n’ai pas envoyé le message.',
+        'Add “because I had forgotten my phone at home” (pluperfect).', 'Je n’ai pas envoyé le message parce que j’avais oublié mon portable à la maison.'],
+      ['tech', 'Comparatives · adjective agreement', 'Tablets are more practical than computers.', 'Les tablettes sont plus pratiques que les ordinateurs.',
+        'Add “but I prefer my laptop because the screen is bigger”.', 'Les tablettes sont plus pratiques que les ordinateurs, mais je préfère mon ordinateur portable parce que l’écran est plus grand.'],
+      ['tech', 'Imperfect vs perfect', 'When I was young, I didn’t have a mobile phone.', 'Quand j’étais jeune, je n’avais pas de portable.',
+        'Add “I got my first phone when I was eleven” (perfect + imperfect).', 'Quand j’étais jeune, je n’avais pas de portable. J’ai eu mon premier portable quand j’avais onze ans.'],
+      ['tech', 'Near future · si clause', 'This evening I am going to watch a series on my tablet.', 'Ce soir, je vais regarder une série sur ma tablette.',
+        'Add “if I finish my homework” (si + present).', 'Ce soir, je vais regarder une série sur ma tablette si je finis mes devoirs.'],
+      ['tech', 'Reflexive · être agreement', 'My sister logged on to social media.', 'Ma sœur s’est connectée aux réseaux sociaux.',
+        'Add “and she stayed online all evening”.', 'Ma sœur s’est connectée aux réseaux sociaux et elle est restée en ligne toute la soirée.'],
+      ['holidays', 'Monter · être agreement', 'My mother went up the Eiffel Tower.', 'Ma mère est montée en haut de la tour Eiffel.',
+        'Add “but I stayed at the bottom because I was scared” (imperfect).', 'Ma mère est montée en haut de la tour Eiffel, mais je suis resté(e) en bas parce que j’avais peur.'],
+      ['travel', 'Transport · en / à', 'We travelled by train and by bike.', 'Nous avons voyagé en train et à vélo.',
+        'Add “It was cheaper than the plane”.', 'Nous avons voyagé en train et à vélo. C’était moins cher que l’avion.'],
+      ['holidays', 'Conditional', 'Ideally, I would go to Canada.', 'Idéalement, j’irais au Canada.',
+        'Add “because I would like to see the mountains and speak French”.', 'Idéalement, j’irais au Canada parce que j’aimerais voir les montagnes et parler français.'],
+      ['local', 'Il y avait · imperfect', 'In the past there were more shops in my town.', 'Avant, il y avait plus de magasins dans ma ville.',
+        'Add “Now lots of them have closed” (perfect).', 'Avant, il y avait plus de magasins dans ma ville. Maintenant, beaucoup d’entre eux ont fermé.']
+    ],
+
+    es: [
+      ['routine', 'Reflexive verb · present', 'I get up at half past seven.', 'Me levanto a las siete y media.',
+        'Put it in the past: “Yesterday I got up at half past seven because I had an exam” (preterite + imperfect).', 'Ayer me levanté a las siete y media porque tenía un examen.'],
+      ['routine', 'Present tense · adverb of frequency', 'I usually have breakfast at home.', 'Normalmente desayuno en casa.',
+        'Add “but yesterday I didn’t have breakfast because I didn’t have time”.', 'Normalmente desayuno en casa, pero ayer no desayuné porque no tenía tiempo.'],
+      ['freetime', 'Irregular present · salir', 'On Saturdays I go out with my friends.', 'Los sábados salgo con mis amigos.',
+        'Add “When I have money, I will go to the cinema” (cuando + subjunctive).', 'Los sábados salgo con mis amigos. Cuando tenga dinero, iré al cine.'],
+      ['freetime', 'Preterite · completed action', 'Last weekend I played tennis.', 'El fin de semana pasado jugué al tenis.',
+        'Add “and it was very hot” (imperfect for description).', 'El fin de semana pasado jugué al tenis y hacía mucho calor.'],
+      ['tech', 'Para + infinitive', 'I use my mobile to listen to music.', 'Uso mi móvil para escuchar música.',
+        'Add “but my parents don’t want me to use it at night” (querer que + subjunctive).', 'Uso mi móvil para escuchar música, pero mis padres no quieren que lo use por la noche.'],
+      ['tech', 'Preterite vs imperfect', 'Yesterday I watched a video on YouTube.', 'Ayer vi un vídeo en YouTube.',
+        'Add “while I was eating” (imperfect for the background).', 'Ayer vi un vídeo en YouTube mientras comía.'],
+      ['freetime', 'Imperfect for habits', 'When I was little, I used to play the piano.', 'Cuando era pequeño/a, tocaba el piano.',
+        'Add “but I gave it up two years ago” (preterite + hace).', 'Cuando era pequeño/a, tocaba el piano, pero lo dejé hace dos años.'],
+      ['tech', 'Adjective agreement', 'Social networks are useful but dangerous.', 'Las redes sociales son útiles pero peligrosas.',
+        'Add “It’s important that we are careful” (es importante que + subjunctive).', 'Las redes sociales son útiles pero peligrosas. Es importante que tengamos cuidado.'],
+
+      ['school', 'Opinion + porque', 'My favourite subject is Spanish because it is useful.', 'Mi asignatura favorita es el español porque es útil.',
+        'Add “I hope the teacher doesn’t give us homework” (esperar que + subjunctive).', 'Mi asignatura favorita es el español porque es útil. Espero que el profesor no nos dé deberes.'],
+      ['rules', 'Impersonal se · prohibido', 'You’re not allowed to eat in class.', 'Está prohibido comer en clase.',
+        'Add “I don’t think it is fair” (no creo que + subjunctive).', 'Está prohibido comer en clase. No creo que sea justo.',
+        'No se permite comer en clase.'],
+      ['school', 'Preterite · tener', 'Yesterday I had a maths exam.', 'Ayer tuve un examen de matemáticas.',
+        'Add “and I was very nervous” (imperfect of estar).', 'Ayer tuve un examen de matemáticas y estaba muy nervioso/a.'],
+      ['rules', 'Hay que / tener que + infinitive', 'We have to wear a uniform.', 'Tenemos que llevar uniforme.',
+        'Add “At primary school we didn’t have to wear one” (imperfect).', 'Tenemos que llevar uniforme. En la escuela primaria no teníamos que llevarlo.',
+        'Hay que llevar uniforme.'],
+      ['future', 'Near future · ir a', 'Next year I’m going to do A levels.', 'El año que viene voy a hacer el bachillerato.',
+        'Add “so that my parents are proud” (para que + subjunctive).', 'El año que viene voy a hacer el bachillerato para que mis padres estén orgullosos.',
+        'El año próximo voy a estudiar bachillerato.'],
+      ['school', 'Preterite · ir', 'Last week we went on a school trip to a museum.', 'La semana pasada fuimos de excursión a un museo.',
+        'Add “It was boring, but afterwards we had a great time”.', 'La semana pasada fuimos de excursión a un museo. Fue aburrido, pero después lo pasamos genial.'],
+      ['rules', 'Creer que · subjunctive after negative', 'I think the rules are strict.', 'Creo que las normas son estrictas.',
+        'Make it negative: “I don’t think the rules are strict” (subjunctive).', 'No creo que las normas sean estrictas.'],
+      ['school', 'Imperfect vs preterite', 'When I was at primary school, I used to walk to school.', 'Cuando estaba en la escuela primaria, iba al colegio a pie.',
+        'Add “but one day my dad took me by car” (preterite for one event).', 'Cuando estaba en la escuela primaria, iba al colegio a pie, pero un día mi padre me llevó en coche.',
+        'Cuando era alumno/a de primaria, iba andando al colegio.'],
+
+      ['family', 'Reflexive · llevarse bien', 'I get on well with my mother.', 'Me llevo bien con mi madre.',
+        'Add “but I argue with my brother because he is really annoying”.', 'Me llevo bien con mi madre, pero discuto con mi hermano porque es muy pesado.'],
+      ['friends', 'Subjunctive after an unknown person', 'A good friend is someone who listens to you.', 'Un buen amigo es alguien que te escucha.',
+        'Add “I’m looking for a friend who is honest” (subjunctive).', 'Un buen amigo es alguien que te escucha. Busco un amigo que sea honesto.'],
+      ['home', 'Vivir · prepositions', 'I live in a flat in the city centre.', 'Vivo en un piso en el centro de la ciudad.',
+        'Add “If I could, I would live by the sea” (si + imperfect subjunctive).', 'Vivo en un piso en el centro de la ciudad. Si pudiera, viviría cerca del mar.'],
+      ['local', 'Hay / había', 'In my town there is a park but there isn’t a cinema.', 'En mi pueblo hay un parque pero no hay cine.',
+        'Add “Ten years ago there was a cinema” (imperfect of hay).', 'En mi pueblo hay un parque pero no hay cine. Hace diez años había un cine.',
+        'En mi ciudad hay un parque pero no hay ningún cine.'],
+      ['family', 'Preterite vs imperfect', 'My grandparents were born in Spain.', 'Mis abuelos nacieron en España.',
+        'Add “and they lived in a small village” (imperfect).', 'Mis abuelos nacieron en España y vivían en un pueblo pequeño.'],
+      ['friends', 'Imperfect for habits', 'When I was younger, I used to argue with my sister.', 'Cuando era más joven, discutía con mi hermana.',
+        'Add “but now we get on very well”.', 'Cuando era más joven, discutía con mi hermana, pero ahora nos llevamos muy bien.'],
+      ['home', 'Preterite · regular -ar', 'Last weekend I helped at home.', 'El fin de semana pasado ayudé en casa.',
+        'Add “I washed the dishes and tidied my bedroom”.', 'El fin de semana pasado ayudé en casa: fregué los platos y ordené mi dormitorio.'],
+      ['local', 'Comparatives', 'My town is quieter than Madrid.', 'Mi ciudad es más tranquila que Madrid.',
+        'Add “I want the council to build a sports centre” (querer que + subjunctive).', 'Mi ciudad es más tranquila que Madrid. Quiero que el ayuntamiento construya un polideportivo.'],
+
+      ['holidays', 'Preterite · ir', 'Last summer I went to France with my family.', 'El verano pasado fui a Francia con mi familia.',
+        'Add “It was sunny every day” (imperfect).', 'El verano pasado fui a Francia con mi familia. Hacía sol todos los días.'],
+      ['travel', 'Preterite · ser vs estar', 'We travelled by plane and the journey was long.', 'Viajamos en avión y el viaje fue largo.',
+        'Add “While we were waiting, I read a book” (imperfect + preterite).', 'Viajamos en avión y el viaje fue largo. Mientras esperábamos, leí un libro.'],
+      ['holidays', 'Imperfect for habits', 'Every day we used to go to the beach.', 'Todos los días íbamos a la playa.',
+        'Add “but one day it rained” (preterite for one event).', 'Todos los días íbamos a la playa, pero un día llovió.'],
+      ['environ', 'Modal · deber', 'We must protect the environment.', 'Debemos proteger el medio ambiente.',
+        'Add “It is necessary for everyone to recycle” (es necesario que + subjunctive).', 'Debemos proteger el medio ambiente. Es necesario que todos reciclen.',
+        'Tenemos que proteger el medio ambiente.'],
+      ['environ', 'Adverb placement', 'I always switch off the lights.', 'Siempre apago las luces.',
+        'Add “If everyone did the same, we would save energy”.', 'Siempre apago las luces. Si todos hicieran lo mismo, ahorraríamos energía.'],
+      ['travel', 'Preterite · reflexive', 'I stayed in a hotel near the beach.', 'Me alojé en un hotel cerca de la playa.',
+        'Add “Next year I would like to go camping” (conditional).', 'Me alojé en un hotel cerca de la playa. El año que viene me gustaría ir de camping.',
+        'Me quedé en un hotel cerca de la playa.'],
+      ['holidays', 'Preterite · regular -ar', 'I visited the monuments and I bought souvenirs.', 'Visité los monumentos y compré recuerdos.',
+        'Add “When I go back, I will visit the museum” (cuando + subjunctive).', 'Visité los monumentos y compré recuerdos. Cuando vuelva, visitaré el museo.'],
+      ['environ', 'Present vs imperfect', 'Pollution is a big problem in cities.', 'La contaminación es un gran problema en las ciudades.',
+        'Add “In the past there were fewer cars” (imperfect of hay).', 'La contaminación es un gran problema en las ciudades. Antes había menos coches.'],
+
+      ['family', 'Comparatives · mayor que', 'My brother is older than me.', 'Mi hermano es mayor que yo.',
+        'Add “When he was little, he was very shy” (imperfect).', 'Mi hermano es mayor que yo. Cuando era pequeño, era muy tímido.'],
+      ['friends', 'Preterite · conocerse', 'My best friend and I met at school.', 'Mi mejor amigo y yo nos conocimos en el colegio.',
+        'Add “We were eleven years old” (imperfect of tener).', 'Mi mejor amigo y yo nos conocimos en el colegio. Teníamos once años.',
+        'Mi mejor amiga y yo nos conocimos en el instituto.'],
+      ['friends', 'Relative que', 'The person I admire most is my grandmother.', 'La persona que más admiro es mi abuela.',
+        'Add “because she always used to help me when I was little” (imperfect).', 'La persona que más admiro es mi abuela, porque siempre me ayudaba cuando era pequeño/a.'],
+      ['family', 'Preterite · regular -ir', 'Yesterday I argued with my parents.', 'Ayer discutí con mis padres.',
+        'Add “because I got home very late” (preterite).', 'Ayer discutí con mis padres porque llegué a casa muy tarde.'],
+      ['routine', 'Reflexive verbs · present', 'I have a shower and I get dressed.', 'Me ducho y me visto.',
+        'Put it in the past: “Yesterday I had a shower and got dressed quickly” (preterite).', 'Ayer me duché y me vestí rápidamente.'],
+      ['freetime', 'Present tense · llevar + gerund', 'I go swimming twice a week.', 'Hago natación dos veces a la semana.',
+        'Add “I have been swimming for five years” (llevar + gerund).', 'Hago natación dos veces a la semana. Llevo cinco años nadando.',
+        'Nado dos veces por semana.'],
+      ['routine', 'Negatives · querer que + subjunctive', 'I never eat fast food.', 'Nunca como comida rápida.',
+        'Add “My mum wants me to eat more fruit” (querer que + subjunctive).', 'Nunca como comida rápida. Mi madre quiere que coma más fruta.',
+        'No como nunca comida basura.'],
+      ['tech', 'Preterite · pluperfect', 'I didn’t send the message.', 'No mandé el mensaje.',
+        'Add “because I had left my mobile at home” (pluperfect).', 'No mandé el mensaje porque había dejado el móvil en casa.',
+        'No envié el mensaje.'],
+      ['tech', 'Comparatives · adjective agreement', 'Tablets are more practical than computers.', 'Las tabletas son más prácticas que los ordenadores.',
+        'Add “but I prefer my laptop because the screen is bigger”.', 'Las tabletas son más prácticas que los ordenadores, pero prefiero mi portátil porque la pantalla es más grande.'],
+      ['tech', 'Imperfect vs preterite', 'When I was young, I didn’t have a mobile.', 'Cuando era joven, no tenía móvil.',
+        'Add “I got my first mobile when I was eleven” (preterite + imperfect).', 'Cuando era joven, no tenía móvil. Tuve mi primer móvil cuando tenía once años.'],
+      ['tech', 'Near future · en cuanto + subjunctive', 'Tonight I’m going to watch a series on my tablet.', 'Esta noche voy a ver una serie en mi tableta.',
+        'Add “as soon as I finish my homework” (en cuanto + subjunctive).', 'Esta noche voy a ver una serie en mi tableta en cuanto termine los deberes.'],
+      ['tech', 'Preterite · no creo que', 'My sister spent three hours on social media.', 'Mi hermana pasó tres horas en las redes sociales.',
+        'Add “I don’t think that is healthy” (no creo que + subjunctive).', 'Mi hermana pasó tres horas en las redes sociales. No creo que sea sano.'],
+      ['holidays', 'Preterite vs imperfect', 'My mother went up the Eiffel Tower.', 'Mi madre subió a la torre Eiffel.',
+        'Add “but I stayed at the bottom because I was scared”.', 'Mi madre subió a la torre Eiffel, pero yo me quedé abajo porque tenía miedo.'],
+      ['travel', 'Transport · en', 'We travelled by train and by bike.', 'Viajamos en tren y en bici.',
+        'Add “It was cheaper than the plane”.', 'Viajamos en tren y en bici. Fue más barato que el avión.'],
+      ['holidays', 'Conditional · si + imperfect subjunctive', 'Ideally, I would go to Mexico.', 'Idealmente, iría a México.',
+        'Add “If I had money, I would visit the pyramids”.', 'Idealmente, iría a México. Si tuviera dinero, visitaría las pirámides.'],
+      ['local', 'Había · preterite', 'In the past there were more shops in my town.', 'Antes había más tiendas en mi pueblo.',
+        'Add “but lots of them closed during the pandemic” (preterite).', 'Antes había más tiendas en mi pueblo, pero muchas cerraron durante la pandemia.']
+    ],
+
+    de: [
+      ['routine', 'Verb second · separable verb', 'At seven o’clock I get up.', 'Um sieben Uhr stehe ich auf.',
+        'Add “because I have to catch the bus” (weil sends the verb to the end).', 'Um sieben Uhr stehe ich auf, weil ich den Bus nehmen muss.'],
+      ['routine', 'Perfect with sein · verb second', 'Yesterday I went to bed late.', 'Gestern bin ich spät ins Bett gegangen.',
+        'Add “because I watched a film” (weil + perfect: auxiliary last).', 'Gestern bin ich spät ins Bett gegangen, weil ich einen Film gesehen habe.'],
+      ['freetime', 'Verb second · time–manner–place', 'At the weekend I play football with my friends.', 'Am Wochenende spiele ich mit meinen Freunden Fußball.',
+        'Add “although it is often cold” (obwohl).', 'Am Wochenende spiele ich mit meinen Freunden Fußball, obwohl es oft kalt ist.'],
+      ['freetime', 'Perfect with sein · verb second', 'Last Saturday I went to the cinema.', 'Letzten Samstag bin ich ins Kino gegangen.',
+        'Add “and I think that the film was really funny” (dass).', 'Letzten Samstag bin ich ins Kino gegangen, und ich finde, dass der Film sehr lustig war.'],
+      ['tech', 'Verb second · time phrase first', 'Every day I use my mobile phone.', 'Jeden Tag benutze ich mein Handy.',
+        'Add “because I can chat with my friends” (weil + modal verb last).', 'Jeden Tag benutze ich mein Handy, weil ich mit meinen Freunden chatten kann.',
+        'Ich benutze jeden Tag mein Handy.'],
+      ['tech', 'Dass · verb to the end', 'My parents say that I spend too much time online.', 'Meine Eltern sagen, dass ich zu viel Zeit online verbringe.',
+        'Add “but I think that the internet is useful”.', 'Meine Eltern sagen, dass ich zu viel Zeit online verbringe, aber ich finde, dass das Internet nützlich ist.'],
+      ['freetime', 'Wenn · verb, comma, verb', 'In the evening I often read books.', 'Am Abend lese ich oft Bücher.',
+        'Rewrite it as “When I have time, I read books” (wenn clause first).', 'Wenn ich Zeit habe, lese ich Bücher.',
+        'Abends lese ich oft Bücher.'],
+      ['tech', 'Perfect with haben · separable', 'Yesterday I downloaded an app.', 'Gestern habe ich eine App heruntergeladen.',
+        'Add “which my brother recommended” (relative clause, verb last).', 'Gestern habe ich eine App heruntergeladen, die mein Bruder empfohlen hat.'],
+
+      ['school', 'Weil · verb to the end', 'My favourite subject is history because the teacher is nice.', 'Mein Lieblingsfach ist Geschichte, weil der Lehrer nett ist.',
+        'Add “although we get too much homework” (obwohl).', 'Mein Lieblingsfach ist Geschichte, weil der Lehrer nett ist, obwohl wir zu viele Hausaufgaben bekommen.',
+        'Mein Lieblingsfach ist Geschichte, weil die Lehrerin nett ist.'],
+      ['rules', 'Modal verb dürfen', 'We are not allowed to use our phones in lessons.', 'Wir dürfen unsere Handys im Unterricht nicht benutzen.',
+        'Add “I find that unfair, because we need them for research”.', 'Wir dürfen unsere Handys im Unterricht nicht benutzen. Ich finde das unfair, weil wir sie für Recherchen brauchen.'],
+      ['school', 'Perfect with sein · verb second', 'This morning I arrived late at school.', 'Heute Morgen bin ich zu spät zur Schule gekommen.',
+        'Add “because I missed the bus” (weil + perfect).', 'Heute Morgen bin ich zu spät zur Schule gekommen, weil ich den Bus verpasst habe.',
+        'Heute Morgen bin ich spät in der Schule angekommen.'],
+      ['rules', 'Modal verb müssen', 'We have to wear a uniform.', 'Wir müssen eine Uniform tragen.',
+        'Add “although I don’t like it” (obwohl + mögen).', 'Wir müssen eine Uniform tragen, obwohl ich sie nicht mag.',
+        'An unserer Schule müssen wir eine Uniform tragen.'],
+      ['future', 'Future with werden', 'Next year I will do A levels.', 'Nächstes Jahr werde ich das Abitur machen.',
+        'Add “because I would like to go to university” (weil + möchte, infinitive before it).', 'Nächstes Jahr werde ich das Abitur machen, weil ich an die Uni gehen möchte.'],
+      ['school', 'Perfect with sein · dass', 'Last week we went on a school trip to Berlin.', 'Letzte Woche sind wir auf Klassenfahrt nach Berlin gefahren.',
+        'Add “I think that the trip was great” (dass).', 'Letzte Woche sind wir auf Klassenfahrt nach Berlin gefahren. Ich glaube, dass die Fahrt toll war.'],
+      ['rules', 'Dass · Konjunktiv II', 'I think that the school day is too long.', 'Ich finde, dass der Schultag zu lang ist.',
+        'Add “If I were head teacher, I would change that” (wenn + wäre, würde).', 'Ich finde, dass der Schultag zu lang ist. Wenn ich Schulleiter(in) wäre, würde ich das ändern.'],
+      ['school', 'Imperfect of haben / sein', 'At primary school I had lots of friends.', 'In der Grundschule hatte ich viele Freunde.',
+        'Add “because I was very sporty” (weil + war).', 'In der Grundschule hatte ich viele Freunde, weil ich sehr sportlich war.'],
+
+      ['family', 'Reflexive · sich verstehen', 'I get on well with my mother.', 'Ich verstehe mich gut mit meiner Mutter.',
+        'Add “but I argue with my brother because he is annoying”.', 'Ich verstehe mich gut mit meiner Mutter, aber ich streite mich mit meinem Bruder, weil er nervig ist.'],
+      ['friends', 'Relative clause · verb last', 'A good friend is someone who listens to me.', 'Ein guter Freund ist jemand, der mir zuhört.',
+        'Add “We got to know each other at primary school” (sich kennenlernen, perfect).', 'Ein guter Freund ist jemand, der mir zuhört. Wir haben uns in der Grundschule kennengelernt.'],
+      ['home', 'Dative after in / auf', 'I live in a small house in the countryside.', 'Ich wohne in einem kleinen Haus auf dem Land.',
+        'Add “but if I were rich, I would live in a big city” (wenn + Konjunktiv II).', 'Ich wohne in einem kleinen Haus auf dem Land, aber wenn ich reich wäre, würde ich in einer großen Stadt wohnen.'],
+      ['local', 'Es gibt + accusative · kein', 'In my town there is a cinema but there isn’t a swimming pool.', 'In meiner Stadt gibt es ein Kino, aber es gibt kein Schwimmbad.',
+        'Add “That’s a shame, because I like swimming” (weil + gern).', 'In meiner Stadt gibt es ein Kino, aber es gibt kein Schwimmbad. Das ist schade, weil ich gern schwimme.'],
+      ['family', 'Dass + perfect with sein', 'My grandparents were born in Turkey.', 'Meine Großeltern sind in der Türkei geboren.',
+        'Add “I know that they moved to Germany in 1975” (dass + perfect: sind last).', 'Meine Großeltern sind in der Türkei geboren. Ich weiß, dass sie 1975 nach Deutschland gezogen sind.',
+        'Meine Großeltern wurden in der Türkei geboren.'],
+      ['friends', 'Als · verb, comma, verb', 'When I was younger, I often argued with my sister.', 'Als ich jünger war, habe ich mich oft mit meiner Schwester gestritten.',
+        'Add “but now we get on really well”.', 'Als ich jünger war, habe ich mich oft mit meiner Schwester gestritten, aber jetzt verstehen wir uns sehr gut.',
+        'Als ich jünger war, stritt ich mich oft mit meiner Schwester.'],
+      ['home', 'Helfen + dative · perfect', 'Last weekend I helped my parents at home.', 'Letztes Wochenende habe ich meinen Eltern zu Hause geholfen.',
+        'Add “I washed up and tidied my room” (separable verbs in the perfect).', 'Letztes Wochenende habe ich meinen Eltern zu Hause geholfen. Ich habe abgewaschen und mein Zimmer aufgeräumt.'],
+      ['local', 'Dass · obwohl', 'My cousin says that my town is boring.', 'Mein Cousin sagt, dass meine Stadt langweilig ist.',
+        'Add “although there are lots of shops” (obwohl + es gibt).', 'Mein Cousin sagt, dass meine Stadt langweilig ist, obwohl es viele Geschäfte gibt.'],
+
+      ['holidays', 'Perfect with sein · time–manner–place', 'Last year I went to Spain with my family.', 'Letztes Jahr bin ich mit meiner Familie nach Spanien gefahren.',
+        'Add “It was sunny every day” (imperfect).', 'Letztes Jahr bin ich mit meiner Familie nach Spanien gefahren. Es war jeden Tag sonnig.'],
+      ['travel', 'Während · verb, comma, verb', 'We flew to Italy and the flight was long.', 'Wir sind nach Italien geflogen und der Flug war lang.',
+        'Add “While we were waiting, I read a book” (während clause first).', 'Wir sind nach Italien geflogen und der Flug war lang. Während wir gewartet haben, habe ich ein Buch gelesen.'],
+      ['holidays', 'Obwohl · verb to the end', 'Every day we went to the beach.', 'Jeden Tag sind wir an den Strand gegangen.',
+        'Add “although it was sometimes windy” (obwohl).', 'Jeden Tag sind wir an den Strand gegangen, obwohl es manchmal windig war.'],
+      ['environ', 'Modal verb · dass', 'We must protect the environment.', 'Wir müssen die Umwelt schützen.',
+        'Add “I think that everyone should recycle” (dass + sollte last).', 'Wir müssen die Umwelt schützen. Ich denke, dass jeder recyceln sollte.'],
+      ['environ', 'Separable verb · weil + modal', 'I always switch off the light.', 'Ich mache immer das Licht aus.',
+        'Add “because I want to save energy” (weil + modal last).', 'Ich mache immer das Licht aus, weil ich Energie sparen will.'],
+      ['travel', 'Perfect with haben · dative', 'I stayed in a hotel by the sea.', 'Ich habe in einem Hotel am Meer übernachtet.',
+        'Add “Next year I would like to go camping” (verb second after the time phrase).', 'Ich habe in einem Hotel am Meer übernachtet. Nächstes Jahr möchte ich zelten gehen.',
+        'Ich habe in einem Hotel am Meer gewohnt.'],
+      ['holidays', 'Future with werden · wenn', 'Next summer I will travel to Austria.', 'Nächsten Sommer werde ich nach Österreich reisen.',
+        'Add “if I have enough money” (wenn).', 'Nächsten Sommer werde ich nach Österreich reisen, wenn ich genug Geld habe.'],
+      ['environ', 'Weil + es gibt', 'Pollution is a big problem in cities.', 'Die Umweltverschmutzung ist ein großes Problem in den Städten.',
+        'Add “because there are too many cars” (weil + es gibt).', 'Die Umweltverschmutzung ist ein großes Problem in den Städten, weil es zu viele Autos gibt.'],
+
+      ['family', 'Comparatives · als', 'My brother is older than me.', 'Mein Bruder ist älter als ich.',
+        'Add “When he was little, he was very shy” (als clause first: verb, comma, verb).', 'Mein Bruder ist älter als ich. Als er klein war, war er sehr schüchtern.'],
+      ['friends', 'Helfen + dative · wenn', 'My best friend always helps me.', 'Meine beste Freundin hilft mir immer.',
+        'Add “when I have problems” (wenn sends the verb to the end).', 'Meine beste Freundin hilft mir immer, wenn ich Probleme habe.',
+        'Mein bester Freund hilft mir immer.'],
+      ['friends', 'Relative clause · verb last', 'The person I admire most is my grandmother.', 'Die Person, die ich am meisten bewundere, ist meine Oma.',
+        'Add “because she has always helped me” (weil + perfect).', 'Die Person, die ich am meisten bewundere, ist meine Oma, weil sie mir immer geholfen hat.'],
+      ['family', 'Reflexive · perfect · verb second', 'Yesterday I argued with my parents.', 'Gestern habe ich mich mit meinen Eltern gestritten.',
+        'Add “because I came home too late” (weil + perfect with sein).', 'Gestern habe ich mich mit meinen Eltern gestritten, weil ich zu spät nach Hause gekommen bin.'],
+      ['routine', 'Reflexive (dative) · bevor', 'After breakfast I brush my teeth.', 'Nach dem Frühstück putze ich mir die Zähne.',
+        'Add “before I leave the house” (bevor sends the verb to the end).', 'Nach dem Frühstück putze ich mir die Zähne, bevor ich das Haus verlasse.'],
+      ['freetime', 'Seit + present tense', 'I go swimming twice a week.', 'Ich gehe zweimal pro Woche schwimmen.',
+        'Add “I have been swimming for five years” (seit + present tense).', 'Ich gehe zweimal pro Woche schwimmen. Ich schwimme seit fünf Jahren.'],
+      ['routine', 'Nie · weil + modal', 'I never eat fast food.', 'Ich esse nie Fast Food.',
+        'Add “because I want to stay healthy” (weil + modal verb last).', 'Ich esse nie Fast Food, weil ich gesund bleiben will.'],
+      ['tech', 'Perfect · weil + pluperfect', 'I didn’t send the message.', 'Ich habe die Nachricht nicht geschickt.',
+        'Add “because I had forgotten my phone” (weil + pluperfect).', 'Ich habe die Nachricht nicht geschickt, weil ich mein Handy vergessen hatte.'],
+      ['tech', 'Comparatives · weil', 'Tablets are more practical than computers.', 'Tablets sind praktischer als Computer.',
+        'Add “but I prefer my laptop, because the screen is bigger”.', 'Tablets sind praktischer als Computer, aber ich mag meinen Laptop lieber, weil der Bildschirm größer ist.'],
+      ['tech', 'Als · verb, comma, verb', 'When I was young, I didn’t have a mobile phone.', 'Als ich jung war, hatte ich kein Handy.',
+        'Add “I got my first phone when I was eleven” (als clause, verb last).', 'Als ich jung war, hatte ich kein Handy. Ich habe mein erstes Handy bekommen, als ich elf war.'],
+      ['tech', 'Wenn · verb, comma, verb', 'This evening I will watch a series on my tablet.', 'Heute Abend werde ich eine Serie auf meinem Tablet sehen.',
+        'Rewrite it starting “If I finish my homework…” (wenn clause first).', 'Wenn ich mit meinen Hausaufgaben fertig bin, werde ich heute Abend eine Serie auf meinem Tablet sehen.'],
+      ['tech', 'Dass · obwohl', 'I think that social media is dangerous.', 'Ich denke, dass soziale Medien gefährlich sind.',
+        'Add “although I use it every day” (obwohl).', 'Ich denke, dass soziale Medien gefährlich sind, obwohl ich sie jeden Tag benutze.'],
+      ['holidays', 'Perfect with sein · weil', 'My mother went up the Eiffel Tower.', 'Meine Mutter ist auf den Eiffelturm gestiegen.',
+        'Add “but I stayed at the bottom, because I was scared” (weil + hatte).', 'Meine Mutter ist auf den Eiffelturm gestiegen, aber ich bin unten geblieben, weil ich Angst hatte.'],
+      ['travel', 'Mit + dative · weil', 'We travelled by train and by bike.', 'Wir sind mit dem Zug und mit dem Rad gefahren.',
+        'Add “because that is cheaper than the plane” (weil).', 'Wir sind mit dem Zug und mit dem Rad gefahren, weil das billiger ist als das Flugzeug.'],
+      ['holidays', 'Konjunktiv II', 'Ideally, I would go to Switzerland.', 'Idealerweise würde ich in die Schweiz fahren.',
+        'Add “If I had money, I would go skiing” (wenn + hätte, würde).', 'Idealerweise würde ich in die Schweiz fahren. Wenn ich Geld hätte, würde ich Ski fahren.'],
+      ['local', 'Es gab · imperfect', 'In the past there were more shops in my town.', 'Früher gab es mehr Geschäfte in meiner Stadt.',
+        'Add “but lots of them have closed” (perfect).', 'Früher gab es mehr Geschäfte in meiner Stadt, aber viele davon haben geschlossen.']
+    ]
+  };
+  Object.keys(BANK).forEach(function (lang) {
+    BANK[lang] = BANK[lang].map(function (a) {
+      return { topic: a[0], focus: a[1], en: a[2], tl: a[3], bonus: a[4], bonusTl: a[5], alt: a[6] || '' };
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  var KEY = 'slt-interleaved-grid-v2';
+  var state = {
+    lang: 'fr', spec: 'AQA', size: 4, unit: 2,
+    cards: [],              // { i: bank index, mystery: bool, by: 'A'|'B'|'-'|null, pts }
+    scores: { A: 0, B: 0 },
+    names: { A: 'Team A', B: 'Team B' },
+    voices: {},             // chosen voice name per language
+    slow: false
+  };
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (!s || !BANK[s.lang] || !s.cards || !s.cards.length) return false;
+      if (s.cards.some(function (c) { return !BANK[s.lang][c.i]; })) return false;
+      s.voices = s.voices || {};
+      if (!(s.unit >= 0 && s.unit < UNITS.length)) s.unit = 2;
+      state = s;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // An equal number of cards from each tier. A 5×5 board has 6 per tier and a
+  // mystery card in the centre whose tier is only shown when it is opened.
+  function newBoard() {
+    var bank = BANK[state.lang];
+    var per = state.size === 5 ? 6 : 4;
+    var spare = [];
+    var cards = [];
+    [1, 2, 3, 4].forEach(function (tier) {
+      var pool = shuffle(bank.map(function (q, i) { return i; }).filter(function (i) { return tierOf(bank[i]) === tier; }));
+      pool.slice(0, per).forEach(function (i) { cards.push({ i: i, mystery: false, by: null, pts: 0 }); });
+      spare = spare.concat(pool.slice(per));
+    });
+    shuffle(cards);
+    if (state.size === 5) {
+      var m = spare[Math.floor(Math.random() * spare.length)];
+      cards.splice(12, 0, { i: m, mystery: true, by: null, pts: 0 });
+    }
+    state.cards = cards;
+    save();
+    render();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------------
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $('grid');
+
+  function q(card) { return BANK[state.lang][card.i]; }
+  function theme(topic) { return TOPICS[topic][state.spec === 'AQA' ? 1 : 2]; }
+  function teamName(t) { return state.names[t] || ('Team ' + t); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+
+  function render() {
+    var L = LANGS[state.lang];
+    $('lang').value = state.lang;
+    $('spec').value = state.spec;
+    $('size').value = String(state.size);
+    $('unit').value = String(state.unit);
+    $('subtitle').textContent = 'Spaced retrieval · ' + state.spec + ' GCSE ' + L.name + ' (' + L.codes[state.spec] + ')';
+    $('nameA').value = teamName('A');
+    $('nameB').value = teamName('B');
+    $('scoreA').textContent = state.scores.A;
+    $('scoreB').textContent = state.scores.B;
+
+    $('legend').innerHTML = [1, 2, 3, 4].map(function (t) {
+      var units = UNITS.filter(function (u, i) { return tierOfUnit(i) === t; }).map(function (u) { return u.name; });
+      return '<span class="key" style="--c: var(--t' + t + ')"><span class="dot">' + t + '</span>' +
+        '<span>' + TIERS[t].name + ' <span class="units">' + esc(units.join(' · ')) + '</span></span></span>';
+    }).join('') + '<span class="hint">Every card has a <b>+1 higher-tier bonus</b></span>';
+
+    grid.setAttribute('style', '--n: ' + state.size);
+    grid.innerHTML = state.cards.map(function (c, idx) {
+      var item = q(c);
+      var tier = tierOf(item);
+      var claim = '';
+      if (c.by) {
+        var who = c.by === '-' ? 'No points' : esc(teamName(c.by));
+        var wc = c.by === 'A' ? 'var(--team-a)' : c.by === 'B' ? 'var(--team-b)' : 'var(--muted)';
+        claim = '<span class="claim" style="--wc:' + wc + '"><span class="who">' + who + '</span>' +
+          (c.by === '-' ? '' : '<span class="pts">+' + c.pts + '</span>') + '</span>';
+      }
+      var label;
+      if (c.mystery && !c.by) {
+        label = 'Mystery card';
+        return '<button class="card mystery" type="button" role="listitem" data-idx="' + idx + '" aria-label="' + label + ', 1 to 4 points">' +
+          '<span class="recency">Mystery · 1–4 pts</span><span class="q">?</span><span class="recency">Any tier</span></button>';
+      }
+      label = TIERS[tier].pts + ' points, ' + TIERS[tier].name + ', ' + TOPICS[item.topic][0] + (c.by ? ', claimed' : '');
+      return '<button class="card' + (c.by ? ' claimed' : '') + '" type="button" role="listitem" data-idx="' + idx + '" data-tier="' + tier + '" aria-label="' + esc(label) + '">' +
+        '<span class="row"><span class="recency">' + TIERS[tier].short + (c.mystery ? ' · mystery' : '') + '</span><span class="badge">' + TIERS[tier].pts + '</span></span>' +
+        '<span><span class="topic">' + TOPICS[item.topic][0] + '</span><br><span class="theme">' + esc(theme(item.topic)) + '</span></span>' +
+        claim + '</button>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scores
+  // ---------------------------------------------------------------------------
+  function addScore(team, d) {
+    state.scores[team] = Math.max(0, state.scores[team] + d);
+    $('score' + team).textContent = state.scores[team];
+    var el = $('team' + team);
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    save();
+  }
+
+  document.querySelectorAll('.step').forEach(function (b) {
+    b.addEventListener('click', function () { addScore(b.dataset.team, +b.dataset.d); });
+  });
+  ['A', 'B'].forEach(function (t) {
+    $('name' + t).addEventListener('input', function (e) {
+      state.names[t] = e.target.value.trim() || ('Team ' + t);
+      updateAwardLabels();
+      save();
+    });
+    $('name' + t).addEventListener('change', render);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Speech
+  // ---------------------------------------------------------------------------
+  var canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  var speakingBtn = null;
+
+  // Drop the gender markers that are for display only: allé(e)s, pequeño/a, Schulleiter(in).
+  function forSpeech(s) {
+    return s.replace(/\((?:e|es|s|in|innen)\)/g, '').replace(/\/(?:a|as)\b/g, '');
+  }
+
+  // Two engines. The default is Google Translate's voice, streamed as MP3: the
+  // same natural voice on every machine, whatever voices it has installed. It is
+  // an unofficial endpoint and needs the internet, and school filters sometimes
+  // block translate.google.com, so if it fails a browser voice for the same
+  // language takes over. An English voice never reads a French answer.
+  var GOOGLE = 'google';
+  var googleFailedAt = 0;         // after a failure, skip Google for a short while
+  var GOOGLE_RETRY_MS = 30000;
+  var player = new Audio();       // one element, reused, so autoplay rules are happy
+  player.preload = 'auto';
+
+  function googleUrl(text) {
+    return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + state.lang +
+      (state.slow ? '&ttsspeed=0.24' : '') + '&q=' + encodeURIComponent(text);
+  }
+
+  // Browser voices vary hugely in quality. The neural ones (Edge's "Natural" /
+  // "Online" voices, Chrome's Google voices, Apple's Enhanced / Premium ones)
+  // sound far more like a native speaker than the older desktop voices, so rank
+  // them first, and prefer the right country: fr-FR over fr-CA, es-ES over es-MX.
+  function voiceScore(v, code) {
+    var n = v.name, s = 0;
+    if (v.lang.replace('_', '-') === code) s += 40;
+    if (/natural|neural|online/i.test(n)) s += 100;
+    if (/google/i.test(n)) s += 60;
+    if (/premium|enhanced|siri/i.test(n)) s += 50;
+    if (/espeak|compact/i.test(n)) s -= 100;
+    return s;
+  }
+
+  function voicesFor(lang) {
+    if (!canSpeak) return [];
+    var code = LANGS[lang].voice;
+    return window.speechSynthesis.getVoices()
+      .filter(function (v) { return v.lang.slice(0, 2).toLowerCase() === lang; })
+      .sort(function (a, b) { return voiceScore(b, code) - voiceScore(a, code); });
+  }
+
+  function useGoogle() {
+    var chosen = state.voices[state.lang];
+    // A saved browser voice that this machine doesn't have counts as Google.
+    var own = chosen && chosen !== GOOGLE && voicesFor(state.lang).some(function (v) { return v.name === chosen; });
+    return !own && !googleDown();
+  }
+
+  function googleDown() { return googleFailedAt && Date.now() - googleFailedAt < GOOGLE_RETRY_MS; }
+
+  function pickVoice() {
+    var list = voicesFor(state.lang);
+    var chosen = state.voices[state.lang];
+    return list.find(function (v) { return v.name === chosen; }) || list[0] || null;
+  }
+
+  function fillVoices() {
+    var sel = $('mVoice');
+    var list = voicesFor(state.lang);
+    var chosen = state.voices[state.lang] || GOOGLE;
+    sel.innerHTML = '<option value="' + GOOGLE + '">Google Translate voice (online)</option>' +
+      list.map(function (v) {
+        return '<option value="' + esc(v.name) + '">' + esc(v.name.replace(/^Microsoft /, '')) + ' (' + v.lang + ')</option>';
+      }).join('');
+    sel.value = chosen === GOOGLE || list.some(function (v) { return v.name === chosen; }) ? chosen : GOOGLE;
+    var L = LANGS[state.lang];
+    var tip = '', warn = false;
+    if (sel.value === GOOGLE && googleDown()) {
+      warn = true;
+      tip = 'Google’s voice didn’t load (no internet, or blocked by the school filter). ' +
+        (list.length ? 'Using this computer’s ' + L.name + ' voice instead.'
+                     : 'This computer has no ' + L.name + ' voice either, so nothing was played rather than read it in English. Try again in a moment, use Microsoft Edge, or add a ' + L.name + ' voice in Windows: Settings › Time & language › Speech.');
+    } else if (sel.value !== GOOGLE && !list.length) {
+      warn = true;
+      tip = 'This browser has no ' + L.name + ' voice. Choose the Google voice, or open the page in Microsoft Edge.';
+    }
+    $('mVoiceTip').textContent = tip;
+    $('mVoiceTip').classList.toggle('warn', warn);
+  }
+
+  var speakRun = 0;
+
+  function busyNow() {
+    return !player.paused || (canSpeak && (window.speechSynthesis.speaking || window.speechSynthesis.pending));
+  }
+
+  function stopAll() {
+    speakRun++;
+    player.onended = player.onerror = player.onplaying = null;
+    player.pause();
+    if (canSpeak) window.speechSynthesis.cancel();
+    if (speakingBtn) speakingBtn.classList.remove('talking');
+    speakingBtn = null;
+  }
+
+  function speak(text, btn) {
+    // A second tap stops it, but only if something really is still playing:
+    // some voices never fire 'end', which used to leave the button stuck.
+    var wasMe = speakingBtn === btn && busyNow();
+    var busy = busyNow();
+    stopAll();
+    var run = speakRun;
+    if (wasMe) return;
+
+    var code = LANGS[state.lang].voice;
+    // One clip or utterance per sentence: Google caps a request at about 200
+    // characters, and Chrome's online voices cut out after ~15 s.
+    var parts = forSpeech(text).split(/(?<=[.!?:;])\s+/).filter(Boolean);
+
+    function done() {
+      if (run !== speakRun) return;
+      btn.classList.remove('talking');
+      if (speakingBtn === btn) speakingBtn = null;
+    }
+
+    function browserVoice(from, v, retried) {
+      // No voice for this language: stay silent rather than let the system's
+      // default (usually English) voice mangle the answer.
+      if (!canSpeak || !v || v.lang.slice(0, 2).toLowerCase() !== state.lang) return done();
+      var synth = window.speechSynthesis;
+      synth.resume();
+      parts.slice(from).forEach(function (part, i, rest) {
+        var u = new SpeechSynthesisUtterance(part);
+        u.lang = v ? v.lang : code;
+        if (v) u.voice = v;
+        u.rate = state.slow ? 0.6 : 0.85;
+        u.onerror = function (e) {
+          if (run !== speakRun || e.error === 'interrupted' || e.error === 'canceled') return done();
+          // Online browser voices fail when the network blocks them: fall back
+          // once to the best voice installed locally.
+          var local = voicesFor(state.lang).find(function (x) { return x.localService; });
+          if (!retried && v && !v.localService) {
+            synth.cancel();
+            browserVoice(from, local || null, true);
+          } else done();
+        };
+        if (i === rest.length - 1) u.onend = done;
+        synth.speak(u);
+      });
+    }
+
+    function google(i) {
+      if (run !== speakRun) return;
+      if (i >= parts.length) return done();
+      var started = false, failed = false;
+      var timer = setTimeout(function () { if (!started) fail(); }, 5000);
+      // Called by the error event and by play()'s rejection: act only once.
+      function fail() {
+        clearTimeout(timer);
+        if (failed || run !== speakRun) return;
+        failed = true;
+        player.onended = player.onerror = player.onplaying = null;
+        player.pause();
+        googleFailedAt = Date.now();
+        fillVoices();
+        browserVoice(i, voicesFor(state.lang)[0] || null, false);
+      }
+      player.onplaying = function () { started = true; clearTimeout(timer); };
+      player.onerror = fail;
+      player.onended = function () { clearTimeout(timer); google(i + 1); };
+      player.src = googleUrl(parts[i]);
+      var p = player.play();
+      if (p && p.catch) p.catch(function (e) { if (e.name !== 'AbortError') fail(); });
+    }
+
+    speakingBtn = btn;
+    btn.classList.add('talking');
+    // Chrome can silently drop a speak() that follows cancel() in the same tick;
+    // give it a moment when something was playing.
+    setTimeout(function () {
+      if (run !== speakRun) return;
+      if (useGoogle()) google(0);
+      else browserVoice(0, pickVoice(), false);
+    }, busy ? 120 : 0);
+  }
+
+  $('mVoice').addEventListener('change', function (e) {
+    state.voices[state.lang] = e.target.value;
+    if (e.target.value === GOOGLE) googleFailedAt = 0; // let it try again
+    save();
+    fillVoices();
+    speak($('mTl').textContent, $('mSpeak'));
+  });
+  $('mSlow').addEventListener('click', function () {
+    state.slow = !state.slow;
+    this.setAttribute('aria-pressed', String(state.slow));
+    save();
+  });
+  if (canSpeak && 'onvoiceschanged' in window.speechSynthesis) {
+    window.speechSynthesis.addEventListener('voiceschanged', function () {
+      if (overlay.classList.contains('open')) fillVoices();
+    });
+  }
+  if (canSpeak) window.speechSynthesis.getVoices(); // warm the voice list
+
+  // ---------------------------------------------------------------------------
+  // Modal
+  // ---------------------------------------------------------------------------
+  var overlay = $('overlay');
+  var modal = $('modal');
+  var current = -1;
+  var bonusOn = false;
+  var lastFocus = null;
+
+  function updateAwardLabels() {
+    if (current < 0) return;
+    var pts = TIERS[tierOf(q(state.cards[current]))].pts + (bonusOn ? 1 : 0);
+    $('mAwardA').textContent = teamName('A') + ' +' + pts;
+    $('mAwardB').textContent = teamName('B') + ' +' + pts;
+  }
+
+  function openCard(idx) {
+    current = idx;
+    var c = state.cards[idx];
+    var item = q(c);
+    var tier = tierOf(item);
+    var L = LANGS[state.lang];
+    bonusOn = false;
+
+    modal.dataset.tier = tier;
+    $('mBadge').textContent = TIERS[tier].pts;
+    $('mRecency').textContent = (c.mystery ? 'Mystery card · ' : '') + TIERS[tier].name + ' · ' + TIERS[tier].pts + (TIERS[tier].pts === 1 ? ' point' : ' points');
+    $('mTopic').textContent = TOPICS[item.topic][0];
+    $('mTheme').textContent = UNITS[unitOf(item.topic)].name + ' · ' + state.spec + ' ' + theme(item.topic);
+    $('mFocus').textContent = item.focus;
+    $('mTask').textContent = 'Translate into ' + L.name;
+    $('mPrompt').textContent = item.en;
+    $('mBonus').textContent = item.bonus;
+    $('mTl').textContent = item.tl;
+    $('mTl').lang = $('mBonusTl').lang = state.lang;
+    $('mAlt').textContent = item.alt ? 'Also accept: ' + item.alt : '';
+    $('mBonusTl').textContent = item.bonusTl;
+    $('mBonusToggle').setAttribute('aria-pressed', 'false');
+    $('mSlow').setAttribute('aria-pressed', String(!!state.slow));
+    fillVoices();
+
+    var claimed = !!c.by;
+    $('mAnswer').classList.toggle('shown', claimed);
+    $('mReveal').hidden = claimed;
+    $('mActions').hidden = claimed;
+    $('mClaimed').hidden = !claimed;
+    if (claimed) {
+      $('mClaimedNote').innerHTML = c.by === '-' ? 'Claimed with <b>no points</b> awarded.' :
+        '<b>' + esc(teamName(c.by)) + '</b> scored <b>+' + c.pts + '</b> on this card.';
+    }
+    updateAwardLabels();
+
+    lastFocus = document.activeElement;
+    overlay.classList.add('open');
+    (claimed ? $('mDone') : $('mReveal')).focus();
+  }
+
+  function closeModal() {
+    stopAll();
+    overlay.classList.remove('open');
+    current = -1;
+    if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+  }
+
+  function reveal() {
+    $('mAnswer').classList.add('shown');
+    $('mReveal').hidden = true;
+    speak(q(state.cards[current]).tl, $('mSpeak'));
+  }
+
+  function claim(team) {
+    var idx = current;
+    var c = state.cards[idx];
+    var pts = TIERS[tierOf(q(c))].pts + (bonusOn ? 1 : 0);
+    c.by = team;
+    c.pts = team === '-' ? 0 : pts;
+    if (team !== '-') addScore(team, pts);
+    save();
+    closeModal();
+    render();
+    var el = grid.querySelector('[data-idx="' + idx + '"]');
+    if (el) el.focus();
+  }
+
+  function undo() {
+    var idx = current;
+    var c = state.cards[idx];
+    if (c.by === 'A' || c.by === 'B') addScore(c.by, -c.pts);
+    c.by = null;
+    c.pts = 0;
+    save();
+    render();
+    openCard(idx);
+  }
+
+  grid.addEventListener('click', function (e) {
+    var card = e.target.closest('.card');
+    if (card) openCard(+card.dataset.idx);
+  });
+  $('mReveal').addEventListener('click', reveal);
+  $('mSpeak').addEventListener('click', function () { speak($('mTl').textContent, $('mSpeak')); });
+  $('mSpeakB').addEventListener('click', function () { speak($('mBonusTl').textContent, $('mSpeakB')); });
+  $('mBonusToggle').addEventListener('click', function () {
+    bonusOn = !bonusOn;
+    this.setAttribute('aria-pressed', String(bonusOn));
+    updateAwardLabels();
+  });
+  $('mAwardA').addEventListener('click', function () { claim('A'); });
+  $('mAwardB').addEventListener('click', function () { claim('B'); });
+  $('mNobody').addEventListener('click', function () { claim('-'); });
+  $('mUndo').addEventListener('click', undo);
+  $('mDone').addEventListener('click', closeModal);
+  $('mClose').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (!overlay.classList.contains('open')) return;
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Tab') {
+      var f = Array.prototype.filter.call(modal.querySelectorAll('button, [tabindex]'), function (el) {
+        return !el.hidden && el.offsetParent !== null;
+      });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------
+  function inProgress() { return state.cards.some(function (c) { return c.by; }); }
+
+  $('newBoard').addEventListener('click', function () {
+    if (inProgress() && !confirm('Deal a new board? Scores are kept.')) return;
+    newBoard();
+  });
+  $('lang').addEventListener('change', function (e) {
+    if (inProgress() && !confirm('Switch language and deal a new board? Scores are kept.')) { e.target.value = state.lang; return; }
+    state.lang = e.target.value;
+    newBoard();
+  });
+  $('size').addEventListener('change', function (e) {
+    if (inProgress() && !confirm('Change the grid size and deal a new board? Scores are kept.')) { e.target.value = String(state.size); return; }
+    state.size = +e.target.value;
+    newBoard();
+  });
+  $('unit').innerHTML = UNITS.map(function (u, i) {
+    return '<option value="' + i + '">' + u.name + '</option>';
+  }).join('');
+  $('unit').addEventListener('change', function (e) {
+    if (inProgress() && !confirm('Change the current unit and deal a new board? Scores are kept.')) { e.target.value = String(state.unit); return; }
+    state.unit = +e.target.value;
+    newBoard();
+  });
+  $('spec').addEventListener('change', function (e) {
+    state.spec = e.target.value;
+    save();
+    render();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Start: ?lang=fr|es|de&spec=aqa|edexcel presets the board for a shared link.
+  // ---------------------------------------------------------------------------
+  var params = new URLSearchParams(location.search);
+  var pLang = params.get('lang');
+  var pSpec = (params.get('spec') || '').toLowerCase();
+  var restored = load();
+  if (pLang && BANK[pLang] && pLang !== state.lang) { state.lang = pLang; restored = false; }
+  if (pSpec === 'aqa') state.spec = 'AQA';
+  if (pSpec === 'edexcel') state.spec = 'Edexcel';
+  if (restored) render(); else newBoard();
+})();
+</script>
+</body>
+</html>

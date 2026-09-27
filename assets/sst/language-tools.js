@@ -26,5 +26,11 @@ window.SLT_TOOLS = [
     blurb: "Conecta 4: pick a GCSE topic, then answer Spanish vocabulary questions to drop your counters.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["Spanish", "Revision Game", "Interactive"],
     image: "spanish-connect4.png", featured: true,
-    keywords: "spanish espanol español conecta 4 connect four vocabulary vocab mfl languages modern foreign edexcel pearson gcse 1sp1 team game starter plenary retrieval" }
+    keywords: "spanish espanol español conecta 4 connect four vocabulary vocab mfl languages modern foreign edexcel pearson gcse 1sp1 team game starter plenary retrieval" },
+
+  { title: "Interleaved Grid Challenge (beta)", url: "languages/games/interleaved-grid.html",
+    blurb: "Pick a card from a grid of French, Spanish or German translations, worth more points the longer ago the topic was taught, and push for the higher-tier bonus.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
+    image: "interleaved-grid.png",
+    keywords: "interleaving interleaved spaced retrieval practice grid challenge translation english to target language sentence builder higher tier foundation bonus aqa 8652 8662 8692 edexcel pearson 1fr1 1gn1 1sp1 passe compose être avoir reflexive preterite imperfect preterito imperfecto subjunctive subjuntivo weil dass obwohl word order verb second inversion team game starter plenary text to speech" }
 ];
