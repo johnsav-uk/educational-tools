@@ -1,0 +1,137 @@
+{
+  "instruments": [
+    {
+      "key": "pipe_organ",
+      "label": "Pipe Organ",
+      "group": "Organ",
+      "use": "Hymns, entrance and recessional",
+      "file": "pipe_organ-mp3.js"
+    },
+    {
+      "key": "pipe_organ_full",
+      "label": "Pipe Organ (Full)",
+      "group": "Organ",
+      "use": "Louder, for a last verse or recessional",
+      "file": "pipe_organ_full-mp3.js"
+    },
+    {
+      "key": "pipe_organ_flute",
+      "label": "Pipe Organ (Flute)",
+      "group": "Organ",
+      "use": "One quiet stop, for Communion",
+      "file": "pipe_organ_flute-mp3.js"
+    },
+    {
+      "key": "magnificent_gothic",
+      "label": "Magnificent Gothic",
+      "group": "Organ",
+      "use": "Soft pipe organ, the sound VLC plays",
+      "file": "magnificent_gothic-mp3.js"
+    },
+    {
+      "key": "church_organ",
+      "label": "Church Organ",
+      "group": "Organ",
+      "use": "General MIDI organ, plainer",
+      "file": "church_organ-mp3.js"
+    },
+    {
+      "key": "reed_organ",
+      "label": "Reed Organ",
+      "group": "Organ",
+      "use": "Smaller, softer than a pipe organ",
+      "file": "reed_organ-mp3.js"
+    },
+    {
+      "key": "soft_grand_piano",
+      "label": "Soft Grand Piano",
+      "group": "Piano and Keys",
+      "use": "Warm, gently played grand",
+      "file": "soft_grand_piano-mp3.js"
+    },
+    {
+      "key": "upright_piano",
+      "label": "Upright Piano",
+      "group": "Piano and Keys",
+      "use": "Mellow, like a parish hall piano",
+      "file": "upright_piano-mp3.js"
+    },
+    {
+      "key": "yamaha_grand_piano",
+      "label": "Yamaha Grand Piano",
+      "group": "Piano and Keys",
+      "use": "Clear concert grand",
+      "file": "yamaha_grand_piano-mp3.js"
+    },
+    {
+      "key": "acoustic_grand_piano",
+      "label": "Grand Piano",
+      "group": "Piano and Keys",
+      "use": "Brighter General MIDI piano",
+      "file": "acoustic_grand_piano-mp3.js"
+    },
+    {
+      "key": "choir_aahs",
+      "label": "Choir Aahs",
+      "group": "Voices",
+      "use": "Meditative, Communion",
+      "file": "choir_aahs-mp3.js"
+    },
+    {
+      "key": "voice_oohs",
+      "label": "Voice Oohs",
+      "group": "Voices",
+      "use": "Softer than Choir Aahs",
+      "file": "voice_oohs-mp3.js"
+    },
+    {
+      "key": "string_ensemble_1",
+      "label": "Strings",
+      "group": "Strings and Harp",
+      "use": "Warm, general purpose",
+      "file": "string_ensemble_1-mp3.js"
+    },
+    {
+      "key": "string_ensemble_2",
+      "label": "Strings (slow)",
+      "group": "Strings and Harp",
+      "use": "Slower swell, reflective",
+      "file": "string_ensemble_2-mp3.js"
+    },
+    {
+      "key": "orchestral_harp",
+      "label": "Harp",
+      "group": "Strings and Harp",
+      "use": "Communion, Marian hymns",
+      "file": "orchestral_harp-mp3.js"
+    },
+    {
+      "key": "flute",
+      "label": "Flute",
+      "group": "Wind and Brass",
+      "use": "Gentle melody line",
+      "file": "flute-mp3.js"
+    },
+    {
+      "key": "trumpet",
+      "label": "Trumpet",
+      "group": "Wind and Brass",
+      "use": "Easter, festal occasions",
+      "file": "trumpet-mp3.js"
+    },
+    {
+      "key": "tubular_bells",
+      "label": "Tubular Bells",
+      "group": "Bells",
+      "use": "Angelus, Advent, bell effects",
+      "file": "tubular_bells-mp3.js"
+    },
+    {
+      "key": "accordion",
+      "label": "Accordion",
+      "group": "Other",
+      "use": "Folk settings",
+      "file": "accordion-mp3.js"
+    }
+  ]
+}
