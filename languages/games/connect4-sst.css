@@ -1,8 +1,9 @@
 /* Connect 4 (French / German / Spanish) on the site palette.
    Linked after each page's own <style>, so these rules win on equal
    specificity. The page chrome moves onto the flat navy system in
-   assets/sst/sst.css; the board keeps its toy blue and the red and yellow
-   counters, because those are the game. */
+   assets/sst/sst.css, in Savage Language Tools' coral where the science
+   games use blue and violet; the board keeps its toy blue and the red and
+   yellow counters, because those are the game. */
 
 :root {
   color-scheme: dark;
@@ -54,10 +55,10 @@ body {
   background: var(--sst-input); color: var(--sst-text);
   border: 1px solid var(--sst-line-strong); border-radius: 8px;
 }
-.topic-bar select:focus { outline: none; border-color: var(--sst-blue); }
+.topic-bar select:focus { outline: none; border-color: var(--sst-coral); }
 .topic-meta { color: var(--sst-text-muted); font-weight: 500; }
 .instructions {
-  background: rgba(71, 181, 250, .08); border-left: 3px solid var(--sst-blue);
+  background: rgba(248, 144, 124, .08); border-left: 3px solid var(--sst-coral);
   color: var(--sst-text-body); font-weight: 500;
 }
 
@@ -75,22 +76,22 @@ body {
 /* Word lists */
 .word-item {
   background: var(--sst-raised); color: var(--sst-text); font-weight: 600;
-  border-left: 3px solid var(--sst-blue); box-shadow: none;
+  border-left: 3px solid var(--sst-coral); box-shadow: none;
 }
-.word-item:nth-child(even) { border-left-color: var(--sst-violet); }
+.word-item:nth-child(even) { border-left-color: var(--sst-line-strong); }
 .word-item:hover:not(.used) { box-shadow: none; background: #1b2a3e; }
-.word-item.selected { background: var(--sst-blue-btn); border-left-color: var(--sst-blue); }
+.word-item.selected { background: var(--sst-coral-btn); border-left-color: var(--sst-coral); }
 .word-item.correct-flash { background: #1f8a4c; border-left-color: var(--sst-green); }
 
-/* Buttons: flat, the site's blue and violet */
+/* Buttons: flat, in the site's coral */
 button.main-btn { font-family: var(--sst-font); font-weight: 600; border-radius: 8px; min-height: 44px; }
-.btn-primary { background: var(--sst-blue-btn); box-shadow: none; }
-.btn-primary:hover { background: #1f95e6; }
+.btn-primary { background: var(--sst-coral-btn); box-shadow: none; }
+.btn-primary:hover { background: #e7624b; }
 .btn-secondary { background: transparent; border: 1px solid oklch(0.45 0.04 255) !important; box-shadow: none; }
-.btn-secondary:hover { border-color: var(--sst-violet-btn) !important; }
+.btn-secondary:hover { border-color: var(--sst-coral-btn) !important; }
 .btn-small { box-shadow: none; }
-.btn-play { background: var(--sst-violet-btn); box-shadow: none; letter-spacing: 0; }
-.btn-play:hover { background: #8360d0; }
+.btn-play { background: var(--sst-coral-btn); box-shadow: none; letter-spacing: 0; }
+.btn-play:hover { background: #e7624b; }
 button.main-btn:hover, button.main-btn:active, .btn-play:active { transform: none; }
 
 /* Win card */

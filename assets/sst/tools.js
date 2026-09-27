@@ -135,23 +135,5 @@ window.SST_TOOLS = [
     blurb: "Bid, dare and bank the winnings in a list-naming game show for the whole class.",
     kind: "Revision Game", levels: ["KS3", "GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
     image: "who-dares-wins.png",
-    keywords: "who dares wins bidding list naming game show bank risk" },
-
-  { title: "French Connect 4", url: "games/languages/french-connect4.html",
-    blurb: "Puissance 4 — drop a counter by answering a French vocabulary question correctly.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["Languages", "Revision Game", "Interactive"],
-    image: "french-connect4.png",
-    keywords: "french francais puissance 4 connect four vocabulary mfl languages modern foreign" },
-
-  { title: "German Connect 4", url: "games/languages/german-connect4.html",
-    blurb: "Vier Gewinnt — drop a counter by answering a German vocabulary question correctly.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["Languages", "Revision Game", "Interactive"],
-    image: "german-connect4.png",
-    keywords: "german deutsch vier gewinnt connect four vocabulary mfl languages modern foreign" },
-
-  { title: "Spanish Connect 4", url: "games/languages/spanish-connect4.html",
-    blurb: "Conecta 4 — drop a counter by answering a Spanish vocabulary question correctly.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["Languages", "Revision Game", "Interactive"],
-    image: "spanish-connect4.png",
-    keywords: "spanish espanol conecta 4 connect four vocabulary mfl languages modern foreign" }
+    keywords: "who dares wins bidding list naming game show bank risk" }
 ];

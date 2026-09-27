@@ -21,6 +21,10 @@
   --sst-violet: oklch(0.74 0.13 295);
   --sst-violet-btn: oklch(0.52 0.17 295);
   --sst-violet-soft: oklch(0.3 0.08 295);
+  /* Coral: the accent of the sister site, Savage Language Tools (languages/). */
+  --sst-coral: oklch(0.76 0.13 32);
+  --sst-coral-btn: oklch(0.6 0.17 32);
+  --sst-coral-soft: oklch(0.3 0.07 32);
   --sst-green: oklch(0.78 0.14 155);
   --sst-amber: oklch(0.82 0.14 80);
   --sst-red: oklch(0.7 0.17 25);
@@ -76,6 +80,17 @@
 .sst-nav { display: flex; align-items: center; gap: 2px; flex: none; margin-left: auto; }
 .sst-nav a { display: flex; align-items: center; height: var(--sst-bar-h); padding: 0 12px; }
 .sst-nav a:hover { box-shadow: inset 0 -2px 0 var(--sst-blue); }
+
+/* Savage Language Tools: the same bar, coral where science is blue, with two
+   speech bubbles for the atom. */
+.sst-bubbles { width: 30px; height: 30px; flex: none; overflow: visible; }
+.sst-bubbles path:first-child { fill: none; stroke: var(--sst-coral); stroke-width: 1.5; stroke-linejoin: round; }
+.sst-bubbles path:last-child { fill: var(--sst-coral); stroke: var(--sst-bg-deep); stroke-width: 2; stroke-linejoin: round; }
+.sst-bar--lang .sst-word span:last-child { color: var(--sst-coral); }
+.sst-bar--lang a:hover { color: var(--sst-coral); }
+.sst-bar--lang a:focus-visible { outline-color: var(--sst-coral); }
+.sst-bar--lang .sst-nav a:hover { box-shadow: inset 0 -2px 0 var(--sst-coral); }
+.sst-bar--lang .sst-kind { background: var(--sst-coral-soft); color: oklch(0.88 0.07 32); }
 
 @media (max-width: 720px) {
   .sst-word, .sst-kind { display: none; }

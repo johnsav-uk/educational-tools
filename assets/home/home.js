@@ -1,23 +1,31 @@
 (function () {
   'use strict';
 
-  var TOOLS = window.SST_TOOLS || [];
+  // The science homepage runs on the defaults below. A sister site (languages/)
+  // sets window.SST_HOME first with its own catalogue, subjects and hues, and
+  // root: the path from its page back to the repo root, which tile links and
+  // screenshots are relative to.
+  var CFG = window.SST_HOME || {};
+  var TOOLS = CFG.tools || window.SST_TOOLS || [];
+  var ROOT = CFG.root || '';
   var SCIENCES = ["Chemistry", "Physics", "Biology"];
 
   // Pill hue per subject label (oklch H). Pills render as oklch(0.3 0.06 H) on oklch(0.86 0.1 H).
-  var HUE = { Chemistry: 185, Physics: 295, Biology: 145, Mixed: 75, Languages: 25 };
+  var HUE = CFG.hue || { Chemistry: 185, Physics: 295, Biology: 145, Mixed: 75 };
 
   var TYPES = [["all", "All"], ["explore", "Explore"], ["play", "Play"]];
-  var SUBJECTS = [["all", "All subjects"], ["Chemistry", "Chemistry"], ["Physics", "Physics"],
-                  ["Biology", "Biology"], ["Mixed", "Mixed"], ["Languages", "Languages"]];
+  var SUBJECTS = CFG.subjects || [["all", "All subjects"], ["Chemistry", "Chemistry"], ["Physics", "Physics"],
+                  ["Biology", "Biology"], ["Mixed", "Mixed"]];
   var LEVELS = [["all", "All levels"], ["KS3", "KS3"], ["GCSE", "GCSE"], ["A-Level", "A-Level"], ["Multi", "Multi"]];
+
+  function scienceOf(t) {
+    var sciences = SCIENCES.filter(function (s) { return t.tags.indexOf(s) !== -1; });
+    return sciences.length === 1 ? sciences[0] : "Mixed";
+  }
 
   TOOLS.forEach(function (t) {
     t.type = t.kind === "Revision Game" ? "play" : "explore";
-    var sciences = SCIENCES.filter(function (s) { return t.tags.indexOf(s) !== -1; });
-    t.subject = sciences.length > 1 ? "Mixed"
-      : sciences.length === 1 ? sciences[0]
-      : t.tags.indexOf("Languages") !== -1 ? "Languages" : "Mixed";
+    t.subject = (CFG.subjectOf || scienceOf)(t);
     // Tolerate a cached tools.js from before levels became a list.
     t.levels = t.levels || (t.level ? [t.level] : []);
     t.levelLabel = t.levels.length > 1 ? "Multi" : t.levels[0];
@@ -82,12 +90,12 @@
 
   function buildTile(t) {
     var a = el('a', 'tile');
-    a.href = t.url;
+    a.href = ROOT + t.url;
 
     var media = el('div', 'tile-media');
     if (t.image) {
       var img = el('img');
-      img.src = 'assets/img/tools/' + t.image;
+      img.src = ROOT + 'assets/img/tools/' + t.image;
       img.alt = '';
       img.loading = 'lazy';
       img.decoding = 'async';
@@ -146,7 +154,7 @@
     emptyEl.hidden = list.length !== 0;
     resetEl.hidden = !(state.query.trim() || state.type !== 'all' || state.subject !== 'all' || state.level !== 'all');
 
-    syncPressed(typeHost, state.type);
+    if (typeHost) syncPressed(typeHost, state.type);
     syncPressed(subjectHost, state.subject);
     syncPressed(levelHost, state.level);
   }
@@ -176,6 +184,18 @@
     });
   });
 
+  // Language cards and the like drop in with one subject chip pressed.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-subject-filter]'), function (link) {
+    link.addEventListener('click', function () {
+      state.type = 'all';
+      state.subject = link.dataset.subjectFilter;
+      state.level = 'all';
+      state.query = '';
+      searchEl.value = '';
+      render();
+    });
+  });
+
   // Header search icon: jump to the catalogue and put the cursor in the search box.
   $('search-jump').addEventListener('click', function (e) {
     e.preventDefault();
@@ -188,7 +208,7 @@
     n.textContent = TOOLS.length + ' tools';
   });
 
-  TOOLS.filter(function (t) { return t.featured; }).forEach(function (t) {
+  if (featuredGrid) TOOLS.filter(function (t) { return t.featured; }).forEach(function (t) {
     featuredGrid.appendChild(buildTile(t));
   });
 
@@ -196,7 +216,7 @@
   var wanted = /[?&]type=(explore|play)\b/.exec(location.search);
   if (wanted) state.type = wanted[1];
 
-  buildChoices(typeHost, TYPES, 'type', 'seg');
+  if (typeHost) buildChoices(typeHost, TYPES, 'type', 'seg');
   buildChoices(subjectHost, SUBJECTS, 'subject', 'chip');
   buildChoices(levelHost, LEVELS, 'level', 'chip');
   render();

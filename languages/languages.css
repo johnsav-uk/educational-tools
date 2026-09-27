@@ -1,0 +1,36 @@
+/* Savage Language Tools: the science homepage (assets/home/home.css) in the
+   sister site's coral. Same navy, type, spacing and components; every place
+   science is blue, this is coral. Linked after home.css. */
+:root {
+  --blue: oklch(0.76 0.13 32);          /* = --sst-coral */
+  --blue-btn: oklch(0.6 0.17 32);       /* = --sst-coral-btn */
+  --btn-hover: oklch(0.66 0.17 32);
+}
+
+.wordmark span:last-child { color: var(--coral); }
+
+.btn--primary:hover, button.btn--primary:hover, .nav-kofi:hover, .empty button:hover { background: var(--btn-hover); }
+.btn--ghost:hover { border-color: var(--blue-btn); }
+.tile:hover { border-color: oklch(0.55 0.1 32); }
+.chip:hover { border-color: oklch(0.48 0.07 32); }
+.chip[aria-pressed="true"] { background: oklch(0.3 0.07 32); border-color: oklch(0.62 0.14 32); color: oklch(0.9 0.05 32); }
+.tile-go--play { color: var(--coral); }
+
+/* Language cards: three across, tinted by each language's pill hue. */
+.paths--langs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.path--lang {
+  --card: oklch(0.2 0.035 var(--h)); --bd: oklch(0.33 0.06 var(--h));
+  --bd-hover: oklch(0.72 0.12 var(--h)); --btn: oklch(0.3 0.07 var(--h));
+  grid-template-columns: 1fr;
+}
+.path--lang .path-icon {
+  font-size: 15px; font-weight: 800; letter-spacing: 0.04em; color: oklch(0.88 0.09 var(--h));
+}
+.path--lang .path-btn { color: oklch(0.92 0.06 var(--h)); }
+.path--lang:hover .path-btn { background: oklch(0.36 0.09 var(--h)); }
+
+/* The link across to science keeps science's blue, so it reads as the other site. */
+.nav-sister { color: oklch(0.8 0.1 240); }
+.sister { --sister-accent: oklch(0.74 0.14 240); }
+.sister .atom span { border-color: oklch(0.74 0.14 240); }
+.sister .atom span:nth-child(4) { background: oklch(0.74 0.14 240); }

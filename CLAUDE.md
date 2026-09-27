@@ -49,7 +49,7 @@ and a body laid out as a grid needs a row for it.
 Shared skins sit beside the pages they serve, linked after `sst.css`:
 `assets/sst/skin.css` for the dark "glass" template tools,
 `games/science/gameshow-sst.css` for Jeopardy, Blockbusters and Who Dares Wins,
-`games/languages/connect4-sst.css` for the Connect 4 games, plus
+`languages/games/connect4-sst.css` for the Connect 4 games, plus
 `tenable-sst.css` and `retrieval-sst.css`.
 
 ## Subject and level colours
@@ -92,6 +92,26 @@ filters, the featured row and every tool's site bar all read from this one list:
   bar cropped off. A missing file falls back to a striped placeholder.
 - `featured: true` puts it in the homepage's "Featured tools" row.
 - Label a tool that is not finished `(beta)` in its title.
+
+## Savage Language Tools (the sister site)
+
+Language tools live in `languages/`, with their own homepage at
+`languages/index.html`: the science homepage's layout, header, Ko-fi, feedback
+form and footer, in **coral** (`--sst-coral`, hue 32; hex `#f8907c`, button
+`#d24f39`) where science is blue, with a two-speech-bubble mark in place of the
+atom. The two homepages link to each other in the header, a "sister site" strip
+and the footer.
+
+- Catalogue: `assets/sst/language-tools.js` (`window.SLT_TOOLS`), same shape as
+  `tools.js`, with the language (`"French"`, `"German"`, `"Spanish"`) in `tags`.
+  Language tools do not go in `tools.js`.
+- Pages sit at `languages/<kind>/<page>` so the usual two `../` reach `assets/`.
+  They load the same `sst.css` / `sst.js`; the bar sees the `languages/` path and
+  switches to the language brand and catalogue on its own.
+- Language pill hues on that site: French 255, German 75, Spanish 340.
+- The homepage reuses `assets/home/home.js`, configured by `window.SST_HOME`
+  in `languages/index.html`, and `home.css` recoloured by `languages/languages.css`.
+- `games/languages/*.html` are redirect stubs for old links and QR codes; leave them.
 
 ## Tools that need a build step
 
