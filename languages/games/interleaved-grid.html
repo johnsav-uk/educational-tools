@@ -294,7 +294,7 @@
   .overlay {
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: 2147483600; /* above the site bar, which uses 2147483000 */
     display: none;
     align-items: center;
     justify-content: center;
@@ -434,16 +434,48 @@
   .claimed-note { margin: 0; color: var(--muted); font-size: 1rem; flex: 1 1 260px; }
   .claimed-note b { color: var(--text); }
 
-  /* Phones and narrow windows: let the page scroll instead of squeezing the grid. */
-  @media (max-width: 760px) {
+  /* Short screens (a phone on its side, a small laptop): the board can't fit in
+     one screen without squashing the cards, so let the page scroll instead. */
+  @media (max-height: 620px) {
     .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); }
-    .grid { grid-auto-rows: minmax(118px, auto); }
+    .grid { grid-auto-rows: minmax(96px, auto); }
+  }
+
+  /* Phones and narrow windows. */
+  @media (max-width: 760px) {
+    .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); gap: 10px; padding: 10px 12px 16px; }
+    .grid { grid-auto-rows: minmax(112px, auto); }
     .grid[style*="--n: 5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .legend .hint { display: none; }
     .card .topic { font-size: 0.92rem; overflow-wrap: normal; }
+    .card .recency { font-size: 0.6rem; letter-spacing: 0.04em; }
+    .heading { margin-right: 0; width: 100%; }
+
+    /* Controls as a two-column block: language | spec, unit across, grid | new board. */
+    .controls { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: dense; gap: 8px; width: 100%; }
+    .controls .field:has(#unit) { grid-column: 1 / -1; }
+    .controls select { width: 100%; min-height: 44px; }
+    .controls .btn { min-height: 44px; }
     .scores { width: 100%; }
-    .team { flex: 1; grid-template-columns: 48px 1fr 48px; }
+    .team { flex: 1; grid-template-columns: 44px 1fr 44px; }
+    .team .step { width: 44px; height: 44px; }
+
+    /* Legend: the tier names only; the unit is already in its dropdown. */
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 0.82rem; }
+    .legend .units, .legend .hint { display: none; }
+    .legend .dot { width: 22px; height: 22px; font-size: 0.75rem; }
+
+    /* Pop-up: close button pinned top right, voice picker full width. */
+    .overlay { padding: 8px; }
+    .modal { position: relative; padding: 16px 14px; }
+    .m-head { padding-right: 52px; gap: 10px; }
+    .m-head .badge { width: 52px; height: 52px; font-size: 1.6rem; }
+    .close-x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
+    .voice-row label { flex: 1 1 100%; }
+    .voice-row select { flex: 1; min-width: 0; max-width: none; }
+    .award { flex: 1 1 140px; min-height: 52px; }
+    .ans-row { padding: 10px 12px; gap: 10px; }
+    .speak { width: 52px; height: 52px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .team.bump output { animation: none; }
