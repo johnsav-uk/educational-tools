@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chemical Bonding: Ionic, Covalent &amp; Metallic (beta)</title>
+<meta name="description" content="AQA GCSE Chemistry 4.2.1: animated electron transfer, dot-and-cross covalent bonding, ionic lattices and a metallic lattice you can push, heat and connect to a battery, with examiner phrasing and misconception busters.">
+<style>
+  /* Site-wide dark palette (assets/sst/sst.css). Canvas colours are the hex
+     equivalents in the COL table in the script. */
+  :root{
+    --paper:var(--sst-bg); --panel:var(--sst-panel); --card:var(--sst-card); --raised:var(--sst-raised);
+    --ink:var(--sst-text); --body:var(--sst-text-body); --muted:var(--sst-text-muted);
+    --line:var(--sst-line); --line2:var(--sst-line-strong);
+    --accent:var(--sst-blue); --btn:var(--sst-blue-btn); --soft:var(--sst-blue-soft);
+    --chem:var(--sst-chem); --gcse:var(--sst-amber);
+    --good:var(--sst-green); --bad:var(--sst-red);
+    --dot:#3B82F6; --cross:#EF4444;
+    color-scheme:dark;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{ background:var(--paper); color:var(--ink); font:15px/1.55 var(--sst-font); -webkit-text-size-adjust:100%; }
+  button,input{ font:inherit; color:inherit; }
+  sub,sup{ font-size:.72em; line-height:0; }
+  button:focus-visible, input:focus-visible{ outline:3px solid #7dd3fc; outline-offset:2px; }
+
+  .top{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 20px; padding:16px clamp(16px,3vw,32px) 12px; }
+  .top h1{ margin:0; font-size:clamp(1.3rem,3vw,1.75rem); line-height:1.15; letter-spacing:-.01em; }
+  .meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:.76rem; font-weight:600; border:1px solid currentColor; color:var(--muted); vertical-align:middle; }
+  .chip.chem{ color:var(--chem); } .chip.gcse{ color:var(--gcse); }
+  .top .grow{ flex:1 1 300px; }
+
+  .layout{ display:grid; grid-template-columns:minmax(0,1fr) 390px; gap:16px; padding:0 clamp(16px,3vw,32px) 28px; align-items:start; }
+  @media (max-width:1020px){ .layout{ grid-template-columns:minmax(0,1fr); } }
+
+  /* ── Toolbars ──────────────────────────────────────────────── */
+  .bar{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin-bottom:10px; }
+  .seg{ display:inline-flex; flex-wrap:wrap; gap:4px; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:11px; }
+  .seg button{ border:1px solid transparent; background:none; border-radius:8px; padding:6px 12px; font-weight:600; font-size:.9rem; color:var(--body); cursor:pointer; }
+  .seg button:hover{ color:var(--ink); background:var(--card); }
+  .seg button[aria-pressed="true"]{ background:var(--soft); border-color:var(--accent); color:var(--ink); }
+  .seg.big button{ font-size:1rem; padding:8px 16px; }
+  .lbl{ font-size:.78rem; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+
+  .stage{ position:relative; height:clamp(340px, calc(100dvh - var(--sst-bar-h) - 330px), 640px);
+    background:#091321; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  @media (max-width:1020px){ .stage{ height:clamp(360px, 100vw, 540px); } }
+  @media (max-width:560px){ .legend{ font-size:.72rem; gap:2px 10px; padding:3px 8px; } }
+  #cv{ display:block; width:100%; height:100%; touch-action:pan-y; }
+  #cv.grab{ cursor:grab; touch-action:none; }
+  #cv.grab:active{ cursor:grabbing; }
+  .legend{ position:absolute; left:10px; bottom:8px; display:flex; flex-wrap:wrap; gap:4px 12px; font-size:.78rem; color:var(--body);
+    background:rgba(9,19,33,.86); border:1px solid var(--line); border-radius:8px; padding:4px 10px; max-width:calc(100% - 20px); pointer-events:none; }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend svg{ flex:none; }
+
+  .democtl{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin-top:10px; min-height:0; }
+  .democtl:empty{ display:none; }
+  .hint{ font-size:.85rem; color:var(--muted); }
+  .btn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; padding:7px 14px; border-radius:9px; border:1px solid var(--line2);
+    background:var(--card); font-weight:600; font-size:.9rem; }
+  .btn:hover{ border-color:var(--muted); }
+  .btn.on{ background:var(--soft); border-color:var(--accent); }
+  .btn.primary{ background:var(--btn); border-color:var(--btn); color:#fff; }
+  .btn svg{ width:16px; height:16px; }
+  .btn.icon{ padding:7px 10px; }
+
+  .controls{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin-top:12px; padding:10px 12px;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; }
+  .steps{ display:flex; flex-wrap:wrap; gap:6px; flex:1 1 360px; }
+  .steps button{ flex:1 1 0; min-width:110px; text-align:left; border:1px solid var(--line); background:var(--card); border-radius:9px;
+    padding:6px 10px; cursor:pointer; font-size:.84rem; color:var(--body); }
+  .steps button b{ display:block; font-size:.72rem; color:var(--muted); font-weight:700; }
+  .steps button[aria-current="step"]{ border-color:var(--accent); background:var(--soft); color:var(--ink); }
+  .steps .arrow{ align-self:center; color:var(--muted); flex:none; min-width:0; border:0; background:none; padding:0 2px; cursor:default; }
+  .transport{ display:flex; gap:6px; align-items:center; }
+  .speed{ display:flex; align-items:center; gap:8px; font-size:.84rem; color:var(--muted); }
+  .speed input{ width:110px; accent-color:#47b5fa; }
+  .speed output{ min-width:3.2em; color:var(--ink); font-variant-numeric:tabular-nums; }
+
+  /* ── Side panel ─────────────────────────────────────────────── */
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  @media (min-width:1021px){ .panel{ position:sticky; top:12px; max-height:calc(100dvh - var(--sst-bar-h) - 24px); overflow:auto; } }
+  .explain h2{ margin:0 0 2px; font-size:1.1rem; }
+  .explain .sub{ color:var(--muted); font-size:.82rem; margin-bottom:8px; }
+  .explain p{ margin:.5em 0; color:var(--body); }
+  .explain .eq{ font-family:var(--sst-mono); font-size:.86rem; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin:.5em 0; color:var(--ink); }
+  .kw{ color:var(--ink); background:var(--soft); border-radius:4px; padding:0 4px; font-weight:700; white-space:nowrap; }
+  .explain .kw{ white-space:normal; }
+
+  .tabs{ display:flex; gap:4px; margin:16px 0 10px; border-bottom:1px solid var(--line); }
+  .tabs button{ border:0; background:none; padding:8px 10px; font-weight:600; font-size:.88rem; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-bottom:9px; }
+  .card h4{ margin:0 0 5px; font-size:.92rem; line-height:1.35; }
+  .card p{ margin:.35em 0; font-size:.88rem; color:var(--body); }
+  .card .lose{ color:var(--muted); font-size:.82rem; }
+  .card .lose b{ color:var(--bad); }
+  .tag{ display:inline-block; font-size:.7rem; font-weight:700; color:var(--accent); border:1px solid var(--accent); border-radius:999px; padding:0 7px; margin-left:6px; vertical-align:1px; }
+  .myth .claim{ display:flex; gap:8px; font-size:.9rem; color:var(--ink); }
+  .myth .x{ color:var(--bad); font-weight:800; flex:none; }
+  .myth .ok{ color:var(--good); font-weight:800; flex:none; }
+  .myth .truth{ display:flex; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:.88rem; color:var(--body); }
+  .myth .truth[hidden]{ display:none; }
+  .myth button{ margin-top:8px; font-size:.82rem; padding:4px 10px; }
+  .vocab{ display:grid; gap:9px; }
+  .vocab .card{ margin:0; }
+  .vocab .term{ font-family:var(--sst-mono); font-weight:700; color:var(--accent); font-size:.92rem; }
+  .vocab .use{ font-style:italic; }
+  .panel .foot{ margin-top:12px; font-size:.78rem; color:var(--muted); }
+  .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .hbtns{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  /* ── Presenter mode: the model fills the screen, explanation in big type ── */
+  .present-only{ display:none !important; }
+  body.presenting{ overflow:hidden; }
+  body.presenting .sst-bar, body.presenting .top, body.presenting .panel .foot{ display:none; }
+  body.presenting .present-only{ display:inline-flex !important; }
+  body.presenting .layout{ position:fixed; inset:0; z-index:40; background:var(--paper); padding:12px 16px;
+    grid-template-columns:minmax(0,1fr) clamp(320px,30vw,660px); grid-template-rows:minmax(0,1fr); gap:16px; align-items:stretch; }
+  body.presenting .layout > section{ display:flex; flex-direction:column; min-height:0; }
+  body.presenting .stage{ flex:1 1 auto; height:auto; min-height:0; }
+  body.presenting .bar{ margin-bottom:8px; }
+  body.presenting .bar .grow{ flex:1; }
+  body.presenting .panel{ position:static; max-height:none; height:100%; overflow:auto; font-size:clamp(17px,1.3vw,28px); padding:clamp(16px,1.4vw,28px); }
+  body.presenting .explain .sub{ font-size:.75em; }
+  body.presenting .explain h2{ font-size:1.45em; line-height:1.2; margin-bottom:.3em; }
+  body.presenting .explain .eq{ font-size:.85em; }
+  body.presenting .tabs button{ font-size:.8em; }
+  body.presenting .card h4, body.presenting .card p, body.presenting .myth .claim, body.presenting .myth .truth,
+  body.presenting .vocab .term{ font-size:.85em; }
+  body.presenting .card .lose{ font-size:.75em; }
+  body.presenting .myth button, body.presenting .vocab .btn{ font-size:.75em; }
+  @media (max-width:1020px){
+    body.presenting .layout{ grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) minmax(0,38vh); }
+  }
+
+  /* ── Print dialog ─────────────────────────────────────────────── */
+  dialog{ border:1px solid var(--line); border-radius:14px; background:var(--card); color:var(--ink); padding:20px 22px; max-width:460px; width:calc(100% - 32px); }
+  dialog::backdrop{ background:rgba(0,0,0,.55); }
+  dialog h2{ margin:0 0 8px; font-size:1.2rem; }
+  dialog label{ display:flex; gap:10px; align-items:flex-start; margin:10px 0; cursor:pointer; color:var(--body); }
+  dialog label b{ color:var(--ink); }
+  dialog .row{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap; }
+
+  /* ── Print: A4 notes, worksheet, mark scheme ───────────────────── */
+  .print-only{ display:none; }
+  @page{ size:A4; margin:13mm 14mm 15mm; }
+  @media print{
+    html, body{ background:#fff !important; color:#000; }
+    body{ font-size:10.5pt; line-height:1.42; }
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .sst-bar, .top, .layout, dialog{ display:none !important; }
+    .print-only{ display:block; }
+    body.p-no-notes #pNotes, body.p-no-qs #pQs, body:not(.p-ms) #pMs{ display:none !important; }
+    #pQs, #pMs{ break-before:page; }
+    body.p-no-notes #pQs{ break-before:auto; }
+    body.p-no-notes.p-no-qs #pMs{ break-before:auto; }
+    .pd{ color:#000; }
+    .pd .newpage{ break-before:page; }
+    .pd h2{ font-size:15pt; margin:0 0 4pt; break-after:avoid; }
+    .pd h3{ font-size:12pt; margin:10pt 0 3pt; break-after:avoid; }
+    .pd p{ margin:4pt 0; }
+    .pd ul{ margin:3pt 0; padding-left:14pt; }
+    .pd li{ margin:1.5pt 0; }
+    .pd .kw{ background:none; padding:0; font-weight:700; color:#000; white-space:normal; }
+    .phead{ display:flex; justify-content:space-between; align-items:flex-end; gap:12pt; border-bottom:1.5pt solid #000; padding-bottom:5pt; margin-bottom:9pt; }
+    .phead h1{ font-size:17pt; margin:0; line-height:1.15; }
+    .phead .sub{ font-size:9pt; color:#444; }
+    .fill{ display:flex; gap:16pt; font-size:10pt; margin:0 0 10pt; }
+    .fill span{ flex:1; border-bottom:1pt solid #000; padding-bottom:2pt; }
+    .pd figure{ margin:5pt 0 7pt; break-inside:avoid; text-align:center; }
+    .pd figure img{ width:100%; max-height:62mm; object-fit:contain; border:0.75pt solid #bbb; border-radius:3pt; }
+    .pd figcaption{ font-size:9pt; color:#333; margin-top:2pt; text-align:left; }
+    .pd .fig2{ display:grid; grid-template-columns:1fr 1fr; gap:6pt 10pt; }
+    .pd .fig2 img{ max-height:56mm; }
+    .pd .side{ display:grid; grid-template-columns:48% 1fr; gap:10pt; align-items:start; break-inside:avoid; }
+    .pd .eqs{ font-family:var(--sst-mono); font-size:9.5pt; border:0.75pt solid #999; border-radius:3pt; padding:4pt 8pt; margin:5pt 0; columns:2; break-inside:avoid; }
+    .pd .key{ font-size:9pt; color:#333; }
+    .pd .key svg{ vertical-align:-2px; }
+    .pd table{ width:100%; border-collapse:collapse; font-size:9.5pt; margin:5pt 0; break-inside:avoid; }
+    .pd th, .pd td{ border:0.75pt solid #999; padding:3pt 5pt; text-align:left; vertical-align:top; }
+    .pd th{ background:#eee; }
+    .pd .tip{ border-left:3pt solid #000; padding:3pt 8pt; margin:6pt 0; background:#f3f3f3; break-inside:avoid; }
+    .pd .q{ margin:0 0 9pt; break-inside:avoid; }
+    .pd .q .qt{ display:flex; gap:8pt; }
+    .pd .q .qn{ font-weight:800; min-width:14pt; }
+    .pd .q .mk{ margin-left:auto; white-space:nowrap; font-weight:700; }
+    .pd .q .part{ margin:3pt 0 0 22pt; }
+    .pd .q .part .qt{ gap:6pt; }
+    .pd .lines{ margin:3pt 0 0 22pt; }
+    .pd .lines i{ display:block; height:8.5mm; border-bottom:0.75pt solid #777; }
+    .pd .part .lines{ margin-left:0; }
+    .pd .box{ margin:4pt 0 0 22pt; border:0.75pt solid #888; border-radius:3pt; }
+    .pd .ms li{ margin:4pt 0; break-inside:avoid; }
+    .pd .ms ul{ margin:1pt 0 0; }
+    .pd .ms .no{ color:#444; font-style:italic; }
+  }
+</style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top">
+  <div class="grow">
+    <h1>Chemical Bonding: Ionic, Covalent &amp; Metallic <span class="chip">beta</span></h1>
+    <div class="meta">
+      <span class="chip chem">AQA Chemistry 4.2.1</span>
+      <span class="chip chem">Trilogy 5.2.1</span>
+      <span class="chip gcse">GCSE</span>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn primary" type="button" id="presentBtn" title="Presenter mode (P)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg>Present on the board</button>
+    <button class="btn" type="button" id="printBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Notes &amp; questions (A4 PDF)</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section aria-label="Bonding model">
+    <div class="bar">
+      <div class="seg big" id="modes" role="group" aria-label="Type of bonding">
+        <button type="button" data-mode="ionic">Ionic</button>
+        <button type="button" data-mode="covalent">Covalent</button>
+        <button type="button" data-mode="metallic">Metallic</button>
+      </div>
+      <div class="seg" id="presets" role="group" aria-label="Substance"></div>
+      <span class="grow present-only"></span>
+      <button class="btn present-only" type="button" id="fullBtn" title="Full screen (F)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Full screen</button>
+      <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)">Exit</button>
+    </div>
+    <div class="bar" id="viewbar"></div>
+
+    <div class="stage">
+      <canvas id="cv" role="img" aria-label="Bonding animation"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="democtl" id="democtl"></div>
+
+    <div class="controls">
+      <div class="steps" id="steps"></div>
+      <div class="transport">
+        <button class="btn icon" type="button" id="prev" title="Previous step (←)" aria-label="Previous step">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="btn primary" type="button" id="play" title="Play / pause (space)">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5l12 7-12 7z"/></svg><span id="playTxt">Play</span></button>
+        <button class="btn icon" type="button" id="next" title="Next step (→)" aria-label="Next step">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="btn" type="button" id="reset" title="Reset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Reset</button>
+      </div>
+      <label class="speed">Speed <input type="range" id="speed" min="0.25" max="2" step="0.25" value="1"><output id="speedOut">1×</output></label>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Explanation">
+    <div class="explain" id="explain" aria-live="polite"></div>
+    <div class="tabs" role="tablist" aria-label="Exam help">
+      <button type="button" role="tab" data-tab="insights" aria-selected="true">Examiner insights</button>
+      <button type="button" role="tab" data-tab="myths" aria-selected="false">Misconception busters</button>
+      <button type="button" role="tab" data-tab="vocab" aria-selected="false">Exam vocabulary</button>
+    </div>
+    <div id="tabbody" role="tabpanel"></div>
+    <p class="foot">Models, not pictures: real atoms have no drawn shells and electrons are not tiny balls. Dots and crosses only show which atom each electron came from; all electrons are identical.</p>
+  </aside>
+</main>
+
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Notes &amp; questions</h2>
+    <p class="hint" style="margin:0">Laid out for A4. In the print window choose <b>Save as PDF</b> to download it, or send it straight to a printer.</p>
+    <label><input type="checkbox" id="optNotes" checked> <span><b>Revision notes</b>: ionic, covalent and metallic bonding with diagrams from the model, exam language and misconceptions (5 pages)</span></label>
+    <label><input type="checkbox" id="optQs" checked> <span><b>Questions</b>: 13 exam-style questions, 35 marks, with answer lines and drawing boxes</span></label>
+    <label><input type="checkbox" id="optMs"> <span><b>Mark scheme</b> on separate pages (teacher copy)</span></label>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Printed document. Diagrams are drawn from the model in a print palette when the page loads. -->
+<div class="print-only pd" id="printDoc">
+  <section id="pNotes">
+    <div class="phead"><div><h1>Chemical Bonding: revision notes</h1><div class="sub">AQA GCSE Chemistry 4.2.1 · Combined Science Trilogy 5.2.1</div></div><div class="sub">Savage Science Tools</div></div>
+
+    <h2>1 · Three types of strong bonding</h2>
+    <table>
+      <tr><th style="width:15%">Bonding</th><th style="width:20%">Found in</th><th style="width:27%">What the electrons do</th><th>What the bond is</th></tr>
+      <tr><td><b>Ionic</b></td><td>metal + non-metal compounds</td><td>transferred from metal atoms to non-metal atoms</td><td>strong <b class="kw">electrostatic attraction</b> between <b class="kw">oppositely charged ions</b></td></tr>
+      <tr><td><b>Covalent</b></td><td>non-metal elements and compounds</td><td>shared in pairs between atoms</td><td>a <b class="kw">shared pair</b> of electrons, attracted to the nuclei of both atoms</td></tr>
+      <tr><td><b>Metallic</b></td><td>metals and alloys</td><td>outer electrons become <b class="kw">delocalised</b></td><td>strong attraction between positive metal ions and <b class="kw">delocalised electrons</b></td></tr>
+    </table>
+
+    <h2 style="margin-top:10pt">2 · Ionic bonding</h2>
+    <p>When a metal reacts with a non-metal, electrons are <b>transferred</b> from the metal atom to the non-metal atom. The metal atom loses electrons and becomes a <b>positive ion</b>; the non-metal atom gains electrons and becomes a <b>negative ion</b>. Both ions end up with the electronic structure of a noble gas.</p>
+    <p class="key"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M3 3L11 11M11 3L3 11" stroke="#c81e1e" stroke-width="2.6" stroke-linecap="round"/></svg> electron that started on the metal atom &nbsp; <svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#1d4ed8"/></svg> electron that started on the non-metal atom. All electrons are identical; the symbols only show where each came from.</p>
+    <figure><img id="img-nacl0" alt="Sodium atom 2,8,1 and chlorine atom 2,8,7"><figcaption><b>Before:</b> a sodium atom (2,8,1) and a chlorine atom (2,8,7).</figcaption></figure>
+    <figure><img id="img-nacl2" alt="Sodium ion and chloride ion in square brackets with charges"><figcaption><b>After:</b> Na⁺ [2,8]⁺ and Cl⁻ [2,8,8]⁻. Each ion goes in square brackets with its charge at the top right.</figcaption></figure>
+    <div class="eqs">Na → Na⁺ + e⁻<br>Cl + e⁻ → Cl⁻<br>Mg → Mg²⁺ + 2e⁻<br>O + 2e⁻ → O²⁻</div>
+
+    <h3>Charges and formulae</h3>
+    <table>
+      <tr><th>Group</th><th>1</th><th>2</th><th>3</th><th>6</th><th>7</th></tr>
+      <tr><td>Electrons lost or gained</td><td>lose 1</td><td>lose 2</td><td>lose 3</td><td>gain 2</td><td>gain 1</td></tr>
+      <tr><td>Charge on the ion</td><td>1+</td><td>2+</td><td>3+</td><td>2−</td><td>1−</td></tr>
+    </table>
+    <figure><img id="img-mgcl2" alt="One magnesium ion between two chloride ions"><figcaption><b>Magnesium chloride:</b> magnesium loses two electrons, one to each chlorine atom. One Mg²⁺ balances two Cl⁻, so the formula is MgCl₂.</figcaption></figure>
+
+    <h3>Giant ionic lattice</h3>
+    <div class="side">
+      <figure style="margin:0"><img id="img-lat" alt="Grid of alternating sodium and chloride ions"><figcaption>A 2D slice of the sodium chloride lattice.</figcaption></figure>
+      <ul>
+        <li>The ions form a giant <b class="kw">regular lattice</b>: each ion is surrounded by oppositely charged ions.</li>
+        <li>Strong <b class="kw">electrostatic forces of attraction</b> act in <b>all directions</b>.</li>
+        <li><b>High melting and boiling points</b>: a lot of energy is needed to overcome the many strong forces. Bigger charges (Mg²⁺, O²⁻) mean stronger forces.</li>
+        <li><b>Conduct electricity when melted or dissolved</b>: the ions are free to move and carry charge. <b>Not as a solid</b>: the ions are fixed in place.</li>
+        <li>There are <b>no molecules</b> in an ionic compound: never write “intermolecular forces”.</li>
+      </ul>
+    </div>
+
+    <h2 class="newpage">3 · Covalent bonding</h2>
+    <p>A <b class="kw">covalent bond</b> is a <b class="kw">shared pair</b> of electrons between two atoms, usually non-metals. It is strong because of the <b class="kw">electrostatic attraction</b> between the shared pair (negative) and the nuclei of both atoms (positive).</p>
+    <p class="key"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#1d4ed8"/></svg> and <svg width="12" height="12" viewBox="0 0 14 14"><path d="M3 3L11 11M11 3L3 11" stroke="#c81e1e" stroke-width="2.6" stroke-linecap="round"/></svg> show which atom each electron came from. Only outer shells are drawn. The shaded overlap holds the shared pairs.</p>
+    <div class="fig2">
+      <figure><img id="img-h2" alt="Hydrogen molecule dot and cross"><figcaption><b>H₂</b>: one shared pair. Each H has 2 electrons.</figcaption></figure>
+      <figure><img id="img-o2" alt="Oxygen molecule dot and cross"><figcaption><b>O₂</b>: two shared pairs, a <b>double bond</b>. Each O has 8 (4 shared + 2 lone pairs).</figcaption></figure>
+      <figure><img id="img-h2o" alt="Water molecule dot and cross"><figcaption><b>H₂O</b>: two single bonds; O has 2 lone pairs, 8 in total.</figcaption></figure>
+      <figure><img id="img-ch4" alt="Methane molecule dot and cross"><figcaption><b>CH₄</b>: four single bonds; C has 8, each H has 2.</figcaption></figure>
+    </div>
+    <div class="tip"><b>Check your diagram:</b> each shared pair is one dot + one cross in the overlap · each H has 2 outer electrons, every other atom 8 · draw the lone (non-bonding) pairs too · number of shared pairs = number of bonds.</div>
+    <h3>Simple molecular substances</h3>
+    <ul>
+      <li><b>Low melting and boiling points</b>: only <b>weak intermolecular forces</b> act between the molecules, and little energy is needed to overcome them.</li>
+      <li>The <b>covalent bonds do not break</b> when the substance melts or boils: steam is still H₂O molecules.</li>
+      <li><b>Do not conduct electricity</b>: the molecules have no overall charge, and there are no ions or delocalised electrons free to move.</li>
+    </ul>
+
+    <h2 class="newpage">4 · Metallic bonding</h2>
+    <p>Metal atoms lose their outer shell electrons, which become <b class="kw">delocalised</b>: free to move through the whole structure. What is left is a giant <b class="kw">regular lattice</b> of positive metal ions, packed closely in layers.</p>
+    <p>The <b>metallic bond</b> is the strong <b class="kw">electrostatic attraction</b> between the positive metal ions and the <b class="kw">delocalised electrons</b>.</p>
+    <figure><img id="img-cu" alt="Rows of positive copper ions with delocalised electrons"><figcaption><b>Copper:</b> close-packed layers of positive ions (+) in a “sea” of delocalised electrons (●). The dashed lines show one ion attracted to the electrons around it.</figcaption></figure>
+    <table>
+      <tr><th style="width:26%">Property</th><th>Explanation</th></tr>
+      <tr><td>High melting and boiling points</td><td>Strong metallic bonds: a lot of energy is needed to overcome the attraction between the ions and the delocalised electrons.</td></tr>
+      <tr><td>Good conductors of electricity</td><td>The <b class="kw">delocalised electrons</b> move through the structure and carry charge. The positive ions stay in place and only vibrate.</td></tr>
+      <tr><td>Good conductors of heat</td><td>The delocalised electrons move through the structure and transfer energy quickly; vibrating ions also pass energy on.</td></tr>
+      <tr><td>Malleable (bend and shape)</td><td>The atoms are in layers, and the <b class="kw">layers slide</b> over each other. The bonding isn't broken: the delocalised electrons still hold the ions in their new positions.</td></tr>
+    </table>
+    <h3>Alloys are harder than pure metals</h3>
+    <figure><img id="img-bronze" alt="Copper lattice with larger tin ions distorting the rows"><figcaption><b>Bronze</b> (copper + tin). The tin atoms are a different size (exaggerated here), so the rows are distorted.</figcaption></figure>
+    <p>An alloy is a mixture of a metal with other elements. The atoms of different sizes <b>distort the layers</b>, so it is more difficult for the <b class="kw">layers to slide</b> over each other. That makes the alloy harder. It is not because the bonds are stronger.</p>
+
+    <h2 class="newpage">5 · Exam language</h2>
+    <table id="pVocab"><tr><th style="width:24%">Key phrase</th><th style="width:38%">What it means</th><th>Use it like this</th></tr></table>
+    <h3>Misconception busters</h3>
+    <table id="pMyths"><tr><th style="width:40%">✗ Wrong idea</th><th>✓ What examiners want</th></tr></table>
+  </section>
+
+  <section id="pQs">
+    <div class="phead"><div><h1>Chemical Bonding: questions</h1><div class="sub">AQA GCSE Chemistry 4.2.1 · Combined Science Trilogy 5.2.1 · Total <span id="pTotal"></span> marks</div></div><div class="sub">Savage Science Tools</div></div>
+    <div class="fill"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+    <div id="pQList"></div>
+  </section>
+
+  <section id="pMs">
+    <div class="phead"><div><h1>Chemical Bonding: mark scheme</h1><div class="sub">One mark per point unless stated. Total <span id="pTotal2"></span> marks.</div></div><div class="sub">Savage Science Tools</div></div>
+    <ol class="ms" id="pMsList"></ol>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ════════════════════════ helpers ════════════════════════ */
+const $ = s => document.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => (t = clamp(t), t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const RAD = Math.PI / 180;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FONT = '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+const K = t => `<b class="kw">${t}</b>`;
+
+const COL = {
+  bg: '#091321', card: '#0d1928', line: '#182535', lineStrong: '#2a3a50', shell: '#40536d',
+  text: '#edf2f8', muted: '#8693a5', blue: '#47b5fa',
+  dot: '#3B82F6', cross: '#EF4444',
+  cation: '#f3b94c', anion: '#b199f4', alloy: '#5cd5c7', carbon: '#9aa6b6', hot: '#f66d67', good: '#63d18f'
+};
+function hex(h) { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); }
+function mix(a, b, t) {
+  const A = hex(a), B = hex(b);
+  return '#' + A.map((v, i) => Math.round(lerp(v, B[i], t)).toString(16).padStart(2, '0')).join('');
+}
+function rgba(h, a) { const [r, g, b] = hex(h); return `rgba(${r},${g},${b},${a})`; }
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ════════════════════════ content ════════════════════════ */
+const IONIC = {
+  NaCl: { label: 'NaCl', name: 'Sodium chloride', formula: 'NaCl', nNm: 1,
+    metal: { sym: 'Na', name: 'sodium', shells: [2, 8, 1], group: 1, ion: 'Na⁺', ionName: 'sodium ion', cfg: '[2,8]⁺', q: '+', like: 'neon' },
+    nm: { sym: 'Cl', name: 'chlorine', shells: [2, 8, 7], group: 7, ion: 'Cl⁻', ionName: 'chloride ion', cfg: '[2,8,8]⁻', q: '−', like: 'argon' },
+    eq: ['Na → Na⁺ + e⁻', 'Cl + e⁻ → Cl⁻'],
+    ratio: 'One Na⁺ for every Cl⁻: the charges balance 1 : 1, so the formula is NaCl.' },
+  MgO: { label: 'MgO', name: 'Magnesium oxide', formula: 'MgO', nNm: 1,
+    metal: { sym: 'Mg', name: 'magnesium', shells: [2, 8, 2], group: 2, ion: 'Mg²⁺', ionName: 'magnesium ion', cfg: '[2,8]²⁺', q: '2+', like: 'neon' },
+    nm: { sym: 'O', name: 'oxygen', shells: [2, 6], group: 6, ion: 'O²⁻', ionName: 'oxide ion', cfg: '[2,8]²⁻', q: '2−', like: 'neon' },
+    eq: ['Mg → Mg²⁺ + 2e⁻', 'O + 2e⁻ → O²⁻'],
+    ratio: 'One Mg²⁺ for every O²⁻: 2+ and 2− balance, so the formula is MgO.' },
+  MgCl2: { label: 'MgCl₂', name: 'Magnesium chloride', formula: 'MgCl₂', nNm: 2,
+    metal: { sym: 'Mg', name: 'magnesium', shells: [2, 8, 2], group: 2, ion: 'Mg²⁺', ionName: 'magnesium ion', cfg: '[2,8]²⁺', q: '2+', like: 'neon' },
+    nm: { sym: 'Cl', name: 'chlorine', shells: [2, 8, 7], group: 7, ion: 'Cl⁻', ionName: 'chloride ion', cfg: '[2,8,8]⁻', q: '−', like: 'argon' },
+    eq: ['Mg → Mg²⁺ + 2e⁻', 'Cl + e⁻ → Cl⁻  (for each of the two chlorine atoms)'],
+    ratio: 'One Mg²⁺ balances two Cl⁻, so the formula is MgCl₂.' }
+};
+
+const BD = 1.42;   // distance between bonded nuclei, in outer-shell radii
+const pol = (deg, d) => ({ x: Math.cos(deg * RAD) * d, y: Math.sin(deg * RAD) * d });
+const COV = {
+  H2: { label: 'H₂', name: 'Hydrogen', formula: 'H₂', names: ['hydrogen', 'hydrogen'],
+    atoms: [{ sym: 'H', cfg: '1', x: -BD / 2, y: 0, mark: 'dot', lone: [], lab: 180 },
+            { sym: 'H', cfg: '1', x: BD / 2, y: 0, mark: 'cross', lone: [], lab: 0 }],
+    bonds: [[0, 1, 1]], displayed: 'H–H',
+    start: 'Each hydrogen atom has one electron in its only shell.',
+    result: 'Each H atom now has 2 electrons in its shell, which is full. One shared pair makes one single covalent bond.' },
+  O2: { label: 'O₂', name: 'Oxygen', formula: 'O₂',
+    atoms: [{ sym: 'O', cfg: '2,6', x: -BD / 2, y: 0, mark: 'dot', lone: [125, 235], lab: 180 },
+            { sym: 'O', cfg: '2,6', x: BD / 2, y: 0, mark: 'cross', lone: [55, 305], lab: 0 }],
+    bonds: [[0, 1, 2]], displayed: 'O=O',
+    start: 'Each oxygen atom (2,6) has 6 outer electrons: two pairs and two unpaired electrons.',
+    result: 'Each O atom now has 8 outer electrons: 4 in the two shared pairs and 4 in two non-bonding (lone) pairs. Two shared pairs make a double covalent bond.' },
+  H2O: { label: 'H₂O', name: 'Water', formula: 'H₂O',
+    atoms: [{ sym: 'O', cfg: '2,6', x: 0, y: 0, mark: 'dot', lone: [40, 140], lab: 90 },
+            Object.assign({ sym: 'H', cfg: '1', mark: 'cross', lone: [], lab: 322 }, pol(322, BD)),
+            Object.assign({ sym: 'H', cfg: '1', mark: 'cross', lone: [], lab: 218 }, pol(218, BD))],
+    bonds: [[0, 1, 1], [0, 2, 1]], displayed: 'H–O–H',
+    start: 'Oxygen (2,6) has two unpaired outer electrons; each hydrogen has one.',
+    result: 'O now has 8 outer electrons (2 shared pairs + 2 lone pairs); each H has 2. Two single covalent bonds.' },
+  CH4: { label: 'CH₄', name: 'Methane', formula: 'CH₄',
+    atoms: [{ sym: 'C', cfg: '2,4', x: 0, y: 0, mark: 'dot', lone: [], lab: 225 }]
+      .concat([0, 90, 180, 270].map(a => Object.assign({ sym: 'H', cfg: '1', mark: 'cross', lone: [], lab: a === 180 ? 180 : 0 }, pol(a, BD)))),
+    bonds: [[0, 1, 1], [0, 2, 1], [0, 3, 1], [0, 4, 1]], displayed: 'CH₄',
+    start: 'Carbon (2,4) has four unpaired outer electrons; each hydrogen has one.',
+    result: 'C now has 8 outer electrons, all in shared pairs; each H has 2. Four single covalent bonds.' }
+};
+
+const METAL = {
+  Cu: { label: 'Copper', name: 'Copper', sym: 'Cu', alloy: null },
+  Fe: { label: 'Iron', name: 'Iron', sym: 'Fe', alloy: null },
+  bronze: { label: 'Bronze alloy', name: 'Bronze (copper + tin)', sym: 'Cu', alloy: 'big', xSym: 'Sn', xName: 'tin' },
+  steel: { label: 'Steel alloy', name: 'Steel (iron + carbon)', sym: 'Fe', alloy: 'small', xSym: 'C', xName: 'carbon' }
+};
+
+const STEPS = {
+  ionic: ['Isolated atoms', 'Electron transfer', 'Ions & attraction'],
+  covalent: ['Isolated atoms', 'Shells overlap', 'Shared pairs'],
+  metallic: ['Metal atoms', 'Electrons delocalise', 'Metallic bond']
+};
+
+const INSIGHTS = {
+  ionic: [
+    { q: 'Describe how sodium and chlorine atoms form sodium chloride. (4 marks)',
+      a: `Electrons are ${K('transferred')} from sodium to chlorine. The sodium atom loses one electron to form a Na⁺ ion; the chlorine atom gains one electron to form a Cl⁻ ion. Both ions have the electronic structure of a noble gas. The ${K('oppositely charged ions')} are held together by strong ${K('electrostatic attraction')}.`,
+      lose: '“Sodium shares its electron”, or describing the ionic bond as the transfer itself.' },
+    { q: 'Explain why magnesium oxide has a high melting point.',
+      a: `It has a giant ionic lattice with strong ${K('electrostatic forces of attraction')} between ${K('oppositely charged ions')} acting in all directions. A lot of energy is needed to overcome them. MgO melts higher than NaCl because its ions carry bigger charges (2+ and 2−).`,
+      lose: 'Any mention of molecules or intermolecular forces for an ionic compound.' },
+    { q: 'When do ionic compounds conduct electricity?',
+      a: 'When melted or dissolved in water: the ions are free to move and carry charge. As a solid the ions are held in fixed positions in the lattice, so it does not conduct.',
+      lose: '“Electrons move through it”: in ionic compounds it is the ions that carry the charge.' },
+    { q: 'Drawing dot-and-cross diagrams of ions',
+      a: 'Show 8 electrons in the outer shell of each ion (or every shell if asked), put square brackets around each ion and write its charge at the top right, e.g. [2,8]⁺. Use dots for one atom’s electrons and crosses for the other’s.',
+      lose: 'Missing brackets or charges, or the wrong number of ions: MgCl₂ needs one Mg²⁺ and two Cl⁻.' }
+  ],
+  covalent: [
+    { q: 'What is a covalent bond?',
+      a: `A ${K('shared pair')} of electrons between two atoms. It is strong because of the ${K('electrostatic attraction')} between the shared pair (negative) and the nuclei (positive) of both atoms.`,
+      lose: '“Atoms share electrons to be stable / happy”: no mark without “shared pair”.' },
+    { q: 'Explain why water has a low boiling point.',
+      a: 'Water is made of small (simple) molecules. There are only weak intermolecular forces between the molecules, and little energy is needed to overcome them. The covalent bonds inside the molecules do not break.',
+      lose: '“The covalent bonds are weak” or “the covalent bonds break when it boils”.' },
+    { q: 'Why don’t simple molecular substances conduct electricity?',
+      a: 'The molecules have no overall electric charge, and there are no delocalised electrons or ions free to move and carry charge.',
+      lose: 'Saying “there are no electrons”: there are plenty, they just aren’t free to move.' },
+    { q: 'Drawing dot-and-cross diagrams of molecules',
+      a: 'Overlap the outer shells, put each shared pair (one dot + one cross) in the overlap, and draw the non-bonding pairs too. Check: each H has 2, every other atom has 8 in its outer shell.',
+      lose: 'Leaving out lone pairs on O, N or Cl, or putting both electrons of a pair from the same atom.' }
+  ],
+  metallic: [
+    { q: 'Describe the structure and bonding in a metal. (3 marks)',
+      a: `A giant structure: a ${K('regular lattice')} of positive metal ions, arranged in layers, surrounded by a sea of ${K('delocalised electrons')}. Metallic bonding is the strong ${K('electrostatic attraction')} between the positive ions and the delocalised electrons.`,
+      lose: '“Metal atoms bonded by covalent bonds”, or leaving out what attracts what.' },
+    { q: 'Explain why metals conduct electricity and heat.',
+      a: `The ${K('delocalised electrons')} are free to move through the whole structure. They carry charge (electric current) and transfer energy (thermal conduction).`,
+      lose: '“The ions move” or “the electrons are free”, without saying they move through the structure.' },
+    { q: 'Explain why pure metals can be bent and shaped.',
+      a: `The atoms are arranged in layers, and the ${K('layers slide')} over each other. The metallic bonding is not broken, because the delocalised electrons still hold the ions together in the new positions.`,
+      lose: '“The bonds are weak”: metallic bonds are strong.' },
+    { q: 'Explain why alloys are harder than pure metals.',
+      a: `An alloy contains atoms of different sizes. They distort the ${K('layers')} in the structure, making it more difficult for the ${K('layers to slide')} over each other.`,
+      lose: '“The bonds in an alloy are stronger”: the answer is about layers, not bond strength.' }
+  ]
+};
+
+const MYTHS = [
+  { mode: 'ionic', myth: 'Ions are formed because atoms want to have full outer shells.',
+    truth: `Atoms don’t want anything. Electrons are transferred from the metal atom to the non-metal atom, and the ions formed happen to have the electronic structure of a noble gas. What holds them together, and makes forming the compound give out energy, is the strong ${K('electrostatic attraction')} between the ${K('oppositely charged ions')}.` },
+  { mode: 'ionic', myth: 'An ionic bond is when an atom gives away an electron.',
+    truth: `The transfer is how the ions form. The ionic bond itself is the strong ${K('electrostatic force of attraction')} between ${K('oppositely charged ions')}.` },
+  { mode: 'ionic', myth: 'Sodium chloride is made of NaCl molecules.',
+    truth: 'It is a giant ionic lattice. “NaCl” gives the ratio of ions (1 : 1), not a molecule, so never write “intermolecular forces” for an ionic compound.' },
+  { mode: 'covalent', myth: 'Covalent bonds happen when atoms share electrons to become happy.',
+    truth: `A covalent bond is the strong ${K('electrostatic attraction')} between a ${K('shared pair')} of negatively charged electrons and the positively charged nuclei of both atoms.` },
+  { mode: 'covalent', myth: 'When water boils, the covalent bonds break.',
+    truth: 'Boiling overcomes the weak intermolecular forces between molecules. The strong O–H covalent bonds inside each molecule stay intact: steam is still H₂O.' },
+  { mode: 'metallic', myth: 'Metals conduct electricity because the ions move.',
+    truth: `The positive ions are fixed in place and only vibrate. Electricity is carried by ${K('delocalised electrons')} that are free to move through the whole structure.` },
+  { mode: 'metallic', myth: 'Alloys are harder because their bonds are stronger.',
+    truth: `Atoms of a different size distort the ${K('regular lattice')}, so the ${K('layers')} cannot ${K('slide')} over each other so easily.` }
+];
+
+const VOCAB = [
+  { term: 'electrostatic attraction', mean: 'The force pulling opposite charges together. Every GCSE bond is described with it.',
+    use: '“…strong electrostatic attraction between oppositely charged ions.”', go: { mode: 'ionic', T: 2 } },
+  { term: 'oppositely charged ions', mean: 'Positive metal ions and negative non-metal ions, the two partners in an ionic bond.',
+    use: '“…held together by strong forces between oppositely charged ions in all directions.”', go: { mode: 'ionic', view: 'lat2' } },
+  { term: 'shared pair', mean: 'Two electrons, one from each atom, between two nuclei. One shared pair = one covalent bond.',
+    use: '“A covalent bond is a shared pair of electrons.”', go: { mode: 'covalent', T: 2 } },
+  { term: 'delocalised electrons', mean: 'Electrons not tied to one atom, free to move through the whole structure.',
+    use: '“…because the delocalised electrons can move through the metal and carry charge.”', go: { mode: 'metallic', demo: 'elec' } },
+  { term: 'regular lattice', mean: 'A repeating 3D arrangement of particles in rows and layers, in ionic compounds and metals.',
+    use: '“A giant structure of positive ions in a regular lattice.”', go: { mode: 'ionic', view: 'lat3' } },
+  { term: 'layers sliding', mean: 'Rows of metal ions moving over each other without the bonding breaking.',
+    use: '“Pure metals are malleable because the layers can slide over each other.”', go: { mode: 'metallic', demo: 'slide' } }
+];
+
+/* ════════════════════════ state ════════════════════════ */
+const S = {
+  mode: 'ionic', preset: { ionic: 'NaCl', covalent: 'H2', metallic: 'Cu' },
+  T: 0, playing: false, target: null, speed: 1,
+  view: 'ions',          // ionic: ions | lat2 | lat3
+  demo: 'structure',     // metallic: structure | slide | elec | heat
+  tab: 'insights', yaw: 0.6, pitch: -0.42, spun: false, sel: null,
+  force: 0, forceRaw: 0, snapping: false, pd: false, heat: false,
+  simT: 0
+};
+const DUR = 3.6;   // seconds per animated step at 1× speed
+const stageOf = T => T <= 0.001 ? 0 : T <= 1.0001 ? 1 : 2;
+
+/* ════════════════════════ canvas ════════════════════════ */
+const cv = $('#cv');
+let ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, Z = 1, SNAP = false;
+// Presenter mode lays the scene out on a smaller logical canvas and scales it
+// up by Z, so labels grow along with the drawing on a big screen.
+function resize() {
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  Z = document.body.classList.contains('presenting') ? clamp(r.width / 820, 1, 2.2) : 1;
+  W = r.width / Z; H = r.height / Z;
+  cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR);
+  ctx.setTransform(DPR * Z, 0, 0, DPR * Z, 0, 0);
+}
+// Room the HTML legend takes at the bottom of the stage, in canvas units.
+const legH = () => SNAP ? 0 : ($('#legend').offsetHeight || 0) / Z;
+new ResizeObserver(resize).observe(cv);
+
+function font(px, w = 600) { ctx.font = `${w} ${Math.round(px)}px ${FONT}`; }
+function text(s, x, y, px, color, align = 'center', w = 600, base = 'middle') {
+  font(px, w); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base; ctx.fillText(s, x, y);
+}
+function ring(x, y, r, color, a = 1, lw = 1.5) {
+  ctx.globalAlpha = a; ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+}
+function disc(x, y, r, fill, stroke, lw = 1.5) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+}
+function electron(x, y, mark, r) {
+  if (mark === 'cross') {
+    const h = r * 1.05;
+    ctx.strokeStyle = COL.cross; ctx.lineWidth = Math.max(1.8, r * .55); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - h, y - h); ctx.lineTo(x + h, y + h); ctx.moveTo(x + h, y - h); ctx.lineTo(x - h, y + h); ctx.stroke();
+  } else {
+    disc(x, y, r, COL.dot, '#9cc3ff', 1);
+  }
+}
+function arrowHead(x, y, ang, s, color) {
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - Math.cos(ang - .45) * s, y - Math.sin(ang - .45) * s);
+  ctx.lineTo(x - Math.cos(ang + .45) * s, y - Math.sin(ang + .45) * s);
+  ctx.closePath(); ctx.fill();
+}
+function arrow(x1, y1, x2, y2, color, lw = 2, both = false, head = 9) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  arrowHead(x2, y2, ang, head, color);
+  if (both) arrowHead(x1, y1, ang + Math.PI, head, color);
+}
+// Wrapped caption: lines grow upwards from y in the lower half, downwards in the upper half.
+let lastLines = 1;
+function ctext(s, x, y, px, color, align = 'center', w = 600) {
+  font(px, w);
+  const max = W - 28, words = s.split(' '), lines = [];
+  let cur = '';
+  for (const wd of words) { const t = cur ? cur + ' ' + wd : wd; if (cur && ctx.measureText(t).width > max) { lines.push(cur); cur = wd; } else cur = t; }
+  lines.push(cur);
+  const lh = px * 1.3, y0 = y > H / 2 ? y - (lines.length - 1) * lh : y;
+  lines.forEach((l, i) => text(l, x, y0 + i * lh, px, color, align, w));
+  lastLines = lines.length;
+}
+// Bottom captions sit just above the HTML legend, whose height changes with width.
+function capY() { return H - legH() - 22; }
+function title(s) { text(s, 14, 20, 14, COL.muted, 'left', 600); }
+
+/* ════════════════════════ ionic: atoms → ions ════════════════════════ */
+const SH = k => 1.25 + 0.65 * k;   // shell radius in units u
+const ionCache = {};
+function buildIonic(key) {
+  const p = IONIC[key];
+  const atoms = p.nNm === 1
+    ? [{ kind: 'metal', el: p.metal, x0: -4.4, x1: -3.55 }, { kind: 'nm', el: p.nm, x0: 4.4, x1: 3.55, face: 180 }]
+    : [{ kind: 'nm', el: p.nm, x0: -7.5, x1: -6.4, face: 0 }, { kind: 'metal', el: p.metal, x0: 0, x1: 0 }, { kind: 'nm', el: p.nm, x0: 7.5, x1: 6.4, face: 180 }];
+  const els = [];
+  atoms.forEach((a, ai) => {
+    a.mark = a.kind === 'metal' ? 'cross' : 'dot';
+    const sh = a.el.shells;
+    for (let k = 0; k < sh.length - 1; k++) {
+      if (sh[k] === 2) { els.push({ mark: a.mark, home: ai, shell: k, dir: 225, side: 0 }, { mark: a.mark, home: ai, shell: k, dir: 45, side: 0 }); }
+      else for (const d of [270, 0, 90, 180]) for (const s of [-1, 1]) els.push({ mark: a.mark, home: ai, shell: k, dir: d, side: s });
+    }
+  });
+  // Non-metal outer shells: full pairs, plus unpaired electrons that the
+  // transferred electrons will pair with (placed facing the metal).
+  const targets = [];
+  const put = e => els.push(e) - 1;
+  atoms.forEach((a, ai) => {
+    if (a.kind !== 'nm') return;
+    const k = a.el.shells.length - 1, n = a.el.shells[k], f = a.face;
+    const pairs = n === 7 ? [f + 90, f + 180, f + 270] : [f + 180, f + 270];
+    const singles = n === 7 ? [f] : [f, f + 90];
+    for (const d of pairs) for (const s of [-1, 1]) put({ mark: 'dot', home: ai, shell: k, dir: d, side: s });
+    for (const d of singles) targets.push({ ai, k, dir: d, single: put({ mark: 'dot', home: ai, shell: k, dir: d, side: 0 }) });
+  });
+  const mi = atoms.findIndex(a => a.kind === 'metal');
+  const mOut = atoms[mi].el.shells.length - 1;
+  const mDirs = key === 'NaCl' ? [0] : key === 'MgO' ? [28, 332] : [180, 0];
+  const lifts = key === 'MgO' ? [0.5, 2.6] : [0.9, 0.9];
+  targets.forEach((t, i) => {
+    els[t.single].pairWith = i;
+    put({ mark: 'cross', home: mi, shell: mOut, dir: mDirs[i], side: 0, tr: { idx: i, to: t.ai, shell: t.k, dir: t.dir, side: 1, lift: lifts[i] } });
+  });
+  const halfX = Math.max(...atoms.map(a => Math.abs(a.x0))) + SH(2) + 0.7;
+  return { p, atoms, els, nT: targets.length, mi, halfX };
+}
+const getIonic = key => ionCache[key] || (ionCache[key] = buildIonic(key));
+function tLocal(i, n, T) { const span = 1 / n; return clamp(((T - i * span) / span - 0.08) / 0.84); }
+
+function drawIonic() {
+  const key = S.preset.ionic, L = getIonic(key), p = L.p, T = S.T;
+  const u = Math.min(W / (2 * L.halfX + 0.6), (H - 30) / 10.4);
+  const cx = W / 2, cy = H * 0.5 - 0.25 * u;
+  const q = ease(T - 1);
+  const pos = L.atoms.map(a => ({ x: cx + lerp(a.x0, a.x1, q) * u, y: cy }));
+  const pairH = 0.21 * u;
+  const shellPt = (ai, k, dir, side) => {
+    const r = SH(k) * u, a = dir * RAD + side * pairH / r;
+    return { x: pos[ai].x + Math.cos(a) * r, y: pos[ai].y + Math.sin(a) * r };
+  };
+
+  title(`${p.name}, ${p.formula}`);
+
+  // shells
+  L.atoms.forEach((a, ai) => {
+    const n = a.el.shells.length;
+    for (let k = 0; k < n; k++) {
+      let al = 1;
+      if (a.kind === 'metal' && k === n - 1) al = 1 - clamp((T - 0.82) / 0.18);
+      if (al > 0) ring(pos[ai].x, pos[ai].y, SH(k) * u, COL.shell, al, 1.6);
+    }
+  });
+  // nuclei
+  L.atoms.forEach((a, ai) => {
+    const c = a.kind === 'metal' ? COL.cation : COL.anion;
+    disc(pos[ai].x, pos[ai].y, 0.62 * u, COL.card, c, 2);
+    text(a.el.sym, pos[ai].x, pos[ai].y + 1, Math.max(11, 0.62 * u), COL.text, 'center', 700);
+  });
+  // electrons (and the path of any electron in flight)
+  const er = Math.max(2.6, 0.15 * u);
+  L.els.forEach(e => {
+    let P;
+    if (e.tr) {
+      const lt = tLocal(e.tr.idx, L.nT, T);
+      const A = shellPt(e.home, e.shell, e.dir, 0);
+      const B = shellPt(e.tr.to, e.tr.shell, e.tr.dir, e.tr.side);
+      const C = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 - e.tr.lift * u };
+      if (lt > 0 && lt < 1) {
+        ctx.setLineDash([4, 5]); ctx.strokeStyle = rgba(COL.cross, .45); ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.quadraticCurveTo(C.x, C.y, B.x, B.y); ctx.stroke(); ctx.setLineDash([]);
+      }
+      const t = ease(lt), m = 1 - t;
+      P = lt <= 0 ? A : lt >= 1 ? B : { x: m * m * A.x + 2 * m * t * C.x + t * t * B.x, y: m * m * A.y + 2 * m * t * C.y + t * t * B.y };
+    } else {
+      const side = e.pairWith != null ? -ease(tLocal(e.pairWith, L.nT, T)) : e.side;
+      P = shellPt(e.home, e.shell, e.dir, side);
+    }
+    electron(P.x, P.y, e.mark, er);
+  });
+
+  // brackets and charges
+  if (q > 0) {
+    L.atoms.forEach((a, ai) => {
+      const n = a.el.shells.length;
+      const r = (a.kind === 'metal' ? SH(n - 2) : SH(n - 1)) * u + 0.35 * u;
+      const c = a.kind === 'metal' ? COL.cation : COL.anion, x = pos[ai].x, y = pos[ai].y, tk = 0.32 * u;
+      ctx.globalAlpha = q; ctx.strokeStyle = c; ctx.lineWidth = 2.2; ctx.lineCap = 'butt';
+      ctx.beginPath();
+      ctx.moveTo(x - r + tk, y - r); ctx.lineTo(x - r, y - r); ctx.lineTo(x - r, y + r); ctx.lineTo(x - r + tk, y + r);
+      ctx.moveTo(x + r - tk, y - r); ctx.lineTo(x + r, y - r); ctx.lineTo(x + r, y + r); ctx.lineTo(x + r - tk, y + r);
+      ctx.stroke();
+      text(a.el.q, x + r + 0.1 * u, y - r + 0.05 * u, Math.max(12, 0.72 * u), c, 'left', 800, 'top');
+      a._r = r;
+      ctx.globalAlpha = 1;
+    });
+    // attraction arrows between neighbouring ions
+    const aq = clamp((q - 0.45) / 0.55);
+    if (aq > 0) {
+      ctx.globalAlpha = aq;
+      const order = L.atoms.map((a, i) => i).sort((i, j) => pos[i].x - pos[j].x);
+      for (let k = 0; k < order.length - 1; k++) {
+        const i = order[k], j = order[k + 1];
+        const x1 = pos[i].x + L.atoms[i]._r + 0.18 * u, x2 = pos[j].x - L.atoms[j]._r - 0.18 * u;
+        if (x2 - x1 > 12) arrow(x1, cy, x2, cy, COL.text, 2, true, Math.min(9, (x2 - x1) / 3));
+      }
+      ctext('Strong electrostatic attraction between oppositely charged ions', cx, cy - SH(2) * u - 0.95 * u, Math.max(12, Math.min(16, 0.5 * u)), COL.text, 'center', 700);
+      ctx.globalAlpha = 1;
+    }
+  } else if (stageOf(T) === 1) {
+    text(p.eq.map(s => s.replace(/ +\(.*\)/, '')).join('     '), cx, cy - SH(2) * u - 0.95 * u, Math.max(12, Math.min(16, 0.5 * u)), COL.muted, 'center', 600);
+  }
+
+  // labels under each particle
+  const ly = cy + SH(2) * u + 0.8 * u, fs = Math.max(11, Math.min(15, 0.46 * u));
+  L.atoms.forEach((a, ai) => {
+    const x = pos[ai].x;
+    const c = a.kind === 'metal' ? COL.cation : COL.anion;
+    if (q < 1) {
+      ctx.globalAlpha = 1 - q;
+      text(`${a.el.sym} atom`, x, ly, fs + 1, COL.text, 'center', 700);
+      text(a.el.shells.join(','), x, ly + fs * 1.4, fs, COL.muted, 'center', 600);
+    }
+    if (q > 0) {
+      ctx.globalAlpha = q;
+      text(`${a.el.ion} ion`, x, ly, fs + 1, c, 'center', 700);
+      text(a.el.cfg, x, ly + fs * 1.4, fs, COL.muted, 'center', 600);
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+
+/* ════════════════════════ ionic: lattices ════════════════════════ */
+function lattice2D(key) {
+  const cols = 9, rows = 6, ions = [];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    let t = null;
+    if (key === 'MgCl2') { if ((i + j) % 2) t = '-'; else if (i % 2 === 0 && j % 2 === 0) t = '+'; }
+    else t = (i + j) % 2 ? '-' : '+';
+    if (t) ions.push({ i, j, t });
+  }
+  return { cols, rows, ions };
+}
+function lattice3D(key) {
+  const pts = [];
+  if (key === 'MgCl2') {
+    for (let k = 0; k < 3; k++) for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) {
+      let t = null;
+      if ((i + j) % 2) t = '-';
+      else if (k % 2 === 0 ? (i % 2 === 0 && j % 2 === 0) : (i % 2 === 1 && j % 2 === 1)) t = '+';
+      if (t) pts.push({ x: i - 2, y: k - 1, z: j - 2, t });
+    }
+  } else {
+    for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++)
+      pts.push({ x: i - 1, y: j - 1, z: k - 1, t: (i + j + k) % 2 ? '-' : '+' });
+  }
+  const bonds = [];
+  for (let a = 0; a < pts.length; a++) for (let b = a + 1; b < pts.length; b++) {
+    if (pts[a].t === pts[b].t) continue;
+    const d = Math.abs(pts[a].x - pts[b].x) + Math.abs(pts[a].y - pts[b].y) + Math.abs(pts[a].z - pts[b].z);
+    if (d < 1.01) bonds.push([a, b]);
+  }
+  return { pts, bonds };
+}
+const latCache = {};
+let pickList = [];
+
+function ionStyle(t) { return t === '+' ? COL.cation : COL.anion; }
+function ionText(p, t, big) {
+  if (big) return t === '+' ? p.metal.ion : p.nm.ion;
+  return t === '+' ? p.metal.q : p.nm.q;
+}
+
+function drawLat2() {
+  const key = S.preset.ionic, p = IONIC[key];
+  const L = latCache['2' + key] || (latCache['2' + key] = lattice2D(key));
+  const sp = Math.min((W - 20) / (L.cols + 0.2), (H - 90) / (L.rows + 0.2));
+  const ox = (W - (L.cols - 1) * sp) / 2, oy = 44 + (H - 90 - (L.rows - 1) * sp) / 2 + sp * 0.1;
+  const P = io => ({ x: ox + io.i * sp, y: oy + io.j * sp });
+  title(`${p.name}: giant ionic lattice (2D slice)`);
+  const sel = S.sel != null ? L.ions[S.sel] : null;
+  // attractions between every neighbouring + and − pair
+  ctx.setLineDash([3, 4]); ctx.strokeStyle = COL.lineStrong; ctx.lineWidth = 1.5;
+  L.ions.forEach(a => L.ions.forEach(b => {
+    if (a.t === '+' && b.t === '-' && Math.abs(a.i - b.i) + Math.abs(a.j - b.j) === 1) {
+      const A = P(a), B = P(b); ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+    }
+  }));
+  ctx.setLineDash([]);
+  pickList = [];
+  const rc = sp * 0.25, ra = sp * 0.37, big = sp > 62;
+  L.ions.forEach((io, idx) => {
+    const { x, y } = P(io), r = io.t === '+' ? rc : ra, c = ionStyle(io.t);
+    disc(x, y, r, mix(c, COL.bg, .72), c, 2);
+    text(ionText(p, io.t, big), x, y + 1, Math.max(10, r * (big ? 0.62 : 0.8)), c, 'center', 800);
+    pickList.push({ idx, x, y, r, z: 0 });
+  });
+  if (sel) {
+    const A = P(sel);
+    L.ions.forEach(b => {
+      if (b.t !== sel.t && Math.abs(b.i - sel.i) + Math.abs(b.j - sel.j) === 1) {
+        const B = P(b), d = Math.hypot(B.x - A.x, B.y - A.y), ux = (B.x - A.x) / d, uy = (B.y - A.y) / d;
+        const r1 = sel.t === '+' ? rc : ra, r2 = b.t === '+' ? rc : ra;
+        arrow(A.x + ux * (r1 + 3), A.y + uy * (r1 + 3), B.x - ux * (r2 + 3), B.y - uy * (r2 + 3), COL.text, 2.5, true, 8);
+      }
+    });
+    ring(A.x, A.y, (sel.t === '+' ? rc : ra) + 4, COL.text, 1, 2);
+  }
+  if (!SNAP) ctext(key === 'MgCl2' ? 'Schematic: shows the 1 : 2 ratio of Mg²⁺ to Cl⁻, not the true arrangement' : 'Tap an ion to see the oppositely charged ions it attracts',
+    W / 2, capY(), 13, COL.muted, 'center', 600);
+}
+
+function drawLat3(dt) {
+  const key = S.preset.ionic, p = IONIC[key];
+  const L = latCache['3' + key] || (latCache['3' + key] = lattice3D(key));
+  if (!S.spun && !REDUCED && !drag) S.yaw += dt * 0.28;
+  title(`${p.name}: giant ionic lattice (3D)`);
+  const cyaw = Math.cos(S.yaw), syaw = Math.sin(S.yaw), cp = Math.cos(S.pitch), spi = Math.sin(S.pitch);
+  const Rm = Math.max(...L.pts.map(q => Math.hypot(q.x, q.y, q.z)));
+  const sc = Math.min(W, H - 70) * 0.5 / (Rm * 1.0 + 0.45);
+  const cx = W / 2, cy = (H - 20) / 2 + 12, D = 9;
+  const pr = L.pts.map(q => {
+    const x = q.x * cyaw + q.z * syaw; let z = -q.x * syaw + q.z * cyaw;
+    const y = q.y * cp - z * spi; z = q.y * spi + z * cp;
+    const per = D / (D + z);
+    return { x: cx + x * sc * per, y: cy + y * sc * per, z, per, t: q.t };
+  });
+  const zs = pr.map(q => q.z), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const depth = z => (z - z0) / (z1 - z0 || 1);
+  ctx.lineWidth = 1.6;
+  L.bonds.forEach(([a, b]) => {
+    const f = depth((pr[a].z + pr[b].z) / 2);
+    ctx.strokeStyle = mix('#51647f', COL.bg, f * .7);
+    ctx.beginPath(); ctx.moveTo(pr[a].x, pr[a].y); ctx.lineTo(pr[b].x, pr[b].y); ctx.stroke();
+  });
+  const order = pr.map((q, i) => i).sort((a, b) => pr[b].z - pr[a].z);
+  pickList = [];
+  order.forEach(i => {
+    const q = pr[i], f = depth(q.z), c = ionStyle(q.t);
+    const r = (q.t === '+' ? 0.2 : 0.31) * sc * q.per;
+    disc(q.x, q.y, r, mix(mix(c, COL.bg, .62), COL.bg, f * .55), mix(c, COL.bg, f * .6), 1.6);
+    if (r > 8) text(q.t === '+' ? p.metal.q : p.nm.q, q.x, q.y + 1, r * 0.8, mix(c, COL.bg, f * .5), 'center', 800);
+    pickList.push({ idx: i, x: q.x, y: q.y, r, z: q.z });
+  });
+  if (S.sel != null && pr[S.sel]) {
+    const A = pr[S.sel];
+    L.bonds.forEach(([a, b]) => {
+      if (a !== S.sel && b !== S.sel) return;
+      const B = pr[a === S.sel ? b : a];
+      ctx.strokeStyle = COL.text; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      disc(B.x, B.y, 5, COL.text);
+    });
+    ring(A.x, A.y, (A.t === '+' ? 0.2 : 0.31) * sc * A.per + 4, COL.text, 1, 2.5);
+  }
+  ctext(key === 'MgCl2' ? 'Schematic layers: keeps the 1 : 2 ratio, not the true structure. Drag to rotate.' :
+    (S.sel != null ? `This ion is attracted to ${L.bonds.filter(b => b.includes(S.sel)).length} oppositely charged neighbours shown here (6 in the full lattice)` : 'Drag to rotate · tap an ion to show its attractions'),
+    W / 2, capY(), 13, COL.muted, 'center', 600);
+}
+
+/* ════════════════════════ covalent ════════════════════════ */
+const covCache = {};
+function buildCov(key) {
+  const m = COV[key], els = [];
+  m.atoms.forEach((a, ai) => {
+    a.lone.forEach(ang => { els.push({ ai, kind: 'lone', ang, side: -1 }, { ai, kind: 'lone', ang, side: 1 }); });
+  });
+  m.bonds.forEach(([a, b, order], bi) => {
+    const A = m.atoms[a], B = m.atoms[b], ab = Math.atan2(B.y - A.y, B.x - A.x) / RAD;
+    for (let k = 0; k < order; k++) {
+      const spread = order === 2 ? (k ? 40 : -40) : 0;
+      els.push({ ai: a, kind: 'bond', bi, k, order, startAng: ab + spread, end: -1 });
+      els.push({ ai: b, kind: 'bond', bi, k, order, startAng: ab + 180 - spread, end: 1 });
+    }
+  });
+  const count = m.atoms.map((a, ai) => a.lone.length * 2 + m.bonds.reduce((s, [x, y, o]) => s + (x === ai || y === ai ? 2 * o : 0), 0));
+  return { m, els, count };
+}
+const getCov = key => covCache[key] || (covCache[key] = buildCov(key));
+
+function drawCov() {
+  const key = S.preset.covalent, L = getCov(key), m = L.m, T = S.T;
+  const a1 = ease(T), q = ease(T - 1), spread = lerp(2, 1, a1);
+  // fit the current arrangement (so the view closes in as the atoms approach), plus room for labels
+  const xs = m.atoms.map(a => a.x * spread), ys = m.atoms.map(a => a.y * spread);
+  const bx0 = Math.min(...xs) - 1, bx1 = Math.max(...xs) + 1, by0 = Math.min(...ys) - 1, by1 = Math.max(...ys) + 1;
+  const R = Math.min((W - 40) / (bx1 - bx0 + 1.5), (H - 130) / (by1 - by0 + 0.2), H / 4.4);
+  const cx = W / 2 - (bx0 + bx1) / 2 * R, cy = 86 + (H - 130) / 2 - (by0 + by1) / 2 * R;
+  const ap = m.atoms.map(a => ({ x: cx + a.x * spread * R, y: cy + a.y * spread * R }));
+  const er = Math.max(3, 0.075 * R);
+
+  title(`${m.name}, ${m.formula}`);
+
+  // overlap tint once bonded
+  if (q > 0) {
+    m.bonds.forEach(([a, b]) => {
+      ctx.save(); ctx.beginPath(); ctx.arc(ap[a].x, ap[a].y, R, 0, Math.PI * 2); ctx.clip();
+      ctx.globalAlpha = 0.22 * q; ctx.fillStyle = COL.blue;
+      ctx.beginPath(); ctx.arc(ap[b].x, ap[b].y, R, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    });
+  }
+  // shells and nuclei
+  m.atoms.forEach((a, ai) => {
+    ring(ap[ai].x, ap[ai].y, R, COL.shell, 1, 1.8);
+    disc(ap[ai].x, ap[ai].y, Math.max(10, 0.2 * R), COL.card, a.mark === 'dot' ? COL.dot : COL.cross, 1.8);
+    text(a.sym, ap[ai].x, ap[ai].y + 1, Math.max(11, 0.21 * R), COL.text, 'center', 700);
+  });
+  // lens (overlap) centre for a bond and its geometry
+  const lens = bi => {
+    const [a, b] = m.bonds[bi], A = ap[a], B = ap[b];
+    const d = Math.hypot(B.x - A.x, B.y - A.y), ex = (B.x - A.x) / d, ey = (B.y - A.y) / d;
+    return { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, ex, ey, nx: -ey, ny: ex };
+  };
+  const f = ease((T - 0.45) / 0.55);
+  L.els.forEach(e => {
+    const A = ap[e.ai]; let P;
+    if (e.kind === 'lone') { const an = e.ang * RAD + e.side * 0.14; P = { x: A.x + Math.cos(an) * R, y: A.y + Math.sin(an) * R }; }
+    else {
+      const s = { x: A.x + Math.cos(e.startAng * RAD) * R, y: A.y + Math.sin(e.startAng * RAD) * R };
+      const l = lens(e.bi);
+      let px, py;
+      if (e.order === 1) { px = l.x + l.nx * e.end * 0.15 * R; py = l.y + l.ny * e.end * 0.15 * R; }
+      else { const kk = e.k ? 1 : -1; px = l.x + l.ex * e.end * 0.11 * R + l.nx * kk * 0.17 * R; py = l.y + l.ey * e.end * 0.11 * R + l.ny * kk * 0.17 * R; }
+      P = { x: lerp(s.x, px, f), y: lerp(s.y, py, f) };
+    }
+    electron(P.x, P.y, m.atoms[e.ai].mark, er);
+  });
+
+  // labels: electron configuration first, outer-shell count once bonded
+  const fs = Math.max(11, Math.min(15, 0.15 * R));
+  m.atoms.forEach((a, ai) => {
+    const ang = a.lab * RAD, d = R + 12 + (Math.abs(Math.sin(ang)) > .7 ? 6 : 0);
+    let x = ap[ai].x + Math.cos(ang) * d; const y = ap[ai].y + Math.sin(ang) * d;
+    const al = Math.cos(ang) > .3 ? 'left' : Math.cos(ang) < -.3 ? 'right' : 'center';
+    // keep the label on the canvas on narrow screens
+    font(fs, 700);
+    const tw = ctx.measureText(`${L.count[ai]} in outer shell`).width;
+    if (al === 'left') x = Math.min(x, W - tw - 6); else if (al === 'right') x = Math.max(x, tw + 6); else x = clamp(x, tw / 2 + 6, W - tw / 2 - 6);
+    if (q < 1) { ctx.globalAlpha = 1 - q; text(`${a.sym}  ${a.cfg}`, x, y, fs, COL.muted, al, 700); }
+    if (q > 0) {
+      ctx.globalAlpha = q;
+      text(`${L.count[ai]} in outer shell`, x, y, fs, L.count[ai] === (a.sym === 'H' ? 2 : 8) ? COL.good : COL.text, al, 700);
+    }
+    ctx.globalAlpha = 1;
+  });
+
+  // callout: the shared pair and what holds it
+  if (q > 0.3) {
+    const aq = clamp((q - 0.3) / 0.7);
+    let bi = 0; m.bonds.forEach((b, i) => { if (lens(i).y < lens(bi).y) bi = i; });
+    const l = lens(bi), [a, b, order] = m.bonds[bi];
+    ctx.globalAlpha = aq;
+    ctx.setLineDash([5, 4]);
+    for (const n of [a, b]) {
+      const A = ap[n], d = Math.hypot(A.x - l.x, A.y - l.y), ux = (A.x - l.x) / d, uy = (A.y - l.y) / d;
+      arrow(l.x + ux * 0.2 * R, l.y + uy * 0.2 * R, A.x - ux * (Math.max(10, 0.2 * R) + 4), A.y - uy * (Math.max(10, 0.2 * R) + 4), COL.text, 1.6, false, 7);
+    }
+    ctx.setLineDash([]);
+    const top = true, ty = 42;
+    const line1 = order === 2 ? 'Two shared pairs = a double covalent bond' : 'Shared pair of electrons = one covalent bond';
+    ctext(line1, W / 2, ty, 15, COL.text, 'center', 700);
+    const l1 = lastLines;
+    ctext('held by electrostatic attraction to both nuclei', W / 2, ty + 19 * l1, 13, COL.muted, 'center', 600);
+    ctx.strokeStyle = rgba(COL.text, .5); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(W / 2, top ? ty + 19 * l1 + 17 * lastLines - 6 : ty - 12); ctx.lineTo(l.x, top ? l.y - 0.55 * R : l.y + 0.55 * R); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ════════════════════════ metallic ════════════════════════ */
+// Close-packed layers: each row sits in the hollows of the row below (offset by
+// half a spacing, rows sqrt(3)/2 apart), as in a slice through a close-packed
+// plane of copper. Positions are in units of the ion-to-ion spacing.
+const MC = 10, MR = 6, SPLIT = 3;   // columns, rows, rows above the slip plane
+const RP = Math.sqrt(3) / 2;        // row pitch
+const SLIP = (SPLIT - 0.5) * RP;    // y of the slip plane
+const YMAX = (MR - 1) * RP + 0.5, XMAX = MC;   // electron bounds (from -0.5)
+const rowOff = r => (r % 2) * 0.5;
+let MET = null;
+function buildMetal(key) {
+  const P = METAL[key], rng = mulberry32(11), ions = [], extras = [];
+  for (let r = 0; r < MR; r++) for (let c = 0; c < MC; c++)
+    ions.push({ c, r, bx: c + rowOff(r), by: r * RP, type: 'M', rad: 0.4, p1: rng() * 6.3, p2: rng() * 6.3 });
+  // Alloy atoms are drawn much bigger (tin) or smaller (carbon) than they really
+  // are, and their neighbours pushed further aside, so the buckled rows are obvious.
+  const push = (centres, reach, amount) => ions.forEach(io => {
+    if (io.type === 'X') return;
+    centres.forEach(b => {
+      const vx = io.bx0 - b.x, vy = io.by0 - b.y, d = Math.hypot(vx, vy);
+      if (d > 0 && d < reach) { const k = amount * (1 - d / reach) / d; io.bx += vx * k; io.by += vy * k; }
+    });
+  });
+  ions.forEach(io => { io.bx0 = io.bx; io.by0 = io.by; });
+  if (P.alloy === 'big') {
+    const bigs = [];
+    [[1, 2], [4, 3], [7, 2], [2, 0], [8, 5], [5, 1], [3, 5], [8, 3]].forEach(([c, r]) => {
+      const io = ions[r * MC + c]; io.type = 'X'; io.rad = 0.66; bigs.push({ x: io.bx, y: io.by });
+    });
+    push(bigs, 2.1, 0.34);
+  }
+  if (P.alloy === 'small') {
+    // carbon sits in the triangular hollow between two atoms of row r and one of row r + 1
+    [[1, 2], [4, 2], [7, 2], [2, 0], [6, 4], [5, 1], [0, 3], [8, 0]].forEach(([c, r]) =>
+      extras.push({ bx: c + rowOff(r) + 0.5, by: (r + 1 / 3) * RP, rad: 0.17 }));
+    push(extras.map(x => ({ x: x.bx, y: x.by })), 1.5, 0.22);
+  }
+  const els = [];
+  for (let i = 0; i < MC * MR * 2; i++) {
+    els.push({ owner: i >> 1, ph: (i & 1) * Math.PI + rng(), x: -0.5 + rng() * (XMAX + 0.5), y: -0.5 + rng() * (YMAX + 0.5), a: rng() * 6.3, delay: rng() * 0.5 });
+  }
+  return { key, P, ions, extras, els, temps: new Array(MC).fill(0) };
+}
+function metal() { if (!MET || MET.key !== S.preset.metallic) MET = buildMetal(S.preset.metallic); return MET; }
+
+function setForce(raw) {
+  const M = metal();
+  S.forceRaw = raw;
+  const f = M.P.alloy ? 0.18 * Math.tanh(raw / 0.5) : clamp(raw, -2, 2);
+  const df = f - S.force;
+  if (df) M.els.forEach(e => { if (e.y < SLIP) e.x += df; });
+  S.force = f;
+  const r = $('#force'); if (r && document.activeElement !== r) r.value = raw;
+}
+
+function stepMetal(dt) {
+  const M = metal();
+  const sim = dt * S.speed;
+  if (S.snapping) {
+    const tgt = M.P.alloy ? 0 : Math.round(S.forceRaw);
+    const nr = lerp(S.forceRaw, tgt, clamp(sim * 6));
+    setForce(Math.abs(nr - tgt) < 0.004 ? tgt : nr);
+    if (S.forceRaw === tgt) S.snapping = false;
+  }
+  // heat flow along the bar
+  if (S.demo === 'heat') {
+    const t = M.temps;
+    if (S.heat) t[0] = lerp(t[0], 1, clamp(sim * 3));
+    const n = t.slice();
+    for (let c = 0; c < MC; c++) {
+      const l = t[Math.max(0, c - 1)], r = t[Math.min(MC - 1, c + 1)];
+      n[c] += sim * 1.6 * (l + r - 2 * t[c]) - sim * 0.03 * t[c];
+    }
+    for (let c = 0; c < MC; c++) t[c] = clamp(n[c]);
+  }
+  const drift = S.demo === 'elec' && S.pd ? 1.5 : 0;
+  M.els.forEach(e => {
+    const top = e.y < SLIP;
+    const col = clamp(Math.round(e.x - (top ? S.force : 0)), 0, MC - 1);
+    const sp = 1.1 * (S.demo === 'heat' ? 1 + 2.6 * M.temps[col] : 1);
+    e.a += (Math.random() - 0.5) * sim * 7;
+    const ox = e.x, oy = e.y;
+    e.x += (Math.cos(e.a) * sp + drift) * sim;
+    e.y += Math.sin(e.a) * sp * sim;
+    if (e.y < -0.5) { e.y = -1 - e.y; e.a = -e.a; }
+    if (e.y > YMAX) { e.y = 2 * YMAX - e.y; e.a = -e.a; }
+    const nowTop = e.y < SLIP, off = nowTop ? S.force : 0;
+    const x0 = -0.5 + off, x1 = XMAX + off;
+    if (nowTop !== top && (e.x < x0 || e.x > x1)) { e.x = ox; e.y = oy; e.a = -e.a; return; }
+    if (drift) {
+      if (e.x > x1) { e.x = x0 + 0.02; e.y = -0.4 + Math.random() * (YMAX + 0.3); }
+      if (e.x < x0) e.x = x1 - 0.02;
+    } else {
+      if (e.x < x0) { e.x = 2 * x0 - e.x; e.a = Math.PI - e.a; }
+      if (e.x > x1) { e.x = 2 * x1 - e.x; e.a = Math.PI - e.a; }
+    }
+  });
+}
+
+let metGeom = null;
+function drawMetal() {
+  const M = metal(), P = M.P, T = S.T, demo = S.demo, t = S.simT;
+  const q = ease(T - 1);
+  const padX = demo === 'slide' ? 5 : demo === 'elec' || demo === 'heat' ? 3 : 1.4;
+  // vertical band for the lattice: room above for the circuit, below for the strip and captions
+  const tm = demo === 'elec' ? 74 : 36;
+  const bm = legH() + 22 + (W < 600 ? 34 : 16) + (demo === 'heat' ? 18 : 0);
+  const s = Math.min((W - 20) / (MC - 0.5 + padX), (H - tm - bm) / ((MR - 1) * RP + 1));
+  const ox = (W - (MC - 0.5) * s) / 2 - (demo === 'slide' ? 0.6 * s : 0);
+  const oy = tm + (H - tm - bm - (MR - 1) * RP * s) / 2;
+  metGeom = { s, ox, oy };
+  const X = x => ox + x * s, Y = y => oy + y * s;
+  title(P.name + (demo === 'slide' ? ': malleability' : demo === 'elec' ? ': electrical conductivity' : demo === 'heat' ? ': thermal conductivity' : ''));
+
+  // apparatus behind the lattice
+  if (demo === 'elec') {
+    const xl = X(-1.1), xr = X(MC - 0.5 + 1.1), yt = 50, yb = Y(YMAX + 0.4);
+    ctx.fillStyle = '#1b2a3d'; ctx.fillRect(xl - 8, Y(-0.6), 8, yb - Y(-0.6)); ctx.fillRect(xr, Y(-0.6), 8, yb - Y(-0.6));
+    text('−', xl - 18, (Y(-0.6) + yb) / 2, 26, COL.blue, 'center', 800);
+    text('+', xr + 20, (Y(-0.6) + yb) / 2, 26, COL.hot, 'center', 800);
+    ctx.strokeStyle = '#51647f'; ctx.lineWidth = 2;
+    const bx = W / 2;
+    ctx.beginPath(); ctx.moveTo(xl - 4, Y(-0.6)); ctx.lineTo(xl - 4, yt - 16); ctx.lineTo(bx - 10, yt - 16);
+    ctx.moveTo(bx + 6, yt - 16); ctx.lineTo(xr + 4, yt - 16); ctx.lineTo(xr + 4, Y(-0.6)); ctx.stroke();
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx - 10, yt - 30); ctx.lineTo(bx - 10, yt - 2); ctx.stroke();
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(bx + 6, yt - 24); ctx.lineTo(bx + 6, yt - 8); ctx.stroke();
+    text(S.pd ? 'p.d. applied' : 'switched off', bx + 20, yt - 16, 12, S.pd ? COL.text : COL.muted, 'left', 700);
+    if (S.pd) {
+      ctext('Delocalised electrons flow towards +. The positive ions stay in place.', W / 2, capY() - 14, 13, COL.blue, 'center', 700);
+      arrow(W / 2 - 60, capY() + 6, W / 2 + 60, capY() + 6, COL.blue, 2, false, 8);
+    }
+  }
+  if (demo === 'heat') {
+    const x0 = X(-1.25);
+    ctx.fillStyle = S.heat ? '#6b2a24' : '#1b2a3d'; ctx.fillRect(x0 - 10, Y(-0.5), 16, (YMAX + 0.5) * s);
+    const vlab = (str, x, c) => { ctx.save(); ctx.translate(x, Y((MR - 1) * RP / 2)); ctx.rotate(-Math.PI / 2); text(str, 0, 0, 12, c, 'center', 800); ctx.restore(); };
+    vlab(S.heat ? 'HEATED END' : 'heater off', Math.max(12, x0 - 22), S.heat ? COL.hot : COL.muted);
+    vlab('COLD END', X(MC - 0.5 + 0.85), COL.muted);
+    // temperature strip
+    const yb = Y((MR - 1) * RP) + 0.5 * s + 6;
+    for (let c = 0; c < MC; c++) {
+      ctx.fillStyle = mix('#1e3350', COL.hot, M.temps[c]);
+      ctx.fillRect(X(c) - s * 0.45, yb, s * 0.9, 8);
+    }
+    if (X(-0.5) - 6 > 80) text('temperature', X(-0.5) - 6, yb + 4, 11, COL.muted, 'right', 600);
+  }
+  // slip plane
+  if (demo === 'slide') {
+    ctx.setLineDash([6, 6]); ctx.strokeStyle = COL.lineStrong; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(-1.2), Y(SLIP)); ctx.lineTo(X(MC - 0.5 + 3.5), Y(SLIP)); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // ions
+  const vib = io => {
+    let amp = 0.025;
+    if (demo === 'heat') amp = 0.025 + 0.13 * M.temps[io.c];
+    if (REDUCED && demo !== 'heat') amp = 0;
+    return { x: Math.sin(t * 9 + io.p1) * amp, y: Math.sin(t * 11 + io.p2) * amp };
+  };
+  const ionPos = io => { const v = vib(io); return { x: X(io.bx + (io.r < SPLIT ? S.force : 0) + v.x), y: Y(io.by + v.y) }; };
+  const jam = demo === 'slide' && P.alloy && Math.abs(S.forceRaw) > 0.08;
+  M.ions.forEach(io => {
+    const p = ionPos(io), r = io.rad * s;
+    let c = io.type === 'X' ? COL.alloy : COL.cation;
+    const hot = demo === 'heat' ? M.temps[io.c] : 0;
+    disc(p.x, p.y, r, mix(mix(c, COL.bg, .72), '#5a2320', hot * .8), mix(c, COL.hot, hot * .8), 2);
+    const lab = io.type === 'X' ? P.xSym : P.sym;
+    if (q < 1) { ctx.globalAlpha = 1 - q; text(lab, p.x, p.y + 1, Math.max(9, r * 0.72), c, 'center', 700); }
+    if (q > 0) { ctx.globalAlpha = q; text('+', p.x, p.y + 1, Math.max(10, r * 0.95), c, 'center', 800); }
+    ctx.globalAlpha = 1;
+    if (T < 1) ring(p.x, p.y, (io.rad + 0.1) * s, COL.shell, 1 - ease(T), 1);
+    if (jam && io.type === 'X' && Math.abs(io.r - (SPLIT - 0.5)) < 1) {
+      ctx.setLineDash([4, 3]); ring(p.x, p.y, r + 5, COL.hot, 1, 2); ctx.setLineDash([]);
+    }
+  });
+  M.extras.forEach(x => {
+    const px = X(x.bx + (x.by < SLIP ? S.force : 0)), py = Y(x.by), r = Math.max(5, x.rad * s);
+    disc(px, py, r, '#2b3544', COL.carbon, 1.6);
+    if (r > 7) text('C', px, py + 1, r * 1.05, COL.carbon, 'center', 700);
+    if (jam && Math.abs(x.by - SLIP) < 0.4) { ctx.setLineDash([4, 3]); ring(px, py, r + 5, COL.hot, 1, 2); ctx.setLineDash([]); }
+  });
+
+  // electrons: bound to their atoms at step 1, then released into the sea
+  const er = Math.max(2.4, 0.07 * s);
+  const bound = e => {
+    const io = M.ions[e.owner], p = ionPos(io), a = t * 1.6 + e.ph, rr = (io.rad + 0.1) * s;
+    return { x: p.x + Math.cos(a) * rr, y: p.y + Math.sin(a) * rr };
+  };
+  const pts = M.els.map(e => {
+    const f = ease((T - e.delay) / 0.5);
+    const free = { x: X(e.x), y: Y(e.y) };
+    if (f >= 1) return free;
+    const b = bound(e);
+    return { x: lerp(b.x, free.x, f), y: lerp(b.y, free.y, f) };
+  });
+  pts.forEach(p => electron(p.x, p.y, 'dot', er));
+
+  // attraction from one ion to the electrons around it
+  if (demo === 'structure' && q > 0.3) {
+    const io = M.ions[2 * MC + 4], p = ionPos(io);
+    const near = pts.map((e, i) => ({ i, d: Math.hypot(e.x - p.x, e.y - p.y) })).sort((a, b) => a.d - b.d).slice(0, 6);
+    ctx.globalAlpha = clamp((q - 0.3) / 0.7) * 0.85; ctx.setLineDash([3, 3]); ctx.strokeStyle = COL.text; ctx.lineWidth = 1.3;
+    near.forEach(n => { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(pts[n.i].x, pts[n.i].y); ctx.stroke(); });
+    ctx.setLineDash([]); ring(p.x, p.y, io.rad * s + 4, COL.text, 1, 2);
+    ctx.globalAlpha = 1;
+  }
+
+  // force handle for the malleability demo
+  if (demo === 'slide') {
+    const hx = X(MC - 0.5 + S.force) + 0.9 * s, hy = Y((SPLIT - 1) * RP / 2);
+    const hh = SPLIT * RP * s * 0.8;
+    if (P.alloy && Math.abs(S.forceRaw) > 0.05) {
+      const rx = hx + (S.forceRaw - S.force) * s * 0.9;
+      arrow(hx, hy, rx, hy, COL.hot, 3, false, 10);
+    }
+    ctx.fillStyle = drag && drag.kind === 'force' ? '#1f4b72' : '#163552';
+    ctx.strokeStyle = COL.blue; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(hx - 13, hy - hh / 2, 26, hh, 13); ctx.fill(); ctx.stroke();
+    text('⇆', hx, hy, 18, COL.blue, 'center', 800);
+    text('push', hx, hy - hh / 2 - 12, 12, COL.blue, 'center', 700);
+    metGeom.handle = { x: hx, y: hy, h: hh };
+    let msg, col = COL.muted;
+    if (P.alloy) { msg = Math.abs(S.forceRaw) > 0.08 ? 'Jammed: different-sized atoms distort the layers, so they cannot slide' : 'Drag the handle to push the top layers'; col = Math.abs(S.forceRaw) > 0.08 ? COL.hot : COL.muted; }
+    else { msg = Math.abs(S.force) > 0.08 ? 'Layers slide, and the delocalised electrons still hold every ion: the bonding is not broken' : 'Drag the handle to push the top layers'; col = Math.abs(S.force) > 0.08 ? COL.good : COL.muted; }
+    ctext(msg, W / 2, capY(), 13, col, 'center', 700);
+  } else metGeom.handle = null;
+  if (demo === 'heat') ctext(S.heat ? 'Hot ions vibrate more and pass it on; fast delocalised electrons carry energy along' : 'Switch on the heater to heat the left end', W / 2, capY(), 13, COL.muted, 'center', 600);
+  if (demo === 'elec' && !S.pd) ctext('Switch on to apply a potential difference: the positive ions stay put', W / 2, capY(), 13, COL.muted, 'center', 600);
+}
+
+/* ════════════════════════ loop ════════════════════════ */
+function drawScene(dt) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
+  if (W < 10 || H < 10) return;
+  if (S.mode === 'ionic') { if (S.view === 'lat2') drawLat2(); else if (S.view === 'lat3') drawLat3(dt); else drawIonic(); }
+  else if (S.mode === 'covalent') drawCov();
+  else drawMetal();
+}
+let last = performance.now(), lastUIKey = '';
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (S.playing) {
+    S.T += dt * S.speed / DUR;
+    const end = S.target != null ? S.target : 2;
+    if (S.T >= end) { S.T = end; S.playing = false; S.target = null; }
+  }
+  S.simT += dt * S.speed;
+  if (S.mode === 'metallic') stepMetal(dt);
+  drawScene(dt);
+  const key = [S.mode, S.preset[S.mode], stageOf(S.T), S.view, S.demo, S.playing, S.pd, S.heat].join('|');
+  if (key !== lastUIKey) { lastUIKey = key; refreshDynamic(); }
+  requestAnimationFrame(frame);
+}
+
+/* ════════════════════════ pointer ════════════════════════ */
+let drag = null;
+function ptr(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / Z, y: (e.clientY - r.top) / Z }; }
+cv.addEventListener('pointerdown', e => {
+  const p = ptr(e);
+  if (S.mode === 'ionic' && S.view === 'lat3') { drag = { kind: 'rot', x: p.x, y: p.y, x0: p.x, y0: p.y }; cv.setPointerCapture(e.pointerId); }
+  else if (S.mode === 'metallic' && S.demo === 'slide' && metGeom) {
+    const h = metGeom.handle, top = p.y < metGeom.oy + SLIP * metGeom.s;
+    if ((h && Math.abs(p.x - h.x) < 34 && Math.abs(p.y - h.y) < h.h / 2 + 20) || top) {
+      drag = { kind: 'force', x0: p.x, raw0: S.forceRaw }; S.snapping = false; cv.setPointerCapture(e.pointerId);
+    }
+  } else drag = { kind: 'tap', x0: p.x, y0: p.y };
+});
+cv.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const p = ptr(e);
+  if (drag.kind === 'rot') {
+    S.yaw += (p.x - drag.x) * 0.01; S.pitch = clamp(S.pitch + (p.y - drag.y) * 0.01, -1.4, 1.4);
+    drag.x = p.x; drag.y = p.y;
+    if (Math.hypot(p.x - drag.x0, p.y - drag.y0) > 4) S.spun = true;
+  } else if (drag.kind === 'force') setForce(clamp(drag.raw0 + (p.x - drag.x0) / metGeom.s, -2.2, 2.2));
+});
+function endDrag(e) {
+  if (!drag) return;
+  const p = ptr(e);
+  if (drag.kind === 'force') S.snapping = true;
+  if ((drag.kind === 'rot' || drag.kind === 'tap') && Math.hypot(p.x - drag.x0, p.y - drag.y0) < 5 && S.mode === 'ionic' && S.view !== 'ions') {
+    const hits = pickList.filter(h => Math.hypot(h.x - p.x, h.y - p.y) <= h.r + 3).sort((a, b) => a.z - b.z);
+    S.sel = hits.length ? (S.sel === hits[0].idx ? null : hits[0].idx) : null;
+  }
+  drag = null;
+}
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', () => { if (drag && drag.kind === 'force') S.snapping = true; drag = null; });
+
+/* ════════════════════════ UI ════════════════════════ */
+const ICON = {
+  dot: '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#3B82F6" stroke="#9cc3ff"/></svg>',
+  cross: '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3L11 11M11 3L3 11" stroke="#EF4444" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  ion: (c, s) => `<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7.5" fill="${mix(c, COL.bg, .72)}" stroke="${c}" stroke-width="1.6"/><text x="9" y="12.6" text-anchor="middle" font-size="10" font-weight="800" fill="${c}" font-family="sans-serif">${s}</text></svg>`,
+  small: c => `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="#2b3544" stroke="${c}" stroke-width="1.5"/></svg>`
+};
+
+function setMode(m) {
+  S.mode = m; S.T = 0; S.playing = false; S.target = null; S.sel = null;
+  S.view = 'ions'; S.demo = 'structure'; resetDemo();
+  refreshStatic();
+}
+// In the 3D rock-salt lattice, start with the centre ion picked: it shows all 6 attractions.
+function defaultSel() { return S.mode === 'ionic' && S.view === 'lat3' && S.preset.ionic !== 'MgCl2' ? 13 : null; }
+function resetDemo() { S.force = 0; S.forceRaw = 0; S.snapping = false; S.pd = false; S.heat = false; MET = null; }
+function play() {
+  if (S.playing) { S.playing = false; return; }
+  leaveEndView();
+  if (S.T >= 2) S.T = 0;
+  S.target = null; S.playing = true;
+}
+function leaveEndView() {
+  if (S.view !== 'ions') { S.view = 'ions'; S.sel = null; refreshStatic(); }
+  if (S.demo !== 'structure') { S.demo = 'structure'; resetDemo(); refreshStatic(); }
+}
+function next() {
+  leaveEndView();
+  if (S.T < 1) S.target = 1; else if (S.T < 2) S.target = 2; else return;
+  S.playing = true;
+}
+function prev() {
+  leaveEndView();
+  S.playing = false; S.target = null;
+  S.T = S.T > 1.0001 ? 1 : 0;
+}
+function goStep(k) {
+  leaveEndView();
+  if (k === 0) { S.T = 0; S.playing = false; S.target = null; }
+  else { S.T = k - 1; S.target = k; S.playing = true; }
+}
+
+function refreshStatic() {
+  document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === S.mode));
+  const data = S.mode === 'ionic' ? IONIC : S.mode === 'covalent' ? COV : METAL;
+  $('#presets').innerHTML = Object.keys(data).map(k =>
+    `<button type="button" data-p="${k}" aria-pressed="${S.preset[S.mode] === k}">${data[k].label}</button>`).join('');
+
+  let vb = '';
+  if (S.mode === 'ionic') vb = `<span class="lbl">Show</span><div class="seg" role="group" aria-label="View">${[['ions', 'Forming the ions'], ['lat2', '2D lattice'], ['lat3', '3D lattice']].map(([v, l]) =>
+    `<button type="button" data-view="${v}" aria-pressed="${S.view === v}">${l}</button>`).join('')}</div>`;
+  if (S.mode === 'metallic') vb = `<span class="lbl">Demo</span><div class="seg" role="group" aria-label="Demonstration">${[['structure', 'Structure'], ['slide', 'Malleability'], ['elec', 'Electrical conductivity'], ['heat', 'Thermal conductivity']].map(([v, l]) =>
+    `<button type="button" data-demo="${v}" aria-pressed="${S.demo === v}">${l}</button>`).join('')}</div>`;
+  $('#viewbar').innerHTML = vb;
+  $('#viewbar').style.display = vb ? '' : 'none';
+
+  let dc = '';
+  if (S.mode === 'metallic' && S.demo === 'slide')
+    dc = `<label class="speed" style="color:var(--body)">Force on the top layers <input type="range" id="force" min="-2.2" max="2.2" step="0.05" value="${S.forceRaw}" style="width:180px"></label>
+      <span class="hint">${METAL[S.preset.metallic].alloy ? 'Try it, then compare with the pure metal.' : 'Let go and the layers settle into their new position.'}</span>`;
+  if (S.mode === 'metallic' && S.demo === 'elec')
+    dc = `<button type="button" class="btn ${S.pd ? 'on' : ''}" id="pdBtn" aria-pressed="${S.pd}">${S.pd ? 'Switch off' : 'Apply potential difference'}</button>
+      <span class="hint">Watch the positive ions: they vibrate but never travel.</span>`;
+  if (S.mode === 'metallic' && S.demo === 'heat')
+    dc = `<button type="button" class="btn ${S.heat ? 'on' : ''}" id="heatBtn" aria-pressed="${S.heat}">${S.heat ? 'Turn heater off' : 'Heat the left end'}</button>
+      <button type="button" class="btn" id="coolBtn">Cool it down</button>`;
+  $('#democtl').innerHTML = dc;
+  const f = $('#force');
+  if (f) {
+    f.addEventListener('input', () => { S.snapping = false; setForce(+f.value); });
+    f.addEventListener('change', () => { S.snapping = true; });
+  }
+  const pdb = $('#pdBtn'); if (pdb) pdb.onclick = () => { S.pd = !S.pd; refreshStatic(); };
+  const hb = $('#heatBtn'); if (hb) hb.onclick = () => { S.heat = !S.heat; refreshStatic(); };
+  const cb = $('#coolBtn'); if (cb) cb.onclick = () => { S.heat = false; metal().temps.fill(0); refreshStatic(); };
+
+  cv.classList.toggle('grab', (S.mode === 'ionic' && S.view === 'lat3') || (S.mode === 'metallic' && S.demo === 'slide'));
+  renderLegend();
+  renderTab();
+  lastUIKey = '';
+}
+
+function renderLegend() {
+  let h = '';
+  if (S.mode === 'ionic') {
+    const p = IONIC[S.preset.ionic];
+    if (S.view === 'ions') h = `<span>${ICON.cross} electron from ${p.metal.name}</span><span>${ICON.dot} electron from ${p.nm.name}</span>`;
+    else h = `<span>${ICON.ion(COL.cation, '+')} ${p.metal.ion} (positive ion)</span><span>${ICON.ion(COL.anion, '−')} ${p.nm.ion} (negative ion)</span>`;
+  } else if (S.mode === 'covalent') {
+    const m = COV[S.preset.covalent], A = m.atoms.find(a => a.mark === 'dot'), B = m.atoms.find(a => a.mark === 'cross');
+    const nm = s => ({ H: 'hydrogen', O: 'oxygen', C: 'carbon' })[s];
+    h = A.sym === B.sym
+      ? `<span>${ICON.dot} electrons from one ${nm(A.sym)} atom</span><span>${ICON.cross} electrons from the other</span>`
+      : `<span>${ICON.dot} electrons from ${nm(A.sym)}</span><span>${ICON.cross} electrons from hydrogen</span>`;
+  } else {
+    const P = METAL[S.preset.metallic];
+    h = `<span>${ICON.ion(COL.cation, '+')} ${P.sym} ion</span>` +
+      (P.alloy === 'big' ? `<span>${ICON.ion(COL.alloy, '+')} Sn ion (size exaggerated)</span>` : '') +
+      (P.alloy === 'small' ? `<span>${ICON.small(COL.carbon)} C atom (smaller)</span>` : '') +
+      `<span>${ICON.dot} delocalised electron</span>`;
+  }
+  $('#legend').innerHTML = h;
+}
+
+function refreshDynamic() {
+  const st = stageOf(S.T), names = STEPS[S.mode];
+  const endView = (S.mode === 'ionic' && S.view !== 'ions') || (S.mode === 'metallic' && S.demo !== 'structure');
+  $('#steps').innerHTML = names.map((n, i) =>
+    `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ''}<button type="button" data-step="${i}" ${!endView && i === st ? 'aria-current="step"' : ''}><b>Step ${i + 1}</b>${n}</button>`).join('');
+  $('#playTxt').textContent = S.playing ? 'Pause' : S.T >= 2 && !endView ? 'Replay' : 'Play';
+  $('#playIcon').innerHTML = S.playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5l12 7-12 7z"/>';
+  $('#explain').innerHTML = explain(st);
+  cv.setAttribute('aria-label', `${names[st]}: ${$('#explain h2') ? $('#explain h2').textContent : ''}`);
+}
+
+function explain(st) {
+  if (S.mode === 'ionic') {
+    const p = IONIC[S.preset.ionic], M = p.metal, X = p.nm, gain = 8 - X.shells[X.shells.length - 1];
+    const hd = `<div class="sub">Ionic bonding · ${p.name}, ${p.formula}</div>`;
+    if (S.view !== 'ions') return hd + `<h2>A giant ionic lattice</h2>
+      <p>In a solid, the ions are not in pairs. They form a ${K('regular lattice')}: every ${M.ion} is surrounded by ${X.ion} ions, and every ${X.ion} by ${M.ion} ions.</p>
+      <p>The ${K('electrostatic attraction')} between ${K('oppositely charged ions')} acts in all directions, so the whole crystal is held together by many strong forces. That is why ionic compounds have high melting points.</p>
+      <p>Solid: the ions only vibrate in place, so it does not conduct. Melted or dissolved: the ions are free to move and carry charge.</p>
+      ${S.preset.ionic === 'MgCl2' ? '<p>This view is a schematic to show the 1 : 2 ratio of ions. The real magnesium chloride structure is layered and more complicated.</p>' : '<p>Tap any ion: it attracts 6 oppositely charged neighbours.</p>'}`;
+    if (st === 0) return hd + `<h2>Step 1 · Isolated atoms</h2>
+      <p>${cap(M.name)} is a metal in group ${M.group}. Its electronic structure is ${M.shells.join(',')}, so it has ${M.group} electron${M.group > 1 ? 's' : ''} in its outer shell.</p>
+      <p>${cap(X.name)} is a non-metal in group ${X.group}: ${X.shells.join(',')}, with ${X.group} outer electrons.${p.nNm > 1 ? ' Two chlorine atoms are needed here.' : ''}</p>
+      <p>Crosses are electrons that started on the ${M.name} atom; dots started on the ${X.name} atom${p.nNm > 1 ? 's' : ''}.</p>`;
+    if (st === 1) return hd + `<h2>Step 2 · Electron transfer</h2>
+      <p>${p.nNm > 1 ? `The magnesium atom transfers its two outer electrons, one to each chlorine atom.` : `The ${M.name} atom transfers ${M.group === 1 ? 'its outer electron' : `its ${M.group} outer electrons`} to the ${X.name} atom${gain > 1 ? `, which gains ${gain}` : ''}.`}</p>
+      <div class="eq">${p.eq.join('<br>')}</div>
+      <p>The metal loses its outer shell, so its old second shell (8 electrons) becomes its outer shell. The non-metal’s outer shell fills to 8.</p>
+      <p>Transferring electrons forms the ions. It is not the bond itself.</p>`;
+    return hd + `<h2>Step 3 · Ions and the ionic bond</h2>
+      <p>${M.ion} ${M.cfg} and ${X.ion} ${X.cfg} both have the electronic structure of a noble gas (${M.like === X.like ? M.like : `${M.like} and ${X.like}`}).</p>
+      <p>The <b>ionic bond</b> is the strong ${K('electrostatic attraction')} between ${K('oppositely charged ions')}.</p>
+      <p>${p.ratio}</p>
+      <p>These forces act in every direction, so the ions build up a giant lattice. Choose <b>2D lattice</b> or <b>3D lattice</b> above to see it.</p>`;
+  }
+  if (S.mode === 'covalent') {
+    const m = COV[S.preset.covalent], hd = `<div class="sub">Covalent bonding · ${m.name}, ${m.formula}</div>`;
+    if (st === 0) return hd + `<h2>Step 1 · Isolated atoms</h2>
+      <p>Covalent bonds form between non-metal atoms.</p><p>${m.start}</p>
+      <p>Only the outer shell takes part in bonding, so only outer shells are drawn, as in exam dot-and-cross diagrams.</p>`;
+    if (st === 1) return hd + `<h2>Step 2 · Outer shells overlap</h2>
+      <p>The atoms move together until their outer shells overlap. An unpaired electron from each atom goes into the overlap, forming a ${K('shared pair')}.</p>
+      <p>${m.bonds[0][2] === 2 ? 'Each oxygen atom puts two electrons into the overlap: two shared pairs.' : `Each shared pair has one dot and one cross: one electron from each atom.`}</p>`;
+    return hd + `<h2>Step 3 · Shared pairs</h2>
+      <p>${m.result}</p>
+      <p>A covalent bond is a ${K('shared pair')} of electrons. It is strong because of the ${K('electrostatic attraction')} between the shared pair and the nuclei of both atoms.</p>
+      <p>Displayed formula: <b>${m.displayed}</b>${m.displayed === 'CH₄' ? ' (C in the centre, with four single bonds to H)' : ''}. ${m.formula} is a small (simple) molecule: only weak intermolecular forces act between molecules, so its melting and boiling points are low.</p>`;
+  }
+  const P = METAL[S.preset.metallic], hd = `<div class="sub">Metallic bonding · ${P.name}</div>`;
+  if (S.demo === 'slide') return hd + (P.alloy ? `<h2>Alloy: layers can’t slide</h2>
+      <p>${cap(P.xName)} atoms are ${P.alloy === 'big' ? 'bigger than' : 'much smaller than'} the ${P.sym} atoms. They distort the rows, so the layers are no longer smooth and flat. (The size difference is exaggerated here so you can see it.)</p>
+      <p>Push the top layers: they jam. Because it is more difficult for the ${K('layers')} to slide over each other, the alloy is <b>harder</b> than the pure metal.</p>
+      <p>The bonds are not stronger. The difference is the distorted layers.</p>` : `<h2>Malleability: layers sliding</h2>
+      <p>The ions are in a ${K('regular lattice')} of flat, even, closely packed layers. Push the top layers and they slide over the bottom ones, dropping into the next set of hollows.</p>
+      <p>The metallic bond is not broken: the ${K('delocalised electrons')} move with the ions and keep attracting them in their new positions. So pure metals can be bent and hammered into shape.</p>
+      <p>This is also why pure metals are too soft for many uses. Try the Bronze or Steel alloy.</p>`);
+  if (S.demo === 'elec') return hd + `<h2>Electrical conductivity</h2>
+      <p>With a potential difference applied, the ${K('delocalised electrons')} drift through the structure towards the positive terminal. This flow of charge is the electric current.</p>
+      <p>The positive ions stay in their fixed positions in the lattice and only vibrate. They do not carry the current.</p>`;
+  if (S.demo === 'heat') return hd + `<h2>Thermal conductivity</h2>
+      <p>At the hot end the ions vibrate more and pass the vibration to their neighbours through the lattice.</p>
+      <p>The ${K('delocalised electrons')} there gain kinetic energy and move quickly through the whole structure, carrying energy to the cold end. That is why metals conduct heat so well.</p>`;
+  if (st === 0) return hd + `<h2>Step 1 · Metal atoms</h2>
+      <p>Metal atoms have only a few electrons in their outer shell, and those electrons are not held tightly.</p>
+      ${P.alloy ? `<p>${P.name.split(' (')[0]} is an alloy: a mixture of ${P.sym === 'Cu' ? 'copper' : 'iron'} with ${P.xName}, whose atoms are a different size.</p>` : ''}`;
+  if (st === 1) return hd + `<h2>Step 2 · Electrons delocalise</h2>
+      <p>The outer shell electrons leave their atoms and become ${K('delocalised electrons')}, free to move through the whole structure.</p>
+      <p>The atoms that are left behind are positive metal ions.</p>`;
+  return hd + `<h2>Step 3 · The metallic bond</h2>
+      <p>A giant structure: a ${K('regular lattice')} of positive ions packed closely together in layers, in a “sea” of ${K('delocalised electrons')}.</p>
+      <p>The <b>metallic bond</b> is the strong ${K('electrostatic attraction')} between the positive metal ions and the delocalised electrons. The dashed lines show one ion attracted to the electrons around it.</p>
+      <p>Strong bonding means lots of energy is needed to melt most metals. Try the demos above.</p>`;
+}
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
+function renderTab() {
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
+  let h = '';
+  if (S.tab === 'insights') {
+    h = INSIGHTS[S.mode].map(c => `<div class="card"><h4>${c.q}</h4><p>${c.a}</p><p class="lose"><b>Loses the mark:</b> ${c.lose}</p></div>`).join('');
+  } else if (S.tab === 'myths') {
+    const list = MYTHS.slice().sort((a, b) => (b.mode === S.mode) - (a.mode === S.mode));
+    h = list.map((m, i) => `<div class="card myth"><div class="claim"><span class="x" aria-hidden="true">✗</span><span>“${m.myth}”${m.mode === S.mode ? '<span class="tag">this model</span>' : ''}</span></div>
+      <div class="truth" id="truth${i}" hidden><span class="ok" aria-hidden="true">✓</span><span><b>Examiner reality:</b> ${m.truth}</span></div>
+      <button type="button" class="btn" data-myth="${i}" aria-expanded="false" aria-controls="truth${i}">Bust it</button></div>`).join('');
+  } else {
+    h = '<div class="vocab">' + VOCAB.map((v, i) => `<div class="card"><div class="term">${v.term}</div><p>${v.mean}</p><p class="use">${v.use}</p>
+      <button type="button" class="btn" data-go="${i}">Show me</button></div>`).join('') + '</div>';
+  }
+  $('#tabbody').innerHTML = h;
+}
+
+/* ════════════════════════ presenter mode ════════════════════════ */
+function setPresenting(on) {
+  document.body.classList.toggle('presenting', on);
+  if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  resize(); lastUIKey = '';
+  if (on) $('#play').focus({ preventScroll: true });
+  else $('#presentBtn').focus({ preventScroll: true });
+}
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+}
+$('#presentBtn').onclick = () => setPresenting(true);
+$('#exitBtn').onclick = () => setPresenting(false);
+$('#fullBtn').onclick = toggleFull;
+document.addEventListener('fullscreenchange', () => requestAnimationFrame(resize));
+
+/* ════════════════════════ printable notes & questions ════════════════════════ */
+const QUESTIONS = [
+  { q: 'Name the type of bonding in each substance.', parts: [
+      { t: 'sodium chloride', marks: 1, lines: 1 }, { t: 'methane, CH₄', marks: 1, lines: 1 },
+      { t: 'copper', marks: 1, lines: 1 }, { t: 'oxygen, O₂', marks: 1, lines: 1 }],
+    ms: ['(a) ionic', '(b) covalent', '(c) metallic', '(d) covalent'] },
+  { q: 'Sodium reacts with chlorine to form sodium chloride. Describe what happens to the electrons when the ions form.', marks: 4, lines: 5,
+    ms: ['electrons are transferred from sodium to chlorine', 'each sodium atom loses one electron to form a Na⁺ ion',
+      'each chlorine atom gains one electron to form a Cl⁻ ion', 'both ions have the electronic structure of a noble gas / a full outer shell'],
+    no: 'Do not accept “sharing” electrons.' },
+  { q: 'Magnesium reacts with oxygen to form magnesium oxide. Draw dot-and-cross diagrams of the two ions formed. Show all the electrons and the charge on each ion.', marks: 3, box: 62,
+    ms: ['magnesium ion with 2,8 electrons', 'oxide ion with 2,8 electrons, two of them shown as having come from magnesium',
+      'charges 2+ and 2− shown, with square brackets around each ion'] },
+  { q: 'The formula of magnesium chloride is MgCl₂. Explain why, in terms of the charges on the ions.', marks: 2, lines: 3,
+    ms: ['magnesium ions are Mg²⁺ and chloride ions are Cl⁻', 'two Cl⁻ ions are needed to balance the charge of one Mg²⁺ (the compound has no overall charge)'] },
+  { q: 'Explain why sodium chloride has a high melting point.', marks: 3, lines: 4,
+    ms: ['giant ionic lattice', 'strong electrostatic forces of attraction between oppositely charged ions (in all directions)', 'a lot of energy is needed to overcome these forces'],
+    no: 'Any reference to molecules or intermolecular forces: maximum 1 mark.' },
+  { q: 'Solid sodium chloride does not conduct electricity, but molten sodium chloride does. Explain why.', marks: 2, lines: 3,
+    ms: ['in the solid the ions are held in fixed positions and cannot move', 'when molten the ions are free to move and carry charge'],
+    no: 'Do not accept “electrons” moving.' },
+  { q: 'Draw a dot-and-cross diagram for a molecule of water, H₂O. Show the outer shell electrons only.', marks: 2, box: 58,
+    ms: ['two shared pairs, each one dot + one cross, between O and each H', 'two lone (non-bonding) pairs on the oxygen, giving it 8 outer electrons'] },
+  { q: 'What is a covalent bond, and why is it strong?', marks: 2, lines: 3,
+    ms: ['a shared pair of electrons (between two atoms)', 'strong electrostatic attraction between the shared pair and the nuclei of both atoms'] },
+  { q: 'Methane, CH₄, has a very low boiling point. Explain why.', marks: 2, lines: 3,
+    ms: ['methane is made of small / simple molecules with weak intermolecular forces between them', 'little energy is needed to overcome these forces'],
+    no: 'Do not accept “covalent bonds are weak” or “covalent bonds break”.' },
+  { q: 'Describe the structure and bonding in a metal.', marks: 3, lines: 4,
+    ms: ['giant structure / regular lattice of positive metal ions in layers', 'delocalised electrons', 'strong electrostatic attraction between the positive ions and the delocalised electrons'] },
+  { q: 'Explain why copper is a good conductor of electricity.', marks: 2, lines: 3,
+    ms: ['copper has delocalised electrons', 'which are free to move through the structure and carry charge'] },
+  { q: 'Pure copper is soft. Bronze, an alloy of copper and tin, is harder. Explain the difference.', marks: 4, lines: 5,
+    ms: ['in pure copper the atoms are arranged in layers', 'the layers can slide over each other easily',
+      'in bronze the tin atoms are a different size', 'they distort the layers, so it is more difficult for the layers to slide'],
+    no: 'Do not accept “stronger bonds” in the alloy.' },
+  { q: 'A student writes: “Metals conduct electricity because the ions move.” Explain what is wrong with this statement.', marks: 2, lines: 3,
+    ms: ['the positive ions are fixed in the lattice (they only vibrate)', 'the charge is carried by delocalised electrons moving through the structure'] }
+];
+const qMarks = q => q.parts ? q.parts.reduce((s, p) => s + p.marks, 0) : q.marks;
+
+function buildPrintDoc() {
+  const mk = n => `[${n} mark${n > 1 ? 's' : ''}]`;
+  const writeSpace = o => o.box ? `<div class="box" style="height:${o.box}mm"></div>` : `<div class="lines">${'<i></i>'.repeat(o.lines)}</div>`;
+  $('#pQList').innerHTML = QUESTIONS.map((q, i) => `<div class="q">
+      <div class="qt"><span class="qn">${i + 1}</span><span>${q.q}</span>${q.parts ? '' : `<span class="mk">${mk(q.marks)}</span>`}</div>
+      ${q.parts ? q.parts.map((p, j) => `<div class="part"><div class="qt"><span>(${'abcd'[j]})</span><span>${p.t}</span><span class="mk">${mk(p.marks)}</span></div>${writeSpace(p)}</div>`).join('') : writeSpace(q)}
+    </div>`).join('');
+  const total = QUESTIONS.reduce((s, q) => s + qMarks(q), 0);
+  $('#pTotal').textContent = total; $('#pTotal2').textContent = total;
+  $('#pMsList').innerHTML = QUESTIONS.map((q, i) => `<li value="${i + 1}"><b>${q.q}</b> ${mk(qMarks(q))}
+      <ul>${q.ms.map(m => `<li>${m}</li>`).join('')}</ul>${q.no ? `<div class="no">${q.no}</div>` : ''}</li>`).join('');
+  $('#pVocab').insertAdjacentHTML('beforeend', VOCAB.map(v => `<tr><td><b>${v.term}</b></td><td>${v.mean}</td><td>${v.use}</td></tr>`).join(''));
+  $('#pMyths').insertAdjacentHTML('beforeend', MYTHS.map(m => `<tr><td>“${m.myth}”</td><td>${m.truth}</td></tr>`).join(''));
+}
+
+// Diagrams for the notes: the live drawing code run on an off-screen canvas in
+// a light print palette, with the model's state swapped in and restored after.
+const PRINT_COL = {
+  bg: '#ffffff', card: '#ffffff', line: '#cccccc', lineStrong: '#9aa3ad', shell: '#6b7280',
+  text: '#111111', muted: '#4b5563', blue: '#1d6fb8', dot: '#1d4ed8', cross: '#c81e1e',
+  cation: '#a15c00', anion: '#6d3fc0', alloy: '#0f766e', carbon: '#4b5563', hot: '#b42318', good: '#166534'
+};
+function snapshot(o) {
+  const keep = { ctx, W, H, DPR, Z, MET, col: Object.assign({}, COL), s: Object.assign({}, S, { preset: Object.assign({}, S.preset) }) };
+  const k = 2.4, c = document.createElement('canvas');
+  c.width = Math.round(o.w * k); c.height = Math.round(o.h * k);
+  ctx = c.getContext('2d'); ctx.setTransform(k, 0, 0, k, 0, 0);
+  W = o.w; H = o.h; Z = 1; SNAP = true;
+  Object.assign(COL, PRINT_COL);
+  Object.assign(S, { mode: o.mode, T: o.T, view: o.view || 'ions', demo: 'structure', sel: null, force: 0, forceRaw: 0, pd: false, heat: false, spun: true, yaw: 0.6, pitch: -0.42 });
+  S.preset = Object.assign({}, S.preset, { [o.mode]: o.preset });
+  if (o.mode === 'metallic') MET = null;
+  let url = '';
+  try { drawScene(0); url = c.toDataURL('image/png'); }
+  finally {
+    ctx = keep.ctx; W = keep.W; H = keep.H; DPR = keep.DPR; Z = keep.Z; MET = keep.MET; SNAP = false;
+    Object.assign(COL, keep.col); Object.assign(S, keep.s);
+  }
+  return url;
+}
+let printImagesDone = false;
+function buildPrintImages() {
+  if (printImagesDone) return;
+  printImagesDone = true;
+  const shots = {
+    'img-nacl0': { mode: 'ionic', preset: 'NaCl', T: 0, w: 760, h: 300 },
+    'img-nacl2': { mode: 'ionic', preset: 'NaCl', T: 2, w: 760, h: 300 },
+    'img-mgcl2': { mode: 'ionic', preset: 'MgCl2', T: 2, w: 900, h: 300 },
+    'img-lat': { mode: 'ionic', preset: 'NaCl', T: 2, view: 'lat2', w: 560, h: 420 },
+    'img-h2': { mode: 'covalent', preset: 'H2', T: 2, w: 520, h: 400 },
+    'img-o2': { mode: 'covalent', preset: 'O2', T: 2, w: 520, h: 400 },
+    'img-h2o': { mode: 'covalent', preset: 'H2O', T: 2, w: 520, h: 400 },
+    'img-ch4': { mode: 'covalent', preset: 'CH4', T: 2, w: 520, h: 400 },
+    'img-cu': { mode: 'metallic', preset: 'Cu', T: 2, w: 820, h: 360 },
+    'img-bronze': { mode: 'metallic', preset: 'bronze', T: 2, w: 820, h: 360 }
+  };
+  for (const id in shots) { const img = document.getElementById(id); if (img) img.src = snapshot(shots[id]); }
+}
+
+const dlg = $('#printDlg');
+$('#printBtn').onclick = () => { buildPrintImages(); if (dlg.showModal) dlg.showModal(); else window.print(); };
+dlg.addEventListener('close', () => {
+  if (dlg.returnValue !== 'print') return;
+  const b = document.body.classList;
+  b.toggle('p-no-notes', !$('#optNotes').checked);
+  b.toggle('p-no-qs', !$('#optQs').checked);
+  b.toggle('p-ms', $('#optMs').checked);
+  setTimeout(() => window.print(), 60);
+});
+window.addEventListener('beforeprint', buildPrintImages);
+
+/* ════════════════════════ events ════════════════════════ */
+$('#modes').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.mode); });
+$('#presets').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.preset[S.mode] = b.dataset.p; S.sel = defaultSel();
+  if (S.mode === 'metallic') { const d = S.demo; resetDemo(); S.demo = d; }
+  if (!((S.mode === 'ionic' && S.view !== 'ions') || (S.mode === 'metallic' && S.demo !== 'structure'))) { S.T = 0; S.playing = false; S.target = null; }
+  refreshStatic();
+});
+$('#viewbar').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.view) { S.view = b.dataset.view; S.sel = defaultSel(); if (S.view !== 'ions') { S.T = 2; S.playing = false; } else { S.T = 0; S.playing = false; } }
+  if (b.dataset.demo) { const was = S.demo; S.demo = b.dataset.demo; if (was !== S.demo) { resetDemo(); } if (S.demo !== 'structure') { S.T = 2; S.playing = false; } }
+  refreshStatic();
+});
+$('#steps').addEventListener('click', e => { const b = e.target.closest('button[data-step]'); if (b) goStep(+b.dataset.step); });
+$('#play').onclick = play;
+$('#next').onclick = next;
+$('#prev').onclick = prev;
+$('#reset').onclick = () => { S.T = 0; S.playing = false; S.target = null; S.sel = null; S.spun = false; S.view = 'ions'; S.demo = 'structure'; resetDemo(); refreshStatic(); };
+$('#speed').addEventListener('input', e => { S.speed = +e.target.value; $('#speedOut').textContent = S.speed + '×'; });
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.tab = b.dataset.tab; renderTab(); } });
+$('#tabbody').addEventListener('click', e => {
+  const m = e.target.closest('button[data-myth]');
+  if (m) {
+    const t = $('#truth' + m.dataset.myth), open = t.hidden;
+    t.hidden = !open; m.setAttribute('aria-expanded', open); m.textContent = open ? 'Hide' : 'Bust it';
+  }
+  const g = e.target.closest('button[data-go]');
+  if (g) {
+    const v = VOCAB[+g.dataset.go].go, tab = S.tab;
+    setMode(v.mode);
+    if (v.view) { S.view = v.view; S.T = 2; S.sel = defaultSel(); }
+    if (v.demo) { S.demo = v.demo; S.T = 2; if (v.demo === 'elec') S.pd = true; }
+    if (v.T) { S.T = v.T - 1; S.target = v.T; S.playing = true; }
+    S.tab = tab; refreshStatic();
+    document.querySelector('.stage').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'nearest' });
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select') || e.altKey || e.ctrlKey || e.metaKey || dlg.open) return;
+  const presenting = document.body.classList.contains('presenting');
+  if (e.key === 'p' || e.key === 'P') setPresenting(!presenting);
+  else if ((e.key === 'f' || e.key === 'F') && presenting) toggleFull();
+  else if (e.key === 'Escape' && presenting && !document.fullscreenElement) setPresenting(false);
+  else if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); play(); }
+  else if (e.key === 'ArrowRight') next();
+  else if (e.key === 'ArrowLeft') prev();
+});
+
+refreshStatic();
+buildPrintDoc();
+if (location.hash === '#present') document.body.classList.add('presenting');
+resize();
+requestAnimationFrame(frame);
+setTimeout(buildPrintImages, 1200);
+})();
+</script>
+</body>
+</html>

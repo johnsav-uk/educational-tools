@@ -53,6 +53,12 @@ window.SST_TOOLS = [
     image: "spectroscopy-detective.png",
     keywords: "spectroscopy organic analysis infrared ir mass spectrometry nmr proton carbon 13 fingerprint structure determination 3.3.6" },
 
+  { title: "Chemical Bonding: Ionic, Covalent & Metallic (beta)", url: "visualisations/chemical-bonding/",
+    blurb: "Watch electrons transfer and pair up, spin an ionic lattice, then push, heat and wire up a metal.",
+    kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+    image: "chemical-bonding.png",
+    keywords: "chemical bonding ionic bond covalent bond metallic bond dot and cross dot-and-cross diagram electron transfer shared pair lone pair non-bonding pair single bond double bond electrostatic attraction oppositely charged ions giant ionic lattice regular lattice sodium chloride nacl magnesium oxide mgo magnesium chloride mgcl2 na+ cl- mg2+ o2- hydrogen h2 oxygen o2 water h2o methane ch4 simple molecule intermolecular forces delocalised electrons delocalized sea of electrons positive ions malleable malleability ductile layers slide alloy alloys harder bronze steel copper iron tin carbon electrical conductivity thermal conductivity conduct heat electricity square brackets charge noble gas electronic structure full outer shell misconceptions examiner mark scheme 4.2.1.1 4.2.1.2 4.2.1.3 4.2.1.4 4.2.1.5 4.2.2.7 4.2.2.8 5.2.1.1 5.2.1.2 5.2.1.3 5.2.1.4 5.2.1.5" },
+
   { title: "Shapes of Simple Molecules and Ions", url: "visualisations/shapes-of-simple-molecules/",
     blurb: "Orbit every AQA shape, switch the lone pairs on and off, then self-mark a four-mark explanation.",
     kind: "3D Model", levels: ["A-Level"], tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
