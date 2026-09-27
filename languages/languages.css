@@ -21,13 +21,15 @@
 .path--lang {
   --card: oklch(0.2 0.035 var(--h)); --bd: oklch(0.33 0.06 var(--h));
   --bd-hover: oklch(0.72 0.12 var(--h)); --btn: oklch(0.3 0.07 var(--h));
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr; grid-template-rows: auto 1fr;
 }
 .path--lang .path-icon {
   font-size: 15px; font-weight: 800; letter-spacing: 0.04em; color: oklch(0.88 0.09 var(--h));
 }
 .path--lang .path-btn { color: oklch(0.92 0.06 var(--h)); }
 .path--lang:hover .path-btn { background: oklch(0.36 0.09 var(--h)); }
+/* Screenshot across the top of each card, above the copy. */
+.path--lang .path-media { order: -1; aspect-ratio: 16 / 10; min-height: 0; border-bottom: 1px solid var(--bd); }
 
 /* The link across to science keeps science's blue, so it reads as the other site. */
 .nav-sister { color: oklch(0.8 0.1 240); }

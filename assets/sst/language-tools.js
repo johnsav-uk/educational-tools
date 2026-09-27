@@ -28,7 +28,7 @@ window.SLT_TOOLS = [
     image: "spanish-connect4.png", featured: true,
     keywords: "spanish espanol español conecta 4 connect four vocabulary vocab mfl languages modern foreign edexcel pearson gcse 1sp1 team game starter plenary retrieval" },
 
-  { title: "Interleaved Grid Challenge (beta)", url: "languages/games/interleaved-grid.html",
+  { title: "Interleaved Grid Challenge", url: "languages/games/interleaved-grid.html",
     blurb: "Pick a card from a grid of French, Spanish or German translations, worth more points the longer ago the topic was taught, and push for the higher-tier bonus.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
     image: "interleaved-grid.png",
