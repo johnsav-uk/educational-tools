@@ -58,6 +58,43 @@ Shared skins sit beside the pages they serve, linked after `sst.css`:
 `languages/games/connect4-sst.css` for the Connect 4 games, plus
 `tenable-sst.css` and `retrieval-sst.css`.
 
+## Every new model has presenter mode, questions and annotation
+
+**Every new Explore tool (`kind` `"3D Model"` or `"Interactive"`) ships with
+all three of these.** Teachers use the tools at the front of the room, then
+set work from them. `visualisations/radioactivity/` does all three and is
+the pattern to copy.
+
+**Presenter mode**, from a button in the tool's header:
+- The tool fills the screen: the site bar and page header are hidden, and the
+  model and its controls take the whole viewport.
+- It keeps the site's normal colours. It is not a separate high-contrast
+  theme. Text, readouts and canvas or chart labels get larger so they read
+  from the back of the room.
+- There's an Exit button, and Esc leaves presenter mode. A full-screen button
+  is optional.
+- `P` toggles it, unless focus is in a text field.
+
+**Questions**, exam-style for the tool's spec and level:
+- A printable A4 student worksheet with marks shown per part and space to
+  write. A graph, table or diagram to read from goes in as inline SVG or HTML.
+- A separate teacher mark scheme with the marking points, the working for
+  calculations, and "do not accept" notes where examiners use them.
+- Printing goes through a small dialog of checkboxes, using `@media print`
+  and `@page { size: A4 }`. Questions and their parts don't split across
+  pages. A plain Ctrl+P must never print the mark scheme.
+
+**Annotation**, a drawing layer over the whole page, from a button in the
+header and in presenter mode:
+- Pen, highlighter, eraser, undo, clear, a row of colour swatches plus a
+  colour picker, and a thickness slider.
+- A "use page" tool leaves the ink on screen while the model underneath
+  stays clickable.
+- `D` toggles it, and Esc closes the toolbar. Closing keeps the ink until
+  Clear.
+- Strokes are stored as points and redrawn on resize, so the ink survives
+  going full screen.
+
 ## Subject and level colours
 
 Carried in `assets/sst/sst.css` and on the homepage pills, by oklch hue:
