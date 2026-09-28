@@ -125,7 +125,7 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   function font(ctx, size, weight, mono){
-    ctx.font = (weight || 600) + ' ' + size + 'px ' + (mono ? '"JetBrains Mono", ui-monospace, monospace' : '"Plus Jakarta Sans", system-ui, sans-serif');
+    ctx.font = (weight || 600) + ' ' + size + 'px ' + (mono ? 'Plus Jakarta Sans, system-ui, sans-serif' : '"Plus Jakarta Sans", system-ui, sans-serif');
   }
   function label(ctx, P, text, x, y, align, to){
     font(ctx, 12.5, 600);

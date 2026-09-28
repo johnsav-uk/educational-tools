@@ -10,7 +10,7 @@
   tailwind.config = { theme: { extend: { fontFamily: {
     display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
     body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-    mono: ['"JetBrains Mono"', 'ui-monospace', 'Consolas', 'monospace']
+    mono: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
   } } } };
 </script>
 <style>
@@ -31,7 +31,7 @@
   --shadow: none;
   --f-display:'Plus Jakarta Sans',system-ui,sans-serif;
   --f-body:'Plus Jakarta Sans',system-ui,sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --f-mono:Plus Jakarta Sans, system-ui, sans-serif;
 }
 body.theme-light{
   --ground:#E2E7EA; --ground-2:#CED6DC; --surface:#FAFBFC; --surface-2:#EFF3F5;
@@ -1161,7 +1161,7 @@ function drawSpectrum(){
 
   const ink = cssVar("--ink"), ink2 = cssVar("--ink-2"), muted = cssVar("--muted");
   const line = cssVar("--line"), lineSoft = cssVar("--line-soft");
-  const mono = '11px "JetBrains Mono", monospace';
+  const mono = '11px Plus Jakarta Sans, system-ui, sans-serif';
   const disp = '600 10px "Archivo Narrow", sans-serif';
 
   /* domain padded so end sticks and their labels stay inside the plot */

@@ -657,7 +657,7 @@ function TabEnergy() {
   const tick = e => (
     <g key={e}>
       <line x1="46" y1={yFor(e)} x2="52" y2={yFor(e)} stroke="#64748b" strokeWidth="1.4" />
-      <text x="42" y={yFor(e) + 4} textAnchor="end" fontSize="11" fill="#94a3b8" fontFamily="JetBrains Mono, monospace">{e}</text>
+      <text x="42" y={yFor(e) + 4} textAnchor="end" fontSize="11" fill="#94a3b8" fontFamily="Plus Jakarta Sans, system-ui, sans-serif">{e}</text>
     </g>
   );
 
@@ -684,7 +684,7 @@ function TabEnergy() {
               markerEnd={'url(#ah-' + k + ')'} opacity="0.9" />
         <text x={side === 'left' ? c.cx - 10 : c.cx + 10} y={mid - 4}
               textAnchor={side === 'left' ? 'end' : 'start'} fontSize="13" fontWeight="700"
-              fill={c.colour} fontFamily="JetBrains Mono, monospace">
+              fill={c.colour} fontFamily="Plus Jakarta Sans, system-ui, sans-serif">
           {dh} kJ mol⁻¹
         </text>
       </g>
@@ -762,7 +762,7 @@ function TabEnergy() {
                 <text x="680" y={(kekY + benzY) / 2 - 12} fontSize="11" fill="#fda4af" fontWeight="700">delocalisation</text>
                 <text x="680" y={(kekY + benzY) / 2 + 1} fontSize="11" fill="#fda4af" fontWeight="700">energy</text>
                 <text x="680" y={(kekY + benzY) / 2 + 17} fontSize="14" fill="#fecdd3" fontWeight="700"
-                      fontFamily="JetBrains Mono, monospace">{Math.round(gap)}</text>
+                      fontFamily="Plus Jakarta Sans, system-ui, sans-serif">{Math.round(gap)}</text>
                 <text x="680" y={(kekY + benzY) / 2 + 30} fontSize="10" fill="#fda4af">kJ mol⁻¹</text>
               </g>
             )}

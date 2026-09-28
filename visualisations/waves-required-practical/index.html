@@ -16,7 +16,7 @@
         fontFamily: {
           sans:    ['Plus Jakarta Sans','Segoe UI','system-ui','-apple-system','sans-serif'],
           display: ['Plus Jakarta Sans','Helvetica','sans-serif'],
-          mono:    ['JetBrains Mono','ui-monospace','Consolas','monospace']
+          mono:    ['Plus Jakarta Sans', 'system-ui', 'sans-serif']
         }
       }
     }
@@ -300,7 +300,7 @@ function drawRuler(ctx, r, pxPerCm, opts) {
   // centimetre graduations
   ctx.strokeStyle = 'rgba(226,232,240,.8)';
   ctx.fillStyle = 'rgba(226,232,240,.85)';
-  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   const totalCm = span / pxPerCm;
@@ -354,7 +354,7 @@ function drawRuler(ctx, r, pxPerCm, opts) {
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.font = 'bold 10px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(m.tag, px, y - 10);
@@ -366,7 +366,7 @@ function drawRuler(ctx, r, pxPerCm, opts) {
   const midX = x + (a + b) / 2;
   const label = readCm.toFixed(1) + ' cm';
   ctx.save();
-  ctx.font = 'bold 13px JetBrains Mono, monospace';
+  ctx.font = 'bold 13px Plus Jakarta Sans, system-ui, sans-serif';
   const w = ctx.measureText(label).width + 16;
   const boxY = y + RULER_H + 6;
   ctx.fillStyle = 'rgba(2,6,23,.92)';
@@ -1001,7 +1001,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
       ctx.beginPath(); ctx.arc(DIPPER_X, y, 8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 10px JetBrains Mono, monospace';
+      ctx.font = 'bold 10px Plus Jakarta Sans, system-ui, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(tag, DIPPER_X, y);
     });
@@ -1014,7 +1014,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
     ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
   }
   ctx.fillStyle = 'rgba(226,232,240,.85)';
-  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillText(source === 'plane' ? 'straight dipper' : source === 'two' ? 'two coherent dippers' : 'point dipper',
                12, TANK.H - 20);
@@ -1054,14 +1054,14 @@ function drawTank(ctx, fieldPair, img, P, t) {
           ctx.fillStyle = 'rgba(2,6,23,.85)';
           ctx.beginPath(); ctx.roundRect(TANK.W - 46, y - 9, 30, 18, 5); ctx.fill();
           ctx.fillStyle = '#6ee7b7';
-          ctx.font = 'bold 11px JetBrains Mono, monospace';
+          ctx.font = 'bold 11px Plus Jakarta Sans, system-ui, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText('n=' + Math.abs(Math.round(o)), TANK.W - 31, y);
         }
       }
     }
     // legend
-    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     ctx.fillStyle = 'rgba(52,211,153,.95)';
     ctx.fillText('—— maxima, constructive', 12, TANK.H - 26);
@@ -1099,9 +1099,9 @@ function drawTank(ctx, fieldPair, img, P, t) {
                : info.verdict === 'destructive' ? 'DESTRUCTIVE' : 'PARTIAL';
     const body = 'path difference = ' + (info.pd / TANK.pxPerCm).toFixed(2) + ' cm = ' + info.n.toFixed(2) + ' λ';
     const body2 = 'phase difference = ' + Math.round(info.phaseDeg) + '°';
-    ctx.font = 'bold 12px JetBrains Mono, monospace';
+    ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, sans-serif';
     const w = ctx.measureText(head).width + 20;
-    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
     const boxW = Math.max(w, ctx.measureText(body).width + 20, ctx.measureText(body2).width + 20);
     const boxH = 52;
     const bx = clamp(probe.x - boxW / 2, 6, TANK.W - boxW - 6);
@@ -1111,10 +1111,10 @@ function drawTank(ctx, fieldPair, img, P, t) {
     ctx.beginPath(); ctx.roundRect(bx, by, boxW, boxH, 7); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = colour;
-    ctx.font = 'bold 12px JetBrains Mono, monospace';
+    ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.fillText(head, bx + boxW / 2, by + 13);
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.fillText(body, bx + boxW / 2, by + 29);
     ctx.fillText(body2, bx + boxW / 2, by + 42);
     ctx.restore();
@@ -1872,10 +1872,10 @@ function drawString(ctx, P, t) {
   ctx.fillStyle = '#020617';
   ctx.beginPath(); ctx.roundRect(28, 26, 122, 26, 4); ctx.fill();
   ctx.fillStyle = '#fbbf24';
-  ctx.font = 'bold 17px JetBrains Mono, monospace';
+  ctx.font = 'bold 17px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   ctx.fillText(freq.toFixed(2), 140, 40);
-  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.font = '9px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.fillStyle = '#94a3b8';
   ctx.textAlign = 'left';
   ctx.fillText('Hz', 34, 40);
@@ -1899,7 +1899,7 @@ function drawString(ctx, P, t) {
   ctx.fillStyle = '#334155'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(44, STRING_Y + 10, 112, BENCH_Y - STRING_Y - 10, 5); ctx.fill(); ctx.stroke();
   ctx.fillStyle = 'rgba(226,232,240,.75)';
-  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('VIBRATION', 100, STRING_Y + 32);
   ctx.fillText('GENERATOR', 100, STRING_Y + 45);
@@ -1936,7 +1936,7 @@ function drawString(ctx, P, t) {
     ctx.beginPath(); ctx.roundRect(hangX - 20, y, 40, 12, 2); ctx.fill(); ctx.stroke();
   }
   ctx.fillStyle = 'rgba(226,232,240,.85)';
-  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.font = 'bold 11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText(massG + ' g', hangX, hangerTop + 9 + discs * 13);
   ctx.restore();
@@ -1996,7 +1996,7 @@ function drawString(ctx, P, t) {
   if (showNodes && onResonance) {
     const n = dominant.n;
     ctx.save();
-    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'center';
     for (let i = 0; i <= n; i++) {
       const x = x0 + (seg * i) / n;
@@ -2034,7 +2034,7 @@ function drawString(ctx, P, t) {
   } else if (showNodes) {
     ctx.save();
     ctx.fillStyle = 'rgba(148,163,184,.85)';
-    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.font = '12px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('no standing wave — tune the frequency to a harmonic', (x0 + x1) / 2, STRING_Y - MAX_AMP - 16);
     ctx.restore();
@@ -2049,7 +2049,7 @@ function drawString(ctx, P, t) {
   ctx.lineTo(bridgeX - 15, BENCH_Y);
   ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.fillStyle = 'rgba(253,230,138,.9)';
-  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText('bridge ⇄', bridgeX, BENCH_Y + 4);
   ctx.restore();
@@ -2064,7 +2064,7 @@ function drawString(ctx, P, t) {
   ctx.moveTo(x1, dimY - 4); ctx.lineTo(x1, dimY + 4);
   ctx.stroke();
   ctx.fillStyle = '#cbd5e1';
-  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   ctx.fillText('L = ' + ((x1 - x0) / STR.pxPerCm).toFixed(0) + ' cm', (x0 + x1) / 2, dimY - 3);
   ctx.restore();

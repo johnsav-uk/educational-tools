@@ -281,7 +281,7 @@ function makeLabel(text, opts) {
   opts = opts || {};
   const pad = 12;
   const stack = opts.mono
-    ? '"JetBrains Mono", ui-monospace, Consolas, monospace'
+    ? 'Plus Jakarta Sans, system-ui, sans-serif'
     : '"Archivo Narrow", "Arial Narrow", Helvetica, sans-serif';
   const font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px ' + stack;
   const measure = document.createElement('canvas').getContext('2d');

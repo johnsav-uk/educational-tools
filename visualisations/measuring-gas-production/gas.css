@@ -153,7 +153,7 @@ a.mcard:hover{ border-color:var(--blue); }
 .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:6px; margin-top:10px; }
 .stat{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:7px 10px; }
 .stat span{ display:block; font-size:.74em; color:var(--muted); font-weight:600; letter-spacing:.02em; }
-.stat b{ font-family:var(--sst-mono); font-size:1.02em; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.stat b{ font-family:Plus Jakarta Sans, system-ui, sans-serif; font-size:1.02em; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .stat.ht span{ color:var(--ht); }
 
 /* ── Comparison ──────────────────────────────────────────────────── */
@@ -238,7 +238,7 @@ figcaption{ font-size:.85rem; color:var(--muted); margin-top:6px; }
 .qblock > .qintro h3{ margin:0 0 4px; font-size:1.05rem; border:0; padding:0; }
 .qblock > .qintro p{ margin:.35em 0; }
 .datawrap{ border:0; border-radius:0; }
-.data{ width:auto; margin:8px 0; font-family:var(--sst-mono); font-size:.9em; }
+.data{ width:auto; margin:8px 0; font-family:Plus Jakarta Sans, system-ui, sans-serif;font-variant-numeric:tabular-nums; font-size:.9em; }
 .data th, .data td{ border:1px solid var(--line2); padding:4px 10px; text-align:center; white-space:nowrap; font-weight:500; }
 .data th{ font-family:var(--sst-font); }
 .q{ border:1px solid var(--line); background:var(--card); border-radius:12px; padding:14px 18px; margin:10px 0; }

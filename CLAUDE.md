@@ -19,10 +19,16 @@ tokens are `#050e1a` (page), `#091321` (panel), `#0d1928` (card), `#182535`
 Some tools keep a light theme as an explicit choice from their own toggle. Dark
 is always the default.
 
-Fonts are vendored in `assets/sst/fonts/` (Plus Jakarta Sans and JetBrains Mono,
-variable woff2, OFL) and declared in `assets/sst/fonts.css`, which `sst.css`
-imports. Don't link fonts.googleapis.com: school filters often block it, and
-the site has to keep its typography there.
+Fonts are vendored in `assets/sst/fonts/` (Plus Jakarta Sans, variable woff2,
+OFL) and declared in `assets/sst/fonts.css`, which `sst.css` imports. Don't link
+fonts.googleapis.com: school filters often block it, and the site has to keep
+its typography there.
+
+One typeface everywhere, counters and readouts included: no monospace, pixel or
+seven-segment fonts, because their dotted or slashed zero reads badly. Where
+digits change live, add `font-variant-numeric: tabular-nums` so they don't
+jitter. `--sst-mono` survives only as an alias for the page font, and `sst.css`
+maps Tailwind's `font-mono` onto the page font too.
 
 ## Every page carries the site bar
 

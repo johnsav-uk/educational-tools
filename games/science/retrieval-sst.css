@@ -27,7 +27,7 @@
   --shadow-lg: none;
   --display: var(--sst-font);
   --body: var(--sst-font);
-  --pixel: var(--sst-mono);
+  --pixel: Plus Jakarta Sans, system-ui, sans-serif;
 }
 
 html, body { background-color: var(--sst-bg); background-image: none; }
@@ -101,7 +101,7 @@ option, optgroup { background: var(--sst-card); color: var(--sst-text); }
 #wa-ans-label { font: 700 11px var(--sst-font); letter-spacing: .1em; color: var(--sst-text-muted); }
 #wa-click-hint { color: var(--sst-text-muted); }
 #wa-click-hint kbd {
-  font-family: var(--sst-mono) !important; font-size: 11px !important; border: 1px solid var(--sst-line-strong) !important;
+  font-family: Plus Jakarta Sans, system-ui, sans-serif !important;font-variant-numeric:tabular-nums; font-size: 11px !important; border: 1px solid var(--sst-line-strong) !important;
   background: var(--sst-raised) !important; color: var(--sst-text) !important;
 }
 

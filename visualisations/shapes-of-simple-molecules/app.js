@@ -563,7 +563,7 @@ var ARC_COLOUR = 0xfbbf24;
 function makeLabel(text, opts) {
   opts = opts || {};
   var pad = 12;
-  var stack = opts.mono ? '"JetBrains Mono", ui-monospace, Consolas, monospace' : '"Archivo Narrow", "Arial Narrow", Helvetica, sans-serif';
+  var stack = opts.mono ? 'Plus Jakarta Sans, system-ui, sans-serif' : '"Archivo Narrow", "Arial Narrow", Helvetica, sans-serif';
   var font = (opts.weight || '700') + ' ' + (opts.size || 72) + 'px ' + stack;
   var measure = document.createElement('canvas').getContext('2d');
   measure.font = font;

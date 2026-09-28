@@ -34,9 +34,16 @@
   --sst-bio: oklch(0.8 0.12 145);
 
   --sst-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --sst-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  /* One typeface everywhere, counters included: no monospace faces (their dotted or
+     slashed zero reads badly). --sst-mono is kept as an alias so older rules still resolve. */
+  --sst-mono: var(--sst-font);
   --sst-bar-h: 52px;
 }
+
+/* Tailwind's font-mono and the browser's monospace defaults for code, kbd, pre and
+   textarea all fall back to the page font. Tabular figures keep counters from jittering. */
+.font-mono { font-family: var(--sst-font) !important; font-variant-numeric: tabular-nums; }
+:where(code, kbd, samp, pre, textarea) { font-family: var(--sst-font); font-variant-numeric: tabular-nums; }
 
 /* ---------- Site bar ---------- */
 .sst-bar, .sst-bar * { box-sizing: border-box; }

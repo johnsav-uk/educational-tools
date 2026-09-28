@@ -885,7 +885,7 @@ function TabEnergy() {
     textAnchor: "end",
     fontSize: "11",
     fill: "#94a3b8",
-    fontFamily: "JetBrains Mono, monospace"
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
   }, e));
   const col = (k, y, doubles, ring) => {
     const c = COLS[k];
@@ -955,7 +955,7 @@ function TabEnergy() {
       fontSize: "13",
       fontWeight: "700",
       fill: c.colour,
-      fontFamily: "JetBrains Mono, monospace"
+      fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
     }, dh, " kJ mol\u207B\xB9"));
   };
   return /*#__PURE__*/React.createElement("div", {
@@ -1113,7 +1113,7 @@ function TabEnergy() {
     fontSize: "14",
     fill: "#fecdd3",
     fontWeight: "700",
-    fontFamily: "JetBrains Mono, monospace"
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
   }, Math.round(gap)), /*#__PURE__*/React.createElement("text", {
     x: "680",
     y: (kekY + benzY) / 2 + 30,

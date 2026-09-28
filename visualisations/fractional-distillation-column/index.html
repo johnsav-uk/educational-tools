@@ -21,7 +21,7 @@
 
   --f-display: 'Plus Jakarta Sans', system-ui, sans-serif;
   --f-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --f-mono: Plus Jakarta Sans, system-ui, sans-serif;
 
   font-size: calc(17px * var(--ui));
 }
@@ -1294,7 +1294,7 @@ function makeSprite(f){
   g.font = '700 52px "Plus Jakarta Sans", sans-serif';
   g.fillText(f.name, 48, 34);
   g.fillStyle = mut;
-  g.font = '400 34px "JetBrains Mono", monospace';
+  g.font = '400 34px Plus Jakarta Sans, system-ui, sans-serif';
   g.fillText(f.carbons || "", 48, 106);
   if (f.alt){
     g.font = '400 32px "Plus Jakarta Sans", sans-serif';
@@ -1316,7 +1316,7 @@ function makeTempSprite(f, tag){
 
   g.textBaseline = "top";
   g.fillStyle = dark ? "#E9F1F6" : "#0F1A21";
-  g.font = '500 62px "JetBrains Mono", monospace';
+  g.font = '500 62px Plus Jakarta Sans, system-ui, sans-serif';
   g.textAlign = "right";
   g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), W - 34, tag ? 26 : 30);
   if (tag){
@@ -1740,7 +1740,7 @@ function render2D(){
 
     /* temperature on the left */
     g.fillStyle = on ? ink : mut;
-    g.font = '500 23px "JetBrains Mono", monospace';
+    g.font = '500 23px Plus Jakarta Sans, system-ui, sans-serif';
     g.textAlign = "right"; g.textBaseline = "middle";
     g.fillText(f.tempLabel || (Math.round(f.condT) + " °C"), TX0 - 22, y);
 
@@ -1771,7 +1771,7 @@ function render2D(){
     g.fillStyle = mut;
     fitText(g, f.useShort, px + 24, py + 50, pw - 44, 17, '400 %Spx "Plus Jakarta Sans", sans-serif');
     g.fillStyle = on ? ink : mut;
-    g.font = '500 19px "JetBrains Mono", monospace'; g.textAlign = "right";
+    g.font = '500 19px Plus Jakarta Sans, system-ui, sans-serif'; g.textAlign = "right";
     g.fillText(f.carbons, px + pw - 14, py + 27);
 
     /* what it is used for, as an icon beside the label */
