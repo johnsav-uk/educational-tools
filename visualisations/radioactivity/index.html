@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radioactivity: Half-Life &amp; Absorption (beta)</title>
+<meta name="description" content="AQA GCSE Physics 4.4.2 (Combined 6.4.2): a random-decay half-life simulator with a live graph, an alpha, beta and gamma absorption bench with a Geiger-Müller counter, a summary card, a presenter mode with annotation, and a printable worksheet and mark scheme.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<!-- Inline icon sprite (in place of an icon font, so nothing loads from a CDN) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-step" viewBox="0 0 24 24"><path d="M5 4.5v15l10-7.5zM16.5 4.5h3v15h-3z" fill="currentColor"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 3.5v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><path d="M3 4.5h18v12H3zM8.5 20.5h7M12 16.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-hl" viewBox="0 0 24 24"><path d="M5 19.5h14" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".55"/><path d="M8 15l-1.5-3L14 4.5l4 4L10.5 16zM6.5 12L4 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11M4.5 15.5l9-9 5 5-8.5 8.5H8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-bin" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5.5 3.5l13 7-5.5 1.5 3.5 6.5-2.5 1.5-3.5-6.5-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8.5V3.5h10v5M7 17H4.5V9h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h4l5-4.5v14l-5-4.5H4zM16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h4l5-4.5v14l-5-4.5H4zM16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="grow">
+    <h1>Radioactivity: Half-Life &amp; Absorption <span class="beta">beta</span></h1>
+    <div class="meta">
+      <span class="chip phys">Physics</span><span class="chip gcse">GCSE</span>
+      <span class="chip">AQA 8463 4.4.2 · Combined 8464 6.4.2</span>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn" type="button" id="presentBtn" title="Presenter mode: fills the screen for the board (P)"><svg><use href="#i-screen"/></svg>Presenter mode</button>
+    <button class="btn" type="button" id="drawBtn" title="Annotate over the page (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+    <button class="btn primary" type="button" id="printBtn"><svg><use href="#i-print"/></svg>Print worksheet</button>
+  </div>
+</header>
+
+<nav class="tabs main-tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-hl" aria-controls="view-hl" aria-selected="true">Half-life</button>
+  <button role="tab" id="tab-ab" aria-controls="view-ab" aria-selected="false" tabindex="-1">Absorption &amp; range</button>
+  <button role="tab" id="tab-sum" aria-controls="view-sum" aria-selected="false" tabindex="-1">Summary card</button>
+  <span class="grow"></span>
+  <button class="btn present-only" type="button" id="drawBtn2" title="Annotate (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+  <button class="btn icon present-only" type="button" id="fullBtn" title="Full screen"><svg><use href="#i-full"/></svg></button>
+  <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)"><svg><use href="#i-close"/></svg>Exit</button>
+</nav>
+
+<main>
+<!-- ═════════════════════════ HALF-LIFE ═════════════════════════ -->
+<section class="view layout" id="view-hl" role="tabpanel" aria-labelledby="tab-hl">
+  <div class="viewport">
+    <div class="split">
+      <figure class="stage grid-stage">
+        <canvas id="gridCv" aria-label="Grid of nuclei. Undecayed nuclei are filled; decayed nuclei are hollow."></canvas>
+        <figcaption class="legend">
+          <span><i class="sw sw-parent"></i><b id="lgParent">C-14</b> undecayed</span>
+          <span><i class="sw sw-daughter"></i><b id="lgDaughter">N-14</b> decayed</span>
+          <span class="lg-note">bigger dot = heavier nucleus</span>
+        </figcaption>
+      </figure>
+      <figure class="stage chart-stage">
+        <canvas id="chartCv" aria-label="Graph of the simulation against time"></canvas>
+      </figure>
+    </div>
+    <div class="readouts" aria-live="off">
+      <div class="ro"><span>Time</span><b id="roTime">0</b></div>
+      <div class="ro"><span>Half-lives</span><b id="roHalves">0.00</b></div>
+      <div class="ro"><span>Undecayed</span><b id="roLeft">400</b></div>
+      <div class="ro"><span>Decayed</span><b id="roGone">0</b></div>
+      <div class="ro"><span>Remaining</span><b id="roPct">100%</b></div>
+    </div>
+    <div class="eqline" id="hlEq"></div>
+  </div>
+
+  <aside class="panel" aria-label="Half-life controls">
+    <h2>Half-life visualiser</h2>
+    <p class="sub">Each nucleus has the same chance of decaying in any second. You can't say <em>which</em> one will go next, only how many, roughly.</p>
+
+    <label class="field"><span class="lbl">Isotope</span>
+      <select id="isoSel">
+        <option value="c14">Carbon-14 (β⁻, 5730 years)</option>
+        <option value="rn222">Radon-222 (α, 3.8 days)</option>
+        <option value="i131">Iodine-131 (β⁻ and γ, 8.0 days)</option>
+        <option value="co60">Cobalt-60 (β⁻ and γ, 5.3 years)</option>
+        <option value="custom">Custom half-life</option>
+      </select>
+    </label>
+    <label class="field" id="customRow" hidden><span class="lbl">Half-life <output id="customOut">10 s</output></span>
+      <input type="range" id="customHl" min="1" max="60" step="1" value="10">
+    </label>
+
+    <div class="field"><span class="lbl">Number of nuclei</span>
+      <div class="seg" id="nSeg">
+        <button type="button" data-n="100">100</button>
+        <button type="button" data-n="400" aria-pressed="true">400</button>
+        <button type="button" data-n="1600">1600</button>
+      </div>
+    </div>
+
+    <label class="field"><span class="lbl">Speed <output id="speedOut">1 half-life in 4 s</output></span>
+      <input type="range" id="speed" min="1" max="12" step="1" value="4">
+    </label>
+
+    <div class="transport">
+      <button class="btn primary" type="button" id="hlPlay"><svg><use href="#i-play"/></svg><span>Start</span></button>
+      <button class="btn" type="button" id="hlStep" title="Advance exactly one half-life"><svg><use href="#i-step"/></svg>+1 half-life</button>
+      <button class="btn icon" type="button" id="hlReset" title="Reset"><svg><use href="#i-reset"/></svg></button>
+    </div>
+
+    <div class="field"><span class="lbl">Plot</span>
+      <div class="seg" id="plotSeg">
+        <button type="button" data-plot="n" aria-pressed="true">Undecayed nuclei</button>
+        <button type="button" data-plot="a">Activity</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="guides" checked> Half-life guidelines</label>
+    <label class="check"><input type="checkbox" id="theory"> Theoretical curve</label>
+
+    <div class="card note">
+      <h4>Reading half-life off the graph</h4>
+      <p>Pick any starting value, find where the curve has fallen to <b>half</b> of it, and read the time difference. It's the same wherever you start, so it's a property of the isotope, not of the sample.</p>
+      <p class="muted">Run 100 nuclei a few times: the curve is jagged and each run differs. With 1600 it is smooth. Decay is <b>random</b>, so half-life is only a good description for large numbers of nuclei.</p>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ ABSORPTION ═════════════════════════ -->
+<section class="view layout" id="view-ab" role="tabpanel" aria-labelledby="tab-ab" hidden>
+  <div class="viewport">
+    <figure class="stage bench-stage">
+      <canvas id="benchCv" aria-label="Source, absorber and Geiger-Müller tube on a bench"></canvas>
+      <figcaption class="legend">
+        <span><i class="sw sw-a"></i>α alpha</span>
+        <span><i class="sw sw-b"></i>β beta</span>
+        <span><i class="sw sw-g"></i>γ gamma</span>
+      </figcaption>
+    </figure>
+    <div class="counter">
+      <div class="lcd" role="status" aria-live="off">
+        <div class="lcd-main"><b id="cps">0.0</b><span>counts/s</span></div>
+        <div class="lcd-sub"><b id="cpm">0</b><span>counts/min</span></div>
+      </div>
+      <div class="lcd lcd-scaler">
+        <div class="lcd-sub"><b id="total">0</b><span>total counts</span></div>
+        <div class="lcd-sub"><b id="elapsed">0.0 s</b><span>counting time</span></div>
+      </div>
+      <div class="counter-btns">
+        <button class="btn" type="button" id="soundBtn" aria-pressed="false" title="GM tube clicks"><svg><use href="#i-mute"/></svg><span>Clicks off</span></button>
+        <button class="btn" type="button" id="countReset"><svg><use href="#i-reset"/></svg>Reset counter</button>
+      </div>
+    </div>
+    <p class="hint">The count rate shown is averaged over the last 5 seconds, so give it a moment to settle after you change something. Readings keep fluctuating because emission is random.</p>
+  </div>
+
+  <aside class="panel" aria-label="Absorption controls">
+    <h2>Absorption &amp; range</h2>
+    <p class="sub">Aim a source at a Geiger-Müller tube, then put things in the way.</p>
+
+    <div class="field"><span class="lbl">Source emits</span>
+      <div class="seg big" id="srcSeg">
+        <button type="button" data-t="a" aria-pressed="true">α</button>
+        <button type="button" data-t="b">β</button>
+        <button type="button" data-t="g">γ</button>
+      </div>
+    </div>
+    <div class="row2">
+      <button class="btn" type="button" id="mysteryBtn" title="Choose a random unknown mixture of emissions"><svg><use href="#i-eye"/></svg>Mystery source</button>
+      <button class="btn" type="button" id="revealBtn" hidden>Reveal</button>
+    </div>
+
+    <div class="field"><span class="lbl">Absorber</span>
+      <div class="seg" id="absSeg">
+        <button type="button" data-m="none" aria-pressed="true">None</button>
+        <button type="button" data-m="paper">Paper</button>
+        <button type="button" data-m="al">Aluminium</button>
+        <button type="button" data-m="pb">Lead</button>
+      </div>
+    </div>
+    <label class="field" id="thickRow" hidden><span class="lbl">Thickness <output id="thickOut">0.1 mm</output></span>
+      <input type="range" id="thick" min="0" max="100" step="1" value="0">
+    </label>
+
+    <label class="field"><span class="lbl">Distance, source to GM tube <output id="distOut">3 cm</output></span>
+      <input type="range" id="dist" min="1" max="100" step="1" value="3">
+    </label>
+
+    <label class="check"><input type="checkbox" id="bgOn" checked> Include background radiation (about 0.4 counts/s)</label>
+
+    <div class="card note" id="abNote"></div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ SUMMARY CARD ═════════════════════════ -->
+<section class="view" id="view-sum" role="tabpanel" aria-labelledby="tab-sum" hidden>
+  <div class="summary" id="summary">
+    <h2 class="sum-title">Nuclear radiation: the summary card</h2>
+    <div class="table-wrap">
+    <table class="sumtab">
+      <thead><tr><th></th><th class="c-a">Alpha, α</th><th class="c-b">Beta, β</th><th class="c-g">Gamma, γ</th></tr></thead>
+      <tbody>
+        <tr><th>What it is</th><td>2 protons + 2 neutrons (a helium nucleus)</td><td>a high-speed electron ejected from the nucleus as a neutron turns into a proton</td><td>electromagnetic radiation from the nucleus</td></tr>
+        <tr><th>Symbol</th><td><span class="nuc"><i>4</i><i>2</i></span>α or <span class="nuc"><i>4</i><i>2</i></span>He</td><td><span class="nuc"><i>0</i><i>−1</i></span>β or <span class="nuc"><i>0</i><i>−1</i></span>e</td><td>γ</td></tr>
+        <tr><th>Charge</th><td>+2</td><td>−1</td><td>0</td></tr>
+        <tr><th>Ionising power</th><td><b>strongly</b> ionising</td><td>moderately ionising</td><td><b>weakly</b> ionising</td></tr>
+        <tr><th>Range in air</th><td>a few cm (about 5 cm)</td><td>tens of cm, up to about 1 m</td><td>a very long way; spreads out and gets weaker with distance</td></tr>
+        <tr><th>Stopped by</th><td>a sheet of paper, or the outer layer of skin</td><td>a few mm of aluminium</td><td>several cm of lead or metres of concrete only <b>reduce</b> it</td></tr>
+        <tr><th>Effect on the nucleus</th><td>mass number −4<br>atomic number −2</td><td>mass number unchanged<br>atomic number +1</td><td>no change: the nucleus just loses energy</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="sum-grid">
+      <div class="card">
+        <h4>Nuclear equation rules</h4>
+        <p>The top numbers (mass numbers) balance on each side, and so do the bottom numbers (atomic numbers).</p>
+        <p class="eq">α: <span class="nuc"><i>226</i><i>88</i></span>Ra → <span class="nuc"><i>222</i><i>86</i></span>Rn + <span class="nuc"><i>4</i><i>2</i></span>He</p>
+        <p class="eq">β: <span class="nuc"><i>14</i><i>6</i></span>C → <span class="nuc"><i>14</i><i>7</i></span>N + <span class="nuc"><i>0</i><i>−1</i></span>e</p>
+        <p>Alpha and beta decay change the element (the atomic number changes). Gamma emission changes neither number. Neutron emission (<span class="nuc"><i>1</i><i>0</i></span>n) lowers the mass number by 1 and leaves the element the same.</p>
+      </div>
+      <div class="card">
+        <h4>Half-life and activity</h4>
+        <p><b>Activity</b> is the rate at which a source of unstable nuclei decays, measured in becquerels (Bq). 1 Bq = 1 decay per second.</p>
+        <p><b>Count rate</b> is the number of decays recorded each second by a detector such as a Geiger-Müller tube.</p>
+        <p><b>Half-life</b> is the time it takes for the number of nuclei of the isotope in a sample to halve, or the time for the count rate (or activity) to fall to half its initial level.</p>
+        <p>Radioactive decay is <b>random</b>: you can't predict which nucleus will decay next, or when.</p>
+        <p><span class="tag">HT</span> After <i>n</i> half-lives, the fraction left is 1 / 2<sup><i>n</i></sup>. After 3 half-lives, 1/8 is left, a net decline of 7/8.</p>
+      </div>
+      <div class="card">
+        <h4>Measuring it in the lab</h4>
+        <p>Measure the <b>background</b> count first, with no source, and subtract it from every reading.</p>
+        <p>Count for a longer time, or repeat and average, because the readings fluctuate at random.</p>
+        <p>Keep the distance fixed when you test absorbers: count rate also falls as the detector moves away.</p>
+      </div>
+      <div class="card">
+        <h4>Contamination and irradiation</h4>
+        <p><b>Contamination</b> is unwanted radioactive atoms getting onto or into other materials. <b>Irradiation</b> is exposing an object to nuclear radiation. An irradiated object does not become radioactive.</p>
+        <p>Alpha is the most dangerous inside the body (strongly ionising) and the least dangerous outside it, because skin stops it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ═════════════════════════ ANNOTATION LAYER ═════════════════════════ -->
+<canvas id="inkCv" class="ink" aria-hidden="true"></canvas>
+<div class="inkbar" id="inkBar" role="toolbar" aria-label="Annotation tools" hidden>
+  <button type="button" data-tool="cursor" title="Use the page (ink stays)"><svg><use href="#i-cursor"/></svg><span>Use page</span></button>
+  <button type="button" data-tool="pen" aria-pressed="true" title="Pen"><svg><use href="#i-pen"/></svg><span>Pen</span></button>
+  <button type="button" data-tool="hl" title="Highlighter"><svg><use href="#i-hl"/></svg><span>Highlight</span></button>
+  <button type="button" data-tool="erase" title="Eraser"><svg><use href="#i-erase"/></svg><span>Erase</span></button>
+  <span class="sep"></span>
+  <span class="swatches" id="swatches"></span>
+  <label class="picker" title="Pick any colour"><input type="color" id="inkColor" value="#ffd84d"></label>
+  <label class="size" title="Line thickness"><input type="range" id="inkSize" min="1" max="10" value="3"></label>
+  <span class="sep"></span>
+  <button type="button" id="inkUndo" title="Undo (Ctrl+Z)"><svg><use href="#i-reset"/></svg><span>Undo</span></button>
+  <button type="button" id="inkClear" title="Clear all ink"><svg><use href="#i-bin"/></svg><span>Clear</span></button>
+  <button type="button" id="inkClose" title="Close and remove ink (D)"><svg><use href="#i-close"/></svg><span>Close</span></button>
+</div>
+
+<!-- ═════════════════════════ PRINT DIALOG ═════════════════════════ -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptCard" checked><span><b>Summary card</b><br>One page: the properties table and equation rules.</span></label>
+  <label><input type="checkbox" id="pOptWs" checked><span><b>Student worksheet</b><br>Exam-style questions: absorption, graph reading, half-life calculations and nuclear equations.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>Answers with worked steps. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn primary" type="button" id="pGo"><svg><use href="#i-print"/></svg>Print</button>
+  </div>
+</dialog>
+
+<!-- ═════════════════════════ PRINTABLES ═════════════════════════ -->
+<div class="print-only pd" id="printDoc">
+  <section id="pCard">
+    <div class="phead"><h1>Nuclear radiation: summary card</h1><div class="sub">AQA GCSE Physics 4.4.2 · Combined Science 6.4.2</div></div>
+    <div id="pCardBody"></div>
+  </section>
+
+  <section id="pWs">
+    <div class="phead"><h1>Radioactivity: exam practice</h1><div class="sub">AQA GCSE Physics 4.4.2 · <span id="wsTotal"></span> marks</div></div>
+    <div class="fill"><span>Name</span><span>Class</span><span>Date</span></div>
+    <div id="pQList"></div>
+  </section>
+
+  <section id="pMs">
+    <div class="phead"><h1>Radioactivity: mark scheme</h1><div class="sub">For teachers · <span id="msTotal"></span> marks</div></div>
+    <div id="pMsList" class="ms"></div>
+  </section>
+</div>
+
+<script src="lib/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

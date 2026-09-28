@@ -107,6 +107,12 @@ window.SST_TOOLS = [
     image: "waves-practical.png",
     keywords: "required practical 8 rp8 waves ripple tank water waves wavelength frequency wave speed v = f lambda stroboscope strobe dipper plane waves point source wavefront stretched string standing wave stationary wave vibration generator signal generator node antinode harmonic fundamental resonance tension pulley hanging masses mass per unit length metre rule apparatus set up diagram 3d lamp white screen projection two dippers two source interference superposition coherent coherence path difference phase difference constructive destructive maxima minima fringes btec applied science unit 1 c1 working with waves diffraction grating 4.6.1.2 4.6.1.3" },
 
+  { title: "Radioactivity: Half-Life & Absorption (beta)", url: "visualisations/radioactivity/",
+    blurb: "Watch nuclei decay at random and read the half-life off the live graph, then block alpha, beta and gamma in front of a Geiger counter.",
+    kind: "Interactive", levels: ["GCSE"], tags: ["AQA Physics", "Physics", "Interactive"],
+    image: "radioactivity.png",
+    keywords: "radioactivity radioactive decay nuclear radiation half life half-life halflife random decay unstable nuclei nucleus isotope activity becquerel bq count rate counts per second counts per minute cps cpm geiger muller geiger-muller gm tube geiger counter background radiation alpha particle beta particle gamma ray gamma rays helium nucleus high speed electron electromagnetic ionising ionizing power penetrating range in air absorption absorbers paper aluminium aluminum lead concrete skin nuclear equations mass number atomic number balancing decay equation neutron turns into proton carbon-14 c-14 carbon dating radon-222 radon iodine-131 iodine cobalt-60 cobalt contamination irradiation net decline ratio graph reading mystery source presenter mode whiteboard annotate pen highlighter worksheet printable exam questions mark scheme higher tier 4.4.2.1 4.4.2.2 4.4.2.3 4.4.2.4 6.4.2.1 6.4.2.2 6.4.2.3 6.4.2.4 8463 8464" },
+
   { title: "Mass vs Weight across the Solar System", url: "visualisations/mass-weight-solar-system/",
     blurb: "Weigh anything from a cat to a school bus on eleven worlds, then watch a spring balance stretch and an astronaut jump.",
     kind: "Interactive", levels: ["KS3"], tags: ["Physics", "Interactive"],
