@@ -192,14 +192,16 @@
   .card {
     --c: var(--t1);
     position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 4px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 2px;
     min-width: 0;
     min-height: 0;
-    padding: clamp(8px, 1vw, 14px);
-    text-align: left;
+    padding: clamp(5px, min(1vw, 1.2vh), 14px);
+    text-align: center;
+    /* Text sizes below scale with the card (cqw/cqh), so the topic stays
+       readable and on the card however small a low-resolution board makes it. */
+    container-type: size;
     background: var(--card);
     border: 2px solid color-mix(in oklch, var(--c) 55%, transparent);
     border-radius: 14px;
@@ -211,11 +213,21 @@
   .card[data-tier="2"] { --c: var(--t2); }
   .card[data-tier="3"] { --c: var(--t3); }
   .card[data-tier="4"] { --c: var(--t4); }
-  .card .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; text-align: left; }
+  .card .body {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 0;
+  }
   .card .recency {
     color: var(--c);
     font-weight: 800;
     font-size: clamp(0.62rem, 0.85vw, 0.82rem);
+    font-size: clamp(0.55rem, min(3.6cqw, 11cqh), 0.82rem);
     letter-spacing: 0.07em;
     text-transform: uppercase;
     line-height: 1.2;
@@ -224,6 +236,8 @@
     flex: none;
     width: clamp(34px, 3.6vw, 54px);
     height: clamp(34px, 3.6vw, 54px);
+    width: clamp(20px, min(12cqw, 26cqh), 54px);
+    height: clamp(20px, min(12cqw, 26cqh), 54px);
     border-radius: 50%;
     background: var(--c);
     color: #0a0f18;
@@ -231,17 +245,21 @@
     place-items: center;
     font-weight: 800;
     font-size: clamp(1.1rem, 1.9vw, 1.8rem);
+    font-size: clamp(0.75rem, min(6.5cqw, 14cqh), 1.8rem);
     line-height: 1;
   }
   .card .topic {
     font-weight: 800;
     font-size: clamp(0.95rem, 1.55vw, 1.5rem);
+    font-size: clamp(0.72rem, min(7.5cqw, 17cqh), 1.5rem);
     line-height: 1.15;
     overflow-wrap: anywhere;
+    max-width: 100%;
   }
   .card .theme {
     color: var(--muted);
     font-size: clamp(0.64rem, 0.8vw, 0.8rem);
+    font-size: clamp(0.58rem, min(3.8cqw, 9.5cqh), 0.8rem);
     line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -250,15 +268,33 @@
   }
   .grid[style*="--n: 5"] .card .theme { -webkit-line-clamp: 1; }
 
+  /* Short cards (low-resolution boards, 5×5): the badge moves into the corner
+     and the tier label goes (the colour and legend still carry it), so the
+     topic gets the whole card. */
+  @container (max-height: 90px) {
+    .card .row { position: absolute; top: 4px; right: 4px; }
+    .card .row .recency { display: none; }
+    .card .badge { width: 22px; height: 22px; font-size: 0.8rem; }
+    .card .body { grid-row: 1 / -1; padding-inline: 20px; }
+    .card .topic { font-size: clamp(0.72rem, min(7.5cqw, 30cqh), 1.3rem); }
+    .card.mystery .recency:last-child { display: none; }
+  }
+  @container (max-height: 40px) {
+    .card .theme { display: none; }
+  }
+
   /* Mystery card: the tier stays hidden until it is opened. */
   .card.mystery {
     --c: var(--accent);
     border-style: dashed;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     align-items: center;
     justify-content: center;
     text-align: center;
   }
-  .card.mystery .q { font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 800; color: var(--accent); line-height: 1; }
+  .card.mystery .q { font-size: clamp(2rem, 4vw, 3.6rem); font-size: clamp(1.4rem, min(18cqw, 40cqh), 3.6rem); font-weight: 800; color: var(--accent); line-height: 1; }
   .card.mystery .recency { color: var(--muted); }
 
   .card.claimed {
@@ -430,16 +466,16 @@
      one screen without squashing the cards, so let the page scroll instead. */
   @media (max-height: 620px) {
     .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); }
-    .grid { grid-auto-rows: minmax(96px, auto); }
+    .grid { grid-auto-rows: 96px; }
   }
 
   /* Phones and narrow windows. */
   @media (max-width: 760px) {
     .app { height: auto; min-height: calc(100dvh - var(--sst-bar-h, 0px)); gap: 10px; padding: 10px 12px 16px; }
-    .grid { grid-auto-rows: minmax(112px, auto); }
+    .grid { grid-auto-rows: 112px; }
     .grid[style*="--n: 5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .card .topic { font-size: 0.92rem; overflow-wrap: normal; }
+    .card .topic { font-size: 0.9rem; overflow-wrap: break-word; hyphens: auto; }
     .card .recency { font-size: 0.6rem; letter-spacing: 0.04em; }
     .heading { margin-right: 0; width: 100%; }
 
@@ -1125,7 +1161,7 @@
       label = TIERS[tier].pts + ' points, ' + TIERS[tier].name + ', ' + TOPICS[item.topic][0] + (c.by ? ', claimed' : '');
       return '<button class="card' + (c.by ? ' claimed' : '') + '" type="button" role="listitem" data-idx="' + idx + '" data-tier="' + tier + '" aria-label="' + esc(label) + '">' +
         '<span class="row"><span class="recency">' + TIERS[tier].short + (c.mystery ? ' · mystery' : '') + '</span><span class="badge">' + TIERS[tier].pts + '</span></span>' +
-        '<span><span class="topic">' + TOPICS[item.topic][0] + '</span><br><span class="theme">' + esc(theme(item.topic)) + '</span></span>' +
+        '<span class="body"><span class="topic">' + TOPICS[item.topic][0] + '</span><span class="theme">' + esc(theme(item.topic)) + '</span></span>' +
         claim + '</button>';
     }).join('');
   }
