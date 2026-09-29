@@ -183,3 +183,47 @@ body:not(.presenting) .sst-deck--pr .sst-pr-slide, body:not(.presenting) .sst-de
 .sst-deck.sst-deck--strip .sst-slide p { margin: 0; }
 .sst-deck.sst-deck--strip .sst-deck-nav { flex-direction: column-reverse; justify-content: center; padding-top: 0; }
 .sst-deck.sst-deck--strip .sst-deck-dots { display: none; }
+
+/* ---------- Annotation layer (annotate.js) ----------
+   Drawn over everything, presenter overlays included. The toolbar keeps the
+   site's dark surface in every theme so the swatches read the same. */
+.sst-ink { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483640; pointer-events: none; touch-action: none; }
+body.sst-inking .sst-ink { pointer-events: auto; cursor: crosshair; }
+body.sst-inking.sst-ink-erase .sst-ink { cursor: cell; }
+.sst-inkbar {
+  position: fixed; left: 0; right: 0; bottom: 16px; width: max-content; max-width: calc(100vw - 24px); margin: 0 auto;
+  z-index: 2147483646; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px;
+  padding: 6px; background: #0d1928; border: 1px solid #2c3d52; border-radius: 14px; color: #edf2f8; font: 600 11px/1.2 var(--sst-font);
+}
+.sst-inkbar[hidden], .sst-ink-fab[hidden] { display: none; }
+.sst-inkbar button {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 54px; padding: 5px 6px;
+  border: 1px solid transparent; border-radius: 9px; background: none; color: #edf2f8; cursor: pointer; font: inherit;
+}
+.sst-inkbar button svg { width: 20px; height: 20px; }
+.sst-inkbar button:hover { background: #182535; }
+.sst-inkbar button[aria-pressed="true"] { background: #13324d; border-color: #47b5fa; }
+.sst-ink-sep { width: 1px; align-self: stretch; margin: 4px; background: #2c3d52; }
+.sst-ink-sw { display: flex; gap: 4px; }
+.sst-inkbar .sst-ink-sw button { min-width: 0; width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 2px solid #2c3d52; }
+.sst-inkbar .sst-ink-sw button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #0d1928 inset; background-clip: padding-box; }
+.sst-ink-pick input { width: 32px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+.sst-ink-size input { width: 90px; accent-color: #47b5fa; }
+.sst-inkbar button:focus-visible, .sst-ink-fab:focus-visible, .sst-ink-nav:focus-visible { outline: 2px solid #47b5fa; outline-offset: 2px; }
+@media (max-width: 640px) { .sst-inkbar button span { display: none; } .sst-inkbar button { min-width: 38px; } .sst-ink-size input { width: 64px; } }
+/* Stand-in for the site bar's Annotate button when the bar is hidden. */
+.sst-ink-fab {
+  position: fixed; left: 14px; bottom: 14px; z-index: 2147483645; width: 46px; height: 46px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid #2c3d52; background: #0d1928; color: #edf2f8; cursor: pointer; padding: 0;
+}
+.sst-ink-fab svg { width: 22px; height: 22px; }
+.sst-ink-fab:hover, .sst-ink-fab.is-on { border-color: #47b5fa; }
+.sst-ink-fab.is-on { background: #13324d; }
+.sst-bar .sst-ink-nav {
+  display: flex; align-items: center; gap: 6px; height: var(--sst-bar-h); padding: 0 12px; border: 0; background: none;
+  color: var(--sst-text); font: inherit; cursor: pointer;
+}
+.sst-bar .sst-ink-nav svg { width: 16px; height: 16px; }
+.sst-bar .sst-ink-nav:hover, .sst-bar .sst-ink-nav.is-on { color: var(--sst-blue); box-shadow: inset 0 -2px 0 var(--sst-blue); }
+@media (max-width: 720px) { .sst-bar .sst-ink-nav { display: none; } }
+@media print { .sst-ink, .sst-inkbar, .sst-ink-fab { display: none !important; } }

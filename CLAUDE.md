@@ -104,7 +104,11 @@ pupils read is sized like a PowerPoint slide and never shrunk to fit:
   pages. A plain Ctrl+P must never print the mark scheme.
 
 **Annotation**, a drawing layer over the whole page, from a button in the
-header and in presenter mode:
+header and in presenter mode. Every page in `visualisations/` gets it for free:
+`sst.js` loads `assets/sst/annotate.js`, which puts an Annotate button in the
+site bar and a round pen button in the corner whenever the bar is hidden
+(presenter mode, full screen). A tool with its own layer (a `#inkCv` canvas, as
+in Radioactivity) is left alone. Whichever you use, it must have:
 - Pen, highlighter, eraser, undo, clear, a row of colour swatches plus a
   colour picker, and a thickness slider.
 - A "use page" tool leaves the ink on screen while the model underneath

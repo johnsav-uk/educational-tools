@@ -73,6 +73,14 @@
     }
   }
 
+  // Explore tools get the shared annotation layer (annotate.js), unless the
+  // tool draws its own.
+  if (location.href.indexOf(root + 'visualisations/') === 0) {
+    var ink = document.createElement('script');
+    ink.src = root + 'assets/sst/annotate.js';
+    document.head.appendChild(ink);
+  }
+
   if (window[listName]) { fill(); return; }
   var s = document.createElement('script');
   s.src = root + 'assets/sst/' + (lang ? 'language-tools.js' : 'tools.js');
