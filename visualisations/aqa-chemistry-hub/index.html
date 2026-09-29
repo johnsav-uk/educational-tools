@@ -102,5 +102,20 @@
 <!-- app.js is generated: python build.py, then compile app.jsx (see README) -->
 <script src="app.js"></script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+const hubGrid = () => document.querySelector('main .grid');
+SST_PRESENTER.setup({
+  stage: () => hubGrid() && hubGrid().children[0],
+  side: () => document.querySelector('main .flex.flex-wrap.items-end'),
+  notes: () => hubGrid() && hubGrid().children[1]
+});
+}
+</script>
 </body>
 </html>

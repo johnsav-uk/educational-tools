@@ -1349,5 +1349,21 @@ requestAnimationFrame(frame);
 })();
 </script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+const panelOf = id => () => document.getElementById(id).closest('section');
+SST_PRESENTER.setup({
+  stage: [panelOf('chamber'), panelOf('graph'), panelOf('profile')], ratio: 0.58,
+  side: ['#tabs', () => document.querySelector('.ctrl').closest('section')],
+  // The open revision tab, except Investigate, which is a task sheet.
+  notes: () => (document.querySelector('.study .tabpane.on') || {}).id === 'tab-tasks' ? [] : '.study .tabpane.on'
+});
+}
+</script>
 </body>
 </html>

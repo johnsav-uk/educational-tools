@@ -109,5 +109,20 @@
 
 <script src="app.js"></script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+const shapeCols = () => { const g = document.querySelector('main > div'); return g ? [...g.children] : []; };
+SST_PRESENTER.setup({
+  stage: () => shapeCols()[0] && shapeCols()[0].children[0],
+  side: () => [shapeCols()[0] && shapeCols()[0].children[1], shapeCols()[1] && shapeCols()[1].querySelector(':scope > div > div')],
+  notes: () => shapeCols()[1] ? [...shapeCols()[1].querySelectorAll(':scope > div > div')].slice(1) : []
+});
+}
+</script>
 </body>
 </html>

@@ -3214,5 +3214,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 
 </script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+const mech = () => document.querySelector('main section');
+SST_PRESENTER.setup({
+  stage: () => mech() && mech().children[0],
+  side: () => document.querySelector('main aside'),
+  notes: () => mech() ? [...mech().children].slice(1) : []
+});
+}
+</script>
 </body>
 </html>

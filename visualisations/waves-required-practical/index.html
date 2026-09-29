@@ -2743,5 +2743,23 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+// Each part of the practical lays out the same way: controls on the left,
+// the apparatus on the right, with notes under it.
+const waveCols = () => { const g = document.querySelector('main > div'); return g ? [...g.children] : []; };
+const rightSections = () => waveCols()[1] ? [...waveCols()[1].querySelectorAll(':scope > section')] : [];
+SST_PRESENTER.setup({
+  stage: () => rightSections().filter(s => s.querySelector('canvas')),
+  side: () => [document.querySelector('header [role=tablist]')].concat(waveCols()[0] ? [...waveCols()[0].children] : []),
+  notes: () => rightSections().filter(s => !s.querySelector('canvas'))
+});
+}
+</script>
 </body>
 </html>

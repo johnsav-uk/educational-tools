@@ -65,7 +65,13 @@ all three of these.** Teachers use the tools at the front of the room, then
 set work from them. `visualisations/radioactivity/` does all three and is
 the pattern to copy.
 
-**Presenter mode**, from a button in the tool's header:
+**Presenter mode**, from a button in the tool's header. A tool can build its
+own (Radioactivity) or describe itself to the shared one in
+`assets/sst/presenter.js`: which element is the model, which are the teacher's
+controls and which text becomes slides. It pins those over the board and hides
+the rest without moving anything, so React and three.js apps keep working
+(`visualisations/time-of-flight-mass-spectrometer/` is a short example). Quiz
+games and quiz sections stay off the board. Either way:
 - The tool fills the screen: the site bar and page header are hidden, and the
   model and its controls take the whole viewport.
 - It keeps the site's normal colours. It is not a separate high-contrast

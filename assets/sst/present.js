@@ -142,6 +142,11 @@
   function sentences(html) {
     return html.replace(/([.!?]["”’)]?)\s+(?=[A-Z“"(<0-9])/g, '$1\u0000').split('\u0000');
   }
+  // A sentence too long for a slide by itself breaks at its commas,
+  // semicolons, colons and dashes.
+  function clauses(html) {
+    return html.replace(/([,;:]|\s[—–])\s+/g, '$1\u0000').split('\u0000');
+  }
   function layout(el) {
     var api = el.sstDeck, blocks = el.sstBlocks, box = el.querySelector(':scope > .sst-slides');
     var keep = api.index;
@@ -188,7 +193,7 @@
         cur.removeChild(n);
         if (n.tagName === 'P') {
           var piece = n.cloneNode(false);
-          sentences(n.innerHTML).forEach(function (sen) {
+          var place = function (sen, deeper) {
             var was = piece.innerHTML;
             piece.innerHTML = was ? was + ' ' + sen : sen;
             if (!piece.parentNode) cur.appendChild(piece);
@@ -199,7 +204,14 @@
             piece = n.cloneNode(false);
             piece.innerHTML = sen;
             cur.appendChild(piece);
-          });
+            if (fits() || !deeper) return;
+            var parts = clauses(sen);
+            if (parts.length < 2) return;
+            cur.removeChild(piece);
+            piece = n.cloneNode(false);
+            parts.forEach(function (c) { place(c, false); });
+          };
+          sentences(n.innerHTML).forEach(function (sen) { place(sen, true); });
         } else {
           if (cur.childNodes.length > headN) cur = turn(cur, b.head, headN);
           cur.appendChild(n);

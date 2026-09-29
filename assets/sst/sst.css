@@ -227,3 +227,33 @@ body.sst-inking.sst-ink-erase .sst-ink { cursor: cell; }
 .sst-bar .sst-ink-nav:hover, .sst-bar .sst-ink-nav.is-on { color: var(--sst-blue); box-shadow: inset 0 -2px 0 var(--sst-blue); }
 @media (max-width: 720px) { .sst-bar .sst-ink-nav { display: none; } }
 @media print { .sst-ink, .sst-inkbar, .sst-ink-fab { display: none !important; } }
+
+/* ---------- Shared presenter mode (presenter.js) ----------
+   The tool's model, controls and notes are pinned over the board; the rest
+   of the page is hidden, not moved, so the app underneath keeps working. */
+body.sst-pres { overflow: hidden !important; visibility: hidden; }
+body.sst-pres .sst-pres-pin, .sst-pres-top, .sst-pres-deck, .sst-ink, .sst-inkbar, .sst-ink-fab { visibility: visible; }
+body.sst-pres .sst-pres-off { display: none !important; }
+.sst-pres-top[hidden], .sst-pres-deck[hidden], .sst-pres-deck:not(.has-slides) { display: none !important; }
+.sst-pres-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 2147482600; box-sizing: border-box;
+  display: flex; align-items: center; gap: 12px; padding: 8px clamp(12px, 2vw, 24px);
+  background: var(--sst-bg-deep); border-bottom: 1px solid var(--sst-line); color: var(--sst-text);
+  font: 500 var(--sst-pr-control)/1.2 var(--sst-font);
+}
+.sst-pres-title { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sst-pres-keys { color: var(--sst-text-muted); white-space: nowrap; }
+@media (max-width: 900px) { .sst-pres-keys { display: none; } }
+.sst-pres-top button {
+  font: 600 1em/1 var(--sst-font); padding: .5em .9em; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--sst-line-strong); background: var(--sst-card); color: var(--sst-text);
+}
+.sst-pres-top button:hover { border-color: var(--sst-text-muted); }
+.sst-pres-top button:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.sst-pres-deck {
+  position: fixed; z-index: 2147482600; box-sizing: border-box;
+  background: var(--sst-panel); border: 1px solid var(--sst-line); border-radius: 12px; padding: 10px 14px 12px 20px;
+}
+/* A pinned card grows the part that holds its canvas to fill the board. */
+body.sst-pres .sst-pres-pin:has(> * canvas) { display: flex !important; flex-direction: column; }
+body.sst-pres .sst-pres-pin > :has(canvas) { flex: 1 1 auto; min-height: 0; height: auto !important; max-height: none !important; }

@@ -254,6 +254,11 @@ table.data tr:last-child td{ border-bottom:0; }
 }
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
+<style>
+/* Presenter mode: what pupils read, at board size (--sst-pr-* in sst.css). */
+body.presenting .pin-t, body.presenting .tag { font-size: var(--sst-pr-label); }
+body.presenting .pin-n { font-size: calc(var(--sst-pr-label) * .8); }
+</style>
 </head>
 <body>
 <script src="../../assets/sst/sst.js"></script>
@@ -1824,5 +1829,20 @@ else window.addEventListener("load", () => {
 });
 </script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+SST_PRESENTER.setup({
+  stage: ['#viewport', () => document.getElementById('spectrum').closest('section')], rows: true, ratio: 0.66,
+  side: () => document.querySelector('.console > .col'),
+  // The explanation card, but not while it's showing quiz questions.
+  notes: () => document.getElementById('mode-quiz').getAttribute('aria-pressed') === 'true' ? [] : '#card'
+});
+}
+</script>
 </body>
 </html>

@@ -236,6 +236,17 @@ sup{font-size:.72em;line-height:0}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
+<style>
+/* Presenter mode: what pupils read, at board size (--sst-pr-* in sst.css). */
+body.presenting .acard { overflow: auto !important; }
+body.presenting .acard h2 { font-size: var(--sst-pr-label); }
+body.presenting #iupac { font-size: var(--sst-pr-title); }
+body.presenting .v.big { font-size: var(--sst-pr-title); }
+body.presenting .stat .k { font-size: var(--sst-pr-label); }
+body.presenting .stat .v { font-size: var(--sst-pr-text); }
+body.presenting .acard p, body.presenting .acard li, body.presenting .alt { font-size: var(--sst-pr-label); }
+body.presenting .tags .tag { font-size: var(--sst-pr-label); }
+</style>
 </head>
 <body>
 <script src="../../assets/sst/sst.js"></script>
@@ -2451,5 +2462,19 @@ window.__mb = {
 };
 </script>
 
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script>
+/* Presenter mode (assets/sst/presenter.js): Present in the site bar, or P.
+   The model goes large on the board, the controls sit beside it, and the
+   explanation becomes slides at board size. Quizzes stay off the board. */
+{
+const cardOf = id => () => document.getElementById(id).closest('section');
+SST_PRESENTER.setup({
+  // The drawing and the 3D view, with the name, formula and groups read live underneath.
+  stage: ['.wrap > .stage', '#nameCard', cardOf('formula'), cardOf('tags')], rows: true, ratio: 0.66
+});
+}
+</script>
 </body>
 </html>
