@@ -1566,7 +1566,12 @@
   if (pLang && BANK[pLang] && pLang !== state.lang) { state.lang = pLang; restored = false; }
   if (pSpec === 'aqa') state.spec = 'AQA';
   if (pSpec === 'edexcel') state.spec = 'Edexcel';
-  if (restored) render(); else newBoard();
+  // A fresh visit (new tab or window) starts a new game at 0–0 on a new board;
+  // a refresh in the same tab carries on where it left off.
+  var fresh = true;
+  try { fresh = !sessionStorage.getItem(KEY); sessionStorage.setItem(KEY, '1'); } catch (e) {}
+  if (fresh) state.scores = { A: 0, B: 0 };
+  if (restored && !fresh) render(); else newBoard();
 })();
 </script>
 </body>
