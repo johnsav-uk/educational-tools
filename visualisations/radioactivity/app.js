@@ -723,13 +723,11 @@ const ink = {
   toggle(force) {
     this.open = force ?? !this.open;
     $('#inkBar').hidden = !this.open;
-    this.cv.style.display = this.open ? '' : 'none';
     $$('#drawBtn, #drawBtn2').forEach(b => b.classList.toggle('on', this.open));
     this.setTool(this.open ? (this.tool === 'cursor' ? 'pen' : this.tool) : this.tool);
     if (this.open) this.resize();
   }
 };
-ink.cv.style.display = 'none';
 $('#swatches').innerHTML = ink.COLOURS.map(c => `<button type="button" data-c="${c}" style="background:${c}" title="${c}" aria-label="Colour ${c}"></button>`).join('');
 $('#swatches').addEventListener('click', e => { const b = e.target.closest('button'); if (b) ink.setColor(b.dataset.c); });
 $('#inkColor').addEventListener('input', e => ink.setColor(e.target.value));
@@ -756,8 +754,9 @@ const endStroke = () => { if (ink.cur) { ink.strokes.push(ink.cur); ink.cur = nu
 ink.cv.addEventListener('pointerup', endStroke);
 ink.cv.addEventListener('pointercancel', endStroke);
 ink.setColor(ink.color);
+ink.resize();
 window.addEventListener('resize', () => {
-  if (ink.open) ink.resize();
+  ink.resize();
   if (presenting()) { const f = Math.round(SST_PRESENT.px('--sst-pr-label')); if (f !== THEMES.present.font) { THEMES.present.font = f; applyChartTheme(); } }
   HL.resize(); AB.resize();
 });
