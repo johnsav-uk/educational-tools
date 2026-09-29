@@ -46,7 +46,7 @@
   </div>
 </header>
 
-<nav class="tabs main-tabs" role="tablist" aria-label="Sections">
+<nav class="tabs main-tabs sst-teacher" role="tablist" aria-label="Sections">
   <button role="tab" id="tab-hl" aria-controls="view-hl" aria-selected="true">Half-life</button>
   <button role="tab" id="tab-ab" aria-controls="view-ab" aria-selected="false" tabindex="-1">Absorption &amp; range</button>
   <button role="tab" id="tab-sum" aria-controls="view-sum" aria-selected="false" tabindex="-1">Summary card</button>
@@ -81,9 +81,17 @@
       <div class="ro"><span>Remaining</span><b id="roPct">100%</b></div>
     </div>
     <div class="eqline" id="hlEq"></div>
+    <div class="sst-deck sst-deck--strip pr-only" id="hlDeck" aria-label="Half-life slides">
+      <section class="sst-slide"><h3>Radioactive decay is random</h3><p>Every nucleus has the same chance of decaying each second. You can't say which one goes next.</p></section>
+      <section class="sst-slide"><h3>Half-life</h3><p>The time for the number of undecayed nuclei, or the activity, to fall to half.</p></section>
+      <section class="sst-slide"><h3>Reading it off the graph</h3><p>Pick a starting value. Find where the curve is at half of it. Read the time between.</p></section>
+      <section class="sst-slide"><h3>Start anywhere</h3><p>You get the same time wherever you start: half-life belongs to the isotope, not the sample.</p></section>
+      <section class="sst-slide"><h3>Why it needs large numbers</h3><p>Run 100 nuclei a few times: jagged, and different every run. 1600 nuclei give a smooth curve.</p></section>
+      <section class="sst-slide"><h3>Higher tier: after <i>n</i> half-lives</h3><p>The fraction left is 1 / 2<sup><i>n</i></sup>. After 3 half-lives, 1/8 is left.</p></section>
+    </div>
   </div>
 
-  <aside class="panel" aria-label="Half-life controls">
+  <aside class="panel sst-teacher" aria-label="Half-life controls">
     <h2>Half-life visualiser</h2>
     <p class="sub">Each nucleus has the same chance of decaying in any second. You can't say <em>which</em> one will go next, only how many, roughly.</p>
 
@@ -155,15 +163,16 @@
         <div class="lcd-sub"><b id="total">0</b><span>total counts</span></div>
         <div class="lcd-sub"><b id="elapsed">0.0 s</b><span>counting time</span></div>
       </div>
-      <div class="counter-btns">
+      <div class="counter-btns sst-teacher">
         <button class="btn" type="button" id="soundBtn" aria-pressed="false" title="GM tube clicks"><svg><use href="#i-mute"/></svg><span>Clicks off</span></button>
         <button class="btn" type="button" id="countReset"><svg><use href="#i-reset"/></svg>Reset counter</button>
       </div>
     </div>
     <p class="hint">The count rate shown is averaged over the last 5 seconds, so give it a moment to settle after you change something. Readings keep fluctuating because emission is random.</p>
+    <div class="sst-deck sst-deck--strip pr-only" id="abDeck" aria-label="Absorption slides" aria-live="polite"></div>
   </div>
 
-  <aside class="panel" aria-label="Absorption controls">
+  <aside class="panel sst-teacher" aria-label="Absorption controls">
     <h2>Absorption &amp; range</h2>
     <p class="sub">Aim a source at a Geiger-Müller tube, then put things in the way.</p>
 
@@ -249,6 +258,45 @@
       </div>
     </div>
   </div>
+
+  <!-- In presenter mode the summary card is shown as slides instead. -->
+  <div class="sst-deck pr-only sum-deck" id="sumDeck" aria-label="Summary slides">
+    <section class="sst-slide"><span class="sst-kicker">Alpha, α</span><h3>A helium nucleus: <span class="nuc"><i>4</i><i>2</i></span>He</h3>
+      <ul><li>2 protons and 2 neutrons, charge +2</li><li><b>Strongly</b> ionising</li><li>Range in air: about 5 cm</li><li>Stopped by a sheet of paper, or skin</li></ul></section>
+    <section class="sst-slide"><span class="sst-kicker">Beta, β</span><h3>A fast electron: <span class="nuc"><i>0</i><i>−1</i></span>e</h3>
+      <ul><li>A neutron turns into a proton and the electron is thrown out</li><li>Moderately ionising</li><li>Range in air: up to about 1 m</li><li>Stopped by a few mm of aluminium</li></ul></section>
+    <section class="sst-slide"><span class="sst-kicker">Gamma, γ</span><h3>An electromagnetic wave</h3>
+      <ul><li>Comes from the nucleus, charge 0</li><li><b>Weakly</b> ionising</li><li>Travels a long way in air</li><li>Lead or concrete only <b>reduces</b> it</li></ul></section>
+    <section class="sst-slide"><h3>Alpha, beta and gamma</h3>
+      <table class="sum-mini"><thead><tr><th></th><th class="c-a">α</th><th class="c-b">β</th><th class="c-g">γ</th></tr></thead>
+      <tbody><tr><th>Ionising</th><td>strongly</td><td>moderately</td><td>weakly</td></tr>
+      <tr><th>Range in air</th><td>~5 cm</td><td>~1 m</td><td>very far</td></tr>
+      <tr><th>Stopped by</th><td>paper</td><td>aluminium</td><td>lead reduces it</td></tr>
+      <tr><th>Charge</th><td>+2</td><td>−1</td><td>0</td></tr></tbody></table></section>
+    <section class="sst-slide"><h3>Effect on the nucleus</h3>
+      <ul><li><b>α</b>: mass number −4, atomic number −2</li><li><b>β</b>: mass number the same, atomic number +1</li><li><b>γ</b>: no change, the nucleus just loses energy</li><li><b>Neutron</b>: mass number −1, same element</li></ul></section>
+    <section class="sst-slide"><h3>Balancing nuclear equations</h3><p>Top numbers (mass) balance. Bottom numbers (atomic) balance.</p>
+      <p class="sum-eq">α: <span class="nuc"><i>226</i><i>88</i></span>Ra → <span class="nuc"><i>222</i><i>86</i></span>Rn + <span class="nuc"><i>4</i><i>2</i></span>He</p>
+      <p class="sum-eq">β: <span class="nuc"><i>14</i><i>6</i></span>C → <span class="nuc"><i>14</i><i>7</i></span>N + <span class="nuc"><i>0</i><i>−1</i></span>e</p></section>
+    <section class="sst-slide"><h3>Activity and count rate</h3>
+      <p><b>Activity</b>: how many nuclei decay each second, in becquerels (Bq). 1 Bq = 1 decay per second.</p>
+      <p><b>Count rate</b>: how many decays a detector, such as a GM tube, records each second.</p></section>
+    <section class="sst-slide"><h3>Half-life</h3>
+      <p>The time for the number of nuclei of the isotope in a sample to halve.</p>
+      <p>Or: the time for the count rate, or activity, to fall to half.</p>
+      <p>Decay is <b>random</b>: you can't predict which nucleus decays next, or when.</p></section>
+    <section class="sst-slide"><span class="sst-kicker">Higher tier</span><h3>After <i>n</i> half-lives</h3>
+      <p>The fraction left is 1 / 2<sup><i>n</i></sup>.</p>
+      <p>After 3 half-lives, 1/8 is left: a net decline of 7/8.</p></section>
+    <section class="sst-slide"><h3>Measuring it in the lab</h3>
+      <ul><li>Measure the <b>background</b> count first, with no source. Subtract it from every reading.</li><li>Count for longer, or repeat and average: readings fluctuate at random.</li><li>Keep the distance fixed when you test absorbers.</li></ul></section>
+    <section class="sst-slide"><h3>Contamination and irradiation</h3>
+      <p><b>Contamination</b>: radioactive atoms get onto or into something.</p>
+      <p><b>Irradiation</b>: something is exposed to radiation. It does <b>not</b> become radioactive.</p></section>
+    <section class="sst-slide"><h3>Which is most dangerous?</h3>
+      <p><b>Inside</b> the body: alpha. It's strongly ionising.</p>
+      <p><b>Outside</b> the body: alpha is the least dangerous, because skin stops it.</p></section>
+  </div>
 </section>
 </main>
 
@@ -300,6 +348,7 @@
   </section>
 </div>
 
+<script src="../../assets/sst/present.js"></script>
 <script src="lib/chart.umd.min.js"></script>
 <script src="app.js"></script>
 </body>

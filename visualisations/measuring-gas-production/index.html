@@ -461,49 +461,16 @@
 </main>
 
 <!-- ═══════════════════ PRESENTER ═══════════════════ -->
+<!-- Slides are built by gas.js when presenter mode opens: text from the page,
+     split to fit at board size, plus the live simulators and quiz moved in. -->
 <div id="presenter" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden>
-  <div class="p-top">
+  <div class="p-top sst-teacher">
     <span class="p-title" id="pTitle">Measuring Gas in Reactions</span>
-    <span class="p-count" id="pCount">1 / 6</span>
+    <span class="p-hint">→ / Space next · ← back · Esc exit</span>
     <button class="btn sm" id="pExit" type="button">Exit <kbd style="font:inherit;opacity:.7">Esc</kbd></button>
   </div>
-  <div class="p-stage" id="pStage">
-    <section class="pslide" data-title="Learning objectives">
-      <div class="kicker">Measuring gas in reactions</div>
-      <h2>Learning objectives &amp; overview</h2>
-      <div data-borrow="overviewBody"></div>
-    </section>
-    <section class="pslide" data-title="Method 1: Gas syringe">
-      <div class="kicker">Method 1</div>
-      <h2>Gas syringe: volume against time</h2>
-      <div data-borrow="body-syringe"></div>
-    </section>
-    <section class="pslide" data-title="Method 2: Mass loss">
-      <div class="kicker">Method 2</div>
-      <h2>Mass loss: balance and cotton wool</h2>
-      <div data-borrow="body-mass"></div>
-    </section>
-    <section class="pslide" data-title="Method 3: Downward displacement">
-      <div class="kicker">Method 3</div>
-      <h2>Downward displacement of water</h2>
-      <div data-borrow="body-water"></div>
-    </section>
-    <section class="pslide" data-title="Comparing the methods">
-      <div class="kicker">Summary</div>
-      <h2>Comparing the three methods</h2>
-      <div data-borrow="compareBody"></div>
-    </section>
-    <section class="pslide" data-title="Check for understanding">
-      <div class="kicker">Quick quiz</div>
-      <h2>Check for understanding</h2>
-      <div data-borrow="quizBody"></div>
-    </section>
-  </div>
-  <div class="p-nav">
-    <button class="btn sm" id="pPrev" type="button" aria-label="Previous slide">← Back</button>
-    <div class="p-dots" id="pDots"></div>
-    <span class="p-hint">→ / Space next · ← back · Esc exit</span>
-    <button class="btn sm primary" id="pNext" type="button" aria-label="Next slide">Next →</button>
+  <div class="p-stage">
+    <div class="sst-deck" id="pDeck" aria-label="Slides"></div>
   </div>
 </div>
 
@@ -526,6 +493,7 @@
   </form>
 </dialog>
 
+<script src="../../assets/sst/present.js"></script>
 <script src="gas.js"></script>
 </body>
 </html>

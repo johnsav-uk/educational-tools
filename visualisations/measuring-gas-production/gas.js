@@ -792,85 +792,126 @@
   });
 
   /* ── Presenter mode ──────────────────────────────────────────────── */
-  var pres = document.getElementById('presenter'), slides = pres.querySelectorAll('.pslide');
-  var pDots = document.getElementById('pDots'), cur = 0, borrowed = [], wentFs = false, opener = null;
-  slides.forEach(function(s, i){
-    var d = document.createElement('button'); d.type = 'button'; d.className = 'p-dot';
-    d.setAttribute('aria-label', 'Slide ' + (i + 1) + ': ' + s.dataset.title);
-    d.addEventListener('click', function(){ go(i); });
-    pDots.appendChild(d);
-  });
-  function go(i){
-    cur = Math.max(0, Math.min(slides.length - 1, i));
-    slides.forEach(function(s, k){ s.classList.toggle('on', k === cur); });
-    pDots.querySelectorAll('.p-dot').forEach(function(d, k){ d.classList.toggle('on', k === cur); if (k === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
-    document.getElementById('pCount').textContent = (cur + 1) + ' / ' + slides.length;
-    document.getElementById('pTitle').textContent = 'Measuring Gas in Reactions · ' + slides[cur].dataset.title;
-    document.getElementById('pPrev').disabled = cur === 0;
-    document.getElementById('pNext').disabled = cur === slides.length - 1;
-    document.getElementById('pStage').scrollTop = 0;
-    sims.forEach(function(s){ s.dirty = true; });
-  }
-  // The slides reuse the live page elements (simulators, table, quiz), moved in
-  // while presenting and put back afterwards, so state carries across.
-  function borrow(){
-    pres.querySelectorAll('[data-borrow]').forEach(function(slot){
-      var el = document.getElementById(slot.dataset.borrow);
-      if (!el) return;
-      var mark = document.createComment('presenter:' + el.id);
-      el.parentNode.replaceChild(mark, el); slot.appendChild(el);
-      borrowed.push([el, mark]);
-    });
+  // Board slides at the site's presenter sizes (assets/sst/present.js): the
+  // page's text, split to fit as the board needs, and the live simulators and
+  // quiz questions, moved in while presenting and put back afterwards so their
+  // state carries across.
+  var pres = document.getElementById('presenter'), deckEl = document.getElementById('pDeck');
+  var borrowed = [], wentFs = false, opener = null;
+  function take(el, slot){
+    var mark = document.createComment('presenter');
+    el.parentNode.replaceChild(mark, el); slot.appendChild(el);
+    borrowed.push([el, mark]);
   }
   function giveBack(){
     borrowed.forEach(function(p){ p[1].parentNode.replaceChild(p[0], p[1]); });
     borrowed = [];
   }
+  function kick(t){ return '<span class="sst-kicker">' + t + '</span>'; }
+  function inner(sel){ var el = document.querySelector(sel); return el ? el.innerHTML : ''; }
+  function slideOf(cls, title, head){
+    var s = document.createElement('section');
+    s.className = 'sst-slide ' + cls; s.dataset.title = title; s.innerHTML = head;
+    return s;
+  }
+  // Key points beside a simulator, as board paragraphs.
+  function keypoints(body){
+    var out = [];
+    body.querySelectorAll('.keypoints > *').forEach(function(n){
+      if (n.classList.contains('eqn')) out.push('<p><span class="eq">' + n.innerHTML + '</span></p>');
+      else if (n.tagName === 'H4') out.push('<h4>' + n.innerHTML + '</h4>');
+      else if (n.tagName === 'UL') n.querySelectorAll('li').forEach(function(li){
+        out.push('<p class="pt ' + n.className + '">' + li.innerHTML + '</p>');
+      });
+    });
+    return out;
+  }
+  function buildSlides(){
+    var blocks = [];
+    var los = []; document.querySelectorAll('#overviewBody .lo li').forEach(function(li, i){
+      los.push('<p class="pt numbered"><span class="num">' + (i + 1) + '</span>' + li.innerHTML + '</p>');
+    });
+    blocks.push({ head: kick('Measuring gas in reactions') + '<h3>Learning objectives</h3>', body: los });
+    var why = document.querySelector('#overviewBody .panel + .panel, #overviewBody .cards3 + .panel');
+    blocks.push({ head: kick('Overview') + '<h3>Why measure a gas?</h3>', body: [
+      '<p>' + (why ? why.querySelector('p').innerHTML : '') + '</p>',
+      '<p>' + inner('#overviewBody .eqn-list') + '</p>'] });
+    var cards = []; document.querySelectorAll('#overviewBody .mcard').forEach(function(c){
+      cards.push('<p class="pt"><b>' + c.querySelector('b').innerHTML + '</b>: ' + c.querySelector('.d').innerHTML + '</p>');
+    });
+    blocks.push({ head: kick('Overview') + '<h3>Three ways to measure the gas</h3>', body: cards });
+    [['syringe', 'Method 1'], ['mass', 'Method 2'], ['water', 'Method 3']].forEach(function(m){
+      var art = document.getElementById('m-' + m[0]), title = art.querySelector('.method-head h3').innerHTML.replace(/<span class="kicker">.*?<\/span><br>/, '');
+      var sim = slideOf('p-sim', m[1] + ': ' + title.replace(/<[^>]+>/g, ''), kick(m[1]) + '<h3>' + title + '</h3>');
+      take(art.querySelector('.sim'), sim);
+      blocks.push({ slide: sim });
+      blocks.push({ head: kick(m[1]) + '<h3>' + title + '</h3>', body: keypoints(art) });
+    });
+    var rows = [];
+    document.querySelectorAll('#compareBody table.cmp tbody tr').forEach(function(tr){
+      var c = tr.children; rows.push('<tr><td>' + c[0].innerHTML + '</td><td>' + c[1].innerHTML + '</td><td>' + c[c.length - 1].innerHTML + '</td></tr>');
+    });
+    blocks.push({ head: kick('Summary') + '<h3>Which method?</h3>', body: [
+      '<table><thead><tr><th>Method</th><th>Measures</th><th>Best for</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>'] });
+    var qs = document.querySelectorAll('#quizBody .qq');
+    qs.forEach(function(q, i){
+      var s = slideOf('p-quiz', 'Quick quiz ' + (i + 1) + ' of ' + qs.length, kick('Quick quiz · ' + (i + 1) + ' of ' + qs.length));
+      take(q, s);
+      blocks.push({ slide: s });
+    });
+    SST_PRESENT.fill(deckEl, blocks);
+  }
+  function showTitle(){
+    var d = deckEl.sstDeck, s = d && deckEl.querySelectorAll('.sst-slides > .sst-slide')[d.index];
+    var t = s && (s.dataset.title || (s.querySelector('h3') || s).textContent);
+    document.getElementById('pTitle').textContent = 'Measuring Gas in Reactions' + (t ? ' · ' + t.trim() : '');
+    sims.forEach(function(x){ x.dirty = true; });
+  }
+  deckEl.addEventListener('sst-slide', showTitle);
   function openPresenter(){
     if (!pres.hidden) return;
     opener = document.activeElement;
-    borrow(); pres.hidden = false; document.body.classList.add('presenting');
-    go(cur);
+    pres.hidden = false; document.body.classList.add('presenting');
+    buildSlides(); showTitle();
     wentFs = false;
     if (pres.requestFullscreen){
       pres.requestFullscreen().then(function(){ wentFs = true; }).catch(function(){});
     }
-    document.getElementById('pNext').focus();
+    var nx = deckEl.querySelector('.sst-deck-next'); if (nx) nx.focus();
   }
   function closePresenter(){
     if (pres.hidden) return;
     pres.hidden = true; document.body.classList.remove('presenting');
     giveBack();
+    deckEl.sstBlocks = null; deckEl.querySelector('.sst-slides').innerHTML = '';
     if (document.fullscreenElement) document.exitFullscreen().catch(function(){});
     sims.forEach(function(s){ s.dirty = true; });
     if (opener && opener.focus) opener.focus();
   }
   document.getElementById('presentBtn').addEventListener('click', openPresenter);
   document.getElementById('pExit').addEventListener('click', closePresenter);
-  document.getElementById('pPrev').addEventListener('click', function(){ go(cur - 1); });
-  document.getElementById('pNext').addEventListener('click', function(){ go(cur + 1); });
   document.addEventListener('fullscreenchange', function(){
     // Esc in full screen is taken by the browser; leaving full screen ends the show.
     if (!document.fullscreenElement && wentFs && !pres.hidden) closePresenter();
   });
+  // Arrows and Page Up / Down turn the page in present.js; Space, Home and End here.
   document.addEventListener('keydown', function(e){
     if (pres.hidden) return;
-    var tg = e.target, tag = tg && tg.tagName;
+    var tg = e.target, tag = tg && tg.tagName, d = deckEl.sstDeck;
     if (e.key === 'Escape'){ e.preventDefault(); closePresenter(); return; }
-    if (tag === 'TEXTAREA' || tag === 'SELECT') return;
-    var isRange = tag === 'INPUT' && tg.type === 'range', isBox = tag === 'INPUT' && tg.type === 'checkbox';
-    if ((e.key === 'ArrowRight' && !isRange) || e.key === 'PageDown' || (e.key === ' ' && !isBox)){ e.preventDefault(); go(cur + 1); }
-    else if ((e.key === 'ArrowLeft' && !isRange) || e.key === 'PageUp'){ e.preventDefault(); go(cur - 1); }
-    else if (e.key === 'Home'){ e.preventDefault(); go(0); }
-    else if (e.key === 'End'){ e.preventDefault(); go(slides.length - 1); }
+    if (tag === 'TEXTAREA' || tag === 'SELECT' || !d) return;
+    var isBox = tag === 'INPUT' && tg.type === 'checkbox', isBtn = tag === 'BUTTON';
+    if (e.key === ' ' && !isBox && !isBtn){ e.preventDefault(); d.next(); }
+    else if (e.key === 'Home'){ e.preventDefault(); d.go(0); }
+    else if (e.key === 'End'){ e.preventDefault(); d.go(d.count - 1); }
   });
   // Swipe between slides on a tablet or touch whiteboard.
   var sx = null;
   pres.addEventListener('touchstart', function(e){ sx = e.target.closest('canvas,input,select,.sim-ctrl,.tablewrap') ? null : e.touches[0].clientX; }, { passive:true });
   pres.addEventListener('touchend', function(e){
-    if (sx === null) return;
+    if (sx === null || !deckEl.sstDeck) return;
     var dx = e.changedTouches[0].clientX - sx; sx = null;
-    if (Math.abs(dx) > 70) go(cur + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 70) deckEl.sstDeck[dx < 0 ? 'next' : 'prev']();
   });
 
   /* ── PDF downloads (browser print, A4) ───────────────────────────── */

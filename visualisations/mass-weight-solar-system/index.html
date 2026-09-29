@@ -112,7 +112,7 @@
     <p class="sect-lede">Choose a mass and a place. The spring balance shows its weight there, and the astronaut shows how high a jump goes when gravity changes.</p>
 
     <div id="explorer" class="explorer">
-      <div class="panel controls">
+      <div class="panel controls sst-teacher">
         <div class="ctl">
           <label for="massNum" class="ctl-label">Mass <span class="muted">(kg)</span></label>
           <div class="mass-row">
@@ -197,16 +197,22 @@
 </main>
 
 <!-- ── Presenter mode ───────────────────────────────────────────────── -->
+<!-- Slides are built by mw.js when presenter mode opens: the starter below,
+     the page's text split to fit at board size, and the live explorer, worked
+     example and quiz moved in. -->
 <div id="presenter" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden>
-  <div class="p-top">
+  <div class="p-top sst-teacher">
     <span class="p-title" id="pTitle">Mass vs Weight</span>
-    <span class="p-count" id="pCount">1 / 5</span>
+    <span class="p-hint">← → or Space to move · Esc to exit</span>
     <button class="btn sm" id="pExit" type="button">Exit <kbd>Esc</kbd></button>
   </div>
-  <div class="p-stage" id="pStage">
-    <section class="pslide hook" data-title="Starter">
-      <div class="kicker">Starter</div>
-      <h2>Are mass and weight the same thing?</h2>
+  <div class="p-stage">
+    <div class="sst-deck" id="pDeck" aria-label="Slides"></div>
+  </div>
+  <div hidden>
+    <section class="sst-slide p-hook" id="pHook" data-title="Starter">
+      <span class="sst-kicker">Starter</span>
+      <h3>Are mass and weight the same thing?</h3>
       <div class="hook-grid">
         <div class="hook-q">
           <p>An astronaut steps on bathroom scales on Earth. They read <strong>80 kg</strong>.</p>
@@ -239,35 +245,10 @@
         </svg>
       </div>
     </section>
-    <section class="pslide" data-title="Definitions">
-      <div class="kicker">Definitions</div>
-      <h2>Mass (kg) vs weight (N)</h2>
-      <div data-borrow="defBody"></div>
-    </section>
-    <section class="pslide" data-title="The formula">
-      <div class="kicker">The equation</div>
-      <h2>W = m × g</h2>
-      <div data-borrow="formulaBody"></div>
-    </section>
-    <section class="pslide" data-title="Planet explorer">
-      <div class="kicker">Planet explorer</div>
-      <h2>Weigh it, then jump on another world</h2>
-      <div data-borrow="explorer"></div>
-    </section>
-    <section class="pslide" data-title="Quick check quiz">
-      <div class="kicker">KS3 quick check</div>
-      <h2>Quick check quiz</h2>
-      <div data-borrow="quizBody"></div>
-    </section>
-  </div>
-  <div class="p-nav">
-    <button class="btn" id="pPrev" type="button" aria-label="Previous slide">← Back</button>
-    <div class="p-dots" id="pDots"></div>
-    <span class="p-hint">← → or Space to move · Esc to exit</span>
-    <button class="btn primary" id="pNext" type="button" aria-label="Next slide">Next →</button>
   </div>
 </div>
 
+<script src="../../assets/sst/present.js"></script>
 <script src="mw.js"></script>
 </body>
 </html>

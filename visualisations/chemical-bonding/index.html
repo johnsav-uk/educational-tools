@@ -114,26 +114,41 @@
   .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
   .hbtns{ display:flex; flex-wrap:wrap; gap:8px; }
 
-  /* ── Presenter mode: the model fills the screen, explanation in big type ── */
+  /* ── Presenter mode ──────────────────────────────────────────────
+     The model fills the screen and the explanation becomes slides, at the
+     --sst-pr-* sizes from sst.css. A slide that runs long is split between
+     sentences (SST_PRESENT.fill), never shrunk. The mode, substance and step
+     buttons are the teacher's and stay compact. */
   .present-only{ display:none !important; }
+  .pr-only{ display:none !important; }
   body.presenting{ overflow:hidden; }
-  body.presenting .sst-bar, body.presenting .top, body.presenting .panel .foot{ display:none; }
+  body.presenting .sst-bar, body.presenting .top{ display:none; }
   body.presenting .present-only{ display:inline-flex !important; }
+  body.presenting .pr-only{ display:flex !important; }
   body.presenting .layout{ position:fixed; inset:0; z-index:40; background:var(--paper); padding:12px 16px;
-    grid-template-columns:minmax(0,1fr) clamp(320px,30vw,660px); grid-template-rows:minmax(0,1fr); gap:16px; align-items:stretch; }
+    grid-template-columns:minmax(0,1fr) clamp(420px,38vw,820px); grid-template-rows:minmax(0,1fr); gap:16px; align-items:stretch; }
   body.presenting .layout > section{ display:flex; flex-direction:column; min-height:0; }
   body.presenting .stage{ flex:1 1 auto; height:auto; min-height:0; }
-  body.presenting .bar{ margin-bottom:8px; }
+  body.presenting .bar{ margin-bottom:8px; font-size:var(--sst-pr-control); }
   body.presenting .bar .grow{ flex:1; }
-  body.presenting .panel{ position:static; max-height:none; height:100%; overflow:auto; font-size:clamp(17px,1.3vw,28px); padding:clamp(16px,1.4vw,28px); }
-  body.presenting .explain .sub{ font-size:.75em; }
-  body.presenting .explain h2{ font-size:1.45em; line-height:1.2; margin-bottom:.3em; }
-  body.presenting .explain .eq{ font-size:.85em; }
-  body.presenting .tabs button{ font-size:.8em; }
-  body.presenting .card h4, body.presenting .card p, body.presenting .myth .claim, body.presenting .myth .truth,
-  body.presenting .vocab .term{ font-size:.85em; }
-  body.presenting .card .lose{ font-size:.75em; }
-  body.presenting .myth button, body.presenting .vocab .btn{ font-size:.75em; }
+  body.presenting .legend{ font-size:var(--sst-pr-label); gap:4px 18px; padding:6px 12px; }
+  body.presenting .legend svg{ width:1em; height:1em; }
+  body.presenting .panel{ position:static; max-height:none; height:100%; overflow:hidden; display:flex; flex-direction:column; gap:12px;
+    padding:clamp(16px,1.4vw,28px); }
+  body.presenting #explain, body.presenting .panel > .tabs, body.presenting #tabbody, body.presenting .panel .foot{ display:none; }
+  body.presenting .pr-sec{ flex:none; }
+  body.presenting #prDeck{ flex:1 1 auto; }
+  #prDeck .pr-q{ color:var(--ink); font-weight:700; }
+  #prDeck .pr-lose{ color:var(--muted); }
+  #prDeck .pr-lose b{ color:var(--bad); }
+  #prDeck .pr-claim{ color:var(--ink); font-weight:700; }
+  #prDeck .pr-claim .x{ color:var(--bad); }
+  #prDeck .pr-truth .ok{ color:var(--good); font-weight:800; }
+  #prDeck .pr-term{ color:var(--accent); font-weight:800; }
+  #prDeck .pr-use{ font-style:italic; }
+  #prDeck .eq{ font-variant-numeric:tabular-nums; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:.2em .5em; margin:.3em 0; color:var(--ink); }
+  #prDeck .kw{ color:var(--ink); background:var(--soft); border-radius:4px; padding:0 4px; font-weight:700; white-space:normal; }
+  #prDeck .btn{ font-size:var(--sst-pr-control); }
   @media (max-width:1020px){
     body.presenting .layout{ grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) minmax(0,38vh); }
   }
@@ -224,7 +239,7 @@
 
 <main class="layout">
   <section aria-label="Bonding model">
-    <div class="bar">
+    <div class="bar sst-teacher">
       <div class="seg big" id="modes" role="group" aria-label="Type of bonding">
         <button type="button" data-mode="ionic">Ionic</button>
         <button type="button" data-mode="covalent">Covalent</button>
@@ -236,7 +251,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Full screen</button>
       <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)">Exit</button>
     </div>
-    <div class="bar" id="viewbar"></div>
+    <div class="bar sst-teacher" id="viewbar"></div>
 
     <div class="stage">
       <canvas id="cv" role="img" aria-label="Bonding animation"></canvas>
@@ -244,7 +259,7 @@
     </div>
     <div class="democtl" id="democtl"></div>
 
-    <div class="controls">
+    <div class="controls sst-teacher">
       <div class="steps" id="steps"></div>
       <div class="transport">
         <button class="btn icon" type="button" id="prev" title="Previous step (←)" aria-label="Previous step">
@@ -268,6 +283,13 @@
       <button type="button" role="tab" data-tab="vocab" aria-selected="false">Exam vocabulary</button>
     </div>
     <div id="tabbody" role="tabpanel"></div>
+    <div class="seg pr-only pr-sec sst-teacher" id="prSec" role="group" aria-label="What the slides show">
+      <button type="button" data-sec="explain" aria-pressed="true">Explanation</button>
+      <button type="button" data-sec="insights" aria-pressed="false">Examiner insights</button>
+      <button type="button" data-sec="myths" aria-pressed="false">Misconceptions</button>
+      <button type="button" data-sec="vocab" aria-pressed="false">Vocabulary</button>
+    </div>
+    <div class="sst-deck pr-only" id="prDeck" data-keys="page" data-edges aria-label="Slides" aria-live="polite"></div>
     <p class="foot">Models, not pictures: real atoms have no drawn shells and electrons are not tiny balls. Dots and crosses only show which atom each electron came from; all electrons are identical.</p>
   </aside>
 </main>
@@ -376,6 +398,7 @@
   </section>
 </div>
 
+<script src="../../assets/sst/present.js"></script>
 <script>
 (() => {
 'use strict';
@@ -565,7 +588,8 @@ let W = 0, H = 0, DPR = 1, Z = 1, SNAP = false;
 function resize() {
   const r = cv.getBoundingClientRect();
   DPR = Math.min(2, window.devicePixelRatio || 1);
-  Z = document.body.classList.contains('presenting') ? clamp(r.width / 820, 1, 2.2) : 1;
+  // Labels reach the presenter label size, as long as the scene stays about 520 units wide.
+  Z = document.body.classList.contains('presenting') && r.width ? clamp(SST_PRESENT.px('--sst-pr-label') / 13, 1, r.width / 520) : 1;
   W = r.width / Z; H = r.height / Z;
   cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR);
   ctx.setTransform(DPR * Z, 0, 0, DPR * Z, 0, 0);
@@ -1300,10 +1324,10 @@ cv.addEventListener('pointercancel', () => { if (drag && drag.kind === 'force') 
 
 /* ════════════════════════ UI ════════════════════════ */
 const ICON = {
-  dot: '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#3B82F6" stroke="#9cc3ff"/></svg>',
-  cross: '<svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3L11 11M11 3L3 11" stroke="#EF4444" stroke-width="2.6" stroke-linecap="round"/></svg>',
-  ion: (c, s) => `<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7.5" fill="${mix(c, COL.bg, .72)}" stroke="${c}" stroke-width="1.6"/><text x="9" y="12.6" text-anchor="middle" font-size="10" font-weight="800" fill="${c}" font-family="sans-serif">${s}</text></svg>`,
-  small: c => `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="#2b3544" stroke="${c}" stroke-width="1.5"/></svg>`
+  dot: '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" fill="#3B82F6" stroke="#9cc3ff"/></svg>',
+  cross: '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><path d="M3 3L11 11M11 3L3 11" stroke="#EF4444" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  ion: (c, s) => `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7.5" fill="${mix(c, COL.bg, .72)}" stroke="${c}" stroke-width="1.6"/><text x="9" y="12.6" text-anchor="middle" font-size="10" font-weight="800" fill="${c}" font-family="sans-serif">${s}</text></svg>`,
+  small: c => `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="#2b3544" stroke="${c}" stroke-width="1.5"/></svg>`
 };
 
 function setMode(m) {
@@ -1411,6 +1435,7 @@ function refreshDynamic() {
   $('#playIcon').innerHTML = S.playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5l12 7-12 7z"/>';
   $('#explain').innerHTML = explain(st);
   cv.setAttribute('aria-label', `${names[st]}: ${$('#explain h2') ? $('#explain h2').textContent : ''}`);
+  presentSlides();
 }
 
 function explain(st) {
@@ -1495,8 +1520,60 @@ function renderTab() {
 }
 
 /* ════════════════════════ presenter mode ════════════════════════ */
+// On the board the side panel is a deck of slides: the explanation for the
+// current step, or the examiner insights, misconceptions or vocabulary.
+// PageDown past the last explanation slide moves the model on a step, and
+// PageUp before the first goes back one, like the builds in a PowerPoint.
+let prSec = 'explain', prKey = '', prLandLast = false;
+const kick = t => `<span class="sst-kicker">${t}</span>`;
+function presentSlides(force) {
+  if (!document.body.classList.contains('presenting')) return;
+  let blocks;
+  if (prSec === 'explain') {
+    const html = $('#explain').innerHTML;
+    if (!force && prKey === 'explain' + html) return;
+    prKey = 'explain' + html;
+    const t = document.createElement('div'); t.innerHTML = html;
+    const h = t.querySelector('h2');
+    blocks = [{ head: kick(h ? h.innerHTML : ''), body: [...t.children].filter(c => c.tagName === 'P' || c.classList.contains('eq')).map(c => c.outerHTML) }];
+  } else {
+    if (!force && prKey === prSec + S.mode) return;
+    prKey = prSec + S.mode;
+    if (prSec === 'insights') {
+      const list = INSIGHTS[S.mode];
+      blocks = list.map((c, i) => ({ head: kick(`Examiner insight ${i + 1} of ${list.length}`),
+        body: [`<p class="pr-q">${c.q}</p>`, `<p>${c.a}</p>`, `<p class="pr-lose"><b>Loses the mark:</b> ${c.lose}</p>`] }));
+    } else if (prSec === 'myths') {
+      const list = MYTHS.slice().sort((a, b) => (b.mode === S.mode) - (a.mode === S.mode));
+      blocks = list.map(m => ({ head: kick(`Misconception${m.mode === S.mode ? ' · this model' : ''}`), one: true,
+        body: [`<p class="pr-claim"><span class="x" aria-hidden="true">✗</span> “${m.myth}”</p>`, `<p class="pr-truth"><span class="ok" aria-hidden="true">✓</span> <b>Examiner reality:</b> ${m.truth}</p>`] }));
+    } else {
+      blocks = VOCAB.map((v, i) => ({ head: kick('Exam vocabulary'),
+        body: [`<p class="pr-term">${v.term}</p>`, `<p>${v.mean}</p>`, `<p class="pr-use">${v.use}</p>`, `<p><button type="button" class="btn" data-go="${i}">Show me</button></p>`] }));
+    }
+  }
+  const d = $('#prDeck');
+  SST_PRESENT.deck(d).index = 0;
+  SST_PRESENT.fill(d, blocks);
+  if (prLandLast) { prLandLast = false; d.sstDeck.go(d.sstDeck.count - 1, true); }
+}
+$('#prSec').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  prSec = b.dataset.sec;
+  document.querySelectorAll('#prSec button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#prDeck').toggleAttribute('data-edges', prSec === 'explain');
+  presentSlides(true);
+});
+$('#prDeck').addEventListener('sst-deck-edge', e => {
+  if (prSec !== 'explain') return;
+  if (e.detail.dir < 0) prLandLast = true;
+  (e.detail.dir > 0 ? next : prev)();
+});
+$('#prDeck').addEventListener('click', e => { const g = e.target.closest('button[data-go]'); if (g) showMe(+g.dataset.go); });
+
 function setPresenting(on) {
   document.body.classList.toggle('presenting', on);
+  if (on) presentSlides(true);
   if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   resize(); lastUIKey = '';
   if (on) $('#play').focus({ preventScroll: true });
@@ -1652,16 +1729,18 @@ $('#tabbody').addEventListener('click', e => {
     t.hidden = !open; m.setAttribute('aria-expanded', open); m.textContent = open ? 'Hide' : 'Bust it';
   }
   const g = e.target.closest('button[data-go]');
-  if (g) {
-    const v = VOCAB[+g.dataset.go].go, tab = S.tab;
-    setMode(v.mode);
-    if (v.view) { S.view = v.view; S.T = 2; S.sel = defaultSel(); }
-    if (v.demo) { S.demo = v.demo; S.T = 2; if (v.demo === 'elec') S.pd = true; }
-    if (v.T) { S.T = v.T - 1; S.target = v.T; S.playing = true; }
-    S.tab = tab; refreshStatic();
-    document.querySelector('.stage').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'nearest' });
-  }
+  if (g) showMe(+g.dataset.go);
 });
+// "Show me" on a vocabulary card: set the model to where the term is shown.
+function showMe(i) {
+  const v = VOCAB[i].go, tab = S.tab;
+  setMode(v.mode);
+  if (v.view) { S.view = v.view; S.T = 2; S.sel = defaultSel(); }
+  if (v.demo) { S.demo = v.demo; S.T = 2; if (v.demo === 'elec') S.pd = true; }
+  if (v.T) { S.T = v.T - 1; S.target = v.T; S.playing = true; }
+  S.tab = tab; refreshStatic();
+  if (!document.body.classList.contains('presenting')) document.querySelector('.stage').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'nearest' });
+}
 document.addEventListener('keydown', e => {
   if (e.target.closest('input, textarea, select') || e.altKey || e.ctrlKey || e.metaKey || dlg.open) return;
   const presenting = document.body.classList.contains('presenting');

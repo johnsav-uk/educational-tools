@@ -298,7 +298,11 @@ table.dt td:first-child{ font-weight:700; white-space:nowrap; }
 .deck-count{ font-weight:700; font-variant-numeric:tabular-nums; min-width:10ch; text-align:center; }
 .deck-count small{ display:block; font-weight:500; color:var(--muted); font-size:11.5px; }
 
-.s169-in{ --sec:var(--chem); position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0; font-size:32px; line-height:1.35;
+/* History slides: a 1600×900 slide scaled to fit, sized to the site's
+   presenter scale in slide units: text 38px (2.4% of the width) and nothing a
+   pupil reads under .8em (30px, allowing for the letterbox). Credits and the
+   footer are exempt. Slides that won't fit are split, not shrunk. */
+.s169-in{ --sec:var(--chem); position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0; font-size:38px; line-height:1.3;
   padding:62px 100px 96px 110px; display:flex; flex-direction:column; background:var(--panel); color:var(--ink); overflow:hidden;
   box-shadow:0 20px 60px -30px rgba(0,0,0,.6); }
 .s169-in::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:16px; background:var(--sec); }
@@ -306,12 +310,12 @@ table.dt td:first-child{ font-weight:700; white-space:nowrap; }
 .s169-in[data-sec="mendeleev"]{ --sec:var(--chem); } .s169-in[data-sec="moseley"]{ --sec:var(--e-nonmetal); }
 .s169-in[data-sec="compare"]{ --sec:var(--alevel); } .s169-in[data-sec="exam"]{ --sec:var(--gcse); }
 .sl-top{ display:flex; justify-content:space-between; align-items:center; gap:1em; margin-bottom:.35em; min-height:1.2em; }
-.sl-kicker{ font-size:.56em; font-weight:800; letter-spacing:.08em; color:var(--sec); }
+.sl-kicker{ font-size:.8em; font-weight:800; letter-spacing:.08em; color:var(--sec); }
 .sl-years{ display:flex; gap:.25em; }
-.sl-years span{ font-size:.46em; font-weight:700; padding:.2em .7em; border-radius:99px; background:var(--panel2); color:var(--muted); white-space:nowrap; }
+.sl-years span{ font-size:.8em; font-weight:700; padding:.2em .7em; border-radius:99px; background:var(--panel2); color:var(--muted); white-space:nowrap; }
 .sl-years span.on{ background:var(--sec); color:var(--panel); }
 .sl-h{ font-size:1.8em; font-weight:800; line-height:1.08; letter-spacing:-.02em; margin:0 0 .55em; }
-.sl-h small{ display:block; font-size:.42em; font-weight:600; color:var(--muted); letter-spacing:0; margin-top:.3em; }
+.sl-h small{ display:block; font-size:.8em; font-weight:600; color:var(--muted); letter-spacing:0; margin-top:.3em; }
 .sl-cols{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.5em; align-items:start; }
 .sl-cols.pic{ grid-template-columns:7.6em minmax(0,1fr); gap:1.4em; }
 .sl-cols.wide{ grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); }
@@ -327,41 +331,41 @@ table.dt td:first-child{ font-weight:700; white-space:nowrap; }
 .sl-list.bad li::before{ background:var(--chem); border-radius:.08em; transform:rotate(45deg); }
 .sl-list.num{ counter-reset:mk; } .sl-list.num li{ counter-increment:mk; padding-left:1.6em; }
 .sl-list.num li::before{ content:counter(mk); width:1.2em; height:1.2em; top:.08em; font-size:.8em; line-height:1.2em; text-align:center; color:var(--panel); font-weight:800; }
-.sl-callout{ margin-top:auto; border-left:.22em solid var(--sec); background:var(--panel2); padding:.45em .8em; border-radius:0 .35em .35em 0; font-size:.78em; }
+.sl-callout{ margin-top:auto; border-left:.22em solid var(--sec); background:var(--panel2); padding:.45em .8em; border-radius:0 .35em .35em 0; font-size:.85em; }
 .sl-callout b{ color:var(--sec); }
-.sl-note{ font-size:.55em; color:var(--muted); margin:.5em 0 0; }
+.sl-note{ font-size:.8em; color:var(--muted); margin:.5em 0 0; }
 .sl-footer{ position:absolute; left:110px; right:100px; bottom:30px; display:flex; justify-content:space-between; font-size:.42em; color:var(--muted); }
 .step{ opacity:0; transform:translateY(.35em); transition:opacity .35s ease, transform .35s ease; }
 .step.shown{ opacity:1; transform:none; }
-.sl-table{ width:100%; border-collapse:collapse; font-size:.72em; }
+.sl-table{ width:100%; border-collapse:collapse; font-size:.8em; }
 .sl-table th, .sl-table td{ padding:.45em .65em; text-align:left; border-bottom:2px solid var(--line); vertical-align:top; }
-.sl-table thead th{ font-size:.72em; color:var(--muted); letter-spacing:.05em; }
+.sl-table thead th{ font-size:1em; color:var(--muted); letter-spacing:.05em; }
 .sl-table tbody th{ font-weight:800; white-space:nowrap; }
-.sl-table caption{ caption-side:top; text-align:left; font-weight:800; font-size:.9em; padding-bottom:.35em; color:var(--sec); }
+.sl-table caption{ caption-side:top; text-align:left; font-weight:800; font-size:1em; padding-bottom:.35em; color:var(--sec); }
 .sl-people{ display:grid; grid-template-columns:repeat(4,1fr); gap:1em; margin:.2em 0 1em; }
 .sl-people figure{ margin:0; text-align:center; }
 .sl-people .sl-pic{ width:5.6em; aspect-ratio:1; border-radius:50%; margin:0 auto .35em; border:.12em solid var(--line2); font-size:1em; }
 .sl-people b{ display:block; font-size:1.05em; color:var(--sec); }
-.sl-people span{ font-size:.6em; color:var(--dim); }
+.sl-people span{ font-size:.8em; color:var(--dim); }
 .sl-oct{ display:grid; grid-template-columns:repeat(7,1fr); gap:.22em; }
 .sl-oct div{ background:var(--panel2); border-radius:.22em; padding:.25em 0 .15em; text-align:center; font-weight:800; font-size:.85em; border:.09em solid transparent; transition:all .3s; }
-.sl-oct .num{ display:block; font-size:.42em; font-weight:600; color:var(--muted); }
+.sl-oct .num{ display:block; font-size:.94em; font-weight:600; color:var(--muted); }
 .show-good .sl-oct .g{ border-color:var(--e-metalloid); background:color-mix(in srgb, var(--e-metalloid) 18%, var(--panel2)); }
 .show-bad .sl-oct .b{ border-color:var(--chem); background:color-mix(in srgb, var(--chem) 20%, var(--panel2)); }
-.sl-key{ display:flex; gap:1.2em; font-size:.5em; color:var(--dim); margin-top:.6em; }
+.sl-key{ display:flex; gap:1.2em; font-size:.8em; color:var(--dim); margin-top:.6em; }
 .sl-key i{ display:inline-block; width:1em; height:1em; border-radius:.2em; vertical-align:-.15em; margin-right:.35em; border:.15em solid; }
 .dalton.sl-dalton{ gap:.6em; margin-top:.6em; }
-.dalton.sl-dalton figure{ font-size:.45em; }
+.dalton.sl-dalton figure{ font-size:.8em; }
 .dalton.sl-dalton svg{ width:3.8em; height:3.8em; }
 .bt-row{ display:flex; align-items:center; gap:.6em; justify-content:center; }
 .bt{ width:5.6em; aspect-ratio:1/1.12; border-radius:.22em; background:var(--tbg); border:.06em solid color-mix(in srgb, var(--ink) 25%, transparent);
   display:grid; grid-template-rows:auto 1fr auto auto; justify-items:center; padding:.15em 0; }
-.bt .m{ font-size:.55em; color:var(--dim); } .bt .s{ font-size:1.7em; font-weight:800; align-self:center; line-height:1; }
-.bt .n{ font-size:.4em; color:var(--dim); } .bt .z{ font-size:.55em; font-weight:800; }
-.bt-lab{ text-align:center; font-size:.48em; color:var(--muted); margin-top:.35em; }
+.bt .m{ font-size:.8em; color:var(--dim); } .bt .s{ font-size:1.7em; font-weight:800; align-self:center; line-height:1; }
+.bt .n{ font-size:.8em; color:var(--dim); } .bt .z{ font-size:.8em; font-weight:800; }
+.bt-lab{ text-align:center; font-size:.8em; color:var(--muted); margin-top:.35em; }
 .bt-arrow{ font-size:1.6em; font-weight:800; color:var(--sec); }
 .sl-q{ background:var(--panel2); border-radius:.35em; padding:.6em .8em; font-size:1.02em; font-weight:700; margin-bottom:.7em; display:flex; gap:.8em; align-items:flex-start; }
-.sl-q .pill{ font-size:.55em; flex:none; color:var(--sec); margin-top:.3em; }
+.sl-q .pill{ font-size:.8em; flex:none; color:var(--sec); margin-top:.3em; }
 
 /* phones: slides reflow instead of shrinking to unreadable text */
 .deck-host.flow{ aspect-ratio:auto; cursor:default; }
@@ -406,18 +410,29 @@ body.pz-open{ overflow:hidden; }
 .dots button[aria-current="true"]{ background:var(--chem); transform:scale(1.25); }
 .pz .keys{ font-size:13px; color:var(--muted); }
 kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); border-bottom-width:2px; border-radius:5px; padding:0 5px; background:var(--panel); color:var(--ink); }
-.slide{ max-width:1700px; margin:0 auto; font-size:clamp(17px, 1.45vw, 32px); line-height:1.45; }
-.slide h2{ font-size:clamp(28px, 3.1vw, 64px); margin:0 0 .15em; letter-spacing:-.02em; line-height:1.1; }
-.slide .kicker{ font-size:.72em; font-weight:800; letter-spacing:.06em; margin:0 0 .3em; }
+.slide{ max-width:1700px; margin:0 auto; font-size:var(--sst-pr-text); line-height:1.3; }
+.slide h2{ font-size:var(--sst-pr-title); margin:0 0 .15em; letter-spacing:-.02em; line-height:1.1; }
+.slide .kicker{ font-size:var(--sst-pr-label); font-weight:800; letter-spacing:.06em; margin:0 0 .3em; }
 .slide .lede{ color:var(--dim); margin:0 0 .8em; }
 .slide ul{ margin:0; padding-left:1.1em; } .slide li{ margin:.35em 0; }
-.slide .two{ display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr); gap:clamp(16px, 2.5vw, 56px); align-items:start; }
+.slide .two{ display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:clamp(16px, 2.5vw, 56px); align-items:start; }
 .slide .eq{ font-family:var(--font-exam); background:var(--panel2); padding:.35em .6em; border-radius:10px; display:inline-block; font-size:.9em; margin:.2em 0; }
 .slide .pz-table .pt{ min-width:0; }
 .slide .pz-table{ max-width:calc((100vh - 200px) * 1.75); }
-.slide table.dt{ font-size:.78em; min-width:0; }
+/* Board sizes from the site's presenter scale (--sst-pr-* in sst.css). Slides
+   that would run long are split, rather than the text made smaller. */
+.slide table.dt{ font-size:var(--sst-pr-label); min-width:0; }
+.slide table.dt thead th{ font-size:1em; }
+.slide .chart{ max-width:none; }
+.slide .chart text{ font-size:26px; }
+.slide .chart details.data{ display:none; }
+.slide .trendlab{ font-size:var(--sst-pr-label); }
+.slide .swap .tile{ width:calc(var(--sst-pr-label) * 6); container-type:normal; }
+.slide .swap .t-sym{ font-size:calc(var(--sst-pr-label) * 2); }
+.slide .swap .t-mass, .slide .swap .t-z, .slide .swap .t-name{ font-size:var(--sst-pr-label); }
+.slide .swap .arrow{ font-size:var(--sst-pr-title); }
 .slide .hero{ display:grid; place-items:center; text-align:center; min-height:60vh; }
-.slide .hero h2{ font-size:clamp(40px, 5vw, 96px); }
+.slide .hero h2{ font-size:calc(var(--sst-pr-title) * 1.6); }
 .slide .hero p{ color:var(--dim); max-width:40ch; margin:.4em auto; }
 .helpbox{ position:absolute; right:16px; top:60px; z-index:5; background:var(--panel); border:1px solid var(--line); border-radius:12px;
   box-shadow:var(--shadow); padding:14px 18px; font-size:14px; max-width:min(460px, calc(100vw - 32px)); }
@@ -582,7 +597,7 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
 
 <!-- Presenter -->
 <div class="pz" id="pz" role="dialog" aria-modal="true" aria-label="Presenter mode" hidden tabindex="-1">
-  <div class="pz-top">
+  <div class="pz-top sst-teacher">
     <div class="pz-title"><span id="pzTitle"></span><span class="count" id="pzCount"></span></div>
     <span class="spotlabel" id="pzSpot" aria-live="polite"></span>
     <div class="pz-tools" id="pzTools" hidden>
@@ -603,7 +618,7 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
     </button>
     <button class="btn" id="pzClose" title="Esc">Exit</button>
   </div>
-  <div class="helpbox" id="pzHelpBox" hidden>
+  <div class="helpbox sst-teacher" id="pzHelpBox" hidden>
     <dl>
       <dt><kbd>→</kbd> <kbd>Space</kbd></dt><dd>Next slide</dd>
       <dt><kbd>←</kbd> <kbd>Shift</kbd>+<kbd>Space</kbd></dt><dd>Previous slide</dd>
@@ -623,7 +638,7 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
   </div>
   <div class="pz-stage" id="pzStage"></div>
   <div class="pz-blank" id="pzBlank" hidden></div>
-  <div class="pz-bot">
+  <div class="pz-bot sst-teacher">
     <button class="btn" id="pzPrev">← Back</button>
     <div class="dots" id="pzDots" role="group" aria-label="Slides"></div>
     <span class="keys" id="pzKeys"><kbd>←</kbd> <kbd>→</kbd> slides · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> groups · <kbd>H</kbd> help</span>
@@ -1605,7 +1620,7 @@ function fixPortraits(root){
 const hp = id => HIST.find(h => h.id === id);
 const yearsBar = on => `<div class="sl-years">${HIST.map(h => `<span class="${h.id === on ? 'on' : ''}">${h.year} ${h.name.split(' ').pop()}</span>`).join('')}</div>`;
 const slTop = (kicker, on) => `<div class="sl-top"><span class="sl-kicker">${kicker}</span>${on ? yearsBar(on) : ''}</div>`;
-const slPic = h => `<div><div class="sl-pic">${portraitHTML(h)}</div><div class="sl-cap">${h.name}. Portrait: Wikimedia Commons, public domain.</div></div>`;
+const slPic = h => `<div><div class="sl-pic">${portraitHTML(h)}</div><div class="sl-cap sst-teacher">${h.name}. Portrait: Wikimedia Commons, public domain.</div></div>`;
 const slList = (items, cls = '', from = 1) => `<ul class="sl-list ${cls}">${items.map((x, i) => `<li class="step" data-step="${from + i}">${x}</li>`).join('')}</ul>`;
 const slCallout = (html, step) => `<div class="sl-callout step" data-step="${step}">${html}</div>`;
 const bigTile = z => { const e = EL[z]; return `<div class="bt cat-${e.cat}"><span class="m">${fmtMass(e, 'alevel')}</span><span class="s">${e.sym}</span><span class="n">${e.name.toLowerCase()}</span><span class="z">${e.z}</span></div>`; };
@@ -1650,8 +1665,11 @@ const HSLIDES = [
     <h2 class="sl-h">John Newlands<small>The Law of Octaves</small></h2>
     <div class="sl-cols pic">${slPic(hp('newlands'))}<div>
       ${slList(['Arranged the elements <b>in order of atomic weight</b>', 'Noticed that every <b>eighth</b> element had similar properties, like notes in a musical octave', 'The first to show that properties <b>repeat periodically</b>'], 'good')}
-      <div class="step" data-step="4" style="margin-top:.4em">${octGrid()}<p class="sl-note">Newlands’ first 28 elements in rows of seven (modern symbols)</p></div>
     </div></div>` },
+
+  { sec:'newlands', title:'Newlands’ octaves', html:() => `${slTop('1864', 'newlands')}
+    <h2 class="sl-h">The octaves<small>Newlands’ first 28 elements in rows of seven (modern symbols)</small></h2>
+    ${octGrid()}` },
 
   { sec:'newlands', title:'Where the octaves broke down', html:() => `${slTop('1864', 'newlands')}
     <h2 class="sl-h">Where the octaves broke down</h2>
@@ -1680,15 +1698,28 @@ const HSLIDES = [
     <h2 class="sl-h">Properties before weight<small>The tellurium–iodine swap</small></h2>
     <div class="sl-cols">
       <div class="step" data-step="1"><div class="bt-row"><div>${bigTile(52)}<div class="bt-lab">with O and S</div></div><span class="bt-arrow" aria-hidden="true">⇄</span><div>${bigTile(53)}<div class="bt-lab">with F, Cl and Br</div></div></div></div>
-      ${slList(['By weight, iodine (126.9) should come <b>before</b> tellurium (127.6)', 'That would put iodine with <b>oxygen and sulfur</b>, and tellurium with the <b>halogens</b>', 'Mendeleev <b>swapped</b> them so each matched its group', 'But he <b>couldn’t explain why</b>: protons and isotopes were not yet known'], '', 2)}
+      ${slList(['By weight, iodine (126.9) should come <b>before</b> tellurium (127.6)', 'That would put iodine with <b>oxygen and sulfur</b>, and tellurium with the <b>halogens</b>'], '', 2)}
+    </div>` },
+
+  { sec:'mendeleev', title:'The tellurium–iodine swap', html:() => `${slTop('1869', 'mendeleev')}
+    <h2 class="sl-h">Properties before weight<small>The tellurium–iodine swap</small></h2>
+    <div class="sl-cols">
+      <div><div class="bt-row"><div>${bigTile(52)}<div class="bt-lab">with O and S</div></div><span class="bt-arrow" aria-hidden="true">⇄</span><div>${bigTile(53)}<div class="bt-lab">with F, Cl and Br</div></div></div></div>
+      ${slList(['Mendeleev <b>swapped</b> them so each matched its group', 'But he <b>couldn’t explain why</b>: protons and isotopes were not yet known'])}
     </div>` },
 
   { sec:'moseley', title:'Moseley: atomic number', html:() => `${slTop('1913', 'moseley')}
     <h2 class="sl-h">Henry Moseley<small>Atomic number</small></h2>
     <div class="sl-cols pic">${slPic(hp('moseley'))}<div>
-      ${slList(['Measured the <b>X-rays</b> given off by each element', 'Their frequency rose steadily with the <b>charge of the nucleus</b>', 'Atomic number = the number of <b>protons</b>', 'Ordering by atomic number put every swapped pair <b>in the right place</b>', 'Gaps at 43, 61, 72 and 75 showed exactly which elements were <b>still missing</b>'], 'good')}
+      ${slList(['Measured the <b>X-rays</b> given off by each element', 'Their frequency rose steadily with the <b>charge of the nucleus</b>', 'Atomic number = the number of <b>protons</b>'], 'good')}
+    </div></div>` },
+
+  { sec:'moseley', title:'What atomic number fixed', html:() => `${slTop('1913', 'moseley')}
+    <h2 class="sl-h">Henry Moseley<small>Atomic number</small></h2>
+    <div class="sl-cols pic">${slPic(hp('moseley'))}<div>
+      ${slList(['Ordering by atomic number put every swapped pair <b>in the right place</b>', 'Gaps at 43, 61, 72 and 75 showed exactly which elements were <b>still missing</b>'], 'good')}
     </div></div>
-    ${slCallout('Moseley was killed at Gallipoli in 1915, aged 27.', 6)}` },
+    ${slCallout('Moseley was killed at Gallipoli in 1915, aged 27.', 3)}` },
 
   { sec:'moseley', title:'Why the swaps were right', html:() => `${slTop('1913', 'moseley')}
     <h2 class="sl-h">Why Mendeleev’s swaps were right</h2>
@@ -1710,13 +1741,17 @@ const HSLIDES = [
     <table class="sl-table"><thead><tr><th scope="col"></th><th scope="col">NEWLANDS 1864</th><th scope="col">MENDELEEV 1869</th><th scope="col">MODERN (MOSELEY 1913)</th></tr></thead><tbody>
       <tr class="step" data-step="1"><th scope="row">Ordered by</th><td>Atomic weight, strictly</td><td>Atomic weight, but properties first</td><td>Atomic (proton) number</td></tr>
       <tr class="step" data-step="2"><th scope="row">Gaps?</th><td>No: every element forced in</td><td>Yes, for undiscovered elements</td><td>None: all 118 known</td></tr>
-      <tr class="step" data-step="3"><th scope="row">Groups</th><td>Broke down after calcium</td><td>Similar properties together</td><td>Same number of outer electrons</td></tr>
-      <tr class="step" data-step="4"><th scope="row">Noble gases</th><td>Not discovered</td><td>Not discovered; added later</td><td>Group 0</td></tr>
-      <tr class="step" data-step="5"><th scope="row">Outcome</th><td>Rejected</td><td>Accepted once Ga and Ge fitted</td><td>Explains the swaps</td></tr></tbody></table>` },
+      <tr class="step" data-step="3"><th scope="row">Groups</th><td>Broke down after calcium</td><td>Similar properties together</td><td>Same number of outer electrons</td></tr></tbody></table>` },
+
+  { sec:'compare', title:'Compare the tables', html:() => `${slTop('SUMMARY')}
+    <h2 class="sl-h">Newlands vs Mendeleev vs modern</h2>
+    <table class="sl-table"><thead><tr><th scope="col"></th><th scope="col">NEWLANDS 1864</th><th scope="col">MENDELEEV 1869</th><th scope="col">MODERN (MOSELEY 1913)</th></tr></thead><tbody>
+      <tr class="step" data-step="1"><th scope="row">Noble gases</th><td>Not discovered</td><td>Not discovered; added later</td><td>Group 0</td></tr>
+      <tr class="step" data-step="2"><th scope="row">Outcome</th><td>Rejected</td><td>Accepted once Ga and Ge fitted</td><td>Explains the swaps</td></tr></tbody></table>` },
 
   { sec:'exam', title:'Exam practice', html:() => `${slTop('EXAM PRACTICE')}
     <div class="sl-q"><span class="pill">4 MARKS</span><span>Explain why Mendeleev’s periodic table was accepted by other scientists but Newlands’ was not.</span></div>
-    <p class="sl-note step" data-step="1" style="margin:0 0 .5em;font-size:.6em;font-weight:800;letter-spacing:.06em">MARKING POINTS</p>
+    <p class="sl-note step" data-step="1" style="margin:0 0 .5em;font-size:.8em;font-weight:800;letter-spacing:.06em">MARKING POINTS</p>
     ${slList(['Newlands kept strictly to atomic-weight order and <b>left no gaps</b>', 'so some elements with <b>different properties</b> were in the same group', 'Mendeleev <b>left gaps</b> for undiscovered elements (and swapped some pairs to fit their properties)', 'his <b>predictions were confirmed</b> when elements such as gallium were discovered'], 'num', 1)}` }
 ];
 const DECK_SECTIONS = [['Intro','intro'],['Dalton','dalton'],['Newlands','newlands'],['Mendeleev','mendeleev'],['Moseley','moseley'],['Compare','compare'],['Exam','exam']];
@@ -1736,7 +1771,7 @@ function fitDeck(host){
 const deckRO = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => es.forEach(e => fitDeck(e.target))) : null;
 function drawDeck(host){
   const s = HSLIDES[deck.i];
-  host.innerHTML = `<div class="s169-in" data-sec="${s.sec}">${s.html()}<div class="sl-footer"><span>AQA GCSE Chemistry · development of the periodic table</span><span>${deck.i + 1} / ${HSLIDES.length}</span></div></div>`;
+  host.innerHTML = `<div class="s169-in" data-sec="${s.sec}">${s.html()}<div class="sl-footer sst-teacher"><span>AQA GCSE Chemistry · development of the periodic table</span><span>${deck.i + 1} / ${HSLIDES.length}</span></div></div>`;
   host.setAttribute('aria-label', `Slide ${deck.i + 1} of ${HSLIDES.length}: ${s.title}`);
   fixPortraits(host);
   deck.max = Math.max(0, ...$$('[data-step]', host).map(x => +x.dataset.step));
@@ -1802,16 +1837,21 @@ const p3items = [11,12,13,14,15,16,17,18].map(z => ({ label:EL[z].sym, name:EL[z
 const SLIDES = [
   { title:'Periodic Table Explorer', html:() => `<div class="hero"><div><p class="kicker chem">AQA CHEMISTRY</p><h2>The Periodic Table</h2>
       <p>Group trends, the transition metals, Mendeleev’s breakthrough and ionisation energy — then a live table to quiz the class.</p>
-      <p style="font-size:.8em"><kbd>→</kbd> next · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> spotlight a group · <kbd>H</kbd> all shortcuts</p></div></div>` },
+      <p class="sst-teacher" style="font-size:var(--sst-pr-control)"><kbd>→</kbd> next · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> spotlight a group · <kbd>H</kbd> all shortcuts</p></div></div>` },
+  // Group 1 and Group 7 each run over two slides, so the text stays at board size.
   { title:'Group 1 trends', table:'g1', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 1</p><h2>The alkali metals</h2>
       <p class="lede">One outer electron, lost to form a 1+ ion.</p>
-      <ul><li>Reactivity <b>increases</b> down the group</li><li>The outer electron is further from the nucleus and more shielded, so it is lost more easily</li>
-      <li>Melting point <b>decreases</b> down the group</li><li>Li fizzes · Na melts into a ball · K burns lilac</li></ul>
+      <ul><li>Reactivity <b>increases</b> down the group</li><li>The outer electron is further from the nucleus and more shielded, so it is lost more easily</li></ul>
+      </div><div class="pz-table"></div></div>` },
+  { title:'Group 1 trends', table:'g1', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 1</p><h2>The alkali metals</h2>
+      <ul><li>Melting point <b>decreases</b> down the group</li><li>Li fizzes · Na melts into a ball · K burns lilac</li></ul>
       <p><span class="eq">2Na + 2H₂O → 2NaOH + H₂</span></p></div><div class="pz-table"></div></div>` },
   { title:'Group 7 trends', table:'g17', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 7</p><h2>The halogens</h2>
       <p class="lede">Seven outer electrons; gain one to form a 1− ion.</p>
-      <ul><li>Reactivity <b>decreases</b> down the group: the outer shell is further from the nucleus, so an electron is gained less easily</li>
-      <li>Boiling point <b>increases</b>: bigger molecules, stronger intermolecular forces</li>
+      <ul><li>Reactivity <b>decreases</b> down the group: the outer shell is further from the nucleus, so an electron is gained less easily</li></ul>
+      </div><div class="pz-table"></div></div>` },
+  { title:'Group 7 trends', table:'g17', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · GROUP 7</p><h2>The halogens</h2>
+      <ul><li>Boiling point <b>increases</b>: bigger molecules, stronger intermolecular forces</li>
       <li>F₂ pale yellow gas · Cl₂ green gas · Br₂ red-brown liquid · I₂ grey-black solid</li></ul>
       <p><span class="eq">Cl₂ + 2KBr → 2KCl + Br₂</span></p></div><div class="pz-table"></div></div>` },
   { title:'Transition metals vs Group 1', table:'g1+trans', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · 4.1.3</p><h2>Transition metals vs Group 1</h2>
@@ -1820,25 +1860,32 @@ const SLIDES = [
       <tr><th scope="row">Strength</th><td>soft</td><td>strong, hard</td></tr><tr><th scope="row">Reactivity</th><td>very reactive</td><td>much less reactive</td></tr>
       <tr><th scope="row">Ions</th><td>always 1+</td><td>different charges: Fe²⁺, Fe³⁺</td></tr><tr><th scope="row">Compounds</th><td>white</td><td>coloured</td></tr>
       <tr><th scope="row">Catalysts</th><td>no</td><td>yes: Fe (Haber), Ni, MnO₂</td></tr></tbody></table></div><div class="pz-table"></div></div>` },
-  { title:'Mendeleev’s breakthrough', html:() => `<div class="two"><div><p class="kicker gcse">GCSE · 4.1.2.1</p><h2>Mendeleev’s breakthrough</h2>
+  { title:'Mendeleev’s breakthrough', html:() => `<p class="kicker gcse">GCSE · 4.1.2.1</p><h2>Mendeleev’s breakthrough</h2>
       <ul><li><b>Left gaps</b> for elements not yet discovered</li><li><b>Predicted</b> their properties from their neighbours</li>
       <li><b>Swapped</b> pairs such as Te and I so they matched their groups</li><li>Gallium and germanium fitted his predictions: the table was accepted</li></ul>
-      <p class="lede" style="margin-top:.8em">Later, atomic number and isotopes explained why the swaps were right.</p></div>
-      <div><table class="dt"><thead><tr><th scope="col">EKA-ALUMINIUM</th><th scope="col">PREDICTED (1871)</th><th scope="col">GALLIUM (1875)</th></tr></thead><tbody>
+      <p class="lede" style="margin-top:.8em">Later, atomic number and isotopes explained why the swaps were right.</p>` },
+  { title:'Mendeleev’s evidence', html:() => `<p class="kicker gcse">GCSE · 4.1.2.1</p><h2>The evidence: gallium, and a swap</h2>
+      <div class="two"><div><table class="dt"><thead><tr><th scope="col">EKA-ALUMINIUM</th><th scope="col">PREDICTED (1871)</th><th scope="col">GALLIUM (1875)</th></tr></thead><tbody>
       ${EKA.ga.rows.map(r => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table>
-      <div class="swap" style="margin-top:1em;justify-content:center">${swapTiles(52, 53)}</div></div></div>` },
+      </div><div class="swap" style="justify-content:center">${swapTiles(52, 53)}</div></div>` },
   { title:'Period 3 ionisation energy', html:() => `<div class="two"><div><p class="kicker alevel">A-LEVEL · 3.1.1.3</p><h2>First ionisation energy across Period 3</h2>
       <ul><li><b>General increase:</b> more protons, same shell, similar shielding</li>
       <li><b>Dip at Al:</b> the electron is in 3p — higher energy and shielded by 3s</li>
       <li><b>Dip at S:</b> the electron comes from a paired 3p orbital; the pair repel</li></ul></div>
       <div>${barChart(p3items, { unit:' kJ mol⁻¹', colour:'--seq-ie', title:'First ionisation energy across Period 3', dips:true })}</div></div>`,
     mount:st => wireChart(st, p3items, ' kJ mol⁻¹') },
+  // The oxides table runs over two slides, so it can stay at board size.
   { title:'Period 3 oxides', html:() => `<p class="kicker alevel">A-LEVEL · 3.2.4</p><h2>Period 3 oxides: ionic to covalent, basic to acidic</h2>
-      <div class="dt-wrap" style="margin-top:.6em"><table class="dt"><thead><tr>${P3.oxides.head.map(h => `<th scope="col">${h.toUpperCase()}</th>`).join('')}</tr></thead>
-      <tbody>${P3.oxides.rows.map(r => `<tr>${r.map((c, i) => i === 0 ? `<th scope="row">${c}</th>` : `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      ${oxideTable(P3.oxides.rows.slice(0, 4))}` },
+  { title:'Period 3 oxides', html:() => `<p class="kicker alevel">A-LEVEL · 3.2.4</p><h2>Period 3 oxides: ionic to covalent, basic to acidic</h2>
+      ${oxideTable(P3.oxides.rows.slice(4))}
       <div class="trendbar" aria-hidden="true"></div><div class="trendlab"><span>basic (ionic)</span><span>amphoteric</span><span>acidic (covalent)</span></div>` },
   { title:'Your turn', table:'', live:true, html:() => `<div class="pz-table" style="max-width:none"></div>` }
 ];
+function oxideTable(rows){
+  return `<div class="dt-wrap" style="margin-top:.6em"><table class="dt"><thead><tr>${P3.oxides.head.map(h => `<th scope="col">${h.toUpperCase()}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr>${r.map((c, i) => i === 0 ? `<th scope="row">${c}</th>` : `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
 function pzSpotPreset(key){
   if (!key) return null;
   if (key === 'g1+trans') return { key, label:'Group 1 and the transition metals', test:e => e.cat === 'alkali' || e.cat === 'trans' };
@@ -1907,13 +1954,13 @@ function pzOpen(which){
   $('#pzKeys').innerHTML = pz.deck === 'history'
     ? '<kbd>←</kbd> <kbd>→</kbd> or click: next point · <kbd>B</kbd> black screen · <kbd>H</kbd> help'
     : '<kbd>←</kbd> <kbd>→</kbd> slides · <kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd> groups · <kbd>H</kbd> help';
-  pz.open = true; $('#pz').hidden = false; document.body.classList.add('pz-open');
+  pz.open = true; $('#pz').hidden = false; document.body.classList.add('pz-open', 'presenting');
   pzRender(); $('#pz').focus();
   const de = document.documentElement;
   if (de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen().catch(() => {});
 }
 function pzClose(){
-  pz.open = false; $('#pz').hidden = true; document.body.classList.remove('pz-open'); $('#pzHelpBox').hidden = true; $('#pzBlank').hidden = true;
+  pz.open = false; $('#pz').hidden = true; document.body.classList.remove('pz-open', 'presenting'); $('#pzHelpBox').hidden = true; $('#pzBlank').hidden = true;
   if (pz.deck === 'history') refreshDeck(true);
   if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
   pzReturn && pzReturn.focus && pzReturn.focus();

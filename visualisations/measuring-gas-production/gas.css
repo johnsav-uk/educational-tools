@@ -274,39 +274,57 @@ dialog .row{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; f
 
 .print-only{ display:none; }
 
-/* ── Presenter mode ──────────────────────────────────────────────── */
+/* ── Presenter mode ──────────────────────────────────────────────
+   Board slides at the --sst-pr-* sizes from sst.css (.sst-deck, built by
+   present.js). Text that won't fit is split onto more slides, never shrunk. */
 #presenter{
   position:fixed; inset:0; z-index:2147483600; background:var(--paper);
-  display:grid; grid-template-rows:auto minmax(0,1fr) auto;
-  font-size:clamp(15px,1.12vw,24px);
+  display:grid; grid-template-rows:auto minmax(0,1fr);
 }
-.p-top, .p-nav{
-  display:flex; align-items:center; gap:12px; padding:10px clamp(14px,2.4vw,32px);
-  background:var(--sst-bg-deep); border-color:var(--line); border-style:solid; border-width:0;
+.p-top{
+  display:flex; align-items:center; gap:12px; padding:8px clamp(14px,2.4vw,32px);
+  background:var(--sst-bg-deep); border-bottom:1px solid var(--line); font-size:var(--sst-pr-control);
 }
-.p-top{ border-bottom-width:1px; }
-.p-nav{ border-top-width:1px; }
-.p-top .p-title{ flex:1; min-width:0; font-weight:600; color:var(--body); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:.85em; }
-.p-top .p-count{ color:var(--muted); font-variant-numeric:tabular-nums; font-size:.85em; }
-.p-stage{ overflow:auto; padding:clamp(14px,2.2vw,36px) clamp(14px,3vw,52px); }
-.pslide{ display:none; max-width:1800px; margin:0 auto; }
-.pslide.on{ display:block; animation:pin 240ms ease; }
-@keyframes pin{ from{ opacity:0; transform:translateX(12px); } to{ opacity:1; transform:none; } }
-@media (prefers-reduced-motion:reduce){ .pslide.on{ animation:none; } }
-.pslide > .kicker{ font-size:.8em; }
-.pslide > h2{ font-size:clamp(1.6rem,2.6vw,3rem); margin:.1em 0 .55em; letter-spacing:-.015em; line-height:1.1; }
-.p-nav .p-dots{ flex:1; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
-.p-dot{ width:13px; height:13px; border-radius:50%; border:2px solid var(--muted); background:none; padding:0; cursor:pointer; }
-.p-dot.on{ background:var(--blue); border-color:var(--blue); }
-.p-hint{ color:var(--muted); font-size:.78em; white-space:nowrap; }
+.p-top .p-title{ flex:1; min-width:0; font-weight:600; color:var(--body); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.p-hint{ color:var(--muted); white-space:nowrap; }
 @media (max-width:720px){ .p-hint{ display:none; } }
-#presenter .sim canvas.stage{ width:min(100%, calc((100dvh - 330px) * 1.8)); margin:0 auto; }
-#presenter .overview{ font-size:1.08em; }
-#presenter .keypoints li{ font-size:1em; }
-#presenter .qq-list{ grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); }
-@media (min-width:1001px){ #presenter .method-body{ grid-template-columns:minmax(0,2.8fr) minmax(0,1fr); } }
+.p-stage{ min-height:0; display:flex; padding:clamp(12px,2vh,28px) clamp(20px,4vw,72px) clamp(10px,1.6vh,20px); }
+#pDeck{ flex:1; min-width:0; }
+#pDeck .sst-slide.is-on{ animation:pin 240ms ease; }
+@keyframes pin{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion:reduce){ #pDeck .sst-slide.is-on{ animation:none; } }
+#pDeck .sst-kicker{ text-transform:uppercase; letter-spacing:.06em; }
+#pDeck h4{ font-size:var(--sst-pr-label); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:.7em 0 .1em; }
+#pDeck .pt{ position:relative; padding-left:1.2em; }
+#pDeck .pt::before{ content:""; position:absolute; left:.2em; top:.55em; width:.36em; height:.36em; border-radius:50%; background:var(--blue); }
+#pDeck .pt.pro::before{ background:var(--tip); }
+#pDeck .pt.con::before{ background:var(--warn); }
+#pDeck .pt .num{ position:absolute; left:0; color:var(--blue); font-weight:800; }
+#pDeck .pt.numbered::before{ display:none; }
+#pDeck .kw{ color:var(--ink); }
+#pDeck .eq{ font-size:1em; padding:.15em .5em; }
+#pDeck .eq.block{ font-size:1em; }
+#pDeck table{ width:100%; font-size:var(--sst-pr-text); }
+#pDeck th{ color:var(--muted); font-size:var(--sst-pr-label); }
+#pDeck td:first-child{ color:var(--ink); font-weight:700; }
+
+/* A live simulator on its own slide, as large as the board allows. */
+#pDeck .p-sim.is-on{ display:flex; flex-direction:column; min-height:100%; }
+#pDeck .p-sim h3{ margin-bottom:.25em; }
+#pDeck .p-sim .sim{ flex:1; font-size:var(--sst-pr-control); }
+#presenter .sim canvas.stage{ width:min(100%, calc((100dvh - 320px - var(--sst-pr-title) * 1.2 - var(--sst-pr-label) * 1.4 - var(--sst-pr-text) * 1.3) * 1.8)); margin:0 auto; }
+#presenter .stat span{ font-size:var(--sst-pr-label); }
+#presenter .stat b{ font-size:var(--sst-pr-text); }
+#presenter .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+#presenter .gopt{ font-size:var(--sst-pr-control); }
 @container (min-width:780px){ #presenter .sim-body.graph-on{ grid-template-columns:minmax(0,2fr) minmax(0,1fr); } }
-#presenter .tablewrap table{ font-size:1em; }
+
+/* One quiz question per slide, at board size. */
+#pDeck .p-quiz .qq{ background:none; border:0; padding:0; }
+#pDeck .p-quiz .qq-stem{ font-size:var(--sst-pr-text); line-height:1.3; margin:0 0 .5em; }
+#pDeck .p-quiz .qq-opts{ gap:.35em; }
+#pDeck .p-quiz .qq-opt{ font-size:var(--sst-pr-text); padding:.3em .6em; }
+#pDeck .p-quiz .qq-exp{ font-size:var(--sst-pr-text); line-height:1.3; }
 
 /* ── Print: A4 portrait ──────────────────────────────────────────── */
 @page{ size:A4 portrait; margin:14mm 14mm 16mm; }

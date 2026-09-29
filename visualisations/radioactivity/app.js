@@ -29,21 +29,24 @@ const THEMES = {
     paper: '#efe9d8', al: '#aeb8c4', pb: '#5f6874', lw: 1, font: 12
   }
 };
-// Presenter mode keeps the same colours, with larger canvas and chart text.
-THEMES.present = { ...THEMES.normal, font: 15 };
+// Presenter mode keeps the same colours. Chart text goes up to the site's
+// presenter label size (--sst-pr-label), set in setPresenting().
+THEMES.present = { ...THEMES.normal, font: 18 };
+const presenting = () => document.body.classList.contains('presenting');
 let T = THEMES.normal;
 
 const nuc = (a, z, s) => `<span class="nuc"><i>${a}</i><i>${z}</i></span>${s}`;
 const BLANK = '<span class="blank"></span>';
 
-// Size a canvas's backing store to its CSS box at device pixel ratio.
-function fitCanvas(cv) {
+// Size a canvas's backing store to its CSS box at device pixel ratio. z > 1
+// draws everything, text included, larger: w and h come back in those units.
+function fitCanvas(cv, z = 1) {
   const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
   const ctx = cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { ctx, w: r.width, h: r.height };
+  ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
+  return { ctx, w: r.width / z, h: r.height / z };
 }
 
 // Poisson sample: Knuth for small means, normal approximation above.
@@ -190,8 +193,9 @@ const HL = {
     const { ctx, w, h } = fitCanvas(cv);
     ctx.fillStyle = T.stage; ctx.fillRect(0, 0, w, h);
     const n = Math.round(Math.sqrt(this.N0));
-    const size = Math.min(w, h - 34) - 20, cell = size / n;
-    const ox = (w - size) / 2, oy = Math.max(10, (h - 34 - size) / 2);
+    const leg = cv.parentElement.querySelector('.legend'), lh = leg ? leg.offsetHeight + 14 : 34;
+    const size = Math.min(w, h - lh) - 20, cell = size / n;
+    const ox = (w - size) / 2, oy = Math.max(10, (h - lh - size) / 2);
     const flashCol = this.iso.mode === 'a' ? T.alpha : this.iso.mode === 'b' ? T.beta : T.flash;
     // Heavier nucleus, bigger dot: ranked rather than to scale, so even carbon-14 stays easy to see.
     const r = cell * this.iso.size;
@@ -300,7 +304,7 @@ function applyChartTheme() {
   const tick = { color: T.body, font: { family: 'Plus Jakarta Sans', size: T.font } };
   const title = { color: T.muted, font: { family: 'Plus Jakarta Sans', size: T.font, weight: '600' } };
   for (const ax of ['x', 'y']) {
-    Object.assign(c.options.scales[ax].ticks, tick);
+    Object.assign(c.options.scales[ax].ticks, tick, { maxRotation: T === THEMES.present ? 0 : 50 });
     Object.assign(c.options.scales[ax].title, title);
     c.options.scales[ax].grid = { color: T.line, lineWidth: T.lw };
     c.options.scales[ax].border = { color: T.line2, width: T.lw };
@@ -374,7 +378,14 @@ const AB = {
   },
   layout: null,
 
-  resize() { this.layout = null; },
+  // In presenter mode the whole bench is drawn larger, so its labels reach
+  // the presenter label size, as long as the bench stays about 560 units wide.
+  zoom: 1,
+  resize() {
+    this.layout = null;
+    const cw = $('#benchCv').getBoundingClientRect().width;
+    this.zoom = presenting() && cw ? clamp(SST_PRESENT.px('--sst-pr-label') / THEMES.normal.font, 1, cw / 560) : 1;
+  },
 
   map(d) {  // cm along the bench to px. Square-root scale, so the first few cm are readable.
     const L = this.layout; return L.xs + L.len * Math.sqrt(clamp(d, 0, 100) / 100);
@@ -440,17 +451,17 @@ const AB = {
 
   draw(now) {
     const cv = $('#benchCv'); if (!cv.offsetWidth) return;
-    const { ctx, w, h } = fitCanvas(cv);
+    const { ctx, w, h } = fitCanvas(cv, this.zoom);
     if (!this.layout || this.layout.w !== w || this.layout.h !== h) {
       const tubeLen = Math.min(120, w * 0.17), xs = Math.max(64, Math.min(92, w * 0.12));
       this.layout = { w, h, xs, cy: h * 0.44, tubeLen, tr: Math.max(14, Math.min(22, h * 0.055)),
         len: w - xs - tubeLen - 18, bw: 0 };
     }
-    const L = this.layout, lw = T.lw;
+    const L = this.layout, lw = T.lw, F = THEMES.normal.font;
     const t = this.thick();
     L.bw = this.mat === 'none' ? 0 : 3 + 9 * Math.log10(1 + t * 2);
     ctx.fillStyle = T.stage; ctx.fillRect(0, 0, w, h);
-    ctx.font = `600 ${T.font}px "Plus Jakarta Sans", sans-serif`; ctx.textBaseline = 'middle';
+    ctx.font = `600 ${F}px "Plus Jakarta Sans", sans-serif`; ctx.textBaseline = 'middle';
 
     // ruler
     const ry = h - 36;
@@ -462,9 +473,9 @@ const AB = {
       ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x, ry + (big ? 8 : 4)); ctx.stroke();
       if (big) { ctx.textAlign = 'center'; ctx.fillText(d === 0 ? '0' : d + (d === 100 ? ' cm' : ''), x, ry + 18); }
     }
-    ctx.textAlign = 'left'; ctx.font = `500 ${T.font - 2}px "Plus Jakarta Sans", sans-serif`;
+    ctx.textAlign = 'left'; ctx.font = `500 ${F - 2}px "Plus Jakarta Sans", sans-serif`;
     ctx.fillText('distance from source (scale stretched near the source)', L.xs, h - 8);
-    ctx.font = `600 ${T.font}px "Plus Jakarta Sans", sans-serif`;
+    ctx.font = `600 ${F}px "Plus Jakarta Sans", sans-serif`;
 
     // source holder
     ctx.fillStyle = T.metal; ctx.strokeStyle = T.metalEdge; ctx.lineWidth = 1.5 * lw;
@@ -472,9 +483,9 @@ const AB = {
     ctx.fillStyle = T.stage; ctx.fillRect(L.xs - 6, L.cy - 8, 6, 16);
     ctx.fillStyle = T.text; ctx.textAlign = 'center';
     const srcLabel = this.mystery ? '?' : 'abg'.split('').filter(k => this.src[k]).map(k => TYPE_NAME[k]).join(' ') || '–';
-    ctx.font = `700 ${T.font + 3}px "Plus Jakarta Sans", sans-serif`;
+    ctx.font = `700 ${F + 3}px "Plus Jakarta Sans", sans-serif`;
     ctx.fillText(srcLabel, L.xs - 27, L.cy);
-    ctx.font = `600 ${T.font - 1}px "Plus Jakarta Sans", sans-serif`; ctx.fillStyle = T.muted;
+    ctx.font = `600 ${F - 1}px "Plus Jakarta Sans", sans-serif`; ctx.fillStyle = T.muted;
     ctx.fillText('source', L.xs - 27, L.cy + 38);
 
     // GM tube
@@ -531,6 +542,10 @@ const AB = {
     const el = $('#abNote');
     if (this.mystery) {
       el.innerHTML = `<h4>Mystery source</h4><p>Which types of radiation does it emit? Keep the tube about 2 to 3 cm away. Measure the count with no absorber, then with paper, then a few mm of aluminium, then lead.</p><p class="muted">A big drop with paper means alpha. A further drop with aluminium means beta. A count still above background after the aluminium means gamma.</p>`;
+      this.slides([['Mystery source', 'Which radiation does it give out? Keep the tube 2 to 3 cm away.'],
+        ['Test it', 'Count with no absorber, then paper, then a few mm of aluminium, then lead.'],
+        ['Big drop with paper?', 'Then it gives out alpha.'], ['Further drop with aluminium?', 'Then it gives out beta.'],
+        ['Still above background after aluminium?', 'Then it gives out gamma.']]);
       return;
     }
     const t = this.thick(), d = this.dist, lines = [];
@@ -557,6 +572,26 @@ const AB = {
     if (!lines.length) lines.push('No source selected: the counter only picks up background radiation.');
     el.innerHTML = `<h4>What is happening</h4>${lines.map(l => `<p>${l}</p>`).join('')}` +
       (this.bg ? '<p class="muted">Subtract the background count (about 0.4 counts/s here) before comparing readings.</p>' : '');
+    // Presenter slides: one line per radiation, short enough for the caption band.
+    const slides = [];
+    if (this.src.a) slides.push(['Alpha, α', this.mat !== 'none' ? `Stopped by the ${MATERIALS[this.mat].name}. Even one sheet of paper absorbs alpha.`
+      : d > 5.5 ? 'Out of range. Alpha only travels about 5 cm in air.' : d > 3.5 ? 'Near the end of its range: only some alpha reaches the tube.'
+      : 'Reaches the tube. Strongly ionising, so it has a short range.']);
+    if (this.src.b) slides.push(['Beta, β', this.mat === 'paper' ? 'Passes through paper almost unaffected.'
+      : this.mat === 'al' ? (this.transmit('b') < 0.02 ? `Absorbed by ${t} mm of aluminium.` : `Partly absorbed by ${t} mm of aluminium. A few mm stops it.`)
+      : this.mat === 'pb' ? 'Absorbed by the lead.' : d > 60 ? 'Fading out. Its range in air is up to about 1 m.'
+      : 'Reaches the tube. Moderately ionising, range in air up to about 1 m.']);
+    if (this.src.g) slides.push(['Gamma, γ', this.mat === 'pb' ? `${t} mm of lead lets about ${Math.round(this.transmit('g') * 100)}% through. Lead reduces gamma, never stops it.`
+      : this.mat === 'al' ? 'Passes through aluminium, barely reduced.' : 'Passes straight through. Weakly ionising, so it goes a long way.']);
+    if (!slides.length) slides.push(['No source', 'The counter only picks up background radiation.']);
+    if (this.bg) slides.push(['Background radiation', 'Subtract it, about 0.4 counts/s here, before comparing readings.']);
+    this.slides(slides);
+  },
+  slides(list) {
+    const deck = $('#abDeck');
+    if (!deck.sstDeck) SST_PRESENT.deck(deck);
+    deck.querySelector('.sst-slides').innerHTML = list.map(([h, p]) => `<section class="sst-slide"><h3>${h}</h3><p>${p}</p></section>`).join('');
+    deck.sstDeck.refresh();
   },
 
   syncUI() {
@@ -623,6 +658,7 @@ $('#soundBtn').addEventListener('click', e => {
 /* ════════════════════════ 5. presenter mode ════════════════════════ */
 function setPresenting(on) {
   document.body.classList.toggle('presenting', on);
+  THEMES.present.font = Math.round(SST_PRESENT.px('--sst-pr-label'));
   T = on ? THEMES.present : THEMES.normal;
   if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   applyChartTheme();
@@ -720,7 +756,11 @@ const endStroke = () => { if (ink.cur) { ink.strokes.push(ink.cur); ink.cur = nu
 ink.cv.addEventListener('pointerup', endStroke);
 ink.cv.addEventListener('pointercancel', endStroke);
 ink.setColor(ink.color);
-window.addEventListener('resize', () => { if (ink.open) ink.resize(); HL.resize(); AB.resize(); });
+window.addEventListener('resize', () => {
+  if (ink.open) ink.resize();
+  if (presenting()) { const f = Math.round(SST_PRESENT.px('--sst-pr-label')); if (f !== THEMES.present.font) { THEMES.present.font = f; applyChartTheme(); } }
+  HL.resize(); AB.resize();
+});
 
 /* ════════════════════════ 7. printables ════════════════════════ */
 // Activity–time graph for question 3: 800 Bq, half-life 6 hours, drawn on print-friendly grid paper.

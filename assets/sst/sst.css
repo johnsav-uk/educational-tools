@@ -38,6 +38,20 @@
      slashed zero reads badly). --sst-mono is kept as an alias so older rules still resolve. */
   --sst-mono: var(--sst-font);
   --sst-bar-h: 52px;
+
+  /* Presenter-mode type scale, for reading from the back of a classroom. It is
+     measured against the viewport, like text on a PowerPoint slide: on a
+     1920×1080 board, text is about 46px (24pt on a slide), labels 33px (18pt)
+     and titles 65px. The vh term holds it on very wide screens and the px term
+     sets a floor on small ones. Anything pupils read uses these. Controls
+     only the teacher reads are exempt, and they use --sst-pr-control.
+     Where there's too much text to fit at this size, split it into slides
+     (.sst-deck, below). Never shrink the text to make it fit. */
+  --sst-pr-title:   max(28px, min(3.4vw, 6vh));
+  --sst-pr-text:    max(22px, min(2.4vw, 4.3vh));
+  --sst-pr-label:   max(18px, min(1.7vw, 3vh));
+  --sst-pr-figure:  max(32px, min(4.4vw, 7.8vh));
+  --sst-pr-control: max(15px, min(1.1vw, 2vh));
 }
 
 /* Tailwind's font-mono and the browser's monospace defaults for code, kbd, pre and
@@ -108,3 +122,64 @@
 
 /* Presenter mode: tools that go full screen hide the bar with it. */
 :fullscreen .sst-bar { display: none; }
+body.presenting .sst-bar { display: none; }
+
+/* ---------- Presenter slides ----------
+   A deck of slides for presenter mode, wired up by present.js:
+     <div class="sst-deck"><section class="sst-slide"><h3>…</h3><p>…</p></section>…</div>
+   One slide shows at a time, at the --sst-pr-* sizes. Next and Back sit
+   under it, and → / PageDown / ← / PageUp (what a presentation clicker sends)
+   turn the page. .sst-deck--strip is a caption band under a model: a short
+   heading and a line or two. A full-size deck takes a whole panel. */
+.sst-deck {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  color: var(--sst-text); font-family: var(--sst-font);
+}
+.sst-deck > .sst-slides { flex: 1 1 auto; min-height: 0; overflow: auto; overflow-wrap: break-word; }
+.sst-deck:not(.sst-deck--pr) .sst-slide:not(.is-on), body.presenting .sst-deck--pr .sst-slide:not(.is-on) { display: none; }
+/* Slide typography, for decks written for the board (not --pr decks, which keep the tool's styles). */
+.sst-deck:not(.sst-deck--pr) .sst-slide { font-size: var(--sst-pr-text); line-height: 1.3; }
+.sst-deck:not(.sst-deck--pr) .sst-slide > :first-child { margin-top: 0; }
+.sst-deck:not(.sst-deck--pr) .sst-slide > :last-child { margin-bottom: 0; }
+.sst-deck:not(.sst-deck--pr) .sst-slide h3 { font-size: var(--sst-pr-title); line-height: 1.1; letter-spacing: -.01em; margin: 0 0 .4em; font-weight: 800; }
+.sst-deck:not(.sst-deck--pr) .sst-slide p, .sst-deck:not(.sst-deck--pr) .sst-slide li { margin: .3em 0; color: var(--sst-text-body); }
+.sst-deck:not(.sst-deck--pr) .sst-slide ul, .sst-deck:not(.sst-deck--pr) .sst-slide ol { margin: .2em 0; padding-left: 1.2em; }
+.sst-deck:not(.sst-deck--pr) .sst-slide b, .sst-deck:not(.sst-deck--pr) .sst-slide strong { color: var(--sst-text); }
+.sst-deck:not(.sst-deck--pr) .sst-slide .sst-kicker { display: block; font-size: var(--sst-pr-label); font-weight: 700; color: var(--sst-blue); letter-spacing: .02em; margin-bottom: .15em; }
+.sst-deck:not(.sst-deck--pr) .sst-slide .sst-small { font-size: var(--sst-pr-label); }
+.sst-deck:not(.sst-deck--pr) .sst-slide table { border-collapse: collapse; font-size: var(--sst-pr-label); }
+.sst-deck:not(.sst-deck--pr) .sst-slide th, .sst-deck:not(.sst-deck--pr) .sst-slide td { padding: .25em .6em; border-bottom: 1px solid var(--sst-line); text-align: left; vertical-align: top; }
+
+.sst-deck-nav {
+  flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding-top: 10px; font-size: var(--sst-pr-control);
+}
+.sst-deck-nav button {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: 600 1em/1 var(--sst-font);
+  padding: .5em .9em; border-radius: 9px; border: 1px solid var(--sst-line-strong); background: var(--sst-card); color: var(--sst-text);
+}
+.sst-deck-nav button:hover:not(:disabled) { border-color: var(--sst-text-muted); }
+.sst-deck-nav button:disabled { opacity: .4; cursor: default; }
+.sst-deck-nav button:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.sst-deck-count { color: var(--sst-text-muted); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: center; }
+.sst-deck-dots { display: flex; gap: 6px; margin-right: auto; }
+.sst-deck-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--sst-line-strong); }
+.sst-deck-dots i.is-on { background: var(--sst-blue); }
+.sst-deck[data-count="1"] .sst-deck-nav { display: none; }
+
+/* .sst-deck--pr: an ordinary page section that becomes slides only in
+   presenter mode. Outside it the deck, its slides and its nav drop out of the
+   layout (display: contents) and every slide shows, so the page reads as
+   before. Slides marked .sst-pr-slide, written only for the board, are hidden. Its slides keep the
+   tool's own styles: the tool sizes them for presenting with the tokens. */
+body:not(.presenting) .sst-deck--pr, body:not(.presenting) .sst-deck--pr > .sst-slides { display: contents; }
+body:not(.presenting) .sst-deck--pr .sst-pr-slide, body:not(.presenting) .sst-deck--pr > .sst-deck-nav { display: none; }
+
+/* Caption band under a model: a small heading over a line or two of text. */
+.sst-deck.sst-deck--strip { flex-direction: row; align-items: stretch; gap: 16px; }
+/* Room for a heading and two lines, so the model above doesn't jump as the slides change. */
+.sst-deck.sst-deck--strip > .sst-slides { height: calc(var(--sst-pr-label) * 1.35 + var(--sst-pr-text) * 2.6); }
+.sst-deck.sst-deck--strip .sst-slide h3 { font-size: var(--sst-pr-label); line-height: 1.25; margin: 0 0 .1em; color: var(--sst-blue); }
+.sst-deck.sst-deck--strip .sst-slide p { margin: 0; }
+.sst-deck.sst-deck--strip .sst-deck-nav { flex-direction: column-reverse; justify-content: center; padding-top: 0; }
+.sst-deck.sst-deck--strip .sst-deck-dots { display: none; }

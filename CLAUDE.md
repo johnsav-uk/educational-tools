@@ -75,6 +75,25 @@ the pattern to copy.
   is optional.
 - `P` toggles it, unless focus is in a text field.
 
+**Readable from the back of the room.** Presenter mode is for the board, so text
+pupils read is sized like a PowerPoint slide and never shrunk to fit:
+- Use the `--sst-pr-*` tokens in `sst.css`, which scale with the viewport:
+  `--sst-pr-text` for body text (about 24pt on a slide), `--sst-pr-title` for
+  headings, `--sst-pr-label` as the floor for anything a pupil reads (legends,
+  axis labels, table cells, readout labels) and `--sst-pr-figure` for live
+  readouts. Canvas, SVG and chart text get the size from
+  `SST_PRESENT.px('--sst-pr-label')` in `assets/sst/present.js`.
+- Too much text to fit? Split it into slides with `.sst-deck` from
+  `present.js`: a caption band (`.sst-deck--strip`) under a model, a
+  full-size deck, or `SST_PRESENT.fill()`, which measures and splits between
+  sentences at whatever size the board is. PageUp/PageDown (a clicker) and the
+  arrow keys turn the page. Never make the text smaller to fit.
+- Controls only the teacher uses (mode buttons, sliders, keyboard hints) are
+  exempt: mark them `.sst-teacher` and size them with `--sst-pr-control`.
+- Check with `SST_PRESENT.audit()` in the console while presenting, at
+  1920×1080, 1280×720 and 1024×768. It lists pupil-facing text under the
+  floor. No slide should scroll.
+
 **Questions**, exam-style for the tool's spec and level:
 - A printable A4 student worksheet with marks shown per part and space to
   write. A graph, table or diagram to read from goes in as inline SVG or HTML.

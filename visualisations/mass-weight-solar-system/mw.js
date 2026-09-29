@@ -563,86 +563,111 @@
   $('qReset').addEventListener('click', buildQuiz);
 
   /* ── Presenter mode ──────────────────────────────────────────────── */
-  var pres = $('presenter'), slides = pres.querySelectorAll('.pslide');
-  var pDots = $('pDots'), cur = 0, borrowed = [], wentFs = false, opener = null;
-  slides.forEach(function(s, i){
-    var d = document.createElement('button'); d.type = 'button'; d.className = 'p-dot';
-    d.setAttribute('aria-label', 'Slide ' + (i + 1) + ': ' + s.dataset.title);
-    d.addEventListener('click', function(){ go(i); });
-    pDots.appendChild(d);
-  });
-  function go(i){
-    cur = Math.max(0, Math.min(slides.length - 1, i));
-    slides.forEach(function(s, k){ s.classList.toggle('on', k === cur); });
-    pDots.querySelectorAll('.p-dot').forEach(function(d, k){ d.classList.toggle('on', k === cur); if (k === cur) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
-    $('pCount').textContent = (cur + 1) + ' / ' + slides.length;
-    $('pTitle').textContent = 'Mass vs Weight · ' + slides[cur].dataset.title;
-    $('pPrev').disabled = cur === 0;
-    $('pNext').disabled = cur === slides.length - 1;
-    $('pStage').scrollTop = 0;
-    spring.c.dirty = jump.c.dirty = true;
-  }
-  // Slides reuse the live page elements, moved in while presenting and put
-  // back afterwards, so the chosen mass, world and quiz answers carry across.
-  function borrow(){
-    pres.querySelectorAll('[data-borrow]').forEach(function(slot){
-      var el = $(slot.dataset.borrow);
-      if (!el) return;
-      var mark = document.createComment('presenter:' + el.id);
-      el.parentNode.replaceChild(mark, el); slot.appendChild(el);
-      borrowed.push([el, mark]);
-    });
+  // Board slides at the site's presenter sizes (assets/sst/present.js): the
+  // page's text, split to fit as the board needs, and the live explorer,
+  // worked example and quiz questions, moved in while presenting and put back
+  // afterwards, so the chosen mass, world and quiz answers carry across.
+  var pres = $('presenter'), deckEl = $('pDeck'), hook = $('pHook');
+  var borrowed = [], wentFs = false, opener = null;
+  function take(el, slot){
+    var mark = document.createComment('presenter');
+    el.parentNode.replaceChild(mark, el); slot.appendChild(el);
+    borrowed.push([el, mark]);
   }
   function giveBack(){
     borrowed.forEach(function(p){ p[1].parentNode.replaceChild(p[0], p[1]); });
     borrowed = [];
   }
+  function kick(t){ return '<span class="sst-kicker">' + t + '</span>'; }
+  function slideOf(cls, title, head){
+    var s = document.createElement('section');
+    s.className = 'sst-slide ' + cls; s.dataset.title = title; s.innerHTML = head;
+    return s;
+  }
+  function items(sel, cls){
+    var out = []; document.querySelectorAll(sel).forEach(function(li){ out.push('<p class="pt ' + (cls || '') + '">' + li.innerHTML + '</p>'); });
+    return out;
+  }
+  function buildSlides(){
+    var blocks = [{ slide: hook }];
+    blocks.push({ head: kick('Starter: the answer') + '<h3>The scales read about 13 kg</h3>',
+      body: Array.prototype.map.call(document.querySelectorAll('#hookAns p'), function(p){ return '<p>' + p.innerHTML + '</p>'; }) });
+    blocks.push({ head: kick('Key idea'), body: ['<p class="bigidea">' + document.querySelector('#defBody .bigidea').innerHTML + '</p>'] });
+    blocks.push({ head: kick('Definitions') + '<h3>Mass <span class="p-unit">in kilograms (kg)</span></h3>', body: items('#defBody .def.mass li', 'mass') });
+    blocks.push({ head: kick('Definitions') + '<h3>Weight <span class="p-unit">in newtons (N)</span></h3>', body: items('#defBody .def.weight li', 'weight') });
+    blocks.push({ head: kick('Watch out'), body: ['<p>' + document.querySelector('#defBody .note').innerHTML.replace(/<strong>Watch out:<\/strong>\s*/, '') + '</p>'] });
+    var key = []; document.querySelectorAll('#formulaBody .f-key > div').forEach(function(d){
+      key.push('<p><b class="' + d.querySelector('dt').className + '">' + d.querySelector('dt').textContent + '</b> is ' + d.querySelector('dd').innerHTML + '</p>');
+    });
+    blocks.push({ head: kick('The equation'), body: [document.querySelector('#formulaBody .formula').outerHTML].concat(key) });
+    blocks.push({ head: kick('The equation') + '<h3>g on Earth</h3>', body: ['<p>' + document.querySelector('#formulaBody > .note').innerHTML + '</p>'] });
+    var worked = slideOf('p-worked', 'Worked example', kick('The equation') + '<h3>Worked example</h3>');
+    take($('worked'), worked);
+    blocks.push({ slide: worked });
+    var ex = slideOf('p-explore', 'Planet explorer', kick('Planet explorer') + '<h3>Weigh it on another world</h3>');
+    take(document.querySelector('#explorer .controls'), ex); take(document.querySelector('#explorer .result'), ex);
+    blocks.push({ slide: ex });
+    var sims = slideOf('p-sims', 'Spring balance and jump', kick('Planet explorer') + '<h3>Watch it: weigh, jump, drop</h3>');
+    document.querySelectorAll('#explorer .sim').forEach(function(f){ take(f, sims); });
+    blocks.push({ slide: sims });
+    var qs = document.querySelectorAll('#qList .qq');
+    qs.forEach(function(q, i){
+      var s = slideOf('p-quiz', 'Quick check ' + (i + 1) + ' of ' + qs.length, kick('KS3 quick check · ' + (i + 1) + ' of ' + qs.length));
+      take(q, s);
+      blocks.push({ slide: s });
+    });
+    SST_PRESENT.fill(deckEl, blocks);
+  }
+  function showTitle(){
+    var d = deckEl.sstDeck, s = d && deckEl.querySelectorAll('.sst-slides > .sst-slide')[d.index];
+    var t = s && (s.dataset.title || (s.querySelector('h3') || s.querySelector('.sst-kicker') || s).textContent);
+    $('pTitle').textContent = 'Mass vs Weight' + (t ? ' · ' + t.trim() : '');
+    spring.c.dirty = jump.c.dirty = true;
+  }
+  deckEl.addEventListener('sst-slide', showTitle);
   function openPresenter(){
     if (!pres.hidden) return;
     opener = document.activeElement;
-    borrow(); pres.hidden = false; document.body.classList.add('presenting');
-    go(cur);
+    pres.hidden = false; document.body.classList.add('presenting');
+    buildSlides(); showTitle();
     wentFs = false;
     if (pres.requestFullscreen){
       pres.requestFullscreen().then(function(){ wentFs = true; }).catch(function(){});
     }
-    $('pNext').focus();
+    var nx = deckEl.querySelector('.sst-deck-next'); if (nx) nx.focus();
   }
   function closePresenter(){
     if (pres.hidden) return;
     pres.hidden = true; document.body.classList.remove('presenting');
     giveBack();
+    deckEl.sstBlocks = null; deckEl.querySelector('.sst-slides').innerHTML = '';
     if (document.fullscreenElement) document.exitFullscreen().catch(function(){});
     spring.c.dirty = jump.c.dirty = true;
     if (opener && opener.focus) opener.focus();
   }
   $('presentBtn').addEventListener('click', openPresenter);
   $('pExit').addEventListener('click', closePresenter);
-  $('pPrev').addEventListener('click', function(){ go(cur - 1); });
-  $('pNext').addEventListener('click', function(){ go(cur + 1); });
-  $('hookReveal').addEventListener('click', function(){ $('hookAns').hidden = false; this.hidden = true; });
   document.addEventListener('fullscreenchange', function(){
     // Esc in full screen is taken by the browser; leaving full screen ends the show.
     if (!document.fullscreenElement && wentFs && !pres.hidden) closePresenter();
   });
+  // Arrows and Page Up / Down turn the page in present.js; Space, Home and End here.
   document.addEventListener('keydown', function(e){
     if (pres.hidden) return;
-    var tg = e.target, tag = tg && tg.tagName;
+    var tg = e.target, tag = tg && tg.tagName, d = deckEl.sstDeck;
     if (e.key === 'Escape'){ e.preventDefault(); closePresenter(); return; }
-    if (tag === 'SELECT' || tag === 'TEXTAREA') return;
-    var field = tag === 'INPUT';   // mass slider and number box keep their own keys
-    if ((e.key === 'ArrowRight' && !field) || e.key === 'PageDown' || (e.key === ' ' && !field)){ e.preventDefault(); go(cur + 1); }
-    else if ((e.key === 'ArrowLeft' && !field) || e.key === 'PageUp'){ e.preventDefault(); go(cur - 1); }
-    else if (e.key === 'Home' && !field){ e.preventDefault(); go(0); }
-    else if (e.key === 'End' && !field){ e.preventDefault(); go(slides.length - 1); }
+    if (tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'INPUT' || !d) return;
+    if (e.key === ' ' && tag !== 'BUTTON'){ e.preventDefault(); d.next(); }
+    else if (e.key === 'Home'){ e.preventDefault(); d.go(0); }
+    else if (e.key === 'End'){ e.preventDefault(); d.go(d.count - 1); }
   });
   // Swipe between slides on a tablet or touch whiteboard.
   var sx = null;
   pres.addEventListener('touchstart', function(e){ sx = e.target.closest('canvas,input,.bodies,.presets') ? null : e.touches[0].clientX; }, { passive:true });
   pres.addEventListener('touchend', function(e){
-    if (sx === null) return;
+    if (sx === null || !deckEl.sstDeck) return;
     var dx = e.changedTouches[0].clientX - sx; sx = null;
-    if (Math.abs(dx) > 70) go(cur + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 70) deckEl.sstDeck[dx < 0 ? 'next' : 'prev']();
   });
 
   /* ── Start ───────────────────────────────────────────────────────── */

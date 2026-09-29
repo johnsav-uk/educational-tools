@@ -146,29 +146,52 @@ input[type="range"] { width: 100%; accent-color: #47b5fa; }
 .c-g { box-shadow: inset 0 -3px 0 var(--gamma); }
 .sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 4px; }
 
-/* ── Presenter mode ───────────────────────────────────── */
-body.presenting { overflow: hidden; }
+/* ── Presenter mode ───────────────────────────────────
+   Sized for the back of the room with the --sst-pr-* tokens from sst.css.
+   What pupils read (readouts, labels, the equation, slides) is at those
+   sizes; the controls panel is the teacher's and stays compact. The side
+   notes and the summary card become slides rather than shrinking. */
+.pr-only { display: none !important; }
+body.presenting { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; }
 body.presenting .sst-bar, body.presenting .top { display: none; }
 body.presenting .present-only { display: inline-flex !important; }
-body.presenting .tabs { margin-top: 8px; }
-body.presenting .tabs [role="tab"] { font-size: 1.25rem; padding: 10px 16px; }
-body.presenting main { height: calc(100dvh - 72px); overflow: auto; }
-body.presenting .layout { grid-template-columns: minmax(0,1fr) clamp(340px, 27vw, 520px); }
-body.presenting .grid-stage, body.presenting .chart-stage { height: calc(100dvh - 300px); }
-body.presenting .bench-stage { height: calc(100dvh - 290px); }
-body.presenting .panel { font-size: 1.1rem; position: static; max-height: none; }
-body.presenting .panel .sub, body.presenting .card p { font-size: .95rem; }
-body.presenting .lbl { font-size: .9rem; }
-body.presenting .ro b { font-size: 1.35rem; }
-body.presenting .ro span { font-size: .9rem; }
-body.presenting .eqline { font-size: 1.5rem; }
-body.presenting .lcd-main b { font-size: 3rem; }
-body.presenting .sumtab { font-size: 1.15rem; }
-body.presenting .summary { max-width: none; }
-body.presenting .legend { font-size: .95rem; }
+body.presenting .pr-only { display: flex !important; }
+body.presenting .tabs { flex: none; margin: 8px 16px 10px; font-size: var(--sst-pr-control); }
+body.presenting .tabs [role="tab"] { font-size: max(1.25rem, var(--sst-pr-control)); padding: 10px 16px; }
+body.presenting main { flex: 1 1 auto; min-height: 0; }
+body.presenting .view:not([hidden]) { height: 100%; }
+body.presenting .layout { grid-template-columns: minmax(0,1fr) clamp(280px, 21vw, 380px); align-items: stretch; padding: 0 16px 14px; gap: 14px; }
+body.presenting .viewport { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+body.presenting .split, body.presenting .bench-stage { flex: 1 1 auto; min-height: 0; }
+body.presenting .grid-stage, body.presenting .chart-stage, body.presenting .bench-stage { height: auto; }
+body.presenting .readouts, body.presenting .eqline, body.presenting .counter { margin-top: 0; }
+body.presenting .ro { padding: 6px 14px 8px; }
+body.presenting .ro span { font-size: var(--sst-pr-label); }
+body.presenting .ro b { font-size: var(--sst-pr-text); line-height: 1.15; white-space: nowrap; }
+body.presenting .eqline { font-size: var(--sst-pr-text); padding: 6px 16px 8px; }
+body.presenting .eqline .lab { font-size: var(--sst-pr-label); }
+body.presenting .legend { font-size: var(--sst-pr-label); gap: 4px 20px; padding: 6px 14px; }
+body.presenting .sw { width: .7em; height: .7em; }
+body.presenting .lcd-main b { font-size: calc(var(--sst-pr-figure) * 1.3); }
+body.presenting .lcd-sub b { font-size: var(--sst-pr-text); }
+body.presenting .lcd span { font-size: var(--sst-pr-label); }
+body.presenting .hint { display: none; }
+body.presenting .sst-deck--strip { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 12px 20px; }
+body.presenting .panel { position: static; max-height: none; min-height: 0; overflow: auto; font-size: var(--sst-pr-control); }
+body.presenting .panel .sub, body.presenting .panel .card.note { display: none; }
+body.presenting .summary { display: none; }
+body.presenting .sum-deck { height: 100%; padding: 8px clamp(24px, 5vw, 96px) 16px; }
+.sum-deck .sst-slide li { margin: .35em 0; }
+.sum-deck .sum-mini { font-size: var(--sst-pr-text); width: 100%; }
+.sum-deck .sum-mini thead th { color: var(--ink); }
+.sum-deck .sum-mini tbody th { color: var(--muted); font-size: var(--sst-pr-label); font-weight: 700; padding-right: 1em; }
+.sum-deck .sum-mini td { color: var(--body); }
+.sum-deck .sum-eq { color: var(--ink); margin: .5em 0; }
 @media (max-width: 1020px) {
+  body.presenting main { overflow: auto; }
+  body.presenting .view:not([hidden]) { height: auto; }
   body.presenting .layout { grid-template-columns: minmax(0,1fr); }
-  body.presenting .grid-stage, body.presenting .chart-stage, body.presenting .bench-stage { height: 56vh; }
+  body.presenting .grid-stage, body.presenting .chart-stage, body.presenting .bench-stage { height: 56vh; flex: none; }
 }
 
 /* ── Annotation overlay ───────────────────────────────── */
