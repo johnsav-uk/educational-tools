@@ -367,6 +367,9 @@ body.presenting .opt { font-size: var(--sst-pr-text); padding: 10px 18px; }
 body.presenting .opt .let { width: 1.3em; height: 1.3em; font-size: var(--sst-pr-label); }
 body.presenting .numrow input { font-size: var(--sst-pr-text); width: 5em; }
 body.presenting .fb, body.presenting .fb .fh { font-size: var(--sst-pr-text); line-height: 1.3; }
+/* The list indent is set in px for the page; at board size the numbers need it in em. */
+body.presenting .fb ol { padding-left: 1.6em; }
+body.presenting .fb li { margin: .15em 0; }
 body.presenting .score { font-size: calc(var(--sst-pr-figure) * 1.4); }
 body.presenting .concept, body.presenting .concept p { font-size: var(--sst-pr-label); }
 @media (max-width: 1020px) { body.presenting .layout { grid-template-columns: minmax(0,1fr); } }
