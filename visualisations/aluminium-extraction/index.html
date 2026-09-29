@@ -82,6 +82,29 @@
     padding:clamp(16px,3vw,32px); min-height:520px;
   }
   .deck:fullscreen{ overflow:auto; border-radius:0; padding:3vw 4vw; }
+
+  /* ── On the board (the deck full screen) ──────────────────────────
+     body.presenting is set while the deck is full screen. Text takes the
+     site's presenter sizes (--sst-pr-* in sst.css), and each slide becomes
+     pages rather than shrinking: its text, split as the screen needs, then
+     its diagram or model scaled up to fill the screen. */
+  body.presenting .deck{ position:fixed; inset:0; z-index:100; border:0; border-radius:0; padding:2.4vh 4vw 1.6vh;
+    overflow:hidden; display:flex; flex-direction:column; }
+  body.presenting .deck > .hint{ display:none; }
+  body.presenting .slide.on{ display:block; flex:1 1 auto; min-height:0; overflow:hidden; }
+  body.presenting .slide.on > :not(.pg-on){ display:none; }
+  body.presenting .slide .pg-off{ display:none !important; }
+  body.presenting .slide .pg-vis{ width:760px; max-width:none; margin:0 auto; zoom:var(--vz, 1); }
+  body.presenting .step{ font-size:var(--sst-pr-label); }
+  body.presenting .slide h2{ font-size:var(--sst-pr-title); margin:.1em 0 .35em; }
+  body.presenting .slide .pg-on:not(.pg-vis) p, body.presenting .slide .pg-on:not(.pg-vis) li{ font-size:var(--sst-pr-text); line-height:1.3; }
+  body.presenting .slide .pg-on:not(.pg-vis) .hint{ font-size:var(--sst-pr-text); line-height:1.3; }
+  body.presenting .summary.pg-on{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
+  body.presenting .summary .card h3{ font-size:var(--sst-pr-title); }
+  body.presenting .slide .pg-on:not(.pg-vis) .eqline{ font-size:var(--sst-pr-text); }
+  body.presenting .slide .pg-on:not(.pg-vis) .callout{ font-size:var(--sst-pr-text); line-height:1.3; }
+  body.presenting .slide .tag{ font-size:var(--sst-pr-label); }
+  body.presenting .deck-nav{ flex:none; font-size:var(--sst-pr-control); margin-top:8px; }
   .slide{ display:none; }
   .slide.on{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:clamp(18px,3vw,40px); align-items:start; }
   .slide.text-wide.on{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
@@ -792,7 +815,7 @@
     var b = document.createElement('button');
     b.className = 'dot'; b.type = 'button';
     b.setAttribute('aria-label', 'Slide ' + (i + 1) + ': ' + s.dataset.title);
-    b.addEventListener('click', function(){ go(i); });
+    b.addEventListener('click', function(){ jump(i); });
     dotsEl.appendChild(b);
   });
   function go(i){
@@ -814,15 +837,104 @@
       vis.hidden = true;
     }
   }
-  document.getElementById('prevBtn').addEventListener('click', function(){ go(cur - 1); });
-  document.getElementById('nextBtn').addEventListener('click', function(){ go(cur + 1); });
+  /* On the board each slide is one or more pages: the text, split to fit at
+     the presenter sizes, then the right-hand diagram or model, scaled up. */
+  var pages = [], pg = 0;
+  function onBoard(){ return document.body.classList.contains('presenting'); }
+  function textUnits(col){
+    var units = [], head = col.classList.contains('summary') ? 0 : 2;
+    Array.prototype.forEach.call(col.children, function(c, k){
+      if (k < head) return;   // the step label and heading head every page
+      if (c.tagName === 'UL') Array.prototype.forEach.call(c.children, function(li){ units.push(li); });
+      else units.push(c);
+    });
+    return units;
+  }
+  function showUnits(col, keep){
+    textUnits(col).forEach(function(u){ u.classList.toggle('pg-off', keep.indexOf(u) === -1); });
+    Array.prototype.forEach.call(col.querySelectorAll(':scope > ul'), function(ul){
+      ul.classList.toggle('pg-off', !Array.prototype.some.call(ul.children, function(li){ return keep.indexOf(li) !== -1; }));
+    });
+  }
+  function clearPages(){
+    Array.prototype.forEach.call(document.querySelectorAll('.pg-on, .pg-off, .pg-vis'), function(e){ e.classList.remove('pg-on', 'pg-off', 'pg-vis'); });
+  }
+  function buildPages(){
+    var at = pages[pg] ? pages[pg].i : cur;
+    pages = [];
+    slides.forEach(function(s, i){
+      go(i);
+      clearPages();
+      var col = s.children[0], units = textUnits(col), page = [];
+      col.classList.add('pg-on');
+      units.forEach(function(u){
+        page.push(u); showUnits(col, page);
+        if (s.scrollHeight > s.clientHeight + 1 && page.length > 1){
+          page.pop(); pages.push({ i:i, units:page }); page = [u];
+        }
+      });
+      pages.push({ i:i, units:page });
+      var v = s.children[1];
+      if (v && v.classList.contains('summary')){
+        // The summary cards are text too: as many to a page as fit.
+        clearPages(); v.classList.add('pg-on'); page = [];
+        textUnits(v).forEach(function(u){
+          page.push(u); showUnits(v, page);
+          if (s.scrollHeight > s.clientHeight + 1 && page.length > 1){ page.pop(); pages.push({ i:i, col:1, units:page }); page = [u]; }
+        });
+        pages.push({ i:i, col:1, units:page });
+      } else if (v) pages.push({ i:i, vis:true });
+    });
+    clearPages();
+    pg = 0; while (pg < pages.length - 1 && pages[pg].i < at) pg++;
+    showPage();
+  }
+  function showPage(){
+    var p = pages[pg], s = slides[p.i];
+    go(p.i);
+    clearPages();
+    if (p.vis){
+      var v = s.children[1];
+      v.classList.add('pg-on', 'pg-vis');
+      v.style.setProperty('--vz', 1);
+      var z = Math.min(s.clientWidth / v.offsetWidth, s.clientHeight / v.scrollHeight) * 0.96;
+      // The model's own labels grow with it; it only drops below full size where a small screen leaves no choice.
+      v.style.setProperty('--vz', Math.max(0.8, Math.min(3, z)).toFixed(3));
+    } else {
+      s.children[p.col || 0].classList.add('pg-on');
+      showUnits(s.children[p.col || 0], p.units);
+    }
+    document.getElementById('slideCount').textContent = (pg + 1) + ' / ' + pages.length;
+    document.getElementById('prevBtn').disabled = pg === 0;
+    document.getElementById('nextBtn').disabled = pg === pages.length - 1;
+  }
+  function step(d){
+    if (!onBoard()) { go(cur + d); return; }
+    pg = Math.max(0, Math.min(pages.length - 1, pg + d)); showPage();
+  }
+  function jump(i){
+    if (!onBoard()) { go(i); return; }
+    pg = 0; while (pg < pages.length - 1 && pages[pg].i < i) pg++; showPage();
+  }
+  function setBoard(on){
+    document.body.classList.toggle('presenting', on);
+    if (on) buildPages();
+    else { clearPages(); go(cur); }
+  }
+  var boardTimer = 0;
+  window.addEventListener('resize', function(){
+    if (!onBoard()) return;
+    clearTimeout(boardTimer); boardTimer = setTimeout(buildPages, 120);
+  });
+  document.getElementById('prevBtn').addEventListener('click', function(){ step(-1); });
+  document.getElementById('nextBtn').addEventListener('click', function(){ step(1); });
   document.addEventListener('keydown', function(e){
     if (document.getElementById('present').hidden) return;
     var t = e.target;
     if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
     if (document.querySelector('dialog[open]')) return;
-    if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); go(cur + 1); }
-    else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); go(cur - 1); }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); step(-1); }
   });
   var tx = null;
   var deck = document.getElementById('deck');
@@ -830,7 +942,7 @@
   deck.addEventListener('touchend', function(e){
     if (tx === null) return;
     var dx = e.changedTouches[0].clientX - tx; tx = null;
-    if (Math.abs(dx) > 60) go(cur + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1);
   });
   var fsBtn = document.getElementById('fsBtn');
   if (!deck.requestFullscreen) fsBtn.hidden = true;
@@ -838,6 +950,7 @@
     if (document.fullscreenElement) document.exitFullscreen();
     else deck.requestFullscreen().catch(function(){});
   });
+  document.addEventListener('fullscreenchange', function(){ setBoard(document.fullscreenElement === deck); });
 
   /* ── Slide 2: cryolite thermometer ────────────────────────────── */
   var cryoOn = false;
