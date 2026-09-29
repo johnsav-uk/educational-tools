@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balancing Equations: Atoms &amp; Molecules (beta)</title>
+<meta name="description" content="AQA GCSE Chemistry 4.1.1.1 and 4.3.1.1 (Combined 5.1.1.1, 5.3.1.1): balance symbol equations by copying whole ball-and-stick molecules, watch a live atom count and balance scale, see why subscripts can't change, take a five-question concept check, and print a worksheet and mark scheme.">
+<style>
+/* Balancing Equations. Colours map onto the site tokens in assets/sst/sst.css.
+   Molecule colours are CPK, as hex, in the EL table at the top of the script. */
+:root {
+  /* Hex fallbacks keep the page on-brand if it is opened as a bare file without sst.css. */
+  --paper: var(--sst-bg, #050e1a); --panel: var(--sst-panel, #091321); --card: var(--sst-card, #0d1928); --raised: var(--sst-raised, #142235);
+  --ink: var(--sst-text, #edf2f8); --body: var(--sst-text-body, #c3ccd8); --muted: var(--sst-text-muted, #8693a5);
+  --line: var(--sst-line, #182535); --line2: var(--sst-line-strong, #2c3d52);
+  --accent: var(--sst-blue, #47b5fa); --btn: var(--sst-blue-btn, #0086dd); --soft: var(--sst-blue-soft, #13324d);
+  --chem: var(--sst-chem, #5fd6c8); --lvl: var(--sst-amber, #f5c451);
+  --good: var(--sst-green, #6fe3a3); --bad: var(--sst-red, #ff6b5e); --warn: var(--sst-amber, #f5c451);
+  --font: var(--sst-font, 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif);
+  --stage: #091321;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--font); -webkit-text-size-adjust: 100%; }
+button, input, select { font: inherit; color: inherit; }
+sub, sup { font-size: .68em; line-height: 0; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
+[hidden] { display: none !important; }
+svg { flex: none; }
+
+/* ── Header ───────────────────────────────────────────── */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 20px; padding: 16px clamp(16px,3vw,32px) 8px; }
+.top h1 { margin: 0; font-size: clamp(1.3rem,3vw,1.75rem); line-height: 1.15; letter-spacing: -.01em; }
+.top .grow { flex: 1 1 320px; }
+.beta { font-size: .5em; font-weight: 700; vertical-align: .45em; color: var(--muted); border: 1px solid var(--line2); border-radius: 999px; padding: 1px 7px; letter-spacing: .03em; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 600; border: 1px solid currentColor; color: var(--muted); }
+.chip.chem { color: var(--chem); } .chip.lvl { color: var(--lvl); }
+.hbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; padding: 7px 14px; border-radius: 9px; border: 1px solid var(--line2);
+  background: var(--card); font-weight: 600; font-size: .9rem; color: var(--ink); }
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.primary { background: var(--btn); border-color: var(--btn); color: #fff; }
+.btn.primary:hover:not(:disabled) { border-color: #9fd6ff; }
+.btn[aria-pressed="true"], .btn.on { background: var(--soft); border-color: var(--accent); }
+.btn svg { width: 16px; height: 16px; }
+.btn.icon { padding: 7px 10px; }
+
+.tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px clamp(16px,3vw,32px) 14px; border-bottom: 1px solid var(--line); }
+.tabs [role="tab"] { border: 0; background: none; padding: 9px 12px; font-weight: 600; font-size: .95rem; color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs [role="tab"]:hover { color: var(--ink); }
+.tabs [role="tab"][aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs .grow { flex: 1; }
+.tabs .btn { margin-bottom: 6px; }
+.present-only { display: none !important; }
+
+/* ── Layout ───────────────────────────────────────────── */
+.layout { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 16px; padding: 0 clamp(16px,3vw,32px) 28px; align-items: start; }
+@media (max-width: 1020px) { .layout { grid-template-columns: minmax(0,1fr); } }
+.stage { position: relative; margin: 0; background: var(--stage); border: 1px solid var(--line); border-radius: 12px; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+@media (min-width: 1021px) { .panel { position: sticky; top: 12px; max-height: calc(100dvh - 24px); overflow: auto; } }
+.panel h2 { margin: 0 0 2px; font-size: 1.1rem; }
+.panel .sub { color: var(--muted); font-size: .86rem; margin: 2px 0 12px; }
+.field { display: block; margin: 0 0 12px; }
+.lbl { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--muted); font-weight: 600; letter-spacing: .02em; margin-bottom: 5px; }
+select, input[type="text"] { width: 100%; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line2); background: var(--sst-input, #071120); color: var(--ink); }
+input[type="range"] { width: 100%; accent-color: #47b5fa; }
+.check { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: .9rem; color: var(--body); cursor: pointer; }
+.check input { accent-color: #47b5fa; width: 16px; height: 16px; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--card); border: 1px solid var(--line); border-radius: 11px; }
+.seg button { flex: 1 1 auto; border: 1px solid transparent; background: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: .95rem; color: var(--body); cursor: pointer; }
+.seg button:hover { color: var(--ink); background: var(--raised); }
+.seg button[aria-pressed="true"] { background: var(--soft); border-color: var(--accent); color: var(--ink); }
+.row2 { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; margin: 12px 0 0; }
+.card h4 { margin: 0 0 5px; font-size: .92rem; line-height: 1.35; }
+.card p, .card li { margin: .35em 0; font-size: .88rem; color: var(--body); }
+.card ol { margin: 0; padding-left: 20px; }
+.card b { color: var(--ink); }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+.err { color: var(--bad); font-size: .86rem; margin: 8px 0 0; min-height: 0; }
+.err:empty { display: none; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.examples button { border: 1px solid var(--line2); background: var(--raised); border-radius: 999px; padding: 2px 10px; font-size: .8rem; color: var(--body); cursor: pointer; }
+.examples button:hover { color: var(--ink); border-color: var(--muted); }
+
+/* ── Balance workspace ────────────────────────────────── */
+.wordeq { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; font-size: clamp(1.15rem, 2.4vw, 1.6rem); font-weight: 700; text-align: center; line-height: 1.35; }
+.wordeq .lab, .symline .lab { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.wordeq .arrow, .symline .arrow { color: var(--muted); margin: 0 .3em; }
+.symline { margin-top: 8px; padding: 8px 18px 10px; text-align: center; font-size: clamp(1.05rem, 2vw, 1.35rem); font-weight: 600; font-variant-numeric: tabular-nums; }
+.symline .co { color: var(--accent); font-weight: 800; }
+
+.eqrow { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 10px 6px; margin-top: 10px; padding: 14px 10px 12px; background: var(--stage); border: 1px solid var(--line); border-radius: 12px; transition: border-color .3s; }
+.eqrow.balanced { border-color: var(--good); }
+.side { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 10px 6px; flex: 1 1 auto; }
+.lead { display: flex; align-items: flex-start; gap: 6px; flex: 1 1 auto; }
+.lead .sp { flex: 1 1 150px; }
+.op { align-self: flex-start; padding-top: 10px; font-size: 1.8rem; font-weight: 700; color: var(--muted); min-width: 1.1em; text-align: center; }
+.op.arrow { color: var(--ink); padding-left: 4px; padding-right: 4px; }
+.sp { flex: 1 1 150px; min-width: min-content; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 6px 8px; border-radius: 10px; }
+.fbig { display: flex; align-items: baseline; gap: 4px; font-size: 2rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.coef { color: var(--accent); font-weight: 800; min-width: .7em; text-align: right; display: inline-block; }
+.coef.one { color: var(--line2); }
+.coef.bump { animation: bump .35s ease-out; }
+@keyframes bump { 40% { transform: scale(1.35); } }
+.form { color: var(--ink); }
+.spname { font-size: .82rem; color: var(--muted); margin-top: -4px; text-align: center; }
+.tray { display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; gap: 6px 8px; min-height: 96px; width: 100%;
+  padding: 8px; border: 1px dashed var(--line2); border-radius: 10px; }
+.copy { display: inline-flex; }
+.copy.cloned { animation: clone .5s cubic-bezier(.2,.8,.2,1); }
+.copy.popped { animation: pop .35s cubic-bezier(.2,.8,.2,1); }
+.copy.source { animation: flashsrc .5s ease-out; }
+.copy.leaving { animation: leave .22s ease-in forwards; }
+@keyframes clone { from { transform: translate(var(--fx), var(--fy)); opacity: .3; } }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } }
+@keyframes flashsrc { 30% { opacity: .5; } }
+@keyframes leave { to { transform: scale(.3); opacity: 0; } }
+.tally { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px; font-size: .85rem; color: var(--body); font-variant-numeric: tabular-nums; }
+.tally span { display: inline-flex; align-items: center; gap: 4px; }
+.tally b { color: var(--ink); }
+.dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid; flex: none; }
+.spbtns { display: flex; gap: 6px; }
+.spbtns .add { padding: 6px 12px; white-space: nowrap; }
+.spbtns .btn.icon { padding: 6px 11px; font-size: 1.05rem; line-height: 1; }
+.nolabels .mol text { display: none; }
+
+.status { margin-top: 10px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: .95rem; color: var(--body); }
+.status b { color: var(--ink); }
+.status.ok { border-color: var(--good); }
+.status.ok .head { color: var(--good); }
+.status.half { border-color: var(--warn); }
+.status.half .head { color: var(--warn); }
+.status .head { font-weight: 800; color: var(--ink); margin-right: 4px; }
+.status .hint { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+
+.dash { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 12px; margin-top: 10px; }
+@media (max-width: 760px) { .dash { grid-template-columns: minmax(0,1fr); } }
+.scale-stage { padding: 6px; }
+.scale-stage svg { display: block; width: 100%; height: auto; }
+#beam { transform-box: view-box; transform-origin: 280px 80px; transition: transform .7s cubic-bezier(.3,.7,.2,1); }
+.pan { transition: transform .7s cubic-bezier(.3,.7,.2,1); }
+.elstage { padding: 10px 12px; }
+.elhead, .er { display: grid; grid-template-columns: 2.4em minmax(0,1fr) 3.6em minmax(0,1fr) 2.4em 1.4em; align-items: center; gap: 6px; }
+.elhead { font-size: .72rem; font-weight: 700; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.elhead span:nth-child(1) { grid-column: 1 / 3; }
+.elhead span:nth-child(2) { text-align: center; }
+.elhead span:nth-child(3) { grid-column: 4 / 7; text-align: right; }
+.er { padding: 5px 0; font-variant-numeric: tabular-nums; }
+.er .n { font-size: 1.15rem; text-align: center; }
+.er .bar { height: 12px; background: var(--card); border-radius: 6px; display: flex; overflow: hidden; }
+.er .bar.l { justify-content: flex-end; }
+.er .bar i { display: block; height: 100%; border-radius: 6px; transition: width .45s cubic-bezier(.3,.7,.2,1); }
+.er .elc { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-weight: 700; }
+.er .mk { font-weight: 800; text-align: center; }
+.er.ok .mk { color: var(--good); } .er.no .mk { color: var(--bad); }
+.er.no .n { color: var(--bad); }
+.er.tot { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 8px; font-size: .85rem; color: var(--muted); }
+.er.tot .n { font-size: 1rem; color: var(--ink); }
+
+/* ── Explainer ────────────────────────────────────────── */
+.exp { padding: 0 clamp(16px,3vw,32px) 32px; max-width: 1320px; }
+.anatomy { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 30px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 20px; }
+.anatomy .big { font-size: 4.2rem; font-weight: 800; line-height: 1; letter-spacing: .02em; }
+.anatomy .big .a-co { color: var(--accent); }
+.anatomy .big sub { color: var(--bad); font-size: .55em; }
+.alabels { flex: 1 1 360px; display: grid; gap: 8px; }
+.al { border-left: 4px solid; padding: 2px 0 2px 12px; color: var(--body); }
+.al b { color: var(--ink); }
+.al.co { border-color: var(--accent); } .al.sub { border-color: var(--bad); }
+.al em { font-style: normal; font-weight: 700; }
+.al.co em { color: var(--accent); } .al.sub em { color: var(--bad); }
+.expbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 12px; }
+.expbar .lbl { margin: 0; }
+.exp-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+@media (max-width: 900px) { .exp-grid { grid-template-columns: minmax(0,1fr); } }
+.xcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.xcard.badc { border-top: 3px solid var(--bad); } .xcard.goodc { border-top: 3px solid var(--good); }
+.xhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.xhead h3 { margin: 0; font-size: 1.15rem; }
+.pill { font-size: .78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+.pill.bad { color: var(--bad); } .pill.good { color: var(--good); }
+.xform { display: flex; align-items: baseline; justify-content: center; gap: 14px; font-size: 2.1rem; font-weight: 700; min-height: 1.6em; font-variant-numeric: tabular-nums; }
+.xform .to { color: var(--muted); font-size: .7em; }
+.xform .hot { color: var(--bad); }
+.xform .strike { text-decoration: line-through; text-decoration-thickness: 3px; }
+.xform .co { color: var(--accent); }
+.xform .dim { color: var(--muted); }
+.xstage svg { display: block; width: 100%; height: auto; }
+.xstage .mname { font-size: .36px; font-weight: 700; fill: #c3ccd8; transition: fill .3s; }
+.xstage .mname.bad { fill: #ff7b72; }
+#subSvg .atm { transition: transform .75s cubic-bezier(.3,.7,.2,1), opacity .5s; }
+#subSvg .bonds { transition: opacity .3s; }
+#subSvg .bonds.a { opacity: 0; }
+#subSvg.fadeB .bonds.b { opacity: 0; }
+#subSvg.showA .bonds.a { opacity: 1; }
+#coefSvg .zoom { transform-box: view-box; transform-origin: 0 0; transition: transform .6s cubic-bezier(.3,.7,.2,1); }
+#coefSvg .cp { transition: transform .6s cubic-bezier(.3,.7,.2,1), opacity .4s; }
+#coefSvg .cp.new { opacity: .35; }
+#coefSvg .cp.gone { opacity: 0; }
+.xbtns { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+.stepper { display: inline-flex; align-items: center; gap: 10px; }
+.stepper output { font-size: 1.6rem; font-weight: 800; color: var(--accent); min-width: 1.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.warn { border: 2px solid var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--panel)); border-radius: 10px; padding: 10px 14px; color: var(--body); animation: shake .45s; }
+.warn .wh { display: flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 800; color: #ff8a80; text-transform: uppercase; letter-spacing: .03em; }
+.warn .wh svg { width: 24px; height: 24px; }
+.warn b { color: var(--ink); }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+.okbox { border: 1px solid var(--good); border-radius: 10px; padding: 10px 14px; color: var(--body); font-variant-numeric: tabular-nums; }
+.okbox .sum { font-size: 1.1rem; font-weight: 700; color: var(--ink); }
+.okbox .sum .co { color: var(--accent); }
+.xcap { margin: 0; font-size: .9rem; color: var(--muted); }
+.rule { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+.rule table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.rule th, .rule td { text-align: left; vertical-align: top; padding: 9px 14px; border-bottom: 1px solid var(--line); color: var(--body); font-size: .93rem; }
+.rule tr:last-child td, .rule tr:last-child th { border-bottom: 0; }
+.rule thead th { color: var(--ink); font-size: 1rem; }
+.rule tbody th { color: var(--muted); font-size: .8rem; width: 140px; }
+.rule .c-co { color: var(--accent); } .rule .c-sub { color: var(--bad); }
+
+/* ── Quiz ─────────────────────────────────────────────── */
+.quiz { padding: 0 clamp(16px,3vw,32px) 32px; max-width: 860px; margin: 0 auto; }
+.qprog { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.qprog i { width: 34px; height: 8px; border-radius: 4px; background: var(--card); border: 1px solid var(--line2); }
+.qprog i.cur { border-color: var(--accent); background: var(--soft); }
+.qprog i.right { background: var(--good); border-color: var(--good); }
+.qprog i.wrong { background: var(--bad); border-color: var(--bad); }
+.qprog span { margin-left: auto; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.qcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 20px; }
+.qtag { font-size: .74rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.qprompt { font-size: 1.3rem; font-weight: 600; line-height: 1.45; margin: 6px 0 14px; }
+.qprompt .fx { font-weight: 800; white-space: nowrap; }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; align-items: center; gap: 12px; text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line2); background: var(--card); cursor: pointer; font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .let { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--raised); font-size: .85rem; color: var(--muted); }
+.opt.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, var(--card)); }
+.opt.right .let { background: var(--good); color: #062014; }
+.opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, var(--card)); }
+.opt.wrong .let { background: var(--bad); color: #2a0806; }
+.opt.faded { opacity: .55; }
+.numrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.numrow input { width: 140px; font-size: 1.3rem; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.numrow input.right { border-color: var(--good); } .numrow input.wrong { border-color: var(--bad); }
+.fb { margin-top: 14px; border-radius: 10px; padding: 12px 16px; border: 1px solid; animation: pop .3s ease-out; }
+.fb.right { border-color: var(--good); } .fb.wrong { border-color: var(--bad); }
+.fb .fh { font-size: 1.1rem; font-weight: 800; }
+.fb.right .fh { color: var(--good); } .fb.wrong .fh { color: #ff8a80; }
+.fb p { margin: 6px 0; color: var(--body); }
+.fb ol { margin: 6px 0 0; padding-left: 22px; color: var(--body); }
+.fb li { margin: 3px 0; }
+.fb b { color: var(--ink); }
+.qnav { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.qfig { display: flex; justify-content: center; margin: 0 0 14px; padding: 8px; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; }
+.score { font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.concepts { display: grid; gap: 10px; margin: 12px 0; }
+.concept { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.concept b { flex: 1 1 200px; }
+.concept .res { font-weight: 800; font-variant-numeric: tabular-nums; }
+.concept.good .res { color: var(--good); } .concept.bad .res { color: var(--bad); }
+.concept p { flex-basis: 100%; margin: 0; font-size: .9rem; color: var(--body); }
+
+/* ── Presenter mode ───────────────────────────────────
+   Sized for the back of the room with the --sst-pr-* tokens from sst.css.
+   What pupils read is at those sizes; the controls panel is the teacher's
+   and stays compact. The side notes, the explainer and the rule table
+   become slides rather than shrinking. */
+.pr-only { display: none !important; }
+body.presenting { overflow: hidden; display: flex; flex-direction: column; height: 100dvh; }
+body.presenting .sst-bar, body.presenting .top { display: none; }
+body.presenting .present-only { display: inline-flex !important; }
+body.presenting .pr-only { display: flex !important; }
+body.presenting .tabs { flex: none; margin: 8px 16px 10px; }
+body.presenting .tabs [role="tab"] { font-size: max(1.25rem, var(--sst-pr-control)); padding: 10px 16px; }
+body.presenting main { flex: 1 1 auto; min-height: 0; overflow: auto; }
+/* Balance it: equation, status and slides on the left, the scale and atom
+   table on the right. The controls open as a drawer (Controls button, or C). */
+body.presenting .layout { display: block; padding: 0 16px 14px; }
+body.presenting .viewport { display: grid; grid-template-columns: minmax(0,2.3fr) minmax(0,1fr); grid-template-areas: "word word" "eq dash" "status dash" "deck dash";
+  grid-template-rows: auto auto auto 1fr; gap: 10px 14px; align-items: start; }
+body.presenting .wordeq { grid-area: word; }
+body.presenting .eqrow { grid-area: eq; margin: 0; }
+body.presenting .status { grid-area: status; margin: 0; }
+body.presenting #balDeck { grid-area: deck; margin: 0; }
+body.presenting .dash { grid-area: dash; grid-template-columns: minmax(0,1fr); margin: 0; }
+body.presenting .panel { display: none; position: fixed; z-index: 60; top: 64px; right: 16px; width: min(380px, calc(100vw - 32px)); max-height: calc(100dvh - 80px); overflow: auto; border-color: var(--line2); }
+body.presenting.show-ctl .panel { display: block; }
+body.presenting:not([data-view="bal"]) #ctlBtn { display: none !important; }
+body.presenting .wordeq { font-size: var(--sst-pr-text); padding: 6px 18px; }
+body.presenting .wordeq .lab, body.presenting .symline .lab { display: none; }
+body.presenting .symline { display: none; }
+body.presenting .eqrow { padding: 8px 8px 10px; }
+body.presenting .tray { min-height: 84px; }
+body.presenting .fbig { font-size: calc(var(--sst-pr-text) * 1.25); }
+body.presenting .op { font-size: calc(var(--sst-pr-text) * 1.25); padding-top: 0; }
+body.presenting .sp { max-width: none; flex-basis: 0; }
+body.presenting .side, body.presenting .lead { flex: 1 1 0; min-width: 0; }
+body.presenting .spname, body.presenting .tally { font-size: var(--sst-pr-label); }
+body.presenting .dot { width: .6em; height: .6em; }
+body.presenting .spbtns .btn { font-size: var(--sst-pr-control); padding: 8px 14px; }
+body.presenting .spbtns .addtxt { display: none; }
+body.presenting .status { font-size: var(--sst-pr-text); padding: 8px 18px; }
+body.presenting .elhead { font-size: var(--sst-pr-label); text-transform: none; letter-spacing: 0; }
+body.presenting .scale-stage svg { max-height: 36vh; }
+/* On the board the scale is a picture: its captions would be too small to
+   read, and the status line and the atom table already say the same. */
+body.presenting #seesaw text { display: none; }
+body.presenting .er { padding: 2px 0; }
+body.presenting .er .n, body.presenting .er .elc, body.presenting .er .mk { font-size: var(--sst-pr-text); }
+body.presenting .er .bar { height: .45em; }
+body.presenting .er.tot { font-size: var(--sst-pr-label); }
+body.presenting .er.tot .n { font-size: var(--sst-pr-text); }
+body.presenting .panel { position: static; max-height: none; font-size: var(--sst-pr-control); }
+body.presenting .panel .sub, body.presenting .panel .card.note { display: none; }
+body.presenting .sst-deck--strip { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 12px 20px; }
+
+/* Explainer: each block is a slide. */
+body.presenting #view-exp:not([hidden]) { height: 100%; }
+body.presenting .exp { max-width: none; height: 100%; padding: 0 16px 14px; }
+body.presenting .exp-deck { height: 100%; }
+body.presenting .exp-deck > .sst-slides { display: flex; flex-direction: column; }
+body.presenting .exp-deck .sst-slide.is-on { display: flex; flex-direction: column; justify-content: center; flex: 1; min-width: 0; }
+body.presenting .anatomy { gap: 3vh 5vw; padding: 3vh 4vw; }
+body.presenting .anatomy .big { font-size: calc(var(--sst-pr-figure) * 2.4); }
+body.presenting .alabels { gap: 3vh; }
+body.presenting .al { font-size: var(--sst-pr-text); line-height: 1.3; border-left-width: 6px; padding-left: 20px; }
+body.presenting .expbar { font-size: var(--sst-pr-control); margin: 0 0 10px; }
+body.presenting .exp-grid { display: contents; }
+body.presenting .exp-deck .xcard.is-on { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px 28px; align-content: start; min-height: 0; flex: 1;
+  grid-template-areas: "head head" "stage form" "stage btns" "stage box" "cap box"; grid-template-rows: auto auto auto auto 1fr; }
+body.presenting .xcard > .xhead { grid-area: head; }
+body.presenting .xcard > .xstage { grid-area: stage; align-self: start; }
+body.presenting .xstage svg { max-height: 38vh; }
+body.presenting .xcard > .xform { grid-area: form; }
+body.presenting .xcard > .xbtns { grid-area: btns; }
+body.presenting .xcard > .warn, body.presenting .xcard > .okbox { grid-area: box; align-self: start; }
+body.presenting .xcard > .xcap { grid-area: cap; }
+body.presenting .xhead h3 { font-size: var(--sst-pr-title); }
+body.presenting .pill { font-size: var(--sst-pr-label); }
+body.presenting .xform { font-size: var(--sst-pr-figure); justify-content: flex-start; }
+body.presenting .xcap, body.presenting .warn p, body.presenting .okbox { font-size: var(--sst-pr-text); line-height: 1.3; }
+body.presenting .warn .wh, body.presenting .okbox .sum { font-size: var(--sst-pr-text); }
+body.presenting .warn .wh svg { width: 1em; height: 1em; }
+body.presenting .xbtns { justify-content: flex-start; font-size: var(--sst-pr-control); }
+body.presenting .stepper output { font-size: var(--sst-pr-figure); }
+body.presenting .rule { display: none; }
+.rule-slide table { width: 100%; border-collapse: collapse; font-size: var(--sst-pr-text); }
+.rule-slide th, .rule-slide td { text-align: left; vertical-align: top; padding: .3em .5em; border-bottom: 1px solid var(--line); color: var(--body); }
+.rule-slide thead th { color: var(--ink); }
+.rule-slide tbody th { color: var(--muted); font-size: var(--sst-pr-label); width: 22%; }
+.rule-slide .c-co { color: var(--accent); } .rule-slide .c-sub { color: var(--bad); }
+
+/* Concept check: the question card is already a slide. */
+body.presenting .quiz { max-width: none; margin: 0; padding: 0 clamp(24px, 5vw, 96px) 14px; }
+body.presenting .qprog, body.presenting .qprog span, body.presenting .qtag { font-size: var(--sst-pr-label); }
+body.presenting .qprompt { font-size: var(--sst-pr-text); line-height: 1.3; }
+body.presenting .opt { font-size: var(--sst-pr-text); padding: 10px 18px; }
+body.presenting .opt .let { width: 1.3em; height: 1.3em; font-size: var(--sst-pr-label); }
+body.presenting .numrow input { font-size: var(--sst-pr-text); width: 5em; }
+body.presenting .fb, body.presenting .fb .fh { font-size: var(--sst-pr-text); line-height: 1.3; }
+body.presenting .score { font-size: calc(var(--sst-pr-figure) * 1.4); }
+body.presenting .concept, body.presenting .concept p { font-size: var(--sst-pr-label); }
+@media (max-width: 1020px) { body.presenting .layout { grid-template-columns: minmax(0,1fr); } }
+@media (max-height: 760px) {
+  body.presenting .tabs { margin: 4px 16px 6px; }
+  body.presenting .tabs [role="tab"] { padding: 6px 12px; }
+  body.presenting .viewport, body.presenting .exp-deck .xcard.is-on { row-gap: 6px; }
+}
+
+/* ── Annotation overlay ───────────────────────────────── */
+.ink { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483100; pointer-events: none; touch-action: none; }
+body.inking .ink { pointer-events: auto; cursor: crosshair; }
+body.inking.tool-erase .ink { cursor: cell; }
+.inkbar { position: fixed; left: 0; right: 0; bottom: 16px; width: max-content; margin: 0 auto; z-index: 2147483200; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px;
+  max-width: calc(100vw - 24px); padding: 6px; background: #0d1928; border: 1px solid #2c3d52; border-radius: 14px; color: #edf2f8; }
+.inkbar button { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 54px; padding: 5px 6px; border: 1px solid transparent; border-radius: 9px;
+  background: none; color: #edf2f8; cursor: pointer; font-size: .7rem; font-weight: 600; }
+.inkbar button svg { width: 20px; height: 20px; }
+.inkbar button:hover { background: #182535; }
+.inkbar button[aria-pressed="true"] { background: #13324d; border-color: #47b5fa; }
+.inkbar .sep { width: 1px; align-self: stretch; margin: 4px 4px; background: #2c3d52; }
+.swatches { display: flex; gap: 4px; }
+.swatches button { min-width: 0; width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 2px solid #2c3d52; }
+.swatches button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #0d1928 inset; }
+.picker input { width: 32px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+.size input { width: 90px; }
+@media (max-width: 640px) { .inkbar button span { display: none; } .inkbar button { min-width: 38px; } .size input { width: 64px; } }
+
+/* ── Print dialog ─────────────────────────────────────── */
+dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); padding: 20px 22px; max-width: 460px; width: calc(100% - 32px); }
+dialog::backdrop { background: rgba(0,0,0,.55); }
+dialog h2 { margin: 0 0 8px; font-size: 1.2rem; }
+dialog label { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; cursor: pointer; color: var(--body); font-size: .92rem; }
+dialog label b { color: var(--ink); }
+dialog input { margin-top: 4px; accent-color: #47b5fa; }
+dialog .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+/* ── Print: worksheet and mark scheme ─────────────────── */
+.print-only { display: none; }
+@page { size: A4; margin: 13mm 14mm 15mm; }
+@media print {
+  html, body { background: #fff !important; color: #000; }
+  body { font-size: 10.5pt; line-height: 1.42; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sst-bar, .top, .tabs, main, dialog, .ink, .inkbar { display: none !important; }
+  .print-only { display: block; }
+  /* Ctrl+P with no dialog prints the worksheet; the mark scheme only when ticked. */
+  body.p-no-ws #pWs, body:not(.p-ms) #pMs { display: none !important; }
+  #pMs { break-before: page; }
+  body.p-no-ws #pMs { break-before: auto; }
+  .pd { color: #000; }
+  .pd p { margin: 3pt 0; }
+  .phead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12pt; border-bottom: 1.5pt solid #000; padding-bottom: 5pt; margin-bottom: 9pt; }
+  .phead h1 { font-size: 17pt; margin: 0; line-height: 1.15; }
+  .phead .sub { font-size: 9pt; color: #444; }
+  .fill { display: flex; gap: 16pt; font-size: 10pt; margin: 0 0 10pt; }
+  .fill span { flex: 1; border-bottom: 1pt solid #000; padding-bottom: 2pt; }
+  .pd table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 5pt 0; break-inside: avoid; }
+  .pd th, .pd td { border: .75pt solid #888; padding: 3pt 6pt; text-align: left; vertical-align: top; color: #000; }
+  .pd th { background: #eee; }
+  .pd .q { margin: 0 0 10pt; }
+  .pd .q > .qt { break-after: avoid; }
+  .pd .qt { display: flex; gap: 8pt; }
+  .pd .qn { font-weight: 800; min-width: 14pt; }
+  .pd .mk { margin-left: auto; white-space: nowrap; font-weight: 700; padding-left: 8pt; }
+  .pd .part { margin: 5pt 0 0 22pt; break-inside: avoid; }
+  .pd .part .qt { gap: 6pt; }
+  .pd .lines { margin: 3pt 0 0; }
+  .pd .lines i { display: block; height: 8.5mm; border-bottom: .75pt solid #777; }
+  .pd .ans { margin: 3pt 0 0; text-align: right; font-size: 10pt; }
+  .pd figure { margin: 5pt 0 4pt 22pt; break-inside: avoid; }
+  .pd figure svg { display: block; width: 100%; max-width: 150mm; height: auto; margin: 0 auto; }
+  .pd .eqp { font-size: 12.5pt; margin: 4pt 0 0; letter-spacing: .01em; }
+  .pd .blank { display: inline-block; min-width: 9mm; border-bottom: .75pt solid #000; height: 1.1em; margin-right: 1pt; }
+  .pd .ms .mq { margin: 0 0 8pt; }
+  .pd .ms .mq .mq { margin: 0 0 5pt; break-inside: avoid; }
+  .pd .ms .mq > b { font-size: 11pt; }
+  .pd .ms ul { margin: 2pt 0 0; padding-left: 16pt; }
+  .pd .ms li { margin: 2pt 0; }
+  .pd .ms .work { font-size: 9.5pt; background: #f3f3f3; border-left: 2.5pt solid #000; padding: 3pt 8pt; margin: 3pt 0; white-space: pre-wrap; font-variant-numeric: tabular-nums; }
+  .pd .ms .no { color: #444; font-style: italic; }
+  .pd .ms .pm { float: right; font-weight: 700; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body data-view="bal">
+<script src="../../assets/sst/sst.js"></script>
+
+<!-- Inline icon sprite (in place of an icon font, so nothing loads from a CDN) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 3.5v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 12h9M18 12v3M21 12v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><path d="M3 4.5h18v12H3zM8.5 20.5h7M12 16.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-hl" viewBox="0 0 24 24"><path d="M5 19.5h14" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".55"/><path d="M8 15l-1.5-3L14 4.5l4 4L10.5 16zM6.5 12L4 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-erase" viewBox="0 0 24 24"><path d="M9 20h11M4.5 15.5l9-9 5 5-8.5 8.5H8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-bin" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5.5 3.5l13 7-5.5 1.5 3.5 6.5-2.5 1.5-3.5-6.5-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8.5V3.5h10v5M7 17H4.5V9h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h4l5-4.5v14l-5-4.5H4zM16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h4l5-4.5v14l-5-4.5H4zM16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5L2.5 20h19zM12 10v4.5M12 17.2v.3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="grow">
+    <h1>Balancing Equations: Atoms &amp; Molecules <span class="beta">beta</span></h1>
+    <div class="meta">
+      <span class="chip chem">Chemistry</span><span class="chip lvl">KS3</span><span class="chip lvl">GCSE</span>
+      <span class="chip">AQA 8462 4.1.1.1, 4.3.1.1 · Combined 8464 5.1.1.1, 5.3.1.1</span>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn" type="button" id="soundBtn" aria-pressed="true" title="Sound effects"><svg><use href="#i-sound"/></svg><span>Sound on</span></button>
+    <button class="btn" type="button" id="presentBtn" title="Presenter mode: fills the screen for the board (P)"><svg><use href="#i-screen"/></svg>Presenter mode</button>
+    <button class="btn" type="button" id="drawBtn" title="Annotate over the page (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+    <button class="btn primary" type="button" id="printBtn"><svg><use href="#i-print"/></svg>Print worksheet</button>
+  </div>
+</header>
+
+<nav class="tabs main-tabs sst-teacher" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-bal" aria-controls="view-bal" aria-selected="true">Balance it</button>
+  <button role="tab" id="tab-exp" aria-controls="view-exp" aria-selected="false" tabindex="-1">Subscripts vs coefficients</button>
+  <button role="tab" id="tab-quiz" aria-controls="view-quiz" aria-selected="false" tabindex="-1">Concept check</button>
+  <span class="grow"></span>
+  <button class="btn present-only" type="button" id="ctlBtn" aria-expanded="false" aria-controls="balPanel" title="Show the balancing controls (C)"><svg><use href="#i-key"/></svg>Controls</button>
+  <button class="btn present-only" type="button" id="drawBtn2" title="Annotate (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+  <button class="btn icon present-only" type="button" id="fullBtn" title="Full screen"><svg><use href="#i-full"/></svg></button>
+  <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)"><svg><use href="#i-close"/></svg>Exit</button>
+</nav>
+
+<main>
+<!-- ═════════════════════════ BALANCE IT ═════════════════════════ -->
+<section class="view layout" id="view-bal" role="tabpanel" aria-labelledby="tab-bal">
+  <div class="viewport">
+    <div class="wordeq" id="wordEq"></div>
+    <div class="symline" id="symLine" aria-live="polite"></div>
+    <div class="eqrow" id="eqRow"></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="dash">
+      <figure class="stage scale-stage"><svg id="seesaw" viewBox="0 0 560 290" role="img" aria-label="Balance scale: reactant atoms on the left pan, product atoms on the right pan"></svg></figure>
+      <div class="stage elstage">
+        <div class="elhead"><span>Reactants</span><span>Atom</span><span>Products</span></div>
+        <div id="elRows"></div>
+      </div>
+    </div>
+    <div class="sst-deck sst-deck--strip pr-only" id="balDeck" aria-label="How to balance, as slides">
+      <section class="sst-slide"><h3>Step 1</h3><p>Count the atoms of each element on both sides.</p></section>
+      <section class="sst-slide"><h3>Step 2</h3><p>Start with an element that is in only one substance on each side.</p></section>
+      <section class="sst-slide"><h3>Leave until last</h3><p>Elements on their own, like O<sub>2</sub> or H<sub>2</sub>.</p></section>
+      <section class="sst-slide"><h3>Step 3</h3><p>Add a whole molecule where that element is short, then count again.</p></section>
+      <section class="sst-slide"><h3>Step 4</h3><p>Stop when every element matches, in the <b>lowest whole numbers</b>.</p></section>
+      <section class="sst-slide"><h3>Why mass is conserved</h3><p>The same atoms are there before and after. They are only rearranged.</p></section>
+    </div>
+  </div>
+
+  <aside class="panel sst-teacher" id="balPanel" aria-label="Balancing controls">
+    <h2>Balance the equation</h2>
+    <p class="sub">Add or remove <b>whole molecules</b> until every type of atom matches on both sides. You can't change a formula.</p>
+    <label class="field"><span class="lbl">Reaction</span><select id="rxSel"></select></label>
+
+    <div class="card" id="customBox" hidden>
+      <h4>Custom reaction creator</h4>
+      <label class="field"><span class="lbl">Reactants</span><input type="text" id="cR" placeholder="Al + O2" spellcheck="false" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Products</span><input type="text" id="cP" placeholder="Al2O3" spellcheck="false" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Word equation (optional)</span><input type="text" id="cN" placeholder="aluminium + oxygen → aluminium oxide" autocomplete="off"></label>
+      <button class="btn primary" type="button" id="cGo">Build it</button>
+      <p class="err" id="cErr" role="alert"></p>
+      <p class="muted small">Type formulae with ordinary numbers, capital letters where they belong and brackets if needed: Ca(OH)2, Fe2O3. Leave out the big numbers in front: balancing is the job.</p>
+      <div class="examples" id="cEx"></div>
+    </div>
+
+    <div class="row2">
+      <button class="btn" type="button" id="hintBtn"><svg><use href="#i-bulb"/></svg>Hint</button>
+      <button class="btn" type="button" id="answerBtn"><svg><use href="#i-key"/></svg>Show answer</button>
+      <button class="btn" type="button" id="resetBtn"><svg><use href="#i-reset"/></svg>Reset</button>
+    </div>
+    <label class="check"><input type="checkbox" id="showTally" checked> Atom counts under each formula</label>
+    <label class="check"><input type="checkbox" id="showLetters" checked> Element letters on the models</label>
+
+    <div class="card note">
+      <h4>How to balance an equation</h4>
+      <ol>
+        <li>Count the atoms of each element on both sides.</li>
+        <li>Start with an element that is in only one substance on each side. Leave elements on their own, like O<sub>2</sub> or H<sub>2</sub>, until last.</li>
+        <li>Add a whole molecule where that element is short, then count again.</li>
+        <li>Stop when every element matches, in the <b>lowest whole numbers</b>.</li>
+      </ol>
+      <p class="muted">The same atoms are there before and after: they are only rearranged. That is why mass is conserved.</p>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ EXPLAINER ═════════════════════════ -->
+<section class="view" id="view-exp" role="tabpanel" aria-labelledby="tab-exp" hidden>
+  <div class="exp">
+   <!-- A normal page; in presenter mode each section is one slide. -->
+   <div class="sst-deck sst-deck--pr exp-deck" id="expDeck" aria-label="Subscripts and coefficients">
+    <section class="sst-slide">
+    <div class="anatomy">
+      <div class="big" aria-label="2 H 2 O">
+        <span class="a-co">2</span>H<sub>2</sub>O
+      </div>
+      <div class="alabels">
+        <div class="al co"><b>Coefficient</b>: the big number in front. It counts <b>whole molecules</b>, so 2H<sub>2</sub>O is two separate water molecules. <em>Change this to balance.</em></div>
+        <div class="al sub"><b>Subscript</b>: the small number after a symbol. It counts the atoms of that element <b>inside one molecule</b>. No number means one. <em>Never change this.</em></div>
+      </div>
+    </div>
+    </section>
+
+    <div class="expbar sst-teacher">
+      <span class="lbl">Try it with</span>
+      <div class="seg" id="exSeg">
+        <button type="button" data-ex="H2O" aria-pressed="true">H<sub>2</sub>O, water</button>
+        <button type="button" data-ex="CO2">CO<sub>2</sub>, carbon dioxide</button>
+        <button type="button" data-ex="O2">O<sub>2</sub>, oxygen</button>
+      </div>
+    </div>
+
+    <div class="exp-grid">
+      <section class="sst-slide xcard badc">
+        <div class="xhead"><h3>Change a subscript</h3><span class="pill bad">✗ Not allowed when balancing</span></div>
+        <div class="xform" id="subForm"></div>
+        <figure class="stage xstage" style="margin:0"><svg id="subSvg" viewBox="-3.6 -1.8 7.2 3.6" role="img" aria-label="Ball-and-stick model"></svg></figure>
+        <div class="xbtns"><button class="btn primary" type="button" id="subPlay"></button></div>
+        <div class="warn" id="subWarn" hidden role="alert">
+          <div class="wh"><svg><use href="#i-alert"/></svg>Warning: chemically illegal!</div>
+          <p id="subWarnText" style="margin:.4em 0 0"></p>
+        </div>
+        <p class="xcap">A subscript is part of the formula. Changing it rebuilds the inside of the molecule, so it becomes a <b>different substance</b> with different properties. The equation might "balance", but it no longer describes the reaction.</p>
+      </section>
+
+      <section class="sst-slide xcard goodc">
+        <div class="xhead"><h3>Change the coefficient</h3><span class="pill good">✓ This is how you balance</span></div>
+        <div class="xform" id="coefForm"></div>
+        <figure class="stage xstage" style="margin:0"><svg id="coefSvg" viewBox="-8 -4 16 8" role="img" aria-label="Copies of the molecule"></svg></figure>
+        <div class="xbtns">
+          <div class="stepper">
+            <button class="btn icon" type="button" id="coefMinus" aria-label="One fewer molecule">−</button>
+            <output id="coefOut">1</output>
+            <button class="btn primary" type="button" id="coefPlus"><svg><use href="#i-plus"/></svg>Copy &amp; paste a molecule</button>
+          </div>
+        </div>
+        <div class="okbox" id="coefTally"></div>
+        <p class="xcap">A coefficient multiplies the <b>whole</b> formula. Each copy is a complete, unchanged molecule, so the substance stays the same: you just have more of it.</p>
+      </section>
+    </div>
+    <section class="sst-slide sst-pr-slide rule-slide">
+      <table>
+        <thead><tr><th></th><th class="c-co">Coefficient: big, in front</th><th class="c-sub">Subscript: small, after a symbol</th></tr></thead>
+        <tbody>
+          <tr><th>Example</th><td><b class="c-co">3</b>CO<sub>2</sub></td><td>CO<sub><b class="c-sub">2</b></sub></td></tr>
+          <tr><th>It counts</th><td>molecules</td><td>atoms of one element in a molecule</td></tr>
+          <tr><th>It multiplies</th><td>every atom in the formula</td><td>only the symbol just before it</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="sst-slide sst-pr-slide rule-slide">
+      <table>
+        <thead><tr><th></th><th class="c-co">Coefficient</th><th class="c-sub">Subscript</th></tr></thead>
+        <tbody>
+          <tr><th>Change it and…</th><td>more or fewer molecules of the <b>same</b> substance</td><td>a <b>different</b> substance</td></tr>
+          <tr><th>When balancing</th><td>✓ change these</td><td>✗ never change these</td></tr>
+        </tbody>
+      </table>
+    </section>
+   </div>
+
+    <div class="rule">
+      <table>
+        <thead><tr><th></th><th class="c-co">Coefficient (big, in front)</th><th class="c-sub">Subscript (small, after a symbol)</th></tr></thead>
+        <tbody>
+          <tr><th>Example</th><td><b class="c-co">3</b>CO<sub>2</sub></td><td>CO<sub><b class="c-sub">2</b></sub></td></tr>
+          <tr><th>What it counts</th><td>how many molecules (or formula units)</td><td>how many atoms of that element in one molecule</td></tr>
+          <tr><th>It multiplies</th><td>every atom in the formula: 3CO<sub>2</sub> has 3 C and 6 O</td><td>only the symbol (or bracket) just before it</td></tr>
+          <tr><th>Change it and…</th><td>you get more or fewer molecules of the <b>same</b> substance</td><td>you get a <b>different</b> substance</td></tr>
+          <tr><th>When balancing</th><td>✓ change these</td><td>✗ never change these</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ CONCEPT CHECK ═════════════════════════ -->
+<section class="view" id="view-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+  <div class="quiz">
+    <div class="qprog" id="qProg"></div>
+    <div class="qcard" id="qCard" aria-live="polite"></div>
+  </div>
+</section>
+</main>
+
+<!-- ═════════════════════════ ANNOTATION LAYER ═════════════════════════ -->
+<canvas id="inkCv" class="ink" aria-hidden="true"></canvas>
+<div class="inkbar" id="inkBar" role="toolbar" aria-label="Annotation tools" hidden>
+  <button type="button" data-tool="cursor" title="Use the page (ink stays)"><svg><use href="#i-cursor"/></svg><span>Use page</span></button>
+  <button type="button" data-tool="pen" aria-pressed="true" title="Pen"><svg><use href="#i-pen"/></svg><span>Pen</span></button>
+  <button type="button" data-tool="hl" title="Highlighter"><svg><use href="#i-hl"/></svg><span>Highlight</span></button>
+  <button type="button" data-tool="erase" title="Eraser"><svg><use href="#i-erase"/></svg><span>Erase</span></button>
+  <span class="sep"></span>
+  <span class="swatches" id="swatches"></span>
+  <label class="picker" title="Pick any colour"><input type="color" id="inkColor" value="#ffd84d"></label>
+  <label class="size" title="Line thickness"><input type="range" id="inkSize" min="1" max="10" value="3"></label>
+  <span class="sep"></span>
+  <button type="button" id="inkUndo" title="Undo (Ctrl+Z)"><svg><use href="#i-reset"/></svg><span>Undo</span></button>
+  <button type="button" id="inkClear" title="Clear all ink"><svg><use href="#i-bin"/></svg><span>Clear</span></button>
+  <button type="button" id="inkClose" title="Close the toolbar; the ink stays until Clear (D)"><svg><use href="#i-close"/></svg><span>Close</span></button>
+</div>
+
+<!-- ═════════════════════════ PRINT DIALOG ═════════════════════════ -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptWs" checked><span><b>Student worksheet</b><br>Exam-style questions: counting atoms, subscripts and coefficients, balancing, conservation of mass and writing equations from words.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>Marking points, working and "do not accept" notes. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn primary" type="button" id="pGo"><svg><use href="#i-print"/></svg>Print</button>
+  </div>
+</dialog>
+
+<!-- ═════════════════════════ PRINTABLES ═════════════════════════ -->
+<div class="print-only pd" id="printDoc">
+  <section id="pWs">
+    <div class="phead"><h1>Balancing equations: exam practice</h1><div class="sub">AQA GCSE Chemistry 4.1.1.1, 4.3.1.1 · <span id="wsTotal"></span> marks</div></div>
+    <div class="fill"><span>Name</span><span>Class</span><span>Date</span></div>
+    <div id="pQList"></div>
+  </section>
+  <section id="pMs">
+    <div class="phead"><h1>Balancing equations: mark scheme</h1><div class="sub">For teachers · <span id="msTotal"></span> marks</div></div>
+    <div id="pMsList" class="ms"></div>
+  </section>
+</div>
+
+<script src="../../assets/sst/present.js"></script>
+<script>
+/* Balancing Equations (AQA GCSE Chemistry 4.1.1.1 / 4.3.1.1, Combined 5.1.1.1 / 5.3.1.1)
+   Plain script, no build step, no libraries.
+
+   Sections:
+     1. Helpers, elements and formula parsing
+     2. Molecule models (templates, generic layout, SVG)
+     3. Reactions and the equation solver
+     4. Sound
+     5. Tabs
+     6. Balance workspace (trays, dashboard, balance scale, hints, custom reactions)
+     7. Subscripts vs coefficients explainer
+     8. Concept check quiz
+     9. Presenter mode
+    10. Annotation layer
+    11. Printables
+    12. Keys and start-up */
+(() => {
+'use strict';
+
+/* ════════════════════════ 1. helpers, elements, parsing ════════════════════════ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// CPK colours, adjusted so carbon still reads on the dark stage. c fill, e rim, t letter, r radius (bond = ~1.1), ar relative atomic mass.
+const EL = {
+  H:  { c: '#f1f3f6', e: '#8f9aab', t: '#0b1420', r: .32, ar: 1,    n: 'hydrogen' },
+  C:  { c: '#3b4048', e: '#a3adbb', t: '#ffffff', r: .46, ar: 12,   n: 'carbon' },
+  N:  { c: '#3f6df2', e: '#a9c0ff', t: '#ffffff', r: .45, ar: 14,   n: 'nitrogen' },
+  O:  { c: '#e5403a', e: '#ffa29c', t: '#ffffff', r: .44, ar: 16,   n: 'oxygen' },
+  F:  { c: '#8fe05a', e: '#cdf5b0', t: '#10240a', r: .42, ar: 19,   n: 'fluorine' },
+  Cl: { c: '#35c46a', e: '#a4f0bf', t: '#06210f', r: .52, ar: 35.5, n: 'chlorine' },
+  Br: { c: '#a8322d', e: '#e69a95', t: '#ffffff', r: .56, ar: 80,   n: 'bromine' },
+  I:  { c: '#8a1f9e', e: '#d49be0', t: '#ffffff', r: .6,  ar: 127,  n: 'iodine' },
+  S:  { c: '#f2d33c', e: '#fff0a3', t: '#2a2200', r: .52, ar: 32,   n: 'sulfur' },
+  P:  { c: '#ff8a1f', e: '#ffc894', t: '#2a1500', r: .52, ar: 31,   n: 'phosphorus' },
+  Si: { c: '#e8c39c', e: '#fbe6cf', t: '#2a1a0a', r: .52, ar: 28,   n: 'silicon' },
+  Li: { c: '#c98cff', e: '#e8cbff', t: '#1f0833', r: .52, ar: 7,    n: 'lithium' },
+  Na: { c: '#a45cf0', e: '#d8b5ff', t: '#ffffff', r: .58, ar: 23,   n: 'sodium' },
+  K:  { c: '#8a3fd0', e: '#cfa6f5', t: '#ffffff', r: .64, ar: 39,   n: 'potassium' },
+  Mg: { c: '#2aa35a', e: '#93dcb0', t: '#ffffff', r: .55, ar: 24,   n: 'magnesium' },
+  Ca: { c: '#5cbf3a', e: '#b4e8a2', t: '#0d2206', r: .6,  ar: 40,   n: 'calcium' },
+  Ba: { c: '#2fb56f', e: '#a3e6c3', t: '#062012', r: .64, ar: 137,  n: 'barium' },
+  Al: { c: '#c2a7a7', e: '#e6d8d8', t: '#231818', r: .55, ar: 27,   n: 'aluminium' },
+  Fe: { c: '#e07a35', e: '#f5bf99', t: '#2a1204', r: .55, ar: 56,   n: 'iron' },
+  Cu: { c: '#c8803a', e: '#ebc49c', t: '#261405', r: .55, ar: 63.5, n: 'copper' },
+  Zn: { c: '#7d80b0', e: '#c3c5e2', t: '#ffffff', r: .55, ar: 65,   n: 'zinc' },
+  Ag: { c: '#c0c6cf', e: '#e9ecf0', t: '#111111', r: .58, ar: 108,  n: 'silver' },
+  Pb: { c: '#61646d', e: '#b0b3ba', t: '#ffffff', r: .62, ar: 207,  n: 'lead' },
+  Mn: { c: '#9c7ac7', e: '#d4c2ea', t: '#ffffff', r: .55, ar: 55,   n: 'manganese' },
+  Cr: { c: '#8a99c7', e: '#c9d1ea', t: '#ffffff', r: .55, ar: 52,   n: 'chromium' },
+  Ni: { c: '#50d050', e: '#b0efb0', t: '#062006', r: .55, ar: 59,   n: 'nickel' },
+  Sn: { c: '#668080', e: '#b7c6c6', t: '#ffffff', r: .6,  ar: 119,  n: 'tin' },
+  Au: { c: '#ffd123', e: '#fff0a8', t: '#2a2000', r: .58, ar: 197,  n: 'gold' },
+  He: { c: '#d9ffff', e: '#9ec7c7', t: '#0b1420', r: .4,  ar: 4,    n: 'helium' },
+  B:  { c: '#ffb5b5', e: '#ffe0e0', t: '#2a0b0b', r: .46, ar: 11,   n: 'boron' }
+};
+const ELDEF = { c: '#e58fc6', e: '#ffc6e8', t: '#2a0b1d', r: .52, ar: null };
+const el = e => EL[e] || ELDEF;
+// Balls are drawn smaller than the radii above so the sticks between them show.
+const RS = .78;
+const elName = e => (EL[e] && EL[e].n) || e;
+const SYMBOLS = new Set(('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr ' +
+  'Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt ' +
+  'Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr').split(' '));
+const METALS = new Set('Li Na K Rb Cs Be Mg Ca Sr Ba Al Ga Sn Pb Fe Cu Zn Ag Au Ni Co Mn Cr Ti Hg Pt V'.split(' '));
+
+// Formula → { element: count } in order of first appearance. Brackets multiply everything inside them.
+function parseFormula(raw) {
+  const s = raw.replace(/[₀-₉]/g, ch => '₀₁₂₃₄₅₆₇₈₉'.indexOf(ch)).replace(/\s+/g, '');
+  if (!s) throw new Error('One of the formulae is empty.');
+  let i = 0;
+  const num = () => {
+    const m = /^\d+/.exec(s.slice(i));
+    if (!m) return 1;
+    i += m[0].length;
+    if (+m[0] < 1) throw new Error(`A subscript of ${m[0]} in ${s} doesn't make sense.`);
+    return +m[0];
+  };
+  const group = close => {
+    const out = {};
+    while (i < s.length) {
+      const ch = s[i];
+      if (ch === '(' || ch === '[') {
+        i++;
+        const g = group(ch === '(' ? ')' : ']'), n = num();
+        for (const k in g) out[k] = (out[k] || 0) + g[k] * n;
+      } else if (ch === ')' || ch === ']') {
+        if (ch !== close) throw new Error(`The brackets in ${s} don't match.`);
+        i++; return out;
+      } else if (/[A-Z]/.test(ch)) {
+        let sym = ch;
+        const nx = s[i + 1] || '';
+        if (/[a-z]/.test(nx)) {
+          if (!SYMBOLS.has(ch + nx)) throw new Error(`"${ch + nx}" in ${s} isn't an element symbol.`);
+          sym = ch + nx;
+        } else if (!SYMBOLS.has(sym)) throw new Error(`"${sym}" in ${s} isn't an element symbol.`);
+        i += sym.length;
+        out[sym] = (out[sym] || 0) + num();
+      } else if (/\d/.test(ch)) {
+        throw new Error(`${s} has a number where an element symbol should be. Big numbers go in front, and you balance those here.`);
+      } else throw new Error(`"${ch}" in ${s} isn't allowed. Element symbols start with a capital letter.`);
+    }
+    if (close) throw new Error(`A bracket in ${s} isn't closed.`);
+    return out;
+  };
+  return group(null);
+}
+const fx = f => esc(f).replace(/(\d+)/g, '<sub>$1</sub>');
+
+const NAMES = {
+  CH4: 'methane', O2: 'oxygen', CO2: 'carbon dioxide', H2O: 'water', H2: 'hydrogen', N2: 'nitrogen', NH3: 'ammonia',
+  C6H12O6: 'glucose', H2SO4: 'sulfuric acid', NaOH: 'sodium hydroxide', Na2SO4: 'sodium sulfate', HCl: 'hydrochloric acid',
+  NaCl: 'sodium chloride', Mg: 'magnesium', MgO: 'magnesium oxide', Na: 'sodium', Fe: 'iron', Cl2: 'chlorine',
+  FeCl3: 'iron(III) chloride', C3H8: 'propane', CaCO3: 'calcium carbonate', CaCl2: 'calcium chloride', CO: 'carbon monoxide',
+  H2O2: 'hydrogen peroxide', O3: 'ozone', Al: 'aluminium', Al2O3: 'aluminium oxide', Cu: 'copper', CuO: 'copper(II) oxide',
+  KOH: 'potassium hydroxide', K: 'potassium', 'Ca(OH)2': 'calcium hydroxide', HNO3: 'nitric acid', 'Ca(NO3)2': 'calcium nitrate',
+  C2H6: 'ethane', C2H4: 'ethene', C2H5OH: 'ethanol', C8H18: 'octane', Zn: 'zinc', ZnCl2: 'zinc chloride', SO2: 'sulfur dioxide',
+  SO3: 'sulfur trioxide', NO2: 'nitrogen dioxide', NO: 'nitrogen monoxide', Ca: 'calcium', CaO: 'calcium oxide', MgCl2: 'magnesium chloride',
+  Li: 'lithium', LiOH: 'lithium hydroxide', KCl: 'potassium chloride', Fe2O3: 'iron(III) oxide', C: 'carbon', S: 'sulfur',
+  P4: 'phosphorus', P4O10: 'phosphorus(V) oxide', MgSO4: 'magnesium sulfate', ZnO: 'zinc oxide', CuSO4: 'copper sulfate',
+  NaHCO3: 'sodium hydrogencarbonate', Na2CO3: 'sodium carbonate', KNO3: 'potassium nitrate', AgNO3: 'silver nitrate', AgCl: 'silver chloride',
+  NaNO3: 'sodium nitrate', CH3OH: 'methanol', C4H10: 'butane', Br2: 'bromine', I2: 'iodine', HBr: 'hydrogen bromide', KBr: 'potassium bromide'
+};
+
+/* ════════════════════════ 2. molecule models ════════════════════════ */
+// Templates: atoms [element, x, y] in bond-length units (y down), bonds [i, j, order].
+const T = (atoms, bonds = []) => ({ atoms, bonds });
+function glucose() {
+  const at = [], bd = [], add = (e, x, y) => at.push([e, x, y]) - 1;
+  const xs = [-2.75, -1.65, -.55, .55, 1.65, 2.75], C = xs.map(x => add('C', x, 0));
+  for (let i = 0; i < 5; i++) bd.push([C[i], C[i + 1], 1]);
+  bd.push([C[0], add('O', -3.45, -.8), 2], [C[0], add('H', -3.42, .74), 1]);           // CHO
+  [1, -1, 1, 1].forEach((s, k) => {                                                      // four CHOH
+    const x = xs[k + 1], o = add('O', x, -s * 1.05);
+    bd.push([C[k + 1], o, 1], [o, add('H', x + .62, -s * 1.72), 1], [C[k + 1], add('H', x, s * .98), 1]);
+  });
+  const o6 = add('O', 3.82, 0);                                                          // CH2OH
+  bd.push([C[5], add('H', 2.75, -.98), 1], [C[5], add('H', 2.75, .98), 1], [C[5], o6, 1], [o6, add('H', 4.45, -.5), 1]);
+  return T(at, bd);
+}
+const MOL = {
+  H2: T([['H', -.37, 0], ['H', .37, 0]], [[0, 1, 1]]),
+  O2: T([['O', -.6, 0], ['O', .6, 0]], [[0, 1, 2]]),
+  N2: T([['N', -.56, 0], ['N', .56, 0]], [[0, 1, 3]]),
+  Cl2: T([['Cl', -.68, 0], ['Cl', .68, 0]], [[0, 1, 1]]),
+  Br2: T([['Br', -.72, 0], ['Br', .72, 0]], [[0, 1, 1]]),
+  H2O: T([['O', 0, -.22], ['H', -.78, .36], ['H', .78, .36]], [[0, 1, 1], [0, 2, 1]]),
+  CO2: T([['O', -1.18, 0], ['C', 0, 0], ['O', 1.18, 0]], [[0, 1, 2], [1, 2, 2]]),
+  CO: T([['C', -.58, 0], ['O', .58, 0]], [[0, 1, 3]]),
+  CH4: T([['C', 0, 0], ['H', 0, -1.02], ['H', 1.02, 0], ['H', 0, 1.02], ['H', -1.02, 0]], [[0, 1, 1], [0, 2, 1], [0, 3, 1], [0, 4, 1]]),
+  NH3: T([['N', 0, .08], ['H', 0, -.96], ['H', -.9, .6], ['H', .9, .6]], [[0, 1, 1], [0, 2, 1], [0, 3, 1]]),
+  HCl: T([['H', -.62, 0], ['Cl', .6, 0]], [[0, 1, 1]]),
+  H2O2: T([['H', -1.32, .55], ['O', -.58, 0], ['O', .58, 0], ['H', 1.32, -.55]], [[0, 1, 1], [1, 2, 1], [2, 3, 1]]),
+  O3: T([['O', -1.0, .4], ['O', 0, -.2], ['O', 1.0, .4]], [[0, 1, 2], [1, 2, 1]]),
+  SO2: T([['O', -1.05, .4], ['S', 0, -.2], ['O', 1.05, .4]], [[0, 1, 2], [1, 2, 2]]),
+  NaOH: T([['Na', -1.3, 0], ['O', 0, 0], ['H', .8, 0]], [[1, 2, 1]]),
+  KOH: T([['K', -1.38, 0], ['O', 0, 0], ['H', .8, 0]], [[1, 2, 1]]),
+  NaCl: T([['Na', -.6, 0], ['Cl', .62, 0]]),
+  KCl: T([['K', -.64, 0], ['Cl', .62, 0]]),
+  MgO: T([['Mg', -.55, 0], ['O', .5, 0]]),
+  CaO: T([['Ca', -.58, 0], ['O', .52, 0]]),
+  CuO: T([['Cu', -.55, 0], ['O', .5, 0]]),
+  CaCl2: T([['Cl', -1.2, 0], ['Ca', 0, 0], ['Cl', 1.2, 0]]),
+  MgCl2: T([['Cl', -1.15, 0], ['Mg', 0, 0], ['Cl', 1.15, 0]]),
+  FeCl3: T([['Fe', 0, .1], ['Cl', 0, -1.1], ['Cl', 1.05, .72], ['Cl', -1.05, .72]]),
+  H2SO4: T([['S', 0, 0], ['O', 0, -1.12], ['O', 0, 1.12], ['O', -1.12, 0], ['O', 1.12, 0], ['H', -1.95, 0], ['H', 1.95, 0]],
+    [[0, 1, 2], [0, 2, 2], [0, 3, 1], [0, 4, 1], [3, 5, 1], [4, 6, 1]]),
+  Na2SO4: T([['S', 0, 0], ['O', 0, -1.12], ['O', 0, 1.12], ['O', -1.12, 0], ['O', 1.12, 0], ['Na', -2.3, 0], ['Na', 2.3, 0]],
+    [[0, 1, 2], [0, 2, 2], [0, 3, 1], [0, 4, 1]]),
+  CaCO3: T([['C', 0, -.1], ['O', 0, -1.24], ['O', -1.0, .48], ['O', 1.0, .48], ['Ca', 0, 1.55]], [[0, 1, 2], [0, 2, 1], [0, 3, 1]]),
+  C3H8: T([['C', -1.15, 0], ['C', 0, 0], ['C', 1.15, 0], ['H', -1.15, -.98], ['H', -1.15, .98], ['H', 0, -.98], ['H', 0, .98],
+    ['H', 1.15, -.98], ['H', 1.15, .98], ['H', -2.15, 0], ['H', 2.15, 0]],
+    [[0, 1, 1], [1, 2, 1], [0, 3, 1], [0, 4, 1], [1, 5, 1], [1, 6, 1], [2, 7, 1], [2, 8, 1], [0, 9, 1], [2, 10, 1]]),
+  C2H5OH: T([['C', -1.1, 0], ['C', 0, 0], ['O', 1.1, 0], ['H', -1.1, -.98], ['H', -1.1, .98], ['H', -2.1, 0], ['H', 0, -.98], ['H', 0, .98], ['H', 1.7, -.55]],
+    [[0, 1, 1], [1, 2, 1], [0, 3, 1], [0, 4, 1], [0, 5, 1], [1, 6, 1], [1, 7, 1], [2, 8, 1]]),
+  C6H12O6: glucose()
+};
+
+// Anything without a template: a central atom with the rest bonded round it, or (for bigger or ionic
+// formulae) a compact cluster. Compounds containing a metal are drawn without sticks.
+function genericMol(atoms) {
+  const els = Object.keys(atoms), list = [];
+  els.forEach(e => { for (let k = 0; k < atoms[e]; k++) list.push(e); });
+  const ionic = els.some(e => METALS.has(e)) && els.length > 1;
+  if (list.length === 1) return T([[list[0], 0, 0]]);
+  if (els.length === 1 && list.length <= 4) {
+    const gap = el(els[0]).r * 2 + .22;
+    return T(list.map((e, k) => [e, (k - (list.length - 1) / 2) * gap, 0]), list.slice(1).map((_, k) => [k, k + 1, 1]));
+  }
+  const centre = els.find(e => atoms[e] === 1 && e !== 'H' && !METALS.has(e)) || els.find(e => atoms[e] === 1 && e !== 'H');
+  if (centre && list.length <= 7) {
+    const rest = list.filter((e, k) => k !== list.indexOf(centre)), n = rest.length;
+    const at = [[centre, 0, 0]], bd = [];
+    rest.forEach((e, k) => {
+      const a = -Math.PI / 2 + k * 2 * Math.PI / n + (n === 2 ? Math.PI / 2 : 0);
+      const d = el(centre).r + el(e).r + (ionic ? .12 : .3);
+      at.push([e, Math.cos(a) * d, Math.sin(a) * d]);
+      if (!ionic) bd.push([0, k + 1, 1]);
+    });
+    return T(at, bd);
+  }
+  // Phyllotaxis cluster, heavier atoms in the middle.
+  const sorted = [...list].sort((a, b) => el(b).r - el(a).r);
+  return T(sorted.map((e, k) => { const r = .64 * Math.sqrt(k), a = k * 2.39996; return [e, r * Math.cos(a), r * Math.sin(a)]; }));
+}
+
+// SVG pieces for a molecule, in its own units. o.print: black rims, no highlight.
+function molParts(m, o = {}) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [e, x, y] of m.atoms) { const r = el(e).r * RS; x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); }
+  const pad = .06; x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+  let s = '';
+  for (const [i, j, ord] of m.bonds) s += bondSVG(m.atoms[i], m.atoms[j], ord, o.print);
+  for (const [e, x, y] of m.atoms) s += atomSVG(e, x, y, o.print);
+  return { x0, y0, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, body: s };
+}
+function bondSVG(a, b, ord, print) {
+  const [, ax, ay] = a, [, bx, by] = b, L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L, ny = (bx - ax) / L;
+  const offs = ord === 1 ? [0] : ord === 2 ? [-.1, .1] : [-.15, 0, .15];
+  return offs.map(d => `<line x1="${(ax + nx * d).toFixed(3)}" y1="${(ay + ny * d).toFixed(3)}" x2="${(bx + nx * d).toFixed(3)}" y2="${(by + ny * d).toFixed(3)}" stroke="${print ? '#222' : '#9aa7b8'}" stroke-width="${print ? .07 : .085}" stroke-linecap="round"/>`).join('');
+}
+function atomSVG(e, x, y, print) {
+  const d = el(e), r = d.r * RS, fs = (e.length > 1 ? .8 : 1) * r;
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${d.c}" stroke="${print ? '#000' : d.e}" stroke-width="${print ? .035 : .045}"/>` +
+    (print ? '' : `<circle cx="${(x - r * .34).toFixed(3)}" cy="${(y - r * .36).toFixed(3)}" r="${(r * .24).toFixed(3)}" fill="#fff" opacity=".28"/>`) +
+    `<text x="${x}" y="${(y + fs * .36).toFixed(3)}" font-size="${fs.toFixed(3)}" font-weight="700" text-anchor="middle" fill="${print && d.t === '#ffffff' ? '#fff' : d.t}">${e}</text>`;
+}
+const molOf = sp => sp.mol || (sp.mol = MOL[sp.f] || genericMol(sp.atoms));
+function molSVG(sp, px) {
+  const p = molParts(molOf(sp));
+  return `<svg class="mol" viewBox="${p.x0.toFixed(3)} ${p.y0.toFixed(3)} ${p.w.toFixed(3)} ${p.h.toFixed(3)}" width="${Math.round(p.w * px)}" height="${Math.round(p.h * px)}" font-family="Plus Jakarta Sans, system-ui, sans-serif" aria-hidden="true">${p.body}</svg>`;
+}
+// A molecule placed inside a bigger SVG, centred on (x, y), px per bond unit.
+function placeMol(f, x, y, px, print) {
+  const sp = species(f), p = molParts(molOf(sp), { print });
+  return `<g transform="translate(${x} ${y}) scale(${px}) translate(${-p.cx} ${-p.cy})">${p.body}</g>`;
+}
+
+/* ════════════════════════ 3. reactions and the solver ════════════════════════ */
+function species(f, name) {
+  const atoms = parseFormula(f);
+  let mr = 0;
+  for (const e in atoms) mr = mr == null || el(e).ar == null ? null : mr + el(e).ar * atoms[e];
+  const els = Object.keys(atoms);
+  const unit = els.length === 1 && atoms[els[0]] === 1 ? 'atom' : els.some(e => METALS.has(e)) ? 'unit' : 'molecule';
+  return { f, name: name || NAMES[f] || f, atoms, mr, unit };
+}
+function makeRx(r, p, names, extra = {}) {
+  return { r: r.map((f, i) => species(f, names && names.r[i])), p: p.map((f, i) => species(f, names && names.p[i])), arrow: '→', ...extra };
+}
+const elementsOf = rx => { const s = []; for (const sp of [...rx.r, ...rx.p]) for (const e in sp.atoms) if (!s.includes(e)) s.push(e); return s; };
+
+const PRESETS = [
+  { id: 'methane', g: 'Core reactions', label: 'Combustion of methane', r: ['CH4', 'O2'], p: ['CO2', 'H2O'] },
+  { id: 'water', g: 'Core reactions', label: 'Synthesis of water', r: ['H2', 'O2'], p: ['H2O'] },
+  { id: 'haber', g: 'Core reactions', label: 'Haber process (ammonia)', r: ['N2', 'H2'], p: ['NH3'], arrow: '⇌' },
+  { id: 'photosynthesis', g: 'Core reactions', label: 'Photosynthesis', r: ['CO2', 'H2O'], p: ['C6H12O6', 'O2'] },
+  { id: 'neutralisation', g: 'Core reactions', label: 'Neutralisation: sulfuric acid + sodium hydroxide', r: ['H2SO4', 'NaOH'], p: ['Na2SO4', 'H2O'] },
+  { id: 'magnesium', g: 'More practice', label: 'Burning magnesium', r: ['Mg', 'O2'], p: ['MgO'] },
+  { id: 'hcl', g: 'More practice', label: 'Hydrogen + chlorine', r: ['H2', 'Cl2'], p: ['HCl'] },
+  { id: 'sodium', g: 'More practice', label: 'Sodium + water', r: ['Na', 'H2O'], p: ['NaOH', 'H2'] },
+  { id: 'iron', g: 'More practice', label: 'Iron + chlorine', r: ['Fe', 'Cl2'], p: ['FeCl3'] },
+  { id: 'propane', g: 'More practice', label: 'Combustion of propane', r: ['C3H8', 'O2'], p: ['CO2', 'H2O'] },
+  { id: 'marble', g: 'More practice', label: 'Calcium carbonate + hydrochloric acid', r: ['CaCO3', 'HCl'], p: ['CaCl2', 'H2O', 'CO2'] },
+  { id: 'ethanol', g: 'More practice', label: 'Combustion of ethanol', r: ['C2H5OH', 'O2'], p: ['CO2', 'H2O'] },
+  { id: 'aluminium', g: 'More practice', label: 'Aluminium + oxygen', r: ['Al', 'O2'], p: ['Al2O3'] },
+  { id: 'hclnaoh', g: 'More practice', label: 'Neutralisation: hydrochloric acid + sodium hydroxide', r: ['HCl', 'NaOH'], p: ['NaCl', 'H2O'] }
+];
+
+// Exact rational arithmetic (BigInt) for the null space of the atom matrix.
+const bgcd = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) [a, b] = [b, a % b]; return a; };
+const Fr = (n, d = 1n) => { if (d < 0n) { n = -n; d = -d; } const g = bgcd(n, d) || 1n; return { n: n / g, d: d / g }; };
+const fsub = (a, b) => Fr(a.n * b.d - b.n * a.d, a.d * b.d);
+const fmul = (a, b) => Fr(a.n * b.n, a.d * b.d);
+const fdiv = (a, b) => Fr(a.n * b.d, a.d * b.n);
+function solve(rx) {
+  const sp = [...rx.r, ...rx.p], nR = rx.r.length, els = elementsOf(rx), cols = sp.length;
+  const M = els.map(e => sp.map((s, j) => Fr(BigInt((s.atoms[e] || 0) * (j < nR ? 1 : -1)))));
+  const piv = [];
+  let r = 0;
+  for (let c = 0; c < cols && r < M.length; c++) {
+    const p = M.findIndex((row, i) => i >= r && row[c].n !== 0n);
+    if (p < 0) continue;
+    [M[r], M[p]] = [M[p], M[r]];
+    const pv = M[r][c];
+    M[r] = M[r].map(x => fdiv(x, pv));
+    for (let i = 0; i < M.length; i++) if (i !== r && M[i][c].n !== 0n) { const f = M[i][c]; M[i] = M[i].map((x, k) => fsub(x, fmul(f, M[r][k]))); }
+    piv.push(c); r++;
+  }
+  const free = [...Array(cols).keys()].filter(c => !piv.includes(c));
+  if (free.length === 0) return { error: "These substances can't make a balanced equation: there's no way to match every atom." };
+  if (free.length > 1) return { error: 'This set of substances can be balanced in more than one independent way. Split it into two separate reactions.' };
+  const x = Array(cols);
+  x[free[0]] = Fr(1n);
+  piv.forEach((c, i) => { x[c] = Fr(-M[i][free[0]].n, M[i][free[0]].d); });
+  let L = 1n;
+  for (const v of x) L = L * v.d / bgcd(L, v.d);
+  let ints = x.map(v => v.n * L / v.d);
+  if (ints.every(v => v <= 0n)) ints = ints.map(v => -v);
+  if (ints.some(v => v <= 0n)) return { error: "These substances can't balance with every substance on its own side. Check that the reactants and products are the right way round, and that nothing is missing." };
+  const g = ints.reduce((a, b) => bgcd(a, b));
+  const out = ints.map(v => Number(v / g));
+  if (out.some(v => v > 60)) return { error: 'This one needs coefficients bigger than 60, which is too many molecules to show. Try a simpler reaction.' };
+  return { coef: out };
+}
+
+/* ════════════════════════ 4. sound ════════════════════════ */
+const sound = {
+  on: true, ctx: null,
+  ac() {
+    if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; this.ctx = new C(); }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+  tone(f, dur, { type = 'sine', vol = .12, to = null, at = 0 } = {}) {
+    if (!this.on) return;
+    const c = this.ac(); if (!c) return;
+    const t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .03);
+  },
+  add() { this.tone(520, .13, { type: 'triangle', to: 900 }); },
+  remove() { this.tone(640, .13, { type: 'triangle', to: 300 }); },
+  balanced() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .42, { type: 'triangle', vol: .1, at: i * .09 })); },
+  right() { this.tone(660, .15, { type: 'triangle' }); this.tone(990, .26, { type: 'triangle', at: .11 }); },
+  wrong() { this.tone(190, .3, { type: 'square', vol: .045, to: 120 }); },
+  illegal() { this.tone(230, .16, { type: 'square', vol: .05 }); this.tone(230, .26, { type: 'square', vol: .05, at: .2, to: 150 }); },
+  whoosh() { this.tone(300, .3, { type: 'sine', vol: .06, to: 700 }); }
+};
+try { if (localStorage.getItem('sst-balance-sound') === 'off') sound.on = false; } catch (e) {}
+function syncSound() {
+  const b = $('#soundBtn');
+  b.setAttribute('aria-pressed', sound.on);
+  b.querySelector('use').setAttribute('href', sound.on ? '#i-sound' : '#i-mute');
+  b.querySelector('span').textContent = sound.on ? 'Sound on' : 'Sound off';
+}
+$('#soundBtn').addEventListener('click', () => {
+  sound.on = !sound.on; syncSound();
+  try { localStorage.setItem('sst-balance-sound', sound.on ? 'on' : 'off'); } catch (e) {}
+  if (sound.on) sound.add();
+});
+syncSound();
+
+/* ════════════════════════ 5. tabs ════════════════════════ */
+const tabs = $$('.main-tabs [role="tab"]');
+function showTab(tab, focus) {
+  tabs.forEach(t => {
+    const on = t === tab;
+    t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+    $('#' + t.getAttribute('aria-controls')).hidden = !on;
+  });
+  document.body.dataset.view = tab.id.slice(4);
+  if (focus) tab.focus();
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => showTab(t));
+  t.addEventListener('keydown', e => {
+    const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (d) { e.preventDefault(); showTab(tabs[(i + d + tabs.length) % tabs.length], true); }
+  });
+});
+
+/* ════════════════════════ 6. balance workspace ════════════════════════ */
+const MAX = 12;
+const B = { rx: null, coef: [], answer: null, cols: [], wasBalanced: false, presetId: 'methane' };
+const allSp = () => [...B.rx.r, ...B.rx.p];
+const presenting = () => document.body.classList.contains('presenting');
+
+function trayPx(sp, n) {
+  const f = n <= 2 ? 1 : n <= 4 ? .86 : n <= 8 ? .7 : .58;
+  const w = molParts(molOf(sp)).w;
+  return Math.round(Math.min(38 * f, 270 / w) * 10) / 10;
+}
+
+function loadRx(rx, presetId) {
+  B.rx = rx; B.presetId = presetId || null;
+  const sol = solve(rx);
+  B.answer = sol.coef || null;
+  B.coef = allSp().map(() => 1);
+  renderRx();
+  B.wasBalanced = isBalanced();
+  update(false);
+}
+
+function renderRx() {
+  const rx = B.rx, join = list => list.map(s => `<span>${esc(s.name)}</span>`).join(' + ');
+  $('#wordEq').innerHTML = `<span class="lab">Word equation</span>${join(rx.r)}<span class="arrow">${rx.arrow}</span>${join(rx.p)}`;
+  const row = $('#eqRow');
+  row.innerHTML = '';
+  B.cols = [];
+  // Two sides, with the arrow leading the products so it wraps with them rather than dangling.
+  row.innerHTML = `<div class="side"></div><div class="side"><div class="lead"><div class="op arrow" aria-label="reacts to form">${rx.arrow}</div></div></div>`;
+  const sides = row.querySelectorAll('.side');
+  allSp().forEach((sp, i) => {
+    const side = sides[i < rx.r.length ? 0 : 1];
+    if (i && i !== rx.r.length) side.insertAdjacentHTML('beforeend', '<div class="op" aria-hidden="true">+</div>');
+    const c = document.createElement('div');
+    c.className = 'sp';
+    c.innerHTML = `<div class="fbig"><span class="coef">1</span><span class="form">${fx(sp.f)}</span></div>
+      <div class="spname">${esc(sp.name)}</div>
+      <div class="tray" role="img"></div>
+      <div class="tally"></div>
+      <div class="spbtns">
+        <button class="btn icon minus" type="button" aria-label="Remove one ${sp.unit} of ${esc(sp.name)}" title="Remove one">−</button>
+        <button class="btn primary add" type="button" aria-label="Add one ${sp.unit} of ${esc(sp.name)}" title="Copy and paste another ${sp.unit} of ${esc(sp.name)}"><svg><use href="#i-plus"/></svg><span class="addtxt">Add ${sp.unit}</span></button>
+      </div>`;
+    (i === rx.r.length ? side.querySelector('.lead') : side).appendChild(c);
+    const col = { el: c, coef: c.querySelector('.coef'), tray: c.querySelector('.tray'), tally: c.querySelector('.tally'), minus: c.querySelector('.minus'), add: c.querySelector('.add') };
+    col.add.addEventListener('click', () => setCoef(i, B.coef[i] + 1));
+    col.minus.addEventListener('click', () => setCoef(i, B.coef[i] - 1));
+    B.cols.push(col);
+  });
+  buildDash();
+  $('#answerBtn').disabled = !B.answer;
+}
+
+function setCoef(i, n) {
+  n = clamp(n, 1, MAX);
+  if (n === B.coef[i]) return;
+  const up = n > B.coef[i];
+  B.coef[i] = n;
+  up ? sound.add() : sound.remove();
+  const c = B.cols[i].coef;
+  c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+  update(true);
+}
+
+// Make the tray hold exactly coef copies. New copies fly out of the previous one: copy and paste.
+function reconcile(i, anim) {
+  const sp = allSp()[i], col = B.cols[i], n = B.coef[i], px = trayPx(sp, n), tray = col.tray;
+  let live = [...tray.children].filter(c => !c.classList.contains('leaving'));
+  const had = live.length;
+  if (+tray.dataset.px !== px) { tray.innerHTML = ''; tray.dataset.px = px; live = []; }
+  while (live.length < n) {
+    const cp = document.createElement('span');
+    cp.className = 'copy';
+    cp.innerHTML = molSVG(sp, px);
+    tray.appendChild(cp);
+    if (anim && live.length >= had) {
+      const src = live[live.length - 1];
+      if (src) {
+        const a = src.getBoundingClientRect(), b = cp.getBoundingClientRect();
+        cp.style.setProperty('--fx', `${a.left - b.left}px`); cp.style.setProperty('--fy', `${a.top - b.top}px`);
+        cp.classList.add('cloned');
+        src.classList.remove('source'); void src.offsetWidth; src.classList.add('source');
+      } else cp.classList.add('popped');
+    }
+    live.push(cp);
+  }
+  while (live.length > n) {
+    const cp = live.pop();
+    if (anim) { cp.classList.add('leaving'); setTimeout(() => cp.remove(), 230); } else cp.remove();
+  }
+  tray.setAttribute('aria-label', `${n} ${sp.unit}${n > 1 ? 's' : ''} of ${sp.name}`);
+}
+
+function counts() {
+  const els = elementsOf(B.rx), c = {}, nR = B.rx.r.length;
+  els.forEach(e => { c[e] = [0, 0]; });
+  allSp().forEach((sp, i) => { for (const e in sp.atoms) c[e][i < nR ? 0 : 1] += sp.atoms[e] * B.coef[i]; });
+  return c;
+}
+const isBalanced = () => Object.values(counts()).every(([l, r]) => l === r);
+const gcdAll = a => a.reduce((x, y) => { while (y) [x, y] = [y, x % y]; return x; });
+
+function update(anim) {
+  const nR = B.rx.r.length;
+  allSp().forEach((sp, i) => {
+    const col = B.cols[i], n = B.coef[i];
+    col.coef.textContent = n;
+    col.coef.classList.toggle('one', n === 1);
+    col.minus.disabled = n <= 1;
+    col.add.disabled = n >= MAX;
+    reconcile(i, anim);
+    col.tally.innerHTML = Object.keys(sp.atoms).map(e => `<span><i class="dot" style="background:${el(e).c};border-color:${el(e).e}"></i>${e} <b>${sp.atoms[e] * n}</b></span>`).join('');
+  });
+  const term = (sp, i) => `${B.coef[i] > 1 ? `<span class="co">${B.coef[i]}</span>` : ''}${fx(sp.f)}`;
+  const sp = allSp();
+  $('#symLine').innerHTML = `<span class="lab">Symbol equation</span>${sp.slice(0, nR).map((s, i) => term(s, i)).join(' + ')}<span class="arrow">${B.rx.arrow}</span>${sp.slice(nR).map((s, i) => term(s, i + nR)).join(' + ')}`;
+  updateDash();
+  const bal = isBalanced();
+  $('#eqRow').classList.toggle('balanced', bal);
+  if (bal && !B.wasBalanced && anim) sound.balanced();
+  B.wasBalanced = bal;
+  setStatus();
+}
+
+function setStatus(hint) {
+  const c = counts(), bad = Object.keys(c).filter(e => c[e][0] !== c[e][1]), st = $('#status');
+  const tot = side => Object.values(c).reduce((s, v) => s + v[side], 0);
+  const mr = side => { let m = 0; const nR = B.rx.r.length; allSp().forEach((sp, i) => { if ((i < nR) === (side === 0)) m = sp.mr == null || m == null ? null : m + sp.mr * B.coef[i]; }); return m; };
+  const fmt = m => Number.isInteger(m) ? m : m.toFixed(1);
+  let html, cls;
+  if (!bad.length) {
+    const g = gcdAll([...B.coef]);
+    if (g > 1) {
+      cls = 'half';
+      html = `<span class="head">Balanced, but not in the lowest numbers.</span>Every coefficient divides by ${g}. Take away molecules until the numbers are as small as they can be.`;
+    } else {
+      cls = 'ok';
+      const m0 = mr(0), m1 = mr(1);
+      html = `<span class="head">Balanced!</span>${tot(0)} atoms on each side, the same atoms rearranged into new substances.` +
+        (m0 != null ? ` Total M<sub>r</sub>: ${fmt(m0)} = ${fmt(m1)}, so mass is conserved.` : '');
+    }
+  } else {
+    cls = '';
+    html = `<span class="head">Not balanced yet.</span>${bad.map(e => `<b>${elName(e)}</b>: ${c[e][0]} on the left, ${c[e][1]} on the right`).join('; ')}.`;
+  }
+  if (hint) html += `<span class="hint">${hint}</span>`;
+  st.className = 'status ' + cls;
+  st.innerHTML = html;
+}
+
+// Which element to fix next: the one in fewest substances, leaving lone elements (O2, H2) until last.
+function hintText() {
+  const c = counts(), nR = B.rx.r.length, sp = allSp();
+  const bad = Object.keys(c).filter(e => c[e][0] !== c[e][1]);
+  if (!bad.length) {
+    const g = gcdAll([...B.coef]);
+    return g > 1 ? `Divide every number by ${g}.` : 'It is already balanced. Try another reaction.';
+  }
+  const score = e => sp.filter(s => s.atoms[e]).length + (sp.some(s => s.atoms[e] && Object.keys(s.atoms).length === 1) ? 10 : 0);
+  const e = [...bad].sort((a, b) => score(a) - score(b))[0];
+  const [L, R] = c[e], leftShort = L < R;
+  const cands = sp.map((s, i) => ({ s, i })).filter(({ s, i }) => s.atoms[e] && (i < nR) === leftShort && B.coef[i] < MAX);
+  cands.sort((a, b) => (Object.keys(a.s.atoms).length === 1) - (Object.keys(b.s.atoms).length === 1));
+  const pick = cands[0];
+  const where = leftShort ? 'left' : 'right';
+  if (!pick) return `Look at <b>${elName(e)}</b>: ${L} on the left and ${R} on the right. Try taking a molecule away from the other side.`;
+  return `Look at <b>${elName(e)}</b>: ${L} on the left, ${R} on the right. The ${where} side is short, so add another ${fx(pick.s.f)} on the ${where}, then count again.`;
+}
+$('#hintBtn').addEventListener('click', () => setStatus(hintText()));
+$('#answerBtn').addEventListener('click', () => {
+  if (!B.answer) return;
+  B.coef = [...B.answer];
+  sound.whoosh();
+  update(true);
+  setStatus('Here is the answer. Check each element: can you see why every number is needed?');
+});
+$('#resetBtn').addEventListener('click', () => { B.coef = B.coef.map(() => 1); B.wasBalanced = isBalanced(); update(false); });
+$('#showTally').addEventListener('change', e => $$('.tally').forEach(t => { t.hidden = !e.target.checked; }));
+$('#showLetters').addEventListener('change', e => $('#eqRow').classList.toggle('nolabels', !e.target.checked));
+
+/* Balance scale and atom rows */
+const SEE = { pivot: [280, 80], arm: 200, drop: 112 };
+function buildDash() {
+  const els = elementsOf(B.rx);
+  $('#elRows').innerHTML = els.map(e => `<div class="er" data-e="${e}"><b class="n l">0</b><span class="bar l"><i style="background:${el(e).c}"></i></span>
+      <span class="elc" title="${elName(e)}"><i class="dot" style="background:${el(e).c};border-color:${el(e).e}"></i>${e}</span>
+      <span class="bar r"><i style="background:${el(e).c}"></i></span><b class="n r">0</b><span class="mk"></span></div>`).join('') +
+    `<div class="er tot"><b class="n l" id="totL">0</b><span>total atoms</span><span></span><span></span><b class="n r" id="totR">0</b><span></span></div>`;
+  const [px, py] = SEE.pivot;
+  const pan = id => `<g class="pan" id="${id}">
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#8693a5" stroke-width="2"/>
+      <line x1="-78" y1="12" x2="78" y2="12" stroke="#8693a5" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-76" y1="12" x2="-76" y2="${SEE.drop}" stroke="#56657a" stroke-width="1.5"/>
+      <line x1="76" y1="12" x2="76" y2="${SEE.drop}" stroke="#56657a" stroke-width="1.5"/>
+      <g class="pile"></g>
+      <path d="M-84 ${SEE.drop} H84 L72 ${SEE.drop + 10} H-72 Z" fill="#2c3d52" stroke="#8693a5" stroke-width="1.5" stroke-linejoin="round"/>
+      <text class="plab" x="0" y="${SEE.drop + 30}" text-anchor="middle" font-size="14" font-weight="700" fill="#edf2f8"></text>
+      <text class="pmr" x="0" y="${SEE.drop + 48}" text-anchor="middle" font-size="12.5" fill="#8693a5"></text>
+    </g>`;
+  $('#seesaw').innerHTML = `
+    <path d="M${px - 48} 272 H${px + 48} L${px + 10} 90 H${px - 10} Z" fill="#182535" stroke="#2c3d52" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="${px - 110}" y1="272" x2="${px + 110}" y2="272" stroke="#2c3d52" stroke-width="2"/>
+    <g id="beam"><rect x="${px - SEE.arm - 6}" y="${py - 5}" width="${SEE.arm * 2 + 12}" height="10" rx="5" fill="#56657a"/>
+      <path id="pointer" d="M${px} ${py - 4} L${px - 6} ${py - 40} H${px + 6} Z" fill="#8693a5"/></g>
+    <circle cx="${px}" cy="${py}" r="7" fill="#8b9bb0" stroke="#091321" stroke-width="2"/>
+    <text id="seeMsg" x="${px}" y="22" text-anchor="middle" font-size="15" font-weight="800" fill="#8693a5"></text>
+    ${pan('panL')}${pan('panR')}`;
+  $('#seesaw').setAttribute('font-family', 'Plus Jakarta Sans, system-ui, sans-serif');
+}
+function pile(c, side) {
+  const balls = [];
+  for (const e in c) for (let k = 0; k < c[e][side]; k++) balls.push(e);
+  const per = 13, r = 5.2, gap = 11.4, max = per * 7;
+  let s = '';
+  balls.slice(0, max).forEach((e, k) => {
+    const row = Math.floor(k / per), inRow = Math.min(per, balls.length - row * per), col = k % per;
+    const x = (col - (inRow - 1) / 2) * gap, y = SEE.drop - r - 1 - row * (gap - 1.2);
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${el(e).c}" stroke="${el(e).e}" stroke-width="1"/>`;
+  });
+  if (balls.length > max) s += `<text x="0" y="${SEE.drop - 7 * (gap - 1.2) - 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#edf2f8">+${balls.length - max} more</text>`;
+  return s;
+}
+function updateDash() {
+  const c = counts();
+  const max = Math.max(1, ...Object.values(c).flat());
+  let L = 0, R = 0;
+  for (const e in c) {
+    const [l, r] = c[e], row = $(`.er[data-e="${e}"]`);
+    L += l; R += r;
+    row.className = 'er ' + (l === r ? 'ok' : 'no');
+    row.querySelector('.n.l').textContent = l; row.querySelector('.n.r').textContent = r;
+    row.querySelector('.bar.l i').style.width = `${l / max * 100}%`;
+    row.querySelector('.bar.r i').style.width = `${r / max * 100}%`;
+    row.querySelector('.mk').textContent = l === r ? '✓' : '✗';
+  }
+  $('#totL').textContent = L; $('#totR').textContent = R;
+  const bal = Object.values(c).every(([l, r]) => l === r);
+  let ang = clamp((R - L) * 1.6, -13, 13);
+  if (!bal && !ang) ang = 2.5;
+  if (bal) ang = 0;
+  $('#beam').style.transform = `rotate(${ang}deg)`;
+  const [px, py] = SEE.pivot, rad = ang * Math.PI / 180;
+  const ends = [[px - SEE.arm * Math.cos(rad), py - SEE.arm * Math.sin(rad)], [px + SEE.arm * Math.cos(rad), py + SEE.arm * Math.sin(rad)]];
+  const nR = B.rx.r.length;
+  ['panL', 'panR'].forEach((id, side) => {
+    const g = $('#' + id);
+    g.style.transform = `translate(${ends[side][0].toFixed(1)}px, ${ends[side][1].toFixed(1)}px)`;
+    g.querySelector('.pile').innerHTML = pile(c, side);
+    g.querySelector('.plab').textContent = `${side ? 'Products' : 'Reactants'}: ${side ? R : L} atoms`;
+    let m = 0;
+    allSp().forEach((sp, i) => { if ((i < nR) === !side) m = m == null || sp.mr == null ? null : m + sp.mr * B.coef[i]; });
+    g.querySelector('.pmr').textContent = m == null ? '' : `total Mr ${Number.isInteger(m) ? m : m.toFixed(1)}`;
+  });
+  const msg = $('#seeMsg');
+  msg.textContent = bal ? 'Balanced: every element matches' : L === R ? 'Same total, but the elements don’t match' : 'Unbalanced';
+  msg.setAttribute('fill', bal ? '#6fe3a3' : '#8693a5');
+}
+
+/* Reaction picker, custom reactions and the URL hash */
+function fillSelect() {
+  const groups = {};
+  PRESETS.forEach(p => { (groups[p.g] = groups[p.g] || []).push(p); });
+  $('#rxSel').innerHTML = Object.entries(groups).map(([g, list]) => `<optgroup label="${g}">${list.map(p => `<option value="${p.id}">${esc(p.label)}</option>`).join('')}</optgroup>`).join('') +
+    '<optgroup label="Your own"><option value="custom">Custom reaction creator…</option></optgroup>';
+}
+function loadPreset(id) {
+  const p = PRESETS.find(x => x.id === id) || PRESETS[0];
+  $('#rxSel').value = p.id;
+  $('#customBox').hidden = true;
+  loadRx(makeRx(p.r, p.p, null, p.arrow ? { arrow: p.arrow } : {}), p.id);
+  setHash(p.id);
+}
+function setHash(h) { try { history.replaceState(null, '', '#' + h); } catch (e) {} }
+$('#rxSel').addEventListener('change', e => {
+  if (e.target.value === 'custom') { $('#customBox').hidden = false; $('#cR').focus(); }
+  else loadPreset(e.target.value);
+});
+
+const splitSide = s => s.split('+').map(t => t.trim()).filter(Boolean).map(t => t.replace(/^\d+\s*/, ''));
+function buildCustom(rStr, pStr, nStr, quiet) {
+  const err = $('#cErr');
+  err.textContent = '';
+  try {
+    const r = splitSide(rStr), p = splitSide(pStr);
+    if (!r.length || !p.length) throw new Error('Type at least one reactant and one product.');
+    let names = null;
+    if (nStr && nStr.trim()) {
+      const sides = nStr.split(/→|->|=|⇌/);
+      if (sides.length === 2) {
+        const nr = sides[0].split('+').map(t => t.trim()), np = sides[1].split('+').map(t => t.trim());
+        if (nr.length === r.length && np.length === p.length) names = { r: nr, p: np };
+        else throw new Error(`The word equation has ${nr.length} + ${np.length} names but there are ${r.length} + ${p.length} formulae.`);
+      } else throw new Error('Put an arrow, →, or -> between the two sides of the word equation.');
+    }
+    const rx = makeRx(r, p, names);
+    const L = new Set(rx.r.flatMap(s => Object.keys(s.atoms))), R = new Set(rx.p.flatMap(s => Object.keys(s.atoms)));
+    for (const e of L) if (!R.has(e)) throw new Error(`${elName(e)[0].toUpperCase() + elName(e).slice(1)} is on the left but not on the right. Atoms can't disappear.`);
+    for (const e of R) if (!L.has(e)) throw new Error(`${elName(e)[0].toUpperCase() + elName(e).slice(1)} is on the right but not on the left. Atoms can't appear from nowhere.`);
+    const sol = solve(rx);
+    if (sol.error) throw new Error(sol.error);
+    $('#rxSel').value = 'custom';
+    $('#customBox').hidden = false;
+    loadRx(rx, null);
+    setHash('r=' + encodeURIComponent(r.join('+') + '>' + p.join('+')) + (names ? '&n=' + encodeURIComponent(nStr.trim()) : ''));
+    return true;
+  } catch (e) {
+    if (!quiet) { err.textContent = e.message; sound.wrong(); }
+    return false;
+  }
+}
+$('#cGo').addEventListener('click', () => buildCustom($('#cR').value, $('#cP').value, $('#cN').value));
+['#cR', '#cP', '#cN'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') $('#cGo').click(); }));
+const EXAMPLES = [['Al + O2', 'Al2O3'], ['Fe2O3 + CO', 'Fe + CO2'], ['C8H18 + O2', 'CO2 + H2O'], ['Ca(OH)2 + HNO3', 'Ca(NO3)2 + H2O'], ['P4 + O2', 'P4O10']];
+$('#cEx').innerHTML = EXAMPLES.map(([r, p], i) => `<button type="button" data-i="${i}">${fx(r)} → ${fx(p)}</button>`).join('');
+$('#cEx').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const [r, p] = EXAMPLES[+b.dataset.i];
+  $('#cR').value = r; $('#cP').value = p; $('#cN').value = '';
+  buildCustom(r, p, '');
+});
+
+/* ════════════════════════ 7. subscripts vs coefficients ════════════════════════ */
+const MORPHS = {
+  H2O: { name: 'water', toName: 'hydrogen peroxide', fB: 'H<sub>2</sub>O', fA: 'H<sub>2</sub>O<sub class="hot">2</sub>', btn: 'Add a subscript 2 to the O',
+    warn: 'H<sub>2</sub>O<sub>2</sub> is <b>hydrogen peroxide</b>, a bleach used to disinfect cuts and lighten hair. You can’t drink it. Changing the subscript didn’t make more water: it made a different chemical.',
+    atoms: [{ e: 'O', b: [0, -.22], a: [-.58, 0] }, { e: 'H', b: [-.78, .36], a: [-1.32, .55] }, { e: 'H', b: [.78, .36], a: [1.32, -.55] }, { e: 'O', b: null, a: [.58, 0] }],
+    bB: [[0, 1, 1], [0, 2, 1]], bA: [[1, 0, 1], [0, 3, 1], [3, 2, 1]] },
+  CO2: { name: 'carbon dioxide', toName: 'carbon monoxide', fB: 'CO<sub>2</sub>', fA: 'CO<sub class="hot strike">2</sub>', btn: 'Delete the subscript 2',
+    warn: 'CO is <b>carbon monoxide</b>, a poisonous gas that stops blood carrying oxygen. Deleting one small number turned a harmless gas into a deadly one.',
+    atoms: [{ e: 'O', b: [-1.18, 0], a: null }, { e: 'C', b: [0, 0], a: [-.58, 0] }, { e: 'O', b: [1.18, 0], a: [.58, 0] }],
+    bB: [[0, 1, 2], [1, 2, 2]], bA: [[1, 2, 3]] },
+  O2: { name: 'oxygen', toName: 'ozone', fB: 'O<sub>2</sub>', fA: 'O<sub class="hot">3</sub>', btn: 'Change the subscript 2 to a 3',
+    warn: 'O<sub>3</sub> is <b>ozone</b>. High in the atmosphere it blocks ultraviolet light; at ground level it is a toxic gas that damages lungs. Oxygen gas is always O<sub>2</sub>.',
+    atoms: [{ e: 'O', b: [-.6, 0], a: [-1.0, .4] }, { e: 'O', b: [.6, 0], a: [0, -.2] }, { e: 'O', b: null, a: [1.0, .4] }],
+    bB: [[0, 1, 2]], bA: [[0, 1, 2], [1, 2, 1]] }
+};
+const X = { ex: 'H2O', changed: false, busy: false, n: 1 };
+const tr = ([x, y]) => `translate(${x}px, ${y}px)`;
+
+function drawSub() {
+  const m = MORPHS[X.ex], svg = $('#subSvg');
+  X.changed = false;
+  svg.classList.remove('fadeB', 'showA');
+  const pos = (list, key) => list.map(([i, j, o]) => bondSVG([0, ...m.atoms[i][key]], [0, ...m.atoms[j][key]], o)).join('');
+  svg.innerHTML = `<g class="bonds b">${pos(m.bB, 'b')}</g><g class="bonds a">${pos(m.bA, 'a')}</g>` +
+    m.atoms.map((a, k) => {
+      const start = a.b || [4.2, a.a[1]];
+      return `<g class="atm" data-k="${k}" style="transform:${tr(start)};${a.b ? '' : 'opacity:0'}">${atomSVG(a.e, 0, 0)}</g>`;
+    }).join('') +
+    `<text class="mname" x="0" y="1.45" text-anchor="middle">${m.name}</text>`;
+  svg.setAttribute('font-family', 'Plus Jakarta Sans, system-ui, sans-serif');
+  $('#subForm').innerHTML = `<span>${m.fB}</span>`;
+  $('#subPlay').textContent = m.btn;
+  $('#subWarn').hidden = true;
+}
+function playSub() {
+  if (X.busy) return;
+  if (X.changed) { drawSub(); return; }
+  const m = MORPHS[X.ex], svg = $('#subSvg');
+  X.busy = true;
+  sound.whoosh();
+  svg.classList.add('fadeB');
+  setTimeout(() => {
+    $$('#subSvg .atm').forEach(g => {
+      const a = m.atoms[+g.dataset.k];
+      if (a.a) { g.style.transform = tr(a.a); g.style.opacity = 1; }
+      else { g.style.transform = tr([Math.sign(a.b[0] || 1) * 4.4, a.b[1] - .6]); g.style.opacity = 0; }
+    });
+  }, 280);
+  setTimeout(() => {
+    svg.classList.add('showA');
+    const nm = svg.querySelector('.mname');
+    nm.textContent = `${m.toName}, not ${m.name}!`;
+    nm.classList.add('bad');
+    $('#subForm').innerHTML = `<span class="dim">${m.fB}</span><span class="to">→</span><span>${m.fA}</span>`;
+    $('#subWarnText').innerHTML = m.warn;
+    $('#subWarn').hidden = false;
+    $('#subPlay').textContent = 'Put it back';
+    sound.illegal();
+    X.changed = true; X.busy = false;
+  }, 1100);
+}
+$('#subPlay').addEventListener('click', playSub);
+
+function drawCoef(anim) {
+  const sp = species(X.ex), p = molParts(molOf(sp)), n = X.n, gap = .8, step = p.w + gap;
+  const svg = $('#coefSvg');
+  let zoom = svg.querySelector('.zoom');
+  if (!anim || !zoom || zoom.dataset.ex !== X.ex) {
+    svg.innerHTML = `<g class="zoom" data-ex="${X.ex}"></g>`;
+    svg.setAttribute('font-family', 'Plus Jakarta Sans, system-ui, sans-serif');
+    zoom = svg.querySelector('.zoom');
+  }
+  const slot = (i, count) => [(i - (count - 1) / 2) * step - p.cx, -p.cy];
+  const s = Math.min(3, 14.5 / (n * step));
+  zoom.style.transform = `scale(${s})`;
+  const cps = [...zoom.querySelectorAll('.cp:not(.gone)')];
+  cps.forEach((g, i) => {
+    if (i < n) g.style.transform = tr(slot(i, n));
+    else { g.classList.add('gone'); setTimeout(() => g.remove(), 420); }
+  });
+  for (let i = cps.length; i < n; i++) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'cp' + (anim ? ' new' : ''));
+    g.innerHTML = p.body;
+    const from = i > 0 && cps[i - 1] ? cps[i - 1].style.transform : tr(slot(i, n));
+    g.style.transform = anim ? from : tr(slot(i, n));
+    zoom.appendChild(g);
+    cps[i] = g;
+    if (anim) requestAnimationFrame(() => requestAnimationFrame(() => { g.classList.remove('new'); if (i < X.n) g.style.transform = tr(slot(i, X.n)); }));
+  }
+  $('#coefOut').textContent = n;
+  $('#coefMinus').disabled = n <= 1;
+  $('#coefPlus').disabled = n >= 4;
+  $('#coefForm').innerHTML = `<span>${n > 1 ? `<span class="co">${n}</span>` : ''}${fx(sp.f)}</span>`;
+  const els = Object.keys(sp.atoms);
+  const one = els.map(e => `${sp.atoms[e]} ${e}`).join(' + '), all = els.map(e => `${sp.atoms[e] * n} ${e}`).join(' + ');
+  $('#coefTally').innerHTML = `<div class="sum">${n > 1 ? `<span class="co">${n}</span>` : ''}${fx(sp.f)} = ${n} × (${one}) = ${all}</div>
+    <div>${n === 1 ? 'One' : ['', '', 'Two', 'Three', 'Four'][n]} separate molecule${n > 1 ? 's' : ''} of <b>${MORPHS[X.ex].name}</b>. Every bond inside each one is unchanged.</div>`;
+}
+$('#coefPlus').addEventListener('click', () => { if (X.n < 4) { X.n++; sound.add(); drawCoef(true); } });
+$('#coefMinus').addEventListener('click', () => { if (X.n > 1) { X.n--; sound.remove(); drawCoef(true); } });
+$('#exSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || X.busy) return;
+  $$('#exSeg button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+  X.ex = b.dataset.ex; X.n = 1;
+  drawSub(); drawCoef(false);
+});
+
+/* ════════════════════════ 8. concept check ════════════════════════ */
+const QZ = [
+  { concept: 'count', type: 'num', answer: 27,
+    prompt: `How many atoms are there altogether in <span class="fx">3Ca(NO<sub>3</sub>)<sub>2</sub></span>?`,
+    diag: {
+      9: 'You counted one Ca(NO<sub>3</sub>)<sub>2</sub> correctly, 9 atoms, but forgot the 3 in front. The coefficient multiplies the whole formula.',
+      5: 'You counted Ca, N and three O once. The 2 after the bracket doubles everything inside it, and the 3 in front triples the lot.',
+      15: 'You used the 3 in front but ignored the 2 after the bracket. That 2 doubles everything inside the bracket.',
+      24: 'The 2 after the bracket multiplies the N as well as the O: there are 2 N in each Ca(NO<sub>3</sub>)<sub>2</sub>, not 1.',
+      11: 'The 3 in front multiplies every atom in the formula, not just the calcium.',
+      21: 'You tripled the bracket part but not the calcium. The 3 in front multiplies everything, Ca included.'
+    },
+    generic: 'Count the atoms in one formula unit first, bracket by bracket, then multiply by the big number in front.',
+    steps: ['Inside the bracket, NO<sub>3</sub> has 1 N and 3 O.', 'The 2 after the bracket doubles it: 2 N and 6 O.', 'Add the calcium: one Ca(NO<sub>3</sub>)<sub>2</sub> has 1 Ca + 2 N + 6 O = <b>9 atoms</b>.', 'The 3 in front means three of these: 3 × 9 = <b>27 atoms</b> (3 Ca, 6 N and 18 O).'] },
+  { concept: 'count', type: 'mcq',
+    prompt: `How many <b>oxygen</b> atoms are there in <span class="fx">2H<sub>2</sub>SO<sub>4</sub></span>?`,
+    opts: [['4', 'That is the oxygen in one molecule. The 2 in front means two molecules, so double it.'],
+      ['6', 'It looks like you added the 2 to the 4. A coefficient multiplies; it doesn’t add.'],
+      ['8', null],
+      ['16', 'You multiplied by both 2s. The subscript 2 belongs to the H only, so it doesn’t touch the oxygen.']],
+    steps: ['The subscript 4 belongs to O: one H<sub>2</sub>SO<sub>4</sub> has 4 O atoms.', 'The subscript 2 belongs to H only, so it doesn’t change the oxygen count.', 'The coefficient 2 means two molecules: 2 × 4 = <b>8 O atoms</b>.'] },
+  { concept: 'coef', type: 'mcq', fig: 'H2O2',
+    prompt: 'A student is balancing H<sub>2</sub> + O<sub>2</sub> → H<sub>2</sub>O. They change it to H<sub>2</sub> + O<sub>2</sub> → H<sub>2</sub>O<sub>2</sub>. What is wrong?',
+    opts: [['It still isn’t balanced.', 'Count again: 2 H and 2 O on each side. It does balance, but the product is now the wrong substance.'],
+      ['Changing the subscript made hydrogen peroxide, a different substance, not water.', null],
+      ['You may only put numbers on the left-hand side.', 'You can put a coefficient in front of any substance, on either side.'],
+      ['The subscript should have gone on the hydrogen instead.', 'Changing any subscript changes the substance. H<sub>4</sub>O isn’t water either.']],
+    steps: ['A subscript is part of the formula: H<sub>2</sub>O is water, H<sub>2</sub>O<sub>2</sub> is hydrogen peroxide.', 'Changing it changes what the substance is, so the equation describes a different reaction.', 'Balance with coefficients instead. Water needs one more O on the right: 2H<sub>2</sub>O. Then hydrogen needs 4 on the left: <b>2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O</b>.'] },
+  { concept: 'coef', type: 'mcq',
+    prompt: 'Which of these means <b>three separate molecules</b> of carbon dioxide?',
+    opts: [['C<sub>3</sub>O<sub>6</sub>', 'That is one big molecule containing 9 atoms. The atoms are right but it isn’t three CO<sub>2</sub> molecules.'],
+      ['3CO<sub>2</sub>', null],
+      ['CO<sub>6</sub>', 'That is one molecule with six oxygens, which isn’t a real substance. The 3 has to go in front.'],
+      ['C<sub>3</sub>O<sub>2</sub>', 'That is carbon suboxide, a different substance: one molecule with 3 C and 2 O.']],
+    steps: ['A number in front (a coefficient) counts whole molecules.', 'So 3CO<sub>2</sub> is three molecules, each one C bonded to two O: <b>3 C and 6 O in total</b>.', 'Writing C<sub>3</sub>O<sub>6</sub> puts all nine atoms into one molecule, which changes the substance.'] },
+  { concept: 'coef', type: 'mcq',
+    prompt: 'Magnesium burns in oxygen to make magnesium oxide, MgO. Which is the correctly balanced equation?',
+    opts: [['Mg + O<sub>2</sub> → MgO<sub>2</sub>', 'It balances, but MgO<sub>2</sub> isn’t magnesium oxide: the formula of the product was changed.'],
+      ['2Mg + O<sub>2</sub> → 2MgO', null],
+      ['Mg + O → MgO', 'Oxygen gas is O<sub>2</sub>. Writing O changes its formula to make the equation balance.'],
+      ['Mg<sub>2</sub> + O<sub>2</sub> → 2MgO', 'Magnesium is Mg. Writing Mg<sub>2</sub> changes its formula. The 2 belongs in front: 2Mg.']],
+    steps: ['Start with the correct formulae and never change them: Mg + O<sub>2</sub> → MgO.', 'Oxygen: 2 on the left, 1 on the right. Put a 2 in front of MgO: Mg + O<sub>2</sub> → 2MgO.', 'Magnesium: now 1 on the left, 2 on the right. Put a 2 in front of Mg: <b>2Mg + O<sub>2</sub> → 2MgO</b>.'] }
+];
+const Qz = { i: 0, res: [], order: [] };
+const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+function quizStart() {
+  Qz.i = 0; Qz.res = [];
+  Qz.order = QZ.map(q => q.opts ? shuffle(q.opts.map((_, k) => k)) : null);
+  quizRender();
+}
+function quizProgress() {
+  $('#qProg').innerHTML = QZ.map((_, k) => `<i class="${Qz.res[k] === true ? 'right' : Qz.res[k] === false ? 'wrong' : k === Qz.i ? 'cur' : ''}"></i>`).join('') +
+    `<span>${Qz.i < QZ.length ? `Question ${Qz.i + 1} of ${QZ.length}` : 'Finished'}</span>`;
+}
+function quizRender() {
+  quizProgress();
+  const card = $('#qCard');
+  if (Qz.i >= QZ.length) return quizSummary();
+  const q = QZ[Qz.i];
+  const tag = q.concept === 'count' ? 'Counting atoms' : 'Subscripts and coefficients';
+  let body = '';
+  if (q.fig) {
+    const figW = 300, figH = 120;
+    body += `<div class="qfig"><svg viewBox="0 0 ${figW} ${figH}" width="${figW}" height="${figH}" font-family="Plus Jakarta Sans, system-ui, sans-serif" aria-label="Model of the student's product, H2O2">${placeMol(q.fig, figW / 2, 52, 42)}<text x="${figW / 2}" y="${figH - 6}" text-anchor="middle" font-size="13" fill="#8693a5">the student's "H₂O₂"</text></svg></div>`;
+  }
+  if (q.type === 'num') {
+    body += `<div class="numrow"><input type="text" id="qNum" inputmode="numeric" autocomplete="off" aria-label="Your answer"><button class="btn primary" type="button" id="qCheck">Check</button></div>`;
+  } else {
+    body += `<div class="opts">${Qz.order[Qz.i].map((k, n) => `<button class="opt" type="button" data-k="${k}"><span class="let">${'ABCD'[n]}</span><span>${q.opts[k][0]}</span></button>`).join('')}</div>`;
+  }
+  card.innerHTML = `<div class="qtag">${tag}</div><div class="qprompt">${q.prompt}</div>${body}<div id="qFb"></div><div class="qnav"></div>`;
+  if (q.type === 'num') {
+    const inp = $('#qNum');
+    const go = () => { const v = inp.value.trim(); if (!/^\d+$/.test(v)) { inp.focus(); return; } quizAnswer(+v); };
+    $('#qCheck').addEventListener('click', go);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  } else {
+    $$('#qCard .opt').forEach(b => b.addEventListener('click', () => quizAnswer(+b.dataset.k)));
+  }
+}
+function quizAnswer(v) {
+  const q = QZ[Qz.i];
+  let ok, why;
+  if (q.type === 'num') {
+    ok = v === q.answer;
+    why = ok ? '' : (q.diag[v] || q.generic);
+    const inp = $('#qNum'); inp.disabled = true; inp.classList.add(ok ? 'right' : 'wrong'); $('#qCheck').disabled = true;
+  } else {
+    ok = q.opts[v][1] === null;
+    why = ok ? '' : q.opts[v][1];
+    $$('#qCard .opt').forEach(b => {
+      const k = +b.dataset.k; b.disabled = true;
+      if (q.opts[k][1] === null) b.classList.add('right');
+      else if (k === v) b.classList.add('wrong');
+      else b.classList.add('faded');
+    });
+  }
+  Qz.res[Qz.i] = ok;
+  ok ? sound.right() : sound.wrong();
+  const correct = q.type === 'num' ? q.answer : q.opts.find(o => o[1] === null)[0];
+  $('#qFb').innerHTML = `<div class="fb ${ok ? 'right' : 'wrong'}">
+      <div class="fh">${ok ? '✓ Correct' : '✗ Not quite'}</div>
+      ${ok ? '' : `<p>${why}</p><p>The answer is <b>${correct}</b>.</p>`}
+      <p><b>Step by step</b></p><ol>${q.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>`;
+  quizProgress();
+  const nav = $('#qCard .qnav');
+  nav.innerHTML = `<button class="btn primary" type="button" id="qNext">${Qz.i < QZ.length - 1 ? 'Next question' : 'See my results'}</button>`;
+  $('#qNext').addEventListener('click', () => { Qz.i++; quizRender(); });
+  $('#qNext').focus({ preventScroll: true });
+}
+function quizSummary() {
+  const score = Qz.res.filter(Boolean).length;
+  const part = c => { const ks = QZ.map((q, k) => q.concept === c ? k : -1).filter(k => k >= 0); return [ks.filter(k => Qz.res[k]).length, ks.length]; };
+  const [cA, cN] = part('count'), [sA, sN] = part('coef');
+  const line = (title, a, n, good, bad) => `<div class="concept ${a === n ? 'good' : 'bad'}"><b>${title}</b><span class="res">${a} / ${n}</span><p>${a === n ? good : bad}</p></div>`;
+  $('#qCard').innerHTML = `<div class="qtag">Your results</div>
+    <div class="score">${score} / ${QZ.length}</div>
+    <div class="concepts">
+      ${line('Counting atoms in a formula', cA, cN, 'Secure: you multiply through brackets and by the coefficient.', 'Practise: count one formula unit bracket by bracket, then multiply everything by the big number in front.')}
+      ${line('Subscripts vs coefficients', sA, sN, 'Secure: you balance with whole molecules and never change a formula.', 'Review the explainer: a subscript changes the substance, a coefficient only makes more copies of it.')}
+    </div>
+    <div class="qnav">${sA < sN ? '<button class="btn" type="button" id="qExp">Open the explainer</button>' : ''}<button class="btn" type="button" id="qBal">Go and balance some</button><button class="btn primary" type="button" id="qAgain"><svg><use href="#i-reset"/></svg>Try again</button></div>`;
+  $('#qAgain').addEventListener('click', quizStart);
+  $('#qBal').addEventListener('click', () => showTab($('#tab-bal'), true));
+  if ($('#qExp')) $('#qExp').addEventListener('click', () => showTab($('#tab-exp'), true));
+  if (score === QZ.length) sound.balanced();
+}
+
+/* ════════════════════════ 9. presenter mode ════════════════════════ */
+// On the board the explainer is a deck; the molecule picker only belongs on the two card slides.
+SST_PRESENT.deck($('#expDeck'));
+const syncExpBar = () => { $('.expbar').hidden = presenting() && !$('#expDeck .xcard.is-on'); };
+$('#expDeck').addEventListener('sst-slide', syncExpBar);
+
+function showControls(on) {
+  document.body.classList.toggle('show-ctl', on);
+  $('#ctlBtn').setAttribute('aria-expanded', on);
+}
+$('#ctlBtn').addEventListener('click', () => showControls(!document.body.classList.contains('show-ctl')));
+
+function setPresenting(on) {
+  document.body.classList.toggle('presenting', on);
+  showControls(false);
+  syncExpBar();
+  if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  update(false);
+  if (ink.open) ink.resize();
+  (on ? $('#exitBtn') : $('#presentBtn')).focus({ preventScroll: true });
+}
+$('#presentBtn').addEventListener('click', () => setPresenting(true));
+$('#exitBtn').addEventListener('click', () => setPresenting(false));
+$('#fullBtn').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+});
+document.addEventListener('fullscreenchange', () => requestAnimationFrame(() => ink.resize()));
+
+/* ════════════════════════ 10. annotation layer ════════════════════════ */
+const ink = {
+  cv: $('#inkCv'), strokes: [], cur: null, tool: 'pen', color: '#ffd84d', size: 3, open: false,
+  COLOURS: ['#ffd84d', '#ff5a5a', '#47b5fa', '#6fe3a3', '#b199f4', '#ffffff', '#000000'],
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    this.cv.width = Math.round(innerWidth * dpr); this.cv.height = Math.round(innerHeight * dpr);
+    this.cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.redraw();
+  },
+  redraw() {
+    const ctx = this.cv.getContext('2d');
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const s of this.cur ? [...this.strokes, this.cur] : this.strokes) this.paint(ctx, s);
+  },
+  // Each stroke is drawn as one path, so a highlighter stays evenly translucent where it overlaps itself.
+  paint(ctx, s) {
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = s.tool === 'erase' ? 'destination-out' : 'source-over';
+    ctx.globalAlpha = s.tool === 'hl' ? 0.35 : 1;
+    ctx.strokeStyle = s.color; ctx.fillStyle = s.color;
+    ctx.lineWidth = s.tool === 'pen' ? s.size * 1.4 : s.size * 7;
+    const p = s.pts;
+    if (p.length === 1) { ctx.beginPath(); ctx.arc(p[0][0], p[0][1], ctx.lineWidth / 2, 0, 7); ctx.fill(); }
+    else {
+      ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length - 1; i++) {
+        const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+        ctx.quadraticCurveTo(p[i][0], p[i][1], mx, my);
+      }
+      ctx.lineTo(p[p.length - 1][0], p[p.length - 1][1]); ctx.stroke();
+    }
+    ctx.restore();
+  },
+  setTool(tool) {
+    this.tool = tool;
+    $$('#inkBar [data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === tool ? 'true' : 'false'));
+    document.body.classList.toggle('inking', this.open && tool !== 'cursor');
+    document.body.classList.toggle('tool-erase', tool === 'erase');
+  },
+  setColor(c) {
+    this.color = c; $('#inkColor').value = c;
+    $$('#swatches button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === c ? 'true' : 'false'));
+    if (this.tool === 'erase' || this.tool === 'cursor') this.setTool('pen');
+  },
+  // Closing hides the toolbar and hands the page back; the ink stays on screen until Clear.
+  toggle(force) {
+    this.open = force ?? !this.open;
+    $('#inkBar').hidden = !this.open;
+    $$('#drawBtn, #drawBtn2').forEach(b => b.classList.toggle('on', this.open));
+    this.setTool(this.open ? (this.tool === 'cursor' ? 'pen' : this.tool) : this.tool);
+    if (this.open) this.resize();
+  }
+};
+$('#swatches').innerHTML = ink.COLOURS.map(c => `<button type="button" data-c="${c}" style="background:${c}" title="${c}" aria-label="Colour ${c}"></button>`).join('');
+$('#swatches').addEventListener('click', e => { const b = e.target.closest('button'); if (b) ink.setColor(b.dataset.c); });
+$('#inkColor').addEventListener('input', e => ink.setColor(e.target.value));
+$('#inkSize').addEventListener('input', e => { ink.size = +e.target.value; });
+$$('#inkBar [data-tool]').forEach(b => b.addEventListener('click', () => ink.setTool(b.dataset.tool)));
+$('#inkUndo').addEventListener('click', () => { ink.strokes.pop(); ink.redraw(); });
+$('#inkClear').addEventListener('click', () => { ink.strokes = []; ink.redraw(); });
+$('#inkClose').addEventListener('click', () => ink.toggle(false));
+$$('#drawBtn, #drawBtn2').forEach(b => b.addEventListener('click', () => ink.toggle()));
+ink.cv.addEventListener('pointerdown', e => {
+  if (ink.tool === 'cursor') return;
+  ink.cv.setPointerCapture(e.pointerId);
+  ink.cur = { tool: ink.tool, color: ink.color, size: ink.size, pts: [[e.clientX, e.clientY]] };
+  ink.redraw();
+});
+ink.cv.addEventListener('pointermove', e => {
+  if (!ink.cur) return;
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  for (const ev of evs) ink.cur.pts.push([ev.clientX, ev.clientY]);
+  ink.redraw();
+});
+const endStroke = () => { if (ink.cur) { ink.strokes.push(ink.cur); ink.cur = null; ink.redraw(); } };
+ink.cv.addEventListener('pointerup', endStroke);
+ink.cv.addEventListener('pointercancel', endStroke);
+ink.setColor(ink.color);
+ink.resize();
+window.addEventListener('resize', () => ink.resize());
+
+/* ════════════════════════ 11. printables ════════════════════════ */
+const BL = '<span class="blank"></span>';
+const bl = (...terms) => `<p class="eqp">${terms.map(t => t === '→' ? ' → ' : t === '+' ? ' + ' : BL + fx(t)).join('')}</p>`;
+
+// Q2: two boxes, A = two water molecules, B = one hydrogen peroxide molecule.
+function figAB() {
+  const W = 520, H = 170, box = (x, lab, inner) => `<rect x="${x}" y="10" width="230" height="130" rx="6" fill="none" stroke="#000" stroke-width="1.2"/>${inner}<text x="${x + 115}" y="162" text-anchor="middle" font-weight="700" font-size="15">${lab}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Plus Jakarta Sans, Arial, sans-serif" role="img" aria-label="Diagram A shows two water molecules; diagram B shows one hydrogen peroxide molecule">
+    ${box(20, 'A', placeMol('H2O', 85, 75, 34, true) + placeMol('H2O', 185, 75, 34, true))}
+    ${box(270, 'B', placeMol('H2O2', 385, 75, 36, true))}</svg>`;
+}
+// Q4: particle diagram before and after hydrogen burns.
+function figMass() {
+  const W = 560, H = 190;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Plus Jakarta Sans, Arial, sans-serif" role="img" aria-label="Before: two hydrogen molecules and one oxygen molecule. After: two water molecules.">
+    <rect x="10" y="10" width="230" height="140" rx="6" fill="none" stroke="#000" stroke-width="1.2"/>
+    ${placeMol('H2', 70, 50, 32, true)}${placeMol('H2', 80, 115, 32, true)}${placeMol('O2', 170, 80, 32, true)}
+    <text x="125" y="170" text-anchor="middle" font-weight="700" font-size="14">Before</text>
+    <path d="M258 80 H300" stroke="#000" stroke-width="2"/><path d="M300 73 L312 80 L300 87 Z" fill="#000"/>
+    <rect x="320" y="10" width="230" height="140" rx="6" fill="none" stroke="#000" stroke-width="1.2"/>
+    ${placeMol('H2O', 390, 65, 34, true)}${placeMol('H2O', 480, 105, 34, true)}
+    <text x="435" y="170" text-anchor="middle" font-weight="700" font-size="14">After</text>
+    <g font-size="12">${atomSVG('H', 0, 0, true).replace(/^/, '<g transform="translate(24 182) scale(9)">') + '</g>'}<text x="36" y="186">= hydrogen atom</text>
+    ${'<g transform="translate(160 182) scale(9)">' + atomSVG('O', 0, 0, true) + '</g>'}<text x="172" y="186">= oxygen atom</text></g></svg>`;
+}
+
+const Q = [
+  { stem: 'Formulae tell you how many atoms of each element there are.',
+    parts: [
+      { t: 'Complete the table. The first row has been done for you.', marks: 4,
+        html: `<table><tr><th>Formula</th><th>Number of atoms of each element</th><th>Total number of atoms</th></tr>
+          <tr><td>CO<sub>2</sub></td><td>1 carbon, 2 oxygen</td><td>3</td></tr>
+          <tr><td>H<sub>2</sub>SO<sub>4</sub></td><td style="height:9mm"></td><td></td></tr>
+          <tr><td>2NH<sub>3</sub></td><td style="height:9mm"></td><td></td></tr>
+          <tr><td>3Ca(NO<sub>3</sub>)<sub>2</sub></td><td style="height:9mm"></td><td></td></tr>
+          <tr><td>Al<sub>2</sub>(SO<sub>4</sub>)<sub>3</sub></td><td style="height:9mm"></td><td></td></tr></table>`,
+        ms: ['H<sub>2</sub>SO<sub>4</sub>: 2 hydrogen, 1 sulfur, 4 oxygen; 7 atoms', '2NH<sub>3</sub>: 2 nitrogen, 6 hydrogen; 8 atoms',
+          '3Ca(NO<sub>3</sub>)<sub>2</sub>: 3 calcium, 6 nitrogen, 18 oxygen; 27 atoms', 'Al<sub>2</sub>(SO<sub>4</sub>)<sub>3</sub>: 2 aluminium, 3 sulfur, 12 oxygen; 17 atoms'],
+        also: 'One mark per row. Both the element counts and the total must be correct for the mark. Allow symbols in place of names.',
+        work: '3Ca(NO₃)₂: one unit = 1 Ca + 2 × (1 N + 3 O) = 1 + 2 + 6 = 9 atoms; × 3 = 27' },
+      { t: 'What does the 2 after the bracket in Ca(NO<sub>3</sub>)<sub>2</sub> tell you?', marks: 1, lines: 2,
+        ms: ['everything inside the bracket is multiplied by 2 / there are two NO<sub>3</sub> (nitrate) groups'],
+        no: 'Do not accept "there are 2 oxygen atoms" or "two molecules".' }
+    ] },
+  { stem: 'A student tries to balance this equation: &nbsp; H<sub>2</sub> + O<sub>2</sub> → H<sub>2</sub>O<br>They write: &nbsp; H<sub>2</sub> + O<sub>2</sub> → H<sub>2</sub>O<sub>2</sub>',
+    parts: [
+      { t: 'The student’s equation has the same number of each type of atom on both sides. Explain why it is still wrong.', marks: 2, lines: 3,
+        ms: ['the student has changed a formula / changed a subscript (of water)', 'H<sub>2</sub>O<sub>2</sub> is a different substance / is hydrogen peroxide, not water (so it is not the product of this reaction)'],
+        no: 'Do not accept "it isn’t balanced".' },
+      { t: 'Write the correctly balanced equation.', marks: 1, lines: 1,
+        ms: ['2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O'], also: 'Allow correct multiples. Do not accept any equation with a changed formula.' },
+      { t: 'The diagrams show two sets of particles. Which diagram, A or B, shows 2H<sub>2</sub>O? Give a reason for your answer.', marks: 2, lines: 2,
+        figure: figAB(),
+        ms: ['A', 'it shows two separate molecules, each with two hydrogen atoms and one oxygen atom (B is one molecule with 2 H and 2 O)'],
+        no: 'The reason mark depends on choosing A.' }
+    ] },
+  { stem: 'Balance these equations by writing numbers in the spaces. Leave a space empty if the number is 1.',
+    parts: [
+      { t: 'Making ammonia.', marks: 1, html: bl('N2', '+', 'H2', '→', 'NH3'), ms: ['N<sub>2</sub> + 3H<sub>2</sub> → 2NH<sub>3</sub>'] },
+      { t: 'Burning methane.', marks: 1, html: bl('CH4', '+', 'O2', '→', 'CO2', '+', 'H2O'), ms: ['CH<sub>4</sub> + 2O<sub>2</sub> → CO<sub>2</sub> + 2H<sub>2</sub>O'] },
+      { t: 'Sodium reacting with water.', marks: 1, html: bl('Na', '+', 'H2O', '→', 'NaOH', '+', 'H2'), ms: ['2Na + 2H<sub>2</sub>O → 2NaOH + H<sub>2</sub>'] },
+      { t: 'Iron reacting with chlorine.', marks: 1, html: bl('Fe', '+', 'Cl2', '→', 'FeCl3'), ms: ['2Fe + 3Cl<sub>2</sub> → 2FeCl<sub>3</sub>'] },
+      { t: 'Neutralising sulfuric acid.', marks: 1, html: bl('H2SO4', '+', 'NaOH', '→', 'Na2SO4', '+', 'H2O'), ms: ['H<sub>2</sub>SO<sub>4</sub> + 2NaOH → Na<sub>2</sub>SO<sub>4</sub> + 2H<sub>2</sub>O'] },
+      { t: 'Burning propane.', marks: 2, html: bl('C3H8', '+', 'O2', '→', 'CO2', '+', 'H2O'),
+        ms: ['3 in front of CO<sub>2</sub> and 4 in front of H<sub>2</sub>O', '5 in front of O<sub>2</sub>'],
+        work: 'C₃H₈ + 5O₂ → 3CO₂ + 4H₂O\nC: 3 = 3   H: 8 = 4 × 2   O: 5 × 2 = 10 = (3 × 2) + 4' }
+    ] },
+  { stem: 'Hydrogen reacts with oxygen to form water. The diagram shows the particles before and after the reaction.',
+    figure: figMass(),
+    parts: [
+      { t: 'Write the word equation for the reaction.', marks: 1, lines: 1, ms: ['hydrogen + oxygen → water'] },
+      { t: 'Use the diagram to write the balanced symbol equation.', marks: 2, lines: 1,
+        ms: ['correct formulae: H<sub>2</sub>, O<sub>2</sub> and H<sub>2</sub>O', 'balanced: 2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O'],
+        also: 'Allow correct multiples for the balancing mark. The balancing mark depends on the correct formulae.' },
+      { t: '4 g of hydrogen reacts completely with 32 g of oxygen. Calculate the mass of water produced.', marks: 1, lines: 1, ans: 'Mass = ____________ g',
+        ms: ['36 g'], work: '4 + 32 = 36 g (mass of products = mass of reactants)' },
+      { t: 'Explain why mass is conserved in a chemical reaction. Use the diagram to help you.', marks: 2, lines: 3,
+        ms: ['no atoms are made or destroyed / the atoms are only rearranged (into new substances)', 'there are the same number of each type of atom before and after (4 H and 2 O), so the total mass stays the same'],
+        no: 'Do not accept "the molecules stay the same".' }
+    ] },
+  { stem: 'Write a balanced symbol equation for each reaction. The formulae are given.',
+    parts: [
+      { t: 'magnesium + oxygen → magnesium oxide &nbsp; (Mg, O<sub>2</sub>, MgO)', marks: 2, lines: 1,
+        ms: ['correct formulae, unchanged: Mg + O<sub>2</sub> → MgO', 'balanced: 2Mg + O<sub>2</sub> → 2MgO'],
+        no: 'Do not accept MgO<sub>2</sub> or Mg<sub>2</sub> for either mark.' },
+      { t: 'calcium carbonate + hydrochloric acid → calcium chloride + water + carbon dioxide &nbsp; (CaCO<sub>3</sub>, HCl, CaCl<sub>2</sub>, H<sub>2</sub>O, CO<sub>2</sub>)', marks: 2, lines: 2,
+        ms: ['correct formulae on the correct sides', 'balanced: CaCO<sub>3</sub> + 2HCl → CaCl<sub>2</sub> + H<sub>2</sub>O + CO<sub>2</sub>'] },
+      { t: 'Aluminium reacts with oxygen to form aluminium oxide, Al<sub>2</sub>O<sub>3</sub>.', marks: 2, lines: 2,
+        ms: ['correct formulae: Al + O<sub>2</sub> → Al<sub>2</sub>O<sub>3</sub>', 'balanced: 4Al + 3O<sub>2</sub> → 2Al<sub>2</sub>O<sub>3</sub>'],
+        work: 'O: 2 and 3 → lowest common multiple 6: 3O₂ and 2Al₂O₃\nAl: 2 × 2 = 4 on the right, so 4Al',
+        no: 'Allow correct multiples. Do not accept AlO or Al<sub>2</sub>O<sub>3</sub> changed to fit, such as AlO<sub>2</sub>.' }
+    ] }
+];
+const marksOf = q => q.parts.reduce((s, p) => s + p.marks, 0);
+const TOTAL = Q.reduce((s, q) => s + marksOf(q), 0);
+function buildPrint() {
+  const mk = n => `[${n} mark${n > 1 ? 's' : ''}]`;
+  const space = p => (p.figure ? `<figure>${p.figure}</figure>` : '') + (p.html || '') + (p.lines ? `<div class="lines">${'<i></i>'.repeat(p.lines)}</div>` : '') + (p.ans ? `<p class="ans">${p.ans}</p>` : '');
+  $('#pQList').innerHTML = Q.map((q, i) => `<div class="q">
+      <div class="qt"><span class="qn">${i + 1}</span><div>${q.stem}</div></div>
+      ${q.figure ? `<figure>${q.figure}</figure>` : ''}
+      ${q.parts.map((p, j) => `<div class="part"><div class="qt"><span>(${'abcdef'[j]})</span><span>${p.t}</span><span class="mk">${mk(p.marks)}</span></div>${space(p)}</div>`).join('')}
+    </div>`).join('');
+  $('#pMsList').innerHTML = Q.map((q, i) => `<div class="mq"><b>Question ${i + 1}</b>
+      ${q.parts.map((p, j) => `<div class="mq"><span class="pm">${p.marks}</span><b>(${'abcdef'[j]})</b>
+        <ul>${p.ms.map(m => `<li>${m}</li>`).join('')}</ul>
+        ${p.work ? `<div class="work">${p.work}</div>` : ''}
+        ${p.also ? `<p class="no">${p.also}</p>` : ''}${p.no ? `<p class="no">${p.no}</p>` : ''}</div>`).join('')}
+    </div>`).join('') + `<p class="no">Throughout: allow correct multiples of balanced equations unless the question asks for the lowest numbers. Never credit an equation in which a formula has been changed to make it balance.</p>`;
+  $('#wsTotal').textContent = TOTAL; $('#msTotal').textContent = TOTAL;
+}
+buildPrint();
+
+const dlg = $('#printDlg');
+$('#printBtn').addEventListener('click', () => dlg.showModal());
+$('#pCancel').addEventListener('click', () => dlg.close());
+$('#pGo').addEventListener('click', () => {
+  if (!$('#pOptWs').checked && !$('#pOptMs').checked) return;
+  const b = document.body.classList;
+  b.toggle('p-no-ws', !$('#pOptWs').checked); b.toggle('p-ms', $('#pOptMs').checked);
+  dlg.close();
+  setTimeout(() => window.print(), 50);
+});
+window.addEventListener('afterprint', () => document.body.classList.remove('p-no-ws', 'p-ms'));
+
+/* ════════════════════════ 12. keys and start-up ════════════════════════ */
+document.addEventListener('keydown', e => {
+  const t = e.target instanceof Element ? e.target : document.body;
+  if (e.key === 'Escape') {
+    if (t.closest('dialog')) return;
+    if (ink.open) ink.toggle(false);
+    else if (document.body.classList.contains('show-ctl')) showControls(false);
+    else if (presenting()) setPresenting(false);
+    return;
+  }
+  if (t.closest('input[type="text"], textarea, select, dialog, [contenteditable]') || e.altKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && e.ctrlKey && ink.open) { e.preventDefault(); ink.strokes.pop(); ink.redraw(); }
+  else if (e.ctrlKey) return;
+  else if (k === 'p') setPresenting(!presenting());
+  else if (k === 'd') ink.toggle();
+  else if (k === 'c' && presenting() && document.body.dataset.view === 'bal') showControls(!document.body.classList.contains('show-ctl'));
+});
+
+// Check every template against its formula once, so a typo in MOL can't show the wrong atoms.
+for (const f in MOL) {
+  const want = parseFormula(f), got = {};
+  MOL[f].atoms.forEach(([e]) => { got[e] = (got[e] || 0) + 1; });
+  if (JSON.stringify(Object.keys(want).sort().map(k => [k, want[k]])) !== JSON.stringify(Object.keys(got).sort().map(k => [k, got[k]]))) console.warn('Template atoms do not match formula:', f);
+}
+
+fillSelect();
+(function fromHash() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  const m = /^r=([^&]*)>([^&]*)(?:&n=(.*))?$/.exec(h);
+  if (m) {
+    $('#cR').value = m[1].replace(/\+/g, ' + '); $('#cP').value = m[2].replace(/\+/g, ' + '); $('#cN').value = m[3] || '';
+    if (buildCustom(m[1], m[2], m[3] || '', true)) return;
+  }
+  loadPreset(PRESETS.some(p => p.id === h) ? h : 'methane');
+})();
+drawSub(); drawCoef(false);
+quizStart();
+if (document.fonts) document.fonts.ready.then(() => update(false));
+})();
+</script>
+</body>
+</html>
