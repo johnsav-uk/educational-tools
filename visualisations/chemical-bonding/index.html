@@ -162,13 +162,36 @@
   dialog .row{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap; }
 
   /* ── Print: A4 notes, worksheet, mark scheme ───────────────────── */
+  /* ── Annotation: a drawing layer over the whole page (D) ─────────
+     Strokes are kept as points and redrawn on resize, so the ink survives
+     presenter mode and full screen. Closing the toolbar keeps the ink until
+     Clear; "Use page" leaves it on screen with the model still clickable. */
+  .ink{ position:fixed; inset:0; width:100vw; height:100vh; z-index:2147483100; pointer-events:none; touch-action:none; }
+  body.inking .ink{ pointer-events:auto; cursor:crosshair; }
+  body.inking.tool-erase .ink{ cursor:cell; }
+  .inkbar{ position:fixed; left:0; right:0; bottom:16px; width:max-content; margin:0 auto; z-index:2147483200; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px;
+    max-width:calc(100vw - 24px); padding:6px; background:#0d1928; border:1px solid #2c3d52; border-radius:14px; color:#edf2f8; }
+  .inkbar[hidden]{ display:none; }
+  .inkbar button{ display:inline-flex; flex-direction:column; align-items:center; gap:2px; min-width:54px; padding:5px 6px; border:1px solid transparent; border-radius:9px;
+    background:none; color:#edf2f8; cursor:pointer; font-size:.7rem; font-weight:600; }
+  .inkbar button svg{ width:20px; height:20px; }
+  .inkbar button:hover{ background:#182535; }
+  .inkbar button[aria-pressed="true"]{ background:#13324d; border-color:#47b5fa; }
+  .inkbar .sep{ width:1px; align-self:stretch; margin:4px; background:#2c3d52; }
+  .swatches{ display:flex; gap:4px; }
+  .swatches button{ min-width:0; width:28px; height:28px; padding:0; border-radius:50%; border:2px solid #2c3d52; }
+  .swatches button[aria-pressed="true"]{ border-color:#fff; box-shadow:0 0 0 2px #0d1928 inset; }
+  .inkbar .picker input{ width:32px; height:32px; padding:0; border:0; background:none; cursor:pointer; }
+  .inkbar .size input{ width:90px; accent-color:#47b5fa; }
+  @media (max-width:640px){ .inkbar button span{ display:none; } .inkbar button{ min-width:38px; } .inkbar .size input{ width:64px; } }
+
   .print-only{ display:none; }
   @page{ size:A4; margin:13mm 14mm 15mm; }
   @media print{
     html, body{ background:#fff !important; color:#000; }
     body{ font-size:10.5pt; line-height:1.42; }
     *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .sst-bar, .top, .layout, dialog{ display:none !important; }
+    .sst-bar, .top, .layout, dialog, .ink, .inkbar{ display:none !important; }
     .print-only{ display:block; }
     body.p-no-notes #pNotes, body.p-no-qs #pQs, body:not(.p-ms) #pMs{ display:none !important; }
     #pQs, #pMs{ break-before:page; }
@@ -232,6 +255,7 @@
   <div class="hbtns">
     <button class="btn primary" type="button" id="presentBtn" title="Presenter mode (P)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg>Present on the board</button>
+    <button class="btn" type="button" id="drawBtn" title="Annotate over the page (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Annotate</button>
     <button class="btn" type="button" id="printBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Notes &amp; questions (A4 PDF)</button>
   </div>
@@ -247,6 +271,7 @@
       </div>
       <div class="seg" id="presets" role="group" aria-label="Substance"></div>
       <span class="grow present-only"></span>
+      <button class="btn present-only" type="button" id="drawBtn2" title="Annotate (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Annotate</button>
       <button class="btn present-only" type="button" id="fullBtn" title="Full screen (F)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Full screen</button>
       <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)">Exit</button>
@@ -293,6 +318,23 @@
     <p class="foot">Models, not pictures: real atoms have no drawn shells and electrons are not tiny balls. Dots and crosses only show which atom each electron came from; all electrons are identical.</p>
   </aside>
 </main>
+
+<!-- Annotation layer -->
+<canvas id="inkCv" class="ink" aria-hidden="true"></canvas>
+<div class="inkbar" id="inkBar" role="toolbar" aria-label="Annotation tools" hidden>
+  <button type="button" data-tool="cursor" title="Use the page (the ink stays)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5l13 7-5.5 1.5 3.5 6.5-2.5 1.5-3.5-6.5-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Use page</span></button>
+  <button type="button" data-tool="pen" aria-pressed="true" title="Pen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Pen</span></button>
+  <button type="button" data-tool="hl" title="Highlighter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19.5h14" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".55"/><path d="M8 15l-1.5-3L14 4.5l4 4L10.5 16zM6.5 12L4 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Highlight</span></button>
+  <button type="button" data-tool="erase" title="Eraser"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 20h11M4.5 15.5l9-9 5 5-8.5 8.5H8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Erase</span></button>
+  <span class="sep"></span>
+  <span class="swatches" id="swatches"></span>
+  <label class="picker" title="Pick any colour"><input type="color" id="inkColor" value="#ffd84d" aria-label="Ink colour"></label>
+  <label class="size" title="Line thickness"><input type="range" id="inkSize" min="1" max="10" value="3" aria-label="Line thickness"></label>
+  <span class="sep"></span>
+  <button type="button" id="inkUndo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 3.5v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Undo</span></button>
+  <button type="button" id="inkClear" title="Clear all ink"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Clear</span></button>
+  <button type="button" id="inkClose" title="Close the toolbar; the ink stays until Clear (D)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Close</span></button>
+</div>
 
 <dialog id="printDlg" aria-labelledby="printDlgTitle">
   <form method="dialog">
@@ -1588,6 +1630,90 @@ $('#exitBtn').onclick = () => setPresenting(false);
 $('#fullBtn').onclick = toggleFull;
 document.addEventListener('fullscreenchange', () => requestAnimationFrame(resize));
 
+/* ════════════════════════ annotation layer ════════════════════════ */
+// A drawing layer over the whole page. Strokes are stored as points in
+// window coordinates and redrawn on resize, so they survive presenter mode
+// and full screen. Closing the toolbar keeps the ink until Clear.
+const ink = {
+  cv: $('#inkCv'), strokes: [], cur: null, tool: 'pen', color: '#ffd84d', size: 3, open: false,
+  COLOURS: ['#ffd84d', '#ff5a5a', '#47b5fa', '#6fe3a3', '#b199f4', '#ffffff', '#000000'],
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    this.cv.width = Math.round(innerWidth * dpr); this.cv.height = Math.round(innerHeight * dpr);
+    this.cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.redraw();
+  },
+  redraw() {
+    const c = this.cv.getContext('2d');
+    c.clearRect(0, 0, innerWidth, innerHeight);
+    for (const s of this.cur ? [...this.strokes, this.cur] : this.strokes) this.paint(c, s);
+  },
+  // Each stroke is one path, so a highlighter stays evenly see-through where it crosses itself.
+  paint(c, s) {
+    c.save();
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    c.globalCompositeOperation = s.tool === 'erase' ? 'destination-out' : 'source-over';
+    c.globalAlpha = s.tool === 'hl' ? 0.35 : 1;
+    c.strokeStyle = s.color; c.fillStyle = s.color;
+    c.lineWidth = s.tool === 'pen' ? s.size * 1.4 : s.size * 7;
+    const p = s.pts;
+    if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], c.lineWidth / 2, 0, 7); c.fill(); }
+    else {
+      c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length - 1; i++) c.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+      c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
+    }
+    c.restore();
+  },
+  setTool(tool) {
+    this.tool = tool;
+    document.querySelectorAll('#inkBar [data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === tool));
+    document.body.classList.toggle('inking', this.open && tool !== 'cursor');
+    document.body.classList.toggle('tool-erase', tool === 'erase');
+  },
+  setColor(col) {
+    this.color = col; $('#inkColor').value = col;
+    document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === col));
+    if (this.tool === 'erase' || this.tool === 'cursor') this.setTool('pen');
+  },
+  toggle(force) {
+    this.open = force ?? !this.open;
+    $('#inkBar').hidden = !this.open;
+    document.querySelectorAll('#drawBtn, #drawBtn2').forEach(b => b.classList.toggle('on', this.open));
+    this.setTool(this.open && this.tool === 'cursor' ? 'pen' : this.tool);
+    if (this.open) this.resize();
+  }
+};
+$('#swatches').innerHTML = ink.COLOURS.map(col => `<button type="button" data-c="${col}" style="background:${col}" aria-label="Colour ${col}"></button>`).join('');
+$('#swatches').addEventListener('click', e => { const b = e.target.closest('button'); if (b) ink.setColor(b.dataset.c); });
+$('#inkColor').addEventListener('input', e => ink.setColor(e.target.value));
+$('#inkSize').addEventListener('input', e => { ink.size = +e.target.value; });
+document.querySelectorAll('#inkBar [data-tool]').forEach(b => b.addEventListener('click', () => ink.setTool(b.dataset.tool)));
+$('#inkUndo').addEventListener('click', () => { ink.strokes.pop(); ink.redraw(); });
+$('#inkClear').addEventListener('click', () => { ink.strokes = []; ink.redraw(); });
+$('#inkClose').addEventListener('click', () => ink.toggle(false));
+document.querySelectorAll('#drawBtn, #drawBtn2').forEach(b => b.addEventListener('click', () => ink.toggle()));
+ink.cv.addEventListener('pointerdown', e => {
+  if (ink.tool === 'cursor') return;
+  ink.cv.setPointerCapture(e.pointerId);
+  ink.cur = { tool: ink.tool, color: ink.color, size: ink.size, pts: [[e.clientX, e.clientY]] };
+  ink.redraw();
+});
+ink.cv.addEventListener('pointermove', e => {
+  if (!ink.cur) return;
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  for (const ev of evs) ink.cur.pts.push([ev.clientX, ev.clientY]);
+  ink.redraw();
+});
+const endStroke = () => { if (ink.cur) { ink.strokes.push(ink.cur); ink.cur = null; ink.redraw(); } };
+ink.cv.addEventListener('pointerup', endStroke);
+ink.cv.addEventListener('pointercancel', endStroke);
+window.addEventListener('resize', () => ink.resize());
+document.addEventListener('fullscreenchange', () => requestAnimationFrame(() => ink.resize()));
+ink.setColor(ink.color);
+ink.resize();
+
 /* ════════════════════════ printable notes & questions ════════════════════════ */
 const QUESTIONS = [
   { q: 'Name the type of bonding in each substance.', parts: [
@@ -1742,9 +1868,12 @@ function showMe(i) {
   if (!document.body.classList.contains('presenting')) document.querySelector('.stage').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'nearest' });
 }
 document.addEventListener('keydown', e => {
+  if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && ink.open && !e.target.closest('input, textarea')) { e.preventDefault(); ink.strokes.pop(); ink.redraw(); return; }
   if (e.target.closest('input, textarea, select') || e.altKey || e.ctrlKey || e.metaKey || dlg.open) return;
   const presenting = document.body.classList.contains('presenting');
-  if (e.key === 'p' || e.key === 'P') setPresenting(!presenting);
+  if (e.key === 'Escape' && ink.open) ink.toggle(false);
+  else if (e.key === 'd' || e.key === 'D') ink.toggle();
+  else if (e.key === 'p' || e.key === 'P') setPresenting(!presenting);
   else if ((e.key === 'f' || e.key === 'F') && presenting) toggleFull();
   else if (e.key === 'Escape' && presenting && !document.fullscreenElement) setPresenting(false);
   else if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); play(); }
