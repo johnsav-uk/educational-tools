@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic Equilibrium Lab (beta)</title>
+<meta name="description" content="A particle simulation of a reversible reaction reaching dynamic equilibrium: live forward and reverse rates, concentration and rate graphs, Le Chatelier's principle, catalysts, the Haber process compromise, and for A-level Kc, Q, Kp and ICE calculations. Aligned with AQA GCSE Chemistry 8462 4.6.2 and A-level 7405 3.1.6 and 3.1.10.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body class="lvl-gcse">
+<script src="../../assets/sst/sst.js"></script>
+
+<!-- Inline icon sprite, so nothing loads from a CDN -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-step" viewBox="0 0 24 24"><path d="M5 4.5v15l10-7.5zM16.5 4.5h3v15h-3z" fill="currentColor"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 3.5v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><path d="M3 4.5h18v12H3zM8.5 20.5h7M12 16.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8.5V3.5h10v5M7 17H4.5V9h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-hot" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.8.3 1.7 1.2 2.6 2.3 2.8C11 8.5 11.3 5.5 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-cold" viewBox="0 0 24 24"><path d="M12 2.5v19M4 7l16 10M20 7L4 17M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-squeeze" viewBox="0 0 24 24"><path d="M3 12h7M7 8.5 10.5 12 7 15.5M21 12h-7M17 8.5 13.5 12l3.5 3.5M12 4v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M10 12H3M6.5 8.5 3 12l3.5 3.5M14 12h7M17.5 8.5 21 12l-3.5 3.5M12 4v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-cat" viewBox="0 0 24 24"><path d="M3 18c3 0 4-9 9-9s6 9 9 9M3 18c4 0 5-5 9-5s5 5 9 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="grow">
+    <h1>Dynamic Equilibrium Lab <span class="beta">beta</span></h1>
+    <p class="tagline">Interactive simulation of reversible reactions and equilibrium</p>
+    <div class="meta">
+      <span class="chip chem">Chemistry</span><span class="chip">GCSE</span><span class="chip">A-level</span>
+      <span class="chip muted-chip">Aligned with AQA 8462 4.6.2 · 7405 3.1.6 and 3.1.10</span>
+    </div>
+  </div>
+  <div class="hbtns">
+    <div class="seg level-seg" id="levelSeg" role="group" aria-label="Level">
+      <button type="button" data-lvl="gcse" aria-pressed="true">GCSE</button>
+      <button type="button" data-lvl="alevel" aria-pressed="false">A-level</button>
+    </div>
+    <button class="btn" type="button" id="presentBtn" title="Presenter mode: the simulation fills the board (P)"><svg><use href="#i-screen"/></svg>Presenter mode</button>
+    <button class="btn" type="button" id="drawBtn" title="Annotate over the page (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+    <button class="btn primary" type="button" id="printBtn"><svg><use href="#i-print"/></svg>Print questions</button>
+  </div>
+</header>
+<p class="intro">Watch a reversible reaction approach equilibrium. The particles never stop reacting: at equilibrium, the forward and reverse reactions occur at equal rates.</p>
+
+<!-- Presenter mode: the teacher's strip across the top of the board -->
+<div class="pres-bar sst-teacher" id="presBar" role="toolbar" aria-label="Presenter controls">
+  <span class="pres-title" id="presTitle">Dynamic Equilibrium Lab</span>
+  <button class="btn primary" type="button" data-act="play"><svg><use href="#i-play"/></svg><span>Play</span></button>
+  <button class="btn" type="button" data-act="step" title="Advance 0.25 s"><svg><use href="#i-step"/></svg>Step</button>
+  <button class="btn icon" type="button" data-act="reset" title="Reset"><svg><use href="#i-reset"/></svg></button>
+  <span class="pres-sep"></span>
+  <button class="btn" type="button" data-change="addR" title="Add reactant"><svg><use href="#i-plus"/></svg><span data-name="R">A</span></button>
+  <button class="btn" type="button" data-change="remP" title="Remove product"><svg><use href="#i-minus"/></svg><span data-name="P">C</span></button>
+  <button class="btn icon" type="button" data-change="cool" title="Lower the temperature"><svg><use href="#i-cold"/></svg></button>
+  <button class="btn icon" type="button" data-change="heat" title="Raise the temperature"><svg><use href="#i-hot"/></svg></button>
+  <button class="btn icon" type="button" data-change="pDown" title="Lower the pressure"><svg><use href="#i-expand"/></svg></button>
+  <button class="btn icon" type="button" data-change="pUp" title="Raise the pressure"><svg><use href="#i-squeeze"/></svg></button>
+  <button class="btn" type="button" data-change="cat" title="Add or remove the catalyst"><svg><use href="#i-cat"/></svg><span>Catalyst</span></button>
+  <span class="grow"></span>
+  <label class="check pres-rate"><input type="checkbox" data-sync="rateToggle"> Rate graph</label>
+  <span class="pres-keys">Space play · P or Esc leave · D annotate</span>
+  <button class="btn icon" type="button" id="fullBtn" title="Full screen"><svg><use href="#i-full"/></svg></button>
+  <button class="btn" type="button" id="exitBtn" title="Leave presenter mode (Esc)"><svg><use href="#i-close"/></svg>Exit</button>
+</div>
+
+<main class="lab" id="lab">
+  <div class="col col-main">
+    <!-- ════════════ The reaction chamber ════════════ -->
+    <section class="sim-card" id="simCard" aria-label="Reaction chamber">
+      <div class="rxbar">
+        <label class="rx-pick sst-teacher"><span class="lbl">Reaction</span><select id="rxSel" aria-label="Reaction"></select></label>
+        <div class="eqn" id="eqn" aria-live="polite"></div>
+        <span class="dh-chip" id="dhChip"></span>
+      </div>
+      <figure class="stage chamber-stage" id="chamberStage">
+        <canvas id="chamberCv" role="img" aria-label="Reaction chamber"></canvas>
+        <div class="ind" aria-hidden="true">
+          <div class="ind-row f"><i class="ring"></i><span class="ind-lab">Forward</span><b id="indF"></b></div>
+          <div class="ind-row r"><i class="ring"></i><span class="ind-lab">Reverse</span><b id="indR"></b></div>
+        </div>
+        <div class="gauges" id="gauges" aria-hidden="true">
+          <span><i>T</i><b id="gT">400 K</b></span>
+          <span><i>p</i><b id="gP">×1.00</b></span>
+          <span class="g-cat" id="gCat" hidden>catalyst</span>
+        </div>
+        <div class="pause-card" id="pauseCard" hidden aria-live="polite"></div>
+        <figcaption class="legend" id="legend"></figcaption>
+      </figure>
+      <div class="transport sst-teacher">
+        <button class="btn primary" type="button" id="playBtn" data-act="play"><svg><use href="#i-play"/></svg><span>Play</span></button>
+        <button class="btn" type="button" id="stepBtn" data-act="step" title="Advance the simulation by 0.25 s (.)"><svg><use href="#i-step"/></svg>Step</button>
+        <button class="btn" type="button" id="resetBtn" data-act="reset" title="Start again with the chosen mixture"><svg><use href="#i-reset"/></svg>Reset</button>
+        <div class="seg speed-seg" id="speedSeg" role="group" aria-label="Simulation speed">
+          <button type="button" data-speed="0.5">½×</button>
+          <button type="button" data-speed="1" aria-pressed="true">1×</button>
+          <button type="button" data-speed="2">2×</button>
+          <button type="button" data-speed="4">4×</button>
+        </div>
+        <span class="clock">t = <b id="clock">0.0</b> s</span>
+      </div>
+      <div class="comp" aria-label="Composition of the mixture">
+        <div class="comp-head"><span>Composition</span><span id="compNote"></span></div>
+        <div class="comp-bar" id="compBar"></div>
+      </div>
+    </section>
+
+    <!-- ════════════ Graphs ════════════ -->
+    <section class="graphs" id="graphs" aria-label="Graphs">
+      <div class="graph-card">
+        <div class="graph-head">
+          <h2>Concentration against time</h2>
+          <div class="graph-tools sst-teacher">
+            <label class="check"><input type="checkbox" id="rateToggle"> Show rate graph</label>
+            <button class="btn sm" type="button" id="gPause" aria-pressed="false">Pause graph</button>
+            <button class="btn sm" type="button" id="gClear">Clear graph</button>
+            <button class="btn sm" type="button" id="gRestart" data-act="reset">Restart</button>
+          </div>
+        </div>
+        <div class="chart"><canvas id="concCv" role="img" aria-label="Graph of concentration against time"></canvas></div>
+      </div>
+      <div class="graph-card" id="rateCard" hidden>
+        <div class="graph-head"><h2>Rate against time</h2><span class="graph-note">Bold lines: the model's rates. Faint lines: reactions counted in the chamber each second.</span></div>
+        <div class="chart"><canvas id="rateCv" role="img" aria-label="Graph of forward and reverse rate against time"></canvas></div>
+      </div>
+    </section>
+    <!-- ════════════ Predict → change → observe ════════════ -->
+    <section class="panel predict" id="predictPanel" aria-label="Predict, change, observe">
+      <h2>Predict <span class="arrow">→</span> Change <span class="arrow">→</span> Observe</h2>
+      <div class="pstep" id="pStep1">
+        <label class="field"><span class="lbl">1. Choose a change</span><select id="pChange"></select></label>
+        <div class="field"><span class="lbl">2. What do you predict will happen to the position of equilibrium?</span>
+          <div class="seg col3" id="pPos" role="group" aria-label="Position prediction">
+            <button type="button" data-v="products">More products</button>
+            <button type="button" data-v="reactants">More reactants</button>
+            <button type="button" data-v="none">No change in position</button>
+          </div>
+        </div>
+        <div class="field"><span class="lbl">And to the time taken to reach equilibrium? <span class="hint-inline">(optional)</span></span>
+          <div class="seg col2" id="pSpeed" role="group" aria-label="Speed prediction">
+            <button type="button" data-v="faster">Reached faster</button>
+            <button type="button" data-v="slower">Reached more slowly</button>
+          </div>
+        </div>
+        <button class="btn primary wide" type="button" id="pReveal" disabled>Reveal: make the change</button>
+      </div>
+      <div class="pstep" id="pStep2" hidden>
+        <div id="pResult" aria-live="polite"></div>
+        <button class="btn wide" type="button" id="pAgain">Predict another change</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="col col-side">
+    <!-- ════════════ Rates and status ════════════ -->
+    <section class="panel rates" id="ratesPanel" aria-label="Rates and status">
+      <ol class="status-steps" id="statusSteps" aria-hidden="true">
+        <li data-s="react">Reacting</li><li data-s="approach">Approaching equilibrium</li><li data-s="eq">Dynamic equilibrium</li>
+      </ol>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="bar-row f">
+        <div class="bar-lab"><span>Forward rate <i class="arr">→</i></span><b id="rfNum">0.0</b></div>
+        <div class="bar"><i id="rfBar"></i></div>
+      </div>
+      <div class="bar-row r">
+        <div class="bar-lab"><span>Reverse rate <i class="arr">←</i></span><b id="rrNum">0.0</b></div>
+        <div class="bar"><i id="rrBar"></i></div>
+      </div>
+      <p class="bar-unit" id="barUnit">reactions per second in the chamber, counted over the last 3 s</p>
+      <div class="model-rates a-only" id="modelRates"></div>
+    </section>
+
+    <!-- ════════════ Controls ════════════ -->
+    <section class="panel controls" id="controls" aria-label="Controls">
+      <h2>Change the conditions</h2>
+      <div class="field">
+        <span class="lbl">Starting mixture <span class="hint-inline">(then Reset)</span></span>
+        <div class="seg mix-seg" id="mixSeg" role="group" aria-label="Starting mixture">
+          <button type="button" data-mix="reactants" aria-pressed="true">Mostly reactants</button>
+          <button type="button" data-mix="products">Mostly products</button>
+          <button type="button" data-mix="equal">Equal amounts</button>
+          <button type="button" data-mix="custom">Custom</button>
+        </div>
+        <div class="custom" id="customBox" hidden></div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Concentration</span>
+        <div class="grid2">
+          <button class="btn" type="button" data-change="addR"><svg><use href="#i-plus"/></svg>Add <span data-name="R">A</span></button>
+          <button class="btn" type="button" data-change="remR"><svg><use href="#i-minus"/></svg>Remove <span data-name="R">A</span></button>
+          <button class="btn" type="button" data-change="addP"><svg><use href="#i-plus"/></svg>Add <span data-name="P">C</span></button>
+          <button class="btn" type="button" data-change="remP"><svg><use href="#i-minus"/></svg>Remove <span data-name="P">C</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Temperature <output id="tOut">400 K</output></span>
+        <div class="grid2">
+          <button class="btn" type="button" data-change="cool"><svg><use href="#i-cold"/></svg>− Temperature</button>
+          <button class="btn" type="button" data-change="heat"><svg><use href="#i-hot"/></svg>+ Temperature</button>
+        </div>
+      </div>
+
+      <div class="field" id="exoField">
+        <span class="lbl">Forward reaction</span>
+        <div class="seg" id="exoSeg" role="group" aria-label="Forward reaction">
+          <button type="button" data-exo="1" aria-pressed="true">Exothermic</button>
+          <button type="button" data-exo="0">Endothermic</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Pressure <output id="pOut">×1.00</output></span>
+        <div class="grid2">
+          <button class="btn" type="button" data-change="pDown"><svg><use href="#i-expand"/></svg>− Pressure</button>
+          <button class="btn" type="button" data-change="pUp"><svg><use href="#i-squeeze"/></svg>+ Pressure</button>
+        </div>
+        <p class="note" id="pNote"></p>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Catalyst</span>
+        <button class="btn wide" type="button" data-change="cat" id="catBtn" aria-pressed="false"><svg><use href="#i-cat"/></svg><span>Add catalyst</span></button>
+      </div>
+
+      <div class="explain" id="explain" aria-live="polite" hidden></div>
+    </section>
+
+    <!-- ════════════ Catalyst comparison ════════════ -->
+    <section class="panel cat-card" id="catCard" hidden aria-label="Catalyst comparison">
+      <h2>Catalyst: faster, not further</h2>
+      <div class="chart small"><canvas id="catCv" role="img" aria-label="Product concentration against time with and without a catalyst"></canvas></div>
+      <div class="cat-grid" id="catGrid"></div>
+      <p class="note">Both runs start from the chosen starting mixture at the current temperature and pressure, using the same model as the chamber.</p>
+    </section>
+
+    <!-- ════════════ Haber compromise ════════════ -->
+    <section class="panel haber" id="haberCard" hidden aria-label="Haber process compromise">
+      <h2>The industrial compromise</h2>
+      <div class="kpis" id="haberKpis"></div>
+      <div class="chart small"><canvas id="haberCv" role="img" aria-label="Equilibrium ammonia yield and rate against temperature"></canvas></div>
+      <ul class="haber-notes">
+        <li><b>Lower temperature</b> gives more ammonia at equilibrium, but the reaction is too slow.</li>
+        <li><b>Higher temperature</b> is faster, but less ammonia is left at equilibrium.</li>
+        <li><b>Higher pressure</b> favours ammonia (4 molecules of gas become 2) and is faster, but thick-walled plant and compressors are expensive and use a lot of energy. About 200 atm is used.</li>
+        <li><b>The iron catalyst</b> gets to equilibrium sooner. It does not change how much ammonia there is at equilibrium.</li>
+        <li>About 450 °C is a compromise: a reasonable yield, made quickly. Unreacted gases are recycled and ammonia is removed as a liquid.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<!-- ════════════ A-level: the quantitative model ════════════ -->
+<section class="deeper a-only" id="deeper" aria-label="A-level equilibrium calculations">
+  <h2 class="sec-title">Equilibrium constants</h2>
+  <div class="deep-grid">
+    <section class="panel" id="kcPanel" aria-label="Kc">
+      <h3>K<sub>c</sub> from the chamber</h3>
+      <div id="kcBody"></div>
+      <div class="row-btns">
+        <button class="btn sm" type="button" id="kcCalcBtn" aria-expanded="false">Show calculation</button>
+        <button class="btn sm" type="button" id="whatKBtn"><svg><use href="#i-info"/></svg>What changes K?</button>
+      </div>
+      <div class="working" id="kcWork" hidden></div>
+      <p class="note">At a fixed temperature, Kc has a constant value for a particular reaction.</p>
+    </section>
+
+    <section class="panel" id="qPanel" aria-label="Reaction quotient Q">
+      <h3>Reaction quotient, Q</h3>
+      <div id="qBody"></div>
+      <div class="qline" id="qLine" aria-hidden="true"><div class="q-track"></div><i class="q-k"></i><i class="q-q"></i><span class="q-lab-k">Kc</span><span class="q-lab-q">Q</span></div>
+      <button class="btn sm" type="button" id="qExplainBtn" aria-expanded="false">Explain Q</button>
+      <div class="working" id="qExplain" hidden>
+        <p>Q has the same form as Kc, but it uses the concentrations <b>now</b>, whether or not the mixture is at equilibrium.</p>
+        <p><b>Q &lt; Kc</b>: too little product for equilibrium, so there is a net forward reaction. Q rises towards Kc.</p>
+        <p><b>Q = Kc</b>: the mixture is at equilibrium. The forward and reverse rates are equal.</p>
+        <p><b>Q &gt; Kc</b>: too much product, so there is a net reverse reaction. Q falls towards Kc.</p>
+        <p>Change a concentration and Q moves while Kc stays put. Change the temperature and Kc moves instead.</p>
+      </div>
+    </section>
+
+    <section class="panel" id="kpPanel" aria-label="Kp">
+      <h3>K<sub>p</sub> for the gas mixture</h3>
+      <div id="kpBody"></div>
+      <div class="row-btns" id="kpBtns">
+        <button class="btn sm" type="button" id="kpPartBtn" aria-expanded="false">Show partial pressures</button>
+        <button class="btn sm" type="button" id="kpCalcBtn" aria-expanded="false">Show Kp calculation</button>
+      </div>
+      <div class="working" id="kpPart" hidden></div>
+      <div class="working" id="kpWork" hidden></div>
+    </section>
+
+    <section class="panel" id="icePanel" aria-label="ICE table">
+      <h3>ICE table</h3>
+      <div id="iceBody"></div>
+    </section>
+
+    <section class="panel wide-panel" id="logPanel" aria-label="Kc log">
+      <h3>Every equilibrium the chamber has reached</h3>
+      <p class="note">A row is added each time the chamber settles. Change the concentrations, the pressure or the catalyst and Kc stays the same; change the temperature and it moves.</p>
+      <div class="table-wrap"><table class="log" id="kcLog"></table></div>
+    </section>
+
+    <section class="panel wide-panel" id="challengePanel" aria-label="Challenge">
+      <h3>Challenge: H<sub>2</sub> + I<sub>2</sub> ⇌ 2HI</h3>
+      <div id="chBody"></div>
+    </section>
+  </div>
+</section>
+
+<!-- ════════════ Background: explanation, misconceptions, spec ════════════ -->
+<section class="learn" aria-label="Learn">
+  <details class="panel what" id="whatIs" open>
+    <summary><h2>What is dynamic equilibrium?</h2></summary>
+    <div id="whatBody"></div>
+  </details>
+
+  <div class="panel miscon">
+    <h2>Common misconceptions</h2>
+    <p class="note">Click a statement to see why it is wrong, then check it in the simulation.</p>
+    <div class="mis-grid" id="misGrid"></div>
+  </div>
+
+  <details class="panel spec">
+    <summary><h2>Specification</h2></summary>
+    <p id="specG"></p>
+    <p id="specA"></p>
+    <p class="note">Aligned with AQA specification content. This is an independent teaching resource, not an AQA product.</p>
+  </details>
+</section>
+
+<!-- Presenter slides: the teaching narrative, under the chamber on the board -->
+<div class="sst-deck sst-deck--strip pr-only" id="narrDeck" aria-label="Teaching narrative"></div>
+
+<!-- ════════════ What changes the equilibrium constant? ════════════ -->
+<dialog id="whatKDlg" aria-labelledby="whatKTitle">
+  <h2 id="whatKTitle">What changes the equilibrium constant?</h2>
+  <table class="wk">
+    <tr><th>Change</th><th>Equilibrium position</th><th>Kc or Kp</th></tr>
+    <tr><td>Concentration</td><td>shifts to oppose it</td><td class="no"><span aria-hidden="true">✕</span> no change</td></tr>
+    <tr><td>Pressure</td><td>shifts if the gas moles differ</td><td class="no"><span aria-hidden="true">✕</span> no change</td></tr>
+    <tr><td>Catalyst</td><td>no shift; reached sooner</td><td class="no"><span aria-hidden="true">✕</span> no change</td></tr>
+    <tr><td>Temperature</td><td>shifts towards the endothermic side when heated</td><td class="yes"><span aria-hidden="true">✓</span> changes</td></tr>
+  </table>
+  <p>Kc = k<sub>f</sub> / k<sub>r</sub>. A concentration or pressure change moves the concentrations, and the system rearranges until the ratio is back to Kc. A catalyst multiplies k<sub>f</sub> and k<sub>r</sub> by the same factor. Only temperature changes k<sub>f</sub> and k<sub>r</sub> by different amounts, because the forward and reverse activation energies differ by ΔH.</p>
+  <p>Heating: Kc <b>increases</b> if the forward reaction is endothermic and <b>decreases</b> if it is exothermic.</p>
+  <p class="note">The Kc log on the page is the evidence: every row at the same temperature has the same Kc.</p>
+  <div class="row"><button class="btn primary" type="button" id="whatKClose">Close</button></div>
+</dialog>
+
+<!-- ════════════ Print dialog ════════════ -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptG" checked><span><b>GCSE worksheet</b><br>Reversible reactions, dynamic equilibrium, Le Chatelier and the Haber process.</span></label>
+  <label><input type="checkbox" id="pOptA"><span><b>A-level worksheet</b><br>Kc, Q, Kp and dynamic equilibrium calculations.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>For the worksheets ticked above, with working. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn primary" type="button" id="pGo"><svg><use href="#i-print"/></svg>Print</button>
+  </div>
+</dialog>
+
+<div class="print-only pd" id="printDoc">
+  <section id="pWsG"></section>
+  <section id="pWsA"></section>
+  <section id="pMsG" class="ms"></section>
+  <section id="pMsA" class="ms"></section>
+</div>
+
+<div class="sr-only" id="srLive" aria-live="polite"></div>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="js/model.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/graphs.js"></script>
+<script src="js/content.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

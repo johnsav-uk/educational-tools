@@ -101,6 +101,12 @@ window.SST_TOOLS = [
     image: "rate-of-reaction.png",
     keywords: "rates of reaction collision theory activation energy catalyst catalysts how catalysts work alternative pathway lower activation energy high jump analogy reaction profile energy profile diagram exothermic endothermic concentration temperature surface area particles 4.6.1 4.6.1.4 4.5.1.3" },
 
+  { title: "Dynamic Equilibrium Lab (beta)", url: "visualisations/dynamic-equilibrium-lab/",
+    blurb: "Watch particles react both ways until the rates meet, change the conditions and see the system respond, then calculate Kc, Q and Kp from the chamber at A-level.",
+    kind: "Interactive", levels: ["GCSE", "A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+    image: "dynamic-equilibrium-lab.png",
+    keywords: "dynamic equilibrium reversible reactions le chatelier le chatelier's principle le chatlier position of equilibrium forward reverse rate equal rates closed system concentration temperature pressure catalyst haber process ammonia compromise yield exothermic endothermic kc kp equilibrium constant equilibria reaction quotient q ice table partial pressure mole fraction hydrogen iodide 4.6.2 4.6.2.1 4.6.2.2 4.6.2.3 4.6.2.4 4.6.2.5 4.6.2.6 4.6.2.7 4.10.4.1 3.1.6 3.1.10" },
+
   { title: "Measuring Gas in Reactions (beta)", url: "visualisations/measuring-gas-production/",
     blurb: "Run the gas syringe, mass-loss and over-water setups, watch the live graphs build, then find the rate from a tangent.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
