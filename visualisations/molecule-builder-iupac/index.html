@@ -2390,6 +2390,9 @@ function legendHTML() {
 
 function update3D(fitIfFresh) {
   if (!hasGL) return;
+  // before the first changed() (deferred to a frame, which a hidden tab never gets) there is
+  // nothing to draw; that first changed() builds the model with the current Labels/Explain state
+  if (!lastAnalysis) return;
   if (!mol.atoms.length) { viewers.forEach(v => { v.remember(); v.clear(); v.model = null; }); $('#legend').innerHTML = ''; model3d = null; return; }
   model3d = build3D(mol);
   const aromRings = lastAnalysis.G.rings.filter(r => r.arom);
