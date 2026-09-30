@@ -1564,15 +1564,17 @@ function atomMat(el) {
   if (!matCache.has(el)) matCache.set(el, new THREE.MeshStandardMaterial({ color: EL[el].cpk, roughness: el === 'H' ? 0.45 : 0.35, metalness: 0.05 }));
   return matCache.get(el);
 }
-function labelSprite(text, color, size = 64) {
+// onAtom: an element symbol sitting on its sphere, hidden by whatever is in front of it;
+// otherwise (locants, chiral stars) the sprite draws on top of everything
+function labelSprite(text, color, size = 64, onAtom = false) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128;
   const g = cv.getContext('2d');
   g.font = `700 ${size}px "Plus Jakarta Sans", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(text, 64, 68);
   g.fillStyle = color; g.fillText(text, 64, 68);
   const tex = new THREE.CanvasTexture(cv);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
-  sp.renderOrder = 10;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: onAtom, transparent: true }));
+  sp.renderOrder = onAtom ? 0 : 10;
   return sp;
 }
 
@@ -1646,7 +1648,8 @@ class Viewer {
     });
     if (opts.labels) model.atoms.forEach((a, i) => {
       if (a.el === 'C' || a.el === 'H') return;
-      const sp = labelSprite(a.el, '#ffffff', 58); sp.scale.setScalar(0.55); sp.userData.atom = i; this.group.add(sp); this.extras.push(sp);
+      const sp = labelSprite(a.el, '#ffffff', 84, true); sp.scale.setScalar(EL[a.el].r * 1.7);
+      sp.userData.atom = i; sp.userData.lift = EL[a.el].r + 0.08; this.group.add(sp); this.extras.push(sp);
     });
     if (opts.locants) opts.locants.forEach((loc, id) => {
       const i = model.atoms.findIndex(a => a.id === id); if (i < 0) return;
@@ -1684,8 +1687,11 @@ class Viewer {
     this.model.bonds.forEach((b, i) => this.placeBond(b, P, this.pieces[i]));
     const pulse = 0.26 + 0.1 * Math.sin(now / 260);
     this.halos.forEach(h => { h.position.copy(P[h.userData.atom]); h.scale.setScalar(h.userData.r); h.material.opacity = pulse; });
+    // element symbols go on the camera-facing side of their sphere
+    const cam = this.group.worldToLocal(this.camera.position.clone());
     this.extras.forEach(x => {
       if (x.userData.atom !== undefined) x.position.copy(P[x.userData.atom]);
+      if (x.userData.lift) x.position.add(cam.clone().sub(x.position).normalize().multiplyScalar(x.userData.lift));
       if (x.userData.ring) {
         const pts = x.userData.ring.map(i => P[i]); const c = new THREE.Vector3(); pts.forEach(p => c.add(p)); c.multiplyScalar(1 / pts.length);
         const n = new THREE.Vector3().subVectors(pts[0], c).cross(new THREE.Vector3().subVectors(pts[1], c)).normalize();
