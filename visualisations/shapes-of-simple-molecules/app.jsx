@@ -318,11 +318,13 @@ function makeLabel(text, opts) {
 
   const tex = new THREE.CanvasTexture(cv);
   tex.minFilter = THREE.LinearFilter;
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  // atom labels sit on their sphere and are hidden by whatever is in front of it;
+  // everything else (angle labels) draws on top
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: !!opts.onAtom });
   const sprite = new THREE.Sprite(mat);
   const scale = (opts.scale || 0.34);
   sprite.scale.set((w / h) * scale, scale, 1);
-  sprite.renderOrder = 999;
+  sprite.renderOrder = opts.onAtom ? 0 : 999;
   return sprite;
 }
 
@@ -368,11 +370,19 @@ function buildMolecule(spec, opts) {
   // --- central atom -------------------------------------------------------
   const centre = atomMesh(spec.central, centralEl.radius * 1.05);
   group.add(centre);
-  if (opts.showLabels) {
-    const lbl = makeLabel(centralEl.label, { colour: '#ffffff', size: 84, scale: 0.46 });
-    lbl.position.set(0, centralEl.radius * 1.05 + 0.34, 0);
+  // Atom labels are anchored to their atom's centre; the viewer moves each one
+  // out to the side of the sphere facing the camera every frame.
+  const atomLabels = [];
+  group.userData.atomLabels = atomLabels;
+  function addAtomLabel(text, centre, radius) {
+    const lbl = makeLabel(text, { colour: '#ffffff', size: 84, scale: radius * 1.15, onAtom: true });
+    lbl.userData.anchor = centre.clone();
+    lbl.userData.lift = radius + 0.1;
+    lbl.position.copy(centre);
     group.add(lbl);
+    atomLabels.push(lbl);
   }
+  if (opts.showLabels) addAtomLabel(centralEl.label, new THREE.Vector3(), centralEl.radius * 1.05);
 
   const bondDirs = g.bonds.map(function (d) { return new THREE.Vector3(d[0], d[1], d[2]).normalize(); });
   const loneDirs = g.lones.map(function (d) { return new THREE.Vector3(d[0], d[1], d[2]).normalize(); });
@@ -391,11 +401,7 @@ function buildMolecule(spec, opts) {
     atom.position.copy(dir.clone().multiplyScalar(BOND_LEN));
     group.add(atom);
 
-    if (opts.showLabels) {
-      const lbl = makeLabel(outerEl.label, { colour: '#0b111b', size: 64, scale: 0.3, pill: 'rgba(240,246,255,0.92)' });
-      lbl.position.copy(dir.clone().multiplyScalar(BOND_LEN + outerEl.radius + 0.26));
-      group.add(lbl);
-    }
+    if (opts.showLabels) addAtomLabel(outerEl.label, atom.position, outerEl.radius);
   });
 
   // --- lone pairs as translucent electron clouds ---------------------------
@@ -537,7 +543,21 @@ function createViewer(mount) {
       root.rotation.y = -0.6 * (1 - e);
     }
     controls.update();
+    placeAtomLabels();
     renderer.render(scene, camera);
+  }
+
+  /* Puts each atom label on the camera-facing side of its sphere. */
+  const camLocal = new THREE.Vector3();
+  function placeAtomLabels() {
+    const labels = current && current.userData.atomLabels;
+    if (!labels || !labels.length) return;
+    current.updateWorldMatrix(true, false);
+    current.worldToLocal(camLocal.copy(camera.position));
+    labels.forEach(function (lbl) {
+      const a = lbl.userData.anchor;
+      lbl.position.copy(camLocal).sub(a).normalize().multiplyScalar(lbl.userData.lift).add(a);
+    });
   }
   loop();
 
