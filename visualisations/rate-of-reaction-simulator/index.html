@@ -55,6 +55,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 }
 .btn:hover{background:#1a2a47;border-color:#33507f}
 .btn:active{transform:translateY(1px)}
+a.btn{text-decoration:none}
 .btn.primary{background:#0086dd;border-color:#0086dd;color:#fff}
 .btn.primary:hover{background:#1f95e6}
 
@@ -77,7 +78,11 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 canvas{display:block;width:100%}
 #chamber{aspect-ratio:640/460}
 #graph{aspect-ratio:600/320}
-#profile{aspect-ratio:600/280}
+/* Exam-paper proportions: a reaction profile is drawn a little wider than tall, never stretched. */
+#profile{aspect-ratio:520/400;max-width:500px;margin:0 auto}
+#arena{aspect-ratio:800/500}
+#hist{aspect-ratio:440/230}
+#miniProfile{aspect-ratio:480/330}
 .stage .float{position:absolute;top:9px;left:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
 .chip{font-size:10.5px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:999px;
   background:rgba(8,14,26,.78);border:1px solid var(--line-2);color:var(--muted)}
@@ -178,6 +183,59 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
   background:#132038;border:1px solid #33507f;color:#e6f6ff;font-size:12.5px;font-weight:600;
   padding:9px 16px;border-radius:999px;transition:opacity .2s,transform .2s;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- How a catalyst works (high-jump analogy) ---------- */
+.cat{margin-top:14px}
+.cat-intro{font-size:13px;color:#c8d4e4;line-height:1.6;max-width:1100px;margin-bottom:12px}
+.cat-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(250px,.62fr);align-items:start}
+@media (max-width:1420px){ .cat-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)} #catControls{grid-column:1 / -1} }
+@media (max-width:900px){ .cat-grid{grid-template-columns:minmax(0,1fr)} #catControls{grid-column:auto} }
+.cat-box{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cat-cap{font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);margin-bottom:-4px}
+.cat-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
+.cat-stats .stat b{font-size:18px}
+.cat-ctrl{background:#08101e;border:1px solid var(--line);border-radius:12px;padding:12px}
+.cat-ctrl .ctrl:first-of-type{padding-top:0}
+.switch.violet input:checked + .track{background:rgba(192,132,252,.25);border-color:#c084fc}
+.switch.warm input:checked + .track{background:rgba(251,146,60,.22);border-color:#fb923c}
+.switch.warm input:checked + .track .knob{background:#fb923c}
+.rounds{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;font-variant-numeric:tabular-nums}
+.rounds th,.rounds td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left}
+.rounds th{color:var(--dim);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.07em}
+.rounds td{color:#c2d1e6}
+.rounds td:last-child,.rounds th:last-child{text-align:right}
+.rounds .empty{color:var(--dim);font-style:normal}
+.cat-explain{display:grid;gap:14px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-top:16px}
+@media (max-width:900px){ .cat-explain{grid-template-columns:minmax(0,1fr)} }
+.cat-explain h3{font-size:13px;color:#fff;margin-bottom:8px}
+.cat-explain p{font-size:12.4px;color:#b9c8de;line-height:1.6;margin-bottom:8px}
+.cat-explain p b{color:#fff}
+ul.map{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+ul.map li{font-size:12.4px;color:#b9c8de;line-height:1.5;background:#08101e;border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+ul.map li b{color:#fff}
+ul.map li .to{color:var(--dim);margin:0 5px}
+.cat-explain .caveat{background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.28);border-radius:11px;padding:10px 12px}
+.cat-explain .caveat h3{color:#fdba74}
+
+/* Presenter mode: which model is on the board. Only shown while presenting. */
+.board-switch{display:none;margin-bottom:10px}
+body.sst-pres .board-switch{display:block}
+body.sst-pres .board-switch .seg button{font-size:var(--sst-pr-control)}
+/* Canvases are fitted inside the pinned card by script; centre them there. */
+body.sst-pres .stage{display:flex;align-items:center;justify-content:center}
+body.sst-pres #profile, body.sst-pres #miniProfile{max-width:none;margin:0}
+body.sst-pres .cat-cap{font-size:var(--sst-pr-label);margin:0}
+/* On the board: the three figures that tell the story; the histogram already counts the jumps. */
+body.sst-pres .cat-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.sst-pres .cat-stats .stat:nth-child(-n+3){display:none}
+body.sst-pres .cat-stats .stat{padding:6px 10px}
+.cat-stats .stat b{white-space:nowrap}
+body.sst-pres .cat-stats .stat b{font-size:var(--sst-pr-figure)}
+body.sst-pres .cat-stats .stat span{font-size:var(--sst-pr-label);text-transform:none;letter-spacing:0}
+body.sst-pres .cat-ctrl .sw, body.sst-pres .cat-ctrl .btn,
+body.sst-pres .cat-ctrl .seg button, body.sst-pres .cat-ctrl .lbl{font-size:var(--sst-pr-control)}
+body.sst-pres .cat-ctrl .hint, body.sst-pres .rounds, body.sst-pres .rounds th{font-size:var(--sst-pr-label)}
+body.sst-pres .rounds th{text-transform:none;letter-spacing:0}
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
@@ -198,6 +256,7 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
     <button class="btn" id="btnSave">＋ Save run to graph</button>
     <button class="btn" id="btnReset">↺ Reset run</button>
     <button class="btn" id="btnClear">✕ Clear saved runs</button>
+    <a class="btn" href="#catSection">How a catalyst works ↓</a>
   </div>
 </header>
 
@@ -237,6 +296,12 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
     </section>
 
     <section class="panel">
+      <div class="board-switch sst-teacher">
+        <div class="seg" data-board>
+          <button data-v="model" class="on">Collision model</button>
+          <button data-v="catalyst">How a catalyst works</button>
+        </div>
+      </div>
       <h2>Variables</h2>
 
       <div class="ctrl">
@@ -286,8 +351,9 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
           <span class="track"><span class="knob"></span></span>
           <span class="sw">Add a catalyst</span>
         </label>
-        <p class="hint">Provides a <em>different pathway with a lower activation energy</em> (−25 kJ/mol here).
-          The catalyst particles are <em>not used up</em> — count them before and after.</p>
+        <p class="hint">Provides a <em>different pathway with a lower activation energy</em> (half of Eₐ here).
+          The catalyst particles are <em>not used up</em> — count them before and after.
+          <a href="#catSection" style="color:#d8b4fe">How a catalyst works ↓</a></p>
       </div>
     </section>
   </div>
@@ -587,6 +653,110 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
   </div>
 </div>
 
+<!-- ================= HOW A CATALYST WORKS ================= -->
+<section class="panel cat" id="catSection">
+  <h2>How a catalyst works <span class="tag">the high-jump analogy</span></h2>
+  <p class="cat-intro">Only athletes who clear the qualifying height get through to the final. Anyone who knocks
+    the bar off goes back to the queue to try again. If the bar is high, few jumps succeed and filling the final takes a
+    long time. Open a <em>second pit with a lower bar</em> and the athletes jump no higher than before, but far more of
+    their jumps succeed. A catalyst does the same for the particles in a reaction: beside the arena, every jump is
+    replayed as a particle climbing the hump on a reaction profile, to the same height.</p>
+
+  <div class="cat-grid">
+    <div class="cat-box" id="catArenaBox">
+      <div class="stage"><canvas id="arena"></canvas></div>
+      <div class="cat-stats">
+        <div class="stat hi"><b id="cjJumps">0</b><span>Jumps</span></div>
+        <div class="stat ok"><b id="cjClear">0</b><span>Cleared</span></div>
+        <div class="stat no"><b id="cjFail">0</b><span>Knocked off</span></div>
+        <div class="stat"><b id="cjPct">0 %</b><span>Jumps that clear</span></div>
+        <div class="stat"><b id="cjFinal">0 / 10</b><span>In the final</span></div>
+        <div class="stat"><b id="cjTime">0.0</b><span>Time / s</span></div>
+      </div>
+    </div>
+
+    <div class="cat-box" id="catChartsBox">
+      <p class="cat-cap">Every jump as a particle</p>
+      <div class="stage"><canvas id="miniProfile"></canvas></div>
+      <p class="cat-cap">Heights reached</p>
+      <div class="stage"><canvas id="hist"></canvas></div>
+    </div>
+
+    <div class="cat-ctrl" id="catControls">
+      <div class="board-switch sst-teacher">
+        <div class="seg" data-board>
+          <button data-v="model">Collision model</button>
+          <button data-v="catalyst" class="on">How a catalyst works</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label class="switch violet">
+          <input type="checkbox" autocomplete="off" id="cjCat">
+          <span class="track"><span class="knob"></span></span>
+          <span class="sw">Add a catalyst: a second pit with a lower bar</span>
+        </label>
+        <p class="hint">The first bar stays where it is. The athletes take the easier route.</p>
+      </div>
+      <div class="ctrl">
+        <label class="switch warm">
+          <input type="checkbox" autocomplete="off" id="cjHot">
+          <span class="track"><span class="knob"></span></span>
+          <span class="sw">Compare: a warmer day</span>
+        </label>
+        <p class="hint">Like raising the temperature: athletes jump <em>higher</em> and <em>more often</em>,
+          but the bar doesn't move.</p>
+      </div>
+      <div class="ctrl">
+        <div class="row">
+          <div class="seg" id="cjSpeed">
+            <button data-v="1" class="on">Normal speed</button>
+            <button data-v="4">Fast</button>
+          </div>
+          <button class="btn" id="cjPlay">⏸ Pause</button>
+          <button class="btn" id="cjReset">↺ Start again</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label class="lbl">Time for all 10 to reach the final</label>
+        <table class="rounds">
+          <thead><tr><th>Conditions</th><th>Cleared</th><th>Time</th></tr></thead>
+          <tbody id="cjRounds"><tr><td colspan="3" class="empty">Let a round finish, then add the catalyst and compare.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-explain" id="catExplain">
+    <div>
+      <h3>How the analogy maps onto the reaction</h3>
+      <ul class="map">
+        <li><b>Athletes waiting to jump</b><span class="to">→</span>reactant particles</li>
+        <li><b>Each jump</b><span class="to">→</span>a collision between reactant particles</li>
+        <li><b>The height an athlete reaches</b><span class="to">→</span>the energy of the collision</li>
+        <li><b>The qualifying height (the bar)</b><span class="to">→</span>the activation energy, Eₐ</li>
+        <li><b>Clearing the bar</b><span class="to">→</span>a successful collision: the particles react</li>
+        <li><b>Knocking the bar off</b><span class="to">→</span>an unsuccessful collision: the particles bounce apart and collide again later</li>
+        <li><b>A second pit with a lower bar</b><span class="to">→</span>a catalyst: an alternative pathway with a lower activation energy</li>
+        <li><b>Athletes in the final</b><span class="to">→</span>product made</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What a catalyst changes, and what it doesn't</h3>
+      <p>The athletes jump <b>no higher</b> than before. A catalyst gives the particles no extra energy. It lowers the
+        energy they <b>need</b>, so a <b>higher proportion of collisions have energy ≥ Eₐ</b>, more collisions are
+        successful each second and the rate increases.</p>
+      <p>Everyone reaches the final in the end, with or without the second pit. The catalyst changes <b>how
+        quickly</b>, not <b>how many</b>: the same amount of product is made.</p>
+      <p>The second pit is still standing when the competition is over. A catalyst is <b>not used up</b>.</p>
+      <div class="caveat">
+        <h3>Say it the exam way</h3>
+        <p>The first bar never moves. A catalyst doesn't change the original pathway: it provides a <b>different
+          pathway with a lower activation energy</b>. Write that, not just "it lowers the activation energy".</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer class="note">
   A teaching model, not a quantitative simulation: particle speeds and the spread of collision energies are exaggerated
   so the effect of each variable is visible in seconds.<br>
@@ -604,7 +774,7 @@ footer.note{margin-top:16px;font-size:11px;color:var(--dim);text-align:center;li
    ============================================================ */
 const WORLD = {w:640, h:460};        // fixed physics world (canvas is scaled to fit)
 const GW = 600, GH = 320;            // product-vs-time graph world
-const EW = 600, EH = 280;            // energy profile world
+const EW = 520, EH = 400;            // energy profile world, exam-paper proportions
 
 const R      = 9;        // radius of a mobile particle
 const RS     = 9;        // radius of a solid particle
@@ -615,7 +785,6 @@ const E_SCALE= 3400;     // converts (px/s)^2 into "kJ/mol" for the model.
                          // collisions are successful: P(success) = exp(-Ea*E_SCALE/sigma^2).
 const V_PER  = 2;        // cm3 of gas per successful reaction
 const CAT_N  = 10;       // catalyst particles when switched on
-const CAT_DROP = 25;     // kJ/mol removed from Ea by the catalyst
 const DT     = 1/60;
 
 const COLOR = {A:'#ff5f7e', B:'#4cc9ff', P:'#4ade80', C:'#c084fc', S:'#f5b13d'};
@@ -643,11 +812,21 @@ const clamp = (v,a,b) => v<a?a:(v>b?b:v);
 /* ============================================================
    Canvas plumbing — fixed world size, scaled to the element
    ============================================================ */
+const presenting = () => document.body.classList.contains('sst-pres');
 function stage(canvas, w, h){
   const ctx = canvas.getContext('2d');
+  const box = canvas.parentElement;
   function fit(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cw = canvas.getBoundingClientRect().width || w;
+    let cw;
+    if (presenting() && box.clientHeight > 0){
+      // On the board the card sets the space: fit inside it, keeping the shape.
+      cw = Math.max(1, Math.min(box.clientWidth, box.clientHeight * w / h));
+      canvas.style.width = cw + 'px';
+    } else {
+      canvas.style.width = '';
+      cw = canvas.getBoundingClientRect().width || w;
+    }
     const ch = cw * h / w;
     canvas.width  = Math.max(1, Math.round(cw * dpr));
     canvas.height = Math.max(1, Math.round(ch * dpr));
@@ -655,13 +834,22 @@ function stage(canvas, w, h){
     ctx.setTransform(s, 0, 0, s, 0, 0);
   }
   fit();
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(canvas);
-  else window.addEventListener('resize', fit);
+  if (window.ResizeObserver){ const ro = new ResizeObserver(fit); ro.observe(canvas); ro.observe(box); }
+  window.addEventListener('resize', fit);
   return ctx;
 }
 const ctx  = stage(el('chamber'), WORLD.w, WORLD.h);
 const gctx = stage(el('graph'),   GW, GH);
 const pctx = stage(el('profile'), EW, EH);
+
+/* Canvas text: its size in world units, never below the board's label floor while presenting. */
+const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
+function fsize(c, W, base){
+  if (!presenting() || !window.SST_PRESENT) return base;
+  const s = (c.canvas.clientWidth || W) / W;
+  return Math.max(base, SST_PRESENT.px('--sst-pr-label') / s);
+}
+function setFont(c, W, weight, base){ const px = fsize(c, W, base); c.font = weight + ' ' + px.toFixed(1) + 'px ' + FONT; return px; }
 
 /* ============================================================
    Model helpers
@@ -674,7 +862,8 @@ function randn(){
 }
 const tempFactor = () => Math.pow((S.tempC + 273) / 293, 2);
 const sigma      = () => SIGMA0 * tempFactor();
-const eaNow      = () => S.catalyst ? Math.max(5, S.ea - CAT_DROP) : S.ea;
+const eaCat      = ea => Math.round(ea / 2);          // the catalysed pathway halves Ea
+const eaNow      = () => S.catalyst ? eaCat(S.ea) : S.ea;
 
 function newParticle(type, r){
   const s = sigma();
@@ -934,7 +1123,7 @@ function drawGraph(){
   const Y = v => pad.t + ph - (v / vMax) * ph;
 
   // grid + ticks
-  c.font = '500 10.5px Inter, Segoe UI, system-ui, sans-serif';
+  c.font = '500 10.5px "Plus Jakarta Sans", system-ui, sans-serif';
   c.textBaseline = 'middle'; c.textAlign = 'right';
   for (let i = 0; i <= 5; i++){
     const v = vMax * i / 5, y = Y(v);
@@ -952,7 +1141,7 @@ function drawGraph(){
   }
 
   // axis titles
-  c.fillStyle = '#93a6c4'; c.font = '600 11px Inter, Segoe UI, system-ui, sans-serif';
+  c.fillStyle = '#93a6c4'; c.font = '600 11px "Plus Jakarta Sans", system-ui, sans-serif';
   c.fillText('Time (s)', pad.l + pw/2, pad.t + ph + 22);
   c.save();
   c.translate(14, pad.t + ph/2); c.rotate(-Math.PI/2);
@@ -988,7 +1177,7 @@ function drawGraph(){
       c.beginPath(); c.moveTo(X(0), Y(0)); c.lineTo(X(tEnd), Y(Math.min(vMax, g * tEnd))); c.stroke();
       c.restore();
       c.fillStyle = '#e9effb'; c.textAlign = 'left'; c.textBaseline = 'bottom';
-      c.font = '600 10.5px Inter, Segoe UI, system-ui, sans-serif';
+      c.font = '600 10.5px "Plus Jakarta Sans", system-ui, sans-serif';
       c.fillText('initial gradient ≈ ' + g.toFixed(2) + ' cm³/s', X(0) + 8, Y(vMax) + 14);
     }
   }
@@ -1001,7 +1190,7 @@ function drawGraph(){
   }
   if (S.finishedAt !== null){
     c.fillStyle = '#4ade80'; c.textAlign = 'right'; c.textBaseline = 'top';
-    c.font = '600 11px Inter, Segoe UI, system-ui, sans-serif';
+    c.font = '600 11px "Plus Jakarta Sans", system-ui, sans-serif';
     c.fillText('reaction complete at ' + S.finishedAt.toFixed(1) + ' s', pad.l + pw, pad.t + 2);
   }
 }
@@ -1029,95 +1218,563 @@ function rateNow(){
 /* ============================================================
    Drawing — reaction profile
    ============================================================ */
-function drawProfile(){
-  const c = pctx, pad = {l:58, r:20, t:22, b:36};
-  const pw = EW - pad.l - pad.r, ph = EH - pad.t - pad.b;
-  c.clearRect(0, 0, EW, EH);
-  c.fillStyle = '#060a12'; c.fillRect(0, 0, EW, EH);
+/* Endothermic ΔH has to stay below the smallest (catalysed) Eₐ, or the hump would dip under the products.
+   It follows the Eₐ slider only, so switching the catalyst never moves it. */
+const dHfor = (exo, ea) => exo ? 45 : Math.min(30, eaCat(ea) - 5);
 
-  const EMAX = 200, dH = 45;
-  const eR = S.exo ? 62 : 34;
-  const eP = S.exo ? eR - dH : eR + dH;
-  const Y = e => pad.t + ph - (e / EMAX) * ph;
+function drawProfile(){
+  drawReactionProfile(pctx, EW, EH, {exo:S.exo, ea:S.ea, eaCat:S.catalyst ? eaNow() : null, dH:dHfor(S.exo, S.ea)});
+}
+
+/* An exam-style reaction profile: axes with arrowheads, flat reactant and product levels, one smooth hump
+   whose peak sits exactly above the Eₐ arrow. Energies in kJ/mol; the axis carries no numbers. */
+function drawReactionProfile(c, W, H, o){
+  const lab  = fsize(c, W, 12.5);
+  const pad  = {l:Math.round(lab * 2.2), r:18, t:18, b:Math.round(lab * 2.4)};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = '#060a12'; c.fillRect(0, 0, W, H);
+
+  const EMAX = 138;
+  const eR = o.exo ? 60 : 14;
+  const eP = o.exo ? eR - o.dH : eR + o.dH;
+  const Y  = e => pad.t + ph - (e / EMAX) * ph;
+  const x0 = pad.l, x1 = pad.l + pw, yAx = pad.t + ph;
+  const xA = x0 + pw*0.04, xB = x0 + pw*0.25, xPk = x0 + pw*0.48, xC = x0 + pw*0.71, xD = x1 - pw*0.03;
+  const G = {Y:Y, xA:xA, xB:xB, xPk:xPk, xC:xC, xD:xD, eR:eR, eP:eP};   // for anything drawn on top
+
+  const head = (x, y, dir, color) => {                 // filled arrowhead pointing up/down/right
+    const s = 7;
+    c.fillStyle = color; c.beginPath();
+    if (dir === 'up')        { c.moveTo(x, y); c.lineTo(x - s*0.6, y + s); c.lineTo(x + s*0.6, y + s); }
+    else if (dir === 'down') { c.moveTo(x, y); c.lineTo(x - s*0.6, y - s); c.lineTo(x + s*0.6, y - s); }
+    else                     { c.moveTo(x, y); c.lineTo(x - s, y - s*0.6); c.lineTo(x - s, y + s*0.6); }
+    c.closePath(); c.fill();
+  };
 
   // axes
-  c.strokeStyle = 'rgba(147,166,196,.45)'; c.lineWidth = 1.2;
-  c.beginPath(); c.moveTo(pad.l, pad.t - 6); c.lineTo(pad.l, pad.t + ph); c.lineTo(pad.l + pw, pad.t + ph); c.stroke();
-  c.fillStyle = '#93a6c4'; c.font = '600 11px Inter, Segoe UI, system-ui, sans-serif';
+  c.strokeStyle = '#8693a5'; c.lineWidth = 1.6; c.setLineDash([]);
+  c.beginPath(); c.moveTo(x0, pad.t + 2); c.lineTo(x0, yAx); c.lineTo(x1 - 2, yAx); c.stroke();
+  head(x0, pad.t - 4, 'up', '#8693a5'); head(x1 + 4, yAx, 'right', '#8693a5');
+  c.fillStyle = '#c3cedc'; setFont(c, W, 600, 12.5);
   c.textAlign = 'center'; c.textBaseline = 'top';
-  c.fillText('Progress of reaction', pad.l + pw/2, pad.t + ph + 12);
-  c.save(); c.translate(16, pad.t + ph/2); c.rotate(-Math.PI/2);
+  c.fillText('Progress of reaction', x0 + pw/2, yAx + lab*0.6);
+  c.save(); c.translate(x0 - lab*1.1, pad.t + ph/2); c.rotate(-Math.PI/2);
   c.textBaseline = 'middle'; c.fillText('Energy', 0, 0); c.restore();
 
-  const xA = pad.l + 18, xB = pad.l + 108, xM = pad.l + pw/2, xC = pad.l + pw - 108, xD = pad.l + pw - 6;
-
-  const curve = (ea, color, width, dash) => {
-    const apex = Math.max(eR, eP) + ea * 0.9;
-    const yPeak = (8*Y(apex) - Y(eR) - Y(eP)) / 6;
+  // one pathway: flat, a half-cosine up to the peak, a half-cosine down, flat
+  const path = (ea, color, width, dash) => {
+    const apex = eR + ea;
     c.save();
     c.setLineDash(dash || []);
     c.strokeStyle = color; c.lineWidth = width; c.lineJoin = 'round'; c.lineCap = 'round';
     c.beginPath();
-    c.moveTo(xA, Y(eR));
-    c.lineTo(xB, Y(eR));
-    c.bezierCurveTo(xB + (xM - xB)*0.62, yPeak, xC - (xC - xM)*0.62, yPeak, xC, Y(eP));
+    c.moveTo(xA, Y(eR)); c.lineTo(xB, Y(eR));
+    for (let i = 1; i <= 40; i++){ const u = i/40; c.lineTo(xB + (xPk - xB)*u, Y(eR + (apex - eR)*(1 - Math.cos(Math.PI*u))/2)); }
+    for (let i = 1; i <= 40; i++){ const u = i/40; c.lineTo(xPk + (xC - xPk)*u, Y(apex + (eP - apex)*(1 - Math.cos(Math.PI*u))/2)); }
     c.lineTo(xD, Y(eP));
-    c.stroke();
-    c.restore();
+    c.stroke(); c.restore();
     return apex;
   };
 
-  // uncatalysed pathway
-  const apexU = curve(S.ea, S.catalyst ? 'rgba(148,163,184,.55)' : '#fbbf24', S.catalyst ? 2 : 3);
-  // catalysed pathway
-  let apexC = null;
-  if (S.catalyst) apexC = curve(eaNow(), '#4ade80', 3, [7,5]);
+  const UNCAT = o.eaCat != null ? 'rgba(251,191,36,.75)' : '#fbbf24', CAT = '#c084fc', DH = '#38bdf8';
+  const apexU = path(o.ea, UNCAT, 3);
+  const apexC = o.eaCat != null ? path(o.eaCat, CAT, 3, [8,6]) : null;
 
-  // Ea arrows
-  const arrow = (x, y1, y2, color, label, side) => {
+  // reactant level carried across as a dashed guide, so Eₐ and ΔH are both measured from it
+  const xDH = xC + (xD - xC) * 0.32;
+  c.save(); c.setLineDash([4,4]); c.strokeStyle = 'rgba(203,213,225,.45)'; c.lineWidth = 1.2;
+  c.beginPath(); c.moveTo(xB, Y(eR)); c.lineTo(o.noDH ? xPk + 18 : xDH + 8, Y(eR)); c.stroke(); c.restore();
+
+  // single-headed arrow from the reactant level, labelled beside it
+  const arrow = (x, e1, e2, color, label, side, eLabel) => {
+    const y1 = Y(e1), y2 = Y(e2), up = y2 < y1;
     c.save();
-    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 1.3;
-    c.setLineDash([4,3]);
-    c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y2); c.stroke();
-    c.setLineDash([]);
-    [[y1, 1], [y2, -1]].forEach(function(p){
-      c.beginPath(); c.moveTo(x, p[0]); c.lineTo(x - 4, p[0] + 6*p[1]); c.lineTo(x + 4, p[0] + 6*p[1]); c.closePath(); c.fill();
-    });
-    c.font = '700 11px Inter, Segoe UI, system-ui, sans-serif';
-    c.textAlign = side === 'left' ? 'right' : 'left';
-    c.textBaseline = 'middle';
-    const tx = side === 'left' ? x - 8 : x + 8, ty = (y1 + y2) / 2;
+    c.strokeStyle = color; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y2 + (up ? 6 : -6)); c.stroke();
+    head(x, y2, up ? 'up' : 'down', color);
+    const px = setFont(c, W, 700, 13);
+    c.textAlign = side === 'left' ? 'right' : 'left'; c.textBaseline = 'middle';
+    const tx = side === 'left' ? x - 7 : x + 7, ty = Y(eLabel);
     const tw = c.measureText(label).width;
-    c.fillStyle = 'rgba(6,10,18,.88)';
-    c.fillRect(side === 'left' ? tx - tw - 4 : tx - 4, ty - 8, tw + 8, 16);
-    c.fillStyle = color;
-    c.fillText(label, tx, ty);
+    c.fillStyle = 'rgba(6,10,18,.9)';
+    c.fillRect(side === 'left' ? tx - tw - 3 : tx - 3, ty - px*0.62, tw + 6, px*1.24);
+    c.fillStyle = color; c.fillText(label, tx, ty);
     c.restore();
   };
 
-  const xEa = xM - (S.catalyst ? 96 : 58);
-  arrow(xEa, Y(eR), Y(apexU), S.catalyst ? 'rgba(203,213,225,.8)' : '#fbbf24',
-        'Eₐ = ' + S.ea + ' kJ/mol', 'left');
-  if (S.catalyst)
-    arrow(xM + 66, Y(eR), Y(apexC), '#4ade80', 'Eₐ (catalysed) = ' + eaNow() + ' kJ/mol', 'right');
+  if (apexC === null){
+    arrow(xPk, eR, apexU, '#fbbf24', 'Eₐ', 'left', eR + o.ea*0.5);
+  } else {
+    // a pair either side of the shared peak, so the pair is centred on it
+    arrow(xPk - 9, eR, apexU, '#fbbf24', 'Eₐ', 'left', eR + o.ea*0.55);
+    arrow(xPk + 9, eR, apexC, CAT, 'Eₐ', 'right', eR + o.eaCat*0.35);
+  }
+  if (!o.noDH) arrow(xDH, eR, eP, DH, 'ΔH', 'right', (eR + eP) / 2);
 
-  // delta H arrow
-  arrow(xC + 26, Y(eR), Y(eP), '#38bdf8',
-        'ΔH = ' + (S.exo ? '−' : '+') + dH + ' kJ/mol', 'left');
+  // level labels (below the reactant line when particles are drawn sitting on it)
+  c.fillStyle = '#e9effb'; setFont(c, W, 600, 12.5);
+  c.textAlign = 'left'; c.textBaseline = o.reactBelow ? 'top' : 'bottom';
+  c.fillText('Reactants', xA, Y(eR) + (o.reactBelow ? 6 : -6));
+  c.textAlign = 'right'; c.textBaseline = o.exo ? 'top' : 'bottom';
+  c.fillText('Products', xD, Y(eP) + (o.exo ? 6 : -6));
 
-  // level labels
-  c.font = '600 11px Inter, Segoe UI, system-ui, sans-serif';
-  c.fillStyle = '#e9effb'; c.textAlign = 'left'; c.textBaseline = 'bottom';
-  c.fillText('Reactants', xA, Y(eR) - 7);
-  c.textAlign = 'right'; c.textBaseline = S.exo ? 'top' : 'bottom';
-  c.fillText('Products', xD, Y(eP) + (S.exo ? 7 : -7));
-
-  c.textAlign = 'center'; c.textBaseline = 'top';
-  c.font = '600 10.5px Inter, Segoe UI, system-ui, sans-serif';
-  c.fillStyle = S.exo ? '#4ade80' : '#fb923c';
-  c.fillText(S.exo ? 'Exothermic — products lower in energy than reactants'
-                   : 'Endothermic — products higher in energy than reactants', EW/2, 4);
+  // the key of values needs room: left off a small canvas on the board rather than shrunk
+  if (o.key === false || (presenting() && c.canvas.clientWidth < 520)) return G;
+  // key with the values, top right
+  const rows = [['Eₐ = ' + o.ea + ' kJ/mol', '#fbbf24', false]];
+  if (o.eaCat != null) rows.push(['Eₐ with catalyst = ' + o.eaCat + ' kJ/mol', CAT, true]);
+  rows.push(['ΔH = ' + (o.exo ? '−' : '+') + o.dH + ' kJ/mol', DH, false]);
+  const kpx = setFont(c, W, 600, 11.5);
+  c.textAlign = 'right'; c.textBaseline = 'middle';
+  rows.forEach(function(r, i){
+    const y = pad.t + 4 + kpx*0.7 + i * kpx * 1.5;
+    c.fillStyle = r[1]; c.fillText(r[0], x1 - 4, y);
+    const tw = c.measureText(r[0]).width;
+    c.save(); c.strokeStyle = r[1]; c.lineWidth = 3; c.setLineDash(r[2] ? [5,4] : []);
+    c.beginPath(); c.moveTo(x1 - 12 - tw - 22, y); c.lineTo(x1 - 12 - tw, y); c.stroke(); c.restore();
+  });
+  return G;
 }
+
+/* ============================================================
+   How a catalyst works — the high-jump analogy
+   A jump is a collision, the height reached is its energy and the bar is Eₐ.
+   Knock the bar off and it's back to the queue (particles that bounce apart
+   collide again), so everyone reaches the final in the end: a catalyst
+   changes how quickly, not how many. The catalyst opens a second pit with a
+   lower bar; the first bar never moves. Every jump is replayed on a reaction
+   profile as a particle climbing the hump to the same height.
+   ============================================================ */
+const AW = 800, AH = 500, PXM = 66;          // arena world; pixels per metre
+const HW = 440, HH = 230;                    // histogram world
+const MW = 480, MH = 330;                    // live reaction profile world
+const PI = Math.PI;
+const CJ = {
+  N: 10, BAR: 2.15, BAR_CAT: 1.95,           // qualifying heights / m
+  EA: 50, EA_CAT: 25,                        // the matching activation energies / kJ/mol
+  MEAN: 2.07, MEAN_HOT: 2.15, SD: 0.12,      // heights reached / m: 25 % clear the first bar, 84 % the second
+  GAP: 0.85, GAP_HOT: 0.6,                   // seconds between jumps
+  RUN: 0.95, FLY: 0.85, LIE: 0.5, FADE: 0.35, LAND_HIP: 0.36,
+  H0: 1.60, BIN: 0.05, NBIN: 18,
+  AMBER: '#fbbf24', VIOLET: '#c084fc', GOOD: '#4ade80', BAD: '#f87171', IDLE: '#dfe6f0'
+};
+/* One scale for both pits, so a jump's height is its collision energy:
+   2.15 m is 50 kJ/mol (the first bar's Eₐ) and 1.95 m is 25 kJ/mol (the second's). */
+const energyOf = h => Math.max(0, 125 * (h - 1.75));
+const SHADE = {'#dfe6f0':'#7f8b9c', '#4ade80':'#2b8f55', '#f87171':'#a84c4c'};   // far-side limbs
+const DEPTH = [56, -24];                     // far upright's offset: a three-quarter view of the bar
+const LANES = [
+  {top:52,  g:276, sx:450, bar:CJ.BAR,     ea:CJ.EA,     color:CJ.AMBER,  knock:null},
+  {top:284, g:492, sx:450, bar:CJ.BAR_CAT, ea:CJ.EA_CAT, color:CJ.VIOLET, knock:null}
+];
+const runLine = L => L.g + DEPTH[1] / 2;                 // athletes run midway between the uprights
+const yAt     = (L, h) => runLine(L) - h * PXM;          // h metres above the runway, at mid-depth
+const crossX  = L => L.sx + DEPTH[0] / 2;                // where the bar is crossed
+const matTop  = L => runLine(L) - 16;
+
+const J = {
+  cat:false, hot:false, speed:1, running:true,
+  t:0, spawnIn:0, queue:[], active:[], qualified:[], doneAt:null,
+  jumps:0, cleared:0, bins:new Array(CJ.NBIN).fill(0), floats:[], rounds:[], dots:new Map()
+};
+const actx = stage(el('arena'), AW, AH);
+const hctx = stage(el('hist'), HW, HH);
+const mctx = stage(el('miniProfile'), MW, MH);
+
+const cjLane  = () => J.cat ? LANES[1] : LANES[0];
+const cjLabel = () => (J.cat ? 'Catalyst' : 'No catalyst') + (J.hot ? ', warmer' : '');
+
+function cjNewRound(){
+  J.queue = []; for (let i = 0; i < CJ.N; i++) J.queue.push(i);
+  J.active = []; J.qualified = []; J.t = 0; J.spawnIn = 0.3; J.doneAt = null; J.dots.clear();
+  LANES.forEach(L => { L.knock = null; });
+}
+function cjReset(){
+  J.jumps = 0; J.cleared = 0; J.bins.fill(0); J.floats = [];
+  cjNewRound(); cjUI();
+}
+
+/* ---------- the competition ---------- */
+function cjStep(dt){
+  J.t += dt;
+  LANES.forEach(L => { if (L.knock) knockStep(L, dt); });
+  for (let i = J.floats.length - 1; i >= 0; i--){ J.floats[i].age += dt; if (J.floats[i].age > 1.4) J.floats.splice(i, 1); }
+  if (J.doneAt !== null){
+    if (J.t - J.doneAt > 4) cjNewRound();       // next round after a pause, same conditions
+    return;
+  }
+  J.spawnIn -= dt;
+  if (J.spawnIn <= 0 && J.queue.length){
+    const L = cjLane(), mean = J.hot ? CJ.MEAN_HOT : CJ.MEAN;
+    const h = clamp(mean + CJ.SD * randn(), CJ.H0 + 0.01, CJ.H0 + CJ.BIN * CJ.NBIN - 0.01);
+    J.active.push({id:J.queue.shift(), lane:L, phase:'run', pt:0, h:h, clears:h >= L.bar,
+                   run:J.hot ? CJ.RUN * 0.85 : CJ.RUN, judged:false});
+    J.spawnIn = J.hot ? CJ.GAP_HOT : CJ.GAP;
+  }
+  for (let i = J.active.length - 1; i >= 0; i--){
+    const a = J.active[i];
+    a.pt += dt;
+    if (a.phase === 'run' && a.pt >= a.run){
+      a.phase = 'fly'; a.pt -= a.run;
+      if (a.lane.knock) a.lane.knock.t = Math.max(a.lane.knock.t, 0.85);   // the bar goes back up before they reach it
+    }
+    if (a.phase === 'fly'){
+      if (!a.judged && a.pt >= CJ.FLY / 2){           // over the bar: cleared, or knocked off
+        a.judged = true;
+        J.jumps++; if (a.clears) J.cleared++;
+        J.bins[Math.floor((a.h - CJ.H0) / CJ.BIN)]++;
+        J.floats = J.floats.filter(f => f.lane !== a.lane);   // one result at a time over each bar
+        J.floats.push({lane:a.lane, age:0, ok:a.clears,
+                       text:a.h.toFixed(2) + ' m ' + (a.clears ? '✓ through' : '✗ back to the queue')});
+        if (!a.clears && !a.lane.knock) a.lane.knock = {t:0, x:0, y:0, vy:-60, rot:0};
+      }
+      if (a.pt >= CJ.FLY){ a.phase = 'lie'; a.pt -= CJ.FLY; }
+    }
+    if (a.phase === 'lie' && a.pt >= CJ.LIE + CJ.FADE){
+      J.active.splice(i, 1);
+      if (a.clears) J.qualified.push(a.id); else J.queue.push(a.id);   // back of the queue to try again
+    }
+  }
+  if (J.qualified.length === CJ.N && !J.active.length){
+    J.doneAt = J.t;
+    J.rounds.unshift({label:cjLabel(), pct:J.jumps ? Math.round(100 * J.cleared / J.jumps) : 0, time:J.t});
+    if (J.rounds.length > 5) J.rounds.pop();
+    cjRounds();
+  }
+}
+
+/* a knocked bar is pushed on, drops onto the mat, bounces, and is put back */
+function knockStep(L, dt){
+  const k = L.knock, floor = matTop(L) - 3 - yAt(L, L.bar);
+  k.t += dt;
+  k.vy += 9.8 * PXM * dt; k.y += k.vy * dt;
+  k.x += 60 * dt * Math.max(0, 1 - k.t * 2);
+  k.rot += dt * 1.4 * Math.max(0, 1 - k.t * 1.5);
+  if (k.y > floor){ k.y = floor; k.vy = Math.abs(k.vy) > 90 ? -k.vy * 0.3 : 0; }
+  if (k.t > 1.0) L.knock = null;
+}
+
+/* ---------- athletes, drawn as sports pictograms ----------
+   Angles are clockwise from straight up. N is the near side (full colour), F the far side (shaded). */
+const BODY = {torso:0.55, thigh:0.46, shin:0.46, upper:0.3, fore:0.28, head:0.115};
+const ease = k => k * k * (3 - 2 * k);
+function runPose(ph){
+  const s = Math.sin(ph), bend = p => 0.15 + 1.35 * Math.pow(0.5 + 0.5 * Math.cos(p), 1.4);
+  return {torso:0.22,
+    thighN:PI - 0.6*s, shinN:PI - 0.6*s + bend(ph),
+    thighF:PI + 0.6*s, shinF:PI + 0.6*s + bend(ph + PI),
+    armN:PI + 0.75*s,  foreN:PI + 0.75*s - 1.5,
+    armF:PI - 0.75*s,  foreF:PI - 0.75*s - 1.5};
+}
+const FLY_KEYS = {        // take-off, over the bar (back arched, head first), landing on the back
+  torso: [0.15,      PI/2 + 0.35,   PI/2 + 0.2],
+  thighN:[PI - 1.35, 3*PI/2 - 0.35, 3*PI/2 + 0.95],
+  shinN: [PI + 0.2,  PI + 0.15,     3*PI/2 + 1.05],
+  thighF:[PI + 0.12, 3*PI/2 - 0.25, 3*PI/2 + 0.85],
+  shinF: [PI + 0.2,  PI + 0.25,     3*PI/2 + 0.95],
+  armN:  [-0.35, -1.45, -1.9],  foreN:[-0.25, -1.35, -2.2],
+  armF:  [-0.15, -1.3,  -1.7],  foreF:[-0.05, -1.2,  -2.0]
+};
+function flyPose(u){
+  const i = u < 0.5 ? 0 : 1, k = ease(u < 0.5 ? u / 0.5 : (u - 0.5) / 0.5), p = {};
+  for (const n in FLY_KEYS) p[n] = FLY_KEYS[n][i] + (FLY_KEYS[n][i + 1] - FLY_KEYS[n][i]) * k;
+  return p;
+}
+const STAND = {torso:0, thighN:PI - 0.06, shinN:PI, thighF:PI + 0.06, shinF:PI,
+               armN:PI - 0.15, foreN:PI - 0.1, armF:PI + 0.15, foreF:PI + 0.1};
+const CHEER = Object.assign({}, STAND, {armN:0.45, foreN:0.25, armF:-0.45, foreF:-0.25});
+
+/* where an athlete is: x, hip height (m), pose */
+function cjPose(a){
+  const L = a.lane, xT = crossX(L) - 115, xL = crossX(L) + 112;
+  if (a.phase === 'run'){
+    const x = -40 + (xT + 40) * (a.pt / a.run), ph = x / 17;
+    const pose = runPose(ph);
+    let hip = 0.87 + 0.03 * Math.cos(2 * ph);
+    const b = (a.pt - (a.run - 0.16)) / 0.16;           // last strides: blend into the take-off
+    if (b > 0){
+      const f = flyPose(0), k = ease(Math.min(1, b));
+      for (const n in pose) pose[n] += (f[n] - pose[n]) * k;
+      hip += (0.95 - hip) * k;
+    }
+    return {x:x, hip:hip, pose:pose, alpha:1};
+  }
+  if (a.phase === 'fly'){
+    const u = a.pt / CJ.FLY, x = xT + (xL - xT) * u;
+    const hip = u <= 0.5 ? 0.95 + (a.h - 0.95) * (1 - Math.pow(1 - u / 0.5, 2))
+                         : a.h + (CJ.LAND_HIP - a.h) * Math.pow((u - 0.5) / 0.5, 2);
+    return {x:x, hip:hip, pose:flyPose(u), alpha:1};
+  }
+  const fade = a.pt > CJ.LIE ? 1 - (a.pt - CJ.LIE) / CJ.FADE : 1;
+  return {x:xL, hip:CJ.LAND_HIP, pose:flyPose(1), alpha:Math.max(0, fade)};
+}
+
+function drawPicto(c, x, y, p, color, scale, alpha){
+  const k = PXM * (scale || 1), shade = SHADE[color] || color;
+  const at = (o, a, l) => [o[0] + Math.sin(a) * l * k, o[1] - Math.cos(a) * l * k];
+  // near-side parts get a thin outline in the background colour, so they read apart from the body
+  const stroke = (pts, col, w, outline) => {
+    c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]);
+    if (outline){ c.strokeStyle = '#060a12'; c.lineWidth = w * k + 3; c.stroke(); }
+    c.strokeStyle = col; c.lineWidth = w * k; c.stroke();
+  };
+  const limb = (o, a1, l1, a2, l2) => { const m = at(o, a1, l1); return [o, m, at(m, a2, l2)]; };
+  const hip = [x, y], sh = at(hip, p.torso, BODY.torso - 0.06), neck = at(hip, p.torso, BODY.torso);
+  c.save(); c.globalAlpha = alpha == null ? 1 : alpha; c.lineCap = 'round'; c.lineJoin = 'round';
+  stroke(limb(sh, p.armF, BODY.upper, p.foreF, BODY.fore), shade, 0.085, false);
+  stroke(limb(hip, p.thighF, BODY.thigh, p.shinF, BODY.shin), shade, 0.11, false);
+  stroke([hip, neck], color, 0.15, true);
+  stroke(limb(hip, p.thighN, BODY.thigh, p.shinN, BODY.shin), color, 0.11, true);
+  stroke(limb(sh, p.armN, BODY.upper, p.foreN, BODY.fore), color, 0.085, true);
+  const hd = at(hip, p.torso, BODY.torso + 0.075 + 0.045 + BODY.head);
+  c.fillStyle = color; c.beginPath(); c.arc(hd[0], hd[1], BODY.head * k, 0, 6.2832); c.fill();
+  c.restore();
+}
+
+/* ---------- the arena: two pits, one above the other ---------- */
+function cjFloor(c, L){
+  c.fillStyle = '#0d1a2a';
+  c.fillRect(0, L.g + DEPTH[1], AW, -DEPTH[1]);
+  c.strokeStyle = '#1b2c42'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(0, L.g); c.lineTo(AW, L.g); c.moveTo(0, L.g + DEPTH[1]); c.lineTo(AW, L.g + DEPTH[1]); c.stroke();
+}
+function cjMat(c, L){
+  const x0 = L.sx - 18, x1 = L.sx + 205, g = L.g, t = 16, D = DEPTH;
+  c.fillStyle = '#1f4f80';
+  c.beginPath(); c.moveTo(x0, g - t); c.lineTo(x1, g - t); c.lineTo(x1 + D[0], g - t + D[1]);
+  c.lineTo(x0 + D[0], g - t + D[1]); c.closePath(); c.fill();
+  c.fillStyle = '#173d63'; c.fillRect(x0, g - t, x1 - x0, t);
+  c.fillStyle = '#12304f';
+  c.beginPath(); c.moveTo(x1, g - t); c.lineTo(x1 + D[0], g - t + D[1]); c.lineTo(x1 + D[0], g + D[1]); c.lineTo(x1, g); c.closePath(); c.fill();
+}
+function cjUpright(c, L, far){
+  const x = L.sx + (far ? DEPTH[0] : 0), g = L.g + (far ? DEPTH[1] : 0), col = far ? '#6b7888' : '#a3b0c2';
+  c.strokeStyle = col; c.lineWidth = 4; c.lineCap = 'butt';
+  c.beginPath(); c.moveTo(x, g); c.lineTo(x, g - 2.55 * PXM); c.stroke();
+  c.fillStyle = col; c.fillRect(x - 9, g - 3, 18, 3);
+  if (far) return;
+  c.lineWidth = 1.2; c.strokeStyle = 'rgba(203,213,225,.55)';
+  for (let i = 16; i <= 25; i++){
+    const y = g - i / 10 * PXM, long = i % 5 === 0;
+    c.beginPath(); c.moveTo(x - (long ? 10 : 6), y); c.lineTo(x - 2, y); c.stroke();
+  }
+}
+function cjBar(c, L){
+  const cx = crossX(L), cy = yAt(L, L.bar), hx = DEPTH[0] / 2, hy = DEPTH[1] / 2;
+  const seg = (dx, dy, rot, col, w, dash) => {
+    const cr = Math.cos(rot), sr = Math.sin(rot), ax = hx * cr - hy * sr, ay = hx * sr + hy * cr;
+    c.save(); c.setLineDash(dash || []); c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(cx + dx - ax, cy + dy - ay); c.lineTo(cx + dx + ax, cy + dy + ay); c.stroke(); c.restore();
+  };
+  if (!L.knock){ seg(0, 0, 0, L.color, 5); return; }
+  seg(0, 0, 0, 'rgba(203,213,225,.5)', 2, [4, 4]);        // where the bar belongs
+  c.save(); c.globalAlpha *= clamp((1.0 - L.knock.t) / 0.25, 0, 1);
+  seg(L.knock.x, L.knock.y, L.knock.rot, L.color, 5);
+  c.restore();
+}
+function cjClosed(c, L){
+  const msg1 = 'Second pit: closed', msg2 = 'Add a catalyst to open it';
+  const px = setFont(c, AW, 700, 15), w = Math.max(c.measureText(msg1).width, c.measureText(msg2).width) + 36;
+  const cx = AW / 2 - 60, cy = (L.top + L.g) / 2 - 18;
+  c.fillStyle = 'rgba(6,10,18,.92)'; c.fillRect(cx - w/2, cy - px * 1.5, w, px * 3);
+  c.save(); c.setLineDash([6, 5]); c.strokeStyle = CJ.VIOLET; c.lineWidth = 1.5;
+  c.strokeRect(cx - w/2, cy - px * 1.5, w, px * 3); c.restore();
+  c.fillStyle = CJ.VIOLET; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(msg1, cx, cy - px * 0.6);
+  setFont(c, AW, 500, 13); c.fillStyle = '#c3cedc'; c.fillText(msg2, cx, cy + px * 0.65);
+}
+
+function drawArena(){
+  const c = actx;
+  c.clearRect(0, 0, AW, AH);
+  c.fillStyle = '#060a12'; c.fillRect(0, 0, AW, AH);
+  c.strokeStyle = '#182535'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(0, 50); c.lineTo(AW, 50); c.moveTo(0, 281); c.lineTo(AW, 281); c.stroke();
+
+  LANES.forEach(function(L, i){
+    const closed = i === 1 && !J.cat, spare = i === 0 && J.cat;
+    const dim = closed ? 0.28 : spare ? 0.5 : 1;
+    c.save(); c.globalAlpha = dim;
+    cjFloor(c, L); cjMat(c, L); cjUpright(c, L, true);
+    c.restore();
+    // athletes pass between the far upright and the bar
+    J.active.filter(a => a.lane === L).forEach(function(a){
+      const s = cjPose(a), col = a.judged ? (a.clears ? CJ.GOOD : CJ.BAD) : CJ.IDLE;
+      drawPicto(c, s.x, yAt(L, s.hip), s.pose, col, 1, s.alpha);
+    });
+    c.save(); c.globalAlpha = dim;
+    if (!closed) cjBar(c, L);
+    cjUpright(c, L, false);
+    c.restore();
+    const label = i === 0 ? (J.cat ? 'First pit · the bar is still 2.15 m' : 'Qualifying height 2.15 m')
+                          : (J.cat ? 'Second pit (the catalyst) · 1.95 m' : '');
+    if (label){
+      setFont(c, AW, 700, 13.5); c.fillStyle = L.color; c.textAlign = 'left'; c.textBaseline = 'top';
+      c.fillText(label, 14, L.top + 8);
+    }
+    if (closed) cjClosed(c, L);
+  });
+
+  // the latest result, under the pit's name
+  for (const f of J.floats){
+    const k = f.age / 1.4, L = f.lane;
+    c.save(); c.globalAlpha = 1 - k * k * k;
+    const px = setFont(c, AW, 700, 14);
+    c.fillStyle = f.ok ? CJ.GOOD : CJ.BAD; c.textAlign = 'left'; c.textBaseline = 'top';
+    c.fillText(f.text, 14, L.top + 12 + px * 1.3);
+    c.restore();
+  }
+
+  // the queue on the left, the final on the right
+  const px = setFont(c, AW, 600, 13);
+  c.fillStyle = '#a3b0c2'; c.textAlign = 'left'; c.textBaseline = 'middle';
+  const wait = 'Waiting to jump';
+  c.fillText(wait, 14, 27);
+  const q0 = 14 + c.measureText(wait).width + 16, feet = 49;
+  J.queue.forEach((id, i) => drawPicto(c, q0 + i * 15, feet - 0.87 * 0.3 * PXM, STAND, CJ.IDLE, 0.3, 0.9));
+  const fin = 'In the final  ' + J.qualified.length + ' / ' + CJ.N;
+  c.textAlign = 'right'; c.fillStyle = J.qualified.length === CJ.N ? CJ.GOOD : '#a3b0c2';
+  c.fillText(fin, AW - 14, 27);
+  const f0 = AW - 14 - c.measureText(fin).width - 18;
+  for (let i = 0; i < CJ.N; i++){
+    const x = f0 - (CJ.N - 1 - i) * 15;
+    if (i < J.qualified.length) drawPicto(c, x, feet - 0.87 * 0.3 * PXM, CHEER, CJ.GOOD, 0.3, 1);
+    else { c.fillStyle = 'rgba(134,147,165,.35)'; c.beginPath(); c.arc(x, feet - 4, 2.5, 0, 6.2832); c.fill(); }
+  }
+
+  if (J.doneAt !== null){
+    const msg = 'All ' + CJ.N + ' in the final after ' + J.doneAt.toFixed(1) + ' s';
+    const bp = setFont(c, AW, 700, 20), tw = c.measureText(msg).width, y = 165;
+    c.fillStyle = 'rgba(6,10,18,.92)'; c.fillRect(AW/2 - tw/2 - 18, y - bp, tw + 36, bp * 2);
+    c.strokeStyle = CJ.GOOD; c.lineWidth = 1.5; c.strokeRect(AW/2 - tw/2 - 18, y - bp, tw + 36, bp * 2);
+    c.fillStyle = CJ.GOOD; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(msg, AW/2, y);
+  }
+}
+
+/* ---------- the same jumps on a reaction profile ----------
+   Each athlete is a particle: waiting athletes sit on the reactant level, each
+   jump climbs the hump to the energy of that jump, and a cleared jump runs
+   down into the products. A knocked bar rolls back to wait again. */
+function drawLiveProfile(dt){
+  const c = mctx;
+  const G = drawReactionProfile(c, MW, MH, {exo:true, ea:CJ.EA, eaCat:J.cat ? CJ.EA_CAT : null, dH:45,
+                                            key:false, noDH:true, reactBelow:true});
+  const r = 6.5, Y = G.Y;
+  const rise = (ea, u) => [G.xB + (G.xPk - G.xB) * u, Y(G.eR + ea * (1 - Math.cos(PI * u)) / 2)];
+  const fall = (ea, u) => { const ap = G.eR + ea; return [G.xPk + (G.xC - G.xPk) * u, Y(ap + (G.eP - ap) * (1 - Math.cos(PI * u)) / 2)]; };
+  const upTo = (ea, e) => rise(ea, Math.acos(clamp(1 - 2 * e / ea, -1, 1)) / PI);
+  const slot = (i, react) => {
+    const span = react ? G.xB - G.xA : G.xD - G.xC, per = Math.max(1, Math.floor((span - 6) / (2 * r + 2)));
+    const col = i % per, row = Math.floor(i / per);
+    return react ? [G.xB - r - 4 - col * (2 * r + 2), Y(G.eR) - r - 1.5 - row * (2 * r + 1)]
+                 : [G.xC + r + 8 + col * (2 * r + 2), Y(G.eP) - r - 1.5 - row * (2 * r + 1)];
+  };
+
+  const want = new Map();        // id → [x, y, colour, on the curve?]
+  let ri = 0, pi = 0;
+  J.active.forEach(a => { if (a.phase === 'run') want.set(a.id, slot(ri++, true).concat([CJ.IDLE, false])); });
+  J.queue.forEach(id => want.set(id, slot(ri++, true).concat([CJ.IDLE, false])));
+  J.qualified.forEach(id => want.set(id, slot(pi++, false).concat([CJ.GOOD, false])));
+  J.active.forEach(function(a){
+    const ea = a.lane.ea;
+    if (a.phase === 'lie'){
+      want.set(a.id, a.clears ? slot(pi++, false).concat([CJ.GOOD, false]) : slot(ri++, true).concat([CJ.BAD, false]));
+      return;
+    }
+    if (a.phase !== 'fly') return;
+    const u = a.pt / CJ.FLY, up = u <= 0.5, s = up ? 1 - Math.pow(1 - u / 0.5, 2) : Math.pow((u - 0.5) / 0.5, 2);
+    const p = a.clears ? (up ? rise(ea, s) : fall(ea, s))
+                       : upTo(ea, energyOf(a.h) * (up ? s : 1 - s));
+    want.set(a.id, [p[0], p[1] - r, a.judged ? (a.clears ? CJ.GOOD : CJ.BAD) : CJ.IDLE, true]);
+  });
+
+  const k = 1 - Math.exp(-(dt || 0) * 10);
+  want.forEach(function(w, id){
+    let d = J.dots.get(id);
+    if (!d){ d = {x:w[0], y:w[1]}; J.dots.set(id, d); }
+    if (w[3]){ d.x = w[0]; d.y = w[1]; } else { d.x += (w[0] - d.x) * k; d.y += (w[1] - d.y) * k; }
+    c.fillStyle = w[2]; c.beginPath(); c.arc(d.x, d.y, r, 0, 6.2832); c.fill();
+    c.strokeStyle = '#060a12'; c.lineWidth = 1.5; c.stroke();
+  });
+}
+
+function drawHist(){
+  const c = hctx, lab = fsize(c, HW, 12);
+  const pad = {l:lab * 2.6, r:12, t:lab * 1.2, b:lab * 2.8};
+  const pw = HW - pad.l - pad.r, ph = HH - pad.t - pad.b;
+  c.clearRect(0, 0, HW, HH);
+  c.fillStyle = '#060a12'; c.fillRect(0, 0, HW, HH);
+  const hMax = CJ.H0 + CJ.BIN * CJ.NBIN;
+  const X = h => pad.l + (h - CJ.H0) / (hMax - CJ.H0) * pw;
+  const top = Math.max(4, Math.ceil(Math.max.apply(null, J.bins) * 1.15));
+  const Y = n => pad.t + ph - n / top * ph;
+  const bar = J.cat ? CJ.BAR_CAT : CJ.BAR;
+
+  // shade the region that clears the bar
+  c.fillStyle = 'rgba(74,222,128,.07)'; c.fillRect(X(bar), pad.t, X(hMax) - X(bar), ph);
+  J.bins.forEach(function(n, i){
+    if (!n) return;
+    const h = CJ.H0 + i * CJ.BIN;
+    c.fillStyle = h + 1e-6 >= bar ? CJ.GOOD : 'rgba(248,113,113,.85)';
+    c.fillRect(X(h) + 1, Y(n), X(h + CJ.BIN) - X(h) - 2, Y(0) - Y(n));
+  });
+  // axes and ticks
+  c.strokeStyle = '#8693a5'; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(pad.l, pad.t); c.lineTo(pad.l, Y(0)); c.lineTo(pad.l + pw, Y(0)); c.stroke();
+  setFont(c, HW, 500, 11); c.fillStyle = '#a3b0c2';
+  c.textAlign = 'center'; c.textBaseline = 'top';
+  for (let h = 1.6; h <= hMax + 1e-6; h += 0.2) c.fillText(h.toFixed(1), X(h), Y(0) + 5);
+  c.textAlign = 'right'; c.textBaseline = 'middle';
+  const step = top <= 8 ? 2 : top <= 20 ? 5 : top <= 50 ? 10 : 20;
+  for (let n = 0; n <= top; n += step) c.fillText(n, pad.l - 6, Y(n));
+  setFont(c, HW, 600, 12); c.fillStyle = '#c3cedc'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+  c.fillText('Height reached (m)', pad.l + pw/2, HH - 2);
+  c.save(); c.translate(lab * 0.75, pad.t + ph/2); c.rotate(-Math.PI/2); c.textBaseline = 'middle';
+  c.fillText(presenting() ? 'Jumps' : 'Number of jumps', 0, 0); c.restore();
+
+  // the bar(s)
+  const line = (h, color, dash, text) => {
+    c.save(); c.setLineDash(dash); c.strokeStyle = color; c.lineWidth = 2.2;
+    c.beginPath(); c.moveTo(X(h), pad.t); c.lineTo(X(h), Y(0)); c.stroke(); c.restore();
+    setFont(c, HW, 700, 11.5); c.fillStyle = color; c.textAlign = 'left'; c.textBaseline = 'top';
+    c.fillText(text, X(h) + 5, pad.t + 2);
+  };
+  if (J.cat){ line(CJ.BAR, 'rgba(251,191,36,.6)', [5,4], ''); line(CJ.BAR_CAT, CJ.VIOLET, [], 'bar = Eₐ'); }
+  else line(CJ.BAR, CJ.AMBER, [], 'bar = Eₐ');
+  if (!J.jumps){
+    setFont(c, HW, 500, 12); c.fillStyle = '#8693a5'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('Each jump lands here as it happens', pad.l + pw/2, pad.t + ph/2);
+  }
+}
+
+function cjUI(){
+  el('cjJumps').textContent = J.jumps;
+  el('cjClear').textContent = J.cleared;
+  el('cjFail').textContent  = J.jumps - J.cleared;
+  el('cjPct').textContent   = (J.jumps ? Math.round(100 * J.cleared / J.jumps) : 0) + ' %';
+  el('cjFinal').textContent = J.qualified.length + ' / ' + CJ.N;
+  el('cjTime').textContent  = (J.doneAt !== null ? J.doneAt : J.t).toFixed(1);
+}
+function cjRounds(){
+  el('cjRounds').innerHTML = J.rounds.length
+    ? J.rounds.map(r => '<tr><td>' + r.label + '</td><td>' + r.pct + ' %</td><td>' + r.time.toFixed(1) + ' s</td></tr>').join('')
+    : '<tr><td colspan="3" class="empty">Let a round finish, then add the catalyst and compare.</td></tr>';
+}
+
+el('cjCat').addEventListener('change', function(e){
+  J.cat = e.target.checked; cjReset();
+  toast(J.cat ? 'Second pit open: same athletes, lower bar' : 'Back to the first pit only');
+});
+el('cjHot').addEventListener('change', function(e){
+  J.hot = e.target.checked; cjReset();
+  toast(J.hot ? 'Warmer: higher jumps, more often. The bar hasn\'t moved' : 'Back to a normal day');
+});
+el('cjPlay').addEventListener('click', function(){
+  J.running = !J.running; this.textContent = J.running ? '⏸ Pause' : '▶ Play';
+});
+el('cjReset').addEventListener('click', function(){ cjReset(); toast('New competition'); });
 
 /* ============================================================
    DOM updates
@@ -1263,6 +1920,7 @@ segment('segLump', function(v){
   resetRun(true);
   toast(S.powder ? 'Same mass, broken into 16 small pieces' : 'Same mass, one large lump');
 });
+segment('cjSpeed', function(v){ J.speed = +v; });
 segment('segEnergy', function(v){
   S.exo = (v === 'exo');
   el('tagEnergy').textContent = S.exo ? 'exothermic' : 'endothermic';
@@ -1321,10 +1979,18 @@ function frame(now){
     while (acc >= DT && guard < 4){ step(DT); acc -= DT; guard++; }
     if (acc > DT * 4) acc = 0;
   }
+  if (J.running){
+    // small steps, so a fast-forwarded athlete is still judged frame by frame
+    let left = real * J.speed;
+    while (left > 1e-6){ const d = Math.min(left, DT); cjStep(d); left -= d; }
+  }
   drawChamber();
   drawGraph();
   drawProfile();
-  if (++uiTick % 6 === 0) updateUI();
+  drawArena();
+  drawHist();
+  drawLiveProfile(real);
+  if (++uiTick % 6 === 0){ updateUI(); cjUI(); }
   requestAnimationFrame(frame);
 }
 
@@ -1343,6 +2009,8 @@ function syncFromControls(){
 }
 
 syncFromControls();
+J.cat = el('cjCat').checked; J.hot = el('cjHot').checked;
+cjReset();
 resetRun(true);
 renderLegend();
 requestAnimationFrame(frame);
@@ -1356,12 +2024,26 @@ requestAnimationFrame(frame);
    The model goes large on the board, the controls sit beside it, and the
    explanation becomes slides at board size. Quizzes stay off the board. */
 {
-const panelOf = id => () => document.getElementById(id).closest('section');
+const panelOf = id => document.getElementById(id).closest('section');
+// Two things can go on the board: the collision model, or the high-jump catalyst analogy.
+let board = 'model';
+const cat = () => board === 'catalyst';
 SST_PRESENTER.setup({
-  stage: [panelOf('chamber'), panelOf('graph'), panelOf('profile')], ratio: 0.58,
-  side: ['#tabs', () => document.querySelector('.ctrl').closest('section')],
+  stage: () => cat() ? ['#catArenaBox', '#catChartsBox'] : [panelOf('chamber'), panelOf('graph'), panelOf('profile')],
+  ratio: 0.6,
+  side: () => cat() ? ['#catControls'] : ['#tabs', panelOf('temp')],
   // The open revision tab, except Investigate, which is a task sheet.
-  notes: () => (document.querySelector('.study .tabpane.on') || {}).id === 'tab-tasks' ? [] : '.study .tabpane.on'
+  notes: () => cat() ? '#catExplain'
+    : (document.querySelector('.study .tabpane.on') || {}).id === 'tab-tasks' ? [] : '.study .tabpane.on'
+});
+document.querySelectorAll('[data-board]').forEach(function(seg){
+  seg.addEventListener('click', function(e){
+    const b = e.target.closest('button');
+    if (!b) return;
+    board = b.dataset.v;
+    document.querySelectorAll('[data-board] button').forEach(x => x.classList.toggle('on', x.dataset.v === board));
+    SST_PRESENTER.layout();
+  });
 });
 }
 </script>

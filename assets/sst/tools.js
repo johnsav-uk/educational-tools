@@ -96,10 +96,10 @@ window.SST_TOOLS = [
     keywords: "lab apparatus diagram drawer chemix required practical rp worksheet exam paper svg png export beaker conical flask burette titration electrolysis bunsen burner tripod gauze retort stand clamp gas syringe measuring cylinder thermometer chromatography distillation liebig condenser eureka displacement can ripple tank circuit ammeter voltmeter variable resistor i-v characteristics density making salts neutralisation temperature changes rates of reaction identifying ions water purification" },
 
   { title: "Rate of Reaction & Collision Theory", url: "visualisations/rate-of-reaction-simulator/",
-    blurb: "Set temperature, concentration and surface area, then watch the collisions and the graph respond.",
+    blurb: "Set temperature, concentration and surface area, watch the collisions and the graph respond, then see how a catalyst works through a high-jump analogy.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
     image: "rate-of-reaction.png",
-    keywords: "rates of reaction collision theory activation energy catalyst concentration temperature surface area particles 4.6.1" },
+    keywords: "rates of reaction collision theory activation energy catalyst catalysts how catalysts work alternative pathway lower activation energy high jump analogy reaction profile energy profile diagram exothermic endothermic concentration temperature surface area particles 4.6.1 4.6.1.4 4.5.1.3" },
 
   { title: "Measuring Gas in Reactions (beta)", url: "visualisations/measuring-gas-production/",
     blurb: "Run the gas syringe, mass-loss and over-water setups, watch the live graphs build, then find the rate from a tangent.",
