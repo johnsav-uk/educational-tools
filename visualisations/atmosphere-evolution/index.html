@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Evolution of the Earth’s Atmosphere (beta) | Savage Science Tools</title>
+<meta name="description" content="AQA GCSE Chemistry 4.9.1, and nothing beyond it: scrub 4.6 billion years of the atmosphere on a stretched timeline, from the volcanoes of the first billion years to algae, plants and today. Live gas charts in the specification’s words, key terms, exam answers with marking points, a quiz, a presenter mode and a printable worksheet with mark scheme.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<!-- Icons (Lucide-style strokes, inline so nothing is fetched) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-orbit" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+</svg>
+
+<a class="skip" href="#exam">Skip to the exam focus panel</a>
+
+<div class="app">
+
+  <header class="head">
+    <div>
+      <p class="kicker">AQA GCSE Chemistry · 4.9.1 · Combined Science 5.9.1</p>
+      <h1>The Evolution of the Earth’s Atmosphere <span class="beta">beta</span></h1>
+    </div>
+    <div class="head-actions sst-teacher">
+      <button class="btn" type="button" id="btnPrint"><svg class="i"><use href="#i-print"/></svg>Print worksheet</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="col-main" aria-label="Scene and timeline">
+
+      <!-- ═════ 3D SCENE ═════ -->
+      <div class="panel scene-card" id="sceneCard">
+        <div class="scene-box" id="sceneBox">
+          <canvas id="glcanvas" tabindex="0" aria-label="3D scene of a volcanic island. Drag to rotate, scroll to zoom, arrow keys to move. The scene changes with the timeline."></canvas>
+          <canvas id="fallback2d" hidden role="img" aria-label="Picture of the scene at the chosen time"></canvas>
+          <div class="labels" id="sceneLabels" aria-hidden="true"></div>
+          <div class="hud" aria-hidden="true">
+            <b id="hudTime">4.6 billion years ago</b>
+            <span id="hudPhase">Earth forms</span>
+          </div>
+          <div class="scene-msg" id="sceneMsg" hidden></div>
+        </div>
+        <div class="scene-tools sst-teacher" role="toolbar" aria-label="Scene controls">
+          <button class="btn" type="button" id="btnLabels" aria-pressed="false" title="Label what is in the scene: the gases from the volcanoes, the algae and the oxygen they make"><svg class="i"><use href="#i-tag"/></svg>Labels</button>
+          <button class="btn" type="button" id="btnCut" aria-pressed="false" title="Show the ground in cross-section, with layers of carbon locked away"><svg class="i"><use href="#i-layers"/></svg>Carbon lock-up view</button>
+          <button class="btn" type="button" id="btnRotate" aria-pressed="false" title="Slowly orbit the scene"><svg class="i"><use href="#i-orbit"/></svg>Orbit</button>
+          <button class="btn" type="button" id="btnReset" title="Return the camera to its starting view"><svg class="i"><use href="#i-reset"/></svg>Reset view</button>
+          <button class="btn" type="button" id="btnSound" aria-pressed="false" title="Turn the ambient sound on or off"><svg class="i"><use href="#i-mute"/></svg><span>Sound off</span></button>
+          <label class="sel"><span>Quality</span>
+            <select id="selQuality" aria-label="Graphics quality">
+              <option value="auto" selected>Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
+            </select>
+          </label>
+          <span class="qnote" id="qNote" role="status"></span>
+        </div>
+      </div>
+
+      <!-- ═════ TIMELINE ═════ -->
+      <div class="panel" id="timelineCard">
+        <div class="tl-top">
+          <h2>Timeline</h2>
+          <div class="tl-play sst-teacher">
+            <button class="btn" type="button" id="btnPrev" aria-label="Previous milestone"><svg class="i"><use href="#i-prev"/></svg></button>
+            <button class="btn primary" type="button" id="btnPlay" aria-label="Play"><svg class="i"><use href="#i-play"/></svg><span>Play</span></button>
+            <button class="btn" type="button" id="btnNext" aria-label="Next milestone"><svg class="i"><use href="#i-next"/></svg></button>
+            <label class="sel"><span>Speed</span>
+              <select id="selSpeed" aria-label="Play speed">
+                <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p class="tl-readout" aria-hidden="true"><span id="tlTime">4.6 billion years ago</span><small id="tlMs">4,600 million years ago</small></p>
+
+        <div class="slider" id="slider" role="slider" tabindex="0" aria-label="Time, from 4.6 billion years ago to today"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="4.6 billion years ago"
+             aria-describedby="sliderHelp">
+          <div class="track" id="track">
+            <div class="segs" id="segs" aria-hidden="true"></div>
+            <div class="fill" id="fill"></div>
+            <div class="marks" id="marks" aria-hidden="true"></div>
+            <div class="thumb" id="thumb"></div>
+          </div>
+        </div>
+        <p class="help" id="sliderHelp">Drag, or use ← → to jump between milestones (hold Shift for fine steps, Home and End for the ends).</p>
+        <p class="scale-note"><strong>Stretched scale:</strong> each section of the bar is the same width but covers a different length of time, so recent events are not squashed. Section lengths are shown under the bar (bn = billion, M = million).</p>
+
+        <ol class="ms-list" id="msList" aria-label="Milestones"></ol>
+      </div>
+
+      <!-- ═════ CAPTION ═════ -->
+      <div class="panel caption" id="captionCard" aria-live="polite">
+        <h2 id="capTitle"></h2>
+        <p class="cap-ms" id="capMs" hidden></p>
+        <h3>What happened</h3>
+        <p id="capWhat"></p>
+        <h3>How it changed the air</h3>
+        <p id="capWhy"></p>
+      </div>
+    </section>
+
+    <!-- ═════ LIVE CHARTS ═════ -->
+    <aside class="col-side" aria-label="Live atmosphere charts">
+      <div class="panel live" id="liveCard">
+        <h2>The air at this moment</h2>
+        <div class="live-grid">
+          <figure class="donut">
+            <div class="donut-wrap"><canvas id="cvDonut" aria-label="Doughnut chart of the gases in the air"></canvas></div>
+            <figcaption class="sr-only" id="chartSummary"></figcaption>
+          </figure>
+          <div class="gauges" id="gauges"></div>
+          <div class="linechart">
+            <h3>How the main gases changed</h3>
+            <div class="line-wrap"><canvas id="cvLine" aria-label="Simplified line graph of nitrogen, oxygen and carbon dioxide against time"></canvas></div>
+            <p class="legend"><span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="#3d7dff" stroke-width="3" stroke-dasharray="2 4"/></svg> <span class="lg-n">Nitrogen</span> N<sub>2</sub><span class="lg-n"> (dotted)</span></span>
+              <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="#ff4d5e" stroke-width="3"/></svg> <span class="lg-n">Oxygen</span> O<sub>2</sub><span class="lg-n"> (solid)</span></span>
+              <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="#e6e9ee" stroke-width="3" stroke-dasharray="7 4"/></svg> <span class="lg-n">Carbon dioxide</span> CO<sub>2</sub><span class="lg-n"> (dashed)</span></span></p>
+          </div>
+        </div>
+        <p class="fine">The words are the specification’s. It gives no exact figures for the early atmosphere, so the bars and lines are only a rough guide to the shape of the change. Today: about 80% nitrogen and about 20% oxygen.</p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ═════════════════════════ AQA EXAM FOCUS ═════════════════════════ -->
+  <section class="exam panel" id="exam" aria-labelledby="examTitle">
+    <div class="exam-head">
+      <h2 id="examTitle">AQA exam focus</h2>
+      <label class="switch" title="Hide the mark-scheme answers until you have had a go, then mark yourself">
+        <input type="checkbox" id="swHide"><span class="sw-ui" aria-hidden="true"></span>
+        <span class="sw-txt"><svg class="i"><use href="#i-eyeoff"/></svg>Hide the answer (exam practice)</span>
+      </label>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Exam focus sections" id="examTabs">
+      <button role="tab" id="tab-terms" aria-controls="pan-terms" aria-selected="true" type="button">Key terms</button>
+      <button role="tab" id="tab-eq" aria-controls="pan-eq" aria-selected="false" tabindex="-1" type="button">Equations</button>
+      <button role="tab" id="tab-cards" aria-controls="pan-cards" aria-selected="false" tabindex="-1" type="button">Exam questions</button>
+      <button role="tab" id="tab-quiz" aria-controls="pan-quiz" aria-selected="false" tabindex="-1" type="button">Test yourself</button>
+      <button role="tab" id="tab-ev" aria-controls="pan-ev" aria-selected="false" tabindex="-1" type="button">Theory vs evidence</button>
+    </div>
+
+    <div role="tabpanel" id="pan-terms" aria-labelledby="tab-terms" class="tabpanel">
+      <p class="lead">Tap or hover any <span class="term demo" tabindex="-1">highlighted word</span> on this page for its definition. You need to use these words in exam answers.</p>
+      <dl class="terms" id="termList"></dl>
+    </div>
+
+    <div role="tabpanel" id="pan-eq" aria-labelledby="tab-eq" class="tabpanel" hidden>
+      <p class="lead">What to write for <strong id="eqPhase"></strong>: the equation, or the steps where the specification describes the change in words. Move the timeline to change phase.</p>
+      <div id="eqNow" class="eq-grid"></div>
+      <details class="eq-all"><summary>All equations</summary><div id="eqAll" class="eq-grid"></div></details>
+    </div>
+
+    <div role="tabpanel" id="pan-cards" aria-labelledby="tab-cards" class="tabpanel" hidden>
+      <p class="lead" id="cardLead">Select a card to turn it over for the mark-scheme answer. Every marking point is a separate mark.</p>
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <div role="tabpanel" id="pan-quiz" aria-labelledby="tab-quiz" class="tabpanel" hidden>
+      <div class="quiz-bar">
+        <label class="switch"><input type="checkbox" id="swExam"><span class="sw-ui" aria-hidden="true"></span><span class="sw-txt">Exam mode: no feedback until the end</span></label>
+        <p class="quiz-score" id="quizScore" role="status"></p>
+      </div>
+      <div id="quiz"></div>
+    </div>
+
+    <div role="tabpanel" id="pan-ev" aria-labelledby="tab-ev" class="tabpanel" hidden>
+      <div class="ev" id="evidence"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Built for AQA GCSE Chemistry 8462, sections 4.9.1.1 to 4.9.1.4 (Combined Science: Trilogy 5.9.1), and kept to what the specification says. The early atmosphere is one theory: evidence is limited because of the time scale of 4.6 billion years.</p>
+  </footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<!-- ═════════════════════════ PRINT DIALOG ═════════════════════════ -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptWs" checked><span><b>Student worksheet</b><br>Exam-style questions on 4.9.1 with marks and space to write, ending with a 6-mark extended answer.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>Marking points, “do not accept” notes and a levels-of-response scheme. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn primary" type="button" id="pGo"><svg class="i"><use href="#i-print"/></svg>Print</button>
+  </div>
+</dialog>
+
+<!-- ═════════════════════════ PRINTABLES ═════════════════════════ -->
+<div class="print-only pd" id="printDoc">
+  <section id="pWs"></section>
+  <section id="pMs"></section>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="lib/CopyShader.js"></script>
+<script src="lib/LuminosityHighPassShader.js"></script>
+<script src="lib/EffectComposer.js"></script>
+<script src="lib/RenderPass.js"></script>
+<script src="lib/ShaderPass.js"></script>
+<script src="lib/MaskPass.js"></script>
+<script src="lib/UnrealBloomPass.js"></script>
+<script src="lib/chart.umd.min.js"></script>
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shaders.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/exam.js"></script>
+<script src="js/print.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

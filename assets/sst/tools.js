@@ -107,6 +107,12 @@ window.SST_TOOLS = [
     image: "dynamic-equilibrium-lab.png",
     keywords: "dynamic equilibrium reversible reactions le chatelier le chatelier's principle le chatlier position of equilibrium forward reverse rate equal rates closed system concentration temperature pressure catalyst haber process ammonia compromise yield exothermic endothermic kc kp equilibrium constant equilibria reaction quotient q ice table partial pressure mole fraction hydrogen iodide 4.6.2 4.6.2.1 4.6.2.2 4.6.2.3 4.6.2.4 4.6.2.5 4.6.2.6 4.6.2.7 4.10.4.1 3.1.6 3.1.10" },
 
+  { title: "Evolution of the Atmosphere (beta)", url: "visualisations/atmosphere-evolution/",
+    blurb: "Scrub 4.6 billion years from the volcanoes of the first billion years to algae, plants and today, then practise the exam answers.",
+    kind: "3D Model", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
+    image: "atmosphere-evolution.png",
+    keywords: "evolution of the earths atmosphere early atmosphere volcanoes volcanic activity carbon dioxide oxygen nitrogen water vapour condensed oceans dissolved carbonates precipitated sediments algae photosynthesis plants fossil fuels coal crude oil natural gas limestone sedimentary rock methane ammonia mars venus four fifths one fifth 80% 20% 200 million years 2.7 billion theory evidence 4.9.1 4.9.1.1 4.9.1.2 4.9.1.3 4.9.1.4 5.9.1 trilogy combined science worksheet mark scheme" },
+
   { title: "Measuring Gas in Reactions (beta)", url: "visualisations/measuring-gas-production/",
     blurb: "Run the gas syringe, mass-loss and over-water setups, watch the live graphs build, then find the rate from a tangent.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
