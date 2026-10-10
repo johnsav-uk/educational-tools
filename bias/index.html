@@ -96,6 +96,12 @@ button{cursor:pointer}
 .controls.busy .ctl, .controls.busy .deliver{opacity:.45;pointer-events:none}
 .controls.busy.rollmode .deliver{opacity:1;pointer-events:auto;background:rgba(236,229,210,.14);color:var(--cream)}
 .controls.busy.rollmode .deliver.charging{background:rgba(236,229,210,.26)}
+/* stowed: off the green while bowls run and the head settles; only a small hurry button stays, bottom right */
+.controls.stowed{transition:opacity .25s,visibility 0s .25s}
+.controls.stowed:not(.rollmode){opacity:0;visibility:hidden;pointer-events:none}
+.controls.stowed.rollmode{left:auto;right:var(--gut);transform:none;transition:none}
+.controls.stowed.rollmode .ctl{display:none}
+.controls.stowed.rollmode .deliver{flex:none;min-width:0;min-height:48px;padding:6px 16px;font-size:14px;border-radius:calc(var(--r) - 1px)}
 .ctl{padding:10px 16px;border-left:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:66px}
 .ctl:first-child{border-left:0}
 .ctl[hidden]{display:none}
@@ -2546,6 +2552,7 @@ const UI = {
   },
   close(id) {
     $(id).classList.remove('show');
+    if ($(id).contains(document.activeElement)) document.activeElement.blur();   // no focus left on a hidden form control: it would swallow game keys
     if (!this.anyOpen()) { game.paused = false; last = performance.now(); }
   },
   anyOpen() { return !!document.querySelector('.scrim.show'); },
@@ -2585,6 +2592,7 @@ const UI = {
     const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.aiTurn;
     $('controls').classList.toggle('busy', !ready || !!this.noticeCb);
     $('controls').classList.toggle('rollmode', (g.phase === 'rolling' || g.phase === 'settle') && !this.noticeCb);
+    $('controls').classList.toggle('stowed', !['aim', 'charge', 'release'].includes(g.phase) || !!this.noticeCb);
     $('controls').setAttribute('aria-busy', String(!ready));
     $('scene').classList.toggle('aimable', g.phase === 'aim');
     if (t) {
@@ -3142,7 +3150,10 @@ window.addEventListener('keydown', e => {
     if (game.mode !== 'title') showTitle();
     return;
   }
-  if (UI.anyOpen() || tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  const formField = ['input', 'select', 'textarea'].includes(tag);
+  if (formField && !e.target.closest('.scrim.show')) { e.target.blur(); e.preventDefault(); }   // focus stranded in a closed sheet: take the key back for the game
+  else if (formField) return;
+  if (UI.anyOpen()) return;
   if (UI.noticeCb && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); if (!e.repeat) UI.noticeGo(); return; }
   if (game.mode === 'title') return;
   const k = e.key.toLowerCase();
@@ -3164,8 +3175,10 @@ window.addEventListener('blur', () => { game.hurry = false; if (game.phase === '
 
 function onResize() {
   scene.resize(); headView.resize();
-  layout.ctrlTop = ($('controls').style.display === 'none' ? window.innerHeight : $('controls').getBoundingClientRect().top) * scene.dpr;
-  if (game.mode === 'title' || !$('controls').offsetHeight) layout.ctrlTop = scene.H * 0.92;
+  if (!$('controls').classList.contains('stowed') || !layout.ctrlTop) {   // a stowed bar keeps the last full-bar measurement
+    layout.ctrlTop = ($('controls').style.display === 'none' ? window.innerHeight : $('controls').getBoundingClientRect().top) * scene.dpr;
+    if (game.mode === 'title' || !$('controls').offsetHeight) layout.ctrlTop = scene.H * 0.92;
+  }
   updateCamera(0, true);
 }
 window.addEventListener('resize', onResize);
@@ -3179,7 +3192,7 @@ function frame(now) {
   if (!(dt > 0)) dt = 0; if (dt > 0.1) dt = 0.1;   // clamp spikes (tab switches, stalls)
   game.update(dt);
   if (game.phase === 'charge' || game.phase === 'release' || game.phase === 'rolling') UI.refreshWeight();
-  const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title') layout.ctrlTop = ct;
+  const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title' && !$('controls').classList.contains('stowed')) layout.ctrlTop = ct;
   updateCamera(dt, false);
   scene.render(buildView(game.acc / W.DT));
   UI.drawHead(dt);
