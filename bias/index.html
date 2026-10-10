@@ -91,6 +91,22 @@ button{cursor:pointer}
 .hp-note{margin:0;padding:8px 14px 11px;border-top:1px solid var(--line);font-size:12px;color:var(--cream-2);min-height:20px}
 .hp-note:empty{display:none}
 
+/* ---------- online ---------- */
+.netchip{display:flex;align-items:center;gap:8px;height:44px;padding:0 13px;font-size:12.5px;color:var(--cream-2);white-space:nowrap}
+.netchip[hidden]{display:none}
+.netchip .dot,.on-status .dot{flex:none;width:8px;height:8px;border-radius:50%;background:#86b46e;box-shadow:0 0 0 3px rgba(134,180,110,.2)}
+.netchip.warn .dot,.on-status.warn .dot{background:var(--alert);box-shadow:0 0 0 3px rgba(216,145,108,.2)}
+.on-choose{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:end;margin-top:6px}
+.on-choose[hidden]{display:none}
+.on-choose .btn{align-self:flex-start}
+.room-code{font-size:46px;font-weight:650;letter-spacing:.14em;line-height:1;margin:8px 0 14px}
+.room-link{display:flex;gap:8px;align-items:center}
+.room-link .input{min-width:0;font-size:13px}
+#onCode{text-transform:uppercase;letter-spacing:.24em;font-size:17px}
+.on-status{display:flex;align-items:center;gap:10px;margin:16px 0 0;color:var(--cream)}
+.on-err{color:var(--alert);min-height:18px;margin:12px 0 0}
+.on-err:empty{display:none}
+
 /* ---------- control bar ---------- */
 .controls{position:absolute;left:50%;bottom:var(--gut);transform:translateX(-50%);display:flex;align-items:stretch;z-index:5;max-width:calc(100% - 2*var(--gut));transition:opacity .35s}
 .controls.busy .ctl, .controls.busy .deliver{opacity:.45;pointer-events:none}
@@ -155,6 +171,7 @@ button{cursor:pointer}
 .btn:hover{border-color:rgba(236,229,210,.45)}
 .btn.primary{background:var(--cream);color:var(--ink);border-color:var(--cream)}
 .btn.primary:hover{background:#f7f0de}
+.btn:disabled{opacity:.4;cursor:default}
 .btn.ghost{border-color:transparent;color:var(--cream-2)}
 .btn.ghost:hover{color:var(--cream);border-color:var(--line)}
 
@@ -295,6 +312,9 @@ table.dist tr.muted td{color:var(--muted)}
   .sb-name{max-width:64px}
   .top-actions .icon-btn{width:40px;height:40px}
   .top-actions #btnHelp{display:none}
+  .netchip{padding:0 12px;height:40px}
+  .netchip .ntx{display:none}
+  .on-choose{grid-template-columns:1fr}
 }
 /* type: one contemporary sans throughout; display text in heavier weights, tighter tracking */
 .sb-big,.sb-name,.sb-score,.hp-head h2,.ctl-title,.deliver,.banner .bn,.notice .nt,.sheet h2,.sheet h3,.sum-result,.cum .cn,.cum .cs,.prof .pn,.practice .ctl-title{font-weight:600;letter-spacing:-.012em}
@@ -320,6 +340,7 @@ table.dist tr.muted td{color:var(--muted)}
   <header class="hud-top">
     <div class="scoreboard panel" id="scoreboard" aria-live="off"></div>
     <div class="top-actions">
+      <div class="netchip panel" id="netChip" role="status" hidden><span class="dot"></span><span class="ntx" id="netTxt"></span></div>
       <button class="icon-btn" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
         <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
       </button>
@@ -401,6 +422,7 @@ table.dist tr.muted td{color:var(--muted)}
       <div class="menu">
         <button class="menu-item" id="mPlay">Play a match</button>
         <button class="menu-item" id="mAI">Play the computer</button>
+        <button class="menu-item" id="mOnline">Play online</button>
         <button class="menu-item" id="mPractice">Practice on the green</button>
         <div class="rule"></div>
         <button class="menu-item minor" id="mHow">How to play</button>
@@ -408,8 +430,46 @@ table.dist tr.muted td{color:var(--muted)}
         <button class="menu-item minor" id="mSettings">Settings</button>
         <button class="menu-item minor" id="mResume" hidden>Return to the game</button>
       </div>
-      <div class="foot" id="titleFoot">Two players, one device. Mouse, keyboard or touch.</div>
+      <div class="foot" id="titleFoot">Two players on one device, or online. Mouse, keyboard or touch.</div>
     </div>
+  </div>
+
+  <!-- Online -->
+  <div class="scrim" id="onlineScrim">
+    <form class="sheet" id="onlineForm" autocomplete="off" onsubmit="return false" style="max-width:580px">
+      <div class="kicker">Play online · singles</div>
+      <h2 id="onH">Play someone on another computer</h2>
+      <p id="onLede">One of you creates a room and sends the code or the link; the other joins with it. Each of you bowls on your own computer and watches the other's bowls run.</p>
+      <div id="onIdent">
+        <div class="grid2">
+          <div class="field"><label for="onName">Your name</label><input class="input" id="onName" maxlength="16" placeholder="Eleanor"></div>
+          <div class="field"><label for="onProf">Your bowls</label><select class="select" id="onProf"></select></div>
+        </div>
+        <div class="field"><span class="lbl">Your colour</span><div class="swatches" id="onCol" role="radiogroup" aria-label="Your colour"></div></div>
+      </div>
+      <div class="on-choose" id="onChoose">
+        <div class="field"><span class="lbl">Start a game</span><button type="button" class="btn primary" id="onCreate">Create a room</button></div>
+        <div class="field"><label for="onCode">Or join with a code</label>
+          <div class="room-link"><input class="input" id="onCode" maxlength="4" autocapitalize="characters" spellcheck="false" placeholder="K7QD"><button type="button" class="btn" id="onJoin">Join</button></div></div>
+      </div>
+      <div id="onRoom" hidden>
+        <div class="kicker" style="margin-top:6px">Room code</div>
+        <div class="room-code num" id="onCodeBig">—</div>
+        <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button></div>
+        <p class="on-status warn" id="onStatus"><span class="dot"></span><span id="onStatusT">Connecting…</span></p>
+        <div id="onHostSet" hidden>
+          <h3>Conditions</h3>
+          <div class="grid2">
+            <div class="field"><label for="onFmt">Match length</label><select class="select" id="onFmt"></select></div>
+            <div class="field"><label for="onLead">First end</label><select class="select" id="onLead"><option value="toss">Toss for the jack</option><option value="0">I lead</option><option value="1">My opponent leads</option></select></div>
+          </div>
+          <div class="field"><label for="onGreen">Green speed</label><select class="select" id="onGreen"></select>
+            <div class="range-row" id="onSpeedRow"><input type="range" id="onSpeed" min="11" max="16" step="0.5" value="13"><output id="onSpeedOut" class="num">13.0 s · Medium</output></div></div>
+        </div>
+      </div>
+      <p class="fine on-err" id="onMsg" role="alert"></p>
+      <div class="sheet-actions"><button type="button" class="btn ghost" id="onBack">Back</button><span class="spacer"></span><button type="button" class="btn primary" id="onGo" hidden>Walk out to the green</button></div>
+    </form>
   </div>
 
   <!-- Match setup -->
@@ -2131,6 +2191,9 @@ const AI = {
   }
 };
 
+// A body's identity that both computers agree on (world ids can differ): the jack, or side.member.bowl number.
+const bodyKey = b => b.kind === 'jack' ? 'J' : `${b.owner}.${b.member || 0}.${b.num}`;
+
 /* Phases: idle → aim ⇄ charge → release → rolling → settle → (placing | between | summary | over) → aim …
    Every transition goes through the methods below; timers run on game time, so
    opening a menu pauses everything. With `instant` (used by the self-tests)
@@ -2148,11 +2211,15 @@ class Game {
     this.endNo = 1; this.shot = null; this.jackSpot = null; this.delivered = null; this.seq = [];
     this.pulse = null; this.handAlpha = 0; this.lastWeights = {}; this.trackY = null;
     this.practice = { profileId: store.get('pr.profile', 'dp-pro'), colour: store.get('pr.colour', 'claret'), T: store.get('pr.T', 13), count: 0 };
+    this.link = null; this.netReset();
   }
   after(delay, fn) { this.timers.push({ t: this.instant ? -1 : this.clock + delay, fn }); }
   flush() { let n = 0; while (this.timers.length && n++ < 1000) this.timers.shift().fn(); }
   clearTimers() { this.timers.length = 0; this.place = null; this.anim = null; this.aiJob = null; this.aiExec = null; this.aiTurn = false; }
   isAI(side) { return !!this.ai && this.mode === 'match' && side === this.ai.side; }
+  // Online, the other seat's turns are played from its messages; local inputs are locked as for the computer.
+  get remoteTurn() { return !!this.link && this.mode === 'match' && !!this.turn && this.turn.player !== this.link.seat; }
+  get locked() { return !!this.aiTurn || this.remoteTurn; }
   get matFront() { return this.matRear + W.MAT_LEN; }
   get cur() { return this.players[this.turn ? this.turn.player : 0]; }                     // the side (player or team) on turn
   get member() { const side = this.cur; return side.members[this.turn && this.turn.member != null ? this.turn.member : 0]; } // the bowler
@@ -2164,13 +2231,13 @@ class Game {
 
   // ---------- starting play ----------
   showcase() { // the title screen's head: a finished end, purely decorative
-    this.clearTimers(); this.mode = 'title'; this.phase = 'idle'; this.dir = 0; this.world.clear(); this.matRear = W.MAT_MIN;
+    this.clearTimers(); this.mode = 'title'; this.phase = 'idle'; this.dir = 0; this.world.clear(); this.matRear = W.MAT_MIN; this.link = null;
     const j = this.world.add(new Body('jack')); j.place(0.0, 29.0);
     const spots = [[0.15, 29.1, 0, 0.4], [-0.21, 29.22, 1, -0.6], [0.34, 29.47, 0, 1.2], [0.42, 28.78, 1, 0.2], [-0.52, 29.6, 0, 2.0], [0.05, 29.86, 1, -1.1], [-0.36, 28.86, 0, 0.5], [0.72, 29.3, 1, -0.3]];
     spots.forEach(([x, y, o, h], i) => { const b = this.world.add(new Body('bowl', o)); b.place(x, y); b.heading = h; b.colour = o ? colourHex('navy') : colourHex('claret'); b.side = i % 2 ? 1 : -1; b.toucher = i === 0; });
   }
   startPractice() {
-    this.clearTimers(); this.mode = 'practice'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null;
+    this.clearTimers(); this.mode = 'practice'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
     const pr = this.practice;
     this.players = [{ name: 'Practice', profileId: pr.profileId, colour: pr.colour, score: 0, played: 0, members: [{ name: 'Practice', role: '', played: 0, hand: 'fore', aim: 0.10 }] }];
     this.world.setGreenSpeed(pr.T);
@@ -2178,6 +2245,7 @@ class Game {
   }
   startMatch(cfg) {
     this.clearTimers(); this.mode = 'match'; this.dir = 0; this.endNo = 1; this.paused = false;
+    this.link = cfg.link || null; this.netReset();
     /* discipline: singles (one player, 4 bowls), pairs (lead + skip, 4 each), triples (lead, second, skip, 3 each).
        Each side is a player or a team; members bowl in position order. */
     const disc = cfg.discipline || DISCIPLINES.singles;
@@ -2195,6 +2263,7 @@ class Game {
     this.shot = null; this.jackSpot = null; this.place = null; this.anim = null; this.delivered = null; this.seq = [];
     this.players.forEach(p => { p.played = 0; p.members.forEach(m => m.played = 0); }); this.practice.count = 0;
     this.order = []; this.orderIdx = 0;
+    if (this.link) this.world.nextId = 1;   // online, both computers number the end's bodies alike
   }
   // The delivery order for an end: position by position, the leading side first in each pair of deliveries.
   buildOrder() {
@@ -2232,20 +2301,20 @@ class Game {
   }
 
   // ---------- aiming & delivery inputs ----------
-  canAim() { return this.phase === 'aim' && !this.aiTurn; }
+  canAim() { return this.phase === 'aim' && !this.locked; }
   setAim(a) { if (!this.canAim()) return; this.aim = clamp(a, -0.45, 0.45); if (this.turn.kind === 'bowl') this.member.aim = this.aim; if (!reduced()) this.pulse = this.pulse == null || this.pulse > 0.6 ? 0 : this.pulse; this.ui.refreshAim(); }
   nudgeAim(deg) { this.setAim(this.aim + deg * Math.PI / 180); }
   setHand(h) {
-    if (!this.turn || this.turn.kind !== 'bowl' || this.phase !== 'aim' || this.aiTurn || h === this.hand) return;
+    if (!this.turn || this.turn.kind !== 'bowl' || this.phase !== 'aim' || this.locked || h === this.hand) return;
     this.hand = h; this.aim = -this.aim; this.member.hand = h; this.member.aim = this.aim; this.pulse = 0;
     this.ui.refresh();
   }
-  canMoveMat() { return this.phase === 'aim' && !this.aiTurn && this.turn && this.turn.kind === 'jack' && (this.mode === 'practice' || this.match.jackAttempt <= 1); } // leader, then the opponent on a re-delivery
+  canMoveMat() { return this.phase === 'aim' && !this.locked && this.turn && this.turn.kind === 'jack' && (this.mode === 'practice' || this.match.jackAttempt <= 1); } // leader, then the opponent on a re-delivery
   moveMat(d) { if (!this.canMoveMat()) return; this.matRear = clamp(Math.round((this.matRear + d) * 4) / 4, W.MAT_MIN, W.MAT_MAX); this.ui.refresh(); }
-  startCharge() { if (this.phase !== 'aim' || this.aiTurn) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
-  cancelCharge(msg) { if (this.phase !== 'charge' || this.aiTurn) return; this.phase = 'aim'; this.charge = null; this.weight = 0; if (msg) this.ui.toast(msg); this.ui.refresh(); }
+  startCharge() { if (this.phase !== 'aim' || this.locked) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
+  cancelCharge(msg) { if (this.phase !== 'charge' || this.locked) return; this.phase = 'aim'; this.charge = null; this.weight = 0; if (msg) this.ui.toast(msg); this.ui.refresh(); }
   releaseCharge() {
-    if (this.phase !== 'charge' || this.aiTurn) return;
+    if (this.phase !== 'charge' || this.locked || !this.charge) return;
     if (this.charge.t < 0.12) { this.cancelCharge('Hold to build weight, then release.'); return; }
     this.deliver(this.weight);
   }
@@ -2259,7 +2328,12 @@ class Game {
     };
   }
   deliver(weight) {
-    const p = this.deliveryParams(weight);
+    const p = this.deliveryParams(weight); p.matRear = this.matRear;
+    if (this.link && this.mode === 'match') { const n = ++this.deliveryNo; this.link.send({ t: 'deliver', n, p }, true); }
+    this.startDelivery(p);
+  }
+  startDelivery(p) {
+    const weight = p.weight;
     this.lastWeights[this.weightKey(p.kind, p.player, p.member)] = weight;
     this.charge = null; this.phase = 'release'; this.zoom = false;
     if (this.instant) { this.launchDelivery(p); return; }
@@ -2277,6 +2351,20 @@ class Game {
     this.phase = 'rolling'; this.acc = 0; this.camMode = 'follow'; this.trackY = p.y;
     Sound.release();
     this.ui.refresh();
+    if (this.instant && this.link) { this.world.runUntilRest(); this.handleEvents(); this.onRest(); }
+  }
+  // Everything has stopped. Online, the bowler's computer has the last word on where things lie.
+  onRest() {
+    this.phase = 'settle'; this.acc = 0; Sound.roll(0);
+    if (!this.link || this.mode !== 'match') { this.after(0.45, () => this.resolveDelivery()); return; }
+    const n = this.deliveryNo;
+    if (this.netSettles.has(n)) { this.applySettle(this.netSettles.get(n)); this.after(0.3, () => this.resolveDelivery()); return; }
+    if (!this.remoteTurn) {
+      const bodies = this.snapshot(); this.netSettles.set(n, bodies);
+      this.link.send({ t: 'settle', n, bodies }, true);
+      this.after(0.45, () => this.resolveDelivery()); return;
+    }
+    this.awaitSettle = n; this.ui.refresh();
   }
   handleEvents() {
     for (const e of this.world.events) {
@@ -2393,17 +2481,17 @@ class Game {
     const m = this.match, leader = m.leader, other = 1 - leader, L = this.players[leader].name, s1 = this.isTeams() ? '' : 's';
     const otherLead = this.isTeams() ? `${this.players[other].members[0].name}, ${this.players[other].name}'s lead,` : this.players[other].name;
     if (res.ok) {
-      this.centreJack(res, () => this.ui.notice('Jack set', `${this.jackText(res)} ${L} bowl${s1} first.`, 'Begin the end', () => this.nextInOrder()));
+      this.centreJack(res, () => this.promptNotice('Jack set', `${this.jackText(res)} ${L} bowl${s1} first.`, 'Begin the end', () => this.nextInOrder()));
       return;
     }
     m.jackAttempt++; this.phase = 'between'; Sound.chime(false);
     if (m.jackAttempt === 1) {
-      this.ui.notice(res.title, `${res.reason} ${otherLead} may move the mat and re-delivers the jack; ${L} still bowl${s1} first.`, 'Continue', () => { this.world.remove(jack); this.trace = []; this.beginJack(other); });
+      this.promptNotice(res.title, `${res.reason} ${otherLead} may move the mat and re-delivers the jack; ${L} still bowl${s1} first.`, 'Continue', () => { this.world.remove(jack); this.trace = []; this.beginJack(other); });
     } else {
-      this.ui.notice(res.title, `${res.reason} After two improper deliveries the jack is placed on the centre line, 2 m from the front ditch.`, 'Place the jack', () => {
+      this.promptNotice(res.title, `${res.reason} After two improper deliveries the jack is placed on the centre line, 2 m from the front ditch.`, 'Place the jack', () => {
         jack.state = 'rest'; jack.ditch = null; jack.place(jack.x, Math.min(jack.y, W.GREEN_LEN - 0.1));
         const r = { ok: true, y: W.GREEN_LEN - W.JACK_DITCH_MIN, placed: true };
-        this.centreJack(r, () => this.ui.notice('Jack placed', `${this.jackText(r)} ${L} bowl${s1} first.`, 'Begin the end', () => this.nextInOrder()));
+        this.centreJack(r, () => this.promptNotice('Jack placed', `${this.jackText(r)} ${L} bowl${s1} first.`, 'Begin the end', () => this.nextInOrder()));
       });
     }
   }
@@ -2442,11 +2530,11 @@ class Game {
   nextInOrder() { const [side, mi] = this.order[this.orderIdx]; this.beginBowl(side, mi); }
   killBowl(b, why) { b.dead = true; b.deadReason = why; if (this.instant) this.world.remove(b); }
   jackDeadFlow(reason) {
-    if (this.mode === 'practice') { this.ui.notice('Dead jack', reason + ' The head will be cleared.', 'New end', () => this.practiceNewEnd(false)); return; }
+    if (this.mode === 'practice') { this.promptNotice('Dead jack', reason + ' The head will be cleared.', 'New end', () => this.practiceNewEnd(false)); return; }
     this.match.deadEnds++;
     const L = this.isTeams() ? `${this.players[this.match.leader].name}'s lead` : this.players[this.match.leader].name;
     Sound.chime(false);
-    this.ui.notice('Dead end', `${reason} No shots are scored. The end is replayed in the same direction, and ${L} delivers the jack again.`, 'Replay the end', () => this.startEnd(true));
+    this.promptNotice('Dead end', `${reason} No shots are scored. The end is replayed in the same direction, and ${L} delivers the jack again.`, 'Replay the end', () => this.startEnd(true));
   }
   completeEnd() {
     const m = this.match, sc = Rules.score(this.liveBodies(), this.world.jack);
@@ -2457,7 +2545,7 @@ class Game {
     m.over = this.checkOver();
     this.phase = 'summary'; this.camMode = 'follow';
     Sound.chime(true);
-    this.ui.summary({ rec, sc, over: m.over }, () => this.nextEnd());
+    this.prompt('summary', [{ rec, sc, over: m.over }], () => this.nextEnd());
   }
   checkOver() {
     const f = this.match.format, s0 = this.players[0].score, s1 = this.players[1].score;
@@ -2495,12 +2583,106 @@ class Game {
   setPracticeColour(id) { this.practice.colour = id; store.set('pr.colour', id); if (this.mode === 'practice') this.players[0].colour = id; this.ui.refresh(); }
   setPracticeSpeed(T) { this.practice.T = T; store.set('pr.T', T); if (this.mode === 'practice' && !this.world.anyMoving()) this.world.setGreenSpeed(T); this.ui.refresh(); }
 
+  // ---------- prompts ----------
+  // Notices and the end summary wait for an answer. Online either player may give it; prompts are
+  // numbered in the same order on both computers, so an answer is applied once, to the right prompt.
+  promptNotice(title, desc, label, cb) { this.prompt('notice', [title, desc, label], cb); }
+  prompt(kind, args, cb) {
+    const id = ++this.promptNo; this.openPrompt = { id, kind, args, cb };
+    this.showPrompt();
+    if (this.openPrompt && this.openPrompt.id === id && this.netContinues.has(id)) this.answerPrompt(id, false);
+  }
+  showPrompt() {
+    const p = this.openPrompt; if (!p) return;
+    const go = () => this.answerPrompt(p.id, true);
+    if (p.kind === 'summary') this.ui.summary(p.args[0], go); else this.ui.notice(p.args[0], p.args[1], p.args[2], go);
+  }
+  answerPrompt(id, local) {
+    const p = this.openPrompt; if (!p || p.id !== id) return;
+    this.openPrompt = null;
+    if (!local && this.ui.dismissPrompt) this.ui.dismissPrompt();
+    if (local && this.link) this.link.send({ t: 'continue', id }, true);
+    p.cb();
+  }
+
+  // ---------- online play ----------
+  /* Each delivery is played on both computers from the bowler's own parameters (aim, weight, hand,
+     bias, release point, mat). When everything stops, the bowler's computer sends where every body
+     lies and the other snaps to it before the rules run: browsers can differ in the last bits of
+     Math.exp and friends, and this keeps the two in step whatever happens. Messages that arrive
+     early wait in netQ until this computer reaches the same turn. */
+  netReset() {
+    this.promptNo = 0; this.openPrompt = null; this.deliveryNo = 0; this.netQ = []; this.netSettles = new Map();
+    this.netContinues = new Set(); this.awaitSettle = null; this.netGap = 0;
+  }
+  netIn(m) {
+    if (m.t === 'deliver') this.netQ.push(m);
+    else if (m.t === 'settle') this.netSettles.set(m.n, m.bodies);
+    else if (m.t === 'continue') { this.netContinues.add(m.id); if (this.openPrompt && this.openPrompt.id === m.id) this.answerPrompt(m.id, false); }
+    else if (m.t === 'aim') this.netAim(m);
+    this.netPump();
+  }
+  netPump() {
+    while (this.netQ.length) {
+      const m = this.netQ[0], p = m.p, t = this.turn;
+      if (m.n <= this.deliveryNo) { this.netQ.shift(); continue; }
+      if (!(this.mode === 'match' && (this.phase === 'aim' || this.phase === 'charge') && t && m.n === this.deliveryNo + 1
+        && t.kind === p.kind && t.player === p.player && (t.member || 0) === p.member)) break;
+      this.netQ.shift();
+      this.matRear = p.matRear; this.aim = p.aim;
+      if (p.kind === 'bowl') { this.hand = p.hand; this.member.hand = p.hand; this.member.aim = p.aim; }
+      this.deliveryNo = m.n; this.startDelivery(p);
+    }
+    if (this.awaitSettle != null && this.netSettles.has(this.awaitSettle)) {
+      const n = this.awaitSettle; this.awaitSettle = null;
+      this.applySettle(this.netSettles.get(n)); this.after(0.3, () => this.resolveDelivery());
+    }
+  }
+  // The other player lining up: shown live, never used for the delivery itself.
+  netAim(m) {
+    if (!this.remoteTurn || m.from !== this.turn.player || !(this.phase === 'aim' || this.phase === 'charge') || m.n !== this.deliveryNo + 1) return;
+    const bowl = this.turn.kind === 'bowl', hand = bowl && (m.hand === 'fore' || m.hand === 'back') ? m.hand : this.hand;
+    const ph = m.w != null ? 'charge' : 'aim', big = hand !== this.hand || ph !== this.phase || !bowl;
+    this.aim = clamp(+m.aim || 0, -0.45, 0.45); this.hand = hand;
+    if (!bowl) this.matRear = clamp(+m.mat || W.MAT_MIN, W.MAT_MIN, W.MAT_MAX);
+    this.phase = ph; this.charge = null; this.weight = m.w != null ? clamp(+m.w || 0, 0, 1) : 0;
+    if (big) this.ui.refresh(); else this.ui.refreshAim();
+  }
+  snapshot() {
+    return this.world.bodies.filter(b => !b.dead).map(b => ({ k: bodyKey(b), x: b.x, y: b.y, state: b.state, ditch: b.ditch, toucher: b.toucher }));
+  }
+  applySettle(list) {
+    const at = new Map(list.map(s => [s.k, s])); let gap = 0;
+    for (const b of this.world.bodies) {
+      if (b.dead) continue; const s = at.get(bodyKey(b)); if (!s) continue;
+      gap = Math.max(gap, Math.hypot(b.x - s.x, b.y - s.y));
+      b.place(s.x, s.y); b.state = s.state; b.ditch = s.ditch; b.toucher = !!s.toucher;
+    }
+    this.netGap = Math.max(this.netGap, gap);
+    if (gap > 1e-6) console.info(`Bias online: resting positions corrected by up to ${(gap * 1000).toFixed(2)} mm`);
+  }
+  // Rebuild an online match from the relay's log, instantly (after a reload or a long drop-out).
+  replayOnline(cfg, entries) {
+    const inst = this.instant; this.instant = true;
+    try {
+      this.startMatch(cfg);
+      for (const e of entries) { if (e.t === 'settle') this.netSettles.set(e.n, e.bodies); else if (e.t === 'continue') this.netContinues.add(e.id); }
+      for (const e of entries) if (e.t === 'deliver') this.netQ.push(e);
+      for (let i = 0; i < 10000; i++) {
+        const before = `${this.netQ.length}.${this.deliveryNo}.${this.promptNo}.${this.timers.length}`;
+        this.netPump(); this.flush();
+        if (`${this.netQ.length}.${this.deliveryNo}.${this.promptNo}.${this.timers.length}` === before) break;
+      }
+    } finally { this.instant = inst; }
+  }
+
   // ---------- per-frame update ----------
   update(dt) {
     if (this.paused) return;
     this.clock += dt;
     if (this.timers.length) { const due = this.timers.filter(t => t.t <= this.clock); if (due.length) { this.timers = this.timers.filter(t => t.t > this.clock); due.forEach(t => t.fn()); } }
     if (this.ai) this.aiUpdate(dt);
+    if (this.link) this.netPump();
     if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; const u = (this.charge.t / 1.5) % 2; this.weight = u <= 1 ? u : 2 - u; }
     if (this.pulse != null) { this.pulse += dt / 1.1; if (this.pulse >= 1) this.pulse = this.phase === 'charge' && !reduced() ? 0 : null; }
     if (this.anim) {
@@ -2509,7 +2691,7 @@ class Game {
       if (this.anim.t >= this.anim.dur) this.anim = null;
     }
     if (this.phase === 'rolling') {
-      this.acc += dt * (this.hurry ? 4 : 1); let n = 0;
+      this.acc += dt * (this.hurry || (this.link && this.netSettles.has(this.deliveryNo)) ? 4 : 1); let n = 0;
       while (this.acc >= W.DT && n < 480) {
         this.world.step(W.DT); this.acc -= W.DT; n++;
         const d = this.delivered;
@@ -2522,7 +2704,7 @@ class Game {
       if (fastest) this.trackY = fastest.y;
       const dv = this.delivered && this.delivered.state === 'moving' ? this.delivered.speed() : 0;
       Sound.roll(dv / 5);
-      if (!this.world.anyMoving()) { this.phase = 'settle'; this.acc = 0; Sound.roll(0); this.after(0.45, () => this.resolveDelivery()); }
+      if (!this.world.anyMoving()) this.onRest();
     }
     if (this.place) {
       const p = this.place; p.t += dt; const k = easeInOut(p.t / p.dur), j = this.world.jack;
@@ -2547,7 +2729,7 @@ const UI = {
   toastTimer: 0, bannerTimer: 0, noticeCb: null, measure: [], measuring: false, pulseT: 0, lastStats: '',
   open(id) {
     const el = $(id); el.classList.add('show');
-    if (game && game.mode !== 'title' && !['summary', 'over'].includes(game.phase) && id !== 'sumScrim' && id !== 'overScrim') game.paused = true;
+    if (game && !game.link && game.mode !== 'title' && !['summary', 'over'].includes(game.phase) && id !== 'sumScrim' && id !== 'overScrim') game.paused = true;  // online, the match runs on
     const f = el.querySelector('.btn.primary') || el.querySelector('.menu-item, button'); if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
   },
   close(id) {
@@ -2574,6 +2756,12 @@ const UI = {
     setTimeout(() => { if (!this.anyOpen()) $('noticeBtn').focus({ preventScroll: true }); }, 80);
     this.refresh();
   },
+  // The other player answered the prompt that is showing (online).
+  dismissPrompt() {
+    this.noticeCb = null; $('notice').classList.remove('show'); this.sumCb = null;
+    if ($('sumScrim').classList.contains('show')) this.close('sumScrim');
+    this.refresh();
+  },
   noticeGo() {
     if (!this.noticeCb) return; const cb = this.noticeCb; this.noticeCb = null;
     $('notice').classList.remove('show'); document.activeElement && document.activeElement.blur(); cb();
@@ -2589,7 +2777,7 @@ const UI = {
     $('practiceBar').hidden = g.mode !== 'practice';
     if (!inGame) return;
     this.renderScoreboard();
-    const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.aiTurn;
+    const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.locked;
     $('controls').classList.toggle('busy', !ready || !!this.noticeCb);
     $('controls').classList.toggle('rollmode', (g.phase === 'rolling' || g.phase === 'settle') && !this.noticeCb);
     $('controls').classList.toggle('stowed', !['aim', 'charge', 'release'].includes(g.phase) || !!this.noticeCb);
@@ -2611,8 +2799,8 @@ const UI = {
       const ghost = g.lastWeights[g.weightKey(t.kind, t.player, t.member)];
       $('meterGhost').style.opacity = ghost == null ? 0 : .85; if (ghost != null) $('meterGhost').style.left = (ghost * 100) + '%';
       const rolling = g.phase === 'rolling' || g.phase === 'settle';
-      $('deliverBtn').firstChild.textContent = rolling ? 'Hold to hurry' : g.aiTurn ? 'Computer to bowl' : isJack ? 'Hold to deliver jack' : 'Hold to deliver';
-      $('deliverBtn').lastChild.textContent = rolling ? 'four times as fast' : g.aiTurn ? `${g.ai.level.name} standard` : 'or hold Space';
+      $('deliverBtn').firstChild.textContent = rolling ? 'Hold to hurry' : g.aiTurn ? 'Computer to bowl' : g.remoteTurn ? `${pl.name} to bowl` : isJack ? 'Hold to deliver jack' : 'Hold to deliver';
+      $('deliverBtn').lastChild.textContent = rolling ? 'four times as fast' : g.aiTurn ? `${g.ai.level.name} standard` : g.remoteTurn ? 'on their computer' : 'or hold Space';
     }
     if (g.mode === 'practice') {
       const p = Profiles.byId(g.practice.profileId);
@@ -2644,7 +2832,7 @@ const UI = {
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
     const green = m.secret && !m.over ? 'green ?' : `<span class="num">${g.world.T.toFixed(1)} s</span>`;
     sb.innerHTML = `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra' : 'End'} <span style="text-transform:none;letter-spacing:0">${g.isExtraEnd() ? '' : fmt}</span></div><div class="sb-big num">${g.endNo}</div></div>${pc(0)}${pc(1)}
-      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : ''} · Bowls · Green</div><div class="sb-meta">${pr.model} · ${green}</div></div>`;
+      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''} · Bowls · Green</div><div class="sb-meta">${pr.model} · ${green}</div></div>`;
   },
   // head panel: drawn every frame from the same bodies the scene uses
   drawHead(dt) {
@@ -2906,6 +3094,7 @@ $('setupGo').onclick = () => {
   store.set('m.col0', setup.col[0]); store.set('m.col1', setup.col[1]); store.set('m.fmt', $('fmt').value); store.set('m.green', mode);
   if (mode === 'set') store.set('m.T', T);
   UI.close('setupScrim');
+  if (Net.on) Net.leave();
   game.startMatch({ players, T, format: { type: ft, n: +fn }, discipline: d, leader: lead, secret: mode === 'secret', ai: vsAI ? setup.level : null });
   const msgs = [];
   if (toss) msgs.push(`${players[lead].name} win${teams ? '' : 's'} the toss and take${teams ? '' : 's'} the jack.`);
@@ -2990,16 +3179,260 @@ function paintSound() {
 function toggleSound() { Settings.sound = !Settings.sound; Sound.init(); Sound.setMuted(!Settings.sound); saveSettings(); paintSound(); bindPair('sdOn', 'sdOff', () => Settings.sound, v => { Settings.sound = v; Sound.setMuted(!v); paintSound(); }); }
 $('btnSound').onclick = toggleSound;
 
+// ---------- online play ----------
+/* The relay (bias-relay: a Cloudflare Worker with one Durable Object per room) seats the two
+   players and passes their messages across. Everything that changes the match is numbered and
+   logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
+   replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
+const BUILD = 'bias-online-1';
+const RELAY = (() => {
+  const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
+  return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
+})();
+const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', ROOM_RE = /^[A-HJ-NP-Z2-9]{4}$/;
+const newRoomCode = () => Array.from(crypto.getRandomValues(new Uint8Array(4)), v => ROOM_CHARS[v % ROOM_CHARS.length]).join('');
+// The interface used while a match is rebuilt from the log: nothing is shown, nothing waits.
+const QuietUI = { toast() {}, banner() {}, clearBanner() {}, announce() {}, pulseHead() {}, refresh() {}, refreshAim() {}, refreshWeight() {}, notice() {}, summary() {}, matchOver() {}, dismissPrompt() {} };
+
+const Net = {
+  ws: null, code: null, seat: null, token: null, state: 'off',   // off | connecting | open | retry
+  who: null, create: false, peers: [], lastSeq: 0, matchNo: 0, inMatch: false,
+  outbox: [], cid: 0, retries: 0, retryTimer: 0, pingClock: 0, aimClock: 0, aimSent: '',
+  get on() { return this.state !== 'off'; },
+  peer() { return this.peers.find(p => p.seat !== this.seat) || null; },
+  saveSession() { try { sessionStorage.setItem('bias.net', JSON.stringify({ code: this.code, token: this.token, who: this.who })); } catch (e) { /* unavailable */ } },
+  loadSession() { try { return JSON.parse(sessionStorage.getItem('bias.net') || 'null'); } catch (e) { return null; } },
+  clearSession() { try { sessionStorage.removeItem('bias.net'); } catch (e) { /* unavailable */ } },
+  open(code, create, who) {
+    this.close();
+    const s = this.loadSession();
+    Object.assign(this, { code, create: !!create, who, state: 'connecting', token: s && s.code === code ? s.token : null,
+      seat: null, peers: [], lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0 });
+    this.connect();
+  },
+  connect() {
+    clearTimeout(this.retryTimer);
+    let ws; try { ws = new WebSocket(`${RELAY}/room/${this.code}`); } catch (e) { this.retry(); return; }
+    this.ws = ws;
+    ws.onopen = () => ws.send(JSON.stringify({ t: 'hello', build: BUILD, who: this.who, create: this.create && !this.token, token: this.token, lastSeq: this.inMatch ? this.lastSeq : 0 }));
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.receive(m); };
+    ws.onclose = () => { if (this.ws !== ws) return; this.ws = null; if (this.state !== 'off') this.retry(); };
+  },
+  retry() {
+    if (this.state === 'off') return;
+    this.state = 'retry'; OnlineUI.status();
+    this.retryTimer = setTimeout(() => this.connect(), Math.min(15000, 700 * 2 ** this.retries++));
+  },
+  close() {
+    this.state = 'off'; clearTimeout(this.retryTimer);
+    if (this.ws) { const ws = this.ws; this.ws = null; try { ws.close(); } catch (e) { /* already closed */ } }
+  },
+  leave() {
+    this.raw({ t: 'leave' }); this.close(); this.clearSession(); this.inMatch = false;
+    if (game.link) game.link = null;
+    OnlineUI.status(); UI.refresh();
+  },
+  raw(m) { if (this.ws && this.ws.readyState === 1 && this.state === 'open') { this.ws.send(JSON.stringify(m)); return true; } return false; },
+  send(m, logged) { if (logged) { m.cid = ++this.cid; this.outbox.push(m); } this.raw(m); },
+  receive(m) {
+    if (m.t === 'error') { OnlineUI.error(m); return; }
+    if (m.t === 'welcome') { this.welcome(m); return; }
+    if (m.t === 'peer') {
+      const old = this.peers.find(p => p.seat === m.seat);
+      if (!old && !m.online) return;   // already gone
+      this.peers = this.peers.filter(p => p.seat !== m.seat);
+      if (!m.left) this.peers.push({ seat: m.seat, who: m.who || (old && old.who) || { name: 'Your opponent' }, online: !!m.online });
+      OnlineUI.peer(m, old); return;
+    }
+    if (m.seq != null) { this.logged(m); return; }
+    if (m.t === 'aim' && this.inMatch && game.link) game.netIn(m);
+  },
+  welcome(m) {
+    const fresh = !this.inMatch || m.matchNo !== this.matchNo;
+    this.state = 'open'; this.retries = 0; this.create = false;
+    this.seat = m.seat; this.token = m.token; this.peers = m.peers; this.saveSession();
+    // whatever of ours the relay already holds need not go again
+    this.cid = Math.max(this.cid, m.lastCid || 0);
+    this.outbox = this.outbox.filter(x => x.cid > (m.lastCid || 0));
+    for (const x of this.outbox) this.raw(x);
+    const log = m.log || [];
+    if (fresh) {
+      const i = log.map(e => e.t).lastIndexOf('setup');
+      if (i >= 0) startOnlineMatch(log[i], log.slice(i + 1));
+      this.lastSeq = log.length ? log[log.length - 1].seq : this.lastSeq;
+      if (i < 0 && !$('onlineScrim').classList.contains('show')) OnlineUI.open();
+    } else for (const e of log) this.logged(e);
+    OnlineUI.status();
+  },
+  logged(e) {
+    if (e.seq <= this.lastSeq && !(e.t === 'setup' && e.matchNo !== this.matchNo)) return;
+    this.lastSeq = Math.max(this.lastSeq, e.seq);
+    if (e.from === this.seat) this.outbox = this.outbox.filter(x => x.cid !== e.cid);
+    if (e.t === 'setup') { startOnlineMatch(e, []); return; }
+    if (!this.inMatch || e.matchNo !== this.matchNo || e.from === this.seat || !game.link) return;
+    game.netIn(e);
+  },
+  // Keep the connection warm, and let the other player watch this one line up.
+  tick(dt) {
+    if (this.state !== 'open') return;
+    if ((this.pingClock += dt) > 25) { this.pingClock = 0; this.raw({ t: 'ping' }); }
+    const g = game;
+    if (!g.link || g.mode !== 'match' || !g.turn || g.remoteTurn || (g.phase !== 'aim' && g.phase !== 'charge')) return;
+    if ((this.aimClock += dt) < 0.1) return; this.aimClock = 0;
+    const m = { t: 'aim', n: g.deliveryNo + 1, aim: +g.aim.toFixed(4), hand: g.hand, mat: g.matRear, w: g.phase === 'charge' ? +g.weight.toFixed(3) : null };
+    const key = JSON.stringify(m); if (key === this.aimSent) return;
+    this.aimSent = key; this.raw(m);
+  }
+};
+
+function startOnlineMatch(s, rest) {
+  Net.inMatch = true; Net.matchNo = s.matchNo; Net.lastSeq = Math.max(Net.lastSeq, s.seq);
+  for (const id of ['onlineScrim', 'titleScrim', 'setupScrim', 'sumScrim', 'overScrim']) if ($(id).classList.contains('show')) UI.close(id);
+  UI.noticeCb = null; $('notice').classList.remove('show');
+  const players = s.players.map(p => ({ name: String(p.name || 'Player').slice(0, 16), profileId: String(p.profileId), colour: String(p.colour) }));
+  const cfg = { players, T: clamp(+s.T || 13, 11, 16), format: s.format, discipline: DISCIPLINES.singles, leader: s.leader ? 1 : 0, secret: !!s.secret, ai: null,
+    link: { seat: Net.seat, send: (m, logged) => Net.send(m, logged) } };
+  if (!rest.length) {
+    game.startMatch(cfg);
+    const msgs = [];
+    if (s.toss) msgs.push(cfg.leader === Net.seat ? 'You win the toss and take the jack.' : `${players[cfg.leader].name} wins the toss and takes the jack.`);
+    if (s.green === 'random') msgs.push(`Today's green is running at ${cfg.T.toFixed(1)} s, ${GreenSpeed.label(cfg.T).toLowerCase()}.`);
+    if (s.secret) msgs.push('The green speed is a secret today: read it from your first bowls.');
+    if (msgs.length) setTimeout(() => UI.toast(msgs.join(' ')), 400);
+    maybeTutorial();
+  } else {
+    const ui = game.ui, muted = Sound.muted; game.ui = QuietUI; Sound.muted = true;
+    try { game.replayOnline(cfg, rest); } finally { game.ui = ui; Sound.muted = muted; }
+    game.trace = []; game.traceAlpha = 0; game.snapCam = true;
+    if (game.phase === 'over') UI.matchOver(); else game.showPrompt();
+    setTimeout(() => UI.toast('Back in the game.'), 300);
+  }
+  UI.refresh(); OnlineUI.status();
+}
+
+const OnlineUI = {
+  stage: 'choose',   // choose (name, bowls, colour; create or join) | room
+  col: store.get('on.col', 'claret'),
+  who() { return { name: ($('onName').value.trim() || 'Player').slice(0, 16), profileId: $('onProf').value, colour: this.col }; },
+  open(code) {
+    if (!Net.on) {
+      this.stage = 'choose';
+      $('onName').value = store.get('on.name', ''); fillProfileSelect($('onProf'), store.get('on.prof', 'dp-pro')); this.paintCol();
+      $('onCode').value = code || '';
+    } else this.stage = 'room';
+    $('onFmt').value = store.get('on.fmt', 'ends:6'); $('onGreen').value = store.get('on.green', 'set'); $('onSpeed').value = store.get('on.T', 13);
+    updateSpeedOut($('onSpeed'), $('onSpeedOut')); this.paintGreen();
+    this.msg(''); this.render();
+    if ($('titleScrim').classList.contains('show')) UI.close('titleScrim');
+    UI.open('onlineScrim');
+    if (code && !Net.on) setTimeout(() => (store.get('on.name', '') ? $('onJoin') : $('onName')).focus({ preventScroll: true }), 90);
+  },
+  paintCol() { fillSwatches($('onCol'), this.col, id => { this.col = id; this.paintCol(); }); },
+  paintGreen() { $('onSpeedRow').classList.toggle('disabled', $('onGreen').value !== 'set'); },
+  remember() { const w = this.who(); store.set('on.name', w.name); store.set('on.prof', w.profileId); store.set('on.col', w.colour); return w; },
+  create() { this.stage = 'room'; Net.open(newRoomCode(), true, this.remember()); this.msg(''); this.render(); },
+  join() {
+    const c = $('onCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!ROOM_RE.test(c)) { this.msg('A room code is four letters and numbers, like K7QD.'); $('onCode').focus(); return; }
+    this.stage = 'room'; Net.open(c, false, this.remember()); this.msg(''); this.render();
+  },
+  msg(t) { $('onMsg').textContent = t || ''; },
+  link() {
+    const u = new URL(location.href), relay = u.searchParams.get('relay');
+    u.search = ''; u.hash = ''; u.searchParams.set('room', Net.code); if (relay) u.searchParams.set('relay', relay);
+    return u.toString();
+  },
+  render() {
+    const room = this.stage === 'room', host = Net.seat === 0 || (Net.seat == null && Net.create), peer = Net.peer(), here = !!(peer && peer.online);
+    $('onIdent').hidden = room; $('onChoose').hidden = room; $('onRoom').hidden = !room; $('onLede').hidden = room;
+    $('onH').textContent = room ? (Net.code ? `Room ${Net.code}` : 'Room') : 'Play someone on another computer';
+    $('onCodeBig').textContent = Net.code || '—'; $('onLink').value = Net.code ? this.link() : '';
+    let st;
+    if (Net.state === 'connecting') st = 'Connecting…';
+    else if (Net.state === 'retry') st = 'Connection lost. Trying again…';
+    else if (Net.state === 'off') st = 'Not connected.';
+    else if (!peer) st = host ? 'Waiting for your opponent. Send them the code or the link.' : 'Waiting for the other player…';
+    else if (!here) st = `${peer.who.name} has dropped out. Waiting for them to come back…`;
+    else st = host ? `${peer.who.name} has joined. Choose the conditions, then walk out.` : `You're in ${peer.who.name}'s room. ${peer.who.name} is choosing the conditions…`;
+    $('onStatusT').textContent = st; $('onStatus').classList.toggle('warn', !(here && Net.state === 'open'));
+    $('onHostSet').hidden = !(room && host); $('onGo').hidden = !(room && host); $('onGo').disabled = !(here && Net.state === 'open');
+    $('onBack').textContent = room ? 'Leave the room' : 'Back';
+  },
+  go() {
+    const peer = Net.peer(); if (!peer || !peer.online || Net.seat !== 0 || Net.state !== 'open') return;
+    const [ft, fn] = $('onFmt').value.split(':'), green = $('onGreen').value;
+    const T = green === 'set' ? +$('onSpeed').value : randomGreen();
+    const leadV = $('onLead').value, toss = leadV === 'toss', leader = toss ? (Math.random() < 0.5 ? 0 : 1) : +leadV;
+    const me = Net.who, them = peer.who, c0 = me.colour || 'claret';
+    const c1 = them.colour && them.colour !== c0 ? them.colour : (c0 === 'navy' ? 'claret' : 'navy');
+    store.set('on.fmt', $('onFmt').value); store.set('on.green', green); if (green === 'set') store.set('on.T', T);
+    Net.send({ t: 'setup', players: [{ name: me.name, profileId: me.profileId, colour: c0 }, { name: them.name, profileId: them.profileId, colour: c1 }],
+      T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
+    $('onGo').disabled = true;
+  },
+  back() {
+    if (this.stage === 'room') { Net.leave(); this.stage = 'choose'; this.open(); return; }
+    UI.close('onlineScrim'); showTitle();
+  },
+  copy() {
+    const t = this.link(), done = () => { $('onCopy').textContent = 'Copied'; setTimeout(() => $('onCopy').textContent = 'Copy link', 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => { $('onLink').select(); });
+    else $('onLink').select();
+  },
+  status() {
+    const chip = $('netChip'), show = !!game.link && game.mode === 'match';
+    chip.hidden = !show;
+    if (show) {
+      const peer = Net.peer(); let t, warn = true;
+      if (Net.state === 'off') t = 'Disconnected';
+      else if (Net.state !== 'open') t = 'Reconnecting…';
+      else if (!peer) t = 'Opponent left';
+      else if (!peer.online) t = `${peer.who.name} is away`;
+      else { t = `Online · ${Net.code}`; warn = false; }
+      $('netTxt').textContent = t; chip.title = t; chip.classList.toggle('warn', warn);
+    }
+    if ($('onlineScrim').classList.contains('show')) this.render();
+  },
+  peer(m, old) {
+    const name = (m.who && m.who.name) || (old && old.who && old.who.name) || 'Your opponent';
+    if (game.link && game.mode === 'match') {
+      if (m.left) UI.toast(`${name} has left the game.`, 'warn');
+      else if (!m.online) UI.toast(`${name} has lost their connection. Play waits for them.`, 'warn');
+      else if (old && !old.online) UI.toast(`${name} is back.`, 'good');
+    }
+    this.status();
+  },
+  error(m) {
+    if (m.code === 'taken' && Net.create && !Net.token) { Net.code = newRoomCode(); Net.connect(); this.render(); return; }
+    Net.close();
+    if (m.code !== 'rate') Net.clearSession();
+    if (game.link && game.mode === 'match') UI.toast(m.text || 'The connection was closed.', 'warn');
+    else { this.stage = 'choose'; if (!$('onlineScrim').classList.contains('show')) this.open(); this.msg(m.text || 'Could not connect.'); }
+    this.status();
+  }
+};
+$('onCreate').onclick = () => OnlineUI.create();
+$('onJoin').onclick = () => OnlineUI.join();
+$('onCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); OnlineUI.join(); } });
+$('onCode').addEventListener('input', () => { const el = $('onCode'), v = el.value.toUpperCase(); if (v !== el.value) el.value = v; });
+$('onGo').onclick = () => OnlineUI.go();
+$('onBack').onclick = () => OnlineUI.back();
+$('onCopy').onclick = () => OnlineUI.copy();
+$('onGreen').addEventListener('change', () => OnlineUI.paintGreen());
+$('onSpeed').addEventListener('input', () => updateSpeedOut($('onSpeed'), $('onSpeedOut')));
+$('onFmt').innerHTML = $('fmt').innerHTML; $('onGreen').innerHTML = $('greenMode').innerHTML;
+
 // Title & in-game menu
 function showTitle() {
   const inGame = game.mode !== 'title';
   $('mResume').hidden = !inGame;
-  $('titleFoot').textContent = inGame ? (game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : 'Practice is in progress.') : 'Two players, one device. Mouse, keyboard or touch.';
+  $('titleFoot').textContent = inGame ? (game.link ? `An online match is in progress (room ${Net.code}). Starting something new will leave it.` : game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : 'Practice is in progress.') : 'Two players on one device, or online. Mouse, keyboard or touch.';
   UI.open('titleScrim');
 }
 $('mPlay').onclick = () => openSetup({ ai: false });
 $('mAI').onclick = () => openSetup({ ai: true });
-$('mPractice').onclick = () => { UI.close('titleScrim'); game.startPractice(); maybeTutorial(); };
+$('mOnline').onclick = () => OnlineUI.open();
+$('mPractice').onclick = () => { if (Net.on) Net.leave(); UI.close('titleScrim'); game.startPractice(); maybeTutorial(); };
 $('mHow').onclick = () => { UI.close('titleScrim'); openTutorial(true); };
 $('mRules').onclick = () => { UI.close('titleScrim'); UI.open('rulesScrim'); };
 $('mSettings').onclick = () => { UI.close('titleScrim'); UI.open('settingsScrim'); };
@@ -3011,8 +3444,8 @@ $('btnHelp').onclick = () => openTutorial(true);
 // End summary & match over
 $('sumNext').onclick = () => { UI.close('sumScrim'); const cb = UI.sumCb; UI.sumCb = null; if (cb) cb(); };
 $('sumLook').onclick = () => { UI.close('sumScrim'); UI.notice(`End ${game.endNo} complete`, 'Take a look at the head before moving on.', 'Show the result', () => UI.open('sumScrim')); };
-$('overAgain').onclick = () => { UI.close('overScrim'); openSetup(); };
-$('overMenu').onclick = () => { UI.close('overScrim'); game.showcase(); UI.refresh(); showTitle(); };
+$('overAgain').onclick = () => { UI.close('overScrim'); if (game.link && Net.on) OnlineUI.open(); else openSetup(); };   // online: the host sets up a rematch in the same room
+$('overMenu').onclick = () => { UI.close('overScrim'); if (Net.on) Net.leave(); game.showcase(); UI.refresh(); OnlineUI.status(); showTitle(); };
 $('noticeBtn').onclick = () => UI.noticeGo();
 
 // Tutorial
@@ -3142,7 +3575,7 @@ window.addEventListener('keydown', e => {
     const open = document.querySelector('.scrim.show');
     if (open) {
       const id = open.id;
-      if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
+      if (['rulesScrim', 'settingsScrim', 'bowlsScrim', 'onlineScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
@@ -3196,6 +3629,7 @@ function frame(now) {
   updateCamera(dt, false);
   scene.render(buildView(game.acc / W.DT));
   UI.drawHead(dt);
+  Net.tick(dt);
   statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); }
 }
 
@@ -3359,6 +3793,28 @@ window.BiasTests = {
       const n = G.world.bowls().length; G.resetHead();
       ok('Practice: reset head keeps the jack, clears the bowls', n >= 1 && G.world.bowls().length === 0 && !!G.world.jack && G.turn.kind === 'bowl');
       G.practiceNewEnd(true); ok('Practice: new end clears everything and flips direction', G.world.bodies.length === 0 && G.turn.kind === 'jack' && G.dir === 1); }
+    // 15. online: two computers linked through an in-memory relay play the same match, and a reload rebuilds it
+    { const answers = () => ({ ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } });
+      const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
+      const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });
+      const log = [], q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
+      const link = seat => ({ seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
+      G.forEach((g, i) => g.startMatch(cfg(link(i))));
+      const pump = () => { while (q.length) { const e = q.shift(); G[1 - e.from].netIn(e); G[0].flush(); G[1].flush(); } };
+      const rnd = mulberry32(2026); let guard = 0;
+      while (G[0].phase !== 'over' && guard++ < 400) {
+        pump(); const g = G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (!g) break;
+        g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
+        g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump();
+      }
+      const sig = g => JSON.stringify({ s: g.players.map(p => p.score), e: g.match.ends.map(e => [e.winner, e.shots]), b: g.snapshot() });
+      ok('Online: both computers finish the same match, end by end', G[0].phase === 'over' && G[1].phase === 'over' && sig(G[0]) === sig(G[1]),
+        `${G[0].players.map(p => p.score).join('–')} after ${G[0].match.ends.length} ends, ${G[0].deliveryNo} deliveries, ${log.length} messages`);
+      const R = new Game(QuietUI, { instant: true }), cut = Math.floor(log.length * 0.6);
+      R.replayOnline(cfg({ seat: 1, send() {} }), log.slice(0, cut));
+      const mid = R.deliveryNo;
+      for (const e of log.slice(cut)) { R.netIn(e); R.flush(); }
+      ok('Online: a player who reloads mid-match rebuilds it from the log', mid > 0 && R.phase === 'over' && sig(R) === sig(G[1]), `rebuilt to delivery ${mid}, then followed live`); }
     const passed = out.filter(r => r.pass).length;
     console.table(out); console.log(`Bias self-tests: ${passed}/${out.length} passed`);
     return { passed, total: out.length, results: out };
@@ -3366,7 +3822,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W };
+window.BiasDebug = { Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W };
 
 // ======================= boot =======================
 Profiles.init();
@@ -3376,6 +3832,11 @@ game.showcase();
 UI.refresh();
 onResize();
 showTitle();
+{ // a link with ?room= joins that room; a reload during an online game rejoins it
+  const q = (new URLSearchParams(location.search).get('room') || '').toUpperCase(), s = Net.loadSession();
+  if (s && s.code && s.token && (!q || q === s.code)) { OnlineUI.stage = 'room'; Net.open(s.code, false, s.who || { name: store.get('on.name', 'Player') || 'Player', profileId: store.get('on.prof', 'dp-pro'), colour: store.get('on.col', 'claret') }); }
+  else if (ROOM_RE.test(q)) OnlineUI.open(q);
+}
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 })();
