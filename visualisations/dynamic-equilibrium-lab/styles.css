@@ -181,6 +181,11 @@ body:not(.presenting) .toast { display: none; }
 .bar i { display: block; height: 100%; width: 0; transition: width .25s linear; }
 .bar-row.f .bar i { background: var(--fwd); }
 .bar-row.r .bar i { background: repeating-linear-gradient(90deg, var(--rev) 0 9px, #c9665a 9px 12px); }
+/* The mean under each rate: full width like the live bar, so all four share one scale. */
+.mean-lab { display: flex; justify-content: space-between; align-items: baseline; font-size: .76rem; color: var(--muted); margin: 5px 0 2px; }
+.mean-lab b { font-size: .92rem; font-weight: 700; color: var(--body); font-variant-numeric: tabular-nums; }
+.bar.mean { height: 8px; }
+.bar.mean i { transition-duration: .5s; }
 .bar-unit { font-size: .76rem; color: var(--muted); margin: -2px 0 0; }
 .model-rates { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: .84rem; color: var(--body); }
 .model-rates p { margin: 3px 0; }
@@ -351,13 +356,21 @@ body.presenting .status p { font-size: var(--sst-pr-label); }
 body.presenting .bar-lab { font-size: var(--sst-pr-label); }
 body.presenting .bar-lab b { font-size: var(--sst-pr-text); }
 body.presenting .bar { height: calc(var(--sst-pr-label) * .9); }
-/* Each rate on one line on the board: name, bar, number. */
-body.presenting .bar-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; margin-bottom: 6px; }
-body.presenting .bar-lab { display: contents; }
+body.presenting .bar.mean { height: calc(var(--sst-pr-label) * .5); }
+/* On the board each rate and each mean is one line: name, bar, number. All four sit in one grid,
+   so the bars are the same length and the two means can be compared by eye. */
+body.presenting .bars { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 3px; margin-bottom: 6px; }
+body.presenting .bar-row, body.presenting .bar-lab, body.presenting .mean-lab { display: contents; }
 body.presenting .bar-lab .arr { font-size: var(--sst-pr-label); }
-body.presenting .bar-lab b { grid-column: 3; grid-row: 1; min-width: 4.2em; text-align: right; }
-body.presenting .bar-lab span { grid-column: 1; grid-row: 1; white-space: nowrap; }
-body.presenting .bar-row .bar { grid-column: 2; grid-row: 1; }
+body.presenting .bar-lab span, body.presenting .mean-lab span { grid-column: 1; white-space: nowrap; }
+body.presenting .bar-row > .bar { grid-column: 2; }
+body.presenting .bar-lab b, body.presenting .mean-lab b { grid-column: 3; min-width: 4.2em; text-align: right; }
+body.presenting .mean-lab span, body.presenting .mean-lab b { font-size: var(--sst-pr-label); }
+body.presenting .mean-lab span { text-align: right; }
+body.presenting .bar-row.f .bar-lab > *, body.presenting .bar-row.f > .bar:not(.mean) { grid-row: 1; }
+body.presenting .bar-row.f .mean-lab > *, body.presenting .bar-row.f > .bar.mean { grid-row: 2; }
+body.presenting .bar-row.r .bar-lab > *, body.presenting .bar-row.r > .bar:not(.mean) { grid-row: 3; margin-top: 8px; }
+body.presenting .bar-row.r .mean-lab > *, body.presenting .bar-row.r > .bar.mean { grid-row: 4; }
 body.presenting #ratesPanel { padding: 10px 14px; }
 body.presenting .bar-unit, body.presenting .model-rates { font-size: var(--sst-pr-label); }
 body.presenting .pr-only { display: flex !important; }

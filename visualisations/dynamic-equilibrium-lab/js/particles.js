@@ -273,7 +273,7 @@ class Chamber {
     // Try the waiting events in random order, so neither direction always goes first.
     for (let i = this.due.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [this.due[i], this.due[j]] = [this.due[j], this.due[i]]; }
     this.due = this.due.filter(e => { e.wait += dt; return !this.react(e.dir, simT, e.wait) && e.wait < 8; });
-    this.events = this.events.filter(e => e[0] > simT - 12);
+    this.events = this.events.filter(e => e[0] > simT - 25);   // enough for the 20 s mean rates
     this.move(dt);
   }
 

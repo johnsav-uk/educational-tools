@@ -288,6 +288,12 @@ function renderStatus(r) {
   }
 }
 
+/* The thin bars: each direction's mean rate over a longer window. The 3 s counts flicker because
+   reactions happen at random; over 20 s that evens out. The window restarts at every change, and
+   again when equilibrium is reached, so at equilibrium it averages only the equilibrium itself and
+   the two means come out about the same. */
+const MEAN_WIN = 20;
+const MEAN_NOTE = `Reactions per second in the chamber. Thick bars count the last 3 s, so they flicker. Thin bars are the mean over up to ${MEAN_WIN} s: since the last change, then since equilibrium was reached.`;
 let lastRates = 0;
 function renderRates(force) {
   const now = performance.now();
@@ -296,13 +302,24 @@ function renderRates(force) {
   const win = Math.min(3, Math.max(0.25, sim.t - Math.max(0, sim.t - 3)));
   const e = chamber.recent(sim.t, 3), w = sim.t < 3 ? Math.max(0.25, sim.t) : win;
   const ef = e.f / w, er = e.r / w, r = sim.rates(), mf = r.f * evScale(), mr = r.r * evScale();
-  // Both bars share one scale, which follows the rates down as they settle so equilibrium bars stay readable.
-  S.barMax = Math.max(S.barMax * 0.97, ef, er, mf, mr, 2);
+  const atEq = S.status === 'eq' && sim.eqSince !== null;
+  const from = atEq ? Math.max(sim.segStart, sim.eqSince) : sim.segStart;
+  const mw = Math.min(MEAN_WIN, sim.t - from), m = mw >= 1 ? chamber.recent(sim.t, mw) : null;
+  const af = m ? m.f / mw : 0, ar = m ? m.r / mw : 0;
+  // All four bars share one scale, which follows the rates down as they settle so equilibrium bars stay readable.
+  S.barMax = Math.max(S.barMax * 0.97, ef, er, mf, mr, af, ar, 2);
   const top = G.niceMax(S.barMax);
   $('#rfNum').textContent = `${ef.toFixed(1)} /s`;
   $('#rrNum').textContent = `${er.toFixed(1)} /s`;
   $('#rfBar').style.width = `${clamp(ef / top * 100, 0, 100)}%`;
   $('#rrBar').style.width = `${clamp(er / top * 100, 0, 100)}%`;
+  $('#rfMeanNum').textContent = m ? `${af.toFixed(1)} /s` : '–';
+  $('#rrMeanNum').textContent = m ? `${ar.toFixed(1)} /s` : '–';
+  $('#rfMean').style.width = `${clamp(af / top * 100, 0, 100)}%`;
+  $('#rrMean').style.width = `${clamp(ar / top * 100, 0, 100)}%`;
+  // On the board the status box above already says "equilibrium"; a short label leaves the bars room.
+  const label = atEq ? (presenting() ? 'mean' : 'mean at equilibrium') : m ? `mean over ${Math.floor(mw)} s` : 'mean';
+  $$('.mean-win').forEach(s => { if (s.textContent !== label) s.textContent = label; });
   if (alevel()) {
     const k = sim.k(), c = sim.conc(), rr = rx();
     const term = sign => rr.species.map((s, i) => Math.sign(s.nu) === sign ? `[${s.name}]${Math.abs(s.nu) > 1 ? sup(Math.abs(s.nu)) : ''}` : '').join('');
@@ -974,7 +991,7 @@ function setLevel(lvl) {
   document.body.classList.toggle('lvl-gcse', lvl === 'gcse');
   document.body.classList.toggle('lvl-alevel', lvl === 'alevel');
   $$('#levelSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lvl === lvl)));
-  $('#barUnit').textContent = 'reactions per second in the chamber, counted over the last 3 s';
+  $('#barUnit').textContent = MEAN_NOTE;
   fillPresetSelect();
   loadPreset(PRESETS[lvl][0], 'reactants');
   fillPresetSelect();

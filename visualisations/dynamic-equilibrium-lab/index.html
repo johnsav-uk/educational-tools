@@ -168,15 +168,22 @@
         <li data-s="react">Reacting</li><li data-s="approach">Approaching equilibrium</li><li data-s="eq">Dynamic equilibrium</li>
       </ol>
       <div class="status" id="status" role="status" aria-live="polite"></div>
-      <div class="bar-row f">
-        <div class="bar-lab"><span>Forward rate <i class="arr">→</i></span><b id="rfNum">0.0</b></div>
-        <div class="bar"><i id="rfBar"></i></div>
+      <div class="bars">
+        <div class="bar-row f">
+          <div class="bar-lab"><span>Forward rate <i class="arr">→</i></span><b id="rfNum">0.0</b></div>
+          <div class="bar"><i id="rfBar"></i></div>
+          <div class="mean-lab"><span class="mean-win">mean</span><b id="rfMeanNum">–</b></div>
+          <div class="bar mean"><i id="rfMean"></i></div>
+        </div>
+        <div class="bar-row r">
+          <div class="bar-lab"><span>Reverse rate <i class="arr">←</i></span><b id="rrNum">0.0</b></div>
+          <div class="bar"><i id="rrBar"></i></div>
+          <div class="mean-lab"><span class="mean-win">mean</span><b id="rrMeanNum">–</b></div>
+          <div class="bar mean"><i id="rrMean"></i></div>
+        </div>
       </div>
-      <div class="bar-row r">
-        <div class="bar-lab"><span>Reverse rate <i class="arr">←</i></span><b id="rrNum">0.0</b></div>
-        <div class="bar"><i id="rrBar"></i></div>
-      </div>
-      <p class="bar-unit" id="barUnit">reactions per second in the chamber, counted over the last 3 s</p>
+      <p class="bar-unit" id="barUnit">Reactions per second in the chamber. Thick bars count the last 3 s, so they flicker.
+        Thin bars are the mean over up to 20 s: since the last change, then since equilibrium was reached.</p>
       <div class="model-rates a-only" id="modelRates"></div>
     </section>
 
