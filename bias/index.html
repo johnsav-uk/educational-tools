@@ -172,6 +172,47 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .practice .pb{display:flex;flex-direction:column;padding:6px}
 .linkbtn{background:transparent;border:0;text-align:left;padding:8px 10px;border-radius:3px;color:var(--cream-2);font-size:13px;min-height:36px}
 .linkbtn:hover{background:rgba(236,229,210,.06);color:var(--cream)}
+.linkbtn.lesson{color:var(--gold);border-top:1px solid var(--line);border-radius:0 0 3px 3px;margin-top:4px}
+
+/* ---------- guided lesson ---------- */
+.coach{position:absolute;left:var(--gut);top:calc(var(--gut) + 70px);width:316px;z-index:5;padding:10px 14px 12px;display:flex;flex-direction:column;max-height:calc(100% - 2*var(--gut) - 180px);background:var(--panel-strong)}
+.coach[hidden]{display:none}
+.co-head{display:flex;align-items:center;gap:2px;margin-right:-6px}
+.co-head .kicker{flex:1;color:var(--gold)}
+.co-ic{width:30px;height:30px;border:0;background:transparent;border-radius:4px;color:var(--cream-2);display:grid;place-items:center;padding:0}
+.co-ic:hover{background:rgba(236,229,210,.07);color:var(--cream)}
+.co-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+.coach.min #coMin svg{transform:rotate(180deg)}
+.co-steps{display:flex;gap:4px;margin:6px 0 12px}
+.co-steps i{flex:1;height:2px;background:var(--line-2)}
+.co-steps i.on{background:var(--gold)}
+.co-steps i.cur{background:rgba(201,168,98,.45)}
+.co-t{margin:0 0 8px;font-size:17px;line-height:1.25}
+.co-body{overflow:auto;min-height:0;overscroll-behavior:contain}
+.co-p p{margin:0 0 8px;font-size:13px;line-height:1.5;color:var(--cream-2)}
+.co-p b{color:var(--cream);font-weight:600}
+.co-note{color:var(--muted);font-size:12px}
+.co-fig svg{display:block;width:100%;height:auto;margin:0 auto 10px}
+.co-result{border-left:2px solid var(--gold);padding:3px 0 3px 10px;margin:0 0 10px;font-size:13px;color:var(--cream)}
+.co-result .kicker{display:block;margin-bottom:3px}
+.co-result.warn{border-left-color:var(--alert)}
+.co-do{margin:4px 0 0;padding:9px 11px;border-radius:4px;border:1px solid var(--line);font-size:13px;line-height:1.45;color:var(--cream)}
+.co-do[hidden]{display:none}
+.co-do.todo{background:rgba(201,168,98,.11);border-color:rgba(201,168,98,.38)}
+.co-do.todo::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:8px;vertical-align:1px;animation:coPulse 1.6s ease-in-out infinite}
+.co-do.ok::before{content:"¹3";color:var(--gold);margin-right:7px;font-weight:700}
+.co-do b{font-weight:600}
+@keyframes coPulse{50%{opacity:.3}}
+.co-actions{display:flex;align-items:center;gap:8px;margin-top:10px}
+.co-actions .spacer{flex:1}
+.co-actions .btn{min-height:36px;padding:7px 14px;font-size:13px}
+.coach.min .co-steps,.coach.min .co-body,.coach.min .co-actions{display:none}
+.coach.min .co-t{margin-bottom:6px}
+.co-spot{outline:2px solid var(--gold);outline-offset:2px;animation:coSpot 1.8s ease-in-out infinite}
+.controls .co-spot{outline-offset:-3px}
+@keyframes coSpot{50%{outline-color:rgba(201,168,98,.3)}}
+.trace-key{display:block;width:220px;max-width:100%;height:auto;margin-top:8px}
+.def{color:var(--cream-2);font-weight:600}
 
 /* ---------- notices, toasts, banners ---------- */
 .toast{position:absolute;left:50%;top:calc(var(--gut) + 74px);transform:translate(-50%,-6px);padding:9px 16px;font-size:13.5px;z-index:6;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;max-width:min(520px,calc(100% - 2*var(--gut)));text-align:center}
@@ -247,6 +288,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .toggle-row:first-of-type{border-top:0}
 .toggle-row .tl{font-size:14px}
 .toggle-row .td{font-size:12px;color:var(--muted)}
+.toggle-row>div:first-child{min-width:0}
+.toggle-row>.seg{flex-shrink:0}
 .fine{font-size:12px;color:var(--muted)}
 
 /* title screen */
@@ -297,6 +340,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .tut-steps i{flex:1;height:2px;background:var(--line-2)}
 .tut-steps i.on{background:var(--gold)}
 .tut-fig{height:150px;border:1px solid var(--line);border-radius:4px;margin:12px 0 16px;background:#20352a;display:block;width:100%}
+.tut-fig[hidden]{display:none}
+.tut-svg{height:auto;border:0;background:none}
+.tut-svg svg{display:block;width:100%;height:auto}
 .keys{display:inline-flex;gap:4px;flex-wrap:wrap}
 kbd{font-family:var(--sans);font-size:11.5px;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:3px;padding:1px 6px;color:var(--cream)}
 
@@ -369,6 +415,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .linkbtn{padding:6px 8px;font-size:12px}
   .toast{top:calc(var(--gut) + 112px)}
   .notice{bottom:auto;top:calc(var(--gut) + 112px)}
+  .coach{top:calc(var(--gut) + 54px);right:var(--gut);width:auto;max-height:40vh;padding:8px 12px 10px}
+  .co-t{font-size:15px}
+  .co-fig svg{height:72px;width:auto;max-width:100%}
+  .coach.rolling .co-steps,.coach.rolling .co-body,.coach.rolling .co-actions{display:none}   /* folded while a bowl runs, so the head stays in view */
+  #app.coaching .toast,#app.coaching .notice{top:calc(var(--gut) + 62px + var(--coach-h, 0px))}
   .grid2{grid-template-columns:1fr;gap:10px}
   .sum{grid-template-columns:1fr}
   #sumCanvas{width:100%;height:220px}
@@ -406,6 +457,13 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .deliver{flex:0 0 auto;min-width:112px;min-height:44px;padding:0 12px;font-size:14px;border-radius:0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0}
   .deliver small{display:none}
   .toast,.notice{top:calc(var(--gut) + 58px)}
+  .coach{top:calc(var(--gut) + 58px);right:auto;width:340px;max-height:calc(100% - 2*var(--gut) - 120px);padding:6px 12px 8px}
+  .co-steps{display:none}
+  .co-t{font-size:14px;margin:2px 0 4px}
+  .co-fig svg{height:52px}
+  .co-actions{margin-top:6px}
+  .co-actions .btn{min-height:32px;padding:4px 12px}
+  #app.coaching .toast,#app.coaching .notice{top:calc(var(--gut) + 58px)}
   .banner{top:30%}
   .banner .bn{font-size:26px}
   #headCanvas{height:min(52vh,240px)}
@@ -516,20 +574,36 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <button class="linkbtn" id="prReset">Reset head</button>
       <button class="linkbtn" id="prNew">New end</button>
       <button class="linkbtn" id="prBowls">Bowls &amp; green</button>
+      <button class="linkbtn lesson" id="prLesson">Guided lesson</button>
     </div>
   </nav>
+
+  <aside class="coach panel" id="coach" hidden aria-label="Guided lesson">
+    <div class="co-head"><div class="kicker" id="coK">Guided lesson</div>
+      <button class="co-ic" id="coMin" aria-label="Fold the lesson away" aria-expanded="true" title="Fold away"><svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5"/></svg></button>
+      <button class="co-ic" id="coEnd" aria-label="End the lesson" title="End the lesson"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>
+    <div class="co-steps" id="coSteps" aria-hidden="true"></div>
+    <h3 class="co-t" id="coT"></h3>
+    <div class="co-body" id="coBody" aria-live="polite">
+      <div class="co-result" id="coResult" hidden></div>
+      <div class="co-fig" id="coFig" aria-hidden="true"></div>
+      <div class="co-p" id="coP"></div>
+    </div>
+    <p class="co-do" id="coDo" aria-live="polite"></p>
+    <div class="co-actions"><button class="btn ghost" id="coBack">Back</button><span class="spacer"></span><button class="btn" id="coNext">Next</button></div>
+  </aside>
 
   <!-- Title -->
   <div class="scrim" id="titleScrim">
     <div class="title-photo" aria-hidden="true"></div>
     <div class="title">
       <div class="club"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club &nbsp;·&nbsp; Est. 1897</div>
-      <h1>Bias</h1>
+      <h1 title="Bias: the curve a bowl takes as it slows down">Bias</h1>
       <p class="sub">Flat-green lawn bowls, on a summer afternoon</p>
       <div class="menu">
         <button class="menu-item lead" id="mResume" hidden>Return to the game</button>
         <button class="menu-item lead" id="mQuick">Play<span class="mi-sub" id="mQuickSub">A short match against the club's computer</span></button>
-        <button class="menu-item" id="mPractice">Practice on the green</button>
+        <button class="menu-item" id="mPractice">Practice on the green<span class="mi-sub">Free play, with a guided first lesson</span></button>
         <div class="rule"></div>
         <button class="menu-item second" id="mSetup">Set up a match<span class="mi-sub">Two players, the computer, pairs or triples</span></button>
         <button class="menu-item second" id="mOnline">Play online<span class="mi-sub">Against a friend on another device</span></button>
@@ -670,6 +744,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
     <div class="sheet" role="dialog" aria-labelledby="bowlsH">
       <div class="kicker" id="bowlsK">Practice</div>
       <h2 id="bowlsH">Bowls &amp; green</h2>
+      <p class="fine"><b class="def">Bias</b> is the curve a bowl takes as it slows down: one side of the bowl is shaped differently from the other, so it runs nearly straight while it is quick and curls in near the end. Bias strength sets how far it curves; late swing sets how late in its run the curve comes.</p>
       <p class="fine">Illustrative gameplay profiles, named after familiar bowls. They are not manufacturer specifications and do not reproduce any commercial bowl's exact behaviour.</p>
       <div class="prof-list" id="profList" role="radiogroup" aria-label="Bowl profile"></div>
       <canvas id="biasPreview" aria-label="Comparison of draw lines for all six profiles"></canvas>
@@ -694,7 +769,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="seg"><button id="armR" aria-pressed="true">Right</button><button id="armL" aria-pressed="false">Left</button></div></div>
       <div class="toggle-row"><div><div class="tl">Follow the bowl</div><div class="td">The camera walks up the green with each delivery.</div></div>
         <div class="seg"><button id="folOn" aria-pressed="true">On</button><button id="folOff" aria-pressed="false">Off</button></div></div>
-      <div class="toggle-row"><div><div class="tl">Delivery trace</div><div class="td">Faint markers along the path of the last bowl.</div></div>
+      <div class="toggle-row"><div><div class="tl">Delivery trace</div><div class="td">Faint dots along the path of the last bowl, brightest where it stopped. They show where the bias took hold.</div>
+          <svg class="trace-key" id="traceKey" viewBox="0 0 240 46" aria-hidden="true"></svg></div>
         <div class="seg"><button id="trOn" aria-pressed="true">On</button><button id="trOff" aria-pressed="false">Off</button></div></div>
       <div class="toggle-row"><div><div class="tl">Challenge</div><div class="td">Expert: aim in whole degrees only, and no gold mark for your last weight.</div></div>
         <div class="seg"><button id="lvStd" aria-pressed="true">Standard</button><button id="lvExp" aria-pressed="false">Expert</button></div></div>
@@ -714,7 +790,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="tut-steps" id="tutSteps"></div>
       <div class="kicker" id="tutK"></div>
       <h2 id="tutH"></h2>
-      <canvas class="tut-fig" id="tutFig" aria-hidden="true"></canvas>
+      <canvas class="tut-fig" id="tutFig" aria-hidden="true"></canvas><div class="tut-fig tut-svg" id="tutSvg" aria-hidden="true" hidden></div>
       <p class="lede" id="tutP"></p>
       <p class="fine" id="tutKeys"></p>
       <div class="sheet-actions"><span class="fine" style="margin-right:auto">Open this again any time from the ? button.</span>
@@ -2729,7 +2805,7 @@ const Sound = {
 };
 
 // ======================= 12. Game state machine =======================
-const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false }, store.get('settings', {}));
+const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false, lessonSeen: false }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', Settings);
 const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 const reduced = () => Settings.motion === 'less' || mqReduce.matches;
@@ -2845,6 +2921,7 @@ class Game {
     this.link = null; this.netReset();
   }
   after(delay, fn) { this.timers.push({ t: this.instant ? -1 : this.clock + delay, fn }); }
+  note(evt, data) { if (this.ui.coach) this.ui.coach(evt, data); }   // practice events for the guided lesson
   flush() { let n = 0; while (this.timers.length && n++ < 1000) this.timers.shift().fn(); }
   clearTimers() { this.timers.length = 0; this.place = null; this.anim = null; this.aiJob = null; this.aiExec = null; this.aiTurn = false; }
   isAI(side) { return !!this.ai && this.mode === 'match' && side === this.ai.side; }
@@ -3133,8 +3210,8 @@ class Game {
   resolveJack() {
     const jack = this.world.jack, res = Rules.checkJack(jack, this.matFront);
     if (this.mode === 'practice') {
-      if (!res.ok) { this.phase = 'between'; this.ui.toast(`${res.title}. ${res.reason}`, 'warn'); this.after(1.6, () => { this.world.remove(jack); this.trace = []; this.beginJack(0); }); return; }
-      this.centreJack(res, () => { this.ui.toast('Jack set: ' + this.jackText(res), 'good'); this.after(0.9, () => this.beginBowl(0)); });
+      if (!res.ok) { this.phase = 'between'; this.ui.toast(`${res.title}. ${res.reason}`, 'warn'); this.note('jackFail', res); this.after(1.6, () => { this.world.remove(jack); this.trace = []; this.beginJack(0); }); return; }
+      this.centreJack(res, () => { this.ui.toast('Jack set: ' + this.jackText(res), 'good'); this.note('jackSet', res); this.after(0.9, () => this.beginBowl(0)); });
       return;
     }
     const m = this.match, leader = m.leader, other = 1 - leader, L = this.players[leader].name, s1 = this.isTeams() ? '' : 's';
@@ -3198,6 +3275,9 @@ class Game {
     }
     this.shot = sc.winner;
     if (this.mode === 'practice') {
+      const lies = live && d.state === 'rest';
+      this.note('bowl', { dead: selfDead ? selfDead.why : null, toucher: !!(d && d.toucher), hit: !!this.deliveredHit, hand: this.hand,
+        report: lies ? this.bowlReport(d, jk) : '', lie: lies ? this.bowlLie(d, jk) : null, range: jk ? jk.y - this.matFront : 0 });
       this.after(1.3, () => { if (w.bodies.filter(b => b.kind === 'bowl' && !b.dead).length >= 12) { this.ui.toast('A full head. The bowls have been collected.'); this.resetHead(); } else this.beginBowl(0); });
       return;
     }
@@ -3208,10 +3288,13 @@ class Game {
      so it is judged by eye: short, jack high or through, and narrow (too little green: it finished on
      the side it was drawing toward) or wide (too much). Practice gives the measured figures. The line is
      only judged for a bowl that ran clear of the others. */
+  // the gap between bowl and jack (edge to edge), split along and across the rink
+  bowlLie(b, j) {
+    const dist = Rules.dist(b, j), cd = Math.hypot(b.x - j.x, b.y - j.y) || 1, dy = (b.y - j.y) * dist / cd, dx = (b.x - j.x) * dist / cd, judgeLine = !this.deliveredHit && !!b.side && Math.abs(dx) > 0.05;
+    return { dist, dy, dx, off: b.x - j.x, judgeLine, lineWord: judgeLine ? (Math.sign(dx) === b.side ? 'narrow' : 'wide') : '' };
+  }
   bowlReport(b, j) {
-    // the gap between bowl and jack (edge to edge), split along and across the rink
-    const dist = Rules.dist(b, j), cd = Math.hypot(b.x - j.x, b.y - j.y) || 1, dy = (b.y - j.y) * dist / cd, dx = (b.x - j.x) * dist / cd, judgeLine = !this.deliveredHit && b.side && Math.abs(dx) > 0.05;
-    const lineWord = judgeLine ? (Math.sign(dx) === b.side ? 'narrow' : 'wide') : '';
+    const { dist, dy, dx, judgeLine, lineWord } = this.bowlLie(b, j);
     if (this.mode !== 'match') {
       const parts = [];
       if (dy < -0.05) parts.push(`${fmtDist(-dy)} short`); else if (dy > 0.05) parts.push(`${fmtDist(dy)} through`);
@@ -3434,6 +3517,206 @@ const scene = new SceneRenderer($('scene'));
 const headView = new HeadView($('headCanvas'));
 const layout = { ctrlTop: 0 };
 
+// ======================= guided lesson (practice) =======================
+/* A coach card that walks a new player through their first deliveries in practice. Each step either waits
+   for something on the green (aim, deliver the jack, bowl, change hand) or explains something and waits
+   for Next. The game reports what happened through game.note() → UI.coach() → Coach.event(). */
+const coarsePointer = () => matchMedia('(pointer: coarse)').matches;
+const narrowScreen = () => matchMedia('(max-width: 860px)').matches;
+// Figures for the lesson (and the bias card in How to play): the green from above, mat on the left, jack
+// on the right. Looking up the green, the bowler's right is the bottom of the figure.
+const LessonFig = {
+  W: 300, H: 100, mx: 30, my: 50, jx: 272,
+  side(hand) { return (hand === 'fore') === (Settings.arm !== 'L') ? 1 : -1; },   // +1: the path swings out below
+  // the bowl's course as a cubic: out along the aim line, then curling in to the jack as it slows
+  curve(s) { const { mx, my, jx } = this; return [[mx, my], [150, my + s * 18], [240, my + s * 32], [jx - 7, my + s * 4]]; },
+  at(c, t) { const u = 1 - t; return [0, 1].map(k => u * u * u * c[0][k] + 3 * u * u * t * c[1][k] + 3 * u * t * t * c[2][k] + t * t * t * c[3][k]); },
+  d(c) { return `M${c[0]} C${c[1]} ${c[2]} ${c[3]}`; },
+  frame(inner, label) { return `<svg viewBox="0 0 ${this.W} ${this.H}" role="img" aria-label="${label}"><rect width="${this.W}" height="${this.H}" rx="4" fill="#20352a"/>${inner}</svg>`; },
+  mat() { return `<rect x="${this.mx - 9}" y="${this.my - 8}" width="10" height="16" fill="#23272a" stroke="rgba(240,236,220,.55)"/>`; },
+  jack() { return `<circle cx="${this.jx}" cy="${this.my}" r="4" fill="#f3eee2"/>`; },
+  aim(s) { return `<path d="M${this.mx} ${this.my} L${this.jx} ${this.my + s * 36}" stroke="rgba(240,236,220,.7)" stroke-dasharray="5 5" fill="none"/>`; },
+  hook(s) { const x = this.jx, y = this.my + s * 36; return `<path d="M${x - 7} ${y - s} Q${x + 2} ${y} ${x + 1} ${y - s * 8}" stroke="#d9b96e" stroke-width="1.6" fill="none" stroke-linecap="round"/>`; },   // as on the green: which way it will draw
+  text(x, y, t, a = 'start', o = .75) { return `<text x="${x}" y="${y}" text-anchor="${a}" font-size="10.5" fill="rgba(240,236,220,${o})" font-family="Plus Jakarta Sans,system-ui,sans-serif">${t}</text>`; },
+  // a legend row along the top or bottom, on the side away from the path
+  legend(s, items) {
+    const y = s > 0 ? 15 : 90; let x = 12, out = '';
+    for (const [mark, label] of items) { out += mark(x, y - 4) + this.text(x + 24, y, label); x += 34 + label.length * 5.6; }
+    return out;
+  },
+  bias() {
+    const s = this.side('fore'), c = this.curve(s), my = this.my, mx = this.mx;
+    return this.frame(
+      `<path d="M${mx} ${my} L${this.jx} ${my}" stroke="rgba(240,236,220,.22)" stroke-dasharray="1 4" fill="none"/>` +   // straight at the jack, for comparison
+      this.aim(s) + `<path d="${this.d(c)}" stroke="#d9b96e" stroke-width="2" fill="none"/>` + this.hook(s) + this.mat() + this.jack() +
+      this.legend(s, [[(x, y) => `<path d="M${x} ${y} h18" stroke="rgba(240,236,220,.7)" stroke-dasharray="4 3"/>`, 'aim line'],
+                      [(x, y) => `<path d="M${x} ${y} h18" stroke="#d9b96e" stroke-width="2"/>`, 'path: curls in as it slows']]),
+      'Top view: the bowl leaves along a line wide of the jack and curves in to it as it slows down');
+  },
+  trace() {
+    const s = this.side('fore'), c = this.curve(s), n = 22; let dots = '';
+    for (let i = 0; i < n; i++) { const [x, y] = this.at(c, i / (n - 1) * 0.94); dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.7" fill="rgba(246,240,220,${(0.25 + 0.7 * i / n).toFixed(2)})"/>`; }
+    const [bx, by] = this.at(c, 1), [kx, ky] = this.at(c, 0.82);
+    return this.frame(dots + this.mat() + this.jack() + `<circle cx="${(bx - 3).toFixed(1)}" cy="${(by + s * 5).toFixed(1)}" r="6" fill="#7c2434" stroke="rgba(240,236,220,.5)"/>` +
+      `<path d="M${(kx - 6).toFixed(1)} ${(ky + s * 9).toFixed(1)} l-14 ${s * 14}" stroke="rgba(217,185,110,.7)"/>` + this.text((kx - 22).toFixed(1), (ky + s * 26 + 3).toFixed(1), 'the bend is the bias', 'end', .7) +
+      this.legend(s, [[(x, y) => [0, 6, 12, 18].map((d, i) => `<circle cx="${x + d}" cy="${y}" r="1.7" fill="rgba(246,240,220,${.3 + i * .2})"/>`).join(''), 'trace, faint → bright'],
+                      [(x, y) => `<circle cx="${x + 9}" cy="${y}" r="5" fill="#7c2434"/>`, 'where it stopped']]),
+      'Top view of the delivery trace: dots along the bowl\'s path, faint near the mat and brightest where it stopped');
+  },
+  hands() {
+    const f = this.side('fore'), out = [f, -f].map((s, i) => `<path d="${this.d(this.curve(s))}" stroke="${i ? 'rgba(240,236,220,.6)' : '#d9b96e'}" stroke-width="${i ? 1.6 : 2}" fill="none"/>`).join('');
+    return this.frame(out + this.mat() + this.jack() + this.text(170, this.my + f * 34 + 4, 'forehand', 'middle') + this.text(170, this.my - f * 34 + 4, 'backhand', 'middle'),
+      'Top view: the forehand and backhand paths curve in to the jack from opposite sides');
+  },
+  // the small legend beside the Delivery trace setting
+  traceKey() {
+    let o = '';
+    for (let i = 0; i < 16; i++) { const t = i / 15, x = 8 + t * 176, y = 30 - (t > .6 ? Math.pow((t - .6) / .4, 2) * 12 : 0); o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.8" fill="rgba(246,240,220,${(0.22 + 0.7 * i / 15).toFixed(2)})"/>`; }
+    return o + `<circle cx="196" cy="16" r="6" fill="#7c2434" stroke="rgba(240,236,220,.5)"/><circle cx="210" cy="11" r="3.5" fill="#f3eee2"/>` +
+      `<text x="8" y="44" font-size="10" fill="#9aa192" font-family="Plus Jakarta Sans,system-ui,sans-serif">from the mat</text>` +
+      `<text x="232" y="44" text-anchor="end" font-size="10" fill="#9aa192" font-family="Plus Jakarta Sans,system-ui,sans-serif">brightest where it stopped</text>`;
+  }
+};
+const LESSON_FIGS = { bias: () => LessonFig.bias(), trace: () => LessonFig.trace(), hands: () => LessonFig.hands() };
+const kbd = k => coarsePointer() ? '' : `<kbd>${k}</kbd>`;
+const LESSON = [
+  { k: 'Aim', t: 'Choose your line', wait: 'aim', spot: '.c-aim',
+    p: () => 'The small white ball is the <b>jack</b>: the target. You roll it up the green first, from the mat at your feet.',
+    do: () => coarsePointer() ? 'Drag left or right across the green to swing the dashed aim line.' : `Drag across the green, or press ${kbd('←')} ${kbd('→')}, to swing the dashed aim line.`,
+    doneText: 'That dashed line is only the direction the ball sets off in.' },
+  { k: 'Weight', t: 'Hold, then let go', wait: 'jack', spot: '#deliverBtn',
+    p: () => '<b>Weight</b> is how hard you bowl. While you hold, the meter fills; hold too long and it falls back.\nThe jack has no bias and runs straight, so keep the aim near 0°. It must stop at least 23 m from the mat.',
+    do: () => `Press and hold <b>Hold to deliver jack</b>${coarsePointer() ? '' : ` (or ${kbd('Space')})`}, and let go about halfway along the meter.` },
+  { k: 'Bias', t: 'What is bias?', fig: 'bias',
+    p: () => '<b>Bias is the curve a bowl takes as it slows down.</b> One side of a bowl is shaped differently from the other, so it runs nearly straight while it is quick, then curls in as it slows.\nSo you don\'t aim at the jack. Choose a wider line (bowlers call it <i>taking green</i>) and let the bias bring the bowl to the jack. The small gold hook at the end of your aim line shows which way it will curve.' },
+  { k: 'First bowl', t: 'Bowl your first wood', wait: 'bowl', spot: '#deliverBtn',
+    prep() { if (game.turn && game.turn.kind === 'bowl' && game.hand !== 'fore') game.setHand('fore'); },
+    p: () => 'Your aim line is already set out wide of the jack, on the forehand. (Bowlers often call a bowl a <i>wood</i>.)',
+    do: () => 'Deliver it with about the weight you gave the jack: the same weight carries a bowl the same distance.' },
+  { k: 'The trace', t: 'Read the delivery trace', fig: 'trace', result: true,
+    p: () => 'The faint dots on the green are the <b>delivery trace</b>: the path your bowl took, brightest where it stopped. It runs almost straight at first, then bends in near the end. That bend is the bias.' +
+      (Settings.trace ? '' : '\n<span class="co-note">The delivery trace is switched off in Settings, so it isn\'t showing on the green.</span>') },
+  { k: 'Adjust', t: 'Correct and go again', wait: 'bowl', result: true, spot: '.c-aim',
+    p: () => lessonAdvice(Coach.last), do: () => 'Adjust your aim or weight, then bowl again.' },
+  { k: 'Backhand', t: 'Curve it the other way', wait: 'back', fig: 'hands', result: true, spot: '#btnBack', doneText: 'Backhand chosen: the aim line has swung across.',
+    p: () => 'Every bowl can be played on either side. On the <b>backhand</b> it sets off on the other side of the jack and curves back the other way: useful when bowls block the forehand line.',
+    do: () => coarsePointer() ? 'Tap <b>Backhand</b> in the controls.' : `Press ${kbd('B')}, or click <b>Backhand</b> in the controls.` },
+  { k: 'Backhand', t: 'Bowl a backhand', wait: 'bowl', spot: '#deliverBtn',
+    p: () => 'The aim line has swung to the other side of the jack, and the gold hook now points the other way. The same weight still carries it the same distance.',
+    do: () => 'Deliver the backhand.' },
+  { k: 'The head', t: 'Look at the head', result: true, spot: () => narrowScreen() ? '#btnHeadToggle' : '#headPanel',
+    p: () => narrowScreen() ? 'Tap <b>Head</b> to see the jack and bowls from directly above. The nearest bowl is ringed in gold, with its distance, and <b>Measure</b> compares any two.'
+      : `The <b>Head</b> panel shows the jack and bowls from directly above. The nearest bowl is ringed in gold, with its distance; <b>Measure</b> (${kbd('M')}) compares any two.` },
+  { k: 'On your own', t: 'Over to you', final: true,
+    p: () => 'That\'s the lesson. When you finish, the practice tools come back: <b>Place jack</b> sets a jack at a standard length, <b>Reset head</b> clears your bowls, <b>New end</b> starts again from the other end, and <b>Bowls &amp; green</b> lets you try other bowls and green speeds. Faster greens draw wider.',
+    do: () => 'Run the lesson again any time from <b>Guided lesson</b>.' }
+];
+function lessonResult(r) {
+  if (!r) return '';
+  const k = '<span class="kicker">Last bowl</span>';
+  if (r.dead) return `${k}Dead: ${esc(r.dead.replace(/\.$/, ''))}`;
+  if (r.toucher) return `${k}A toucher: it touched the jack, so it is chalked`;
+  return r.report ? `${k}${esc(r.report)}` : `${k}It moved the jack`;
+}
+function lessonAdvice(r) {
+  if (!r) return 'Use the delivery trace and the head to judge your last bowl: was it short or long, and which side of the jack did it finish?';
+  if (r.dead) {
+    if (/ditch|left the green/i.test(r.dead)) return 'It ran into the ditch: far too much weight. Let go earlier on the meter.';
+    if (/14 m/.test(r.dead)) return 'It stopped far too short. Hold longer before you let go: aim for about the weight you gave the jack.';
+    return 'It finished outside the rink, so the line was too far out. Bring your aim back towards the jack.';
+  }
+  if (r.toucher) return 'A toucher is chalked and stays live, even if it is later knocked into the ditch. Try to repeat it: same line, same weight.';
+  const L = r.lie; if (!L) return 'Look at where it finished against the jack, then adjust your aim or weight.';
+  if (L.dist < 0.15) return `Lovely: ${fmtDist(L.dist)} from the jack. Try to repeat it: same line, same weight.`;
+  const out = [], q = Settings.expert ? 1 : 2;   // expert aims in whole degrees
+  if (L.dy < -0.25) out.push(`<b>Short</b> by ${fmtDist(-L.dy)}: give it a little more weight.`);
+  else if (L.dy > 0.25) out.push(`<b>Through</b> by ${fmtDist(L.dy)}: a little less weight.`);
+  else out.push('The weight was about right.');
+  if (L.judgeLine && Math.abs(L.dx) > 0.15) {
+    // a change of aim moves the finish across by about range × angle
+    const deg = Math.abs(L.off) / Math.max(10, r.range) * 180 / Math.PI, step = Math.max(1 / q, Math.round(deg * q) / q);
+    const dir = L.off > 0 ? 'left' : 'right', key = kbd(L.off > 0 ? '←' : '→');
+    out.push(L.lineWord === 'narrow'
+      ? `<b>Narrow</b> by ${fmtDist(Math.abs(L.dx))}: it finished on the side it was curving towards, so it needed more room. Aim wider, about ${step}° to the ${dir}${key ? ' ' + key : ''}.`
+      : `<b>Wide</b> by ${fmtDist(Math.abs(L.dx))}: it never curved far enough to reach the jack, so it had too much green. Aim closer, about ${step}° to the ${dir}${key ? ' ' + key : ''}.`);
+  } else if (Math.abs(L.dx) <= 0.15) out.push('The line was good.');
+  if (!Settings.expert && Math.abs(L.dy) > 0.25) out.push('The gold mark on the meter shows the weight you just used.');
+  return out.join(' ');
+}
+function jackHint(res) {
+  const why = /ditch/i.test(res.title) ? 'Too much weight: let go a little earlier.' : /short/i.test(res.title) ? 'Not enough weight: hold a little longer before letting go.' : 'It ran off the side: bring the aim back to 0°.';
+  return `<span class="kicker">${esc(res.title)}</span>${why} Try again.`;
+}
+const Coach = {
+  on: false, i: 0, min: false, done: new Set(), last: null, flash: '', aim0: 0, timer: 0, jackFirst: false,
+  get step() { return LESSON[this.i]; },
+  start() {
+    if (game.mode !== 'practice') return;
+    if (game.turn && game.turn.kind === 'bowl') game.practiceNewEnd(false);   // the lesson begins with the jack
+    Settings.lessonSeen = Settings.tutorialSeen = true; saveSettings();
+    this.on = true; this.min = false; this.done.clear(); this.last = null;
+    this.go(game.turn && game.turn.kind === 'bowl' ? LESSON.findIndex(s => s.k === 'Bias') : 0);
+  },
+  stop() { this.on = false; clearTimeout(this.timer); this.spot(null); $('coach').hidden = true; $('app').classList.remove('coaching'); UI.refresh(); },
+  go(i) {
+    clearTimeout(this.timer); this.i = clamp(i, 0, LESSON.length - 1); this.flash = ''; this.aim0 = game.aim;
+    if (this.step.prep) this.step.prep();
+    this.render(); UI.refresh(); $('coBody').scrollTop = 0;
+  },
+  // a waited-for action is done: show it ticked, then move on
+  complete(delay) {
+    if (this.done.has(this.i)) return; this.done.add(this.i); this.render();
+    const i = this.i; this.timer = setTimeout(() => { if (this.on && this.i === i) this.go(i + 1); }, delay);
+  },
+  event(evt, data) {
+    if (!this.on) return; const s = this.step;
+    if (evt === 'jackFail' && (s.wait === 'aim' || s.wait === 'jack')) { this.flash = jackHint(data); this.render(); }
+    else if (evt === 'jackSet') { if (s.wait === 'aim' || s.wait === 'jack') { this.done.add(0); this.done.add(1); this.go(2); } else this.render(); }
+    else if (evt === 'bowl') { this.last = data; if (s.wait === 'bowl' && !this.done.has(this.i)) { this.done.add(this.i); this.go(this.i + 1); } else this.render(); }
+  },
+  // called on every UI refresh: watch what the player is doing
+  sync() {
+    if (!this.on) return;
+    if (game.mode !== 'practice') { this.stop(); return; }
+    const s = this.step;
+    $('coach').classList.toggle('rolling', ['release', 'rolling', 'settle'].includes(game.phase));
+    if (s.wait === 'aim' && Math.abs(game.aim - this.aim0) > 0.05 * Math.PI / 180) this.complete(1800);
+    if (s.wait === 'back' && game.hand === 'back' && game.turn && game.turn.kind === 'bowl') this.complete(900);
+    if (this.jackFirst !== this.needJack()) this.render();
+  },
+  // a gold ring round the control the step is about
+  spot(sel) { document.querySelectorAll('.co-spot').forEach(e => e.classList.remove('co-spot')); const e = sel && document.querySelector(sel); if (e) e.classList.add('co-spot'); },
+  // a bowling step, but the jack has to be delivered again first (after a dead jack, say)
+  needJack() { const s = this.step; return (s.wait === 'bowl' || s.wait === 'back') && !this.done.has(this.i) && !!game.turn && game.turn.kind === 'jack'; },
+  render() {
+    const s = this.step, el = $('coach'), waiting = !!s.wait && !this.done.has(this.i), val = v => typeof v === 'function' ? v() : (v || '');
+    this.jackFirst = this.needJack();
+    el.hidden = false; el.classList.toggle('min', this.min); $('app').classList.add('coaching');
+    $('coMin').setAttribute('aria-expanded', String(!this.min)); $('coMin').title = this.min ? 'Open the lesson' : 'Fold away';
+    $('coK').textContent = `Guided lesson · ${this.i + 1} of ${LESSON.length}`;
+    $('coSteps').innerHTML = LESSON.map((_, i) => `<i class="${i < this.i || this.done.has(i) ? 'on' : i === this.i ? 'cur' : ''}"></i>`).join('');
+    $('coT').textContent = s.t;
+    const res = $('coResult'), showRes = this.flash || (s.result && this.last ? lessonResult(this.last) : '');
+    res.hidden = !showRes; res.classList.toggle('warn', !!this.flash || (!!s.result && !!this.last && !!this.last.dead)); res.innerHTML = showRes;
+    $('coFig').hidden = !s.fig; $('coFig').innerHTML = s.fig ? LESSON_FIGS[s.fig]() : '';
+    $('coP').innerHTML = val(s.p).split('\n').map(x => `<p>${x}</p>`).join('');
+    const doText = this.jackFirst ? 'First, the jack again: aim near 0°, then hold and let go about halfway.'
+      : waiting ? val(s.do) : s.wait ? (s.doneText || 'Done.') : val(s.do);
+    $('coDo').innerHTML = doText; $('coDo').hidden = !doText;
+    $('coDo').className = 'co-do' + (s.wait && !waiting ? ' ok' : waiting ? ' todo' : '');
+    $('coBack').disabled = this.i === 0;
+    this.spot(this.jackFirst ? '#deliverBtn' : waiting || !s.wait ? val(s.spot) : null);
+    const nx = $('coNext'); nx.textContent = s.final ? 'Finish' : waiting ? 'Skip' : 'Next';
+    nx.className = 'btn ' + (waiting ? 'ghost' : 'primary');
+  }
+};
+$('coNext').onclick = () => { if (Coach.step.final) Coach.stop(); else Coach.go(Coach.i + 1); };
+$('coBack').onclick = () => Coach.go(Coach.i - 1);
+$('coEnd').onclick = () => Coach.stop();
+$('coMin').onclick = () => { Coach.min = !Coach.min; Coach.render(); };
+$('traceKey').innerHTML = LessonFig.traceKey();
+if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--coach-h', $('coach').offsetHeight + 'px')).observe($('coach'));
+
 const UI = {
   toastTimer: 0, bannerTimer: 0, noticeCb: null, measure: [], measuring: false, pulseT: 0, lastStats: '',
   open(id) {
@@ -3491,7 +3774,8 @@ const UI = {
     $('scoreboard').style.display = inGame ? '' : 'none';
     $('controls').style.display = inGame ? '' : 'none';
     $('headPanel').style.display = inGame ? '' : 'none';
-    $('practiceBar').hidden = g.mode !== 'practice';
+    $('practiceBar').hidden = g.mode !== 'practice' || Coach.on;   // the lesson card takes its place
+    Coach.sync();
     if (!inGame) return;
     this.renderScoreboard();
     const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.locked;
@@ -3522,11 +3806,12 @@ const UI = {
     if (g.mode === 'practice') {
       const p = Profiles.byId(g.practice.profileId);
       $('practiceInfo').textContent = p.model;
-      $('prPlace').disabled = $('prReset').disabled = $('prNew').disabled = $('prBowls').disabled = !g.practiceReady();
+      $('prPlace').disabled = $('prReset').disabled = $('prNew').disabled = $('prBowls').disabled = $('prLesson').disabled = !g.practiceReady();
     }
     this.refreshAim(); this.refreshWeight();
   },
-  refreshAim() { $('aimVal').textContent = fmtAim(game.aim, Settings.expert); },
+  refreshAim() { $('aimVal').textContent = fmtAim(game.aim, Settings.expert); Coach.sync(); },
+  coach(evt, data) { Coach.event(evt, data); },
   refreshWeight() {
     const g = game, w = g.phase === 'charge' || g.phase === 'release' ? g.weight : (g.phase === 'rolling' || g.phase === 'settle' ? (g.lastWeights[g.weightKey(g.turn.kind, g.turn.player, g.turn.member)] || 0) : 0);
     $('meterFill').style.width = (w * 100).toFixed(1) + '%';
@@ -4262,7 +4547,7 @@ function showTitle() {
 $('mSetup').onclick = () => openSetup({});
 $('mQuick').onclick = quickPlay;
 $('mOnline').onclick = () => OnlineUI.open();
-$('mPractice').onclick = () => { if (Net.on) Net.leave(); UI.close('titleScrim'); game.startPractice(); maybeTutorial(); };
+$('mPractice').onclick = () => { if (Net.on) Net.leave(); UI.close('titleScrim'); if (Coach.on) Coach.stop(); game.startPractice(); if (!Settings.lessonSeen) setTimeout(() => Coach.start(), 400); else maybeTutorial(); };   // a first visit starts the guided lesson
 $('mHow').onclick = () => { UI.close('titleScrim'); openTutorial(true); };
 $('mRules').onclick = () => { UI.close('titleScrim'); UI.open('rulesScrim'); };
 $('mSettings').onclick = () => { UI.close('titleScrim'); UI.open('settingsScrim'); };
@@ -4280,11 +4565,12 @@ $('noticeBtn').onclick = () => UI.noticeGo();
 
 // Tutorial
 const TUT = [
-  { k: 'Aim', t: 'Choose your line', p: 'Drag across the green, or use the arrow keys, to set the line the bowl leaves your hand on. The dashed line shows only that starting direction; the bowl will not follow it.', keys: '← → aim · Shift for larger steps · Z to look closer at the head' },
-  { k: 'Hand', t: 'Forehand or backhand', p: 'Every bowl is biased and curves as it slows. A right-hander\'s forehand starts out to the right and draws in from the right; the backhand mirrors it. The small gold hook at the end of the aim line shows which way this hand will draw.', keys: 'F forehand · B backhand' },
-  { k: 'Weight', t: 'Hold, then let go', p: 'Press and hold Deliver (or Space). The meter rises and falls; release at the weight you want. The top fifth is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
-  { k: 'The head', t: 'Read it from above', p: 'The inset shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls.', keys: 'M measure · the gold mark on the meter is your last weight' },
-  { k: 'The rules in brief', t: 'Jack, touchers, dead bowls', p: 'The jack must stop at least 23 m from the mat. Bowls that touch the jack are chalked as touchers and stay live even in the ditch; other bowls in the ditch are dead. The nearest bowl scores, plus each of that player\'s bowls inside the opponent\'s best.', keys: 'Full rules are in the menu.' }
+  { k: 'Bias', fig: 'bias', t: 'What is bias?', p: 'Bias is the curve a bowl takes as it slows down. One side of every bowl is shaped differently from the other, so it runs nearly straight while it is quick, then curls in as it slows. So you never aim straight at the jack: choose a wider line, and let the bias bring the bowl to the jack.', keys: 'For a step-by-step lesson on the green, choose Practice, then Guided lesson.' },
+  { k: 'Aim', fig: 'aim', t: 'Choose your line', p: 'Drag across the green, or use the arrow keys, to set the line the bowl leaves your hand on. The dashed line shows only that starting direction; the bowl will not follow it.', keys: '← → aim · Shift for larger steps · Z to look closer at the head' },
+  { k: 'Hand', fig: 'hand', t: 'Forehand or backhand', p: 'Every bowl is biased and curves as it slows. A right-hander\'s forehand starts out to the right and draws in from the right; the backhand mirrors it. The small gold hook at the end of the aim line shows which way this hand will draw.', keys: 'F forehand · B backhand' },
+  { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold Deliver (or Space). The meter rises and falls; release at the weight you want. The top fifth is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
+  { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The inset shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls.', keys: 'M measure · the gold mark on the meter is your last weight' },
+  { k: 'The rules in brief', fig: 'rules', t: 'Jack, touchers, dead bowls', p: 'The jack must stop at least 23 m from the mat. Bowls that touch the jack are chalked as touchers and stay live even in the ditch; other bowls in the ditch are dead. The nearest bowl scores, plus each of that player\'s bowls inside the opponent\'s best.', keys: 'Full rules are in the menu.' }
 ];
 let tutStep = 0;
 function openTutorial() { tutStep = 0; renderTut(); UI.open('tutScrim'); }
@@ -4295,7 +4581,8 @@ function renderTut() {
   $('tutSteps').innerHTML = TUT.map((_, i) => `<i class="${i <= tutStep ? 'on' : ''}"></i>`).join('');
   $('tutK').textContent = `${tutStep + 1} of ${TUT.length} · ${s.k}`; $('tutH').textContent = s.t; $('tutP').textContent = s.p; $('tutKeys').textContent = s.keys;
   $('tutPrev').disabled = tutStep === 0; $('tutNext').textContent = tutStep === TUT.length - 1 ? 'Start playing' : 'Next';
-  requestAnimationFrame(drawTutFig);
+  const svg = LESSON_FIGS[s.fig]; $('tutFig').hidden = !!svg; $('tutSvg').hidden = !svg;   // the bias figure is shared with the guided lesson
+  if (svg) $('tutSvg').innerHTML = svg(); else requestAnimationFrame(drawTutFig);
 }
 $('tutNext').onclick = () => { if (tutStep < TUT.length - 1) { tutStep++; renderTut(); } else closeTut(); };
 $('tutPrev').onclick = () => { if (tutStep > 0) { tutStep--; renderTut(); } };
@@ -4309,24 +4596,26 @@ function drawTutFig() {
   const jack = (x, y) => { g.fillStyle = '#f3eee2'; g.beginPath(); g.arc(x, y, 4, 0, TAU); g.fill(); };
   const bowl = (x, y, c, ring) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, 7, 0, TAU); g.fill(); g.strokeStyle = cream + '.5)'; if (ring) { g.beginPath(); g.arc(x, y, 3.8, 0, TAU); g.stroke(); } };
   g.lineWidth = 1.5;
-  if (tutStep === 0 || tutStep === 1) {
-    const mx = 40, my = h / 2, jx = w - 50, jy = h / 2; mat(mx, my); jack(jx, jy);
-    const paths = tutStep === 0 ? [1] : [1, -1];
+  const f = TUT[tutStep].fig;
+  if (f === 'aim' || f === 'hand') {
+    // seen from above with the green running left to right, the bowler's right is the bottom of the figure
+    const mx = 40, my = h / 2, jx = w - 50, jy = h / 2, fore = Settings.arm === 'L' ? 1 : -1; mat(mx, my); jack(jx, jy);
+    const paths = f === 'aim' ? [1] : [1, -1];
     for (const sg of paths) {
       g.setLineDash([5, 5]); g.strokeStyle = cream + '.7)'; g.beginPath(); g.moveTo(mx + 8, my); g.lineTo(jx, jy - sg * 52); g.stroke(); g.setLineDash([]);
-      if (tutStep === 1) { g.strokeStyle = sg > 0 ? gold : cream + '.55)'; g.beginPath(); g.moveTo(mx + 8, my); g.bezierCurveTo(mx + (jx - mx) * .45, my - sg * 44, jx - 70, jy - sg * 42, jx - 9, jy - sg * 3); g.stroke(); }
+      if (f === 'hand') { g.strokeStyle = sg === fore ? gold : cream + '.55)'; g.beginPath(); g.moveTo(mx + 8, my); g.bezierCurveTo(mx + (jx - mx) * .45, my - sg * 44, jx - 70, jy - sg * 42, jx - 9, jy - sg * 3); g.stroke(); }
     }
     g.fillStyle = cream + '.7)'; g.font = '12px "Plus Jakarta Sans",system-ui,sans-serif';
-    if (tutStep === 1) { g.fillText('forehand', w / 2 - 20, my - 46); g.fillText('backhand', w / 2 - 20, my + 56); }
+    if (f === 'hand') { g.fillText('forehand', w / 2 - 20, fore > 0 ? my - 46 : my + 56); g.fillText('backhand', w / 2 - 20, fore > 0 ? my + 56 : my - 46); }
     else g.fillText('initial line only', w / 2 - 40, my - 34);
-  } else if (tutStep === 2) {
+  } else if (f === 'weight') {
     const x0 = 40, x1 = w - 40, y = h / 2 - 6;
     g.fillStyle = cream + '.08)'; g.fillRect(x0, y, x1 - x0, 14);
     g.fillStyle = 'rgba(216,145,108,.25)'; g.fillRect(x0 + (x1 - x0) * .8, y, (x1 - x0) * .2, 14);
     g.fillStyle = '#e6dcc0'; g.fillRect(x0, y, (x1 - x0) * .56, 14);
     g.fillStyle = gold; g.fillRect(x0 + (x1 - x0) * .52, y - 5, 2, 24);
     g.fillStyle = cream + '.7)'; g.font = '12px "Plus Jakarta Sans",system-ui,sans-serif'; g.fillText('draw', x0, y + 36); g.fillText('drive', x0 + (x1 - x0) * .8, y + 36); g.fillText('last weight', x0 + (x1 - x0) * .52 - 20, y - 12);
-  } else if (tutStep === 3) {
+  } else if (f === 'head') {
     const cx = w / 2, cy = h / 2; g.strokeStyle = cream + '.18)'; g.setLineDash([2, 4]); g.beginPath(); g.arc(cx, cy, 40, 0, TAU); g.stroke(); g.setLineDash([]);
     bowl(cx + 14, cy + 16, '#7c2434'); bowl(cx - 30, cy - 8, '#2a416c', true); bowl(cx + 36, cy - 30, '#7c2434'); jack(cx, cy);
     g.strokeStyle = gold; g.beginPath(); g.arc(cx + 14, cy + 16, 10.5, 0, TAU); g.stroke();
@@ -4383,7 +4672,7 @@ $('btnFore').onclick = () => game.setHand('fore'); $('btnBack').onclick = () => 
 $('aimL').onclick = () => game.nudgeAim(-0.1); $('aimR').onclick = () => game.nudgeAim(0.1);
 $('matBack').onclick = () => game.moveMat(-0.25); $('matFwd').onclick = () => game.moveMat(0.25);
 $('prPlace').onclick = () => game.practicePlaceJack(); $('prReset').onclick = () => game.resetHead(); $('prNew').onclick = () => game.practiceNewEnd(true);
-$('prBowls').onclick = openBowls;
+$('prBowls').onclick = openBowls; $('prLesson').onclick = () => Coach.start();
 $('hpZoom').onclick = () => { headView.zoom = headView.zoom === 'head' ? 'wide' : 'head'; $('hpZoom').textContent = headView.zoom === 'head' ? 'Wide' : 'Close'; };
 function toggleMeasure() { if (game.mode === 'match' && !UI.measuring) return; toggleMeasureNow(); }   // no measuring during an end: the end summary measures
 function toggleMeasureNow() { UI.measuring = !UI.measuring; UI.measure = []; $('hpMeasure').setAttribute('aria-pressed', String(UI.measuring)); $('headCanvas').classList.toggle('measuring', UI.measuring); }
@@ -4659,6 +4948,12 @@ window.BiasTests = {
       const n = G.world.bowls().length; G.resetHead();
       ok('Practice: reset head keeps the jack, clears the bowls', n >= 1 && G.world.bowls().length === 0 && !!G.world.jack && G.turn.kind === 'bowl');
       G.practiceNewEnd(true); ok('Practice: new end clears everything and flips direction', G.world.bodies.length === 0 && G.turn.kind === 'jack' && G.dir === 1); }
+    // 14b. practice reports to the guided lesson: jack set, then each bowl with where it finished
+    { const ev = [], UIc = { ...StubUI, coach(e, d) { ev.push([e, d]); } }, G = new Game(UIc, { instant: true }); G.startPractice();
+      G.testDeliver(0, 0.55); G.testDeliver(0.06, 0.55);
+      const b = ev.find(e => e[0] === 'bowl'), lie = b && b[1].lie;
+      ok('Lesson: practice reports the jack and the bowl', ev.some(e => e[0] === 'jackSet') && !!b && (!!lie || !!b[1].dead || b[1].toucher), ev.map(e => e[0]).join(','));
+      ok("Lesson: the bowl's lie splits into along and across", !lie || (Math.abs(Math.hypot(lie.dx, lie.dy) - lie.dist) < 1e-6 && b[1].range > 20)); }
     // 15. online: two computers linked through an in-memory relay play the same match, and a reload rebuilds it
     { const answers = () => ({ ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } });
       const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
@@ -4691,7 +4986,8 @@ window.BiasTests = {
 window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
-  camera(c) { debugCam = c; } };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
+  camera(c) { debugCam = c; },
+  get game() { return game; }, Coach };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
 // ======================= boot =======================
 Profiles.init();
