@@ -26,7 +26,6 @@ svg { flex: none; }
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 20px; padding: 16px clamp(16px,3vw,32px) 8px; }
 .top h1 { margin: 0; font-size: clamp(1.3rem,3vw,1.75rem); line-height: 1.15; letter-spacing: -.01em; }
 .top .grow { flex: 1 1 320px; }
-.beta { font-size: .5em; font-weight: 700; vertical-align: .45em; color: var(--muted); border: 1px solid var(--line2); border-radius: 999px; padding: 1px 7px; letter-spacing: .03em; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 600; border: 1px solid currentColor; color: var(--muted); }
 .chip.phys { color: var(--phys); } .chip.gcse { color: var(--gcse); }

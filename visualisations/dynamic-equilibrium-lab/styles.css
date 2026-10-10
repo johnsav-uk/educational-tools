@@ -36,7 +36,6 @@ body.lvl-alevel .g-only { display: none !important; }
 .top h1 { margin: 0; font-size: clamp(1.3rem,3vw,1.75rem); line-height: 1.15; letter-spacing: -.01em; }
 .tagline { margin: 2px 0 0; color: var(--body); font-size: .95rem; }
 .top .grow { flex: 1 1 320px; min-width: 0; }
-.beta { font-size: .5em; font-weight: 700; vertical-align: .45em; color: var(--muted); border: 1px solid var(--line2); border-radius: 999px; padding: 1px 7px; letter-spacing: .03em; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 600; border: 1px solid var(--line2); color: var(--body); }
 .chip.chem { color: var(--chem); border-color: currentColor; }

@@ -894,6 +894,16 @@
     // Esc in full screen is taken by the browser; leaving full screen ends the show.
     if (!document.fullscreenElement && wentFs && !pres.hidden) closePresenter();
   });
+  // P opens and closes the presenter, unless the key is being typed into a field.
+  document.addEventListener('keydown', function(e){
+    if ((e.key !== 'p' && e.key !== 'P') || e.ctrlKey || e.metaKey || e.altKey) return;
+    var tg = e.target, tag = tg && tg.tagName;
+    if (tag === 'TEXTAREA' || tag === 'SELECT' || (tg && tg.isContentEditable)) return;
+    if (tag === 'INPUT' && !/^(checkbox|radio|range|button|submit|reset)$/.test(tg.type)) return;
+    if (document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    if (pres.hidden) openPresenter(); else closePresenter();
+  });
   // Arrows and Page Up / Down turn the page in present.js; Space, Home and End here.
   document.addEventListener('keydown', function(e){
     if (pres.hidden) return;

@@ -22,7 +22,6 @@ sub, sup { line-height: 0; }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .kicker { color: var(--sst-chem); font-weight: 700; font-size: .8rem; letter-spacing: .02em; margin-bottom: 4px; }
 .head h1 { font-size: clamp(1.4rem, 3vw, 2.1rem); }
-.beta { display: inline-block; margin-left: 8px; padding: 2px 10px; vertical-align: middle; border: 1px solid var(--sst-line-strong); border-radius: 999px; color: var(--sst-text-muted); font-size: .8rem; font-weight: 700; }
 
 .panel { background: var(--sst-panel); border: 1px solid var(--sst-line); border-radius: 14px; padding: 16px; }
 .panel h2 { font-size: 1.05rem; }

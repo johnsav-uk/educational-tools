@@ -53,13 +53,13 @@ window.SST_TOOLS = [
     image: "spectroscopy-detective.png",
     keywords: "spectroscopy organic analysis infrared ir mass spectrometry nmr proton carbon 13 fingerprint structure determination 3.3.6" },
 
-  { title: "Chemical Bonding: Ionic, Covalent & Metallic (beta)", url: "visualisations/chemical-bonding/",
+  { title: "Chemical Bonding: Ionic, Covalent & Metallic", url: "visualisations/chemical-bonding/",
     blurb: "Watch electrons transfer and pair up, spin an ionic lattice, then push, heat and wire up a metal.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
     image: "chemical-bonding.png",
     keywords: "chemical bonding ionic bond covalent bond metallic bond dot and cross dot-and-cross diagram electron transfer shared pair lone pair non-bonding pair single bond double bond electrostatic attraction oppositely charged ions giant ionic lattice regular lattice sodium chloride nacl magnesium oxide mgo magnesium chloride mgcl2 na+ cl- mg2+ o2- hydrogen h2 oxygen o2 water h2o methane ch4 simple molecule intermolecular forces delocalised electrons delocalized sea of electrons positive ions malleable malleability ductile layers slide alloy alloys harder bronze steel copper iron tin carbon electrical conductivity thermal conductivity conduct heat electricity square brackets charge noble gas electronic structure full outer shell misconceptions examiner mark scheme 4.2.1.1 4.2.1.2 4.2.1.3 4.2.1.4 4.2.1.5 4.2.2.7 4.2.2.8 5.2.1.1 5.2.1.2 5.2.1.3 5.2.1.4 5.2.1.5" },
 
-  { title: "Balancing Equations: Atoms & Molecules (beta)", url: "visualisations/balancing-equations/",
+  { title: "Balancing Equations: Atoms & Molecules", url: "visualisations/balancing-equations/",
     blurb: "Copy and paste whole ball-and-stick molecules until the balance scale levels, then see why changing a subscript makes a different substance.",
     kind: "Interactive", levels: ["KS3", "GCSE"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
     image: "balancing-equations.png",
@@ -101,13 +101,13 @@ window.SST_TOOLS = [
     image: "rate-of-reaction.png",
     keywords: "rates of reaction collision theory activation energy catalyst catalysts how catalysts work alternative pathway lower activation energy high jump analogy reaction profile energy profile diagram exothermic endothermic concentration temperature surface area particles 4.6.1 4.6.1.4 4.5.1.3" },
 
-  { title: "Dynamic Equilibrium Lab (beta)", url: "visualisations/dynamic-equilibrium-lab/",
+  { title: "Dynamic Equilibrium Lab", url: "visualisations/dynamic-equilibrium-lab/",
     blurb: "Watch particles react both ways until the rates meet, change the conditions and see the system respond, then calculate Kc, Q and Kp from the chamber at A-level.",
     kind: "Interactive", levels: ["GCSE", "A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
     image: "dynamic-equilibrium-lab.png",
     keywords: "dynamic equilibrium reversible reactions le chatelier le chatelier's principle le chatlier position of equilibrium forward reverse rate equal rates closed system concentration temperature pressure catalyst haber process ammonia compromise yield exothermic endothermic kc kp equilibrium constant equilibria reaction quotient q ice table partial pressure mole fraction hydrogen iodide 4.6.2 4.6.2.1 4.6.2.2 4.6.2.3 4.6.2.4 4.6.2.5 4.6.2.6 4.6.2.7 4.10.4.1 3.1.6 3.1.10" },
 
-  { title: "Evolution of the Atmosphere (beta)", url: "visualisations/atmosphere-evolution/",
+  { title: "Evolution of the Atmosphere", url: "visualisations/atmosphere-evolution/",
     blurb: "Scrub 4.6 billion years from the volcanoes of the first billion years to algae, plants and today, then practise the exam answers.",
     kind: "3D Model", levels: ["GCSE"], tags: ["AQA Chemistry", "Chemistry", "3D Model", "Interactive"],
     image: "atmosphere-evolution.png",
@@ -125,7 +125,7 @@ window.SST_TOOLS = [
     image: "waves-practical.png",
     keywords: "required practical 8 rp8 waves ripple tank water waves wavelength frequency wave speed v = f lambda stroboscope strobe dipper plane waves point source wavefront stretched string standing wave stationary wave vibration generator signal generator node antinode harmonic fundamental resonance tension pulley hanging masses mass per unit length metre rule apparatus set up diagram 3d lamp white screen projection two dippers two source interference superposition coherent coherence path difference phase difference constructive destructive maxima minima fringes btec applied science unit 1 c1 working with waves diffraction grating 4.6.1.2 4.6.1.3" },
 
-  { title: "Radioactivity: Half-Life & Absorption (beta)", url: "visualisations/radioactivity/",
+  { title: "Radioactivity: Half-Life & Absorption", url: "visualisations/radioactivity/",
     blurb: "Watch nuclei decay at random and read the half-life off the live graph, then block alpha, beta and gamma in front of a Geiger counter.",
     kind: "Interactive", levels: ["GCSE"], tags: ["AQA Physics", "Physics", "Interactive"],
     image: "radioactivity.png",
