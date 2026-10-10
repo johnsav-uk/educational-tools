@@ -108,6 +108,7 @@ button{cursor:pointer}
 #onCode{text-transform:uppercase;letter-spacing:.24em;font-size:17px}
 .on-status{display:flex;align-items:center;gap:10px;margin:16px 0 0;color:var(--cream)}
 .on-err{color:var(--alert);min-height:18px;margin:12px 0 0}
+.on-menu{position:absolute;top:18px;right:18px}
 .on-err:empty{display:none}
 
 /* ---------- control bar ---------- */
@@ -456,7 +457,8 @@ table.dist tr.muted td{color:var(--muted)}
 
   <!-- Online -->
   <div class="scrim" id="onlineScrim">
-    <form class="sheet" id="onlineForm" autocomplete="off" onsubmit="return false" style="max-width:580px">
+    <form class="sheet" id="onlineForm" autocomplete="off" onsubmit="return false" style="max-width:580px;position:relative">
+      <button type="button" class="chip on-menu" id="onMenu">‹ Main menu</button>
       <div class="kicker">Play online · singles</div>
       <h2 id="onH">Play someone on another computer</h2>
       <p id="onLede">One of you creates a room and sends the code or the link; the other joins with it. Each of you bowls on your own computer and watches the other's bowls run.</p>
@@ -3540,6 +3542,7 @@ const OnlineUI = {
     $('onLevels').textContent = `Challenge: you ${levelName(myLevel())}` + (peer && peer.who ? ` · ${peer.who.name} ${levelName(peer.who.level)}` : '') + '. Change yours in Settings.';
     $('onHostSet').hidden = !(room && host); $('onGo').hidden = !(room && host); $('onGo').disabled = !(here && Net.state === 'open');
     $('onBack').textContent = room ? 'Leave the room' : 'Back';
+    $('onMenu').textContent = room ? '‹ Leave and go to menu' : '‹ Main menu';
   },
   go() {
     const peer = Net.peer(); if (!peer || !peer.online || Net.seat !== 0 || Net.state !== 'open') return;
@@ -3553,9 +3556,10 @@ const OnlineUI = {
       T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
     $('onGo').disabled = true;
   },
+  // Either button: out of the room (if in one) and back to the main menu in one step.
   back() {
-    if (this.stage === 'room') { Net.leave(); this.stage = 'choose'; this.open(); return; }
-    UI.close('onlineScrim'); showTitle();
+    if (Net.on) Net.leave();
+    this.stage = 'choose'; UI.close('onlineScrim'); showTitle();
   },
   copy() {
     const t = this.link(), done = () => { $('onCopy').textContent = 'Copied'; setTimeout(() => $('onCopy').textContent = 'Copy link', 1600); };
@@ -3602,6 +3606,7 @@ $('onCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preven
 $('onCode').addEventListener('input', () => { const el = $('onCode'), v = el.value.toUpperCase(); if (v !== el.value) el.value = v; });
 $('onGo').onclick = () => OnlineUI.go();
 $('onBack').onclick = () => OnlineUI.back();
+$('onMenu').onclick = () => OnlineUI.back();
 $('onCopy').onclick = () => OnlineUI.copy();
 $('onGreen').addEventListener('change', () => OnlineUI.paintGreen());
 $('onSpeed').addEventListener('input', () => updateSpeedOut($('onSpeed'), $('onSpeedOut')));
@@ -3761,7 +3766,8 @@ window.addEventListener('keydown', e => {
     const open = document.querySelector('.scrim.show');
     if (open) {
       const id = open.id;
-      if (['rulesScrim', 'settingsScrim', 'bowlsScrim', 'onlineScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
+      if (id === 'onlineScrim') OnlineUI.back();
+      else if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
