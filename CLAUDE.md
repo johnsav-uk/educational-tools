@@ -163,7 +163,11 @@ filters, the featured row and every tool's site bar all read from this one list:
 - `image` is a 1600×1000 screenshot in `assets/img/tools/`, taken with the site
   bar cropped off. A missing file falls back to a striped placeholder.
 - `featured: true` puts it in the homepage's "Featured tools" row.
-- Label a tool that is not finished `(beta)` in its title.
+- Label a tool that is not finished `(beta)` in its title, here and on the page
+  (`<title>` and any chip in its heading). An Explore tool comes out of beta
+  once it has presenter mode, questions and annotation as described above,
+  `SST_PRESENT.audit()` finds nothing below the floor on any slide, and it has
+  been through a lesson. A Play tool comes out once it has been played in class.
 
 ## Savage Language Tools (the sister site)
 
