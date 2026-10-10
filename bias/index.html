@@ -125,6 +125,9 @@ button{cursor:pointer}
 .on-status{display:flex;align-items:center;gap:10px;margin:16px 0 0;color:var(--cream)}
 .on-err{color:var(--alert);min-height:18px;margin:12px 0 0}
 .on-menu{position:absolute;top:18px;right:18px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.share-targets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.share-msg{margin:6px 0 14px;color:var(--cream-2)}
 .on-err:empty{display:none}
 
 /* ---------- control bar ---------- */
@@ -562,7 +565,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div id="onRoom" hidden>
         <div class="kicker" style="margin-top:6px">Room code</div>
         <div class="room-code num" id="onCodeBig">—</div>
-        <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button><button type="button" class="btn" id="onShare" hidden>Share</button></div>
+        <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button><button type="button" class="btn" id="onShare">Share</button></div>
         <p class="on-status warn" id="onStatus"><span class="dot"></span><span id="onStatusT">Connecting…</span></p>
         <p class="fine" id="onLevels" style="margin:8px 0 0"></p>
         <div id="onHostSet" hidden>
@@ -578,6 +581,18 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <p class="fine on-err" id="onMsg" role="alert"></p>
       <div class="sheet-actions"><button type="button" class="btn ghost" id="onBack">Back</button><span class="spacer"></span><button type="button" class="btn primary" id="onGo" hidden>Walk out to the green</button></div>
     </form>
+  </div>
+
+  <!-- Share -->
+  <div class="scrim" id="shareScrim">
+    <div class="sheet" role="dialog" aria-labelledby="shareH" style="max-width:480px">
+      <div class="kicker">Share</div>
+      <h2 id="shareH">Tell a friend</h2>
+      <p class="share-msg" id="shareMsg"></p>
+      <div class="room-link"><input class="input" id="shareLink" readonly aria-label="Link to share"><button type="button" class="btn primary" id="shareCopy">Copy link</button></div>
+      <div class="share-targets" id="shareTargets"></div>
+      <div class="sheet-actions"><button type="button" class="btn ghost" id="shareDone">Done</button></div>
+    </div>
   </div>
 
   <!-- Match setup -->
@@ -3748,7 +3763,7 @@ function openSetup(opts = {}) {
   if (opts.ai != null) setup.opp = opts.ai ? 'ai' : 'human';
   $('aiLevel').value = setup.level;
   fillProfileSelect($('p0prof'), store.get('m.prof0', 'dp-pro')); fillProfileSelect($('p1prof'), store.get('m.prof1', 'hs-classic'));
-  $('setupSpeed').value = store.get('m.T', 13); $('fmt').value = store.get('m.fmt', 'ends:6'); $('greenMode').value = store.get('m.green', 'set');
+  $('setupSpeed').value = store.get('m.T', 13); $('fmt').value = store.get('m.fmt', 'ends:6'); $('greenMode').value = store.get('m.green', 'secret');
   renderDiscipline(); renderSetupColours(); updateSpeedOut($('setupSpeed'), $('setupSpeedOut')); renderGreenMode(); renderOpponent();
   $('setupMore').open = false; renderMoreSum();
   UI.close('titleScrim'); UI.open('setupScrim');
@@ -3842,8 +3857,9 @@ $('setupGo').onclick = () => {
   maybeTutorial();
 };
 
-/* Play: no form to fill in. Singles against the computer over 4 ends on a medium green, using whatever
-   name, bowls, colours and standard were last chosen in Set up a match (sensible defaults otherwise). */
+/* Play: no form to fill in. Singles against the computer over 4 ends, using whatever name, bowls,
+   colours, standard and green speed setting were last chosen in Set up a match (by default: a random
+   green, kept secret until the end). */
 function quickPlay() {
   if (Net.on) Net.leave();
   UI.close('titleScrim');
@@ -3852,9 +3868,11 @@ function quickPlay() {
     { name: (store.get('m.name0', null) || 'You').slice(0, 16), profileId: store.get('m.prof0', 'dp-pro'), colour: store.get('m.col0', 'claret') },
     { name: (store.get('m.aiName', 'Computer') || 'Computer').slice(0, 16), profileId: store.get('m.prof1', 'hs-classic'), colour: store.get('m.col1', 'navy') }];
   if (players[1].colour === players[0].colour) players[1].colour = players[0].colour === 'navy' ? 'claret' : 'navy';
-  game.startMatch({ players, T: 13, format: { type: 'ends', n: 4 }, discipline: DISCIPLINES.singles, leader: lead, secret: false, ai: level });
+  const gm = store.get('m.green', 'secret'), T = gm === 'set' ? clamp(+store.get('m.T', 13) || 13, 11, 16) : randomGreen();
+  game.startMatch({ players, T, format: { type: 'ends', n: 4 }, discipline: DISCIPLINES.singles, leader: lead, secret: gm === 'secret', ai: level });
   const you = players[lead].name === 'You';
-  setTimeout(() => UI.toast(`${players[lead].name} ${you ? 'win' : 'wins'} the toss and ${you ? 'take' : 'takes'} the jack. Four ends against a ${aiLevel(level).name.toLowerCase()} standard opponent.`), 400);
+  const green = gm === 'secret' ? ' The green speed is a secret today: read it from your first bowls.' : gm === 'random' ? ` Today's green is running at ${T.toFixed(1)} s, ${GreenSpeed.label(T).toLowerCase()}.` : '';
+  setTimeout(() => UI.toast(`${players[lead].name} ${you ? 'win' : 'wins'} the toss and ${you ? 'take' : 'takes'} the jack. Four ends against a ${aiLevel(level).name.toLowerCase()} standard opponent.${green}`), 400);
   maybeTutorial();
 }
 
@@ -3865,7 +3883,7 @@ function openBowls() {
   $('bowlsK').textContent = practice ? 'Practice' : `${pl.name}'s bowls, fixed for the match`;
   $('bowlsSpeedField').hidden = !practice; $('bowlsColField').hidden = !practice;
   $('edG').disabled = $('edLate').disabled = !practice; $('profReset').hidden = !practice;
-  $('bowlsSpeed').value = game.world.T; updateSpeedOut($('bowlsSpeed'), $('bowlsSpeedOut'));
+  if (practice) { $('bowlsSpeed').value = game.world.T; updateSpeedOut($('bowlsSpeed'), $('bowlsSpeedOut')); }   // never fill in the speed of a secret green
   renderBowlsSheet(); UI.open('bowlsScrim');
   requestAnimationFrame(drawBiasPreview);
 }
@@ -3893,7 +3911,9 @@ function drawBiasPreview() {
   if (!r.width) return;
   cv.width = r.width * dpr; cv.height = r.height * dpr;
   const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const w = r.width, h = r.height, T = game.world.T, sel = selectedProfileId(), EX = 4;
+  // a secret green must not leak through here: show a medium green until the match is over
+  const secret = game.mode === 'match' && !!game.match && game.match.secret && !game.match.over;
+  const w = r.width, h = r.height, T = secret ? 13 : game.world.T, sel = selectedProfileId(), EX = 4;
   g.fillStyle = '#24402e'; g.fillRect(0, 0, w, h);
   // the path runs left → right (mat → 27 m); lateral offset exaggerated ×4
   const X = y => 18 + (y / 28) * (w - 36), Y = x => h / 2 - x * EX * (h / 2 - 16) / 3.2;
@@ -3912,7 +3932,7 @@ function drawBiasPreview() {
   }
   g.fillStyle = 'rgba(240,236,220,.6)'; g.font = '11px "Plus Jakarta Sans",system-ui,sans-serif'; g.textAlign = 'left'; g.fillText('Mat', 8, h - 8); g.textAlign = 'right'; g.fillText('27 m', w - 8, h - 8);
   const p = Profiles.byId(sel);
-  $('biasCaption').textContent = `Forehand draws to 27 m on a ${T.toFixed(1)} s green, lateral scale ×${EX}. ${p.model}: ${p.blurb} Measured: ${selW.toFixed(2)} m wide at the shoulder, taking about ${(Math.tan(Math.abs(selAim)) * 27).toFixed(1)} m of green.`;
+  $('biasCaption').textContent = `Forehand draws to 27 m on ${secret ? 'a medium green (the speed of this green is a secret)' : `a ${T.toFixed(1)} s green`}, lateral scale ×${EX}. ${p.model}: ${p.blurb} Measured: ${selW.toFixed(2)} m wide at the shoulder, taking about ${(Math.tan(Math.abs(selAim)) * 27).toFixed(1)} m of green.`;
 }
 
 // Settings sheet
@@ -4090,7 +4110,7 @@ const OnlineUI = {
       $('onName').value = store.get('on.name', ''); fillProfileSelect($('onProf'), store.get('on.prof', 'dp-pro')); this.paintCol();
       $('onCode').value = code || '';
     } else this.stage = 'room';
-    $('onFmt').value = store.get('on.fmt', 'ends:6'); $('onGreen').value = store.get('on.green', 'set'); $('onSpeed').value = store.get('on.T', 13);
+    $('onFmt').value = store.get('on.fmt', 'ends:6'); $('onGreen').value = store.get('on.green', 'secret'); $('onSpeed').value = store.get('on.T', 13);
     updateSpeedOut($('onSpeed'), $('onSpeedOut')); this.paintGreen();
     this.msg(''); this.render();
     if ($('titleScrim').classList.contains('show')) UI.close('titleScrim');
@@ -4186,18 +4206,36 @@ const OnlineUI = {
     this.status();
   }
 };
-// Share: the phone's own share sheet where there is one (WhatsApp, messages, mail…), else copy the link.
+// Share. On a phone the phone's own share sheet; everywhere else (and if that fails) a panel with the
+// link, a Copy button and plain links to WhatsApp, X, Facebook and email, so there is always something to click.
 const gameLink = () => { const u = new URL(location.href); u.search = ''; u.hash = ''; return u.toString(); };
-async function shareLink(text, url) {
-  if (navigator.share) { try { await navigator.share({ title: 'Bias · Lawn Bowls', text, url }); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; } }
-  try { await navigator.clipboard.writeText(url); return 'copied'; } catch (e) { return 'failed'; }
-}
-$('onShare').hidden = !navigator.share;
-$('onShare').onclick = () => { if (Net.code) shareLink(`Fancy a game of bowls? Join me on Bias: room ${Net.code}.`, OnlineUI.link()); };
-$('mShare').onclick = async () => {
-  const r = await shareLink('Bias: lawn bowls in your browser. Play the computer, or a friend online.', gameLink()), b = $('mShare'), old = 'Share this game';
-  if (r === 'copied' || r === 'failed') { b.textContent = r === 'copied' ? 'Link copied' : gameLink(); setTimeout(() => b.textContent = old, 2200); }
+const SHARE = {
+  async copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+    try { const el = $('shareLink'); el.focus(); el.select(); el.setSelectionRange(0, text.length); return document.execCommand('copy'); } catch (e) { return false; }
+  },
+  async go(title, text, url) {
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      try { await navigator.share({ title: 'Bias · Lawn Bowls', text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    this.panel(title, text, url);
+  },
+  panel(title, text, url) {
+    const enc = encodeURIComponent, full = text + ' ' + url;
+    $('shareH').textContent = title; $('shareMsg').textContent = text; $('shareLink').value = url;
+    $('shareCopy').textContent = 'Copy link';
+    $('shareTargets').innerHTML = [
+      ['WhatsApp', `https://wa.me/?text=${enc(full)}`], ['X', `https://x.com/intent/post?text=${enc(text)}&url=${enc(url)}`],
+      ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`], ['Email', `mailto:?subject=${enc('Bias · Lawn Bowls')}&body=${enc(full)}`]
+    ].map(([n, h]) => `<a class="btn" href="${h}" target="_blank" rel="noopener noreferrer">${n}</a>`).join('');
+    UI.open('shareScrim'); setTimeout(() => { $('shareLink').select(); }, 80);
+  }
 };
+$('shareCopy').onclick = async () => { const ok = await SHARE.copy($('shareLink').value); $('shareCopy').textContent = ok ? 'Copied' : 'Press Ctrl+C to copy'; if (!ok) $('shareLink').select(); setTimeout(() => $('shareCopy').textContent = 'Copy link', 2400); };
+$('shareDone').onclick = () => UI.close('shareScrim');
+$('shareLink').onclick = () => $('shareLink').select();
+$('onShare').onclick = () => { if (Net.code) SHARE.go('Invite your opponent', `Fancy a game of bowls? Join me on Bias: room ${Net.code}.`, OnlineUI.link()); };
+$('mShare').onclick = () => SHARE.go('Tell a friend', 'Bias: lawn bowls in your browser. Play the computer, or a friend online.', gameLink());
 $('onCreate').onclick = () => OnlineUI.create();
 $('onJoin').onclick = () => OnlineUI.join();
 $('onCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); OnlineUI.join(); } });
@@ -4365,6 +4403,7 @@ window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (e.key === 'Escape') {
     if (game.phase === 'charge') { game.cancelCharge('Delivery cancelled.'); return; }
+    if ($('shareScrim').classList.contains('show')) { UI.close('shareScrim'); return; }
     const open = document.querySelector('.scrim.show');
     if (open) {
       const id = open.id;
