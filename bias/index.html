@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16201b">
 <title>Bias · Lawn Bowls</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231f3a2a'/%3E%3Ccircle cx='16' cy='16' r='11.5' fill='none' stroke='%23c9a862' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='8.4' fill='none' stroke='%23c9a862' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='4.2' fill='%23c9a862'/%3E%3C/svg%3E">
 <style>
 /* Plus Jakarta Sans — Copyright 2020 The Plus Jakarta Sans Project Authors
    (github.com/tokotype/PlusJakartaSans), SIL Open Font License 1.1.
@@ -219,9 +220,13 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .fine{font-size:12px;color:var(--muted)}
 
 /* title screen */
-#titleScrim{justify-content:flex-start;align-items:stretch;padding:0;background:linear-gradient(90deg,rgba(13,19,15,.86) 0,rgba(13,19,15,.62) 34%,rgba(13,19,15,0) 62%)}
-.title{display:flex;flex-direction:column;justify-content:center;padding:6vh 0 6vh max(var(--gut),7vw);max-width:520px;gap:0}
+#titleScrim{justify-content:flex-start;align-items:stretch;padding:0;overflow-y:auto;background:linear-gradient(90deg,rgba(13,19,15,.86) 0,rgba(13,19,15,.62) 34%,rgba(13,19,15,0) 62%)}
+.title{display:flex;flex-direction:column;justify-content:safe center;padding:6vh 0 6vh max(var(--gut),7vw);max-width:520px;gap:0}
 .title .club{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--cream-2)}
+/* the club emblem: the face of a bowl, its rings picked out in brass */
+.emblem{width:1.9em;height:1.9em;vertical-align:-.62em;margin-right:.8em;fill:none;stroke:var(--gold);stroke-width:1.1}
+.emblem .e-core{fill:var(--gold);stroke:none}
+.kicker .emblem{width:1.7em;height:1.7em;vertical-align:-.55em;margin-right:.7em}
 .title h1{font-family:var(--serif);font-weight:400;font-size:clamp(64px,10vw,104px);line-height:.95;margin:18px 0 10px;letter-spacing:-.01em}
 .title .sub{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--cream-2);margin:0 0 34px}
 .title .menu{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
@@ -275,7 +280,7 @@ kbd{font-family:var(--sans);font-size:11.5px;border:1px solid var(--line-2);bord
 table.dist{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 table.dist th{font-weight:400;text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:5px 6px;border-bottom:1px solid var(--line)}
 table.dist td{padding:6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-table.dist td.r,table.dist th.r{text-align:right}
+table.dist td.r,table.dist th.r{text-align:right;white-space:nowrap}
 table.dist tr.scoring td{color:var(--cream)}
 table.dist tr.muted td{color:var(--muted)}
 .pip{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);vertical-align:-1px;margin-right:8px;box-shadow:inset -1px -1px 2px rgba(0,0,0,.5)}
@@ -288,6 +293,13 @@ table.dist tr.muted td{color:var(--muted)}
 .card th,.card td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center;font-variant-numeric:tabular-nums}
 .card th{font-weight:400;color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 .card td:first-child,.card th:first-child{text-align:left}
+table.stats{width:100%;border-collapse:collapse;font-size:13px}
+.card table.stats th,.card table.stats td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0}
+.card table.stats thead th{font-weight:500;color:var(--cream-2);font-size:12.5px;text-align:right;white-space:nowrap}
+.card table.stats tbody th{font-weight:400;color:var(--cream-2);text-align:left;font-size:13px}
+.card table.stats td{text-align:right;color:var(--muted);width:24%}
+.card table.stats td.best{color:var(--cream);font-weight:600}
+.card h3{margin-top:24px}
 
 /* ---------- narrow screens ---------- */
 @media (max-width: 860px){
@@ -335,6 +347,35 @@ table.dist tr.muted td{color:var(--muted)}
   .netchip{padding:0 12px;height:40px}
   .netchip .ntx{display:none}
   .on-choose{grid-template-columns:1fr}
+}
+/* phones held sideways: one slim row of controls, so the green stays in view */
+@media (max-height: 500px) and (orientation: landscape){
+  :root{--gut:8px}
+  .scoreboard{min-height:48px}
+  .sb-cell{padding:5px 10px}
+  .controls{flex-wrap:nowrap}
+  .ctl{min-height:0;padding:5px 10px;gap:3px;flex:0 1 auto}
+  .ctl .kicker{font-size:9.5px}
+  .ctl.c-phase{flex:0 1 auto;flex-basis:auto;border-bottom:0;flex-direction:row;align-items:center;gap:8px}
+  .ctl.c-phase .ctl-title{font-size:13px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  .ctl.c-weight{flex:1 1 110px;border-top:0;border-left:1px solid var(--line)}
+  .seg button{padding:4px 8px;font-size:12px;min-height:32px}
+  .nudge{width:32px;height:32px}
+  .val{min-width:48px;font-size:13px}
+  .deliver{flex:0 0 auto;min-width:112px;min-height:44px;padding:0 12px;font-size:14px;border-radius:0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0}
+  .deliver small{display:none}
+  .toast,.notice{top:calc(var(--gut) + 58px)}
+  .banner{top:30%}
+  .banner .bn{font-size:26px}
+  #headCanvas{height:min(52vh,240px)}
+  .title{padding-top:14px;padding-bottom:14px}
+  .title .club{font-size:10px}
+  .title h1{font-size:46px;margin:8px 0 4px}
+  .title .sub{font-size:14px;margin:0 0 12px}
+  .title .menu-item:not(.minor){font-size:17px;min-height:38px;padding-top:5px;padding-bottom:5px}
+  .menu-item.minor{min-height:32px;padding:5px 0}
+  .title .rule{margin:8px 0 4px}
+  .title .foot{display:none}
 }
 /* type: one contemporary sans throughout; display text in heavier weights, tighter tracking */
 .sb-big,.sb-name,.sb-score,.hp-head h2,.ctl-title,.deliver,.banner .bn,.notice .nt,.sheet h2,.sheet h3,.sum-result,.cum .cn,.cum .cs,.prof .pn,.practice .ctl-title{font-weight:600;letter-spacing:-.012em}
@@ -437,7 +478,7 @@ table.dist tr.muted td{color:var(--muted)}
   <div class="scrim" id="titleScrim">
     <div class="title-photo" aria-hidden="true"></div>
     <div class="title">
-      <div class="club">Ashcombe Bowls Club &nbsp;·&nbsp; Est. 1897</div>
+      <div class="club"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club &nbsp;·&nbsp; Est. 1897</div>
       <h1>Bias</h1>
       <p class="sub">Flat-green lawn bowls, on a summer afternoon</p>
       <div class="menu">
@@ -652,10 +693,12 @@ table.dist tr.muted td{color:var(--muted)}
   <!-- Match over -->
   <div class="scrim" id="overScrim">
     <div class="sheet card" role="dialog" aria-labelledby="overH" style="max-width:600px">
-      <div class="kicker">Match complete</div>
+      <div class="kicker"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club · Match complete</div>
       <h2 id="overH">—</h2>
       <p id="overP"></p>
       <div style="overflow:auto"><table id="overTable"></table></div>
+      <h3>The match in figures</h3>
+      <table class="stats" id="overStats"></table>
       <div class="sheet-actions"><button class="btn ghost" id="overMenu">Clubhouse</button><span class="spacer"></span><button class="btn primary" id="overAgain">Play again</button></div>
     </div>
   </div>
@@ -946,12 +989,12 @@ class PhysicsWorld {
     let where = null;
     if (b.y > W.GREEN_LEN) where = 'front'; else if (b.y < 0) where = 'rear'; else if (Math.abs(b.x) > W.GREEN_HALF) where = 'side';
     if (!where) return;
-    const v = b.speed(), into = clamp(b.r + 0.05 * v, b.r + 0.004, W.DITCH_W - b.r);
+    const v = b.speed(), into = clamp(b.r + 0.05 * v, b.r + 0.004, W.DITCH_W - b.r), fx = b.x, fy = b.y;
     if (where === 'front') { b.y = W.GREEN_LEN + into; if (v > 0) b.x += b.vx / v * 0.02; }
     else if (where === 'rear') b.y = -into;
     else b.x = Math.sign(b.x) * (W.GREEN_HALF + into);
     b.vx = b.vy = 0; b.state = 'ditch'; b.ditch = where;
-    this.events.push({ type: 'ditch', b, where, speed: v });
+    this.events.push({ type: 'ditch', b, where, speed: v, fx, fy });   // fx, fy: where it went over the edge (for drawing the fall)
   }
 }
 
@@ -1634,6 +1677,14 @@ function drawBowl(g, x, y, R, hex, o) {
   }
   g.restore();
 }
+// Top-down silhouette of a bowl centred on the origin, travel along ±y: the running surface front and back, gently arched faces either side.
+function bowlOutline(g, hw, r) {
+  const P = BOWL_TOP; g.beginPath(); g.moveTo(P[0] * hw, P[1] * r);
+  for (let i = 2; i < P.length; i += 2) g.lineTo(P[i] * hw, P[i + 1] * r);
+  g.closePath();
+}
+// unit outline: a superellipse, rounder along the running surface than across the faces
+const BOWL_TOP = (() => { const a = []; for (let i = 0; i < 48; i++) { const t = i / 48 * TAU, c = Math.cos(t), s = Math.sin(t); a.push(Math.sign(c) * Math.abs(c) ** (2 / 3.2), Math.sign(s) * Math.abs(s) ** (2 / 2.3)); } return a; })();
 function drawJack(g, x, y, R, o) {
   const alpha = o.alpha == null ? 1 : o.alpha, L = o.L;
   g.save(); g.globalAlpha = alpha;
@@ -1814,7 +1865,7 @@ class SceneRenderer {
     g.fillStyle = sh; g.fillRect(0, Math.max(0, hz), Wd, cam.F * 0.22);
     // haze band over far ground
     const hg = g.createLinearGradient(0, hz - 2, 0, hz + cam.F * 0.05);
-    hg.addColorStop(0, rgba(PAL.haze, .55)); hg.addColorStop(1, rgba(PAL.haze, 0));
+    hg.addColorStop(0, rgba(PAL.haze, .4)); hg.addColorStop(1, rgba(PAL.haze, 0));
     g.fillStyle = hg; g.fillRect(0, hz - 2, Wd, cam.F * 0.05 + 2);
     // scenery, far to near
     this.renderScenery(g, dir);
@@ -1831,6 +1882,7 @@ class SceneRenderer {
     const cam = this.cam, Wd = this.W, Hd = this.H, mips = Art.ground[dir], hz = cam.horizon();
     const row = this.dpr >= 1.75 ? 2 : 1, top = Math.max(0, Math.floor(hz) + 1);
     g.fillStyle = rgba(mixRgb(PAL.lawn, PAL.haze, .45)); g.fillRect(0, Math.max(0, hz), Wd, Hd);
+    this.renderFarFields(g, dir);
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'medium';
     const blades = this._bladePat || (this._bladePat = g.createPattern(Art.blades, 'repeat'));
     const mottle = this._mottlePat || (this._mottlePat = g.createPattern(Art.mottle, 'repeat'));
@@ -1867,6 +1919,36 @@ class SceneRenderer {
       }
     }
   }
+  /* The country beyond the club hedges, between the textured ground and the distant band: fields
+     and hedgerows laid out in perspective, so a camera that rises to follow a bowl looks over the
+     hedge onto farmland rather than bare colour. Drawn in this end's coordinates. */
+  renderFarFields(g, dir) {
+    const cam = this.cam, Wd = this.W, Hd = this.H, hz = cam.horizon(), pt = {};
+    const rows = [46, 62, 80, 104, 136, 180, 250, 420];
+    const tones = [[104, 134, 70], [124, 146, 82], [94, 122, 66], [134, 148, 88], [112, 138, 76], [120, 140, 80]];
+    const yOn = (x, y, z) => { const p = cam.project(x, y, z, pt); return p ? p.y : null; };
+    // fields, far to near, each from its far boundary down to its near one
+    for (let i = rows.length - 2; i >= 0; i--) {
+      const near = yOn(cam.x, rows[i], 0), far = yOn(cam.x, rows[i + 1], 0); if (near == null) continue;
+      const top = Math.max(hz, far == null ? hz : far); if (near < 0 || top > Hd) continue;
+      g.fillStyle = rgba(mixRgb(tones[(i + dir * 3) % tones.length], PAL.haze, clamp((rows[i] - cam.y) / 260, 0.08, 0.62)));
+      g.fillRect(0, top, Wd, near - top + 1);
+    }
+    // hedgerows on the field boundaries
+    for (let i = rows.length - 2; i >= 1; i--) {
+      const y = rows[i], d = y - cam.y; if (d < 4) continue;
+      const base = yOn(cam.x, y, 0); if (base == null || base < 0) continue;
+      const ph = i * 1.7 + dir * 4.1, step = Math.max(3, Wd / 320);
+      g.beginPath(); g.moveTo(-2, base + 1);
+      for (let sx = -2; sx <= Wd + step; sx += step) {
+        const wx = cam.x + (sx - cam.cx) * d / cam.F;
+        const hz2 = 1.5 + 0.22 * Math.sin(wx * 0.31 + ph) + 0.14 * Math.sin(wx * 0.9 + ph * 2.3) + 0.06 * Math.sin(wx * 3.1 + ph * 3);
+        const sy = yOn(wx, y, hz2); g.lineTo(sx, sy == null ? base : sy);
+      }
+      g.lineTo(Wd + step, base + 1); g.closePath();
+      g.fillStyle = rgba(mixRgb([58, 82, 48], PAL.haze, clamp(d / 240, 0.06, 0.6))); g.fill();
+    }
+  }
   renderScenery(g, dir) {
     const cam = this.cam, items = [];
     for (const it of Art.scenery) {
@@ -1878,7 +1960,8 @@ class SceneRenderer {
         const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
         const seed = it.x0 * 1.7 + it.y0 * 0.83;   // each hedge clipped its own way
         if (y1 - y0 > x1 - x0) { // runs along the rink: split into segments for depth sorting
-          for (let y = Math.max(y0, cam.y + 0.6); y < y1; y += 3) { const ye = Math.min(y1, y + 3); items.push({ hedge: { x0, x1, y0: y, y1: ye, h: it.h, along: 'y', dir, seed, flowers: it.flowers }, d: (y + ye) / 2 - cam.y }); }
+          // segments are fixed to the ground (not to the camera), so the leaves stay put as the camera moves up the green
+          for (let y = y0; y < y1; y += 3) { const ye = Math.min(y1, y + 3); if (ye <= cam.y + 0.6) continue; const ys = Math.max(y, cam.y + 0.6); items.push({ hedge: { x0, x1, y0: ys, y1: ye, h: it.h, along: 'y', dir, seed, flowers: it.flowers }, d: (ys + ye) / 2 - cam.y }); }
         } else if (y0 > cam.y + 1) items.push({ hedge: { x0, x1, y0, y1, h: it.h, along: 'x', dir, seed, flowers: it.flowers }, d: y0 - cam.y });
       }
     }
@@ -1960,8 +2043,20 @@ class SceneRenderer {
       // ditch floor on the sides (visible from height)
       for (let y = Math.max(0, cam.y + 0.5); y < W.GREEN_LEN; y += 4) poly([[sx * W.GREEN_HALF, y, zb], [sx * W.GREEN_HALF, Math.min(W.GREEN_LEN, y + 4), zb], [x, Math.min(W.GREEN_LEN, y + 4), zb], [x, y, zb]], 'rgba(70,62,48,1)');
     }
-    // front bank face
+    // front bank face. The green's edge hides everything below its line of sight, so the ditch floor and the
+    // foot of the bank are clipped to it; the bank below green level is in the ditch's shadow.
+    const lip = P(0, W.GREEN_LEN, 0);
+    g.save(); if (lip) { g.beginPath(); g.rect(0, 0, this.W, lip.y); g.clip(); }
+    poly([[-W.GREEN_HALF, W.GREEN_LEN, zb], [W.GREEN_HALF, W.GREEN_LEN, zb], [xb, yb, zb], [-xb, yb, zb]], 'rgb(52,46,36)');
     const nF = [0, -1, 0], q = poly([[-xb, yb, zb], [xb, yb, zb], [xb, yb, zt], [-xb, yb, zt]], timber(lit(nF)));
+    const f0 = P(0, yb, zb), f1 = P(0, yb, 0);
+    if (f0 && f1 && poly([[-xb, yb, zb], [xb, yb, zb], [xb, yb, 0], [-xb, yb, 0]], 'rgba(0,0,0,0)')) {
+      const sg = g.createLinearGradient(0, f0.y, 0, f1.y - 1); sg.addColorStop(0, 'rgba(14,11,6,.72)'); sg.addColorStop(1, 'rgba(14,11,6,.42)');
+      g.fillStyle = sg; g.fill();
+      // the shadow's top edge: where the sunlit board meets the shaded part, just above the green's line
+      g.strokeStyle = 'rgba(14,11,6,.35)'; g.lineWidth = Math.max(1, f1.s * .006); const a0 = P(-xb, yb, 0), a1 = P(xb, yb, 0);
+      if (a0 && a1) { g.beginPath(); g.moveTo(a0.x, a0.y); g.lineTo(a1.x, a1.y); g.stroke(); }
+    }
     poly([[-xb - .35, yb, zt], [xb + .35, yb, zt], [xb + .35, yb + .35, zt], [-xb - .35, yb + .35, zt]], rgba(shadeRgb(PAL.cap, .1)));
     if (q) { // board joints, posts, rink plates, boundary pegs
       g.strokeStyle = 'rgba(30,24,16,.35)'; g.lineWidth = Math.max(.5, this.dpr * .6);
@@ -1974,6 +2069,7 @@ class SceneRenderer {
       });
       for (const bx of [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5]) { const p0 = P(bx, yb + .1, zt), p1 = P(bx, yb + .1, zt + .16); if (p0 && p1) { g.strokeStyle = '#f2eee2'; g.lineWidth = Math.max(1, p0.s * .03); g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke(); } }
     }
+    g.restore();
     // the green's front lip catching the light
     const e0 = P(-W.GREEN_HALF, W.GREEN_LEN, 0), e1 = P(W.GREEN_HALF, W.GREEN_LEN, 0);
     if (e0 && e1) { g.strokeStyle = 'rgba(200,220,150,.25)'; g.lineWidth = Math.max(1, this.dpr * .8); g.beginPath(); g.moveTo(e0.x, e0.y); g.lineTo(e1.x, e1.y); g.stroke(); }
@@ -1986,6 +2082,22 @@ class SceneRenderer {
   }
 
   // ---------- dynamic layer ----------
+  /* A live jack or toucher in the front ditch is marked on top of the bank, in line with where it lies,
+     as on a real green: a white post, the jack's plain, a toucher's carrying a disc in its bowl's colour. */
+  drawDitchMarkers(g, v) {
+    const cam = this.cam, yb = W.GREEN_LEN + W.DITCH_W + 0.1, zt = W.BANK_H;
+    for (const b of v.bodies) {
+      if (b.state !== 'ditch' || b.ditch !== 'front' || b.z != null || b.fade < 1 || !(b.kind === 'jack' || b.toucher)) continue;
+      const p0 = cam.project(b.rx, yb, zt), p1 = cam.project(b.rx, yb, zt + 0.2); if (!p0 || !p1) continue;
+      if (p0.x < -20 || p0.x > this.W + 20) continue;
+      const w = Math.max(1.2, p0.s * 0.022), r = Math.max(2, p1.s * (b.kind === 'jack' ? 0.026 : 0.034));
+      g.strokeStyle = 'rgba(20,16,10,.35)'; g.lineWidth = w; g.lineCap = 'round';   // shadow side of the post
+      g.beginPath(); g.moveTo(p0.x + w * .45, p0.y); g.lineTo(p1.x + w * .45, p1.y); g.stroke();
+      g.strokeStyle = '#f4f0e4'; g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke();
+      g.fillStyle = b.kind === 'jack' ? '#fbf9f2' : b.colour; g.strokeStyle = '#f4f0e4'; g.lineWidth = Math.max(1, r * .28);
+      g.beginPath(); g.arc(p1.x, p1.y - r * .6, r, 0, TAU); g.fill(); g.stroke();
+    }
+  }
   render(v) {
     const g = this.g, cam = this.cam;
     this.renderBackground(v.dir);
@@ -1995,13 +2107,14 @@ class SceneRenderer {
     this.drawMat(g, v);
     if (v.trace && v.trace.length) this.drawTrace(g, v.trace, v.traceAlpha);
     if (v.aim) this.drawAim(g, v.aim, v);
+    this.drawDitchMarkers(g, v);
     // bodies, far first
     const list = v.bodies.slice().sort((a, b) => b.ry - a.ry);
     const edge = cam.project(0, W.GREEN_LEN, 0);
     for (const b of list) {
       const alpha = b.fade;
       if (alpha <= 0.01) continue;
-      const inDitch = b.state === 'ditch', z = inDitch ? -W.DITCH_D + b.r : b.r;
+      const inDitch = b.state === 'ditch', z = b.z != null ? b.z : inDitch ? -W.DITCH_D + b.r : b.r;
       const C = cam.project(b.rx, b.ry, z); if (!C) continue;
       const R = b.r * C.s;
       if (C.x < -R * 3 || C.x > this.W + R * 3) continue;
@@ -2108,8 +2221,23 @@ class HeadView {
     this.w = Math.max(10, r.width); this.h = Math.max(10, r.height);
     this.cv.width = Math.round(this.w * this.dpr); this.cv.height = Math.round(this.h * this.dpr);
   }
+  /* 'head' frames itself on the bowls near the jack: from 3.4 m across down to 1.8 m
+     when the head is tight, easing between the two so the panel never jumps. */
+  fitSpan(jk, bodies, dt) {
+    if (this.zoom !== 'head') return 6.4;
+    let want = 1.8;
+    if (jk) for (const b of bodies) {
+      if (b.kind !== 'bowl' || b.dead || b.fade < 0.5) continue;
+      const dx = Math.abs(b.x - jk.x), dy = Math.abs(b.y - jk.y - 0.25);
+      if (dx > 1.7 || dy > 1.9) continue;
+      want = Math.max(want, 2 * (dx + 0.28), 2 * (dy + 0.28) * this.w / this.h);
+    }
+    want = Math.min(3.4, want);
+    this.span = this.span == null || reduced() ? want : this.span + (want - this.span) * Math.min(1, dt * 2.5);
+    return this.span;
+  }
   frame(centerY) {
-    const span = this.zoom === 'head' ? 3.4 : 6.4, s = this.w / span;
+    const span = this.zoom === 'head' ? (this.span || 3.4) : 6.4, s = this.w / span;
     const halfH = this.h / 2 / s;
     const cy = clamp(centerY, 10, W.GREEN_LEN + W.DITCH_W + 0.25 - halfH * 0.8);
     return { s, cx: 0, cy, halfH };
@@ -2122,6 +2250,7 @@ class HeadView {
     const g = this.g, w = this.w, h = this.h;
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const jk = o.jack, centerY = jk ? jk.y + 0.25 : (o.focusY || 31);
+    this.fitSpan(jk, o.bodies, o.dt == null ? 1 : o.dt);
     const f = this.view = this.frame(centerY), T = (x, y) => this.toScreen(f, x, y);
     // turf
     g.fillStyle = '#2f5a33'; g.fillRect(0, 0, w, h);
@@ -2129,6 +2258,13 @@ class HeadView {
     // ditch & bank
     const d0 = T(0, W.GREEN_LEN), d1 = T(0, W.GREEN_LEN + W.DITCH_W);
     if (d0.y > 0) { g.fillStyle = '#5b5241'; g.fillRect(0, d1.y, w, d0.y - d1.y); g.fillStyle = '#7d705a'; g.fillRect(0, 0, w, Math.max(0, d1.y)); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, d0.y - 1, w, 1); }
+    // ditch markers on the bank, in line with a live jack or toucher in the front ditch
+    if (d0.y > 0) for (const m of [...o.bodies.filter(b => b.kind === 'bowl' && b.toucher && !b.dead), ...(o.jack ? [{ ...o.jack, kind: 'jack' }] : [])]) {
+      if (m.state !== 'ditch' || m.ditch !== 'front') continue;
+      const M = T(m.x, W.GREEN_LEN + W.DITCH_W + 0.1), r = Math.max(2.5, 0.035 * f.s);
+      g.fillStyle = m.kind === 'jack' ? '#fbf9f2' : m.colour; g.strokeStyle = '#f4f0e4'; g.lineWidth = 1.2;
+      g.beginPath(); g.arc(M.x, M.y, r, 0, TAU); g.fill(); g.stroke();
+    }
     // rink boundaries and centre line
     g.setLineDash([4, 4]); g.lineWidth = 1;
     for (const bx of [-7.5, -2.5, 2.5, 7.5]) { const a = T(bx, 0); if (a.x < -2 || a.x > w + 2) continue; g.strokeStyle = 'rgba(240,236,220,.38)'; g.beginPath(); g.moveTo(a.x, Math.max(0, d0.y)); g.lineTo(a.x, h); g.stroke(); }
@@ -2152,21 +2288,40 @@ class HeadView {
     }
     // measurement lines
     if (jk && o.measure) for (const id of o.measure) { const b = byId.get(id); if (!b) continue; const A = T(b.x, b.y), J = T(jk.x, jk.y); g.strokeStyle = 'rgba(246,240,220,.85)'; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(J.x, J.y); g.stroke(); }
-    // bowls
+    // where the jack lay before the last bowl moved it
+    if (jk && o.jackFrom && Math.hypot(o.jackFrom.x - jk.x, o.jackFrom.y - jk.y) > 0.03) {
+      const P = T(o.jackFrom.x, o.jackFrom.y), J = T(jk.x, jk.y), r = Math.max(2.4, jk.r * f.s);
+      g.strokeStyle = 'rgba(246,240,220,.32)'; g.lineWidth = 1; g.setLineDash([2, 3]);
+      g.beginPath(); g.moveTo(P.x, P.y); g.lineTo(J.x, J.y); g.stroke();
+      g.beginPath(); g.arc(P.x, P.y, r, 0, TAU); g.stroke(); g.setLineDash([]);
+    }
+    // bowls, seen from above: lying on the running surface, faces to either side of the line of travel
     for (const b of o.bodies) {
       if (b.kind !== 'bowl') continue;
       const A = T(b.x, b.y), r = Math.max(3, b.r * f.s), alpha = b.fade;
       if (A.y < -r || A.y > h + r || A.x < -r || A.x > w + r) continue;
       g.globalAlpha = alpha;
-      const base = hexRgb(b.colour);
-      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(A.x + 1, A.y + 1.2, r, 0, TAU); g.fill();
-      const gr = g.createRadialGradient(A.x - r * .35, A.y - r * .35, r * .1, A.x, A.y, r);
-      gr.addColorStop(0, rgba(shadeRgb(base, .35))); gr.addColorStop(1, rgba(shadeRgb(base, -.3)));
-      g.fillStyle = gr; g.beginPath(); g.arc(A.x, A.y, r, 0, TAU); g.fill();
+      const base = hexRgb(b.colour), hw = r * W.BOWL_WIDTH;
+      g.save(); g.translate(A.x, A.y); g.rotate(b.heading || 0);
+      // contact shadow, cast down and to the right
+      g.save(); g.translate(1.1, 1.3); g.fillStyle = 'rgba(0,0,0,.34)'; bowlOutline(g, hw, r); g.fill(); g.restore();
+      // body: the running surface rounds away toward the front and back, the faces toward the sides
+      const hc = Math.cos(b.heading || 0), hs = Math.sin(b.heading || 0), lx = -r * .32 * hc - r * .36 * hs, ly = r * .32 * hs - r * .36 * hc;   // light from the upper left of the panel, whichever way the bowl lies
+      const gr = g.createRadialGradient(lx, ly, r * .08, 0, 0, r * 1.05);
+      gr.addColorStop(0, rgba(shadeRgb(base, .42))); gr.addColorStop(.55, rgba(shadeRgb(base, .02))); gr.addColorStop(1, rgba(shadeRgb(base, -.45)));
+      g.fillStyle = gr; bowlOutline(g, hw, r); g.fill();
+      if (r >= 6) {
+        // grip rings: shallow grooves either side of the running surface
+        g.strokeStyle = rgba(shadeRgb(base, -.5), .55); g.lineWidth = Math.max(.6, r * .06);
+        for (const sx of [-1, 1]) for (const k of [.52, .64]) { g.beginPath(); g.moveTo(sx * hw * k, -r * .62); g.lineTo(sx * hw * k, r * .62); g.stroke(); }
+        // sheen along the crown
+        g.strokeStyle = 'rgba(255,252,240,.22)'; g.lineWidth = Math.max(.8, r * .1); g.beginPath(); g.moveTo(-hw * .12, -r * .7); g.quadraticCurveTo(-hw * .22, 0, -hw * .12, r * .1); g.stroke();
+      }
+      g.restore();
       // owner marking for colour-blind safety: player two carries an inner ring
       g.strokeStyle = 'rgba(255,250,236,.55)'; g.lineWidth = 1;
-      if (b.owner === 1) { g.beginPath(); g.arc(A.x, A.y, r * .55, 0, TAU); g.stroke(); }
-      else { g.fillStyle = 'rgba(255,250,236,.55)'; g.beginPath(); g.arc(A.x, A.y, Math.max(1, r * .18), 0, TAU); g.fill(); }
+      if (b.owner === 1) { g.beginPath(); g.arc(A.x, A.y, Math.min(hw, r) * .5, 0, TAU); g.stroke(); }
+      else { g.fillStyle = 'rgba(255,250,236,.55)'; g.beginPath(); g.arc(A.x, A.y, Math.max(1, r * .16), 0, TAU); g.fill(); }
       if (b.toucher) { g.strokeStyle = '#fbfaf4'; g.lineWidth = 1.4; const k = r * .5; g.beginPath(); g.moveTo(A.x + r * .7 - k * .5, A.y - r * .7 - k * .5); g.lineTo(A.x + r * .7 + k * .5, A.y - r * .7 + k * .5); g.moveTo(A.x + r * .7 - k * .5, A.y - r * .7 + k * .5); g.lineTo(A.x + r * .7 + k * .5, A.y - r * .7 - k * .5); g.stroke(); }
       if (o.highlight && o.highlight.has(b.id)) { g.strokeStyle = '#d9b96e'; g.lineWidth = 1.6; g.beginPath(); g.arc(A.x, A.y, r + 3, 0, TAU); g.stroke(); }
       if (o.nearestId === b.id) { const p = o.pulse || 0; g.strokeStyle = `rgba(217,185,110,${.9 - p * .6})`; g.lineWidth = 1.3; g.beginPath(); g.arc(A.x, A.y, r + 3 + p * 8, 0, TAU); g.stroke(); }
@@ -2336,15 +2491,15 @@ const AI = {
     }
     return w;
   },
-  // how good the head is for side `me` after the shot
-  value(w, delivered, matFront, me, holdingBefore) {
+  // how good the head is for side `me` after the shot; `posW` weighs position (who is nearer) against shots
+  value(w, delivered, matFront, me, holdingBefore, posW = 1) {
     const { dead, jackDead } = Rules.afterDelivery(w.bodies, delivered, matFront);
     for (const e of dead) e.b.dead = true;
     if (jackDead) return holdingBefore ? -2.5 : 0.4;            // a dead end is replayed: good only when losing
     const sc = Rules.score(w.bodies.filter(b => !b.dead), w.jack);
     let v = sc.winner === me ? sc.shots : sc.winner == null ? 0 : -sc.shots;
     const own = sc.ranked.find(e => e.b.owner === me), opp = sc.ranked.find(e => e.b.owner !== me);
-    v += 0.45 * clamp(((opp ? opp.d : 2.5) - (own ? own.d : 2.5)) / 1.2, -1, 1);
+    v += 0.45 * posW * clamp(((opp ? opp.d : 2.5) - (own ? own.d : 2.5)) / 1.2, -1, 1);
     if (dead.some(e => e.b === delivered)) v -= 0.25;
     return v;
   }
@@ -2360,7 +2515,7 @@ const bodyKey = b => b.kind === 'jack' ? 'J' : `${b.owner}.${b.member || 0}.${b.
 class Game {
   constructor(ui, opts = {}) {
     this.ui = ui; this.instant = !!opts.instant;
-    this.world = new PhysicsWorld(13);
+    this.world = new PhysicsWorld(13); this.drops = new Map();
     this.mode = 'title'; this.phase = 'idle'; this.dir = 0; this.matRear = W.MAT_MIN;
     this.players = []; this.match = null; this.turn = null;
     this.aim = 0; this.hand = 'fore'; this.weight = 0; this.charge = null;
@@ -2443,7 +2598,7 @@ class Game {
     if (this.mode === 'match') this.ui.banner(this.endLabel(), this.isTeams() ? this.players[p].members[0].name : this.players[p].name,
       (this.isTeams() ? `${this.players[p].name} lead · ` : '') + (this.match.jackAttempt ? 'May move the mat, then re-delivers the jack' : 'Places the mat and delivers the jack'));
     if (this.isAI(p)) this.aiStart();
-    else this.ui.banner('Practice', 'Deliver the jack', 'Aim, then hold to build weight');
+    else if (this.mode !== 'match') this.ui.banner('Practice', 'Deliver the jack', 'Aim, then hold to build weight');
   }
   beginBowl(p, mi = 0) {
     const pl = this.players[p], mb = pl.members[mi];
@@ -2508,6 +2663,7 @@ class Game {
   }
   // The single entry point that hands a delivery to the physics world.
   launchDelivery(p) {
+    const j0 = this.world.jack; this.jackFrom = j0 && p.kind === 'bowl' ? { x: j0.x, y: j0.y } : null;   // drawing only: where the jack lay before this bowl
     const b = new Body(p.kind === 'jack' ? 'jack' : 'bowl', p.kind === 'jack' ? -1 : p.player);
     if (p.kind === 'bowl') { const pl = this.players[p.player]; b.colour = colourHex(pl.colour); b.member = p.member; b.num = pl.members[p.member].played + 1; }
     this.world.add(b);
@@ -2536,7 +2692,11 @@ class Game {
       if (e.type === 'hit') {
         Sound.clack(e.speed / 2.5, e.jack);
         if (e.jack) { const j = this.world.jack; if (j) this.effects.push({ type: 'ring', x: j.x, y: j.y, t: 0, dur: 0.6 }); }
-      } else if (e.type === 'ditch') Sound.thud(e.speed / 3);
+      } else if (e.type === 'ditch') {
+        Sound.thud(e.speed / 3);
+        // drawing only: the body tips over the lip and drops to the ditch floor, rather than appearing there
+        if (!this.instant && !reduced()) this.drops.set(e.b, { t: 0, dur: clamp(0.17 + 0.03 / Math.max(e.speed, 0.15), 0.19, 0.38), fx: e.fx, fy: e.fy });
+      }
     }
     this.world.events.length = 0;
   }
@@ -2599,7 +2759,7 @@ class Game {
     const base = Profiles.byId(this.players[me].profileId), prof = { G: base.G * this.ai.est.biasF, late: base.late };
     const jack = this.world.jack, sc0 = Rules.score(this.liveBodies(), jack), holding = sc0.winner === me;
     const jt = jack.state === 'ditch' ? { x: clamp(jack.x, -2.2, 2.2), y: W.GREEN_LEN - 0.35 } : { x: jack.x, y: jack.y - 0.07 };
-    const gp = GreenSpeed.params(T), cands = [];
+    const gp = GreenSpeed.params(T), cands = [], sit = this.aiSituation(me);
     const hands = L.tactics === 0 ? [aiRand() < 0.65 ? 'fore' : 'back'] : ['fore', 'back'];
     for (const hand of hands) {
       const rel = releasePoint(this.matRear, hand, arm), sd = biasSide(hand, arm);
@@ -2618,22 +2778,36 @@ class Game {
           add('back', AI.solveDraw(prof, T, sd, rel, { x: jt.x, y: Math.min(jt.y + 0.8, W.GREEN_LEN - 0.4) })); yield;
         }
       }
-      if (L.tactics >= 3 && sc0.winner != null && !holding && sc0.shots >= 2) { add('drive', AI.solveThrough(prof, T, sd, rel, jack, Weight.toSpeed(0.96))); yield; }
+      if ((L.tactics >= 3 || (L.tactics >= 2 && sit.risk > 0)) && sc0.winner != null && !holding && sc0.shots >= 2) { add('drive', AI.solveThrough(prof, T, sd, rel, jack, Weight.toSpeed(0.96))); yield; }
     }
     if (L.samples === 0 || cands.length === 1) return cands[0];
     let best = null;
     for (const c of cands) {
-      const rel = releasePoint(this.matRear, c.hand, arm), noisy = L.samples > 1 ? 1 : 0; let tot = 0;
+      const rel = releasePoint(this.matRear, c.hand, arm), noisy = L.samples > 1 ? 1 : 0, vals = [];
       for (let k = 0; k < L.samples; k++) {
         const w = AI.clone(this.world, T), b = w.add(new Body('bowl', me));
         const aim = c.aim + noisy * aiGauss() * L.aimSD * DEG, wgt = clamp(c.weight + noisy * aiGauss() * L.wSD, 0, 1);
         w.launch(b, rel.x, rel.y, aim, Weight.toSpeed(wgt), biasSide(c.hand, arm), prof); w.runUntilRest();
-        tot += AI.value(w, b, this.matFront, me, holding); yield;
+        vals.push(AI.value(w, b, this.matFront, me, holding, sit.posW)); yield;
       }
-      c.value = tot / L.samples + (c.type === 'draw' ? 0.06 : 0);
+      // the expected outcome, tilted toward the spread when the match calls for a risk (behind late on) or for safety (ahead late on)
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length, sd = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length);
+      c.value = mean + (L.tactics >= 2 ? sit.risk * sd : 0) + (c.type === 'draw' ? 0.06 : 0);
       if (!best || c.value > best.value) best = c;
     }
     return best;
+  }
+  /* What the state of the end and the match asks of the computer's next bowl.
+     posW: position matters while the opponent still has bowls to answer with; once it has none, only shots count.
+     risk: > 0 when behind with little of the match left (take on the shot that might pay), < 0 when ahead (play safe). */
+  aiSituation(me) {
+    const m = this.match, oppLeft = this.order ? this.order.slice(this.orderIdx + 1).filter(([s]) => s !== me).length : 1;
+    const diff = this.players[me].score - this.players[1 - me].score, f = m.format;
+    const left = f.type === 'ends' ? Math.max(0, f.n - this.endNo) : Math.max(0, Math.ceil((f.n - Math.max(this.players[0].score, this.players[1].score)) / 2));
+    let risk = 0;
+    if (left <= 2 && diff < 0) risk = clamp(-diff / (left + 1) * 0.25, 0.15, 0.6);
+    else if (left <= 2 && diff > 0) risk = -clamp(diff / (left + 1) * 0.2, 0.1, 0.4);
+    return { posW: oppLeft > 0 ? 1 : 0.15, risk, oppLeft };
   }
   jackText(res) { const d = res.y - this.matFront; return res.placed ? `Placed on the 2 m mark, ${d.toFixed(1)} m from the mat.` : `${d.toFixed(1)} m from the mat${res.moved ? ', moved back to the 2 m mark' : ''}, centred on the rink.`; }
   resolveJack() {
@@ -2681,7 +2855,7 @@ class Game {
     const sc = Rules.score(this.liveBodies(), w.jack);
     if (this.mode === 'match' && sc.winner != null && sc.winner !== this.shot) {
       this.ui.pulseHead();
-      if (!selfDead && !dead.length && !(d && d.toucher)) this.ui.toast(`${this.players[sc.winner].name} holds shot`, 'good');
+      if (!selfDead && !dead.length && !(d && d.toucher)) this.ui.toast(`${this.players[sc.winner].name} holds shot · ${fmtDist(sc.ranked[0].d)}`, 'good');
       Sound.tick();
     }
     this.shot = sc.winner;
@@ -2703,7 +2877,10 @@ class Game {
   }
   completeEnd() {
     const m = this.match, sc = Rules.score(this.liveBodies(), this.world.jack);
-    const rec = { no: this.endNo, extra: this.isExtraEnd(), winner: sc.winner, shots: sc.shots, tie: sc.tie, none: !!sc.none, leader: m.leader, dir: this.dir };
+    const rec = { no: this.endNo, extra: this.isExtraEnd(), winner: sc.winner, shots: sc.shots, tie: sc.tie, none: !!sc.none, leader: m.leader, dir: this.dir,
+      // for the match statistics: each side's nearest bowl, and its bowls within 50 cm, when the end finished
+      near: [0, 1].map(i => { const e = sc.ranked.find(x => x.b.owner === i); return e ? e.d : null; }),
+      close: [0, 1].map(i => sc.ranked.filter(x => x.b.owner === i && x.d <= 0.5).length) };
     if (sc.winner != null) this.players[sc.winner].score += sc.shots;
     m.ends.push(rec);
     if (sc.winner != null) m.leader = sc.winner;
@@ -2726,14 +2903,14 @@ class Game {
   practiceReady() { return this.mode === 'practice' && !['release', 'rolling', 'settle', 'placing', 'charge'].includes(this.phase); }
   practicePlaceJack() {
     if (!this.practiceReady()) return;
-    this.clearTimers(); this.world.clear(); this.trace = []; this.practice.count = 0; this.players[0].played = 0; this.players[0].members[0].played = 0;
+    this.clearTimers(); this.world.clear(); this.trace = []; this.jackFrom = null; this.practice.count = 0; this.players[0].played = 0; this.players[0].members[0].played = 0;
     const y = Math.min(this.matFront + 26, W.GREEN_LEN - W.JACK_DITCH_MIN), j = this.world.add(new Body('jack'));
     j.place(0, y); this.jackSpot = { x: 0, y }; this.ui.toast(`Jack placed ${(y - this.matFront).toFixed(1)} m from the mat.`);
     this.beginBowl(0);
   }
   resetHead() {
     if (this.mode !== 'practice' || ['release', 'rolling', 'settle', 'placing'].includes(this.phase)) return;
-    this.clearTimers(); this.charge = null;
+    this.clearTimers(); this.charge = null; this.jackFrom = null;
     for (const b of this.world.bodies.slice()) if (b.kind === 'bowl') this.world.remove(b);
     this.trace = []; this.practice.count = 0; this.players[0].played = 0; this.players[0].members[0].played = 0; this.shot = null;
     let j = this.world.jack;
@@ -2878,6 +3055,7 @@ class Game {
     }
     for (const b of this.world.bodies.slice()) if (b.dead) { b.fade -= dt / 0.9; if (b.fade <= 0) this.world.remove(b); }
     this.effects = this.effects.filter(e => (e.t += dt) < e.dur);
+    for (const [b, d] of this.drops) if ((d.t += dt) >= d.dur) this.drops.delete(b);
     if (this.phase !== 'rolling' && this.phase !== 'settle' && this.traceAlpha > 0) { this.traceHold += dt; if (this.traceHold > 2.5) this.traceAlpha = Math.max(0.3, this.traceAlpha - dt * 0.4); }
     const showHand = (this.phase === 'aim' || this.phase === 'charge' || this.phase === 'release') && this.mode !== 'title';
     this.handAlpha = damp(this.handAlpha, showHand ? 1 : 0, reduced() ? 60 : 6, dt);
@@ -3007,14 +3185,14 @@ const UI = {
     const cv = headView.cv; if (!cv.clientWidth || !cv.clientHeight) return;
     if (Math.abs(cv.clientWidth - headView.w) > 0.5 || Math.abs(cv.clientHeight - headView.h) > 0.5) headView.resize();
     if (this.pulseT > 0) this.pulseT = Math.max(0, this.pulseT - dt / 0.9);
-    const bodies = g.world.bodies.map(b => ({ id: b.id, kind: b.kind, x: b.x, y: b.y, r: b.r, owner: b.owner, colour: b.colour, toucher: b.toucher, state: b.state, fade: b.dead ? Math.max(0, b.fade) * .6 : 1 }));
+    const bodies = g.world.bodies.map(b => ({ id: b.id, kind: b.kind, x: b.x, y: b.y, r: b.r, owner: b.owner, colour: b.colour, toucher: b.toucher, state: b.state, heading: b.heading, dead: b.dead, fade: b.dead ? Math.max(0, b.fade) * .6 : 1 }));
     const jack = g.world.jack, sc = Rules.score(g.liveBodies(), jack);
     const nearest = sc.ranked.length ? sc.ranked[0].b.id : null;
     const moving = g.world.bodies.find(b => b.state === 'moving');
     let incoming = null;
     if (moving && headView.view) { const f = headView.view; if (moving.y < f.cy - f.halfH) incoming = { x: moving.x }; }
     this.measure = this.measure.filter(id => g.world.bodies.some(b => b.id === id && !b.dead));
-    headView.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r } : null, nearestId: g.mode === 'match' || sc.ranked.length ? nearest : null, measure: this.measuring ? this.measure : null, incoming, pulse: 1 - this.pulseT, focusY: Math.min(g.matFront + 27, 33) });
+    headView.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, nearestId: g.mode === 'match' || sc.ranked.length ? nearest : null, measure: this.measuring ? this.measure : null, incoming, jackFrom: g.jackFrom, dt, pulse: 1 - this.pulseT, focusY: Math.min(g.matFront + 27, 33) });
     // text readouts (only when they change)
     let shot = '—', near = '—';
     if (jack && sc.ranked.length) {
@@ -3061,10 +3239,10 @@ const UI = {
     const cv = $('sumCanvas'), hv = new HeadView(cv); hv.resize(); hv.zoom = 'head';
     const g = game, jack = g.world.jack, nums = new Map(), hl = new Set();
     sc.ranked.forEach((e, i) => { nums.set(e.b.id, String(i + 1)); if (e.scores) hl.add(e.b.id); });
-    const bodies = g.liveBodies().map(b => ({ id: b.id, kind: b.kind, x: b.x, y: b.y, r: b.r, owner: b.owner, colour: b.colour, toucher: b.toucher, state: b.state, fade: 1 }));
+    const bodies = g.liveBodies().map(b => ({ id: b.id, kind: b.kind, x: b.x, y: b.y, r: b.r, owner: b.owner, colour: b.colour, toucher: b.toucher, state: b.state, heading: b.heading, fade: 1 }));
     // fit the zoom so every live bowl is in view
     if (jack) { const far = Math.max(0, ...sc.ranked.map(e => e.d)); hv.zoom = far > 1.3 ? 'wide' : 'head'; }
-    hv.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r } : null, highlight: hl, numbers: nums, labels: true });
+    hv.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, highlight: hl, numbers: nums, labels: true });
   },
   matchOver() {
     const g = game, P = g.players, m = g.match, w = P[0].score > P[1].score ? 0 : 1;
@@ -3074,6 +3252,16 @@ const UI = {
     const head = `<tr><th>${g.isTeams() ? 'Team' : 'Player'}</th>${m.ends.map((e, i) => `<th>${e.extra ? 'X' : i + 1}</th>`).join('')}<th>Total</th></tr>`;
     const row = i => `<tr><td><span class="pip" style="--c:${colourHex(P[i].colour)}"></span>${esc(P[i].name)}</td>${m.ends.map(e => `<td>${e.winner === i ? e.shots : (e.winner == null ? '–' : '')}</td>`).join('')}<td><b>${P[i].score}</b></td></tr>`;
     $('overTable').innerHTML = head + row(0) + row(1);
+    // the match in figures: the better figure on each line is set brighter
+    const E = m.ends.filter(e => e.near), avg = i => { const v = E.map(e => e.near[i]).filter(d => d != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+    const stat = (label, vals, fmt, low) => { const ok = vals.filter(v => v != null), best = ok.length === 2 && vals[0] !== vals[1] ? (low ? Math.min : Math.max)(...ok) : null;
+      return `<tr><th scope="row">${label}</th>${vals.map(v => `<td class="${v != null && v === best ? 'best' : ''}">${v == null ? '–' : fmt(v)}</td>`).join('')}</tr>`; };
+    const n = x => String(x);
+    $('overStats').innerHTML = `<thead><tr><th></th>${P.map(p => `<th scope="col"><span class="pip" style="--c:${colourHex(p.colour)}"></span>${esc(p.name)}</th>`).join('')}</tr></thead><tbody>`
+      + stat('Ends won', [0, 1].map(i => m.ends.filter(e => e.winner === i).length), n)
+      + stat('Best end', [0, 1].map(i => Math.max(0, ...m.ends.filter(e => e.winner === i).map(e => e.shots))), n)
+      + stat('Nearest bowl, on average', [avg(0), avg(1)], fmtDist, true)
+      + stat('Bowls finishing within 50 cm', [0, 1].map(i => E.reduce((a, e) => a + e.close[i], 0)), n) + '</tbody>';
     Sound.chime(true);
     this.open('overScrim');
   }
@@ -3147,11 +3335,21 @@ function handView() {
 // The scene renderer only knows bowls; the jack-in-hand is drawn here.
 function buildView(alpha) {
   const g = game, a = g.phase === 'rolling' ? clamp(alpha, 0, 1) : 1;
-  const bodies = g.world.bodies.map(b => ({
-    kind: b.kind, rx: b.px + (b.x - b.px) * a, ry: b.py + (b.y - b.py) * a, r: b.r, state: b.state, ditch: b.ditch,
-    colour: b.colour, heading: b.heading, roll: b.roll, side: b.side, toucher: b.toucher,
-    fade: b.dead ? clamp(b.fade, 0, 1) : 1, lift: b.dead ? 1 - clamp(b.fade, 0, 1) : 0
-  }));
+  const bodies = g.world.bodies.map(b => {
+    const o = {
+      kind: b.kind, rx: b.px + (b.x - b.px) * a, ry: b.py + (b.y - b.py) * a, r: b.r, state: b.state, ditch: b.ditch,
+      colour: b.colour, heading: b.heading, roll: b.roll, side: b.side, toucher: b.toucher,
+      fade: b.dead ? clamp(b.fade, 0, 1) : 1, lift: b.dead ? 1 - clamp(b.fade, 0, 1) : 0
+    };
+    const d = g.drops.get(b);
+    if (d) { // over the lip: carried on by its momentum, falling under gravity, with a small bump on landing
+      const k = clamp(d.t / d.dur, 0, 1), kh = 1 - (1 - k) * (1 - k);
+      o.rx = lerp(d.fx, b.x, kh); o.ry = lerp(d.fy, b.y, kh);
+      o.z = b.r - W.DITCH_D * k * k + (k > 0.86 ? Math.sin((k - 0.86) / 0.14 * Math.PI) * 0.008 : 0);
+      o.roll = (b.roll || 0) + k * 0.6;
+    }
+    return o;
+  });
   let aim = null;
   if ((g.phase === 'aim' || g.phase === 'charge') && g.mode !== 'title') {
     const rel = releasePoint(g.matRear, g.turn.kind === 'bowl' ? g.hand : 'fore', Settings.arm), j = g.world.jack;
@@ -3810,15 +4008,19 @@ window.addEventListener('resize', onResize);
 document.addEventListener('visibilitychange', () => { if (document.hidden) { if (game.phase === 'charge') game.cancelCharge(); Sound.roll(0); } last = performance.now(); });
 
 // ======================= 14. Main loop =======================
-let last = performance.now(), statsClock = 0;
+let last = performance.now(), statsClock = 0, debugCam = null;
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = (now - last) / 1000; last = now;
   if (!(dt > 0)) dt = 0; if (dt > 0.1) dt = 0.1;   // clamp spikes (tab switches, stalls)
+  tick(dt);
+}
+function tick(dt) {
   game.update(dt);
   if (game.phase === 'charge' || game.phase === 'release' || game.phase === 'rolling') UI.refreshWeight();
   const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title' && !$('controls').classList.contains('stowed')) layout.ctrlTop = ct;
   updateCamera(dt, false);
+  if (debugCam) { Object.assign(scene.cam, debugCam); scene.cam.update(); }
   const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo'))) scene.render(buildView(game.acc / W.DT));   // the title still hides the green
   UI.drawHead(dt);
   Net.tick(dt);
@@ -3979,6 +4181,15 @@ window.BiasTests = {
       G.testDeliver(0, 0.6); let guard = 0;
       while (G.phase === 'aim' && G.turn.player === 0 && guard++ < 10) G.testDeliver(0.1, 0.6, 'fore');
       ok('Computer: plays only its own turns and completes the end', G.seq.join('') === '01010101' && StubUI.log.includes('summary'), G.seq.join(''));
+      { const e = G.match.ends[0], sc = StubUI.last.sc, n0 = sc.ranked.find(x => x.b.owner === 0);
+        ok('Each end records the nearest bowl of each side for the match figures', e.near.length === 2 && e.near[0] === (n0 ? n0.d : null) && e.close.every(n => n >= 0 && n <= 4), e.near.map(d => d == null ? '–' : fmtDist(d)).join(' / ')); }
+      { const H = new Game(StubUI, { instant: true });
+        H.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 6 }, leader: 0, ai: 'county' }); H.testDeliver(0, 0.62);
+        const early = H.aiSituation(1); H.orderIdx = H.order.length - 1; const last = H.aiSituation(H.order[H.orderIdx][0]);
+        H.endNo = 5; H.players[1].score = 0; H.players[0].score = 4; const behind = H.aiSituation(1), ahead = H.aiSituation(0);
+        ok('Computer: weighs position only while the opponent has bowls left, and takes risks only when behind late on',
+          early.posW === 1 && last.posW < 1 && early.risk === 0 && behind.risk > 0 && ahead.risk < 0,
+          `posW ${early.posW}/${last.posW}, risk ${behind.risk.toFixed(2)}/${ahead.risk.toFixed(2)}`); }
       aiRand = saved; Settings.arm = arm; }
     // 14. practice can be reset and reused
     { const G = new Game(StubUI, { instant: true }); G.startPractice(); G.testDeliver(0, 0.6); G.testDeliver(0.1, 0.6); G.testDeliver(0.1, 0.62);
@@ -4014,7 +4225,10 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W };
+window.BiasDebug = { CAM, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+  // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
+  pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
+  camera(c) { debugCam = c; } };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
 // ======================= boot =======================
 Profiles.init();
