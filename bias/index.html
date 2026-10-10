@@ -64,6 +64,9 @@ button{cursor:pointer}
 .sb-player::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .45s ease}
 .sb-player.active::after{transform:scaleX(1)}
 .sb-player:not(.active) .sb-name{color:var(--cream-2)}
+.sb-lvl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-left:7px;line-height:1}
+.sb-lvl.x{color:var(--gold)}
+.sb-player .dots{align-items:center}
 .dots{display:flex;gap:4px}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:inset -1.5px -1.5px 2px rgba(0,0,0,.5),inset 1px 1px 1px rgba(255,255,255,.28)}
 .dot.spent{background:transparent;box-shadow:inset 0 0 0 1px rgba(236,229,210,.28)}
@@ -474,6 +477,7 @@ table.dist tr.muted td{color:var(--muted)}
         <div class="room-code num" id="onCodeBig">—</div>
         <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button></div>
         <p class="on-status warn" id="onStatus"><span class="dot"></span><span id="onStatusT">Connecting…</span></p>
+        <p class="fine" id="onLevels" style="margin:8px 0 0"></p>
         <div id="onHostSet" hidden>
           <h3>Conditions</h3>
           <div class="grid2">
@@ -2986,7 +2990,9 @@ const UI = {
     const m = g.match, act = g.turn ? g.turn.player : -1;
     const total = m.discipline.positions * m.discipline.bowls;
     const pc = i => { const p = g.players[i], hex = colourHex(p.colour); let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}" style="--c:${hex}"></span>`;
-      return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}</div></div><div class="sb-score num">${p.score}</div></div>`; };
+      return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
+    // online, each side's challenge level is shown to both players
+    const lvl = i => { if (!g.link) return ''; const x = onlineLevel(i) === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
     const green = m.secret && !m.over ? 'green ?' : `<span class="num">${g.world.T.toFixed(1)} s</span>`;
@@ -3330,7 +3336,7 @@ function bindPair(onId, offId, get, set) {
 bindPair('armR', 'armL', () => Settings.arm === 'R', v => { Settings.arm = v ? 'R' : 'L'; UI.refresh(); });
 bindPair('folOn', 'folOff', () => Settings.follow, v => Settings.follow = v);
 bindPair('trOn', 'trOff', () => Settings.trace, v => Settings.trace = v);
-bindPair('lvStd', 'lvExp', () => !Settings.expert, v => { Settings.expert = !v; UI.refresh(); });
+bindPair('lvStd', 'lvExp', () => !Settings.expert, v => { Settings.expert = !v; UI.refresh(); if (typeof OnlineUI !== 'undefined') OnlineUI.levelChanged(); });
 bindPair('sdOn', 'sdOff', () => Settings.sound, v => { Settings.sound = v; Sound.setMuted(!v); paintSound(); });
 bindPair('mvAuto', 'mvLess', () => Settings.motion === 'auto', v => Settings.motion = v ? 'auto' : 'less');
 $('settingsDone').onclick = () => { UI.close('settingsScrim'); if (game.mode === 'title') showTitle(); };
@@ -3346,7 +3352,7 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-1';
+const BUILD = 'bias-online-2';
 const RELAY = (() => {
   const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
   return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
@@ -3354,6 +3360,14 @@ const RELAY = (() => {
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', ROOM_RE = /^[A-HJ-NP-Z2-9]{4}$/;
 const newRoomCode = () => Array.from(crypto.getRandomValues(new Uint8Array(4)), v => ROOM_CHARS[v % ROOM_CHARS.length]).join('');
 // The interface used while a match is rebuilt from the log: nothing is shown, nothing waits.
+const myLevel = () => Settings.expert ? 'expert' : 'standard';
+const levelName = l => l === 'expert' ? 'Expert' : 'Standard';
+// A side's challenge level online: ours from Settings, the opponent's as the relay last heard it.
+function onlineLevel(side) {
+  if (!game.link) return myLevel();
+  if (side === game.link.seat) return myLevel();
+  const p = Net.peer(); return p && p.who && p.who.level === 'expert' ? 'expert' : 'standard';
+}
 const QuietUI = { toast() {}, banner() {}, clearBanner() {}, announce() {}, pulseHead() {}, refresh() {}, refreshAim() {}, refreshWeight() {}, notice() {}, summary() {}, matchOver() {}, dismissPrompt() {} };
 
 const Net = {
@@ -3366,7 +3380,7 @@ const Net = {
   loadSession() { try { return JSON.parse(sessionStorage.getItem('bias.net') || 'null'); } catch (e) { return null; } },
   clearSession() { try { sessionStorage.removeItem('bias.net'); } catch (e) { /* unavailable */ } },
   open(code, create, who) {
-    this.close();
+    this.close(); who = { ...who, level: myLevel() };
     const s = this.loadSession();
     Object.assign(this, { code, create: !!create, who, state: 'connecting', token: s && s.code === code ? s.token : null,
       seat: null, peers: [], lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0 });
@@ -3475,7 +3489,13 @@ function startOnlineMatch(s, rest) {
 const OnlineUI = {
   stage: 'choose',   // choose (name, bowls, colour; create or join) | room
   col: store.get('on.col', 'claret'),
-  who() { return { name: ($('onName').value.trim() || 'Player').slice(0, 16), profileId: $('onProf').value, colour: this.col }; },
+  who() { return { name: ($('onName').value.trim() || 'Player').slice(0, 16), profileId: $('onProf').value, colour: this.col, level: myLevel() }; },
+  // the player changed Standard/Expert: tell the other side straight away
+  levelChanged() {
+    if (Net.on && Net.who) { Net.who = { ...Net.who, level: myLevel() }; Net.saveSession(); Net.raw({ t: 'who', who: Net.who }); }
+    if (game.mode === 'match') UI.renderScoreboard();
+    if ($('onlineScrim').classList.contains('show')) this.render();
+  },
   open(code) {
     if (!Net.on) {
       this.stage = 'choose';
@@ -3517,6 +3537,7 @@ const OnlineUI = {
     else if (!here) st = `${peer.who.name} has dropped out. Waiting for them to come back…`;
     else st = host ? `${peer.who.name} has joined. Choose the conditions, then walk out.` : `You're in ${peer.who.name}'s room. ${peer.who.name} is choosing the conditions…`;
     $('onStatusT').textContent = st; $('onStatus').classList.toggle('warn', !(here && Net.state === 'open'));
+    $('onLevels').textContent = `Challenge: you ${levelName(myLevel())}` + (peer && peer.who ? ` · ${peer.who.name} ${levelName(peer.who.level)}` : '') + '. Change yours in Settings.';
     $('onHostSet').hidden = !(room && host); $('onGo').hidden = !(room && host); $('onGo').disabled = !(here && Net.state === 'open');
     $('onBack').textContent = room ? 'Leave the room' : 'Back';
   },
@@ -3557,6 +3578,8 @@ const OnlineUI = {
   },
   peer(m, old) {
     const name = (m.who && m.who.name) || (old && old.who && old.who.name) || 'Your opponent';
+    const lv = m.who && m.who.level, was = old && old.who && old.who.level;
+    if (lv && was && lv !== was && game.link && game.mode === 'match') { UI.toast(`${name} is now playing at ${levelName(lv)}.`); UI.renderScoreboard(); }
     if (game.link && game.mode === 'match') {
       if (m.left) UI.toast(`${name} has left the game.`, 'warn');
       else if (!m.online) UI.toast(`${name} has lost their connection. Play waits for them.`, 'warn');
