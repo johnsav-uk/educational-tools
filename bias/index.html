@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16201b">
 <title>Bias · Lawn Bowls</title>
+<meta name="description" content="Lawn bowls in your browser. Biased bowls, five computer opponents, and live online play against a friend. Free, no download.">
+<link rel="canonical" href="https://www.johnsav.co.uk/bias/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bias">
+<meta property="og:title" content="Bias · Lawn Bowls">
+<meta property="og:description" content="Lawn bowls in your browser. Play the computer, or a friend online. Free, no download.">
+<meta property="og:url" content="https://www.johnsav.co.uk/bias/">
+<meta property="og:image" content="https://www.johnsav.co.uk/bias/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bowls on a sunlit green in front of the Ashcombe Bowls Club pavilion, with the title Bias">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bias · Lawn Bowls">
+<meta name="twitter:description" content="Lawn bowls in your browser. Play the computer, or a friend online. Free, no download.">
+<meta name="twitter:image" content="https://www.johnsav.co.uk/bias/preview.jpg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231f3a2a'/%3E%3Ccircle cx='16' cy='16' r='11.5' fill='none' stroke='%23c9a862' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='8.4' fill='none' stroke='%23c9a862' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='4.2' fill='%23c9a862'/%3E%3C/svg%3E">
 <style>
 /* Plus Jakarta Sans — Copyright 2020 The Plus Jakarta Sans Project Authors
@@ -519,6 +534,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item minor" id="mHow">How to play</button>
         <button class="menu-item minor" id="mRules">Rules used in this game</button>
         <button class="menu-item minor" id="mSettings">Settings</button>
+        <button class="menu-item minor" id="mShare">Share this game</button>
       </div>
       <div class="foot" id="titleFoot">Two players on one device, or online. Mouse, keyboard or touch.</div>
     </div>
@@ -546,7 +562,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div id="onRoom" hidden>
         <div class="kicker" style="margin-top:6px">Room code</div>
         <div class="room-code num" id="onCodeBig">—</div>
-        <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button></div>
+        <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button><button type="button" class="btn" id="onShare" hidden>Share</button></div>
         <p class="on-status warn" id="onStatus"><span class="dot"></span><span id="onStatusT">Connecting…</span></p>
         <p class="fine" id="onLevels" style="margin:8px 0 0"></p>
         <div id="onHostSet" hidden>
@@ -4169,6 +4185,18 @@ const OnlineUI = {
     else { this.stage = 'choose'; if (!$('onlineScrim').classList.contains('show')) this.open(); this.msg(m.text || 'Could not connect.'); }
     this.status();
   }
+};
+// Share: the phone's own share sheet where there is one (WhatsApp, messages, mail…), else copy the link.
+const gameLink = () => { const u = new URL(location.href); u.search = ''; u.hash = ''; return u.toString(); };
+async function shareLink(text, url) {
+  if (navigator.share) { try { await navigator.share({ title: 'Bias · Lawn Bowls', text, url }); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; } }
+  try { await navigator.clipboard.writeText(url); return 'copied'; } catch (e) { return 'failed'; }
+}
+$('onShare').hidden = !navigator.share;
+$('onShare').onclick = () => { if (Net.code) shareLink(`Fancy a game of bowls? Join me on Bias: room ${Net.code}.`, OnlineUI.link()); };
+$('mShare').onclick = async () => {
+  const r = await shareLink('Bias: lawn bowls in your browser. Play the computer, or a friend online.', gameLink()), b = $('mShare'), old = 'Share this game';
+  if (r === 'copied' || r === 'failed') { b.textContent = r === 'copied' ? 'Link copied' : gameLink(); setTimeout(() => b.textContent = old, 2200); }
 };
 $('onCreate').onclick = () => OnlineUI.create();
 $('onJoin').onclick = () => OnlineUI.join();
