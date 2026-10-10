@@ -790,13 +790,21 @@ const W = {
   BOWL_R: 0.0635, BOWL_WIDTH: 0.72, BOWL_M: 1.55,   // width: half-width across the faces ÷ radius (rendering only)
   JACK_R: 0.0318, JACK_M: 0.25,
   E_BB: 0.90,           // restitution bowl–bowl
-  E_BJ: 0.86,           // restitution bowl–jack
+  E_BJ: 0.86,           // restitution bowl–jack at firing pace; gentler contacts are deader (see collide)
   MU: 0.10,             // tangential friction during contact
   ROLL_K: 0.40,         // I/(m r²): post-impact sliding friction re-establishes rolling
   DT: 1 / 360,          // fixed physics step (s)
   MAX_DELIVERY_T: 90
 };
 const RINKS = [-10, -5, 0, 5, 10];
+/* Bowl on jack. The bowl (r 63.5 mm) meets the jack (r 31.8 mm) above the jack's centre, so the line of
+   centres dips about 19° into the turf: only cos² of the blow drives the jack along the green, and the
+   part pressed into the grass adds friction against it. At draw weight that friction, and a deader contact
+   (the jack nestled in the turf), make the bowl push the jack and stay with it; at firing pace the jack
+   skips off the grass and leaves at nearly the full elastic speed. */
+const BJ = (() => { const t = Math.asin((W.BOWL_R - W.JACK_R) / (W.BOWL_R + W.JACK_R)); return { cos: Math.cos(t), sin: Math.sin(t) }; })();
+const bjRestitution = s => W.E_BJ - 0.5 * Math.exp(-(s / 0.9) * (s / 0.9));   // s: closing speed along the contact (m/s)
+const bjTurf = s => 0.3 * Math.exp(-(s / 1.2) * (s / 1.2));                     // grass friction on the jack from the downward part of the blow
 
 // ======================= 3. Green speed =======================
 /* Rolling resistance: dv/dt = −(a0 + k·v). A small speed-proportional term
@@ -960,15 +968,18 @@ class PhysicsWorld {
           const rvx = c.vx - a.vx, rvy = c.vy - a.vy, vn = rvx * nx + rvy * ny;
           if (vn >= 0) continue;
           const isJack = a.kind === 'jack' || c.kind === 'jack';
-          const e = isJack ? W.E_BJ : W.E_BB;
-          const jn = -(1 + e) * vn / ws;
+          let jn, ja, jc;   // normal impulse along the green, and as received by a and by c
+          if (isJack && a.kind !== c.kind) {
+            const s = -vn * BJ.cos, j3 = (1 + bjRestitution(s)) * s / ws;   // impulse along the tilted line of centres
+            jn = j3 * BJ.cos; const turf = Math.min(jn, bjTurf(s) * j3 * BJ.sin);
+            ja = a.kind === 'jack' ? jn - turf : jn; jc = c.kind === 'jack' ? jn - turf : jn;
+          } else { jn = ja = jc = -(1 + (isJack ? W.E_BJ : W.E_BB)) * vn / ws; }
           let tx = rvx - vn * nx, ty = rvy - vn * ny, jt = 0;
           const vt = Math.hypot(tx, ty);
           if (vt > 1e-9) { tx /= vt; ty /= vt; jt = Math.min(vt / ws, W.MU * jn); }
           const ax0 = a.vx, ay0 = a.vy, cx0 = c.vx, cy0 = c.vy;
-          const ix = jn * nx - jt * tx, iy = jn * ny - jt * ty;
-          a.vx -= ix * a.invM; a.vy -= iy * a.invM;
-          c.vx += ix * c.invM; c.vy += iy * c.invM;
+          a.vx -= (ja * nx - jt * tx) * a.invM; a.vy -= (ja * ny - jt * ty) * a.invM;
+          c.vx += (jc * nx - jt * tx) * c.invM; c.vy += (jc * ny - jt * ty) * c.invM;
           const k = W.ROLL_K;
           a.vx = (a.vx + k * ax0) / (1 + k); a.vy = (a.vy + k * ay0) / (1 + k);
           c.vx = (c.vx + k * cx0) / (1 + k); c.vy = (c.vy + k * cy0) / (1 + k);
@@ -2690,6 +2701,7 @@ class Game {
   handleEvents() {
     for (const e of this.world.events) {
       if (e.type === 'hit') {
+        if (e.speed < 0.03) continue;   // a bowl leaning on the jack as it pushes it: no click for each touch
         Sound.clack(e.speed / 2.5, e.jack);
         if (e.jack) { const j = this.world.jack; if (j) this.effects.push({ type: 'ring', x: j.x, y: j.y, t: 0, dur: 0.6 }); }
       } else if (e.type === 'ditch') {
@@ -3552,7 +3564,7 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-2';
+const BUILD = 'bias-online-3';   // bump whenever the physics changes: both players must simulate identically
 const RELAY = (() => {
   const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
   return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
@@ -4049,6 +4061,15 @@ window.BiasTests = {
       const d = w.add(new Body('bowl', 0)); w.launch(d, 0.0, 22, 0, 3.4, -1, prof('dp-pro')); w.runUntilRest();
       return { sig: w.bodies.map(b => [b.x, b.y, b.state].join(',')).join(';'), hits: w.events.filter(e => e.type === 'hit').length }; };
     { const r1 = scenario(), r2 = scenario(); ok('Identical inputs give bit-identical results', r1.sig === r2.sig && r1.hits > 0, `${r1.hits} contacts`); }
+    // 3b. bowl on jack: pushed at draw weight, sent away at firing pace
+    { const hit = v => { const w = new PhysicsWorld(13), j = w.add(new Body('jack')), y = 4; j.place(0, y);   // far from the ditch, so a hard hit runs out on the green
+        const b = w.add(new Body('bowl', 0)); w.launch(b, 0, y - W.BOWL_R - W.JACK_R - 0.002, 0, v, 0, null); const y0 = b.y; w.runUntilRest();
+        return { jack: j.y - y, bowl: b.y - y0, gap: j.y - b.y - W.BOWL_R - W.JACK_R }; };
+      const slow = hit(0.4), firm = hit(1.0), fast = hit(3.5);
+      ok('Bowl on jack at draw weight: the bowl pushes the jack and finishes with it', slow.gap < 0.06 && slow.jack > 0.05 && slow.jack < 1.4 * slow.bowl,
+        `jack ${(slow.jack * 100).toFixed(0)} cm, bowl ${(slow.bowl * 100).toFixed(0)} cm, gap ${(slow.gap * 100).toFixed(1)} cm`);
+      ok('Bowl on jack at firing pace: the jack is sent well ahead of the bowl', fast.jack > 1.3 * fast.bowl && fast.gap > 1,
+        `jack ${fast.jack.toFixed(2)} m, bowl ${fast.bowl.toFixed(2)} m (firm 1 m/s: jack ${firm.jack.toFixed(2)}, bowl ${firm.bowl.toFixed(2)})`); }
     // 4. forehand / backhand mirror
     { const p = prof('hs-classic'), a = simulatePath(p, 13, 0.1, 4.6, biasSide('fore', 'R')), b = simulatePath(p, 13, -0.1, 4.6, biasSide('back', 'R'));
       ok('Forehand and backhand are exact mirror images', Math.abs(a.x + b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9, `x ${a.x.toFixed(3)} / ${b.x.toFixed(3)}`);
