@@ -630,6 +630,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="seg"><button id="lvStd" aria-pressed="true">Standard</button><button id="lvExp" aria-pressed="false">Expert</button></div></div>
       <div class="toggle-row"><div><div class="tl">Sound</div><div class="td">Generated in the browser; no audio files.</div></div>
         <div class="seg"><button id="sdOn" aria-pressed="true">On</button><button id="sdOff" aria-pressed="false">Off</button></div></div>
+      <div class="toggle-row"><div><div class="tl">Birdsong</div><div class="td">Blackbirds, robins and a wood pigeon in the trees round the green.</div></div>
+        <div class="seg"><button id="bdOn" aria-pressed="true">On</button><button id="bdOff" aria-pressed="false">Off</button></div></div>
       <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced motion cuts camera moves and idle animation.</div></div>
         <div class="seg"><button id="mvAuto" aria-pressed="true">System</button><button id="mvLess" aria-pressed="false">Reduced</button></div></div>
       <div class="sheet-actions"><button class="btn primary" id="settingsDone">Done</button></div>
@@ -1170,6 +1172,8 @@ const Art = {
     this.flag = this.withHaze(this.buildFlag());
     this.shrubs = [0, 1, 2].map(i => this.withHaze(this.buildShrub(i)));
     this.planter = this.withHaze(this.buildPlanter());
+    this.people = { stand: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(i => this.withHaze(this.buildPerson(i, false))), sit: [0, 1, 2, 3, 4, 5].map(i => this.withHaze(this.buildPerson(i, true))) };
+    this.crowdN = 0;
     this.band = [this.buildBand(11), this.buildBand(23)];
     this.clouds = [this.buildClouds(3), this.buildClouds(9)];
     this.scenery = this.layoutScenery();
@@ -1479,6 +1483,68 @@ const Art = {
     g.fillStyle = '#e8d9a8'; g.fillRect(x(0.55), y(9.55), x(0.08), x(0.36)); g.fillRect(x(0.42), y(9.42), x(0.34), x(0.08));
     c.wm = wm; c.hm = hm; return c;
   },
+  /* Spectators: simple figures in summer clothes, standing or seated (seen from the front), lit from the
+     upper left like the rest of the club. Built once; the match decides how many are placed. */
+  buildPerson(seed, seated) {
+    vrand = mulberry32(900 + seed * 37 + (seated ? 5 : 0));
+    const PX = 80, wm = 0.8, hm = seated ? 1.4 : 1.86, c = makeCanvas(wm * PX, hm * PX), g = c.getContext('2d');
+    const X = m => c.width / 2 + m * PX, Y = m => c.height - m * PX, pick = a => a[Math.floor(vrand() * a.length)];
+    const skin = pick([[238, 204, 176], [226, 184, 148], [204, 160, 122], [160, 112, 80], [116, 80, 56]]);
+    const top = pick([[244, 242, 234], [244, 242, 234], [244, 242, 234], [240, 236, 222], [236, 228, 208], [176, 202, 226], [230, 190, 196], [238, 226, 160], [196, 184, 220], [176, 196, 168], [206, 186, 150], [34, 50, 82], [33, 76, 52]]);
+    const dress = !seated && vrand() < .3, low = dress ? top : pick([[240, 238, 230], [240, 238, 230], [240, 238, 230], [168, 166, 160], [56, 64, 82], [200, 184, 146]]);
+    const pose = seated ? 'lap' : pick(['down', 'down', 'behind', 'folded']);
+    const hair = pick([[226, 222, 214], [196, 192, 186], [120, 92, 64], [64, 48, 36], [40, 34, 30]]);
+    const hat = pick(['none', 'none', 'sun', 'panama', 'cap']);
+    const sh = (col, f) => rgba(shadeRgb(col, f));
+    const body = (x0, y0, x1, y1, col, r = .05) => {   // a rounded block, lit on its left, shaded on its right
+      const gr = g.createLinearGradient(X(x0), 0, X(x1), 0); gr.addColorStop(0, sh(col, .12)); gr.addColorStop(.55, rgba(col)); gr.addColorStop(1, sh(col, -.32));
+      g.fillStyle = gr; g.beginPath(); g.roundRect(X(x0), Y(y1), (x1 - x0) * PX, (y1 - y0) * PX, r * PX); g.fill();
+    };
+    const taper = (t0, t1, b0, b1, yb, yt, col, r = .06) => {   // a tapering shape: width t0..t1 at the top (rounded shoulders), b0..b1 at the bottom
+      const gr = g.createLinearGradient(X(Math.min(t0, b0)), 0, X(Math.max(t1, b1)), 0); gr.addColorStop(0, sh(col, .12)); gr.addColorStop(.55, rgba(col)); gr.addColorStop(1, sh(col, -.32));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(X(b0), Y(yb)); g.lineTo(X(t0), Y(yt - r)); g.quadraticCurveTo(X(t0), Y(yt), X(t0 + r), Y(yt));
+      g.lineTo(X(t1 - r), Y(yt)); g.quadraticCurveTo(X(t1), Y(yt), X(t1), Y(yt - r)); g.lineTo(X(b1), Y(yb)); g.closePath(); g.fill();
+    };
+    let neck;
+    if (seated) {
+      body(-.17, 0, -.03, .46, low, .03); body(.03, 0, .17, .46, low, .03);          // lower legs
+      g.fillStyle = 'rgba(30,26,22,.9)'; g.fillRect(X(-.18), Y(.05), .16 * PX, .05 * PX); g.fillRect(X(.02), Y(.05), .16 * PX, .05 * PX);   // shoes
+      body(-.2, .42, .2, .56, low, .05);                                              // knees and thighs, toward us
+      body(-.21, .52, .21, 1.06, top, .07);                                           // body
+      body(-.27, .62, -.17, 1.02, top, .04); body(.17, .62, .27, 1.02, top, .04);    // arms
+      g.fillStyle = sh(skin, -.05); g.beginPath(); g.ellipse(X(-.08), Y(.6), .06 * PX, .04 * PX, 0, 0, TAU); g.ellipse(X(.09), Y(.6), .06 * PX, .04 * PX, 0, 0, TAU); g.fill();   // hands in the lap
+      neck = 1.06;
+    } else {
+      if (dress) { taper(-.08, -.02, -.08, -.03, 0, .36, skin, .01); taper(.02, .08, .03, .08, 0, .36, skin, .01); taper(-.17, .17, -.25, .25, .3, .98, top, .03); }
+      else { taper(-.14, -.01, -.11, -.03, 0, .94, low, .02); taper(.01, .14, .03, .11, 0, .94, low, .02); }
+      g.fillStyle = 'rgba(30,26,22,.9)'; g.beginPath(); g.ellipse(X(-.07), Y(.025), .06 * PX, .03 * PX, 0, 0, TAU); g.ellipse(X(.07), Y(.025), .06 * PX, .03 * PX, 0, 0, TAU); g.fill();
+      taper(-.21, .21, -.16, .16, .88, 1.44, top, .09);
+      if (pose === 'down') {                                                         // arms at the sides
+        taper(-.27, -.17, -.25, -.18, .9, 1.4, top, .045); taper(.17, .27, .18, .25, .9, 1.4, top, .045);
+        g.fillStyle = rgba(skin); g.beginPath(); g.ellipse(X(-.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); g.ellipse(X(.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); g.fill();
+      } else if (pose === 'folded') {                                                // arms folded across the chest
+        body(-.27, 1.04, -.18, 1.42, top, .04); body(.18, 1.04, .27, 1.42, top, .04); body(-.25, 1.04, .25, 1.16, shadeRgb(top, -.06), .05);
+      } else { body(-.25, 1.1, -.18, 1.42, top, .04); body(.18, 1.1, .25, 1.42, top, .04); }   // hands behind the back
+      neck = 1.44;
+    }
+    // neck and head
+    body(-.045, neck - .02, .045, neck + .07, skin, .02);
+    const hy = neck + .17, hg = g.createRadialGradient(X(-.04), Y(hy + .03), 1, X(0), Y(hy), .14 * PX);
+    hg.addColorStop(0, sh(skin, .1)); hg.addColorStop(1, sh(skin, -.25));
+    g.fillStyle = hg; g.beginPath(); g.ellipse(X(0), Y(hy), .095 * PX, .115 * PX, 0, 0, TAU); g.fill();
+    g.fillStyle = rgba(hair); g.beginPath(); g.ellipse(X(0), Y(hy + .05), .1 * PX, .075 * PX, 0, Math.PI, TAU); g.fill();
+    if (hat === 'sun' || hat === 'panama') {
+      const col = hat === 'sun' ? [232, 214, 170] : [238, 230, 206];
+      g.fillStyle = sh(col, -.1); g.beginPath(); g.ellipse(X(0), Y(hy + .07), (hat === 'sun' ? .2 : .16) * PX, .035 * PX, 0, 0, TAU); g.fill();
+      g.fillStyle = rgba(col); g.beginPath(); g.ellipse(X(0), Y(hy + .1), .1 * PX, .07 * PX, 0, Math.PI, TAU); g.fill();
+      if (hat === 'panama') { g.fillStyle = 'rgba(40,36,30,.85)'; g.fillRect(X(-.1), Y(hy + .09), .2 * PX, .025 * PX); }
+    } else if (hat === 'cap') {
+      const col = pick([[34, 50, 82], [33, 76, 52], [236, 232, 220]]);
+      g.fillStyle = rgba(col); g.beginPath(); g.ellipse(X(0), Y(hy + .06), .1 * PX, .07 * PX, 0, Math.PI, TAU); g.fill();
+      g.fillStyle = sh(col, -.2); g.beginPath(); g.ellipse(X(.02), Y(hy + .05), .11 * PX, .025 * PX, 0, 0, TAU); g.fill();
+    }
+    c.wm = wm; c.hm = hm; return c;
+  },
   buildShrub(v) { // a flowering shrub: rose, white hydrangea or lilac
     vrand = mulberry32(700 + v * 13);
     const PX = 70, wm = 2.4, hm = 1.6, c = makeCanvas(wm * PX, hm * PX), g = c.getContext('2d'), cx = c.width / 2, base = c.height;
@@ -1576,6 +1642,20 @@ const Art = {
     items.push({ kind: 'sprite', x: 19.4, y: 47.5, h: this.flag.img.hm, spr: this.flag, fixed: true });
     for (const [x, y, v] of [[-0.2, 44.2, 0], [15.1, 44.6, 1], [-12.5, 40.4, 2], [-21.5, 40.5, 0], [23.5, 40.4, 1], [6.2, 46.4, 1]]) items.push({ kind: 'sprite', x, y, h: this.shrubs[v].img.hm, spr: this.shrubs[v], fixed: true });
     for (const x of [1.4, 13.2, -5.2]) items.push({ kind: 'sprite', x, y: 39.6, h: this.planter.img.hm, spr: this.planter, fixed: true });
+    // spectators: seats on the benches first, then standing places, most visible first; the far end gets fewer
+    const P = this.people, crowd = (n, seats, stands) => {
+      let k = 0;
+      for (const [x, y] of seats) { if (k >= n) return; const s = P.sit[k % P.sit.length]; items.push({ kind: 'sprite', x, y, h: s.img.hm, spr: s, fixed: true }); k++; }
+      for (const [x, y] of stands) { if (k >= n) return; const s = P.stand[(k * 7 + 3) % P.stand.length]; items.push({ kind: 'sprite', x, y, h: s.img.hm * (0.92 + ((k * 37) % 13) / 100), spr: s, fixed: true, flip: k % 2 === 1 }); k++; }
+    };
+    if (this.crowdN > 0) {
+      crowd(this.crowdN, [[3.65, 39.35], [-4.4, 39.35], [12.25, 39.35], [2.75, 39.35], [11.35, 39.35], [-3.55, 39.35]],
+        // small groups, at different distances: by the near benches, in front of the pavilion, on the veranda steps
+        [[-1.3, 38.9], [-.7, 39.3], [6.6, 43.6], [7.2, 43.9], [15.2, 38.4], [15.8, 38.9], [8.0, 43.4], [4.4, 45.6], [5.0, 46.0], [-8.6, 39.0],
+          [-8.0, 38.6], [10.4, 45.8], [11.0, 45.3], [9.0, 38.3], [2.0, 43.2], [12.6, 43.8], [-12.0, 39.4], [-11.4, 39.0], [13.8, 47.2], [6.2, 47.6], [8.8, 47.9]]);
+      crowd(Math.round(this.crowdN * 0.6), [[-3.45, -3.15], [4.45, -3.15], [-2.55, -3.15], [3.55, -3.15]],
+        [[0.6, -3.7], [1.2, -3.9], [-6.6, -3.5], [-7.2, -3.8], [7.4, -3.6], [8.0, -3.4], [-12.4, -3.9], [10.6, -4.0], [1.9, -4.6], [-1.4, -4.5]]);
+    }
     // hedges: footprint rectangles
     const hedge = (x0, y0, x1, y1, h, flowers) => items.push({ kind: 'hedge', x0, y0, x1, y1, h, flowers });
     hedge(-31, -6.2, 31, -5.0, 1.8);
@@ -1758,74 +1838,105 @@ function digitOutline(c, w) {
   const t = c[n - 1], p = c[n - 2], dx = t[0] - p[0], dy = t[1] - p[1], l = Math.hypot(dx, dy) || 1, tip = [t[0] + dx / l * w[n - 1] * .85, t[1] + dy / l * w[n - 1] * .85];
   return { left: L, right: Rr, tip, path: L.concat([tip], Rr.slice().reverse()) };
 }
+// How the bowler's hand round the bowl or jack on the mat is shown: 'ghost' (a see-through silhouette),
+// 'full' (the drawn hand) or 'none' (the bowl alone). In every case the bowl dips as weight builds and travels out on release.
+const HAND_STYLE = 'ghost';
 function handBehind(g, x, y, R, o) { /* every visible part of this hand lies in front of the bowl */ }
+/* The bowler's own right hand, seen from above and behind as it holds the bowl on the mat (claw grip).
+   The bowl sits in the lower palm; the fingers are spread under the running surface, out of sight.
+   Palm, thumb, wrist and forearm are one continuous outline: the thumb grows out of the ball of the
+   thumb and lies along the grip line on the bowl's upper right shoulder. Units are the bowl's radius
+   (6.35 cm); seen along its running surface the bowl's outline is only about ±0.78 across. Palm about
+   8.5 cm, wrist about 6 cm, thumb about 2.2 cm. The forearm comes toward the viewer, so it widens down
+   the screen, and is shaded as a cylinder. */
+// The hand's outline, in units of the bowl's radius: palm, thumb, wrist and forearm as one continuous shape.
+function handShape(J) {
+  // the thumb's centreline and widths; its inner edge (toward the bowl's centre) and outer edge join the palm without a seam
+  // Holding the jack (radius 0.5 here, centred at 0, 0.46 so it rests in the palm) the thumb lies along its side instead.
+  const thC = J ? [[.5, .98], [.6, .74], [.58, .5], [.48, .3], [.34, .16]] : [[.62, .9], [.72, .62], [.71, .32], [.63, .06], [.51, -.18]], thW = [.2, .17, .148, .13, .112];
+  const th = digitOutline(thC, thW);   // th.left runs up the outer edge, th.right up the inner edge
+  const cup = J ? [150, 120, 90, 62].map(a => [.5 * Math.cos(a * DEG), .46 + .5 * Math.sin(a * DEG)])   // where the jack or bowl rests in the palm
+    : [[-.6, .7], [-.34, .9], [0, .96], [.26, .93]];
+  const outerDown = th.left.slice().reverse();                                   // outer edge of the thumb, tip to base
+  const rim = [...(J ? [[.76, 1.1], [.72, 1.24], [.64, 1.38]] : [[.86, 1.0], [.80, 1.18], [.66, 1.36]]),   // ball of the thumb, into the wrist
+    [.6, 1.52], [.68, 1.8], [.92, 2.4], [1.18, 3.3], [1.36, 4.4], [1.42, 5.4],    // wrist, then the forearm's far edge
+    [-.66, 5.4], [-.68, 4.4], [-.66, 3.3], [-.6, 2.4], [-.52, 1.75], [-.5, 1.5],    // the forearm's near edge, back to the wrist
+    ...(J ? [[-.58, 1.3], [-.66, 1.1], [-.66, .92], [-.56, .78]]                  // the palm is wider than the jack: its edge shows beside it
+      : [[-.58, 1.3], [-.65, 1.08], [-.68, .86], [-.67, .66]])];                    // edge of the hand, rising up the bowl's side and tucking under it
+  const outline = cup.concat(th.right.slice(1), [th.tip], outerDown.slice(0, -1), rim);
+  return { thC, thW, th, cup, outline };
+}
+/* A see-through silhouette of the bowler's hand and forearm round the bowl or jack: no detail, darkest
+   at the hand and fading away down the arm, so it says the bowl is held without competing with it. */
+function handGhost(g, x, y, R, o) {
+  const { outline } = handShape(!!o.jack);
+  g.save(); g.globalAlpha = o.alpha; g.translate(x, y); if (o.arm === 'L') g.scale(-1, 1); g.scale(R, R);
+  g.beginPath(); splinePath(g, outline, true);
+  const fg = g.createLinearGradient(0, .2, 0, 3.4);
+  fg.addColorStop(0, 'rgba(14,20,16,.36)'); fg.addColorStop(.35, 'rgba(14,20,16,.3)'); fg.addColorStop(1, 'rgba(14,20,16,0)');
+  g.fillStyle = fg; g.fill();
+  // a faint light edge along the near side, just enough to read as a rounded arm
+  const eg = g.createLinearGradient(0, .6, 0, 3);
+  eg.addColorStop(0, 'rgba(240,236,220,.16)'); eg.addColorStop(1, 'rgba(240,236,220,0)');
+  g.strokeStyle = eg; g.lineWidth = .025; g.stroke();
+  g.restore();
+}
 function handFront(g, x, y, R, o) {
   g.save(); g.globalAlpha = o.alpha; g.translate(x, y); if (o.arm === 'L') g.scale(-1, 1); g.scale(R, R);
   g.lineJoin = 'round'; g.lineCap = 'round';
-  const edge = (a) => { g.strokeStyle = `rgba(${SKIN.deep.join(',')},${a})`; g.lineWidth = .013; g.stroke(); };
 
-  // ---- palm, wrist and forearm, one shape; its top edge is the cup the bowl sits in
-  const cup = [[.80, .36], [.68, .60], [.40, .79], [0, .87], [-.40, .80], [-.68, .60], [-.80, .34]];
-  const rim = [[-.97, .44], [-.99, .74], [-.84, 1.0], [-.56, 1.2],             // heel of the hand, little-finger side
-    [-.52, 1.5], [-.6, 2.1], [-.8, 3.2], [-1.1, 4.6],                              // wrist and forearm, near edge
-    [3.2, 4.6], [2.1, 3.2], [1.35, 2.1], [.98, 1.5],                              // forearm, far edge
-    [.86, 1.24], [1.0, 1.02], [1.03, .78], [1.0, .56]];                           // thenar mound
-  const palm = () => { g.beginPath(); splinePath(g, cup.concat(rim), true); };
-  palm();
-  const pg = g.createLinearGradient(-1, 0, 2, 0); pg.addColorStop(0, rgba(SKIN.lit)); pg.addColorStop(.4, rgba(SKIN.base)); pg.addColorStop(1, rgba(SKIN.dark));
+  const J = !!o.jack, { thC, thW, th, cup, outline } = handShape(J);
+  const hand = () => { g.beginPath(); splinePath(g, outline, true); };
+
+  // the thumb's shadow on the bowl, then the hand
+  g.save(); g.translate(-.06, .04); g.beginPath(); splinePath(g, th.path, true); g.fillStyle = 'rgba(24,12,8,.24)'; g.fill(); g.restore();
+  hand();
+  // shaded as a cylinder across the arm: lit on the near side, core shadow toward the far side, a little reflected light at the far edge
+  const pg = g.createLinearGradient(-.7, 2.4, 1.15, 2.1);
+  pg.addColorStop(0, rgba(SKIN.base)); pg.addColorStop(.22, rgba(SKIN.lit)); pg.addColorStop(.5, rgba(SKIN.base)); pg.addColorStop(.82, rgba(SKIN.dark)); pg.addColorStop(1, rgba(shadeRgb(SKIN.dark, .08)));
   g.fillStyle = pg; g.fill();
-  g.save(); palm(); g.clip();
+
+  g.save(); hand(); g.clip();
   const glow = (cx, cy, r, a) => { const rg = g.createRadialGradient(cx, cy, 0, cx, cy, r); rg.addColorStop(0, `rgba(255,238,224,${a})`); rg.addColorStop(1, 'rgba(255,238,224,0)'); g.fillStyle = rg; g.fillRect(cx - r, cy - r, r * 2, r * 2); };
-  glow(-.7, .86, .42, .5); glow(.78, .9, .38, .32); glow(0, 1.08, .4, .18);   // hypothenar, thenar, heel
-  softStroke(g, cup, .06, '72,40,28', .9);                                        // where the bowl presses into the palm
-  const sh = g.createRadialGradient(0, .8, .1, 0, .86, .75); sh.addColorStop(0, 'rgba(66,36,24,.32)'); sh.addColorStop(1, 'rgba(66,36,24,0)');
-  g.fillStyle = sh; g.fillRect(-1.2, .3, 2.4, 1.1);                                // the bowl's shadow in the palm
-  g.strokeStyle = 'rgba(128,84,64,.28)'; g.lineWidth = .013;                      // wrist creases
-  for (const yy of [1.28, 1.36]) { g.beginPath(); g.moveTo(-.52, yy); g.quadraticCurveTo(.18, yy + .07, .9, yy - .02); g.stroke(); }
-  const fa = g.createLinearGradient(.3, 0, 2.5, 0); fa.addColorStop(0, 'rgba(96,60,44,0)'); fa.addColorStop(1, 'rgba(96,60,44,.38)');
-  g.fillStyle = fa; g.fillRect(-2, 1.3, 6, 3.6);                                   // the forearm turns away from the light
-  // knitted cuff, its top edge an ellipse round the forearm
-  const cuff = t => [lerp(-1.0, 2.3, t), 2.2 - Math.sin(t * Math.PI) * .2];
-  g.beginPath(); for (let i = 0; i <= 24; i++) { const q = cuff(i / 24); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); } g.lineTo(4, 5); g.lineTo(-2, 5); g.closePath();
-  const cg = g.createLinearGradient(-.8, 0, 2.2, 0); cg.addColorStop(0, '#4d5751'); cg.addColorStop(1, '#1f2724'); g.fillStyle = cg; g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.07)'; g.lineWidth = .03;
-  for (let i = 0; i <= 16; i++) { const q = cuff(i / 16); g.beginPath(); g.moveTo(q[0], q[1] + .03); g.lineTo(q[0] + .1, q[1] + .55); g.stroke(); }
-  g.restore();
-  palm(); edge(.26);
-
-  // ---- little finger, wrapping up the left side of the bowl (ring finger just beyond it)
-  const ring = digitOutline([[-.84, .30], [-.86, .06], [-.80, -.18], [-.72, -.34]], [.075, .072, .066, .06]);
-  const lit = digitOutline([[-.93, .58], [-.97, .32], [-.95, .06], [-.88, -.12]], [.085, .08, .074, .066]);
-  for (const [d, k] of [[ring, .78], [lit, 1]]) {
-    g.beginPath(); splinePath(g, d.path, true);
-    const fg = g.createLinearGradient(-1.06, 0, -.72, 0); fg.addColorStop(0, rgba(shadeRgb(SKIN.base, k < 1 ? -.12 : 0))); fg.addColorStop(1, rgba(SKIN.shade));
-    g.fillStyle = fg; g.fill(); edge(.3);
+  glow(-.48, 1.0, .38, .42); glow(.62, 1.02, .34, .3); glow(0, 1.2, .3, .14);    // heel, ball of the thumb, centre of the heel
+  // the thumb: rounded across its width, lit along its back, its pad turning under against the bowl
+  const tg = g.createLinearGradient(th.right[2][0], th.right[2][1], th.left[2][0], th.left[2][1]); tg.addColorStop(0, 'rgba(110,70,52,.32)'); tg.addColorStop(.45, 'rgba(110,70,52,0)'); tg.addColorStop(.78, 'rgba(255,240,226,.32)'); tg.addColorStop(1, 'rgba(255,240,226,0)');
+  g.save(); g.beginPath(); splinePath(g, th.path, true); g.clip(); g.fillStyle = tg; g.fillRect(-.2, -.5, 1.4, 1.7); g.restore();
+  softStroke(g, th.right.slice(1, -1), .028, '110,70,52', .55);                  // the pad's edge against the bowl
+  softStroke(g, [1, 2, 3].map(i => [lerp(thC[i][0], th.left[i][0], .55), lerp(thC[i][1], th.left[i][1], .55)]), .024, '255,242,230', .7);   // light along the back of the thumb
+  // the crease where the thumb folds out of the palm, soft, not a seam
+  softStroke(g, [th.right[0], [(th.right[0][0] + th.left[0][0]) / 2, (th.right[0][1] + th.left[0][1]) / 2 + .1], [th.left[0][0], th.left[0][1] + .08]], .014, '128,84,64', .3);
+  softStroke(g, cup, .05, '72,40,28', .8);                                         // where the bowl presses into the palm
+  const sr = J ? .38 : .6, sh = g.createRadialGradient(0, .82, .06, 0, .88, sr); sh.addColorStop(0, 'rgba(66,36,24,.34)'); sh.addColorStop(1, 'rgba(66,36,24,0)');
+  g.fillStyle = sh; g.fillRect(-1, .3, 1.8, 1.1);                                  // the shadow of what it holds, in the palm
+  g.strokeStyle = 'rgba(128,84,64,.28)'; g.lineWidth = .013;                       // wrist creases
+  for (const yy of [1.46, 1.54]) { g.beginPath(); g.moveTo(-.48, yy); g.quadraticCurveTo(.05, yy + .06, .6, yy - .02); g.stroke(); }
+  softStroke(g, [[-.06, 1.6], [-.1, 1.95], [-.16, 2.3]], .016, '150,104,84', .32);  // tendons just under the skin above the wrist
+  softStroke(g, [[.2, 1.6], [.24, 1.95], [.28, 2.3]], .014, '150,104,84', .26);
+  softStroke(g, [[-.42, 1.8], [-.44, 2.6], [-.46, 3.5]], .05, '255,240,228', .35);  // light along the near side of the forearm
+  // thumb joint: a couple of fine creases across the knuckle
+  for (const [i, a] of [[2, .34], [3, .2]]) {
+    const p = thC[i], q = thC[i + 1], dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy), w = thW[i] * .6;
+    g.strokeStyle = `rgba(120,76,58,${a})`; g.lineWidth = .012; g.beginPath(); g.moveTo(p[0] + dy / l * w, p[1] - dx / l * w); g.quadraticCurveTo(p[0] + dx / l * .02, p[1] + dy / l * .02, p[0] - dy / l * w, p[1] + dx / l * w); g.stroke();
   }
-  for (const [px, py] of [[-.95, .2], [-.86, -.06]]) { g.strokeStyle = 'rgba(120,76,58,.35)'; g.lineWidth = .012; g.beginPath(); g.moveTo(px - .06, py + .01); g.lineTo(px + .05, py - .01); g.stroke(); }  // finger joints
-
-  // ---- thumb, lying on the right-hand shoulder along the grip line
-  const th = digitOutline([[.86, .62], [.84, .36], [.78, .08], [.70, -.16], [.60, -.36]], [.15, .13, .115, .1, .088]);
-  // contact shadow on the bowl beside the pad
-  g.save(); g.translate(-.06, .04); g.beginPath(); splinePath(g, th.path, true); g.fillStyle = 'rgba(24,12,8,.22)'; g.fill(); g.restore();
-  g.beginPath(); splinePath(g, th.path, true);
-  const tg = g.createLinearGradient(.52, -.1, .96, -.02); tg.addColorStop(0, rgba(SKIN.shade)); tg.addColorStop(.5, rgba(SKIN.base)); tg.addColorStop(.8, rgba(SKIN.lit)); tg.addColorStop(1, rgba(SKIN.base));
-  g.fillStyle = tg; g.fill();
-  g.save(); g.beginPath(); splinePath(g, th.path, true); g.clip();
-  softStroke(g, th.right.slice(1), .03, '110,70,52', .7);                         // the pad turning under, against the bowl
-  softStroke(g, [[.88, .4], [.83, .12], [.76, -.12]], .022, '255,242,230', .8);    // light along the back of the thumb
-  const rt = g.createRadialGradient(.86, .66, 0, .86, .66, .3); rt.addColorStop(0, 'rgba(255,236,220,.22)'); rt.addColorStop(1, 'rgba(255,236,220,0)'); g.fillStyle = rt; g.fillRect(.5, .3, .7, .7);
+  // short sleeve of the club shirt, its hem an ellipse round the arm
+  const hem = t => [lerp(-.95, 1.7, t), 4.0 + .08 * t - Math.sin(t * Math.PI) * .22];
+  g.beginPath(); for (let i = 0; i <= 24; i++) { const q = hem(i / 24); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); } g.lineTo(2.2, 6); g.lineTo(-1.6, 6); g.closePath();
+  const cg = g.createLinearGradient(-.9, 0, 1.7, 0); cg.addColorStop(0, '#4d5751'); cg.addColorStop(.35, '#3c4641'); cg.addColorStop(1, '#1d2522'); g.fillStyle = cg; g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = .02; g.beginPath();
+  for (let i = 0; i <= 24; i++) { const q = hem(i / 24); i ? g.lineTo(q[0], q[1] + .06) : g.moveTo(q[0], q[1] + .06); } g.stroke();
+  g.fillStyle = 'rgba(40,24,16,.22)'; g.beginPath();                               // the sleeve's shadow on the arm
+  for (let i = 0; i <= 24; i++) { const q = hem(i / 24); i ? g.lineTo(q[0], q[1] - .1) : g.moveTo(q[0], q[1] - .1); } for (let i = 24; i >= 0; i--) { const q = hem(i / 24); g.lineTo(q[0], q[1]); } g.fill();
   g.restore();
-  g.beginPath(); splinePath(g, th.left.concat([th.tip], th.right.slice().reverse()), false); edge(.3);
-  // the joint: creases on the pad side, wrinkles over the knuckle
-  g.strokeStyle = 'rgba(120,76,58,.4)'; g.lineWidth = .012;
-  g.beginPath(); g.moveTo(.66, .06); g.quadraticCurveTo(.70, .09, .75, .08); g.stroke();
-  g.beginPath(); g.moveTo(.665, .12); g.quadraticCurveTo(.70, .14, .74, .135); g.stroke();
-  g.strokeStyle = 'rgba(120,76,58,.22)';
-  for (const yy of [.02, .06, .1]) { g.beginPath(); g.moveTo(.9, yy); g.lineTo(.86, yy + .015); g.stroke(); }
+  // one outline round the whole hand
+  hand(); g.strokeStyle = `rgba(${SKIN.deep.join(',')},.28)`; g.lineWidth = .013; g.stroke();
+
   // nail, nearly edge-on along the back of the tip
-  g.beginPath(); splinePath(g, [[.79, -.13], [.74, -.26], [.67, -.38], [.62, -.44], [.645, -.37], [.70, -.25], [.745, -.12]], true);
-  g.fillStyle = 'rgba(238,206,192,.96)'; g.fill(); g.strokeStyle = 'rgba(128,84,64,.3)'; g.lineWidth = .009; g.stroke();
-  g.strokeStyle = 'rgba(255,252,246,.85)'; g.lineWidth = .014; g.beginPath(); g.moveTo(.665, -.415); g.lineTo(.62, -.445); g.stroke();
+  { const a = thC[3], b = thC[4], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l;
+    const cx = b[0] - ux * .02 - uy * .045, cy = b[1] - uy * .02 + ux * .045;
+    g.beginPath(); g.ellipse(cx, cy, .12, .052, Math.atan2(uy, ux), 0, TAU);
+    g.fillStyle = 'rgba(238,206,192,.96)'; g.fill(); g.strokeStyle = 'rgba(128,84,64,.3)'; g.lineWidth = .009; g.stroke();
+    g.strokeStyle = 'rgba(255,252,246,.85)'; g.lineWidth = .014; g.beginPath(); g.moveTo(cx + ux * .07, cy + uy * .07); g.lineTo(cx + ux * .115, cy + uy * .115); g.stroke(); }
   g.restore();
 }
 
@@ -2208,10 +2319,11 @@ class SceneRenderer {
   drawHandLayer(g, h, L) {
     if (h.alpha <= 0.01) return;
     const paint = c => {
-      const o = { alpha: 1, arm: h.arm }, k = h.jack ? 0.62 : 1;
-      handBehind(c, h.x, h.y, h.R * k, o);
+      // the hand is the same size whatever it holds; with the jack (half a bowl across) it sits higher, so the jack rests in the palm
+      const o = { alpha: 1, arm: h.arm, jack: h.jack }, hy = h.jack ? h.y - 0.46 * h.R : h.y;
+      if (HAND_STYLE === 'full') handBehind(c, h.x, hy, h.R, o);
       if (h.bowl) { if (h.jack) drawJack(c, h.x, h.y, h.R * 0.5, { L, alpha: 1 }); else drawBowl(c, h.x, h.y, h.R, h.colour, { head: h.head, L, alpha: 1, bias: h.bias, roll: 0.6 }); }
-      handFront(c, h.x, h.y, h.R * k, o);
+      if (HAND_STYLE === 'full') handFront(c, h.x, hy, h.R, o); else if (HAND_STYLE === 'ghost') handGhost(c, h.x, hy, h.R, o);
     };
     if (h.alpha >= 0.985) { paint(g); return; }
     const buf = this.handBuf || (this.handBuf = makeCanvas(1, 1));
@@ -2367,7 +2479,7 @@ class HeadView {
 
 // ======================= 11. Audio =======================
 const Sound = {
-  ctx: null, master: null, muted: false, rollGain: null, noise: null,
+  ctx: null, master: null, muted: false, noise: null, birdBus: null, birdTimer: null,
   init() {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
@@ -2376,25 +2488,78 @@ const Sound = {
       const len = this.ctx.sampleRate * 2, buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = buf.getChannelData(0);
       let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } // brown-ish noise (audio only)
       this.noise = buf;
-      // rolling: looped low noise through a lowpass; gain follows the moving bowl
-      const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true;
-      const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380;
-      this.rollGain = this.ctx.createGain(); this.rollGain.gain.value = 0;
-      src.connect(lp); lp.connect(this.rollGain); this.rollGain.connect(this.master); src.start();
+      // birdsong: its own channel, softened a little as if from the trees round the green
+      const soft = this.ctx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 6500;
+      this.birdBus = this.ctx.createGain(); this.birdBus.gain.value = Settings.birds ? 1 : 0;
+      this.birdBus.connect(soft); soft.connect(this.master);
+      this.nextBird(2.5);
     } catch (e) { this.ctx = null; }
   },
+  setBirds(on) { if (this.birdBus) this.birdBus.gain.setTargetAtTime(on ? 1 : 0, this.ctx.currentTime, 0.3); },
+  /* A bowl on a lawn makes no sound as it runs, so there is no rolling sound. The summer afternoon is
+     birdsong instead: a phrase every few seconds from somewhere round the green, never two at once. */
+  nextBird(delay) {
+    clearTimeout(this.birdTimer);
+    this.birdTimer = setTimeout(() => {
+      if (this.ctx && !this.muted && Settings.birds && !document.hidden && this.ctx.state === 'running') {
+        const r = Math.random(), pan = Math.random() * 1.6 - 0.8, vol = 0.55 + Math.random() * 0.45;
+        const dur = r < 0.38 ? this.blackbird(pan, vol) : r < 0.68 ? this.robin(pan, vol) : r < 0.86 ? this.sparrow(pan, vol) : this.woodpigeon(pan, vol);
+        this.nextBird(dur + 2.2 + Math.random() * 6.5);
+      } else this.nextBird(3);
+    }, delay * 1000);
+  },
+  // one note: a sine sliding from f0 to f1 (with optional warble), shaped and placed left or right
+  note(t, f0, f1, dur, vol, pan, warble = 0) {
+    const c = this.ctx, o = c.createOscillator(), gn = c.createGain(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    if (warble) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 38 + Math.random() * 20; lg.gain.value = f0 * warble; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + dur + .02); }
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(.02, dur * .3)); gn.gain.setValueAtTime(vol, t + dur * .6); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn); if (p) { p.pan.value = pan; gn.connect(p); p.connect(this.birdBus); } else gn.connect(this.birdBus);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  blackbird(pan, v) {   // a few fluting, sliding notes, then a quieter twitter
+    let t = this.ctx.currentTime + .05; const base = 1500 + Math.random() * 600, n = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) { const f = base * (1 + Math.random() * .7), d = .14 + Math.random() * .2; this.note(t, f, f * (0.82 + Math.random() * .4), d, .035 * v, pan, .012); t += d + .03 + Math.random() * .05; }
+    for (let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) { const f = 3200 + Math.random() * 1400; this.note(t, f, f * .8, .05, .014 * v, pan); t += .07; }
+    return t - this.ctx.currentTime;
+  },
+  robin(pan, v) {       // thin, high notes that rise and fall quickly
+    let t = this.ctx.currentTime + .05; const n = 5 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < n; i++) { const f = 3000 + Math.random() * 3200, d = .05 + Math.random() * .11; this.note(t, f, f * (Math.random() < .5 ? .7 : 1.3), d, .022 * v, pan, .02); t += d + .02 + Math.random() * .06; }
+    return t - this.ctx.currentTime;
+  },
+  sparrow(pan, v) {     // a couple of short chirps
+    let t = this.ctx.currentTime + .05; const n = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) { const f = 3600 + Math.random() * 700; this.note(t, f, f * .72, .055, .02 * v, pan); t += .11 + Math.random() * .08; }
+    return t - this.ctx.currentTime;
+  },
+  woodpigeon(pan, v) {  // the five-note coo, low and soft: coo-COO-coo, coo-coo
+    let t = this.ctx.currentTime + .05; const f = 400 + Math.random() * 60;
+    for (const [k, d, a, gap] of [[1, .32, .7, .08], [1.14, .55, 1, .1], [1, .3, .7, .32], [1, .3, .65, .08], [1, .3, .6, 0]]) { this.note(t, f * k, f * k * .9, d, .05 * a * v, pan * .6, .006); t += d + gap; }
+    return t - this.ctx.currentTime;
+  },
   setMuted(m) { this.muted = m; if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.8, this.ctx.currentTime, 0.05); },
-  roll(level) { if (this.rollGain) this.rollGain.gain.setTargetAtTime(clamp(level, 0, 1) * 0.22, this.ctx.currentTime, 0.08); },
+  roll() {},   // bowls run silently on grass
+  /* Bowl on bowl (or jack): built like the ditch thud (a short, falling low tone) but lighter, with a
+     woody, xylophone-like note on top: a mallet tap, a fundamental and its overtone at three times the
+     pitch (as a xylophone bar is tuned), the overtone dying away fastest. The jack, smaller, is a little
+     higher and shorter. Harder hits are louder and slightly brighter. */
   clack(strength, jack) {
-    if (!this.ctx || this.muted) return; const t = this.ctx.currentTime, s = clamp(strength, 0.05, 1);
-    const o = this.ctx.createOscillator(), og = this.ctx.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(jack ? 2600 : 1450, t); o.frequency.exponentialRampToValueAtTime(jack ? 1900 : 980, t + 0.06);
-    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.35 * s, t + 0.002); og.gain.exponentialRampToValueAtTime(0.0001, t + (jack ? 0.07 : 0.11));
-    o.connect(og); og.connect(this.master); o.start(t); o.stop(t + 0.15);
-    const n = this.ctx.createBufferSource(), bp = this.ctx.createBiquadFilter(), ng = this.ctx.createGain();
-    n.buffer = this.noise; bp.type = 'bandpass'; bp.frequency.value = jack ? 3400 : 2100; bp.Q.value = 1.2;
-    ng.gain.setValueAtTime(0.5 * s, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-    n.connect(bp); bp.connect(ng); ng.connect(this.master); n.start(t, Math.random()); n.stop(t + 0.05);
+    if (!this.ctx || this.muted) return; const c = this.ctx, t = c.currentTime, s = clamp(strength, 0.05, 1), k = jack ? 1.4 : 1;
+    const tone = (f0, f1, a, d, glide) => {
+      const o = c.createOscillator(), og = c.createGain(); o.type = 'sine';
+      o.frequency.setValueAtTime(f0, t); if (glide) o.frequency.exponentialRampToValueAtTime(f1, t + glide); else o.frequency.value = f0;
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(a, t + .002); og.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(og); og.connect(this.master); o.start(t); o.stop(t + d + .02);
+    };
+    tone(240 * k, 135 * k, .22 * s, jack ? .09 : .13, .08);                  // body: the thud's shape, lighter
+    const f = 680 * k * (0.98 + 0.04 * s);
+    tone(f, f, .16 * s, (jack ? .13 : .2) * (0.8 + 0.3 * s));                   // the wooden note
+    tone(f * 3, f * 3, .05 * s, .045);                                           // its overtone, gone almost at once
+    const n = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain();   // the mallet's tap
+    n.buffer = this.noise; bp.type = 'bandpass'; bp.frequency.value = (jack ? 2700 : 2100) * (0.9 + 0.2 * s); bp.Q.value = 1.3;
+    ng.gain.setValueAtTime(0.4 * s, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + .012);
+    n.connect(bp); bp.connect(ng); ng.connect(this.master); n.start(t, Math.random()); n.stop(t + .02);
   },
   thud(strength) {
     if (!this.ctx || this.muted) return; const t = this.ctx.currentTime;
@@ -2405,7 +2570,7 @@ const Sound = {
   release() {
     if (!this.ctx || this.muted) return; const t = this.ctx.currentTime;
     const n = this.ctx.createBufferSource(), lp = this.ctx.createBiquadFilter(), ng = this.ctx.createGain();
-    n.buffer = this.noise; lp.type = 'lowpass'; lp.frequency.value = 600; ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.35, t + 0.02); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    n.buffer = this.noise; lp.type = 'lowpass'; lp.frequency.value = 600; ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.14, t + 0.02); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);   // the soft touch of the bowl meeting the grass
     n.connect(lp); lp.connect(ng); ng.connect(this.master); n.start(t, Math.random()); n.stop(t + 0.25);
   },
   chime(up = true) {
@@ -2425,7 +2590,7 @@ const Sound = {
 };
 
 // ======================= 12. Game state machine =======================
-const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, motion: 'auto', expert: false, tutorialSeen: false }, store.get('settings', {}));
+const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', Settings);
 const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 const reduced = () => Settings.motion === 'less' || mqReduce.matches;
@@ -3550,6 +3715,7 @@ bindPair('folOn', 'folOff', () => Settings.follow, v => Settings.follow = v);
 bindPair('trOn', 'trOff', () => Settings.trace, v => Settings.trace = v);
 bindPair('lvStd', 'lvExp', () => !Settings.expert, v => { Settings.expert = !v; UI.refresh(); if (typeof OnlineUI !== 'undefined') OnlineUI.levelChanged(); });
 bindPair('sdOn', 'sdOff', () => Settings.sound, v => { Settings.sound = v; Sound.setMuted(!v); paintSound(); });
+bindPair('bdOn', 'bdOff', () => Settings.birds, v => { Settings.birds = v; Sound.setBirds(v); });
 bindPair('mvAuto', 'mvLess', () => Settings.motion === 'auto', v => Settings.motion = v ? 'auto' : 'less');
 $('settingsDone').onclick = () => { UI.close('settingsScrim'); if (game.mode === 'title') showTitle(); };
 function paintSound() {
@@ -4027,7 +4193,15 @@ function frame(now) {
   if (!(dt > 0)) dt = 0; if (dt > 0.1) dt = 0.1;   // clamp spikes (tab switches, stalls)
   tick(dt);
 }
+/* How many come to watch: a few for a friendly, a crowd for a county or international match. */
+function crowdFor(g) {
+  if (g.mode === 'title') return 0;
+  if (g.mode !== 'match') return 2;
+  const n = g.ai ? { starter: 2, club: 4, league: 7, county: 12, international: 20 }[g.ai.level.id] || 4 : g.link ? 6 : 5;
+  return n + (g.isTeams() ? 2 : 0);
+}
 function tick(dt) {
+  { const n = crowdFor(game); if (n !== Art.crowdN) { Art.crowdN = n; Art.scenery = Art.layoutScenery(); scene.bgKey = null; } }
   game.update(dt);
   if (game.phase === 'charge' || game.phase === 'release' || game.phase === 'rolling') UI.refreshWeight();
   const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title' && !$('controls').classList.contains('stowed')) layout.ctrlTop = ct;
@@ -4246,7 +4420,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; } };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
