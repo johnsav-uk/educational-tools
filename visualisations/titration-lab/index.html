@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Titration Lab (beta)</title>
+<meta name="description" content="A virtual titration laboratory for AQA GCSE Chemistry (4.4.2.5, Required practical 2) and AQA A-level Chemistry (Required practical 1, 3.1.12.5, 3.2.5.5 and 3.2.5.6): rinse and fill the burette, pipette, titrate to the endpoint, get concordant titres and calculate the unknown concentration, including potassium manganate(VII) redox titrations.">
+<link rel="stylesheet" href="titration.css?v=1791701729">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top" id="top">
+  <div class="grow">
+    <h1><span id="hTitle">Titration Lab</span> <span class="chip beta">beta</span></h1>
+    <p class="lede" id="hLede">Rinse, fill and read a burette, pipette an exact portion, titrate to the endpoint and work out the concentration from your own results. GCSE neutralisation, A-level standard solutions, weak acids and manganate(VII) redox titrations.</p>
+  </div>
+  <div class="actions">
+    <button class="btn" id="btnChange" type="button" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h13M3 7l4-4M3 7l4 4M21 17H8m13 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Experiments
+    </button>
+    <button class="btn primary" id="btnPresent" type="button" title="Presenter mode: the bench on the board (P)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Presenter mode
+    </button>
+    <button class="btn" id="btnAnnotate" type="button" title="Draw over the page (D)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4zM14 6l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      Annotate
+    </button>
+    <button class="btn" id="btnPrint" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Questions &amp; worksheets
+    </button>
+  </div>
+</header>
+
+<!-- ═════════ Choosing an experiment ═════════ -->
+<section id="picker" class="picker" aria-labelledby="pickerTitle">
+  <h2 id="pickerTitle" class="sr-only">Choose an experiment</h2>
+  <div id="pickerGroups"></div>
+  <p class="picker-note">Each run picks a new unknown concentration. A mystery challenge has a code, so a class can all do the same one: <label class="code-entry">Challenge code <input id="codeIn" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="12" placeholder="e.g. 3-K7Q2"></label> <button class="btn sm" id="codeGo" type="button">Open</button> <span id="codeMsg" class="muted" role="status"></span></p>
+</section>
+
+<!-- ═════════ The brief ═════════ -->
+<section id="brief" class="brief" hidden aria-labelledby="briefTitle">
+  <div class="brief-main">
+    <p class="kicker" id="briefKicker"></p>
+    <h2 id="briefTitle"></h2>
+    <div class="meta" id="briefChips"></div>
+    <div id="briefBody"></div>
+  </div>
+  <form class="brief-side panel" id="briefForm">
+    <h3>Before you start</h3>
+    <div id="briefChoices"></div>
+    <div class="safety">
+      <h4>Safety in a real lab</h4>
+      <ul id="briefSafety"></ul>
+    </div>
+    <button class="btn primary wide" type="submit" id="briefStart">Start the practical</button>
+  </form>
+</section>
+
+<!-- ═════════ The laboratory ═════════ -->
+<main id="lab" class="lab" hidden>
+  <div class="stagecol">
+    <div class="benchpanel" id="bench">
+      <svg id="benchSvg" role="img" aria-label="The laboratory bench"></svg>
+      <figure class="lens" id="lensBox">
+        <svg id="lensSvg" role="img" aria-label="Magnified view of the burette scale at the meniscus"></svg>
+        <figcaption id="lensCap">Read the bottom of the meniscus</figcaption>
+      </figure>
+      <div class="colourchip" id="colourChip" aria-hidden="true"><i></i><span></span></div>
+      <div class="clock" id="clock" hidden></div>
+    </div>
+    <div class="dock sst-no-deck-keys sst-teacher" id="dock" aria-label="Titration controls"></div>
+  </div>
+  <aside class="side">
+    <section class="card" id="method" aria-labelledby="methodTitle">
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <h3 id="methodTitle">Method</h3>
+      <div id="methodBody"></div>
+    </section>
+    <section class="card sst-teacher" id="actions" aria-labelledby="actionsTitle">
+      <h3 id="actionsTitle" class="sr-only">Apparatus</h3>
+      <div class="tabs" role="tablist" id="actionTabs"></div>
+      <div id="actionPanel"></div>
+    </section>
+    <section class="card" id="results" aria-labelledby="resultsTitle">
+      <h3 id="resultsTitle">Results</h3>
+      <div id="resultsBody"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- ═════════ Analysis, answer and report ═════════ -->
+<main id="analyse" class="analyse" hidden aria-labelledby="analyseTitle">
+  <div class="analyse-head">
+    <h2 id="analyseTitle">Analyse your results</h2>
+    <div class="actions">
+      <button class="btn" id="backToBench" type="button">Back to the bench</button>
+    </div>
+  </div>
+  <div class="analyse-grid">
+    <section class="panel" id="anResults"></section>
+    <section class="panel" id="anCalc"></section>
+  </div>
+  <section class="panel" id="anReveal" hidden></section>
+</main>
+
+<div id="srLive" class="sr-only" aria-live="polite"></div>
+
+<!-- ═════════ Print: practical report ═════════ -->
+<section class="print-only doc" id="printReport"></section>
+
+<!-- ═════════ Print: GCSE worksheet ═════════ -->
+<section class="print-only doc" id="wsGcse">
+  <div class="print-head"><div><h1>Titrations</h1><div class="sub">Student worksheet · AQA GCSE Chemistry 4.4.2.5, 4.3.4 · Required practical 2</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>19</b> marks. <span class="tag">HT</span> marks a Higher Tier question.</p>
+
+  <div class="q"><h3><span class="n">1</span> A student used a titration to find the concentration of a solution of sodium hydroxide. The hydrochloric acid had a concentration of 0.100 mol/dm³.</h3></div>
+  <div class="q"><p><b>1.1</b> Name the piece of apparatus the student should use to measure exactly 25.0 cm³ of sodium hydroxide solution into a conical flask.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.2</b> The student rinsed the burette with the hydrochloric acid before filling it. Explain why.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.3</b> The student added phenolphthalein to the sodium hydroxide in the flask. Give the colour change at the endpoint.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.4</b> Give two things the student should do to find the endpoint accurately.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.5</b> The table shows the student’s results.</p>
+    <table class="ws-table data"><thead><tr><th></th><th>Rough</th><th>1</th><th>2</th><th>3</th></tr></thead>
+      <tbody><tr><th>Final reading / cm³</th><td>24.60</td><td>24.35</td><td>25.40</td><td>24.05</td></tr>
+      <tr><th>Initial reading / cm³</th><td>0.00</td><td>0.50</td><td>1.20</td><td>0.10</td></tr>
+      <tr><th>Titre / cm³</th><td>24.60</td><td>23.85</td><td>24.20</td><td></td></tr></tbody></table>
+    <p>Calculate the titre for titration 3 and write it in the table.</p><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.6</b> Concordant results are within 0.10 cm³ of each other. Which titrations are concordant?</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.7</b> Calculate the mean titre. Use only the concordant results.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">Mean titre = ………………… cm³ [2 marks]</p></div>
+
+  <div class="q"><h3><span class="n">2</span> <span class="tag">HT</span> The mean titre of hydrochloric acid was 23.90 cm³.</h3><p class="eqn">HCl + NaOH → NaCl + H<sub>2</sub>O</p>
+    <p><b>2.1</b> Calculate the concentration of the sodium hydroxide solution in mol/dm³.</p><div class="ws-lines"><i></i><i></i><i></i><i></i></div><p class="mk">Concentration = ………………… mol/dm³ [3 marks]</p></div>
+  <div class="q"><p><b>2.2</b> Calculate the concentration of the sodium hydroxide solution in g/dm³. Relative formula mass (M<sub>r</sub>) of NaOH = 40</p><div class="ws-lines"><i></i><i></i></div><p class="mk">Concentration = ………………… g/dm³ [1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">3</span> <span class="tag">HT</span> 25.0 cm³ of 0.100 mol/dm³ sodium hydroxide solution was neutralised by 20.00 cm³ of sulfuric acid.</h3><p class="eqn">H<sub>2</sub>SO<sub>4</sub> + 2NaOH → Na<sub>2</sub>SO<sub>4</sub> + 2H<sub>2</sub>O</p>
+    <p>Calculate the concentration of the sulfuric acid in mol/dm³.</p><div class="ws-lines"><i></i><i></i><i></i><i></i><i></i></div><p class="mk">Concentration = ………………… mol/dm³ [4 marks]</p></div>
+
+  <div class="q"><h3><span class="n">4</span> Universal indicator is not used in titrations. Explain why.</h3><div class="ws-lines"><i></i><i></i></div><p class="mk">[1 mark]</p></div>
+</section>
+
+<section class="print-only doc" id="msGcse">
+  <div class="print-head"><div><h1>Titrations: mark scheme</h1><div class="sub">Teacher copy · AQA GCSE Chemistry 4.4.2.5, 4.3.4</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [1]</h4><ul><li>(volumetric) pipette (with a pipette filler)</li></ul><p class="dna">Do not accept: measuring cylinder, burette, beaker.</p></div>
+  <div class="ms-q"><h4>1.2 [2]</h4><ul><li>water left in the burette would dilute the acid (1)</li><li>so a larger volume of acid would be needed / the titre would be too big (1)</li></ul><p class="dna">Do not accept “to clean it” on its own.</p></div>
+  <div class="ms-q"><h4>1.3 [1]</h4><ul><li>pink to colourless (both colours, in that order)</li></ul><p class="dna">Do not accept “clear” for colourless.</p></div>
+  <div class="ms-q"><h4>1.4 [2]</h4><ul><li>any two from: add the acid drop by drop near the endpoint; swirl the flask (after each addition); use a white tile under the flask; read the burette at eye level / from the bottom of the meniscus; do a rough titration first</li></ul></div>
+  <div class="ms-q"><h4>1.5 [1]</h4><ul><li>24.05 − 0.10 = <b>23.95</b> (cm³)</li></ul></div>
+  <div class="ms-q"><h4>1.6 [1]</h4><ul><li>1 and 3 (23.85 and 23.95)</li></ul><p class="dna">Do not accept answers including the rough titration or titration 2.</p></div>
+  <div class="ms-q"><h4>1.7 [2]</h4><ul><li>(23.85 + 23.95) ÷ 2 (1)</li><li>= <b>23.90</b> (cm³) (1)</li></ul><p class="dna">An answer using all four titres (24.15) or all three precise titres (24.00) scores 0.</p></div>
+  <div class="ms-q"><h4>2.1 [3]</h4><ul><li>moles HCl = 0.100 × 23.90 ÷ 1000 = 2.39 × 10<sup>−3</sup> (1)</li><li>moles NaOH = 2.39 × 10<sup>−3</sup> (1:1 ratio) (1)</li><li>concentration = 2.39 × 10<sup>−3</sup> ÷ (25.0 ÷ 1000) = <b>0.0956</b> mol/dm³ (1)</li></ul><p class="dna">Allow 0.096. An answer of 95.6 or 9.56 × 10<sup>−5</sup> (one cm³ → dm³ conversion missed) scores 2.</p></div>
+  <div class="ms-q"><h4>2.2 [1]</h4><ul><li>0.0956 × 40 = <b>3.82</b> g/dm³ (allow 3.8; allow error carried forward from 2.1 × 40)</li></ul></div>
+  <div class="ms-q"><h4>3 [4]</h4><ul><li>moles NaOH = 0.100 × 25.0 ÷ 1000 = 2.50 × 10<sup>−3</sup> (1)</li><li>moles H<sub>2</sub>SO<sub>4</sub> = 2.50 × 10<sup>−3</sup> ÷ 2 = 1.25 × 10<sup>−3</sup> (1)</li><li>volume = 20.00 ÷ 1000 = 0.02000 dm³ (1)</li><li>concentration = 1.25 × 10<sup>−3</sup> ÷ 0.02000 = <b>0.0625</b> mol/dm³ (1)</li></ul><p class="dna">0.125 (ratio not used) scores 3 if working is clear; allow ECF for the final step.</p></div>
+  <div class="ms-q"><h4>4 [1]</h4><ul><li>its colour changes gradually across the pH range, so there is no sharp / single colour change at the endpoint</li></ul></div>
+</section>
+
+<!-- ═════════ Print: A-level worksheet ═════════ -->
+<section class="print-only doc" id="wsAlevel">
+  <div class="print-head"><div><h1>Titrations</h1><div class="sub">Student worksheet · AQA A-level Chemistry 3.1.2.5 (RP1), 3.1.12.5, 3.2.5.5, 3.2.5.6</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>35</b> marks. Give answers to an appropriate number of significant figures.</p>
+
+  <div class="q"><h3><span class="n">1</span> A student makes 250.0 cm³ of a standard solution of anhydrous sodium carbonate, Na<sub>2</sub>CO<sub>3</sub> (M<sub>r</sub> = 106.0), with a concentration of about 0.100 mol dm<sup>−3</sup>.</h3>
+    <p><b>1.1</b> Calculate the mass of sodium carbonate needed.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">Mass = ………………… g [2 marks]</p></div>
+  <div class="q"><p><b>1.2</b> The student has weighed the solid into a beaker. Describe how the student should make up the standard solution.</p><div class="ws-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div><p class="mk">[5 marks]</p></div>
+  <div class="q"><p><b>1.3</b> The student weighed by difference: weighing bottle + solid = 11.37 g; weighing bottle after tipping = 8.71 g. Each reading on the balance has an uncertainty of ±0.005 g. Calculate the percentage uncertainty in the mass of solid used.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.4</b> The student did not rinse the beaker into the volumetric flask. State and explain the effect on the concentration of the solution compared with the value calculated from the mass.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.5</b> 25.0 cm³ portions of the solution made from 2.66 g of sodium carbonate were titrated with hydrochloric acid using methyl orange. The mean titre was 24.35 cm³.</p><p class="eqn">Na<sub>2</sub>CO<sub>3</sub> + 2HCl → 2NaCl + H<sub>2</sub>O + CO<sub>2</sub></p><p>Calculate the concentration of the hydrochloric acid.</p><div class="ws-lines"><i></i><i></i><i></i><i></i></div><p class="mk">Concentration = ………………… mol dm<sup>−3</sup> [3 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">2</span> The graph shows how the pH changes when 0.100 mol dm<sup>−3</sup> sodium hydroxide is added to 25.0 cm³ of 0.100 mol dm<sup>−3</sup> ethanoic acid.</h3>
+    <figure class="fig" id="wsCurve"></figure>
+    <table class="ws-table data"><thead><tr><th>Indicator</th><th>pH range</th></tr></thead><tbody><tr><td>Methyl orange</td><td>3.1 – 4.4</td></tr><tr><td>Bromothymol blue</td><td>6.0 – 7.6</td></tr><tr><td>Phenolphthalein</td><td>8.3 – 10.0</td></tr></tbody></table>
+    <p><b>2.1</b> Use the graph to find the pK<sub>a</sub> of ethanoic acid. Explain your method.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>2.2</b> Choose the most suitable indicator from the table for this titration. Explain your choice.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>2.3</b> Explain why methyl orange is not suitable for this titration.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q page"><h3><span class="n">3</span> An iron tablet containing iron(II) sulfate was dissolved in dilute sulfuric acid and made up to 250.0 cm³. 25.0 cm³ portions were titrated with 0.0100 mol dm<sup>−3</sup> potassium manganate(VII). The mean titre was 21.60 cm³.</h3>
+    <p class="eqn">MnO<sub>4</sub><sup>−</sup> + 8H<sup>+</sup> + 5e<sup>−</sup> → Mn<sup>2+</sup> + 4H<sub>2</sub>O &nbsp;&nbsp;&nbsp; Fe<sup>2+</sup> → Fe<sup>3+</sup> + e<sup>−</sup></p>
+    <p><b>3.1</b> Use the half-equations to write an ionic equation for the reaction.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>3.2</b> Calculate the mass of iron in the tablet. A<sub>r</sub> of Fe = 55.8</p><div class="ws-lines"><i></i><i></i><i></i><i></i><i></i></div><p class="mk">Mass = ………………… g [4 marks]</p></div>
+  <div class="q"><p><b>3.3</b> State the colour change at the endpoint.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>3.4</b> Explain why dilute hydrochloric acid is not used to acidify the solution.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q"><h3><span class="n">4</span> Potassium manganate(VII) reacts with ethanedioate ions in acidic solution.</h3><p class="eqn">2MnO<sub>4</sub><sup>−</sup> + 16H<sup>+</sup> + 5C<sub>2</sub>O<sub>4</sub><sup>2−</sup> → 2Mn<sup>2+</sup> + 8H<sub>2</sub>O + 10CO<sub>2</sub></p>
+    <p><b>4.1</b> When manganate(VII) is added to warm acidified ethanedioate, the purple colour disappears slowly at first and then quickly. Explain why.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>4.2</b> 25.0 cm³ of sodium ethanedioate solution reacted with 23.20 cm³ of 0.0200 mol dm<sup>−3</sup> potassium manganate(VII). Calculate the concentration of the ethanedioate ions.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">Concentration = ………………… mol dm<sup>−3</sup> [3 marks]</p></div>
+
+  <div class="q"><h3><span class="n">5</span> Each burette reading has an uncertainty of ±0.05 cm³.</h3>
+    <p><b>5.1</b> Calculate the percentage uncertainty in a titre of 21.60 cm³.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>5.2</b> Suggest how the percentage uncertainty in the titre could be reduced using the same burette.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+</section>
+
+<section class="print-only doc" id="msAlevel">
+  <div class="print-head"><div><h1>Titrations: mark scheme</h1><div class="sub">Teacher copy · AQA A-level Chemistry 3.1.2.5, 3.1.12.5, 3.2.5.5, 3.2.5.6</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [2]</h4><ul><li>moles = 0.100 × 250.0 ÷ 1000 = 0.0250 (1)</li><li>mass = 0.0250 × 106.0 = <b>2.65</b> g (1)</li></ul></div>
+  <div class="ms-q"><h4>1.2 [5]</h4><ul><li>dissolve in (less than 250 cm³ of) deionised / distilled water, stirring with a glass rod (1)</li><li>transfer to a (250 cm³) volumetric flask using a funnel (1)</li><li>rinse the beaker, rod and funnel with deionised water and add the washings to the flask (1)</li><li>make up to the mark with deionised water, adding it drop by drop near the mark (1)</li><li>bottom of the meniscus on the mark, viewed at eye level; stopper and invert several times to mix (1)</li></ul><p class="dna">Do not accept “tap water”. Mixing must be by inverting the stoppered flask, not shaking an open one.</p></div>
+  <div class="ms-q"><h4>1.3 [2]</h4><ul><li>mass = 11.37 − 8.71 = 2.66 g; uncertainty = 2 × 0.005 = 0.01 g (1)</li><li>0.01 ÷ 2.66 × 100 = <b>0.38 %</b> (1)</li></ul><p class="dna">0.19 % (one reading only) scores 1.</p></div>
+  <div class="ms-q"><h4>1.4 [2]</h4><ul><li>the concentration is lower than calculated (1)</li><li>because some sodium carbonate (solution) is left in the beaker and not transferred to the flask (1)</li></ul></div>
+  <div class="ms-q"><h4>1.5 [3]</h4><ul><li>c(Na<sub>2</sub>CO<sub>3</sub>) = 2.66 ÷ 106.0 ÷ 0.2500 = 0.1004 mol dm<sup>−3</sup>; moles in 25.0 cm³ = 2.509 × 10<sup>−3</sup> (1)</li><li>moles HCl = 2 × 2.509 × 10<sup>−3</sup> = 5.019 × 10<sup>−3</sup> (1)</li><li>concentration = 5.019 × 10<sup>−3</sup> ÷ 0.02435 = <b>0.206</b> mol dm<sup>−3</sup> (1)</li></ul><p class="dna">0.103 (ratio not used) scores 2. Allow ECF.</p></div>
+  <div class="ms-q"><h4>2.1 [2]</h4><ul><li>read the pH at half the equivalence volume (12.5 cm³), where [CH<sub>3</sub>COOH] = [CH<sub>3</sub>COO<sup>−</sup>] so pH = pK<sub>a</sub> (1)</li><li>pK<sub>a</sub> = <b>4.8</b> (allow 4.7 – 4.8) (1)</li></ul></div>
+  <div class="ms-q"><h4>2.2 [2]</h4><ul><li>phenolphthalein (1)</li><li>its range (8.3 – 10.0) lies within the steep / vertical part of the curve (around pH 7 – 11) (1)</li></ul><p class="dna">Do not accept “the equivalence point is at pH 7”.</p></div>
+  <div class="ms-q"><h4>2.3 [1]</h4><ul><li>its range (3.1 – 4.4) is below the steep part / in the buffer region, so it changes colour (gradually) well before the equivalence point</li></ul></div>
+  <div class="ms-q"><h4>3.1 [1]</h4><ul><li>MnO<sub>4</sub><sup>−</sup> + 8H<sup>+</sup> + 5Fe<sup>2+</sup> → Mn<sup>2+</sup> + 4H<sub>2</sub>O + 5Fe<sup>3+</sup></li></ul><p class="dna">Ignore state symbols. Electrons must not appear.</p></div>
+  <div class="ms-q"><h4>3.2 [4]</h4><ul><li>moles MnO<sub>4</sub><sup>−</sup> = 0.0100 × 21.60 ÷ 1000 = 2.160 × 10<sup>−4</sup> (1)</li><li>moles Fe<sup>2+</sup> in 25.0 cm³ = 5 × 2.160 × 10<sup>−4</sup> = 1.080 × 10<sup>−3</sup> (1)</li><li>moles in 250.0 cm³ = 1.080 × 10<sup>−2</sup> (1)</li><li>mass = 1.080 × 10<sup>−2</sup> × 55.8 = <b>0.603</b> g (1)</li></ul><p class="dna">0.0603 g (scaling to 250 cm³ missed) scores 3. 0.121 g (1:1 ratio) scores 2. Allow ECF.</p></div>
+  <div class="ms-q"><h4>3.3 [1]</h4><ul><li>(colourless / pale yellow) to (pale) pink, which stays</li></ul><p class="dna">Do not accept purple to colourless; do not accept “purple” for the endpoint.</p></div>
+  <div class="ms-q"><h4>3.4 [2]</h4><ul><li>chloride ions are oxidised (to chlorine) by manganate(VII) (1)</li><li>so more manganate(VII) is used / the titre is too big (so the calculated amount of iron is too high) (1)</li></ul></div>
+  <div class="ms-q"><h4>4.1 [3]</h4><ul><li>at first the reaction is slow because it is between two negative ions, which repel / the activation energy is high (1)</li><li>Mn<sup>2+</sup> ions formed in the reaction catalyse it: autocatalysis (1)</li><li>Mn<sup>2+</sup> provides a route with a lower activation energy (e.g. 4Mn<sup>2+</sup> + MnO<sub>4</sub><sup>−</sup> + 8H<sup>+</sup> → 5Mn<sup>3+</sup> + 4H<sub>2</sub>O, then 2Mn<sup>3+</sup> + C<sub>2</sub>O<sub>4</sub><sup>2−</sup> → 2Mn<sup>2+</sup> + 2CO<sub>2</sub>), so the reaction speeds up as more Mn<sup>2+</sup> forms (1)</li></ul></div>
+  <div class="ms-q"><h4>4.2 [3]</h4><ul><li>moles MnO<sub>4</sub><sup>−</sup> = 0.0200 × 23.20 ÷ 1000 = 4.640 × 10<sup>−4</sup> (1)</li><li>moles C<sub>2</sub>O<sub>4</sub><sup>2−</sup> = 4.640 × 10<sup>−4</sup> × 5 ÷ 2 = 1.160 × 10<sup>−3</sup> (1)</li><li>concentration = 1.160 × 10<sup>−3</sup> ÷ 0.0250 = <b>0.0464</b> mol dm<sup>−3</sup> (1)</li></ul><p class="dna">0.0186 (1 : 1 ratio used) or 7.42 × 10<sup>−3</sup> (ratio inverted) scores 2.</p></div>
+  <div class="ms-q"><h4>5.1 [1]</h4><ul><li>2 × 0.05 = 0.10; 0.10 ÷ 21.60 × 100 = <b>0.46 %</b></li></ul><p class="dna">0.23 % (one reading only) scores 0.</p></div>
+  <div class="ms-q"><h4>5.2 [1]</h4><ul><li>make the titre bigger: use a larger portion in the flask, a more concentrated solution in the flask, or a more dilute solution in the burette</li></ul><p class="dna">Do not accept “repeat the titration” or “use a more precise burette”.</p></div>
+</section>
+
+<!-- ═════════ Print dialog ═════════ -->
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Questions &amp; worksheets</h2>
+    <p>Formatted for A4 portrait. In the print window, choose <b>Save as PDF</b> to download, or pick a printer.</p>
+    <fieldset>
+      <legend>Level</legend>
+      <label><input type="radio" name="pLevel" value="gcse" checked> <span><b>GCSE</b> (AQA Chemistry 4.4.2.5, RP2)</span></label>
+      <label><input type="radio" name="pLevel" value="alevel"> <span><b>A-level</b> (AQA Chemistry RP1, 3.1.12.5, 3.2.5.5, 3.2.5.6)</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Include</legend>
+      <label><input type="checkbox" id="pWs" checked> <span><b>Student worksheet</b>: exam-style questions with marks and answer space</span></label>
+      <label><input type="checkbox" id="pMs"> <span><b>Teacher mark scheme</b>, starting on a new page</span></label>
+      <label><input type="checkbox" id="pReport"> <span><b>My practical report</b>: results, calculation and evaluation from this session</span></label>
+      <label><input type="checkbox" id="pBlank"> <span><b>Blank results table</b> for a practical in the lab</span></label>
+    </fieldset>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" id="doPrint" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<section class="print-only doc" id="printBlank">
+  <div class="print-head"><div><h1>Titration results</h1><div class="sub">Savage Science Tools</div></div></div>
+  <div class="fill-in"><span>Name:</span><span>Date:</span></div>
+  <p>Titrant in the burette: ………………………………… Concentration: ………………… &nbsp; Solution in the flask: ………………………………… Volume: ………… cm³ &nbsp; Indicator: ……………………</p>
+  <table class="ws-table data blank"><thead><tr><th></th><th>Rough</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+    <tbody><tr><th>Final reading / cm³</th><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><th>Initial reading / cm³</th><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><th>Titre / cm³</th><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><th>Concordant? (✓)</th><td>—</td><td></td><td></td><td></td><td></td></tr></tbody></table>
+  <p>Mean titre (concordant results only): ………………… cm³</p>
+</section>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="js/engine.js?v=1791701729"></script>
+<script src="js/experiments.js?v=1791701729"></script>
+<script src="js/lab.js?v=1791701729"></script>
+<script src="js/bench.js?v=1791701729"></script>
+<script src="js/ui.js?v=1791701729"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
