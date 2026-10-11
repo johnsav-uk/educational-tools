@@ -88,9 +88,21 @@ button{cursor:pointer}
 .dot.spent{background:transparent;box-shadow:inset 0 0 0 1px rgba(236,229,210,.28)}
 .sb-meta{font-size:12px;color:var(--cream-2);white-space:nowrap}
 .top-actions{display:flex;gap:6px;margin-left:auto}
+/* the scoreboard, with a small sound toggle tucked under the end number */
+.hud-left{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.hud-left>*{pointer-events:auto}
 .icon-btn{width:44px;height:44px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);color:var(--cream);box-shadow:var(--shadow);padding:0}
 .icon-btn:hover{border-color:var(--line-2)}
 .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn.sm{width:32px;height:32px}
+.icon-btn.sm svg{width:15px;height:15px}
+.hv-btn{width:auto;display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;font-size:12.5px;font-weight:600;color:var(--cream-2)}
+.hv-btn[aria-pressed=true]{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.top-actions:has(.netchip:not([hidden])) .hv-btn span{display:none}
+.top-actions:has(.netchip:not([hidden])) .hv-btn{padding:0;width:44px;justify-content:center}
+/* the bowl being played: its dot flashes, with a gold halo */
+.dot.cur{animation:curDot 1.1s ease-in-out infinite;box-shadow:0 0 0 1.5px var(--gold)}
+@keyframes curDot{50%{opacity:.25}}
 
 /* ---------- head view panel ---------- */
 .headpanel{position:absolute;right:var(--gut);top:calc(var(--gut) + 58px);width:272px;z-index:4;padding:0;overflow:hidden;transition:opacity .4s,transform .4s}
@@ -109,6 +121,7 @@ button{cursor:pointer}
 .hp-stats dd{margin:3px 0 0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hp-note{margin:0;padding:8px 14px 11px;border-top:1px solid var(--line);font-size:12px;color:var(--cream-2);min-height:20px}
 .hp-note:empty{display:none}
+#app.nohead .headpanel{display:none}
 
 /* ---------- online ---------- */
 .netchip{display:flex;align-items:center;gap:8px;height:44px;padding:0 13px;font-size:12.5px;color:var(--cream-2);white-space:nowrap}
@@ -130,42 +143,50 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .share-msg{margin:6px 0 14px;color:var(--cream-2)}
 .on-err:empty{display:none}
 
-/* ---------- control bar ---------- */
-.controls{position:absolute;left:50%;bottom:var(--gut);transform:translateX(-50%);display:flex;align-items:stretch;z-index:5;max-width:calc(100% - 2*var(--gut));transition:opacity .35s}
-.controls.busy .ctl, .controls.busy .deliver{opacity:.45;pointer-events:none}
-.controls.busy.rollmode .deliver{opacity:1;pointer-events:auto;background:rgba(236,229,210,.14);color:var(--cream)}
-.controls.busy.rollmode .deliver.charging{background:rgba(236,229,210,.26)}
-/* stowed: off the green while bowls run and the head settles; only a small hurry button stays, bottom right */
+/* ---------- thumb band ---------- */
+/* a round deliver button inside the weight ring (a swing meter), the hand to its left, fine aim to its right */
+.controls{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--gut) + env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:center;gap:18px;z-index:5;pointer-events:none;transition:opacity .35s}
+.controls>*{pointer-events:auto}
+.controls.busy .side,.controls.busy .dial{opacity:.45;pointer-events:none}
+/* stowed: off the green once the bowl is away and through the opponent's turn; while a bowl runs only a smaller hurry circle stays, in the same thumb spot */
 .controls.stowed{transition:opacity .25s,visibility 0s .25s}
 .controls.stowed:not(.rollmode){opacity:0;visibility:hidden;pointer-events:none}
-.controls.stowed.rollmode{left:auto;right:var(--gut);transform:none;transition:none}
-.controls.stowed.rollmode .ctl{display:none}
-.controls.stowed.rollmode .deliver{flex:none;min-width:0;min-height:48px;padding:6px 16px;font-size:14px;border-radius:calc(var(--r) - 1px)}
-.ctl{padding:10px 16px;border-left:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:66px}
-.ctl:first-child{border-left:0}
+.controls.stowed.rollmode{transition:none}
+.controls.rollmode .side,.controls.rollmode .ring,.controls.rollmode .wread{visibility:hidden}
+.controls.busy.rollmode .dial{opacity:1;pointer-events:auto}
+.controls.rollmode .deliver{width:70px;height:70px;background:rgba(19,27,23,.84);color:var(--cream);border:1px solid var(--line-2)}
+.controls.rollmode .deliver b{font-size:13px}
+.controls.rollmode .deliver small{font-size:8.5px}
+.controls.rollmode .deliver.charging{background:rgba(52,64,57,.92)}
+.controls.charging .side{opacity:.25;pointer-events:none}
+.side{width:118px;margin-bottom:14px;padding:7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);transition:opacity .2s}
+.ctl{display:flex;flex-direction:column;gap:6px}
 .ctl[hidden]{display:none}
+.ctl .kicker{text-align:center;font-size:9.5px}
+.ctl .kicker em{font-style:normal;color:var(--cream);letter-spacing:.04em;margin-left:5px;font-size:11.5px;text-transform:none}
 .ctl-title{font-family:var(--serif);font-size:16px;line-height:1.15;white-space:nowrap}
-.ctl-row{display:flex;align-items:center;gap:8px}
-.val{font-size:14.5px;white-space:nowrap;min-width:58px}
 .seg{display:inline-flex;border:1px solid var(--line-2);border-radius:4px;overflow:hidden}
 .seg button{background:transparent;border:0;padding:6px 11px;color:var(--cream-2);font-size:13px;min-height:32px}
 .seg button+button{border-left:1px solid var(--line-2)}
 .seg button[aria-pressed=true]{background:var(--cream);color:var(--ink)}
-.nudge{width:30px;height:30px;border:1px solid var(--line-2);background:transparent;border-radius:3px;color:var(--cream-2);padding:0;display:grid;place-items:center;font-size:15px;line-height:1}
-.nudge:hover{color:var(--cream)}
-.meter{position:relative;width:210px;height:10px;border-radius:2px;background:rgba(236,229,210,.07);box-shadow:inset 0 0 0 1px var(--line)}
-.meter .zone{position:absolute;left:80%;right:0;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(216,145,108,.22) 0 3px,transparent 3px 7px);border-radius:0 2px 2px 0}
-.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#9f9878,#ece3c8);border-radius:2px}
-.meter .ghost{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--gold);opacity:0;transition:opacity .3s}
-.meter .ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(236,229,210,.14) calc(10% - 1px) 10%)}
-.deliver{border:0;margin:0;background:var(--cream);color:var(--ink);font-family:var(--serif);font-size:16px;padding:0 22px;min-width:178px;border-radius:0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0;touch-action:none;transition:background .2s}
-.deliver small{display:block;font-family:var(--sans);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-top:2px}
+.pair{display:flex;gap:4px}
+.pair button{flex:1;min-width:0;min-height:42px;border-radius:8px;border:1px solid var(--line-2);background:transparent;color:var(--cream-2);font-size:13px;font-weight:600;padding:0}
+.pair button:hover{color:var(--cream);border-color:rgba(236,229,210,.4)}
+.pair button[aria-pressed=true]{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.pair .nudge{font-size:20px;line-height:1;color:var(--cream)}
+.pair button:disabled{opacity:.35;cursor:default}
+.dial{position:relative;width:150px;height:168px;flex:none}
+.wread{position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:12px;font-weight:600;letter-spacing:.05em;white-space:nowrap;color:var(--cream);text-shadow:0 1px 6px rgba(0,0,0,.65)}
+.wread span{color:var(--cream-2);font-weight:500}
+.ring{position:absolute;left:50%;bottom:0;width:150px;height:150px;margin-left:-75px;overflow:visible}
+.deliver{position:absolute;left:50%;bottom:75px;width:92px;height:92px;transform:translate(-50%,50%);border-radius:50%;border:0;margin:0;padding:0;background:var(--cream);color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 -3px 0 rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;touch-action:none;transition:background .2s,width .2s,height .2s}
+.deliver b{font-family:var(--serif);font-size:17px;font-weight:700;letter-spacing:-.01em}
+.deliver small{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-top:3px}
 .deliver:hover{background:#f6efdc}
-.deliver.charging{background:#e7d9b2}
-.headtoggle{display:none}
+.deliver.charging{background:#e7d9b2;transform:translate(-50%,50%) scale(.95)}
 
 /* ---------- practice bar ---------- */
-.practice{position:absolute;left:var(--gut);top:calc(var(--gut) + 70px);display:flex;flex-direction:column;gap:0;z-index:5;width:190px}
+.practice{position:absolute;left:var(--gut);top:calc(var(--gut) + 108px);display:flex;flex-direction:column;gap:0;z-index:5;width:190px}
 .practice[hidden]{display:none}
 .practice .ph{padding:10px 14px 8px;border-bottom:1px solid var(--line)}
 .practice .ph .ctl-title{font-size:15px}
@@ -175,10 +196,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .linkbtn.lesson{color:var(--gold);border-top:1px solid var(--line);border-radius:0 0 3px 3px;margin-top:4px}
 
 /* ---------- guided lesson ---------- */
-.coach{position:absolute;left:var(--gut);top:calc(var(--gut) + 70px);width:316px;z-index:5;padding:10px 14px 12px;display:flex;flex-direction:column;max-height:calc(100% - 2*var(--gut) - 180px);background:var(--panel-strong)}
+.coach{position:absolute;left:var(--gut);top:calc(var(--gut) + 108px);width:316px;z-index:5;padding:10px 14px 12px;display:flex;flex-direction:column;max-height:calc(100% - 2*var(--gut) - 300px);background:var(--panel-strong)}
 .coach[hidden]{display:none}
 .co-head{display:flex;align-items:center;gap:2px;margin-right:-6px}
-.co-head .kicker{flex:1;color:var(--gold)}
+.co-head .kicker{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--gold)}
 .co-ic{width:30px;height:30px;border:0;background:transparent;border-radius:4px;color:var(--cream-2);display:grid;place-items:center;padding:0}
 .co-ic:hover{background:rgba(236,229,210,.07);color:var(--cream)}
 .co-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
@@ -209,7 +230,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .coach.min .co-steps,.coach.min .co-body,.coach.min .co-actions{display:none}
 .coach.min .co-t{margin-bottom:6px}
 .co-spot{outline:2px solid var(--gold);outline-offset:2px;animation:coSpot 1.8s ease-in-out infinite}
-.controls .co-spot{outline-offset:-3px}
+.controls .co-spot{outline-offset:3px}
 @keyframes coSpot{50%{outline-color:rgba(201,168,98,.3)}}
 .trace-key{display:block;width:220px;max-width:100%;height:auto;margin-top:8px}
 .def{color:var(--cream-2);font-weight:600}
@@ -225,7 +246,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .banner .kicker{color:rgba(238,231,212,.8);text-shadow:0 1px 8px rgba(0,0,0,.4)}
 .banner .bn{font-family:var(--serif);font-size:40px;line-height:1.1;margin-top:6px;color:#f4eedd;text-shadow:0 2px 18px rgba(0,0,0,.35)}
 .banner .bs{font-size:13px;margin-top:8px;color:rgba(238,231,212,.85);text-shadow:0 1px 8px rgba(0,0,0,.5)}
-.notice{position:absolute;left:50%;bottom:calc(var(--gut) + 82px);transform:translate(-50%,8px);z-index:6;display:flex;align-items:center;gap:18px;padding:12px 12px 12px 18px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:calc(100% - 2*var(--gut));width:max-content}
+.notice{position:absolute;left:50%;bottom:calc(var(--gut) + 186px);transform:translate(-50%,8px);z-index:6;display:flex;align-items:center;gap:18px;padding:12px 12px 12px 18px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:calc(100% - 2*var(--gut));width:max-content}
 .notice.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .notice .nt{font-family:var(--serif);font-size:16px}
 .notice::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;opacity:0}
@@ -399,27 +420,40 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .dot{width:7px;height:7px}
   .sb-big{font-size:18px}
   .sb-opt{display:none}
-  .headpanel{top:auto;bottom:0;right:0;left:0;width:auto;border-radius:10px 10px 0 0;transform:translateY(105%);z-index:12;background:var(--panel-strong);padding-bottom:env(safe-area-inset-bottom)}
-  .headpanel.open{transform:none}
-  #headCanvas{height:min(46vh,300px)}
-  .controls{left:var(--gut);right:var(--gut);transform:none;flex-wrap:wrap;max-width:none}
-  .ctl{min-height:54px;padding:8px 12px;flex:1 1 auto}
-  .ctl.c-phase{flex-basis:100%;border-bottom:1px solid var(--line);flex-direction:row;align-items:center;justify-content:space-between}
-  .ctl.c-weight{border-left:0;flex-basis:100%;border-top:1px solid var(--line)}
-  .meter{width:100%}
-  .deliver{flex:1 1 100%;min-height:56px;border-radius:0 0 calc(var(--r) - 1px) calc(var(--r) - 1px)}
-  .headtoggle{display:inline-flex}
-  .practice{left:auto;right:var(--gut);top:calc(var(--gut) + 54px);bottom:auto;width:auto}
+  /* the head view: a small plan in the sky, top right, clear of the far end of the rink */
+  .headpanel{top:calc(var(--gut) + 68px);width:148px;border-radius:6px;background:rgba(19,27,23,.9)}
+  .hp-head{position:absolute;top:4px;right:4px;padding:0;border:0;z-index:1}
+  .hp-head h2{display:none}
+  .hp-tools .chip{min-height:22px;padding:2px 6px;font-size:10.5px;background:rgba(19,27,23,.75)}
+  #headCanvas{height:124px}
+  .hp-stats{grid-template-columns:1fr}
+  .hp-stats>div{padding:5px 8px 6px;display:flex;gap:6px;align-items:baseline;min-width:0}
+  .hp-stats>div+div{display:none}
+  .hp-stats dt{font-size:9px;flex:none}
+  .hp-stats dd{margin:0;font-size:11.5px;min-width:0}
+  .hp-note{padding:5px 8px 6px;font-size:11px;min-height:0}
+  /* the thumb band spans the screen: hand under the left thumb, aim under the right */
+  .controls{justify-content:space-between;gap:0}
+  .side{width:min(112px,calc(50% - 72px));margin-bottom:12px}
+  .dial{width:140px}
+  .practice{left:var(--gut);right:auto;top:calc(var(--gut) + 104px);bottom:auto;width:auto;max-width:calc(100% - 2*var(--gut) - 158px)}
+  #app.nohead .practice{max-width:calc(100% - 2*var(--gut))}
   .practice .pb{flex-direction:row;flex-wrap:wrap}
   .practice .ph{display:none}
   .linkbtn{padding:6px 8px;font-size:12px}
-  .toast{top:calc(var(--gut) + 112px)}
-  .notice{bottom:auto;top:calc(var(--gut) + 112px)}
-  .coach{top:calc(var(--gut) + 54px);right:var(--gut);width:auto;max-height:40vh;padding:8px 12px 10px}
+  /* messages: brief ones top left beside the head view; prompts at the bottom, under the thumb (the controls are stowed then) */
+  .toast{left:var(--gut);top:calc(var(--gut) + 104px);transform:translateY(-6px);max-width:calc(100% - 2*var(--gut) - 158px);text-align:left}
+  .toast.show{transform:none}
+  #app.nohead .toast{max-width:calc(100% - 2*var(--gut))}
+  .notice{bottom:calc(var(--gut) + env(safe-area-inset-bottom));width:calc(100% - 2*var(--gut))}
+  .coach{top:calc(var(--gut) + 104px);right:var(--gut);width:auto;max-height:36vh;padding:8px 12px 10px}
+  /* while the lesson card is open it has the sky; folded, it moves aside for the head view */
+  #app.coaching:not(.coach-folded) .headpanel{display:none}
+  #app.coach-folded:not(.nohead) .coach{right:auto;max-width:calc(100% - 2*var(--gut) - 158px)}
   .co-t{font-size:15px}
   .co-fig svg{height:72px;width:auto;max-width:100%}
   .coach.rolling .co-steps,.coach.rolling .co-body,.coach.rolling .co-actions{display:none}   /* folded while a bowl runs, so the head stays in view */
-  #app.coaching .toast,#app.coaching .notice{top:calc(var(--gut) + 62px + var(--coach-h, 0px))}
+  #app.coaching .toast{top:calc(var(--gut) + 112px + var(--coach-h, 0px))}
   .grid2{grid-template-columns:1fr;gap:10px}
   .sum{grid-template-columns:1fr}
   #sumCanvas{width:100%;height:220px}
@@ -435,38 +469,35 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .sb-cell.sb-endcell .kicker{display:none}
   .sb-name{max-width:64px}
   .top-actions .icon-btn{width:40px;height:40px}
+  .top-actions .hv-btn{width:auto}
+  .top-actions:has(.netchip:not([hidden])) .hv-btn{width:40px}
   .top-actions #btnHelp{display:none}
   .netchip{padding:0 12px;height:40px}
   .netchip .ntx{display:none}
   .on-choose{grid-template-columns:1fr}
 }
-/* phones held sideways: one slim row of controls, so the green stays in view */
+@media (max-width: 370px){
+  .hv-btn span{display:none}
+  .top-actions .hv-btn{width:40px;padding:0;justify-content:center}
+}
+/* short landscape windows (a phone held sideways is asked to turn upright): a smaller thumb band */
 @media (max-height: 500px) and (orientation: landscape){
   :root{--gut:8px}
   .scoreboard{min-height:48px}
   .sb-cell{padding:5px 10px}
-  .controls{flex-wrap:nowrap}
-  .ctl{min-height:0;padding:5px 10px;gap:3px;flex:0 1 auto}
-  .ctl .kicker{font-size:9.5px}
-  .ctl.c-phase{flex:0 1 auto;flex-basis:auto;border-bottom:0;flex-direction:row;align-items:center;gap:8px}
-  .ctl.c-phase .ctl-title{font-size:13px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
-  .ctl.c-weight{flex:1 1 110px;border-top:0;border-left:1px solid var(--line)}
-  .seg button{padding:4px 8px;font-size:12px;min-height:32px}
-  .nudge{width:32px;height:32px}
-  .val{min-width:48px;font-size:13px}
-  .deliver{flex:0 0 auto;min-width:112px;min-height:44px;padding:0 12px;font-size:14px;border-radius:0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0}
-  .deliver small{display:none}
-  .toast,.notice{top:calc(var(--gut) + 58px)}
+  .controls{transform:scale(.78);transform-origin:50% 100%}
+  .toast{top:calc(var(--gut) + 58px)}
+  .notice{bottom:calc(var(--gut) + 140px)}
   .coach{top:calc(var(--gut) + 58px);right:auto;width:340px;max-height:calc(100% - 2*var(--gut) - 120px);padding:6px 12px 8px}
   .co-steps{display:none}
   .co-t{font-size:14px;margin:2px 0 4px}
   .co-fig svg{height:52px}
   .co-actions{margin-top:6px}
   .co-actions .btn{min-height:32px;padding:4px 12px}
-  #app.coaching .toast,#app.coaching .notice{top:calc(var(--gut) + 58px)}
+  #app.coaching .toast{top:calc(var(--gut) + 58px)}
   .banner{top:30%}
   .banner .bn{font-size:26px}
-  #headCanvas{height:min(52vh,240px)}
+  #headCanvas{height:min(46vh,220px)}
   .title{padding-top:14px;padding-bottom:14px}
   .title .club{font-size:10px}
   .title h1{font-size:46px;margin:8px 0 4px}
@@ -477,11 +508,10 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .title .foot{display:none}
 }
 /* type: one contemporary sans throughout; display text in heavier weights, tighter tracking */
-.sb-big,.sb-name,.sb-score,.hp-head h2,.ctl-title,.deliver,.banner .bn,.notice .nt,.sheet h2,.sheet h3,.sum-result,.cum .cn,.cum .cs,.prof .pn,.practice .ctl-title{font-weight:600;letter-spacing:-.012em}
+.sb-big,.sb-name,.sb-score,.hp-head h2,.ctl-title,.banner .bn,.notice .nt,.sheet h2,.sheet h3,.sum-result,.cum .cn,.cum .cs,.prof .pn,.practice .ctl-title{font-weight:600;letter-spacing:-.012em}
 .sb-score,.cum .cs{font-weight:650;letter-spacing:-.02em}
 .sheet h2{font-size:26px;letter-spacing:-.02em}
 .banner .bn{letter-spacing:-.025em}
-.deliver{font-size:15px}
 .title h1{font-weight:700;letter-spacing:-.045em;font-size:clamp(60px,9.5vw,96px)}
 .title .sub{font-style:normal;font-weight:400;font-size:17px;letter-spacing:-.005em}
 .menu-item{font-weight:550;font-size:20px;letter-spacing:-.015em}
@@ -492,6 +522,14 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .title .menu-item.primary,.title .menu-item.primary:hover,.title .menu-item.primary:focus-visible{margin-left:0;padding-left:16px;padding-right:52px}
   .menu-item.lead{font-size:22px}
 }
+/* phones are played upright: held sideways, the game asks to be turned back */
+.rotate{display:none}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse){
+  .rotate{display:flex;position:fixed;inset:0;z-index:100;background:#16201b;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px}
+  .rotate svg{width:54px;height:54px;stroke:var(--gold);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px}
+  .rotate .rt{font-size:20px;font-weight:600;letter-spacing:-.012em}
+  .rotate .rs{color:var(--cream-2);font-size:13.5px}
+}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
@@ -499,14 +537,20 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 </head>
 <body>
 <div id="app">
+  <div class="rotate" aria-live="polite"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="15" y="6" width="18" height="34" rx="3"/><path d="M22 35h4"/><path d="M38 20a14 14 0 0 1-4 12"/><path d="M34 32l0.3-4 3.7 1"/></svg><div class="rt">Turn your phone upright</div><div class="rs">Bias is played in portrait.</div></div>
   <canvas id="scene" aria-label="First-person view of the bowling green. Drag on the green or use the arrow keys to aim." role="img"></canvas>
 
   <header class="hud-top">
-    <div class="scoreboard panel" id="scoreboard" aria-live="off"></div>
+    <div class="hud-left">
+      <div class="scoreboard panel" id="scoreboard" aria-live="off"></div>
+      <button class="icon-btn sm" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
+        <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+      </button>
+    </div>
     <div class="top-actions">
       <div class="netchip panel" id="netChip" role="status" hidden><span class="dot"></span><span class="ntx" id="netTxt"></span></div>
-      <button class="icon-btn" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
-        <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+      <button class="icon-btn hv-btn" id="btnHeadView" aria-pressed="true" aria-controls="headPanel" title="Head view (H)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><circle cx="6.5" cy="9" r="2.6"/><circle cx="17" cy="15" r="2.6"/><circle cx="15.5" cy="7" r="2.6"/></svg><span>Head</span>
       </button>
       <button class="icon-btn" id="btnHelp" aria-label="How to play" title="How to play">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.6"/><path d="M12 16.9v.1"/></svg>
@@ -523,7 +567,6 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="hp-tools">
         <button class="chip" id="hpZoom" title="Switch scale">Wide</button>
         <button class="chip" id="hpMeasure" aria-pressed="false" title="Measure (M)">Measure</button>
-        <button class="chip headtoggle" id="hpClose">Close</button>
       </div>
     </div>
     <canvas id="headCanvas" aria-label="Top-down head diagram"></canvas>
@@ -541,30 +584,28 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
     <button class="btn primary" id="noticeBtn">Continue</button>
   </div>
 
-  <footer class="controls panel busy" id="controls" aria-label="Delivery controls">
-    <div class="ctl c-phase">
-      <div><div class="kicker" id="phaseK">To bowl</div><div class="ctl-title" id="phaseT">—</div></div>
-      <button class="chip headtoggle" id="btnHeadToggle" aria-expanded="false">Head</button>
-    </div>
-    <div class="ctl c-hand" id="grpHand">
-      <div class="kicker">Hand <span style="opacity:.6">F / B</span></div>
-      <div class="seg" role="group" aria-label="Delivery hand">
-        <button id="btnFore" aria-pressed="true">Forehand</button><button id="btnBack" aria-pressed="false">Backhand</button>
+  <footer class="controls busy" id="controls" aria-label="Delivery controls">
+    <div class="side side-l">
+      <div class="ctl c-hand" id="grpHand">
+        <div class="kicker" title="F / B">Hand</div>
+        <div class="pair" role="group" aria-label="Delivery hand"><button id="btnFore" aria-pressed="true" title="Forehand (F)">Fore</button><button id="btnBack" aria-pressed="false" title="Backhand (B)">Back</button></div>
+      </div>
+      <div class="ctl c-mat" id="grpMat" hidden>
+        <div class="kicker" title="↑ ↓">Mat<em class="num" id="matVal">2.0 m</em></div>
+        <div class="pair"><button class="nudge" id="matBack" aria-label="Move mat back">−</button><button class="nudge" id="matFwd" aria-label="Move mat up the green">+</button></div>
       </div>
     </div>
-    <div class="ctl c-mat" id="grpMat" hidden>
-      <div class="kicker">Mat <span style="opacity:.6">↑ ↓</span></div>
-      <div class="ctl-row"><button class="nudge" id="matBack" aria-label="Move mat back">−</button><span class="val num" id="matVal">2.0 m</span><button class="nudge" id="matFwd" aria-label="Move mat up the green">+</button></div>
+    <div class="dial c-weight">
+      <div class="wread num" id="weightVal" aria-live="off"></div>
+      <svg class="ring" id="meterRing" viewBox="0 0 150 150" aria-hidden="true"></svg>
+      <button class="deliver" id="deliverBtn" aria-describedby="weightVal" title="Hold to deliver (or hold Space)"><b id="dlT">Hold</b><small id="dlS">to bowl</small></button>
     </div>
-    <div class="ctl c-aim">
-      <div class="kicker">Aim <span style="opacity:.6">← →</span></div>
-      <div class="ctl-row"><button class="nudge" id="aimL" aria-label="Aim left">‹</button><span class="val num" id="aimVal">0.0°</span><button class="nudge" id="aimR" aria-label="Aim right">›</button></div>
+    <div class="side side-r">
+      <div class="ctl c-aim">
+        <div class="kicker" title="← →">Aim<em class="num" id="aimVal">0.0°</em></div>
+        <div class="pair"><button class="nudge" id="aimL" aria-label="Aim left">‹</button><button class="nudge" id="aimR" aria-label="Aim right">›</button></div>
+      </div>
     </div>
-    <div class="ctl c-weight">
-      <div class="kicker">Weight <span id="weightVal" class="num" style="color:var(--cream);letter-spacing:.04em;margin-left:6px">—</span></div>
-      <div class="meter" id="meter" aria-hidden="true"><div class="zone"></div><div class="ticks"></div><div class="fill" id="meterFill"></div><div class="ghost" id="meterGhost"></div></div>
-    </div>
-    <button class="deliver" id="deliverBtn" aria-describedby="weightVal">Hold to deliver<small>or hold Space</small></button>
   </footer>
 
   <nav class="practice panel" id="practiceBar" hidden aria-label="Practice tools">
@@ -1278,7 +1319,7 @@ function toEnd(dir, x, y) { return dir ? { x: -x, y: W.GREEN_LEN - y } : { x, y 
 /* The bowler's view. back: metres behind the mat front; z: eye height; lens: focal length ÷ screen
    height (bigger is narrower, so the far end looks nearer); sky: the horizon is kept no higher than
    this fraction of the way down, even if the release point then drops out of the bottom of the frame. */
-const CAM = { back: 3.0, z: 1.30, lens: 1.6, sky: 0.26 };
+const CAM = { back: 3.0, z: 1.30, lens: 1.6, sky: 0.26, backTall: 2.0, wideTall: 1.75 };
 
 // ======================= 8. Procedural art =======================
 const PAL = {
@@ -2102,7 +2143,8 @@ class SceneRenderer {
     this.cv.width = this.W; this.cv.height = this.H;
     this.bg.width = this.W; this.bg.height = this.H; this.bgKey = '';
   }
-  baseF() { return Math.min(this.H * CAM.lens, this.W * 1.3); }
+  baseF() { return Math.min(this.H * CAM.lens, this.W * (this.tall() ? CAM.wideTall : 1.3)); }
+  tall() { return this.H > this.W * 1.3; }   // a phone held upright
 
   // ---------- static layer: sky, scenery, ground, banks ----------
   renderBackground(dir) {
@@ -2805,7 +2847,7 @@ const Sound = {
 };
 
 // ======================= 12. Game state machine =======================
-const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false, lessonSeen: false }, store.get('settings', {}));
+const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false, lessonSeen: false, headView: true }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', Settings);
 const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 const reduced = () => Settings.motion === 'less' || mqReduce.matches;
@@ -3252,7 +3294,7 @@ class Game {
     const sc = Rules.score(this.liveBodies(), w.jack);
     if (this.mode === 'match' && sc.winner != null && sc.winner !== this.shot) {
       this.ui.pulseHead();
-      if (!selfDead && !dead.length && !(d && d.toucher)) this.ui.toast(closeCall(sc) ? 'Too close to call' : `${this.players[sc.winner].name} holds shot`, 'good');
+      if (!selfDead && !dead.length && !(d && d.toucher)) this.ui.toast(closeCall(sc) ? 'Too close to call' : (n => `${n} ${n === 'You' ? 'hold' : 'holds'} shot`)(this.players[sc.winner].name), 'good');
       Sound.tick();
     }
     /* What the bowl did, seen and heard: a toucher or a draw right on the jack gets a gold ripple, a chime
@@ -3515,7 +3557,7 @@ class Game {
 const $ = id => document.getElementById(id);
 const scene = new SceneRenderer($('scene'));
 const headView = new HeadView($('headCanvas'));
-const layout = { ctrlTop: 0 };
+const layout = { ctrlTop: 0, hvBottom: 0 };
 
 // ======================= guided lesson (practice) =======================
 /* A coach card that walks a new player through their first deliveries in practice. Each step either waits
@@ -3585,8 +3627,8 @@ const LESSON = [
     do: () => coarsePointer() ? 'Drag left or right across the green to swing the dashed aim line.' : `Drag across the green, or press ${kbd('←')} ${kbd('→')}, to swing the dashed aim line.`,
     doneText: 'That dashed line is only the direction the ball sets off in.' },
   { k: 'Weight', t: 'Hold, then let go', wait: 'jack', spot: '#deliverBtn',
-    p: () => '<b>Weight</b> is how hard you bowl. While you hold, the meter fills; hold too long and it falls back.\nThe jack has no bias and runs straight, so keep the aim near 0°. It must stop at least 23 m from the mat.',
-    do: () => `Press and hold <b>Hold to deliver jack</b>${coarsePointer() ? '' : ` (or ${kbd('Space')})`}, and let go about halfway along the meter.` },
+    p: () => '<b>Weight</b> is how hard you bowl. While you hold, the ring round the button fills; hold too long and it falls back.\nThe jack has no bias and runs straight, so keep the aim near 0°. It must stop at least 23 m from the mat.',
+    do: () => `Press and hold the round <b>Hold</b> button${coarsePointer() ? '' : ` (or ${kbd('Space')})`}, and let go when the ring is about halfway round.` },
   { k: 'Bias', t: 'What is bias?', fig: 'bias',
     p: () => '<b>Bias is the curve a bowl takes as it slows down.</b> One side of a bowl is shaped differently from the other, so it runs nearly straight while it is quick, then curls in as it slows.\nSo you don\'t aim at the jack. Choose a wider line (bowlers call it <i>taking green</i>) and let the bias bring the bowl to the jack. The small gold hook at the end of your aim line shows which way it will curve.' },
   { k: 'First bowl', t: 'Bowl your first wood', wait: 'bowl', spot: '#deliverBtn',
@@ -3604,8 +3646,8 @@ const LESSON = [
   { k: 'Backhand', t: 'Bowl a backhand', wait: 'bowl', spot: '#deliverBtn',
     p: () => 'The aim line has swung to the other side of the jack, and the gold hook now points the other way. The same weight still carries it the same distance.',
     do: () => 'Deliver the backhand.' },
-  { k: 'The head', t: 'Look at the head', result: true, spot: () => narrowScreen() ? '#btnHeadToggle' : '#headPanel',
-    p: () => narrowScreen() ? 'Tap <b>Head</b> to see the jack and bowls from directly above. The nearest bowl is ringed in gold, with its distance, and <b>Measure</b> compares any two.'
+  { k: 'The head', t: 'Look at the head', result: true, spot: () => narrowScreen() ? '#coMin' : '#headPanel',
+    p: () => narrowScreen() ? 'Fold this card away with the arrow above: the <b>Head</b> view, top right, shows the jack and bowls from directly above. The nearest bowl is ringed in gold, with its distance. Tap <b>Head</b> to hide or show it.'
       : `The <b>Head</b> panel shows the jack and bowls from directly above. The nearest bowl is ringed in gold, with its distance; <b>Measure</b> (${kbd('M')}) compares any two.` },
   { k: 'On your own', t: 'Over to you', final: true,
     p: () => 'That\'s the lesson. When you finish, the practice tools come back: <b>Place jack</b> sets a jack at a standard length, <b>Reset head</b> clears your bowls, <b>New end</b> starts again from the other end, and <b>Bowls &amp; green</b> lets you try other bowls and green speeds. Faster greens draw wider.',
@@ -3621,7 +3663,7 @@ function lessonResult(r) {
 function lessonAdvice(r) {
   if (!r) return 'Use the delivery trace and the head to judge your last bowl: was it short or long, and which side of the jack did it finish?';
   if (r.dead) {
-    if (/ditch|left the green/i.test(r.dead)) return 'It ran into the ditch: far too much weight. Let go earlier on the meter.';
+    if (/ditch|left the green/i.test(r.dead)) return 'It ran into the ditch: far too much weight. Let go earlier on the ring.';
     if (/14 m/.test(r.dead)) return 'It stopped far too short. Hold longer before you let go: aim for about the weight you gave the jack.';
     return 'It finished outside the rink, so the line was too far out. Bring your aim back towards the jack.';
   }
@@ -3640,7 +3682,7 @@ function lessonAdvice(r) {
       ? `<b>Narrow</b> by ${fmtDist(Math.abs(L.dx))}: it finished on the side it was curving towards, so it needed more room. Aim wider, about ${step}° to the ${dir}${key ? ' ' + key : ''}.`
       : `<b>Wide</b> by ${fmtDist(Math.abs(L.dx))}: it never curved far enough to reach the jack, so it had too much green. Aim closer, about ${step}° to the ${dir}${key ? ' ' + key : ''}.`);
   } else if (Math.abs(L.dx) <= 0.15) out.push('The line was good.');
-  if (!Settings.expert && Math.abs(L.dy) > 0.25) out.push('The gold mark on the meter shows the weight you just used.');
+  if (!Settings.expert && Math.abs(L.dy) > 0.25) out.push('The gold mark on the ring shows the weight you just used.');
   return out.join(' ');
 }
 function jackHint(res) {
@@ -3657,7 +3699,9 @@ const Coach = {
     this.on = true; this.min = false; this.done.clear(); this.last = null;
     this.go(game.turn && game.turn.kind === 'bowl' ? LESSON.findIndex(s => s.k === 'Bias') : 0);
   },
-  stop() { this.on = false; clearTimeout(this.timer); this.spot(null); $('coach').hidden = true; $('app').classList.remove('coaching'); UI.refresh(); },
+  stop() { this.on = false; clearTimeout(this.timer); this.spot(null); $('coach').hidden = true; $('app').classList.remove('coaching', 'coach-folded'); UI.refresh(); },
+  // folded (by hand, or while a bowl runs) the card leaves room for the head view on a phone
+  fold() { $('app').classList.toggle('coach-folded', this.on && ($('coach').classList.contains('min') || $('coach').classList.contains('rolling'))); },
   go(i) {
     clearTimeout(this.timer); this.i = clamp(i, 0, LESSON.length - 1); this.flash = ''; this.aim0 = game.aim;
     if (this.step.prep) this.step.prep();
@@ -3679,7 +3723,7 @@ const Coach = {
     if (!this.on) return;
     if (game.mode !== 'practice') { this.stop(); return; }
     const s = this.step;
-    $('coach').classList.toggle('rolling', ['release', 'rolling', 'settle'].includes(game.phase));
+    $('coach').classList.toggle('rolling', ['release', 'rolling', 'settle'].includes(game.phase)); this.fold();
     if (s.wait === 'aim' && Math.abs(game.aim - this.aim0) > 0.05 * Math.PI / 180) this.complete(1800);
     if (s.wait === 'back' && game.hand === 'back' && game.turn && game.turn.kind === 'bowl') this.complete(900);
     if (this.jackFirst !== this.needJack()) this.render();
@@ -3691,7 +3735,7 @@ const Coach = {
   render() {
     const s = this.step, el = $('coach'), waiting = !!s.wait && !this.done.has(this.i), val = v => typeof v === 'function' ? v() : (v || '');
     this.jackFirst = this.needJack();
-    el.hidden = false; el.classList.toggle('min', this.min); $('app').classList.add('coaching');
+    el.hidden = false; el.classList.toggle('min', this.min); $('app').classList.add('coaching'); this.fold();
     $('coMin').setAttribute('aria-expanded', String(!this.min)); $('coMin').title = this.min ? 'Open the lesson' : 'Fold away';
     $('coK').textContent = `Guided lesson · ${this.i + 1} of ${LESSON.length}`;
     $('coSteps').innerHTML = LESSON.map((_, i) => `<i class="${i < this.i || this.done.has(i) ? 'on' : i === this.i ? 'cur' : ''}"></i>`).join('');
@@ -3716,6 +3760,42 @@ $('coEnd').onclick = () => Coach.stop();
 $('coMin').onclick = () => { Coach.min = !Coach.min; Coach.render(); };
 $('traceKey').innerHTML = LessonFig.traceKey();
 if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--coach-h', $('coach').offsetHeight + 'px')).observe($('coach'));
+
+// only touch the DOM when the markup really changed (a rewrite restarts animations, such as the flashing dot)
+const setHtml = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
+/* The weight ring round the deliver button, a swing meter: 20 segments over 270°, open at the foot,
+   filling clockwise from green to gold; the last fifth (the drive band) is red. A gold tick marks the last weight. */
+const Ring = {
+  N: 20, R: 62, SW: 9, A0: 135, SPAN: 270, w: -1, ghost: undefined, segs: null,
+  colour(f) {
+    const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t)), d = Weight.DRIVE_AT;
+    const g = [134, 180, 110], y = [226, 209, 132], gold = [201, 168, 98], o = [216, 145, 108], r = [196, 86, 64];
+    return `rgb(${f < 0.5 ? mix(g, y, f / 0.5) : f < d ? mix(y, gold, (f - 0.5) / (d - 0.5)) : mix(o, r, (f - d) / (1 - d))})`;
+  },
+  pt(deg, r) { const a = deg * Math.PI / 180; return [75 + r * Math.cos(a), 75 + r * Math.sin(a)]; },
+  arc(d0, d1, r) { const [x0, y0] = this.pt(d0, r), [x1, y1] = this.pt(d1, r); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; },
+  build() {
+    const svg = $('meterRing'), seg = this.SPAN / this.N, gap = 2.2, tx = 'font-size="9" font-weight="600" text-anchor="middle" font-family="Plus Jakarta Sans,system-ui,sans-serif"';
+    let s = `<path d="${this.arc(this.A0 - 1, this.A0 + this.SPAN + 1, this.R)}" stroke="rgba(10,16,12,.5)" stroke-width="${this.SW + 4}" fill="none" stroke-linecap="round"/>`;   // a dark halo: the ring reads over grass and over the mat
+    for (let i = 0; i < this.N; i++) s += `<path d="${this.arc(this.A0 + i * seg + gap / 2, this.A0 + (i + 1) * seg - gap / 2, this.R)}" stroke-width="${this.SW}" fill="none"/>`;
+    const [lx, ly] = this.pt(this.A0, this.R + 4), [rx, ry] = this.pt(this.A0 + this.SPAN, this.R + 4);
+    s += `<line class="rg-ghost" stroke="#c9a862" stroke-width="2.5" stroke-linecap="round"/>`;
+    s += `<text x="${lx - 4}" y="${ly + 14}" fill="rgba(236,229,210,.7)" ${tx}>0</text><text x="${rx + 4}" y="${ry + 14}" fill="rgba(216,145,108,.9)" ${tx}>MAX</text>`;
+    svg.innerHTML = s; this.segs = [...svg.querySelectorAll('path')].slice(1); this.gl = svg.querySelector('.rg-ghost');
+  },
+  set(w, ghost) {
+    if (!this.segs) this.build();
+    const lit = Math.round(w * this.N * 4) / 4;   // redraw only when a segment changes
+    if (lit !== this.w) {
+      this.w = lit;
+      this.segs.forEach((p, i) => p.setAttribute('stroke', i / this.N < w - 1e-6 ? this.colour((i + 0.5) / this.N) : (i + 1) / this.N > Weight.DRIVE_AT + 1e-6 ? 'rgba(216,145,108,.42)' : 'rgba(236,229,210,.24)'));
+    }
+    if (ghost !== this.ghost) {
+      this.ghost = ghost; this.gl.style.display = ghost == null ? 'none' : '';
+      if (ghost != null) { const d = this.A0 + this.SPAN * ghost, [x0, y0] = this.pt(d, this.R - this.SW / 2 - 3), [x1, y1] = this.pt(d, this.R + this.SW / 2 + 5); Object.entries({ x1: x0, y1: y0, x2: x1, y2: y1 }).forEach(([k, v]) => this.gl.setAttribute(k, v.toFixed(2))); }
+    }
+  }
+};
 
 const UI = {
   toastTimer: 0, bannerTimer: 0, noticeCb: null, measure: [], measuring: false, pulseT: 0, lastStats: '',
@@ -3774,6 +3854,7 @@ const UI = {
     $('scoreboard').style.display = inGame ? '' : 'none';
     $('controls').style.display = inGame ? '' : 'none';
     $('headPanel').style.display = inGame ? '' : 'none';
+    $('app').classList.toggle('nohead', !Settings.headView); $('btnHeadView').setAttribute('aria-pressed', String(!!Settings.headView));
     $('practiceBar').hidden = g.mode !== 'practice' || Coach.on;   // the lesson card takes its place
     Coach.sync();
     if (!inGame) return;
@@ -3781,27 +3862,21 @@ const UI = {
     const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.locked;
     $('controls').classList.toggle('busy', !ready || !!this.noticeCb);
     $('controls').classList.toggle('rollmode', (g.phase === 'rolling' || g.phase === 'settle') && !this.noticeCb);
-    $('controls').classList.toggle('stowed', !['aim', 'charge', 'release'].includes(g.phase) || !!this.noticeCb);
+    // off the green whenever there is nothing to do with them: from the moment the bowl leaves the hand, and all through the opponent's turn
+    $('controls').classList.toggle('stowed', !ready || !!this.noticeCb);
     $('controls').setAttribute('aria-busy', String(!ready));
     $('scene').classList.toggle('aimable', g.phase === 'aim');
     if (t) {
       const isJack = t.kind === 'jack';
-      $('phaseK').textContent = g.mode === 'match' ? g.endLabel() : 'Practice';
-      const mb = g.member, teams = g.isTeams(), nb = g.mode === 'match' ? g.match.discipline.bowls : 4;
-      const who = teams ? `${mb.name}, ${mb.role.toLowerCase()}` : pl.name;
-      $('phaseT').textContent = isJack ? (g.mode === 'match' ? `${who} · the jack` : 'Deliver the jack')
-        : (g.mode === 'match' ? `${who} · bowl ${Math.min(nb, mb.played + 1)} of ${nb}` : `Bowl ${g.practice.count + 1}`);
-      if (teams) $('phaseK').textContent = `${g.endLabel()} · ${pl.name}`;
-      if (g.phase === 'summary' || g.phase === 'over') $('phaseT').textContent = g.phase === 'over' ? 'Match complete' : 'End complete';
+      // who is on the mat is on the scoreboard (the flashing dot); in a team game the readout names the player
+      const mb = g.member; this.who = g.isTeams() ? `${mb.name}, ${mb.role.toLowerCase()}` : '';
       $('grpHand').hidden = isJack; $('grpMat').hidden = !isJack;
       $('btnFore').setAttribute('aria-pressed', String(g.hand === 'fore')); $('btnBack').setAttribute('aria-pressed', String(g.hand === 'back'));
       $('matVal').textContent = g.matRear.toFixed(2).replace(/0$/, '') + ' m';
       $('matBack').disabled = !g.canMoveMat() || g.matRear <= W.MAT_MIN; $('matFwd').disabled = !g.canMoveMat() || g.matRear >= W.MAT_MAX;
-      const ghost = g.lastWeights[g.weightKey(t.kind, t.player, t.member)];
-      $('meterGhost').style.opacity = ghost == null || Settings.expert ? 0 : .85; if (ghost != null) $('meterGhost').style.left = (ghost * 100) + '%';
       const rolling = g.phase === 'rolling' || g.phase === 'settle';
-      $('deliverBtn').firstChild.textContent = rolling ? 'Hold to hurry' : g.aiTurn ? 'Computer to bowl' : g.remoteTurn ? `${pl.name} to bowl` : isJack ? 'Hold to deliver jack' : 'Hold to deliver';
-      $('deliverBtn').lastChild.textContent = rolling ? 'four times as fast' : g.aiTurn ? `${g.ai.level.name} standard` : g.remoteTurn ? 'on their computer' : 'or hold Space';
+      $('dlT').textContent = rolling ? 'Hurry' : 'Hold'; $('dlS').textContent = rolling ? 'hold · ×4' : isJack ? 'to roll jack' : 'to bowl';
+      $('deliverBtn').setAttribute('aria-label', rolling ? 'Hold to hurry, four times as fast' : isJack ? 'Hold to deliver the jack' : 'Hold to deliver');
     }
     if (g.mode === 'practice') {
       const p = Profiles.byId(g.practice.profileId);
@@ -3813,30 +3888,38 @@ const UI = {
   refreshAim() { $('aimVal').textContent = fmtAim(game.aim, Settings.expert); Coach.sync(); },
   coach(evt, data) { Coach.event(evt, data); },
   refreshWeight() {
-    const g = game, w = g.phase === 'charge' || g.phase === 'release' ? g.weight : (g.phase === 'rolling' || g.phase === 'settle' ? (g.lastWeights[g.weightKey(g.turn.kind, g.turn.player, g.turn.member)] || 0) : 0);
-    $('meterFill').style.width = (w * 100).toFixed(1) + '%';
-    $('weightVal').textContent = !['charge', 'release', 'rolling', 'settle'].includes(g.phase) ? '—' : `${Math.round(w * 100)}% · ${Weight.toSpeed(w).toFixed(2)} m/s${w > Weight.DRIVE_AT ? ' · drive' : ''}`;
+    const g = game, t = g.turn, w = g.phase === 'charge' || g.phase === 'release' ? g.weight : 0;
+    const last = t ? g.lastWeights[g.weightKey(t.kind, t.player, t.member)] : null, ghost = last == null || Settings.expert ? null : last;
+    const charging = g.phase === 'charge' || g.phase === 'release';
+    $('controls').classList.toggle('charging', g.phase === 'charge');
+    if (g.phase === 'charge') $('dlT').textContent = 'Release';
+    Ring.set(w, ghost);
+    const html = charging ? `${Math.round(w * 100)}% <span>· ${Weight.toSpeed(w).toFixed(2)} m/s${w > Weight.DRIVE_AT ? ' · drive' : ''}</span>`
+      : [this.who ? esc(this.who) : t && t.kind === 'jack' ? 'Jack' : '', ghost != null ? `<span>Last</span> ${Math.round(ghost * 100)}%` : ''].filter(Boolean).join(' <span>·</span> ');
+    if (html !== this.wreadHtml) { this.wreadHtml = html; $('weightVal').innerHTML = html; }
   },
   renderScoreboard() {
     const g = game, sb = $('scoreboard');
     if (g.mode === 'practice') {
       const p = Profiles.byId(g.practice.profileId);
-      sb.innerHTML = `<div class="sb-cell"><div class="kicker">Practice</div><div class="sb-big num">${g.turn && g.turn.kind === 'jack' ? 'Jack' : 'Bowl ' + (g.practice.count + (['aim', 'charge', 'release', 'rolling', 'settle'].includes(g.phase) ? 1 : 0))}</div></div>
+      setHtml(sb, `<div class="sb-cell"><div class="kicker">Practice</div><div class="sb-big num">${g.turn && g.turn.kind === 'jack' ? 'Jack' : 'Bowl ' + (g.practice.count + (['aim', 'charge', 'release', 'rolling', 'settle'].includes(g.phase) ? 1 : 0))}</div></div>
         <div class="sb-cell sb-opt"><div class="kicker">Bowls</div><div class="sb-meta">${p.maker} ${p.model}</div></div>
-        <div class="sb-cell sb-opt"><div class="kicker">Green</div><div class="sb-meta num">${g.world.T.toFixed(1)} s · ${GreenSpeed.label(g.world.T)}</div></div>`;
+        <div class="sb-cell sb-opt"><div class="kicker">Green</div><div class="sb-meta num">${g.world.T.toFixed(1)} s · ${GreenSpeed.label(g.world.T)}</div></div>`);
       return;
     }
     const m = g.match, act = g.turn ? g.turn.player : -1;
     const total = m.discipline.positions * m.discipline.bowls;
-    const pc = i => { const p = g.players[i], hex = colourHex(p.colour); let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}" style="--c:${hex}"></span>`;
+    // the bowl being played (it counts as played once it settles)
+    const pc = i => { const p = g.players[i], hex = colourHex(p.colour), cur = i === act && ['aim', 'charge', 'release', 'rolling', 'settle'].includes(g.phase) && g.turn.kind === 'bowl' ? p.played : -1;
+      let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}${k === cur ? ' cur' : ''}" style="--c:${hex}"></span>`;
       return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
     // online, each side's challenge level is shown to both players
     const lvl = i => { if (!g.link) return ''; const x = onlineLevel(i) === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
     const green = m.secret && !m.over ? 'green ?' : `<span class="num">${g.world.T.toFixed(1)} s</span>`;
-    sb.innerHTML = `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra' : 'End'} <span style="text-transform:none;letter-spacing:0">${g.isExtraEnd() ? '' : fmt}</span></div><div class="sb-big num">${g.endNo}</div></div>${pc(0)}${pc(1)}
-      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''} · Bowls · Green</div><div class="sb-meta">${pr.model} · ${green}</div></div>`;
+    setHtml(sb, `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra' : 'End'} <span style="text-transform:none;letter-spacing:0">${g.isExtraEnd() ? '' : fmt}</span></div><div class="sb-big num">${g.endNo}</div></div>${pc(0)}${pc(1)}
+      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''} · Bowls · Green</div><div class="sb-meta">${pr.model} · ${green}</div></div>`);
   },
   // head panel: drawn every frame from the same bodies the scene uses
   drawHead(dt) {
@@ -3934,6 +4017,11 @@ const game = new Game(UI);
 window.BiasGame = game;
 
 // ---------- camera rig ----------
+// the most the camera may tilt down and still show the top of the far bank below the phone's head view
+function bankCap(camY, camZ, F, Hd) {
+  if (!layout.hvBottom) return Infinity;
+  return Math.atan2(camZ - W.BANK_H, W.GREEN_LEN + W.DITCH_W - camY) - Math.atan((layout.hvBottom - Hd / 2) / F);
+}
 function pitchFor(camY, camZ, F, yTarget, screenY, Hd) { return Math.atan2(camZ, yTarget - camY) - Math.atan((screenY - Hd / 2) / F); }
 function updateCamera(dt, snap) {
   const cam = scene.cam, Hd = scene.H, F0 = scene.baseF(), rm = reduced();
@@ -3944,12 +4032,15 @@ function updateCamera(dt, snap) {
     const t = rm ? 1.2 : game.clock * 0.05, y = lerp(21.2, 24.2, 0.5 - 0.5 * Math.cos(t)), z = 0.95, F = wide ? F0 * 1.1 : Math.max(F0 * 1.1, Hd * 0.7);
     tgt = { x: (wide ? -1.25 : 0) + Math.sin(t * 0.8) * 0.18, y, z, F, pitch: pitchFor(y, z, F, 29.1, Hd * (wide ? 0.66 : 0.72), Hd) }; snap = true;
   } else {
-    const z0 = CAM.z, camY = game.matFront - CAM.back;
+    // an upright phone stands a little closer behind the mat (with a longer lens, see baseF), so the mat sits
+    // down under the Hold button, as it does on a wide screen, rather than halfway up the green
+    const tall = scene.tall(), z0 = CAM.z, camY = game.matFront - (tall ? CAM.backTall : CAM.back);
     const rel = releasePoint(game.matRear, game.hand, Settings.arm);
-    const relY = Math.min(Hd * 0.80, layout.ctrlTop - Hd * 0.05);
+    const relY = tall ? layout.ctrlTop + Hd * 0.02 : Math.min(Hd * 0.80, layout.ctrlTop - Hd * 0.05);
     // keep the release point clear of the controls, the horizon no lower than a third of the way down,
-    // and (for a close camera with a long lens) no higher than CAM.sky, so the far end stays in view
-    const tiltMax = Math.atan((Hd / 2 - Hd * CAM.sky) / F0);
+    // and (for a close camera with a long lens) no higher than CAM.sky, so the far end stays in view;
+    // on a phone, the top of the far bank stays below the head view, so the panel never hides the ditch, the head or the end of the aim line
+    const tiltMax = Math.min(Math.atan((Hd / 2 - Hd * CAM.sky) / F0), bankCap(camY, z0, F0, Hd));
     const pitch0 = Math.min(tiltMax, Math.max(pitchFor(camY, z0, F0, rel.y, relY, Hd), Math.atan((Hd / 2 - Hd * 0.34) / F0)));
     tgt = { x: 0, y: camY, z: z0, F: F0, pitch: pitch0 };
     if (game.zoom && (game.phase === 'aim' || game.phase === 'charge')) {
@@ -3960,7 +4051,7 @@ function updateCamera(dt, snap) {
       const maxY = Math.max(camY, Math.min(jy - 6.2, W.GREEN_LEN - 7.6));
       const y = clamp(game.trackY - 6.6, camY, maxY), k = clamp((y - camY) / Math.max(1, maxY - camY), 0, 1);
       const z = lerp(z0, 1.9, k), lookY = lerp(rel.y, jy, k), sy = lerp(relY, Hd * 0.6, k);
-      tgt = { x: 0, y, z, F: F0, pitch: Math.min(tiltMax, pitchFor(y, z, F0, lookY, sy, Hd)) }; rate = 2.2;
+      tgt = { x: 0, y, z, F: F0, pitch: Math.min(tiltMax, bankCap(y, z, F0, Hd), pitchFor(y, z, F0, lookY, sy, Hd)) }; rate = 2.2;
     }
   }
   if (game.snapCam) { snap = true; game.snapCam = false; }
@@ -4568,8 +4659,8 @@ const TUT = [
   { k: 'Bias', fig: 'bias', t: 'What is bias?', p: 'Bias is the curve a bowl takes as it slows down. One side of every bowl is shaped differently from the other, so it runs nearly straight while it is quick, then curls in as it slows. So you never aim straight at the jack: choose a wider line, and let the bias bring the bowl to the jack.', keys: 'For a step-by-step lesson on the green, choose Practice, then Guided lesson.' },
   { k: 'Aim', fig: 'aim', t: 'Choose your line', p: 'Drag across the green, or use the arrow keys, to set the line the bowl leaves your hand on. The dashed line shows only that starting direction; the bowl will not follow it.', keys: '← → aim · Shift for larger steps · Z to look closer at the head' },
   { k: 'Hand', fig: 'hand', t: 'Forehand or backhand', p: 'Every bowl is biased and curves as it slows. A right-hander\'s forehand starts out to the right and draws in from the right; the backhand mirrors it. The small gold hook at the end of the aim line shows which way this hand will draw.', keys: 'F forehand · B backhand' },
-  { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold Deliver (or Space). The meter rises and falls; release at the weight you want. The top fifth is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
-  { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The inset shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls.', keys: 'M measure · the gold mark on the meter is your last weight' },
+  { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold the round Hold button (or Space). The ring round it fills and falls back, like a swing meter; let go at the weight you want. The red fifth at the end is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
+  { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The head view, top right, shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls.', keys: 'H shows or hides the head view · M measure · the gold mark on the ring is your last weight' },
   { k: 'The rules in brief', fig: 'rules', t: 'Jack, touchers, dead bowls', p: 'The jack must stop at least 23 m from the mat. Bowls that touch the jack are chalked as touchers and stay live even in the ditch; other bowls in the ditch are dead. The nearest bowl scores, plus each of that player\'s bowls inside the opponent\'s best.', keys: 'Full rules are in the menu.' }
 ];
 let tutStep = 0;
@@ -4609,12 +4700,20 @@ function drawTutFig() {
     if (f === 'hand') { g.fillText('forehand', w / 2 - 20, fore > 0 ? my - 46 : my + 56); g.fillText('backhand', w / 2 - 20, fore > 0 ? my + 56 : my - 46); }
     else g.fillText('initial line only', w / 2 - 40, my - 34);
   } else if (f === 'weight') {
-    const x0 = 40, x1 = w - 40, y = h / 2 - 6;
-    g.fillStyle = cream + '.08)'; g.fillRect(x0, y, x1 - x0, 14);
-    g.fillStyle = 'rgba(216,145,108,.25)'; g.fillRect(x0 + (x1 - x0) * .8, y, (x1 - x0) * .2, 14);
-    g.fillStyle = '#e6dcc0'; g.fillRect(x0, y, (x1 - x0) * .56, 14);
-    g.fillStyle = gold; g.fillRect(x0 + (x1 - x0) * .52, y - 5, 2, 24);
-    g.fillStyle = cream + '.7)'; g.font = '12px "Plus Jakarta Sans",system-ui,sans-serif'; g.fillText('draw', x0, y + 36); g.fillText('drive', x0 + (x1 - x0) * .8, y + 36); g.fillText('last weight', x0 + (x1 - x0) * .52 - 20, y - 12);
+    // the weight ring round the deliver button, part filled, with the last weight marked
+    const cx = w / 2, cy = h / 2 + 4, R = Math.min(52, h / 2 - 16), seg = Ring.SPAN / Ring.N, rad = d => d * Math.PI / 180;
+    g.lineWidth = 8;
+    for (let i = 0; i < Ring.N; i++) {
+      const lit = i / Ring.N < 0.56; g.strokeStyle = lit ? Ring.colour((i + 0.5) / Ring.N) : (i + 1) / Ring.N > Weight.DRIVE_AT + 1e-6 ? 'rgba(216,145,108,.3)' : 'rgba(0,0,0,.28)';
+      g.beginPath(); g.arc(cx, cy, R, rad(Ring.A0 + i * seg + 1.1), rad(Ring.A0 + (i + 1) * seg - 1.1)); g.stroke();
+    }
+    g.lineWidth = 1.5;
+    g.fillStyle = '#eee7d4'; g.beginPath(); g.arc(cx, cy, R * 0.66, 0, TAU); g.fill();
+    g.fillStyle = '#16201b'; g.font = '600 13px "Plus Jakarta Sans",system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('Hold', cx, cy + 4);
+    const ga = rad(Ring.A0 + Ring.SPAN * 0.5); g.strokeStyle = gold; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx + Math.cos(ga) * (R - 7), cy + Math.sin(ga) * (R - 7)); g.lineTo(cx + Math.cos(ga) * (R + 9), cy + Math.sin(ga) * (R + 9)); g.stroke(); g.lineWidth = 1.5;
+    g.fillStyle = cream + '.7)'; g.font = '12px "Plus Jakarta Sans",system-ui,sans-serif';
+    g.textAlign = 'right'; g.fillText('draw', cx - R - 16, cy + 4); g.textAlign = 'left'; g.fillStyle = 'rgba(216,145,108,.9)'; g.fillText('drive', cx + R + 16, cy + 4);
+    g.fillStyle = cream + '.7)'; g.fillText('last weight', cx + 12, cy - R - 6); g.textAlign = 'start';
   } else if (f === 'head') {
     const cx = w / 2, cy = h / 2; g.strokeStyle = cream + '.18)'; g.setLineDash([2, 4]); g.beginPath(); g.arc(cx, cy, 40, 0, TAU); g.stroke(); g.setLineDash([]);
     bowl(cx + 14, cy + 16, '#7c2434'); bowl(cx - 30, cy - 8, '#2a416c', true); bowl(cx + 36, cy - 30, '#7c2434'); jack(cx, cy);
@@ -4652,9 +4751,23 @@ const endAim = e => { if (aimPointer === e.pointerId) aimPointer = null; };
 scene.cv.addEventListener('pointerup', endAim); scene.cv.addEventListener('pointercancel', endAim);
 scene.cv.addEventListener('contextmenu', e => e.preventDefault());
 
+// Phones are played upright. Only some browsers allow a lock (Android, in full screen); elsewhere the
+// "turn your phone upright" screen covers a sideways phone, and an offline game waits behind it.
+let portraitTried = false;
+function lockPortrait() {
+  if (portraitTried || !coarsePointer()) return; portraitTried = true;
+  try { const o = screen.orientation; if (o && o.lock) o.lock('portrait').catch(() => {}); } catch (e) {}
+}
+const mqSideways = matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)');
+const onSideways = () => {
+  if (game.link || game.mode === 'title') return;
+  if (mqSideways.matches) { game.paused = true; if (game.phase === 'charge') game.cancelCharge(); }
+  else if (!UI.anyOpen()) { game.paused = false; last = performance.now(); }
+};
+if (mqSideways.addEventListener) mqSideways.addEventListener('change', onSideways);
 const dbtn = $('deliverBtn');
 dbtn.addEventListener('pointerdown', e => {
-  if (e.button !== 0) return; e.preventDefault(); Sound.init();
+  if (e.button !== 0) return; e.preventDefault(); Sound.init(); lockPortrait();
   if (game.phase === 'rolling' || game.phase === 'settle') { game.hurry = true; dbtn.setPointerCapture(e.pointerId); dbtn.classList.add('charging'); return; }
   if (game.startCharge()) { dbtn.setPointerCapture(e.pointerId); dbtn.classList.add('charging'); }
 });
@@ -4683,9 +4796,8 @@ $('headCanvas').addEventListener('pointerdown', e => {
   const i = UI.measure.indexOf(b.id); if (i >= 0) UI.measure.splice(i, 1); else { UI.measure.push(b.id); if (UI.measure.length > 2) UI.measure.shift(); }
   UI.lastStats = '';
 });
-function setHeadOpen(open) { $('headPanel').classList.toggle('open', open); $('btnHeadToggle').setAttribute('aria-expanded', String(open)); requestAnimationFrame(() => headView.resize()); }
-$('btnHeadToggle').onclick = () => setHeadOpen(!$('headPanel').classList.contains('open'));
-$('hpClose').onclick = () => setHeadOpen(false);
+function setHeadView(on) { Settings.headView = on; saveSettings(); UI.refresh(); requestAnimationFrame(() => headView.resize()); }
+$('btnHeadView').onclick = () => setHeadView(!Settings.headView);
 
 window.addEventListener('keydown', e => {
   Sound.init();
@@ -4720,7 +4832,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'z') { if (game.canAim() || game.phase === 'charge') game.zoom = !game.zoom; }
   else if (k === 'm') toggleMeasure();
   else if (k === 's') toggleSound();
-  else if (k === 'h') setHeadOpen(!$('headPanel').classList.contains('open'));
+  else if (k === 'h') setHeadView(!Settings.headView);
 });
 window.addEventListener('keyup', e => {
   if (e.key === ' ') game.hurry = false;
@@ -4728,8 +4840,14 @@ window.addEventListener('keyup', e => {
 });
 window.addEventListener('blur', () => { game.hurry = false; if (game.phase === 'charge') { dbtn.classList.remove('charging'); game.cancelCharge(); } });
 
+// the foot of the small head view (and the practice tools) on a phone, which the far bank must stay below
+function measureHeadView() {
+  if (!narrowScreen() || game.mode === 'title') { layout.hvBottom = 0; return; }
+  const foot = ['headPanel', 'practiceBar'].reduce((m, id) => { const e = $(id); return e.offsetParent ? Math.max(m, e.getBoundingClientRect().bottom) : m; }, 0);
+  layout.hvBottom = foot ? (foot + 8) * scene.dpr : 0;   // the whole panel, its note line included
+}
 function onResize() {
-  scene.resize(); headView.resize();
+  scene.resize(); headView.resize(); measureHeadView();
   if (!$('controls').classList.contains('stowed') || !layout.ctrlTop) {   // a stowed bar keeps the last full-bar measurement
     layout.ctrlTop = ($('controls').style.display === 'none' ? window.innerHeight : $('controls').getBoundingClientRect().top) * scene.dpr;
     if (game.mode === 'title' || !$('controls').offsetHeight) layout.ctrlTop = scene.H * 0.92;
@@ -4762,6 +4880,7 @@ function tick(dt) {
   game.update(dt);
   if (game.phase === 'charge' || game.phase === 'release' || game.phase === 'rolling') UI.refreshWeight();
   const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title' && !$('controls').classList.contains('stowed')) layout.ctrlTop = ct;
+  measureHeadView();
   updateCamera(dt, false);
   if (debugCam) { Object.assign(scene.cam, debugCam); scene.cam.update(); }
   const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo'))) scene.render(buildView(game.acc / W.DT));   // the title still hides the green
