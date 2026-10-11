@@ -237,6 +237,32 @@ rather than loading from a CDN, and commit compiled output alongside its source.
 `visualisations/aqa-chemistry-hub/` shows the pattern, including how to run Babel
 through the browser when a JSX tool needs compiling.
 
+## Keeping builds cheap: one agent, subagents for reading
+
+Measured on the October 2026 builds (Titration Lab, Electrochemical Cells,
+Dynamic Equilibrium, Atmosphere, Radioactivity): subagents added 10–20% to a
+build and didn't lower the cost per KB of finished page. The main
+conversation re-reading its own context on every turn was 45–60% of every
+session's cost.
+
+- **Build a page with a single agent.** The page's code has to sit in one
+  context anyway. Don't spawn subagents to write a spec, UX proposal or test
+  plan from a brief the main agent already has: each one pays about 60–70k
+  tokens just to start, and the main agent still does all the building.
+- **Use subagents for jobs that are mostly reading and return a short
+  report**: AQA spec audits, test and edge-case reviews, checking one change
+  across many pages. Run them on Sonnet (`model: "sonnet"`). The Sonnet test
+  review on Electrochemical Cells read about 276k tokens of files and sent back
+  2k, for about $3.
+- **Fan out site-wide audits.** The same check across every page (the
+  light/dark audit was 321 turns in one thread, the most expensive session of
+  the lot) goes to Sonnet subagents in batches of pages, each reporting back
+  what it changed or found.
+- **Keep the main thread's context small.** Start a new session for follow-up
+  fixes rather than continuing a finished build, especially after a break.
+  Titration Lab's build averaged about 460k tokens of context per turn and
+  ran overnight.
+
 ## Previewing before pushing
 
 Serve the repo and open the page you changed:
