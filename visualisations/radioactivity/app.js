@@ -19,20 +19,36 @@ const $$ = s => [...document.querySelectorAll(s)];
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const fmt = n => n.toLocaleString('en-GB');
 
-// Hex only: canvases and Chart.js read these directly.
-const THEMES = {
-  normal: {
+// Hex only: canvases and Chart.js read these directly. One palette for each
+// site theme (assets/sst/sst.js); THEMES.normal and THEMES.present take the
+// current one, so a theme change repaints without touching the drawing code.
+const PALETTES = {
+  dark: {
     stage: '#091321', text: '#edf2f8', body: '#c3ccd8', muted: '#8693a5', line: '#182535', line2: '#2c3d52',
     parent: '#b199f4', daughter: '#26344a', daughterEdge: '#4a5b72', guide: '#f5c451', theory: '#8693a5',
     act: '#47b5fa', alpha: '#f5b14c', beta: '#47b5fa', gamma: '#6fe3a3', flash: '#ffffff', mystery: '#dfe6ee',
     metal: '#3a4a60', metalEdge: '#5b6d85', tube: '#56657a', tubeEdge: '#8b9bb0', window: '#c9b27a',
-    paper: '#efe9d8', al: '#aeb8c4', pb: '#5f6874', lw: 1, font: 12
+    paper: '#efe9d8', al: '#aeb8c4', pb: '#5f6874'
+  },
+  light: {
+    stage: '#f8fafd', text: '#142030', body: '#354150', muted: '#596473', line: '#e1e6ec', line2: '#b5bfc9',
+    parent: '#6c4ab3', daughter: '#d5dde6', daughterEdge: '#9aa8b8', guide: '#a86b00', theory: '#596473',
+    act: '#0068b2', alpha: '#c46a00', beta: '#0068b2', gamma: '#14894f', flash: '#142030', mystery: '#56657a',
+    metal: '#9aa7b3', metalEdge: '#5f6d7a', tube: '#b8c2cc', tubeEdge: '#5f6d7a', window: '#c9a85a',
+    paper: '#e8dcb8', al: '#aeb8c4', pb: '#5f6874'
   }
 };
+const THEMES = { normal: { lw: 1, font: 12 }, present: { lw: 1, font: 18 } };
 // Presenter mode keeps the same colours. Chart text goes up to the site's
 // presenter label size (--sst-pr-label), set in setPresenting().
-THEMES.present = { ...THEMES.normal, font: 18 };
+function usePalette() {
+  const p = PALETTES[window.SST_THEME && SST_THEME.get() === 'light' ? 'light' : 'dark'];
+  Object.assign(THEMES.normal, p); Object.assign(THEMES.present, p);
+}
+usePalette();
 const presenting = () => document.body.classList.contains('presenting');
+// Isotope colours are tuned for a dark stage; light mode uses a deeper shade.
+const isoCol = iso => (window.SST_THEME && SST_THEME.get() === 'light' && iso.colLight) || iso.col;
 let T = THEMES.normal;
 
 const nuc = (a, z, s) => `<span class="nuc"><i>${a}</i><i>${z}</i></span>${s}`;
@@ -92,15 +108,15 @@ tabs.forEach((t, i) => {
 
 /* ════════════════════════ 3. half-life visualiser ════════════════════════ */
 const ISOTOPES = {
-  c14:   { short: 'C-14',   daughter: 'N-14',   hl: 5730, unit: 'years', per: 'year', mode: 'b', size: 0.26, col: '#5fd4c4',
+  c14:   { short: 'C-14',   daughter: 'N-14',   hl: 5730, unit: 'years', per: 'year', mode: 'b', size: 0.26, col: '#5fd4c4', colLight: '#0f8f80',
            eq: `${nuc(14, 6, 'C')} → ${nuc(14, 7, 'N')} + ${nuc(0, '−1', 'e')}` },
-  rn222: { short: 'Rn-222', daughter: 'Po-218', hl: 3.8,  unit: 'days',  per: 'day',  mode: 'a', size: 0.46, col: '#f4877a',
+  rn222: { short: 'Rn-222', daughter: 'Po-218', hl: 3.8,  unit: 'days',  per: 'day',  mode: 'a', size: 0.46, col: '#f4877a', colLight: '#c8432f',
            eq: `${nuc(222, 86, 'Rn')} → ${nuc(218, 84, 'Po')} + ${nuc(4, 2, 'He')}` },
-  i131:  { short: 'I-131',  daughter: 'Xe-131', hl: 8.0,  unit: 'days',  per: 'day',  mode: 'b', size: 0.39, col: '#b199f4',
+  i131:  { short: 'I-131',  daughter: 'Xe-131', hl: 8.0,  unit: 'days',  per: 'day',  mode: 'b', size: 0.39, col: '#b199f4', colLight: '#6c4ab3',
            eq: `${nuc(131, 53, 'I')} → ${nuc(131, 54, 'Xe')} + ${nuc(0, '−1', 'e')} + γ` },
-  co60:  { short: 'Co-60',  daughter: 'Ni-60',  hl: 5.27, unit: 'years', per: 'year', mode: 'b', size: 0.32, col: '#a6d86e',
+  co60:  { short: 'Co-60',  daughter: 'Ni-60',  hl: 5.27, unit: 'years', per: 'year', mode: 'b', size: 0.32, col: '#a6d86e', colLight: '#4d8a1a',
            eq: `${nuc(60, 27, 'Co')} → ${nuc(60, 28, 'Ni')} + ${nuc(0, '−1', 'e')} + γ` },
-  custom:{ short: 'Parent', daughter: 'Daughter', hl: 10, unit: 's', per: 's', mode: 'x', size: 0.36, col: '#dfe6ee', eq: '' }
+  custom:{ short: 'Parent', daughter: 'Daughter', hl: 10, unit: 's', per: 's', mode: 'x', size: 0.36, col: '#dfe6ee', colLight: '#56657a', eq: '' }
 };
 const PACE = [12, 8, 6, 4, 3, 2.5, 2, 1.5, 1, 0.75, 0.5, 0.3];   // seconds per half-life, by slider position
 const MAXH = 6;          // run for six half-lives
@@ -179,7 +195,7 @@ const HL = {
     if (key === 'custom') iso.hl = +$('#customHl').value;
     this.iso = iso;
     $('#customRow').hidden = key !== 'custom';
-    document.documentElement.style.setProperty('--parent', iso.col);
+    document.documentElement.style.setProperty('--parent', isoCol(iso));
     $('#lgParent').textContent = iso.short; $('#lgDaughter').textContent = iso.daughter;
     const modeName = { a: 'alpha decay', b: 'beta decay', x: '' }[iso.mode];
     $('#hlEq').innerHTML = iso.eq ? `<span class="lab">${modeName}</span>${iso.eq}`
@@ -203,7 +219,7 @@ const HL = {
     for (let i = 0; i < this.N0; i++) {
       const cx = ox + (i % n + 0.5) * cell, cy = oy + (Math.floor(i / n) + 0.5) * cell;
       if (!this.state[i]) {
-        ctx.fillStyle = this.iso.col;
+        ctx.fillStyle = isoCol(this.iso);
         ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
       } else {
         ctx.fillStyle = T.daughter; ctx.strokeStyle = T.daughterEdge; ctx.lineWidth = Math.max(1, r * 0.14);
@@ -311,7 +327,7 @@ function applyChartTheme() {
   }
   c.options.plugins.legend.labels.color = T.body;
   c.options.plugins.legend.labels.font = { family: 'Plus Jakarta Sans', size: T.font };
-  const simCol = HL.plot === 'n' ? HL.iso.col : T.act;
+  const simCol = HL.plot === 'n' ? isoCol(HL.iso) : T.act;
   Object.assign(c.data.datasets[0], { borderColor: simCol, backgroundColor: simCol, borderWidth: 2.5 * T.lw });
   Object.assign(c.data.datasets[1], { borderColor: T.theory, backgroundColor: T.theory, borderWidth: 2 * T.lw });
 }
@@ -653,6 +669,14 @@ $('#soundBtn').addEventListener('click', e => {
   b.setAttribute('aria-pressed', sound.on);
   b.querySelector('use').setAttribute('href', sound.on ? '#i-sound' : '#i-mute');
   b.querySelector('span').textContent = sound.on ? 'Clicks on' : 'Clicks off';
+});
+
+/* Light / dark from the site bar: swap the palette and repaint. */
+document.addEventListener('sst-theme', () => {
+  usePalette();
+  document.documentElement.style.setProperty('--parent', isoCol(HL.iso));
+  applyChartTheme();
+  HL.resize(); AB.resize(); HL.chart && HL.chart.update('none');
 });
 
 /* ════════════════════════ 5. presenter mode ════════════════════════ */

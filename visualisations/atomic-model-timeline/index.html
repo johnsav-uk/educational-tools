@@ -301,6 +301,53 @@ body.present .stage-note{display:none}
   .tl-name{display:none}
   .tl-year{font-size:11px}
 }
+
+/* ---------- LIGHT THEME ----------
+   The site bar's Light / Dark toggle (assets/sst/sst.js). The stage keeps the
+   dark set, re-declared below, because the models glow against a dark
+   ground; the header, timeline and notes around it go light. */
+.theme-light{
+  --bg:#f1f5f8; --bg2:#f8fafd; --panel:#ffffff; --panel2:#f8fafd; --line:#d5dbe3;
+  --txt:#142030; --dim:#596473; --accent:#0068b2; --accent2:#6c4ab3;
+  --gold:#975d00; --pos:#c0392b; --neg:#0068b2; --neut:#596473; --ok:#1b7a52; --warn:#b45309;
+}
+.theme-light .stage{
+  --bg:#050e1a; --bg2:#091321; --panel:#0d1928; --panel2:#142132; --line:#182535;
+  --txt:#edf2f8; --dim:#8693a5; --accent:#47b5fa; --accent2:#b199f4;
+  --gold:#f2c14e; --pos:#ff5f6d; --neg:#4da6ff; --neut:#9fb0c2; --ok:#3ddc97; --warn:#ffb454;
+  color:var(--txt); color-scheme:dark;
+}
+.theme-light ::-webkit-scrollbar-thumb{background:#c9d1db;background-clip:content-box}
+.theme-light .app-header{background:#f8fafd}
+.theme-light .atom-mark i{box-shadow:none}
+.theme-light .tag.ht{color:#6c4ab3}
+.theme-light .btn:hover{border-color:#9aa8b8;background:#e8edf3}
+.theme-light .btn.primary{background:#0076cc;border-color:#0076cc;color:#fff}
+.theme-light .btn.on{background:#6c4ab3;border-color:#6c4ab3;color:#fff}
+.theme-light .timeline{background:#f8fafd}
+.theme-light .tl-line{background:#d5dbe3}
+.theme-light .tl-fill{box-shadow:none}
+.theme-light .tl-dot{background:#ffffff;border-color:#b5bfc9}
+.theme-light .tl-name{color:#354150}
+.theme-light .tl-model{color:#596473}
+.theme-light .tl-node.done .tl-dot{border-color:#0068b2;background:#d1ecff}
+.theme-light .tl-node.active .tl-dot{box-shadow:0 0 0 5px rgba(0,104,178,.14)}
+.theme-light .tl-node.active .tl-name{color:#142030}
+.theme-light .tl-node.active .tl-model{color:#354150}
+.theme-light .panel{background:#ffffff}
+.theme-light :is(.p-lede, .kw dd){color:#354150}
+.theme-light :is(.card p, .card li, .tip li, .pr-list li){color:#142030}
+.theme-light :is(.o-txt strong, .kw dt, .pr-list b, .pr-list strong){color:#142030}
+.theme-light :is(.card.keywords h3 .ic, .tip li::marker){color:#6c4ab3}
+.theme-light .tip h3{color:#6c4ab3}
+.theme-light .tip{background:#f4f0fd}
+.theme-light .ms{background:#eef6f1;color:#1b5e3f}
+.theme-light .pr-list li.ms-item{color:#1b5e3f}
+.theme-light .spec{color:#354150}
+.theme-light .spec q{color:#354150}
+.theme-light .o-dot{box-shadow:none}
+.theme-light .present-pane{background:#ffffff}
+.theme-light .pr-dot{background:#c9d1db}
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>

@@ -8,11 +8,71 @@
 
    Pages under languages/ belong to the sister site, Savage Language Tools: the
    same bar in its coral identity, linking to languages/index.html and reading
-   language-tools.js instead. Nothing on the page has to opt in. */
+   language-tools.js instead. Nothing on the page has to opt in.
+
+   It also sets the colour theme before the page paints: dark unless the
+   viewer chose light, one choice for the whole site. Pages with their own
+   header (the homepages) load it with data-bar="none" to get the theme
+   without the bar. The API, for tools that paint with JavaScript:
+     SST_THEME.get()              'dark' or 'light'
+     SST_THEME.set(t) / toggle()
+     document 'sst-theme' event   fired after a change; e.detail.theme
+   Any element with data-sst-theme-toggle becomes a Light / Dark button; a
+   .sst-theme-label inside it shows the theme it switches to. */
 (function () {
   'use strict';
   var me = document.currentScript;
-  if (!me || document.querySelector('.sst-bar')) return;
+
+  var KEY = 'sst-theme';
+  var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.3 8.3 0 0 1 9.4 4a8.3 8.3 0 1 0 10.6 10.6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+  function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function current() { return document.documentElement.classList.contains('theme-light') ? 'light' : 'dark'; }
+  function paintButtons() {
+    var next = current() === 'light' ? 'dark' : 'light';
+    var word = next === 'light' ? 'Light' : 'Dark';
+    var els = document.querySelectorAll('[data-sst-theme-toggle]');
+    for (var i = 0; i < els.length; i++) {
+      var b = els[i], label = b.querySelector('.sst-theme-label'), icon = b.querySelector('.sst-theme-icon');
+      b.title = 'Switch to ' + next + ' mode';
+      b.setAttribute('aria-label', 'Switch to ' + next + ' mode');
+      if (icon) icon.innerHTML = next === 'light' ? SUN : MOON;
+      if (label) label.textContent = word;
+      else if (!b.children.length) b.textContent = word;
+    }
+  }
+  function apply(t) {
+    var light = t === 'light';
+    [document.documentElement, document.body].forEach(function (el) {
+      if (!el) return;
+      el.classList.toggle('theme-light', light);
+      el.classList.toggle('theme-dark', !light);
+    });
+    paintButtons();
+  }
+  function set(t, quiet) {
+    t = t === 'light' ? 'light' : 'dark';
+    var changed = t !== current();
+    apply(t);
+    if (!quiet) { try { localStorage.setItem(KEY, t); } catch (e) { /* storage blocked */ } }
+    if (changed) document.dispatchEvent(new CustomEvent('sst-theme', { detail: { theme: t } }));
+  }
+  window.SST_THEME = {
+    get: current,
+    set: function (t) { set(t); },
+    toggle: function () { set(current() === 'light' ? 'dark' : 'light'); },
+    paint: paintButtons, sun: SUN, moon: MOON
+  };
+  apply(stored());
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-sst-theme-toggle]');
+    if (b) { e.preventDefault(); window.SST_THEME.toggle(); }
+  });
+  // Buttons in markup further down the page, and choices made in another tab.
+  document.addEventListener('DOMContentLoaded', paintButtons);
+  window.addEventListener('storage', function (e) { if (e.key === KEY) set(e.newValue, true); });
+
+  if (!me || me.getAttribute('data-bar') === 'none' || document.querySelector('.sst-bar')) return;
   var root = me.src.replace(/assets\/sst\/sst\.js(\?.*)?$/, '');
   var lang = location.href.indexOf(root + 'languages/') === 0;
 
@@ -48,7 +108,13 @@
         '<a class="sst-keep" href="' + root + 'index.html#all">All tools</a>' +
       '</nav>';
   }
+  var themeBtn = document.createElement('button');
+  themeBtn.type = 'button'; themeBtn.className = 'sst-theme-nav';
+  themeBtn.setAttribute('data-sst-theme-toggle', '');
+  themeBtn.innerHTML = '<i class="sst-theme-icon"></i><span class="sst-theme-label"></span>';
+  bar.querySelector('.sst-nav').appendChild(themeBtn);
   document.body.insertBefore(bar, document.body.firstChild);
+  paintButtons();
 
   var crumb = bar.querySelector('.sst-crumb');
   var fallback = (document.title || '').split(/\s[—|–-]\s/)[0];

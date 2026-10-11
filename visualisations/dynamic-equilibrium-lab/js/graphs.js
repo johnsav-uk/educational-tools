@@ -10,7 +10,15 @@
 (function () {
 'use strict';
 
-const THEME = { text: '#edf2f8', body: '#c3ccd8', muted: '#8693a5', line: '#182535', line2: '#2c3d52', bg: '#091321' };
+// Follows the site's light / dark theme (assets/sst/sst.js), updated in place.
+const THEMES = {
+  dark:  { text: '#edf2f8', body: '#c3ccd8', muted: '#8693a5', line: '#182535', line2: '#2c3d52', bg: '#091321', green: '#6fe3a3', amber: '#f5b14c' },
+  light: { text: '#142030', body: '#354150', muted: '#596473', line: '#e1e6ec', line2: '#b5bfc9', bg: '#f8fafd', green: '#14894f', amber: '#b86e00' }
+};
+const THEME = {};
+function useTheme() { Object.assign(THEME, THEMES[document.documentElement.classList.contains('theme-light') ? 'light' : 'dark']); }
+useTheme();
+document.addEventListener('sst-theme', useTheme);
 
 // A tidy axis maximum: 1, 2, 2.5 or 5 × 10^n just above v.
 function niceMax(v) {
@@ -169,26 +177,26 @@ function drawCompromise(cv, { T, yieldPct, rate, Tnow, font = 11, unitC = true }
   ticks(yMax, 4).forEach(v => {
     const y = Math.round(Y1(v)) + 0.5;
     ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#6fe3a3'; ctx.fillText(fmtTick(v), L - 4, y);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = THEME.green; ctx.fillText(fmtTick(v), L - 4, y);
   });
-  ticks(rMax, 4).forEach(v => { ctx.textAlign = 'left'; ctx.fillStyle = '#f5b14c'; ctx.fillText(fmtTick(v), L + pw + 4, Y2(v)); });
+  ticks(rMax, 4).forEach(v => { ctx.textAlign = 'left'; ctx.fillStyle = THEME.amber; ctx.fillText(fmtTick(v), L + pw + 4, Y2(v)); });
   ctx.fillStyle = THEME.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   // Round-number ticks in whichever unit is shown.
   const off = unitC ? 273 : 0;
   for (let u = Math.ceil((x0 - off) / 50) * 50; u <= x1 - off + 1e-6; u += 50) ctx.fillText(String(u), X(u + off), Tm + ph + 4);
   ctx.fillStyle = THEME.body; ctx.font = f(600); ctx.textBaseline = 'bottom';
   ctx.fillText(unitC ? 'Temperature / °C' : 'Temperature / K', L + pw / 2, h - 1);
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#6fe3a3';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = THEME.green;
   ctx.fillText('% NH₃ at equilibrium', L, 1);
-  ctx.textAlign = 'right'; ctx.fillStyle = '#f5b14c';
+  ctx.textAlign = 'right'; ctx.fillStyle = THEME.amber;
   ctx.fillText('rate (relative)', L + pw, 1);
   const line = (arr, Yf, col, dash) => {
     ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.setLineDash(dash || []);
     ctx.beginPath(); arr.forEach((v, i) => { const x = X(T[i]), y = Yf(v); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke();
     ctx.setLineDash([]);
   };
-  line(yieldPct, Y1, '#6fe3a3');
-  line(rate, Y2, '#f5b14c', [6, 4]);
+  line(yieldPct, Y1, THEME.green);
+  line(rate, Y2, THEME.amber, [6, 4]);
   // Where the chamber is now.
   const x = X(Tnow);
   ctx.strokeStyle = THEME.text; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;

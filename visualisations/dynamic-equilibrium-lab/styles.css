@@ -9,7 +9,7 @@
   --line: var(--sst-line); --line2: var(--sst-line-strong);
   --accent: var(--sst-blue); --btn: var(--sst-blue-btn); --soft: var(--sst-blue-soft);
   --chem: var(--sst-chem);
-  --stage: #091321;
+  --stage: var(--sst-stage);
   --fwd: #edf2f8; --rev: #ff8a7a;
   --good: var(--sst-green); --warn: var(--sst-amber);
   color-scheme: dark;
@@ -390,6 +390,17 @@ body.presenting #narrDeck { flex: none; margin: 10px 14px 12px; background: var(
 /* ── Print: A4 worksheets and mark scheme ─────────────── */
 .print-only { display: none; }
 @page { size: A4; margin: 13mm 14mm 15mm; }
+/* ── Light theme (the site bar's Light / Dark toggle) ──────────────────────── */
+.theme-light { --fwd: #142030; --rev: #d9503f; }
+.theme-light :is(button, input, select, summary):focus-visible { outline-color: #0068b2; }
+.theme-light :is(input[type="range"], .check input, dialog input) { accent-color: var(--btn); }
+.theme-light .dh-chip.exo { color: #b4321f; border-color: #e7b3a9; }
+.theme-light .dh-chip.endo { color: #0068b2; border-color: #a9cbe7; }
+.theme-light .gauges .g-cat { color: #8a5a00; border-color: #e3cf9a; }
+.theme-light :is(.pause-card, .toast) { background: var(--card); }
+.theme-light :is(.status.eq, .cat-grid .same) { border-color: #8cc7a8; background: var(--sst-good-bg); }
+.theme-light .bar-row.r .bar i { background: repeating-linear-gradient(90deg, var(--rev) 0 9px, #f0a092 9px 12px); }
+
 @media print {
   html, body { background: #fff !important; color: #000; }
   body { font-size: 10.5pt; line-height: 1.42; overflow: visible; }

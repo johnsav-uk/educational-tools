@@ -7,8 +7,8 @@
   --line:var(--sst-line); --line2:var(--sst-line-strong);
   --blue:var(--sst-blue); --btn:var(--sst-blue-btn); --soft:var(--sst-blue-soft); --btnink:#fff;
   --chem:var(--sst-chem); --good:var(--sst-green); --warn:var(--sst-amber); --bad:var(--sst-red);
-  --goodbg:oklch(0.25 0.05 155); --warnbg:oklch(0.26 0.05 80); --badbg:oklch(0.24 0.05 25);
-  --stage:#091321;
+  --goodbg:var(--sst-good-bg); --warnbg:var(--sst-warn-bg); --badbg:var(--sst-bad-bg);
+  --stage:var(--sst-stage);
   color-scheme:dark;
 }
 *{ box-sizing:border-box; }
@@ -314,6 +314,30 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
 /* ── Print: A4 ──────────────────────────────────────────────────── */
 @page{ size:A4; margin:14mm 14mm 16mm; background:#fff; }
+/* ── Light theme (the site bar's Light / Dark toggle) ─────────────────────── */
+.theme-light .pill.chem{ background:oklch(.93 .04 185); color:var(--chem); }
+.theme-light .pill.level{ box-shadow:inset 0 0 0 1px oklch(.8 .02 255); }
+.theme-light .colourchip, .theme-light .clock{ background:oklch(1 0 0 / .92); }
+.theme-light .hold.down{ background:oklch(.93 .06 80); }
+.theme-light .steps li.done::before{ background:oklch(.93 .05 155); }
+/* The bench, burette lens and pH curve are SVG drawn for a navy stage.
+   CSS outranks SVG attributes, so in light mode each colour that would
+   vanish is swapped here; liquids, steel and the balance display keep theirs. */
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#182535"]{ fill:#d5dbe3; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#182535"]{ stroke:#d5dbe3; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#edf2f8"]{ fill:#142030; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#edf2f8"]{ stroke:#142030; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#8693a5"]{ fill:#596473; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#8693a5"]{ stroke:#596473; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#4a5a70"]{ fill:#9aa8b8; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#4a5a70"]{ stroke:#9aa8b8; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#111d2c"]{ fill:#d5dde6; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#111d2c"]{ stroke:#d5dde6; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#26364a"]{ fill:#aab5c2; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#26364a"]{ stroke:#aab5c2; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#091321"]{ fill:#f8fafd; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#091321"]{ stroke:#f8fafd; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#0d1928"]{ fill:#ffffff; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#0d1928"]{ stroke:#ffffff; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#1b2a3c"]{ fill:#cfd7e0; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#1b2a3c"]{ stroke:#cfd7e0; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#9fb4cc"]{ fill:#7d93ab; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#9fb4cc"]{ stroke:#7d93ab; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#cfe0f2"]{ fill:#7d93ab; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#cfe0f2"]{ stroke:#7d93ab; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#47b5fa"]{ fill:#0076cc; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#47b5fa"]{ stroke:#0076cc; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="#f2c94c"]{ fill:#a87c00; } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="#f2c94c"]{ stroke:#a87c00; }
+.theme-light :is(#benchSvg, #lensSvg, .curve svg) [fill="rgba(207,224,242,0.85)"]{ fill:rgba(125,147,171,0.85); } .theme-light :is(#benchSvg, #lensSvg, .curve svg) [stroke="rgba(207,224,242,0.85)"]{ stroke:rgba(125,147,171,0.85); }
+
 @media print{
   :root{ --paper:#fff; --panel:#fff; --card:#fff; --raised:#f3f3f3; --ink:#000; --body:#111; --muted:#444; --line:#bbb; --line2:#999; --blue:#0b5394; }
   html,body{ background:#fff !important; color:#000; height:auto !important; overflow:visible !important; display:block !important; }

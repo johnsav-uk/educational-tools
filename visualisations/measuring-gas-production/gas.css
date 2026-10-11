@@ -7,7 +7,7 @@
   --line:var(--sst-line); --line2:var(--sst-line-strong);
   --blue:var(--sst-blue); --btn:var(--sst-blue-btn); --btnink:#ffffff;
   --chem:var(--sst-chem); --gcse:var(--sst-amber); --ht:var(--sst-violet);
-  --tip:var(--sst-green); --tipbg:oklch(0.24 0.05 160); --warn:var(--sst-red); --warnbg:oklch(0.23 0.05 20);
+  --tip:var(--sst-green); --tipbg:var(--sst-good-bg); --warn:var(--sst-red); --warnbg:var(--sst-warn-bg);
   --eqbg:var(--sst-raised);
   color-scheme:dark;
 }
@@ -134,9 +134,9 @@ a.mcard:hover{ border-color:var(--blue); }
 @container (min-width:780px){
   .sim-body.graph-on{ grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); align-items:center; }
 }
-.sim canvas{ display:block; border-radius:9px; background:#091321; touch-action:pan-y; }
+.sim canvas{ display:block; border-radius:9px; background:var(--sst-stage); touch-action:pan-y; }
 .sim canvas.stage{ width:100%; aspect-ratio:720 / 400; }
-.sim-graph{ background:#091321; border-radius:9px; padding:6px 6px 8px; }
+.sim-graph{ background:var(--sst-stage); border-radius:9px; padding:6px 6px 8px; }
 .sim canvas.graph{ width:100%; aspect-ratio:2 / 1; }
 @container (min-width:780px){ .sim-body.graph-on canvas.graph{ aspect-ratio:16 / 11; } }
 .sim-graph .gopt{ display:flex; flex-wrap:wrap; gap:4px 14px; padding:6px 6px 0; font-size:.85em; color:var(--muted); }

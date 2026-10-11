@@ -63,6 +63,14 @@
     #root { height: auto; }
   }
   svg text { font-family:'Plus Jakarta Sans','Segoe UI',Helvetica,Arial,sans-serif; }
+  /* Light theme (the site bar's Light / Dark toggle): the studio chrome goes
+     light; the drawing is white paper either way. */
+  .theme-light ::-webkit-scrollbar-track { background:#f1f5f8; }
+  .theme-light ::-webkit-scrollbar-thumb { background:#c9d1db; }
+  .theme-light ::-webkit-scrollbar-thumb:hover { background:#9aa8b8; }
+  .theme-light input[type=range]{ background:#d5dbe3; }
+  .theme-light input[type=range]::-webkit-slider-thumb{ background:#0284c7; border-color:#ffffff; }
+  .theme-light input[type=range]::-moz-range-thumb{ background:#0284c7; border-color:#ffffff; }
   /* Printing gives the drawing the whole page: the dark studio chrome is
      hidden and the canvas loses its frame. */
   @media print {

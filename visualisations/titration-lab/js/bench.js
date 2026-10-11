@@ -17,8 +17,11 @@
     glass: '#9fb4cc', glassFill: 'rgba(159,180,204,0.07)', label: '#8693a5', leader: '#4a5a70', text: '#edf2f8',
     bench: '#111d2c', benchTop: '#26364a', steel: '#56657a', steelDark: '#3a4759', tile: '#e9eef5', tileEdge: '#b8c3d1',
     clear: 'rgba(159,180,204,0.16)', clearTop: '#cfe0f2', purple: '#5d1d8f', purpleTop: '#b07ad8', paleGreen: 'rgba(190,226,160,0.30)',
-    rubber: '#5b4b45', blue: '#47b5fa', amber: '#f2c94c', bg: [40, 52, 68], white: [233, 238, 245]
+    rubber: '#5b4b45', blue: '#47b5fa', amber: '#f2c94c', bg: [40, 52, 68], bgLight: [226, 232, 238], white: [233, 238, 245]
   };
+  // The bench SVG's own colours swap for light mode in titration.css; only the
+  // background a liquid is seen against has to follow the theme here.
+  function lightTheme() { return document.documentElement.classList.contains('theme-light'); }
 
   function el(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
@@ -256,7 +259,7 @@
     // Flask contents.
     if (hasFlaskLiquid) {
       var f = s.flask, h = flaskHeight(f.totalVol()), ap = f.appearance();
-      var bg = (s.tile && under === 'flask') ? C.white : C.bg;
+      var bg = (s.tile && under === 'flask') ? C.white : lightTheme() ? C.bgLight : C.bg;
       var col = liquidColour(ap.abs, bg), base = 0;
       // Colourless liquid on the tile would vanish: give it the glass tint.
       var clear = ap.abs[0] + ap.abs[1] + ap.abs[2] < 0.03;

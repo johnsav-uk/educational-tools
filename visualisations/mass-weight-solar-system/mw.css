@@ -8,7 +8,7 @@
   --blue:var(--sst-blue); --btn:var(--sst-blue-btn); --btnink:#ffffff;
   --phys:var(--sst-phys); --ks3:var(--sst-amber);
   --mass:var(--sst-amber); --weight:var(--sst-blue); --gcol:var(--sst-green);
-  --good:var(--sst-green); --goodbg:oklch(0.24 0.05 160); --bad:var(--sst-red); --badbg:oklch(0.23 0.05 20);
+  --good:var(--sst-green); --goodbg:var(--sst-good-bg); --bad:var(--sst-red); --badbg:var(--sst-bad-bg);
   color-scheme:dark;
 }
 
@@ -341,6 +341,11 @@ canvas.stage{ display:block; width:100%; height:auto; aspect-ratio:600/440; bord
   .res-pair{ grid-template-columns:1fr; }
   .bodies{ grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); }
 }
+/* ── Light theme (the site bar's Light / Dark toggle) ─────────────────
+   The two canvases are scenes in space, so they keep their night sky in
+   both themes; only the page around them goes light. */
+.theme-light .preset.on{ background:oklch(0.94 0.05 80); }
+
 @media print{
   .top .actions, .jump, #presenter, canvas{ display:none !important; }
 }

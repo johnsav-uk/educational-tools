@@ -45,14 +45,14 @@
   .lbl{ font-size:.78rem; color:var(--muted); font-weight:600; letter-spacing:.02em; }
 
   .stage{ position:relative; height:clamp(340px, calc(100dvh - var(--sst-bar-h) - 330px), 640px);
-    background:#091321; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    background:var(--sst-stage); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   @media (max-width:1020px){ .stage{ height:clamp(360px, 100vw, 540px); } }
   @media (max-width:560px){ .legend{ font-size:.72rem; gap:2px 10px; padding:3px 8px; } }
   #cv{ display:block; width:100%; height:100%; touch-action:pan-y; }
   #cv.grab{ cursor:grab; touch-action:none; }
   #cv.grab:active{ cursor:grabbing; }
   .legend{ position:absolute; left:10px; bottom:8px; display:flex; flex-wrap:wrap; gap:4px 12px; font-size:.78rem; color:var(--body);
-    background:rgba(9,19,33,.86); border:1px solid var(--line); border-radius:8px; padding:4px 10px; max-width:calc(100% - 20px); pointer-events:none; }
+    background:color-mix(in srgb, var(--sst-stage) 86%, transparent); border:1px solid var(--line); border-radius:8px; padding:4px 10px; max-width:calc(100% - 20px); pointer-events:none; }
   .legend span{ display:inline-flex; align-items:center; gap:5px; }
   .legend svg{ flex:none; }
 
@@ -78,6 +78,9 @@
   .transport{ display:flex; gap:6px; align-items:center; }
   .speed{ display:flex; align-items:center; gap:8px; font-size:.84rem; color:var(--muted); }
   .speed input{ width:110px; accent-color:#47b5fa; }
+  /* Light theme (the site bar's Light / Dark toggle); the canvas swaps COL in the script. */
+  .theme-light .speed input{ accent-color:var(--btn); }
+  .theme-light :is(button, input):focus-visible{ outline-color:#0068b2; }
   .speed output{ min-width:3.2em; color:var(--ink); font-variant-numeric:tabular-nums; }
 
   /* ── Side panel ─────────────────────────────────────────────── */
@@ -459,8 +462,23 @@ const COL = {
   bg: '#091321', card: '#0d1928', line: '#182535', lineStrong: '#2a3a50', shell: '#40536d',
   text: '#edf2f8', muted: '#8693a5', blue: '#47b5fa',
   dot: '#3B82F6', cross: '#EF4444',
-  cation: '#f3b94c', anion: '#b199f4', alloy: '#5cd5c7', carbon: '#9aa6b6', hot: '#f66d67', good: '#63d18f'
+  cation: '#f3b94c', anion: '#b199f4', alloy: '#5cd5c7', carbon: '#9aa6b6', hot: '#f66d67', good: '#63d18f',
+  wall: '#1b2a3d', wallHot: '#6b2a24', grid: '#51647f', cold: '#1e3350', ember: '#5a2320',
+  carbonFill: '#2b3544', handle: '#163552', handleOn: '#1f4b72', dotEdge: '#9cc3ff'
 };
+// The canvas follows the site's light / dark theme (assets/sst/sst.js): COL is
+// swapped in place, as the print palette below is.
+const DARK_COL = Object.assign({}, COL);
+const LIGHT_COL = {
+  bg: '#f8fafd', card: '#ffffff', line: '#e1e6ec', lineStrong: '#b5bfc9', shell: '#8d9aa9',
+  text: '#142030', muted: '#596473', blue: '#0068b2', dot: '#1d4ed8', cross: '#c81e1e',
+  cation: '#a15c00', anion: '#6d3fc0', alloy: '#0f766e', carbon: '#4b5563', hot: '#c0392b', good: '#1b7a52',
+  wall: '#cfd7e0', wallHot: '#f2c2b8', grid: '#9aa8b8', cold: '#dbe6f2', ember: '#f4c7bd',
+  carbonFill: '#cfd5dc', handle: '#d6e6f5', handleOn: '#b9d6f0', dotEdge: '#1d4ed8'
+};
+function useTheme() { Object.assign(COL, document.documentElement.classList.contains('theme-light') ? LIGHT_COL : DARK_COL); }
+useTheme();
+document.addEventListener('sst-theme', useTheme);
 function hex(h) { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); }
 function mix(a, b, t) {
   const A = hex(a), B = hex(b);
@@ -659,7 +677,7 @@ function electron(x, y, mark, r) {
     ctx.strokeStyle = COL.cross; ctx.lineWidth = Math.max(1.8, r * .55); ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x - h, y - h); ctx.lineTo(x + h, y + h); ctx.moveTo(x + h, y - h); ctx.lineTo(x - h, y + h); ctx.stroke();
   } else {
-    disc(x, y, r, COL.dot, '#9cc3ff', 1);
+    disc(x, y, r, COL.dot, COL.dotEdge, 1);
   }
 }
 function arrowHead(x, y, ang, s, color) {
@@ -937,7 +955,7 @@ function drawLat3(dt) {
   ctx.lineWidth = 1.6;
   L.bonds.forEach(([a, b]) => {
     const f = depth((pr[a].z + pr[b].z) / 2);
-    ctx.strokeStyle = mix('#51647f', COL.bg, f * .7);
+    ctx.strokeStyle = mix(COL.grid, COL.bg, f * .7);
     ctx.beginPath(); ctx.moveTo(pr[a].x, pr[a].y); ctx.lineTo(pr[b].x, pr[b].y); ctx.stroke();
   });
   const order = pr.map((q, i) => i).sort((a, b) => pr[b].z - pr[a].z);
@@ -1191,10 +1209,10 @@ function drawMetal() {
   // apparatus behind the lattice
   if (demo === 'elec') {
     const xl = X(-1.1), xr = X(MC - 0.5 + 1.1), yt = 50, yb = Y(YMAX + 0.4);
-    ctx.fillStyle = '#1b2a3d'; ctx.fillRect(xl - 8, Y(-0.6), 8, yb - Y(-0.6)); ctx.fillRect(xr, Y(-0.6), 8, yb - Y(-0.6));
+    ctx.fillStyle = COL.wall; ctx.fillRect(xl - 8, Y(-0.6), 8, yb - Y(-0.6)); ctx.fillRect(xr, Y(-0.6), 8, yb - Y(-0.6));
     text('−', xl - 18, (Y(-0.6) + yb) / 2, 26, COL.blue, 'center', 800);
     text('+', xr + 20, (Y(-0.6) + yb) / 2, 26, COL.hot, 'center', 800);
-    ctx.strokeStyle = '#51647f'; ctx.lineWidth = 2;
+    ctx.strokeStyle = COL.grid; ctx.lineWidth = 2;
     const bx = W / 2;
     ctx.beginPath(); ctx.moveTo(xl - 4, Y(-0.6)); ctx.lineTo(xl - 4, yt - 16); ctx.lineTo(bx - 10, yt - 16);
     ctx.moveTo(bx + 6, yt - 16); ctx.lineTo(xr + 4, yt - 16); ctx.lineTo(xr + 4, Y(-0.6)); ctx.stroke();
@@ -1208,14 +1226,14 @@ function drawMetal() {
   }
   if (demo === 'heat') {
     const x0 = X(-1.25);
-    ctx.fillStyle = S.heat ? '#6b2a24' : '#1b2a3d'; ctx.fillRect(x0 - 10, Y(-0.5), 16, (YMAX + 0.5) * s);
+    ctx.fillStyle = S.heat ? COL.wallHot : COL.wall; ctx.fillRect(x0 - 10, Y(-0.5), 16, (YMAX + 0.5) * s);
     const vlab = (str, x, c) => { ctx.save(); ctx.translate(x, Y((MR - 1) * RP / 2)); ctx.rotate(-Math.PI / 2); text(str, 0, 0, 12, c, 'center', 800); ctx.restore(); };
     vlab(S.heat ? 'HEATED END' : 'heater off', Math.max(12, x0 - 22), S.heat ? COL.hot : COL.muted);
     vlab('COLD END', X(MC - 0.5 + 0.85), COL.muted);
     // temperature strip
     const yb = Y((MR - 1) * RP) + 0.5 * s + 6;
     for (let c = 0; c < MC; c++) {
-      ctx.fillStyle = mix('#1e3350', COL.hot, M.temps[c]);
+      ctx.fillStyle = mix(COL.cold, COL.hot, M.temps[c]);
       ctx.fillRect(X(c) - s * 0.45, yb, s * 0.9, 8);
     }
     if (X(-0.5) - 6 > 80) text('temperature', X(-0.5) - 6, yb + 4, 11, COL.muted, 'right', 600);
@@ -1239,7 +1257,7 @@ function drawMetal() {
     const p = ionPos(io), r = io.rad * s;
     let c = io.type === 'X' ? COL.alloy : COL.cation;
     const hot = demo === 'heat' ? M.temps[io.c] : 0;
-    disc(p.x, p.y, r, mix(mix(c, COL.bg, .72), '#5a2320', hot * .8), mix(c, COL.hot, hot * .8), 2);
+    disc(p.x, p.y, r, mix(mix(c, COL.bg, .72), COL.ember, hot * .8), mix(c, COL.hot, hot * .8), 2);
     const lab = io.type === 'X' ? P.xSym : P.sym;
     if (q < 1) { ctx.globalAlpha = 1 - q; text(lab, p.x, p.y + 1, Math.max(9, r * 0.72), c, 'center', 700); }
     if (q > 0) { ctx.globalAlpha = q; text('+', p.x, p.y + 1, Math.max(10, r * 0.95), c, 'center', 800); }
@@ -1251,7 +1269,7 @@ function drawMetal() {
   });
   M.extras.forEach(x => {
     const px = X(x.bx + (x.by < SLIP ? S.force : 0)), py = Y(x.by), r = Math.max(5, x.rad * s);
-    disc(px, py, r, '#2b3544', COL.carbon, 1.6);
+    disc(px, py, r, COL.carbonFill, COL.carbon, 1.6);
     if (r > 7) text('C', px, py + 1, r * 1.05, COL.carbon, 'center', 700);
     if (jam && Math.abs(x.by - SLIP) < 0.4) { ctx.setLineDash([4, 3]); ring(px, py, r + 5, COL.hot, 1, 2); ctx.setLineDash([]); }
   });
@@ -1289,7 +1307,7 @@ function drawMetal() {
       const rx = hx + (S.forceRaw - S.force) * s * 0.9;
       arrow(hx, hy, rx, hy, COL.hot, 3, false, 10);
     }
-    ctx.fillStyle = drag && drag.kind === 'force' ? '#1f4b72' : '#163552';
+    ctx.fillStyle = drag && drag.kind === 'force' ? COL.handleOn : COL.handle;
     ctx.strokeStyle = COL.blue; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.roundRect(hx - 13, hy - hh / 2, 26, hh, 13); ctx.fill(); ctx.stroke();
     text('⇆', hx, hy, 18, COL.blue, 'center', 800);
@@ -1775,7 +1793,9 @@ function buildPrintDoc() {
 const PRINT_COL = {
   bg: '#ffffff', card: '#ffffff', line: '#cccccc', lineStrong: '#9aa3ad', shell: '#6b7280',
   text: '#111111', muted: '#4b5563', blue: '#1d6fb8', dot: '#1d4ed8', cross: '#c81e1e',
-  cation: '#a15c00', anion: '#6d3fc0', alloy: '#0f766e', carbon: '#4b5563', hot: '#b42318', good: '#166534'
+  cation: '#a15c00', anion: '#6d3fc0', alloy: '#0f766e', carbon: '#4b5563', hot: '#b42318', good: '#166534',
+  wall: '#d6d6d6', wallHot: '#f2c2b8', grid: '#9aa3ad', cold: '#e3e8ee', ember: '#f4c7bd',
+  carbonFill: '#d6d9de', handle: '#e3eef8', handleOn: '#cfe2f3', dotEdge: '#1d4ed8'
 };
 function snapshot(o) {
   const keep = { ctx, W, H, DPR, Z, MET, col: Object.assign({}, COL), s: Object.assign({}, S, { preset: Object.assign({}, S.preset) }) };

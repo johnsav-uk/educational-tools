@@ -30,7 +30,20 @@ const COL = {
   A: '#47b5fa', B: '#f5b14c', C: '#6fe3a3', D: '#b199f4',
   N2: '#47b5fa', H2: '#dfe6ee', NH3: '#6fe3a3', I2: '#b199f4', HI: '#f5b14c'
 };
-const EVENT = { f: '#edf2f8', r: '#ff8a7a' };      // forward: solid light ring; reverse: dashed coral ring
+// forward: solid ring in the page's ink; reverse: dashed coral ring. EVENT and
+// VESSEL follow the site's light / dark theme (assets/sst/sst.js) in place.
+const EVENT_SET = { dark: { f: '#edf2f8', r: '#ff8a7a' }, light: { f: '#142030', r: '#d9503f' } };
+const VESSEL_SET = {
+  dark:  { gas: '#0b1726', behind: '#070f1a', hatch: '#122033', wall: '#2c3d52', rod: '#3a4a60', plate: '#8b9bb0', plateCore: '#56657a' },
+  light: { gas: '#f8fafd', behind: '#e3e8ee', hatch: '#cdd5de', wall: '#9aa8b8', rod: '#9aa8b8', plate: '#6b7a8a', plateCore: '#b5bfc9' }
+};
+const EVENT = {}, VESSEL = {};
+function useTheme() {
+  const t = document.documentElement.classList.contains('theme-light') ? 'light' : 'dark';
+  Object.assign(EVENT, EVENT_SET[t]); Object.assign(VESSEL, VESSEL_SET[t]);
+}
+useTheme();
+document.addEventListener('sst-theme', useTheme);
 const INK = '#07111d';                             // letters on the particles
 
 // Each species is drawn as a small molecule: a list of atoms [dx, dy, radius]
@@ -323,25 +336,25 @@ class Chamber {
     const z = this.zoom, G = this.geom();
     ctx.clearRect(0, 0, this.w, this.h);
     // Vessel walls, with the piston on the right.
-    ctx.fillStyle = '#0b1726';
+    ctx.fillStyle = VESSEL.gas;
     ctx.fillRect(G.left, G.top, G.right - G.left, G.bottom - G.top);
     // Behind the piston: hatched, so it reads as outside the gas.
     const xEnd = G.left + G.full + 14 * z, pw = 8 * z;
     ctx.save();
     ctx.beginPath(); ctx.rect(G.right, G.top, xEnd - G.right, G.bottom - G.top); ctx.clip();
-    ctx.fillStyle = '#070f1a'; ctx.fillRect(G.right, G.top, xEnd - G.right, G.bottom - G.top);
-    ctx.strokeStyle = '#122033'; ctx.lineWidth = 1;
+    ctx.fillStyle = VESSEL.behind; ctx.fillRect(G.right, G.top, xEnd - G.right, G.bottom - G.top);
+    ctx.strokeStyle = VESSEL.hatch; ctx.lineWidth = 1;
     for (let x = G.right - (G.bottom - G.top); x < xEnd; x += 12 * z) { ctx.beginPath(); ctx.moveTo(x, G.bottom); ctx.lineTo(x + (G.bottom - G.top), G.top); ctx.stroke(); }
     ctx.restore();
-    ctx.strokeStyle = '#2c3d52'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = VESSEL.wall; ctx.lineWidth = 1.5;
     ctx.strokeRect(G.left + 0.5, G.top + 0.5, xEnd - G.left - 1, G.bottom - G.top - 1);
     // The piston: a plate across the vessel and its rod out to the right.
     const mid = (G.top + G.bottom) / 2;
-    ctx.fillStyle = '#3a4a60';
+    ctx.fillStyle = VESSEL.rod;
     ctx.fillRect(G.right + pw, mid - 3.5 * z, xEnd - G.right - pw, 7 * z);
-    ctx.fillStyle = '#8b9bb0';
+    ctx.fillStyle = VESSEL.plate;
     ctx.fillRect(G.right, G.top + 1, pw, G.bottom - G.top - 2);
-    ctx.fillStyle = '#56657a';
+    ctx.fillStyle = VESSEL.plateCore;
     ctx.fillRect(G.right + pw * 0.35, G.top + 1, pw * 0.3, G.bottom - G.top - 2);
 
     // Rings where reactions happened: solid for forward, dashed for reverse.

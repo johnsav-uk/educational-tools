@@ -6,8 +6,8 @@
 <title>Extraction of Aluminium (beta)</title>
 <meta name="description" content="AQA GCSE Chemistry 4.4.3.3: a slide-by-slide lesson, animated electrolysis cell, revision notes and self-marked exam questions on extracting aluminium by electrolysis.">
 <style>
-  /* Site-wide dark palette (assets/sst/sst.css). The light set is kept for
-     an explicit data-theme="light" and for print, below. */
+  /* Site-wide dark palette (assets/sst/sst.css). Light is the site bar's
+     Light / Dark toggle (.theme-light); print has its own set, below. */
   :root{
     --paper:#050e1a; --card:#0d1928; --ink:#edf2f8; --muted:#8693a5; --line:#182535;
     --chem:#5cd5c7; --gcse:#f3b94c; --ht:#b199f4;
@@ -16,12 +16,12 @@
     --btn:#0086dd; --btnink:#ffffff;
     color-scheme:dark;
   }
-  :root[data-theme="light"]{
-    --paper:#efe9dd; --card:#fbf8f1; --ink:#14120f; --muted:#5d564b; --line:#d9d0bf;
-    --chem:#a8281e; --gcse:#a04d10; --ht:#5b3f9e;
-    --tip:#1f6f5c; --tipbg:#e3f0ea; --warn:#a8281e; --warnbg:#f6e2dd;
-    --cath:#2f5fa7; --anod:#b4541a; --eqbg:#f1ebde;
-    --btn:#14120f; --btnink:#efe9dd;
+  .theme-light{
+    --paper:var(--sst-bg); --card:var(--sst-card); --ink:var(--sst-text); --muted:var(--sst-text-muted); --line:var(--sst-line);
+    --chem:var(--sst-chem); --gcse:var(--sst-amber); --ht:var(--sst-violet);
+    --tip:#1b7a52; --tipbg:#e3f3ea; --warn:#c0392b; --warnbg:#fbe9e7;
+    --cath:#0068b2; --anod:#b4541a; --eqbg:#eef2f6;
+    --btn:var(--sst-blue-btn); --btnink:#ffffff;
     color-scheme:light;
   }
 
@@ -197,6 +197,13 @@
   .stats b{ color:#fff; font-variant-numeric:tabular-nums; }
   .legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:8px; font-size:.82rem; color:#bfb6a6; }
   .legend i{ display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px; margin-right:5px; }
+  .theme-light .vis{ background:#f8fafd; color:var(--ink); border:1px solid var(--line); }
+  .theme-light .vis .btn{ background:var(--sst-card); border-color:var(--sst-line-strong); color:var(--ink); }
+  .theme-light .vis .btn:hover{ border-color:var(--muted); }
+  .theme-light .vis label, .theme-light .stats, .theme-light .legend{ color:var(--sst-text-body); }
+  .theme-light .vis .btn.power[aria-pressed="true"]{ background:#f59e0b; border-color:#f59e0b; color:#14120f; }
+  .theme-light .stats b{ color:var(--ink); }
+  .theme-light .vis-msg{ color:#975d00; }
   .vis-msg{ min-height:1.4em; margin-top:6px; font-size:.9rem; color:#fbbf24; }
 
   .summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
@@ -271,7 +278,7 @@
   /* ── Print: A4 worksheet ───────────────────────────────────────── */
   @page{ size:A4; margin:14mm 14mm 16mm; }
   @media print{
-    :root, :root[data-theme="dark"], :root:not([data-theme="light"]){
+    :root, :root.theme-light{
       --paper:#fff; --card:#fff; --ink:#000; --muted:#444; --line:#bbb;
       --chem:#a8281e; --gcse:#a04d10; --ht:#5b3f9e; --tip:#1f6f5c; --tipbg:#eef6f2;
       --warn:#a8281e; --warnbg:#fbeeeb; --cath:#2f5fa7; --anod:#b4541a; --eqbg:#f4f1ea;
@@ -1170,6 +1177,12 @@
       ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
       ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
     }
+    // Colours that sit on the background follow the site's light / dark theme.
+    var PAL = {
+      dark:  { bg:'#091321', lbl:'#efe9dd', sub:'#b3aa9a', lead:'rgba(239,233,221,.55)', wire:'#b9b1a2', plus:'#fca5a5', minus:'#93c5fd' },
+      light: { bg:'#f8fafd', lbl:'#142030', sub:'#596473', lead:'rgba(20,32,48,.45)', wire:'#7d8794', plus:'#c0392b', minus:'#0068b2' }
+    };
+    function pal(){ return PAL[document.documentElement.classList.contains('theme-light') ? 'light' : 'dark']; }
     var WIRE = [[580, 50], [682, 50], [682, 330], [640, 330]];
     function wirePoint(d){
       for (var i = 0; i < WIRE.length - 1; i++){
@@ -1183,18 +1196,20 @@
     var WL = wireLen();
 
     function label(text, sub, ty, px, py){
-      ctx.strokeStyle = 'rgba(239,233,221,.55)'; ctx.lineWidth = 1;
+      var P = pal();
+      ctx.strokeStyle = P.lead; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(152, ty - 4); ctx.lineTo(px, py); ctx.stroke();
-      ctx.fillStyle = '#efe9dd'; ctx.textAlign = 'right';
+      ctx.fillStyle = P.lbl; ctx.textAlign = 'right';
       ctx.font = '600 12.5px system-ui,Segoe UI,Arial,sans-serif'; ctx.fillText(text, 148, ty);
-      if (sub){ ctx.fillStyle = '#b3aa9a'; ctx.font = '11.5px system-ui,Segoe UI,Arial,sans-serif'; ctx.fillText(sub, 148, ty + 14); }
-      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 7); ctx.fillStyle = '#efe9dd'; ctx.fill();
+      if (sub){ ctx.fillStyle = P.sub; ctx.font = '11.5px system-ui,Segoe UI,Arial,sans-serif'; ctx.fillText(sub, 148, ty + 14); }
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 7); ctx.fillStyle = P.lbl; ctx.fill();
     }
 
     function draw(){
       var pt = poolTop();
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = '#091321'; ctx.fillRect(0, 0, W, H);
+      var P = pal();
+      ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
 
       // tap and ladle
       ctx.fillStyle = '#6b7079'; ctx.fillRect(628, 396, 50, 9);
@@ -1273,7 +1288,7 @@
       ctx.globalAlpha = 1;
 
       // wires and supply
-      ctx.strokeStyle = '#b9b1a2'; ctx.lineWidth = 3;
+      ctx.strokeStyle = P.wire; ctx.lineWidth = 3;
       ctx.beginPath(); WIRE.forEach(function(w, k){ if (k) ctx.lineTo(w[0], w[1]); else ctx.moveTo(w[0], w[1]); }); ctx.stroke();
       ctx.fillStyle = '#6b7079'; ctx.fillRect(628, 326, 14, 8);
       if (on && anodes.some(aActive)){
@@ -1289,8 +1304,8 @@
       ctx.font = '700 12px system-ui,Arial,sans-serif'; ctx.fillText('d.c.', 682, 138);
       ctx.font = '11px system-ui,Arial,sans-serif'; ctx.fillText(on ? 'ON' : 'OFF', 682, 155);
       ctx.font = '700 17px system-ui,Arial,sans-serif';
-      ctx.fillStyle = '#fca5a5'; ctx.fillText('+', 596, 42);
-      ctx.fillStyle = '#93c5fd'; ctx.fillText('−', 660, 322);
+      ctx.fillStyle = P.plus; ctx.fillText('+', 596, 42);
+      ctx.fillStyle = P.minus; ctx.fillText('−', 660, 322);
 
       // temperature tag
       ctx.fillStyle = '#7a2e0e'; rr(588, 172, 64, 20, 5); ctx.fill();

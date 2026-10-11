@@ -98,6 +98,14 @@
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 <link rel="stylesheet" href="../../assets/sst/skin.css">
+<style>
+  /* Light theme: slider readouts take their accent from an inline style;
+     each pale accent gets a deeper shade that reads on white. */
+  .theme-light [style*="color: rgb(34, 211, 238)"] { color: #0891b2 !important; }
+  .theme-light [style*="color: rgb(56, 189, 248)"] { color: #0369a1 !important; }
+  .theme-light [style*="color: rgb(245, 158, 11)"] { color: #b45309 !important; }
+  .theme-light [style*="color: rgb(251, 191, 36)"] { color: #b45309 !important; }
+</style>
 </head>
 <body class="font-sans text-slate-100">
 <script src="../../assets/sst/sst.js"></script>
@@ -283,14 +291,63 @@ function Badge({ children, tone = 'slate' }) {
 const RULER_H = 40;      // height of the ruler body in canvas px
 const GRAB    = 14;      // hit radius for the marker tabs
 
+/* Light / dark: the canvases are drawn for a navy ground. In the site's
+   light theme (assets/sst/sst.js), C() swaps each of those colours for its
+   counterpart on a light ground; the loops redraw every frame, so a switch
+   shows at once. */
+const isLight = () => document.documentElement.classList.contains('theme-light');
+const LIGHT_SWAP = {
+  "#020617": "#f8fafd",
+  "#060a13": "#e6ebf1",
+  "#0b1220": "#f4f7fa",
+  "#0f172a": "#f8fafc",
+  "#1e293b": "#e2e8f0",
+  "#22d3ee": "#0891b2",
+  "#334155": "#cbd5e1",
+  "#34d399": "#059669",
+  "#475569": "#94a3b8",
+  "#6ee7b7": "#047857",
+  "#94a3b8": "#475569",
+  "#cbd5e1": "#334155",
+  "#e2e8f0": "#1e293b",
+  "#f59e0b": "#d97706",
+  "#fb7185": "#e11d48",
+  "#fbbf24": "#b45309",
+  "#fde68a": "#92400e",
+  "rgba(0,0,0,.55)": "rgba(0,0,0,.18)",
+  "rgba(148,163,184,.5)": "rgba(71,85,105,.5)",
+  "rgba(148,163,184,.55)": "rgba(71,85,105,.55)",
+  "rgba(148,163,184,.65)": "rgba(71,85,105,.65)",
+  "rgba(148,163,184,.8)": "rgba(71,85,105,.8)",
+  "rgba(148,163,184,.85)": "rgba(71,85,105,.85)",
+  "rgba(148,163,184,.9)": "rgba(71,85,105,.9)",
+  "rgba(15,23,42,.88)": "rgba(248,250,253,.92)",
+  "rgba(2,6,23,.85)": "rgba(248,250,253,.94)",
+  "rgba(2,6,23,.92)": "rgba(248,250,253,.94)",
+  "rgba(226,232,240,.5)": "rgba(30,41,59,.5)",
+  "rgba(226,232,240,.75)": "rgba(30,41,59,.75)",
+  "rgba(226,232,240,.8)": "rgba(30,41,59,.8)",
+  "rgba(226,232,240,.85)": "rgba(30,41,59,.85)",
+  "rgba(251,113,133,.7)": "rgba(225,29,72,.7)",
+  "rgba(251,113,133,.9)": "rgba(225,29,72,.9)",
+  "rgba(251,191,36,.05)": "rgba(180,83,9,.05)",
+  "rgba(251,191,36,.16)": "rgba(180,83,9,.16)",
+  "rgba(251,191,36,.32)": "rgba(180,83,9,.32)",
+  "rgba(251,191,36,.55)": "rgba(180,83,9,.55)",
+  "rgba(253,230,138,.9)": "rgba(146,64,14,.9)",
+  "rgba(52,211,153,.85)": "rgba(5,150,105,.85)",
+  "rgba(52,211,153,.95)": "rgba(5,150,105,.95)"
+};
+const C = c => (isLight() && LIGHT_SWAP[c]) || c;
+
 function drawRuler(ctx, r, pxPerCm, opts) {
   const { x, y, span, a, b } = r;
   const tickTop = y + 6;
 
   // body
   ctx.save();
-  ctx.fillStyle = 'rgba(15,23,42,.88)';
-  ctx.strokeStyle = 'rgba(148,163,184,.65)';
+  ctx.fillStyle = C('rgba(15,23,42,.88)');
+  ctx.strokeStyle = C('rgba(148,163,184,.65)');
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(x, y, span, RULER_H, 6);
@@ -298,8 +355,8 @@ function drawRuler(ctx, r, pxPerCm, opts) {
   ctx.stroke();
 
   // centimetre graduations
-  ctx.strokeStyle = 'rgba(226,232,240,.8)';
-  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.strokeStyle = C('rgba(226,232,240,.8)');
+  ctx.fillStyle = C('rgba(226,232,240,.85)');
   ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -324,14 +381,14 @@ function drawRuler(ctx, r, pxPerCm, opts) {
 
   // "cm" caption, and a grip so it looks draggable
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(148,163,184,.9)';
+  ctx.fillStyle = C('rgba(148,163,184,.9)');
   ctx.fillText('cm', x + span - 6, y + 3);
   ctx.restore();
 
   // the two markers
   const markers = [
-    { pos: a, colour: opts.colourA || '#22d3ee', tag: 'A' },
-    { pos: b, colour: opts.colourB || '#f59e0b', tag: 'B' }
+    { pos: a, colour: opts.colourA || C('#22d3ee'), tag: 'A' },
+    { pos: b, colour: opts.colourB || C('#f59e0b'), tag: 'B' }
   ];
   markers.forEach(m => {
     const px = x + m.pos;
@@ -353,7 +410,7 @@ function drawRuler(ctx, r, pxPerCm, opts) {
     ctx.lineTo(px + 8, y - 15);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#0f172a'; /* on the marker colour, both themes */
     ctx.font = 'bold 10px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -369,13 +426,13 @@ function drawRuler(ctx, r, pxPerCm, opts) {
   ctx.font = 'bold 13px Plus Jakarta Sans, system-ui, sans-serif';
   const w = ctx.measureText(label).width + 16;
   const boxY = y + RULER_H + 6;
-  ctx.fillStyle = 'rgba(2,6,23,.92)';
-  ctx.strokeStyle = 'rgba(148,163,184,.5)';
+  ctx.fillStyle = C('rgba(2,6,23,.92)');
+  ctx.strokeStyle = C('rgba(148,163,184,.5)');
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.roundRect(midX - w / 2, boxY, w, 22, 6);
   ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#e2e8f0';
+  ctx.fillStyle = C('#e2e8f0');
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, midX, boxY + 11);
   ctx.restore();
@@ -743,7 +800,7 @@ function RippleTank() {
               <span className="font-mono text-sm font-semibold text-cyan-300">{waves}</span>
             </div>
             <input type="range" min={1} max={15} step={1} value={waves}
-                   style={{ '--accent': '#22d3ee' }}
+                   style={{ '--accent': C('#22d3ee') }}
                    onChange={(e) => setWaves(parseInt(e.target.value, 10))}
                    aria-label="Number of crests spanned" />
             <p className="text-[11px] leading-snug text-slate-500 mt-0.5">
@@ -893,7 +950,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
   const data = img.data;
 
   // Crest colour ramp: deep water blue through to a bright cyan highlight.
-  const TROUGH = [4, 20, 38], CREST = [186, 245, 255];
+  const TROUGH = isLight() ? [64, 120, 168] : [4, 20, 38], CREST = isLight() ? [236, 250, 255] : [186, 245, 255];
 
   const lam = Math.max(lambdaPx, 3);
   const k = (2 * Math.PI) / lam;
@@ -972,15 +1029,15 @@ function drawTank(ctx, fieldPair, img, P, t) {
   // vignette, so the middle of the screen looks lit
   const vg = ctx.createRadialGradient(TANK.W * 0.5, TANK.H * 0.5, TANK.H * 0.25, TANK.W * 0.5, TANK.H * 0.5, TANK.W * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,.55)');
+  vg.addColorStop(1, C('rgba(0,0,0,.55)'));
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, TANK.W, TANK.H);
 
   /* --- the dipper ----------------------------------------------------- */
   ctx.save();
   if (source === 'plane') {
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#94a3b8';
+    ctx.fillStyle = C('#1e293b');
+    ctx.strokeStyle = C('#94a3b8');
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(DIPPER_X - 12, 30, 20, TANK.H - 60, 6);
@@ -997,10 +1054,10 @@ function drawTank(ctx, fieldPair, img, P, t) {
     ctx.beginPath(); ctx.moveTo(DIPPER_X, yA); ctx.lineTo(DIPPER_X, yB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(DIPPER_X, yA); ctx.lineTo(DIPPER_X, 8); ctx.stroke();
     [[yA, '1'], [yB, '2']].forEach(([y, tag]) => {
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = C('#e2e8f0');
       ctx.beginPath(); ctx.arc(DIPPER_X, y, 8, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = C('#0f172a'); ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = C('#0f172a');
       ctx.font = 'bold 10px Plus Jakarta Sans, system-ui, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(tag, DIPPER_X, y);
@@ -1009,11 +1066,11 @@ function drawTank(ctx, fieldPair, img, P, t) {
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(DIPPER_X, SOURCE_Y); ctx.lineTo(DIPPER_X, 8); ctx.stroke();
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = C('#e2e8f0');
     ctx.beginPath(); ctx.arc(DIPPER_X, SOURCE_Y, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = C('#0f172a'); ctx.lineWidth = 2; ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.fillStyle = C('rgba(226,232,240,.85)');
   ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillText(source === 'plane' ? 'straight dipper' : source === 'two' ? 'two coherent dippers' : 'point dipper',
@@ -1042,7 +1099,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
         if (x === DIPPER_X) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.lineWidth = isMax ? 1.8 : 1.3;
-      ctx.strokeStyle = isMax ? 'rgba(52,211,153,.85)' : 'rgba(251,113,133,.7)';
+      ctx.strokeStyle = isMax ? C('rgba(52,211,153,.85)') : C('rgba(251,113,133,.7)');
       ctx.setLineDash(isMax ? [] : [7, 5]);
       ctx.stroke();
       ctx.setLineDash([]);
@@ -1051,9 +1108,9 @@ function drawTank(ctx, fieldPair, img, P, t) {
         const dx = (TANK.W - 34) - DIPPER_X;
         const y = SOURCE_Y + a * Math.sqrt(1 + (dx * dx) / b2);
         if (y > 14 && y < TANK.H - 14) {
-          ctx.fillStyle = 'rgba(2,6,23,.85)';
+          ctx.fillStyle = C('rgba(2,6,23,.85)');
           ctx.beginPath(); ctx.roundRect(TANK.W - 46, y - 9, 30, 18, 5); ctx.fill();
-          ctx.fillStyle = '#6ee7b7';
+          ctx.fillStyle = C('#6ee7b7');
           ctx.font = 'bold 11px Plus Jakarta Sans, system-ui, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText('n=' + Math.abs(Math.round(o)), TANK.W - 31, y);
@@ -1063,9 +1120,9 @@ function drawTank(ctx, fieldPair, img, P, t) {
     // legend
     ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillStyle = 'rgba(52,211,153,.95)';
+    ctx.fillStyle = C('rgba(52,211,153,.95)');
     ctx.fillText('—— maxima, constructive', 12, TANK.H - 26);
-    ctx.fillStyle = 'rgba(251,113,133,.9)';
+    ctx.fillStyle = C('rgba(251,113,133,.9)');
     ctx.fillText('- -  minima, destructive', 230, TANK.H - 26);
     ctx.restore();
   }
@@ -1074,10 +1131,10 @@ function drawTank(ctx, fieldPair, img, P, t) {
   if (source === 'two' && probe) {
     const yA = SOURCE_Y - sepPx / 2, yB = SOURCE_Y + sepPx / 2;
     const info = interferenceAt(probe.x, probe.y, sepPx, lam);
-    const colour = info.verdict === 'constructive' ? '#34d399'
-                 : info.verdict === 'destructive' ? '#fb7185' : '#fbbf24';
+    const colour = info.verdict === 'constructive' ? C('#34d399')
+                 : info.verdict === 'destructive' ? C('#fb7185') : C('#fbbf24');
     ctx.save();
-    ctx.strokeStyle = 'rgba(226,232,240,.8)';
+    ctx.strokeStyle = C('rgba(226,232,240,.8)');
     ctx.lineWidth = 1.4;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
@@ -1106,14 +1163,14 @@ function drawTank(ctx, fieldPair, img, P, t) {
     const boxH = 52;
     const bx = clamp(probe.x - boxW / 2, 6, TANK.W - boxW - 6);
     const by = probe.y > 84 ? probe.y - 22 - boxH : probe.y + 22;
-    ctx.fillStyle = 'rgba(2,6,23,.92)';
+    ctx.fillStyle = C('rgba(2,6,23,.92)');
     ctx.strokeStyle = colour; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.roundRect(bx, by, boxW, boxH, 7); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = colour;
     ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.fillText(head, bx + boxW / 2, by + 13);
-    ctx.fillStyle = '#cbd5e1';
+    ctx.fillStyle = C('#cbd5e1');
     ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.fillText(body, bx + boxW / 2, by + 29);
     ctx.fillText(body2, bx + boxW / 2, by + 42);
@@ -1122,7 +1179,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
 
   /* --- tank walls ----------------------------------------------------- */
   ctx.save();
-  ctx.strokeStyle = 'rgba(148,163,184,.55)';
+  ctx.strokeStyle = C('rgba(148,163,184,.55)');
   ctx.lineWidth = 6;
   ctx.strokeRect(3, 3, TANK.W - 6, TANK.H - 6);
   ctx.restore();
@@ -1131,7 +1188,7 @@ function drawTank(ctx, fieldPair, img, P, t) {
   if (showRuler) {
     drawRuler(ctx, ruler, TANK.pxPerCm, {
       guideTop: 8, guideBottom: TANK.H - 8,
-      colourA: '#22d3ee', colourB: '#fbbf24'
+      colourA: C('#22d3ee'), colourB: C('#fbbf24')
     });
   }
 }
@@ -1851,8 +1908,8 @@ function drawString(ctx, P, t) {
 
   // background wash
   const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#0b1220');
-  bg.addColorStop(1, '#060a13');
+  bg.addColorStop(0, C('#0b1220'));
+  bg.addColorStop(1, C('#060a13'));
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
@@ -1867,27 +1924,27 @@ function drawString(ctx, P, t) {
 
   /* --- signal generator, top left -------------------------------------- */
   ctx.save();
-  ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.fillStyle = C('#1e293b'); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(18, 16, 176, 62, 8); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#020617';
+  ctx.fillStyle = C('#020617');
   ctx.beginPath(); ctx.roundRect(28, 26, 122, 26, 4); ctx.fill();
-  ctx.fillStyle = '#fbbf24';
+  ctx.fillStyle = C('#fbbf24');
   ctx.font = 'bold 17px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   ctx.fillText(freq.toFixed(2), 140, 40);
   ctx.font = '9px Plus Jakarta Sans, system-ui, sans-serif';
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = C('#94a3b8');
   ctx.textAlign = 'left';
   ctx.fillText('Hz', 34, 40);
   ctx.fillText('SIGNAL GENERATOR', 28, 62);
   // dial
-  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+  ctx.strokeStyle = C('#94a3b8'); ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(172, 40, 12, 0, Math.PI * 2); ctx.stroke();
   const dial = (freq / 250) * Math.PI * 1.6 - Math.PI * 0.8;
   ctx.beginPath(); ctx.moveTo(172, 40);
   ctx.lineTo(172 + 10 * Math.sin(dial), 40 - 10 * Math.cos(dial)); ctx.stroke();
   // lead down to the vibration generator
-  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2.5;
+  ctx.strokeStyle = C('#475569'); ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(106, 78);
   ctx.bezierCurveTo(106, 120, 70, 140, 70, STRING_Y + 10);
@@ -1896,16 +1953,16 @@ function drawString(ctx, P, t) {
 
   /* --- vibration generator --------------------------------------------- */
   ctx.save();
-  ctx.fillStyle = '#334155'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+  ctx.fillStyle = C('#334155'); ctx.strokeStyle = C('#94a3b8'); ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(44, STRING_Y + 10, 112, BENCH_Y - STRING_Y - 10, 5); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = 'rgba(226,232,240,.75)';
+  ctx.fillStyle = C('rgba(226,232,240,.75)');
   ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('VIBRATION', 100, STRING_Y + 32);
   ctx.fillText('GENERATOR', 100, STRING_Y + 45);
   // the driven peg — it is what shakes the string end
   const drive = Math.sin(2 * Math.PI * DISPLAY_HZ * t) * 3;
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 3;
+  ctx.strokeStyle = C('#e2e8f0'); ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(x0, STRING_Y + 10); ctx.lineTo(x0, STRING_Y + drive); ctx.stroke();
   ctx.restore();
 
@@ -1913,9 +1970,9 @@ function drawString(ctx, P, t) {
   ctx.save();
   ctx.strokeStyle = '#64748b'; ctx.lineWidth = 6;
   ctx.beginPath(); ctx.moveTo(STR.pulleyX, STRING_Y + PULLEY_R); ctx.lineTo(STR.pulleyX, BENCH_Y + 2); ctx.stroke();
-  ctx.fillStyle = '#475569';
+  ctx.fillStyle = C('#475569');
   ctx.fillRect(STR.pulleyX - 26, BENCH_Y - 2, 52, 10);
-  ctx.fillStyle = '#cbd5e1';
+  ctx.fillStyle = C('#cbd5e1');
   ctx.beginPath(); ctx.arc(STR.pulleyX, STRING_Y, PULLEY_R, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#64748b';
   ctx.beginPath(); ctx.arc(STR.pulleyX, STRING_Y, 5, 0, Math.PI * 2); ctx.fill();
@@ -1925,17 +1982,17 @@ function drawString(ctx, P, t) {
   const discs = Math.round(massG / 50);
   const hangerTop = BENCH_Y + 36;
   ctx.save();
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
+  ctx.strokeStyle = C('#e2e8f0'); ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(hangX, STRING_Y); ctx.lineTo(hangX, hangerTop); ctx.stroke();
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = C('#94a3b8');
   ctx.fillRect(hangX - 16, hangerTop, 32, 5);            // hanger plate
   for (let i = 0; i < discs; i++) {
     const y = hangerTop + 5 + i * 13;
-    ctx.fillStyle = i % 2 ? '#94a3b8' : '#cbd5e1';
-    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1;
+    ctx.fillStyle = i % 2 ? C('#94a3b8') : C('#cbd5e1');
+    ctx.strokeStyle = C('#475569'); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.roundRect(hangX - 20, y, 40, 12, 2); ctx.fill(); ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(226,232,240,.85)';
+  ctx.fillStyle = C('rgba(226,232,240,.85)');
   ctx.font = 'bold 11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText(massG + ' g', hangX, hangerTop + 9 + discs * 13);
@@ -1961,21 +2018,21 @@ function drawString(ctx, P, t) {
     for (let x = x1; x >= x0; x -= STEP) ctx.lineTo(x, STRING_Y + Math.abs(shape((x - x0) / seg)));
     ctx.closePath();
     const grd = ctx.createLinearGradient(0, STRING_Y - MAX_AMP, 0, STRING_Y + MAX_AMP);
-    grd.addColorStop(0, 'rgba(251,191,36,.16)');
-    grd.addColorStop(0.5, 'rgba(251,191,36,.05)');
-    grd.addColorStop(1, 'rgba(251,191,36,.16)');
+    grd.addColorStop(0, C('rgba(251,191,36,.16)'));
+    grd.addColorStop(0.5, C('rgba(251,191,36,.05)'));
+    grd.addColorStop(1, C('rgba(251,191,36,.16)'));
     ctx.fillStyle = grd; ctx.fill();
-    ctx.strokeStyle = 'rgba(251,191,36,.32)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = C('rgba(251,191,36,.32)'); ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
   }
 
   // the string itself
   ctx.save();
-  ctx.strokeStyle = onResonance ? '#fbbf24' : '#cbd5e1';
+  ctx.strokeStyle = onResonance ? C('#fbbf24') : C('#cbd5e1');
   ctx.lineWidth = 2.4;
   ctx.lineJoin = 'round';
-  ctx.shadowColor = onResonance ? 'rgba(251,191,36,.55)' : 'transparent';
+  ctx.shadowColor = onResonance ? C('rgba(251,191,36,.55)') : 'transparent';
   ctx.shadowBlur = onResonance ? 8 : 0;
   ctx.beginPath();
   ctx.moveTo(x0, STRING_Y);
@@ -1984,7 +2041,7 @@ function drawString(ctx, P, t) {
   ctx.shadowBlur = 0;
   ctx.stroke();
   // the dead length: bridge, over the pulley, down to the masses
-  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+  ctx.strokeStyle = C('#cbd5e1'); ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(x1, STRING_Y - 2);
   ctx.lineTo(STR.pulleyX, STRING_Y - PULLEY_R);
@@ -2000,40 +2057,40 @@ function drawString(ctx, P, t) {
     ctx.textAlign = 'center';
     for (let i = 0; i <= n; i++) {
       const x = x0 + (seg * i) / n;
-      ctx.strokeStyle = 'rgba(226,232,240,.5)';
+      ctx.strokeStyle = C('rgba(226,232,240,.5)');
       ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, STRING_Y - MAX_AMP - 6); ctx.lineTo(x, STRING_Y + MAX_AMP + 6); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = C('#e2e8f0');
       ctx.beginPath(); ctx.arc(x, STRING_Y, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(226,232,240,.85)';
+      ctx.fillStyle = C('rgba(226,232,240,.85)');
       ctx.textBaseline = 'bottom';
       ctx.fillText('N', x, STRING_Y - MAX_AMP - 10);
     }
     for (let i = 0; i < n; i++) {
       const x = x0 + (seg * (i + 0.5)) / n;
-      ctx.fillStyle = '#f59e0b';
+      ctx.fillStyle = C('#f59e0b');
       ctx.beginPath(); ctx.arc(x, STRING_Y, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fbbf24';
+      ctx.fillStyle = C('#fbbf24');
       ctx.textBaseline = 'top';
       ctx.fillText('A', x, STRING_Y + MAX_AMP + 10);
     }
     // one loop, labelled
     const loopPx = seg / n;
-    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = C('#fbbf24'); ctx.lineWidth = 1.5;
     const arrowY = STRING_Y - MAX_AMP - 24;
     ctx.beginPath();
     ctx.moveTo(x0, arrowY); ctx.lineTo(x0 + loopPx, arrowY);
     ctx.moveTo(x0 + 6, arrowY - 4); ctx.lineTo(x0, arrowY); ctx.lineTo(x0 + 6, arrowY + 4);
     ctx.moveTo(x0 + loopPx - 6, arrowY - 4); ctx.lineTo(x0 + loopPx, arrowY); ctx.lineTo(x0 + loopPx - 6, arrowY + 4);
     ctx.stroke();
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = C('#fbbf24');
     ctx.textBaseline = 'bottom';
     ctx.fillText('λ/2', x0 + loopPx / 2, arrowY - 4);
     ctx.restore();
   } else if (showNodes) {
     ctx.save();
-    ctx.fillStyle = 'rgba(148,163,184,.85)';
+    ctx.fillStyle = C('rgba(148,163,184,.85)');
     ctx.font = '12px Plus Jakarta Sans, system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('no standing wave — tune the frequency to a harmonic', (x0 + x1) / 2, STRING_Y - MAX_AMP - 16);
@@ -2042,13 +2099,13 @@ function drawString(ctx, P, t) {
 
   /* --- wooden bridge (draggable) ---------------------------------------- */
   ctx.save();
-  ctx.fillStyle = '#a16207'; ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1.5;
+  ctx.fillStyle = '#a16207'; ctx.strokeStyle = C('#fde68a'); ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(bridgeX, STRING_Y - 6);
   ctx.lineTo(bridgeX + 15, BENCH_Y);
   ctx.lineTo(bridgeX - 15, BENCH_Y);
   ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = 'rgba(253,230,138,.9)';
+  ctx.fillStyle = C('rgba(253,230,138,.9)');
   ctx.font = '10px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText('bridge ⇄', bridgeX, BENCH_Y + 4);
@@ -2057,13 +2114,13 @@ function drawString(ctx, P, t) {
   /* --- L dimension line -------------------------------------------------- */
   ctx.save();
   const dimY = BENCH_Y + 22;
-  ctx.strokeStyle = 'rgba(148,163,184,.8)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = C('rgba(148,163,184,.8)'); ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x0, dimY); ctx.lineTo(x1, dimY);
   ctx.moveTo(x0, dimY - 4); ctx.lineTo(x0, dimY + 4);
   ctx.moveTo(x1, dimY - 4); ctx.lineTo(x1, dimY + 4);
   ctx.stroke();
-  ctx.fillStyle = '#cbd5e1';
+  ctx.fillStyle = C('#cbd5e1');
   ctx.font = '11px Plus Jakarta Sans, system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   ctx.fillText('L = ' + ((x1 - x0) / STR.pxPerCm).toFixed(0) + ' cm', (x0 + x1) / 2, dimY - 3);
@@ -2073,7 +2130,7 @@ function drawString(ctx, P, t) {
   if (showRuler) {
     drawRuler(ctx, ruler, STR.pxPerCm, {
       guideTop: STRING_Y - MAX_AMP - 8, guideBottom: ruler.y - 18,
-      colourA: '#22d3ee', colourB: '#fbbf24'
+      colourA: C('#22d3ee'), colourB: C('#fbbf24')
     });
   }
 }

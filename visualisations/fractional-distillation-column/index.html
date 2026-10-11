@@ -25,32 +25,14 @@
 
   font-size: calc(17px * var(--ui));
 }
-:root[data-theme="light"]{
+/* Light is the site's Light / Dark toggle (assets/sst/sst.js), which puts
+   .theme-light on <html> as well as <body>, so tok() reads these values. */
+.theme-light{
   --ground:#E4E9ED; --ground-2:#D3DBE2; --surface:#FBFCFD; --surface-2:#EEF2F5;
   --line:#C0CAD3; --line-soft:#DBE2E8; --ink:#0F1A21; --ink-2:#34434E; --muted:#62727D;
   --accent:#0070b8; --accent-ink:#ffffff; --accent-text:#005a94; --accent-soft:rgba(0,112,184,.12);
   --scene-a:#DDE5EB; --scene-b:#AFBFCB;
-  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
-  --stroke-shift: -0.22;
-}
-
-/* The page's own theme choice. It lives on <body> rather than :root so that a
-   host restamping data-theme on the root element cannot undo the viewer's
-   pick here; with no class set, the :root rules above still decide.        */
-body.theme-dark{
-  --ground:#050e1a; --ground-2:#030915; --surface:#091321; --surface-2:#0d1928;
-  --line:#182535; --line-soft:#111c2b; --ink:#edf2f8; --ink-2:#bbc5d1; --muted:#8693a5;
-  --accent:#0086dd; --accent-ink:#ffffff; --accent-text:#47b5fa; --accent-soft:rgba(71,181,250,.14);
-  --scene-a:#0d1928; --scene-b:#030915;
   --shadow: none;
-  --stroke-shift: 0.10;
-}
-body.theme-light{
-  --ground:#E4E9ED; --ground-2:#D3DBE2; --surface:#FBFCFD; --surface-2:#EEF2F5;
-  --line:#C0CAD3; --line-soft:#DBE2E8; --ink:#0F1A21; --ink-2:#34434E; --muted:#62727D;
-  --accent:#0070b8; --accent-ink:#ffffff; --accent-text:#005a94; --accent-soft:rgba(0,112,184,.12);
-  --scene-a:#DDE5EB; --scene-b:#AFBFCB;
-  --shadow: 0 1px 0 rgba(15,26,33,.05), 0 10px 26px -18px rgba(15,26,33,.45);
   --stroke-shift: -0.22;
 }
 
@@ -322,8 +304,7 @@ button{ font:inherit; color:inherit; }
 .arrow.up{ color:#C43D3D; }
 .arrow.dn{ color:#58D2A4; }
 .arrow.neutral{ color:var(--ink-2); }
-body.theme-dark .arrow.dn{ color:#58D2A4; }
-body.theme-light .arrow.dn, :root[data-theme="light"] .arrow.dn{ color:#2E8C6A; }
+.theme-light .arrow.dn{ color:#2E8C6A; }
 
 /* Exam cards */
 .markcard{
@@ -410,9 +391,8 @@ body.present #theme-txt{ display:none; }
         <button id="mode-3d" aria-pressed="true">3D</button>
         <button id="mode-2d" aria-pressed="false">2D</button>
       </div>
-      <button class="btn" id="btn-theme" title="Colour theme">
-        <svg class="ico" id="theme-ico" viewBox="0 0 16 16" aria-hidden="true"></svg>
-        <span id="theme-txt">Auto</span>
+      <button class="btn" id="btn-theme" data-sst-theme-toggle>
+        <i class="sst-theme-icon"></i><span class="sst-theme-label" id="theme-txt">Light</span>
       </button>
       <button class="btn" id="btn-marks" aria-pressed="false">Exam points</button>
       <button class="btn" id="btn-present" aria-pressed="false">Presentation</button>
@@ -738,13 +718,7 @@ function rgba(hex, a){
   return "rgba(" + c.r + "," + c.g + "," + c.b + "," + a + ")";
 }
 function isDark(){
-  const b = document.body;
-  if (b && b.classList.contains("theme-dark")) return true;
-  if (b && b.classList.contains("theme-light")) return false;
-  const t = document.documentElement.getAttribute("data-theme");
-  if (t === "dark") return true;
-  if (t === "light") return false;
-  return true;   /* site default */
+  return !document.documentElement.classList.contains("theme-light");   /* site default is dark */
 }
 function tok(name){
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -2102,58 +2076,8 @@ $("#btn-labels").addEventListener("click", () => {
   $("#btn-labels").setAttribute("aria-pressed", String(state.labels));
 });
 
-/* ── Colour theme: follow the viewer, or pin it light or dark ──────────── */
-const THEME_KEY = "fdc-theme";
-const THEME_ICONS = {
-  auto:  '<circle cx="8" cy="8" r="5.3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
-         '<path d="M8 2.7a5.3 5.3 0 0 0 0 10.6Z" fill="currentColor"/>',
-  light: '<circle cx="8" cy="8" r="3.1" fill="currentColor"/>' +
-         '<g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
-         '<path d="M8 1v1.7M8 13.3V15M1 8h1.7M13.3 8H15M3 3l1.2 1.2M11.8 11.8 13 13M13 3l-1.2 1.2M4.2 11.8 3 13"/></g>',
-  dark:  '<path d="M13.1 10.4A5.6 5.6 0 0 1 5.6 2.9a5.8 5.8 0 1 0 7.5 7.5Z" fill="currentColor"/>'
-};
-const THEME_LABEL = { auto:"Auto", light:"Light", dark:"Dark" };
-const THEME_HINT  = {
-  auto:"Colour theme: following your device. Click for light.",
-  light:"Colour theme: light. Click for dark.",
-  dark:"Colour theme: dark. Click to follow your device."
-};
-
-/* Read the mode from the document itself, so the button stays truthful even
-   if the viewer changes their theme outside the page.                       */
-function currentThemeMode(){
-  const c = document.body.classList;
-  return c.contains("theme-dark") ? "dark" : c.contains("theme-light") ? "light" : "auto";
-}
-function syncThemeButton(){
-  const mode = currentThemeMode();
-  document.getElementById("theme-ico").innerHTML = THEME_ICONS[mode];
-  document.getElementById("theme-txt").textContent = THEME_LABEL[mode];
-  const b = document.getElementById("btn-theme");
-  b.title = THEME_HINT[mode];
-  b.setAttribute("aria-label", THEME_HINT[mode]);
-}
-function setThemeMode(mode, remember){
-  document.body.classList.toggle("theme-dark", mode === "dark");
-  document.body.classList.toggle("theme-light", mode === "light");
-  if (remember){
-    try { localStorage.setItem(THEME_KEY, mode); } catch (e) { /* private mode */ }
-  }
-  syncThemeButton();
-  onThemeChange();
-}
-document.getElementById("btn-theme").addEventListener("click", () => {
-  const next = { auto:"light", light:"dark", dark:"auto" }[currentThemeMode()];
-  setThemeMode(next, true);
-});
-
-/* Restore a remembered choice before anything is drawn */
-(function restoreTheme(){
-  let saved = null;
-  try { saved = localStorage.getItem(THEME_KEY); } catch (e) { /* private mode */ }
-  if (saved === "light" || saved === "dark") setThemeMode(saved, false);
-  syncThemeButton();
-})();
+/* ── Colour theme: the site's Light / Dark toggle (assets/sst/sst.js) runs
+   #btn-theme; the scene restyles on its 'sst-theme' event, below. ────────── */
 
 /* ── Presentation mode ── */
 function setPresent(on){
@@ -2323,15 +2247,11 @@ function pickAt(clientX, clientY){
 
 /* ── Theme reactions ── */
 function onThemeChange(){
-  syncThemeButton();
   applySceneTheme();
   restyleFractionMaterials();
   rebuildLabels();
 }
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onThemeChange);
-new MutationObserver(onThemeChange).observe(document.documentElement, {
-  attributes:true, attributeFilter:["data-theme"]
-});
+document.addEventListener("sst-theme", onThemeChange);
 
 /* ── Boot ─────────────────────────────────────────────────────────────── */
 const started = initThree();

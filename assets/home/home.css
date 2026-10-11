@@ -356,3 +356,60 @@ button.btn--primary:disabled { opacity: 0.6; cursor: default; }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 13px; }
 .site-footer nav a { display: flex; align-items: center; min-height: 44px; padding: 0 10px; }
 .site-footer small { font-size: 12px; color: var(--text-muted); }
+
+/* ---------- Theme toggle ---------- */
+/* sst.js (loaded with data-bar="none") sets the theme and runs this button. */
+.theme-toggle {
+  display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 14px;
+  background: none; border: 0; color: var(--text); font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap;
+}
+.theme-toggle:hover { color: var(--blue); }
+.sst-theme-icon { display: inline-flex; font-style: normal; flex: none; }
+.sst-theme-icon svg { width: 16px; height: 16px; }
+
+/* ---------- Light theme ----------
+   The viewer's choice from the Light / Dark button, shared with every tool
+   (sst.js puts .theme-light on <html>). Same layout, light surfaces. */
+.theme-light {
+  --bg: oklch(0.968 0.006 250);
+  --bg-hero: oklch(0.945 0.012 250);
+  --bg-panel: oklch(0.985 0.004 250);
+  --bg-card: oklch(1 0 0);
+  --line: oklch(0.89 0.012 250);
+  --text: oklch(0.24 0.035 255);
+  --text-body: oklch(0.37 0.03 255);
+  --text-muted: oklch(0.5 0.028 255);
+  --blue: oklch(0.5 0.15 245);
+  --blue-btn: oklch(0.55 0.17 245);
+  --violet: oklch(0.5 0.16 295);
+  --violet-btn: oklch(0.52 0.17 295);
+  --coral: oklch(0.56 0.16 32);
+  color-scheme: light;
+}
+.theme-light :is(.nav-kofi, .btn--primary, .empty button):hover { background: oklch(0.5 0.17 245); }
+.theme-light .btn--ghost { border-color: oklch(0.8 0.02 255); }
+.theme-light .hero-figure .frame { --stripe-a: oklch(0.93 0.01 250); --stripe-b: oklch(0.95 0.01 250); border-color: oklch(0.86 0.015 250); }
+.theme-light .path--explore { --card: oklch(0.965 0.02 245); --bd: oklch(0.85 0.05 245); }
+.theme-light .path--play { --card: oklch(0.965 0.02 295); --bd: oklch(0.86 0.05 295); --bd-hover: oklch(0.55 0.15 295); }
+.theme-light .path-icon { border-color: oklch(0.8 0.07 var(--h)); background: oklch(0.92 0.04 var(--h)); }
+.theme-light .path-icon .diamond { border-color: oklch(0.5 0.15 240); }
+.theme-light .path-title span { color: oklch(0.45 0.08 var(--h)); }
+.theme-light .path-media { --stripe-a: oklch(0.93 0.025 var(--h)); --stripe-b: oklch(0.95 0.02 var(--h)); }
+.theme-light .tile { --tile-bg: oklch(1 0 0); border-color: oklch(0.88 0.012 250); }
+.theme-light .tile:hover { border-color: oklch(0.6 0.1 245); }
+.theme-light :is(.tile-media, .catalogue .tile-media) { --stripe-a: oklch(0.93 0.01 250); --stripe-b: oklch(0.95 0.01 250); }
+.theme-light .tile-blurb { color: var(--text-body); }
+.theme-light .pill { background: oklch(0.93 0.04 var(--h)); color: oklch(0.42 0.1 var(--h)); }
+.theme-light .pill--level { background: transparent; color: var(--text-body); box-shadow: inset 0 0 0 1px oklch(0.8 0.02 255); }
+.theme-light .search { background: oklch(1 0 0); border-color: oklch(0.82 0.02 255); }
+.theme-light .search input::placeholder { color: oklch(0.55 0.025 255); }
+.theme-light .search input::-webkit-search-cancel-button { filter: none; }
+.theme-light .segmented { border-color: oklch(0.85 0.015 255); }
+.theme-light .chip { border-color: oklch(0.85 0.015 255); color: var(--text-body); }
+.theme-light .chip:hover { border-color: oklch(0.7 0.06 245); }
+.theme-light .chip[aria-pressed="true"] { background: oklch(0.93 0.04 245); border-color: oklch(0.55 0.15 245); color: oklch(0.4 0.12 245); }
+.theme-light .empty { border-color: oklch(0.85 0.015 255); }
+.theme-light .empty span { color: var(--text-body); }
+.theme-light .nav-sister { color: oklch(0.55 0.15 32); }
+.theme-light .feedback select, .theme-light .feedback textarea, .theme-light .feedback input { background: oklch(1 0 0); border-color: oklch(0.82 0.02 255); }
+.theme-light .feedback::backdrop { background: oklch(0.3 0.03 255 / 0.45); }

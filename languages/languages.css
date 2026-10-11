@@ -36,3 +36,22 @@
 .sister { --sister-accent: oklch(0.74 0.14 240); }
 .sister .atom span { border-color: oklch(0.74 0.14 240); }
 .sister .atom span:nth-child(4) { background: oklch(0.74 0.14 240); }
+
+/* Light theme: the same coral identity, deeper so it reads on white. */
+.theme-light {
+  --blue: oklch(0.56 0.16 32);
+  --blue-btn: oklch(0.58 0.17 32);
+  --btn-hover: oklch(0.52 0.17 32);
+}
+.theme-light :is(.btn--primary, button.btn--primary, .nav-kofi, .empty button):hover { background: var(--btn-hover); }
+.theme-light .tile:hover { border-color: oklch(0.65 0.12 32); }
+.theme-light .chip:hover { border-color: oklch(0.72 0.08 32); }
+.theme-light .chip[aria-pressed="true"] { background: oklch(0.94 0.035 32); border-color: oklch(0.58 0.17 32); color: oklch(0.45 0.14 32); }
+.theme-light .path--lang { --card: oklch(0.97 0.015 var(--h)); --bd: oklch(0.86 0.04 var(--h)); --bd-hover: oklch(0.55 0.13 var(--h)); --btn: oklch(0.92 0.04 var(--h)); }
+.theme-light .path--lang .path-icon { color: oklch(0.42 0.12 var(--h)); }
+.theme-light .path--lang .path-btn { color: oklch(0.38 0.1 var(--h)); }
+.theme-light .path--lang:hover .path-btn { background: oklch(0.88 0.06 var(--h)); }
+.theme-light .nav-sister { color: oklch(0.5 0.15 240); }
+.theme-light .sister { --sister-accent: oklch(0.5 0.15 240); }
+.theme-light .sister .atom span { border-color: oklch(0.5 0.15 240); }
+.theme-light .sister .atom span:nth-child(4) { background: oklch(0.5 0.15 240); }

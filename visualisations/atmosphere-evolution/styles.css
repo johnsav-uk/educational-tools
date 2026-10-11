@@ -4,6 +4,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { color-scheme: dark; }
+html.theme-light { color-scheme: light; }
 body {
   margin: 0; background: var(--sst-bg); color: var(--sst-text-body);
   font: 400 1rem/1.55 var(--sst-font); -webkit-font-smoothing: antialiased;
@@ -301,6 +302,14 @@ body.sst-pres .sr-only { font-size: var(--sst-pr-label); }   /* invisible either
 /* ── print: worksheet and (only if ticked) mark scheme ── */
 .print-only { display: none; }
 @page { size: A4; margin: 12mm; }
+/* ── Light theme (the site bar's Light / Dark toggle) ──
+   The scene is the Earth from space, so it keeps its night sky in both
+   themes, and the labels over it stay light on their dark backing. */
+.theme-light :is(.hud, .lbl) { color: #edf2f8; }
+.theme-light .hud b { color: #edf2f8; }
+.theme-light .hud span { color: #bbc5d1; }
+.theme-light :is(.hud, .lbl) { border-color: #2c3d52; }
+
 @media print {
   body:not(.printing) #printDoc { display: none !important; }
   body.printing { background: #fff !important; color: #000 !important; }

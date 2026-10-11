@@ -7,7 +7,7 @@
   --line: var(--sst-line); --line2: var(--sst-line-strong);
   --accent: var(--sst-blue); --btn: var(--sst-blue-btn); --soft: var(--sst-blue-soft);
   --phys: var(--sst-phys); --gcse: var(--sst-amber);
-  --stage: #091321;
+  --stage: var(--sst-stage);
   --alpha: #f5b14c; --beta: #47b5fa; --gamma: #6fe3a3;
   --parent: #b199f4; --daughter: #3a4a60;
   color-scheme: dark;
@@ -92,9 +92,9 @@ svg { flex: none; }
 .lbl { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--muted); font-weight: 600; letter-spacing: .02em; margin-bottom: 5px; }
 .lbl output { color: var(--ink); font-family: var(--sst-font); font-variant-numeric: tabular-nums; font-weight: 500; }
 select { width: 100%; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line2); background: var(--sst-input); color: var(--ink); }
-input[type="range"] { width: 100%; accent-color: #47b5fa; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
 .check { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: .9rem; color: var(--body); cursor: pointer; }
-.check input { accent-color: #47b5fa; width: 16px; height: 16px; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
 .seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--card); border: 1px solid var(--line); border-radius: 11px; }
 .seg button { flex: 1 1 auto; border: 1px solid transparent; background: none; border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: .88rem; color: var(--body); cursor: pointer; }
 .seg button:hover { color: var(--ink); background: var(--raised); }
@@ -218,7 +218,7 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 dialog h2 { margin: 0 0 8px; font-size: 1.2rem; }
 dialog label { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; cursor: pointer; color: var(--body); font-size: .92rem; }
 dialog label b { color: var(--ink); }
-dialog input { margin-top: 4px; accent-color: #47b5fa; }
+dialog input { margin-top: 4px; accent-color: var(--accent); }
 dialog .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 
 /* ── Print: A4 summary card, worksheet, mark scheme ───── */
@@ -290,3 +290,12 @@ dialog .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16
 }
 .bench-stage .legend { top: 8px; bottom: auto; }
 .legend .lg-note { color: var(--muted); }
+
+/* ── Light theme (the site bar's Light / Dark toggle) ──── */
+.theme-light {
+  --alpha: #c46a00; --beta: #0068b2; --gamma: #14894f;
+  --daughter: #d5dde6;
+}
+.theme-light .lcd { background: #e4efe6; border-color: #a9c7b2; color: #0d4d2c; }
+.theme-light .lcd span { color: #2f7a52; }
+.theme-light :is(button, input, select):focus-visible { outline-color: #0068b2; }

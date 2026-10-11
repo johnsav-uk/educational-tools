@@ -236,6 +236,47 @@ body.sst-pres .cat-ctrl .sw, body.sst-pres .cat-ctrl .btn,
 body.sst-pres .cat-ctrl .seg button, body.sst-pres .cat-ctrl .lbl{font-size:var(--sst-pr-control)}
 body.sst-pres .cat-ctrl .hint, body.sst-pres .rounds, body.sst-pres .rounds th{font-size:var(--sst-pr-label)}
 body.sst-pres .rounds th{text-transform:none;letter-spacing:0}
+
+/* ── Light theme (the site bar's Light / Dark toggle) ─────────────────────── */
+.theme-light{
+  --bg:#f1f5f8; --panel-a:#ffffff; --panel-b:#f8fafd; --line:#d5dbe3; --line-2:#b5bfc9;
+  --text:#142030; --muted:#354150; --dim:#596473; --accent:#0068b2; --accent-2:#0076cc;
+  --cA:#e11d48; --cB:#0284c7; --cP:#15803d; --cCat:#7e22ce; --cSolid:#d97706;
+  --warn:#c2410c; --good:#15803d; --bad:#dc2626;
+}
+.theme-light .stage{ background:#f8fafd; }
+.theme-light .btn{ background:#ffffff; }
+.theme-light .btn:hover{ background:#e8edf3; border-color:#9aa8b8; }
+.theme-light .seg{ background:#e8edf3; }
+.theme-light :is(.seg button.on, .tabs button.on){ background:#ffffff; color:var(--text); box-shadow:inset 0 0 0 1px #9aa8b8; border-color:#9aa8b8; }
+.theme-light :is(.stat, .phrase, .task, .cat-ctrl, ul.map li, .lg, .tbl th){ background:#f8fafd; }
+.theme-light :is(.bar, .val){ background:#e8edf3; }
+.theme-light .ctrl{ border-top-color:#e1e6ec; }
+.theme-light #toast{ background:#ffffff; border-color:#9aa8b8; color:var(--text); box-shadow:none; }
+.theme-light :is(.track){ background:#d5dbe3; }
+.theme-light .knob{ background:#8693a5; }
+.theme-light input[type=range]::-webkit-slider-runnable-track{ background:#d5dbe3; border-color:#b5bfc9; }
+.theme-light input[type=range]::-moz-range-track{ background:#d5dbe3; border-color:#b5bfc9; }
+.theme-light input[type=range]::-webkit-slider-thumb{ border-color:#ffffff; }
+.theme-light input[type=range]::-moz-range-thumb{ border-color:#ffffff; }
+.theme-light :is(.chip.hot){ color:#0068b2; }
+.theme-light :is(.chip.cat){ color:#7e22ce; }
+.theme-light :is(.ctrl label.lbl, .switch .sw, .lg b, .term p, .phrase .txt, .study ul, .tbl td, .task, .cat-intro, .rounds td, .cat-explain p, ul.map li){ color:var(--muted); }
+.theme-light .trap h3, .theme-light .cat-explain .caveat h3{ color:#c2410c; }
+.theme-light .trap p{ color:#4a3a28; }
+.theme-light .trap .x{ color:#dc2626; } .theme-light .trap .t{ color:#15803d; }
+.theme-light .task .n{ background:#e8edf3; border-color:#b5bfc9; }
+.theme-light .scroll::-webkit-scrollbar-thumb{ background:#c9d1db; }
+.theme-light :is(em, .term h3, .study h4, .study li b, .task b, .cat-explain h3, .cat-explain p b, ul.map li b, .phrase .txt strong){ color:var(--text); }
+.theme-light :is(.seg button:hover, .tabs button:hover, .copy:hover){ color:var(--text); }
+.theme-light .callout{ color:#0b4a6f; }
+.theme-light .chip, .theme-light .panel > h2 .tag{ background:#ffffff; }
+.theme-light .tabs button{ background:#f8fafd; }
+.theme-light .tabs button.on{ background:#ffffff; }
+.theme-light [style*="color:#d8b4fe"]{ color:#7e22ce !important; }
+.theme-light .spec{ color:#0068b2; }
+.theme-light .btn.primary{ background:#0076cc; border-color:#0076cc; color:#fff; }
+.theme-light .btn.primary:hover{ background:#0068b2; }
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
@@ -813,8 +854,72 @@ const clamp = (v,a,b) => v<a?a:(v>b?b:v);
    Canvas plumbing — fixed world size, scaled to the element
    ============================================================ */
 const presenting = () => document.body.classList.contains('sst-pres');
+
+/* Light / dark: every canvas here is drawn for a navy ground. In the site's
+   light theme (assets/sst/sst.js) each context passes the colours it is given
+   through LIGHT_SWAP, so the drawing code stays as written and a switch shows
+   on the next frame. */
+const LIGHT_SWAP = {
+  '#060a12': '#f8fafd',
+  'rgba(34,211,238,.05)': 'rgba(2,132,199,.06)',
+  'rgba(34,211,238,.08)': 'rgba(20,32,48,.07)',
+  'rgba(253,224,71,.55)': 'rgba(180,120,0,.6)',
+  'rgba(233,213,255,.75)': 'rgba(109,40,217,.6)',
+  'rgba(51,80,127,.6)': 'rgba(90,110,140,.6)',
+  'rgba(147,166,196,.45)': 'rgba(71,85,105,.55)',
+  '#67799b': '#596473',
+  '#93a6c4': '#4c5868',
+  'rgba(255,255,255,.55)': 'rgba(20,32,48,.45)',
+  '#e9effb': '#142030',
+  '#8693a5': '#596473',
+  '#c3cedc': '#354150',
+  'rgba(251,191,36,.75)': 'rgba(180,83,9,.8)',
+  '#fbbf24': '#b45309',
+  '#c084fc': '#7e22ce',
+  '#38bdf8': '#0369a1',
+  'rgba(203,213,225,.45)': 'rgba(71,85,105,.45)',
+  'rgba(203,213,225,.55)': 'rgba(71,85,105,.55)',
+  'rgba(203,213,225,.5)': 'rgba(71,85,105,.5)',
+  'rgba(6,10,18,.9)': 'rgba(255,255,255,.92)',
+  'rgba(6,10,18,.92)': 'rgba(255,255,255,.92)',
+  '#0d1a2a': '#e6ebf1',
+  '#1b2c42': '#c9d1db',
+  '#1f4f80': '#9cc3e6',
+  '#173d63': '#b9d3ea',
+  '#12304f': '#d3e3f1',
+  '#6b7888': '#8d99a8',
+  '#a3b0c2': '#4c5868',
+  '#182535': '#e1e6ec',
+  'rgba(134,147,165,.35)': 'rgba(71,85,105,.35)',
+  'rgba(74,222,128,.07)': 'rgba(21,128,61,.08)',
+  'rgba(248,113,113,.85)': 'rgba(220,38,38,.85)',
+  'rgba(251,191,36,.6)': 'rgba(180,83,9,.6)',
+  '#f5b13d': '#d97706',
+  '#ff5f7e': '#e11d48',
+  '#4cc9ff': '#0284c7',
+  '#4ade80': '#15803d',
+  '#22d3ee': '#0891b2',
+  '#f59e0b': '#d97706',
+  '#fb7185': '#e11d48',
+  '#f87171': '#dc2626',
+  '#dfe6f0': '#475569',
+  '#7f8b9c': '#94a3b8',
+  '#2b8f55': '#4ade80',
+  '#a84c4c': '#f87171'
+};
+const isLight = () => document.documentElement.classList.contains('theme-light');
+function themed(ctx){
+  ['fillStyle', 'strokeStyle'].forEach(k => {
+    const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, k);
+    Object.defineProperty(ctx, k, {
+      get(){ return d.get.call(this); },
+      set(v){ d.set.call(this, typeof v === 'string' && isLight() && LIGHT_SWAP[v] || v); }
+    });
+  });
+  return ctx;
+}
 function stage(canvas, w, h){
-  const ctx = canvas.getContext('2d');
+  const ctx = themed(canvas.getContext('2d'));
   const box = canvas.parentElement;
   function fit(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);

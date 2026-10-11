@@ -118,3 +118,15 @@ body::before { display: none; }
 .end-pos { color: var(--sst-text-muted); }
 .end-found { color: var(--sst-green); }
 .end-missed { color: var(--sst-text-muted); }
+
+/* Light theme (the site bar's Light / Dark toggle): the neon badges and the
+   pale active filter take deeper shades that read on white. */
+.theme-light .filter-btn { color: var(--sst-text-body); }
+.theme-light .filter-btn.active { color: var(--sst-violet); }
+.theme-light .q-card.selected { background: var(--sst-violet-soft); }
+.theme-light .diff-Easy { background: #0a7a4514; color: #0a7a45; border-color: #0a7a45; }
+.theme-light .diff-Medium { background: #7e22ce14; color: #7e22ce; border-color: #7e22ce; }
+.theme-light .diff-Hard { background: #c0124a14; color: #c0124a; border-color: #c0124a; }
+.theme-light .lvl-KS3 { background: #0277a814; color: #0277a8; border-color: #0277a8; }
+.theme-light .lvl-GCSE { background: #9a5b0014; color: #9a5b00; border-color: #9a5b00; }
+.theme-light .lvl-Both { background: #14203010; color: #354150; border-color: #8693a5; }

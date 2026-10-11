@@ -16,9 +16,6 @@ tokens are `#050e1a` (page), `#091321` (panel), `#0d1928` (card), `#182535`
 (line), `#edf2f8` (text), `#8693a5` (muted), `#47b5fa` / `#0086dd` (blue) and
 `#b199f4` / `#734dbe` (violet).
 
-Some tools keep a light theme as an explicit choice from their own toggle. Dark
-is always the default.
-
 Fonts are vendored in `assets/sst/fonts/` (Plus Jakarta Sans, variable woff2,
 OFL) and declared in `assets/sst/fonts.css`, which `sst.css` imports. Don't link
 fonts.googleapis.com: school filters often block it, and the site has to keep
@@ -30,12 +27,56 @@ digits change live, add `font-variant-numeric: tabular-nums` so they don't
 jitter. `--sst-mono` survives only as an alias for the page font, and `sst.css`
 maps Tailwind's `font-mono` onto the page font too.
 
+## Every page has light and dark modes
+
+**Every page works in both themes. Dark is the default; light is the
+viewer's choice**, from the Light / Dark button at the end of the site bar
+(and in the shared presenter's top bar). One choice covers the whole site,
+both homepages included, and is remembered in `localStorage` (`sst-theme`).
+The homepages have their own header, so they load `sst.js` with
+`data-bar="none"`: the theme without the bar.
+Time of Flight was the model.
+
+`sst.js` sets the theme before the page paints, putting `.theme-light` or
+`.theme-dark` on both `<html>` and `<body>`. A new tool needs:
+
+- **Colours from the tokens.** `sst.css` redefines every `--sst-*` token under
+  `.theme-light`, so a tool whose `:root` variables are written as
+  `var(--sst-*)` goes light on its own. Backgrounds behind a canvas, scene or
+  diagram use `--sst-stage`; right / caution / wrong feedback backgrounds use
+  `--sst-good-bg`, `--sst-warn-bg` and `--sst-bad-bg`.
+- **A `.theme-light` block** after the tool's own `:root` block for anything it
+  colours itself. Light-mode hex equivalents: `#f1f5f8` (page), `#f8fafd`
+  (panel and `--sst-stage`), `#ffffff` (card), `#d5dbe3` (line), `#142030`
+  (text), `#596473` (muted), `#0068b2` / `#0076cc` (blue), `#6c4ab3` /
+  `#734dbe` (violet).
+- **Canvases and three.js scenes that repaint.** Choose the palette when
+  drawing (`SST_THEME.get()` returns `'dark'` or `'light'`) and redraw on the
+  `sst-theme` event: `document.addEventListener('sst-theme', redraw)`. A loop
+  that draws every frame only needs the palette lookup.
+- **SVG drawn for a navy ground** can be swapped from CSS without touching
+  the drawing code: CSS outranks SVG presentation attributes, so
+  `.theme-light #mySvg [fill="#edf2f8"] { fill: #142030; }` works (Titration
+  Lab and Electrochemical Cells do this).
+- A tool's own Light / Dark button just carries `data-sst-theme-toggle`, with
+  an `<i class="sst-theme-icon">` and a `<span class="sst-theme-label">`
+  inside; `sst.js` runs it. Don't keep a separate theme or storage key.
+
+Scenes that depict a dark place (space in Mass & Weight, the atmosphere's
+early Earth, glowing atom models in the Atomic Model Timeline) keep their dark
+stage in both themes, with the page around them going light. Printed
+worksheets are black on white in either theme. The glass template's Tailwind
+utilities are repainted for light in `assets/sst/skin.css`.
+
+Check both themes before pushing: switch with the button, read every tab and
+mode, and look for text or lines that vanish on white.
+
 ## Every page carries the site bar
 
 **Any new page in `visualisations/` or `games/` must load the site bar.** It
 is the header across the top of every tool: logo home, the tool's name and
 kind, and Explore / Play / Support / All tools (Support links to the homepage's
-feedback form and Ko-fi). Without it a tool is a dead end: pupils
+feedback form and Ko-fi), then the Light / Dark button. Without it a tool is a dead end: pupils
 reach it from a link, a QR code or a shared URL, and there is nothing to
 click to see everything else.
 

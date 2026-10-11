@@ -94,3 +94,21 @@ body::before { display: none !important; }
 /* Win overlay */
 .win { background: rgba(3, 9, 21, .94) !important; }
 .win h2 { font-family: var(--sst-font) !important; font-weight: 800 !important; text-shadow: none !important; }
+
+/* Light theme (the site bar's Light / Dark toggle). The show titles are
+   yellow or white for a dark stage; on the light page they take the ink. */
+.theme-light .titlebar h1 { color: var(--sst-text) !important; }
+.theme-light .chip { color: var(--sst-text-body) !important; }
+.theme-light .chip:hover { border-color: oklch(0.6 0.08 245) !important; }
+.theme-light .chip.on { color: var(--sst-blue) !important; }
+/* Blockbusters: the White team's name and score are drawn in white, and the
+   Blue team's in a pale blue; on the light page they take darker shades. */
+.theme-light :is(.scard.white .who, .scard.white .num, .win.white h2) { color: #354150; text-shadow: none; }
+.theme-light :is(.scard.blue .who, .scard.blue .num) { color: #1d5fae; }
+/* Who Dares Wins: the gold team, category and bid are yellow on the stage;
+   on the light page they take a deep gold, and the coral team a deeper red. */
+.theme-light :is(.scard.a .who, .catcard .topic, .bid-num) { color: #8a5a12; text-shadow: none; }
+.theme-light .scard.b .who { color: #c2410c; }
+/* Team names written in their team colour (often an inline style): darkened
+   on the light page so the hue still says which team it is. */
+.theme-light :is(.scard .who, .win .fscard .who, [style*="color:var(--team"]) { filter: brightness(.7); }

@@ -17,7 +17,7 @@
   --chem: var(--sst-chem, #5fd6c8); --lvl: var(--sst-amber, #f5c451);
   --good: var(--sst-green, #6fe3a3); --bad: var(--sst-red, #ff6b5e); --warn: var(--sst-amber, #f5c451);
   --font: var(--sst-font, 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif);
-  --stage: #091321;
+  --stage: var(--sst-stage, #091321);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -254,6 +254,23 @@ input[type="range"] { width: 100%; accent-color: #47b5fa; }
 .fb.right { border-color: var(--good); } .fb.wrong { border-color: var(--bad); }
 .fb .fh { font-size: 1.1rem; font-weight: 800; }
 .fb.right .fh { color: var(--good); } .fb.wrong .fh { color: #ff8a80; }
+
+/* ── Light theme (the site bar's Light / Dark toggle) ──────────────────────
+   Atoms keep their element colours. The bonds, the balance and the labels
+   are SVG attributes drawn for the navy stage, swapped here for ink. */
+.theme-light :is(button, input, select):focus-visible { outline-color: #0068b2; }
+.theme-light :is(input[type="range"], .check input) { accent-color: var(--btn); }
+.theme-light .btn.primary:hover:not(:disabled) { border-color: #00578f; }
+.theme-light .xstage .mname { fill: #354150; }
+.theme-light .xstage .mname.bad { fill: #c0392b; }
+.theme-light :is(.warn .wh, .fb.wrong .fh) { color: #c0392b; }
+.theme-light .stage svg [fill="#edf2f8"] { fill: #142030; }
+.theme-light .stage svg [fill="#182535"] { fill: #e1e6ec; }
+.theme-light .coef.one { color: var(--sst-text-muted); }
+.theme-light .stage svg [stroke="#9aa7b8"] { stroke: #6b7787; } .theme-light .stage svg [fill="#9aa7b8"] { fill: #6b7787; }
+.theme-light .stage svg [stroke="#8693a5"] { stroke: #596473; } .theme-light .stage svg [fill="#8693a5"] { fill: #596473; }
+.theme-light .stage svg [stroke="#56657a"] { stroke: #8693a5; } .theme-light .stage svg [fill="#56657a"] { fill: #8693a5; }
+.theme-light .stage svg [stroke="#2c3d52"] { stroke: #9aa8b8; } .theme-light .stage svg [fill="#2c3d52"] { fill: #c9d1db; }
 .fb p { margin: 6px 0; color: var(--body); }
 .fb ol { margin: 6px 0 0; padding-left: 22px; color: var(--body); }
 .fb li { margin: 3px 0; }

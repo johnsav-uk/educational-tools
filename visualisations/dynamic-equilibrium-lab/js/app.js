@@ -1027,6 +1027,7 @@ document.addEventListener('keydown', e => {
 let resizeT = 0;
 const queueResize = () => { clearTimeout(resizeT); resizeT = setTimeout(resizeAll, 60); };
 window.addEventListener('resize', queueResize);
+document.addEventListener('sst-theme', resizeAll);   // repaint the vessel and charts in the new theme
 if (window.ResizeObserver) {
   const ro = new ResizeObserver(queueResize);
   ['#chamberCv', '#concCv', '#rateCv', '#catCv', '#haberCv'].forEach(sel => ro.observe($(sel)));

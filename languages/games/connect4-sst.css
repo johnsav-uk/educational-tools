@@ -99,3 +99,9 @@ button.main-btn:hover, button.main-btn:active, .btn-play:active { transform: non
 .congrats-card { background: var(--sst-card); border: 1px solid var(--sst-line-strong); box-shadow: none; }
 .congrats-card h2 { font-family: var(--sst-font); font-weight: 800; color: var(--sst-text); }
 .congrats-card p { font-family: var(--sst-font); color: var(--sst-text-body); font-weight: 500; }
+
+/* Light theme (the site bar's Light / Dark toggle): the yellow half of the
+   title takes the counters' darker edge so it reads on white. */
+.theme-light .title-plaque h1 span.c-yellow { color: #a86f00; }
+.theme-light :is(.status-text.player2, .score.player2 .value) { color: #a86f00; }
+.theme-light .btn-secondary { color: var(--sst-text); }

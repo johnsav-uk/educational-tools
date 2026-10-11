@@ -16,8 +16,8 @@
 <style>
 /* ── Tokens ─────────────────────────────────────────────────────────────
    Dark is the bare :root set, on the site-wide palette (assets/sst/sst.css).
-   Light is only the explicit choice from the page's own toggle, which lives
-   on <body> so a host restamping data-theme can't undo it. Scene colours
+   Light is the viewer's choice from the site's Light / Dark toggle
+   (assets/sst/sst.js), which puts .theme-light on <body>. Scene colours
    stay hex: three.js reads them and can't parse oklch(). */
 :root{
   --ground:#050e1a; --ground-2:#030915; --surface:#091321; --surface-2:#0d1928;
@@ -274,7 +274,7 @@ body.presenting .pin-n { font-size: calc(var(--sst-pr-label) * .8); }
       <button id="mode-demo" aria-pressed="true">Demo mode</button>
       <button id="mode-quiz" aria-pressed="false">Quiz &amp; annotation</button>
     </div>
-    <button class="btn" id="theme-btn" title="Switch light / dark">Dark</button>
+    <button class="btn" id="theme-btn" data-sst-theme-toggle><i class="sst-theme-icon"></i><span class="sst-theme-label">Light</span></button>
   </header>
 
   <div class="console">
@@ -1718,20 +1718,13 @@ function setMode(m){
   else { state.awaitingPick = false; renderCard(); }
 }
 
-function setTheme(t){
-  document.body.classList.toggle("theme-dark", t === "dark");
-  document.body.classList.toggle("theme-light", t === "light");
-  document.getElementById("theme-btn").textContent = t === "dark" ? "Light" : "Dark";
+/* The theme is the site's (assets/sst/sst.js): it puts .theme-light on
+   <body>, and the scene, table and spectrum repaint when it changes. */
+document.addEventListener("sst-theme", () => {
   applySceneTheme();
   renderFlightTable();
   drawSpectrum();
-  try { localStorage.setItem("tof-theme", t); } catch (err) { /* sandboxed storage */ }
-}
-function currentTheme(){
-  if (document.body.classList.contains("theme-dark")) return "dark";
-  if (document.body.classList.contains("theme-light")) return "light";
-  return "dark"; // site default
-}
+});
 
 /* ═══════════════════════════════════════════════════════════════════════
    8. LOOP + BOOT
@@ -1774,10 +1767,6 @@ function boot(){
   specCanvas = document.getElementById("spectrum");
   specCtx = specCanvas.getContext("2d");
 
-  let saved = null;
-  try { saved = localStorage.getItem("tof-theme"); } catch (err) { /* sandboxed storage */ }
-  if (saved) setTheme(saved); else document.getElementById("theme-btn").textContent = currentTheme() === "dark" ? "Light" : "Dark";
-
   initScene();
   initControls();
   renderSteps();
@@ -1811,7 +1800,6 @@ function boot(){
   document.getElementById("view-reset").addEventListener("click", () => selectStage(-1));
   document.getElementById("mode-demo").addEventListener("click", () => setMode("demo"));
   document.getElementById("mode-quiz").addEventListener("click", () => setMode("quiz"));
-  document.getElementById("theme-btn").addEventListener("click", () => setTheme(currentTheme() === "dark" ? "light" : "dark"));
 
   new ResizeObserver(() => { resize3D(); resizeSpectrum(); }).observe(document.querySelector(".console"));
 

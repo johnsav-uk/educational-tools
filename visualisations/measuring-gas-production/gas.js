@@ -17,6 +17,15 @@
       cotton:'#e9eef5', cottonShade:'#b8c3d1', puff:'226,234,244', mg:'#c9d2dc', chip:'#e6dfcf', chipEdge:'#a79f8e',
       mno2:'#2a2f36', mno2Edge:'#6b7480', leader:'#4a5a70', clockBg:'#0d1928'
     },
+    light: {
+      bg:'#f8fafd', bench:'#d5dde6', benchTop:'#aab5c2', text:'#142030', muted:'#596473',
+      glass:'#6f86a0', glassFill:'rgba(111,134,160,0.06)', liquid:'rgba(0,118,204,0.16)', liquidTop:'rgba(0,104,178,0.7)',
+      water:'rgba(0,118,204,0.12)', gas:'rgba(20,32,48,0.03)', bubble:'rgba(60,80,105,0.8)', bubbleFill:'rgba(255,255,255,0.7)',
+      rubber:'#7a665e', metal:'#8b99a8', metalLight:'#596473', plunger:'#c9d2dc', accent:'#0076cc', ht:'#6c4ab3',
+      balance:'#e6ebf1', balanceEdge:'#9aa8b8', lcdBg:'#e3efe9', lcd:'#0f6b5f', lcdDim:'rgba(15,107,95,0.08)',
+      cotton:'#ffffff', cottonShade:'#8f9cab', puff:'120,135,155', mg:'#8a95a2', chip:'#e6dfcf', chipEdge:'#8c8473',
+      mno2:'#2a2f36', mno2Edge:'#6b7480', leader:'#9aa8b8', clockBg:'#ffffff'
+    },
     print: {
       bg:'#ffffff', bench:'#d6d6d6', benchTop:'#9a9a9a', text:'#000000', muted:'#333333',
       glass:'#222222', glassFill:'rgba(0,0,0,0.02)', liquid:'rgba(40,120,200,0.16)', liquidTop:'rgba(20,90,170,0.8)',
@@ -27,6 +36,9 @@
       mno2:'#222222', mno2Edge:'#000000', leader:'#555555', clockBg:'#ffffff'
     }
   };
+
+  /* On screen the drawings follow the site's light / dark theme (sst.js). */
+  function screenPal(){ return document.documentElement.classList.contains('theme-light') ? PAL.light : PAL.dark; }
 
   function sf(x, n){
     if (!isFinite(x)) return '—';
@@ -553,13 +565,14 @@
     this.dirty = false;
     var ctx = this.ctx, k = s.w / W * s.dpr;
     ctx.setTransform(k, 0, 0, k, 0, 0);
-    ctx.fillStyle = PAL.dark.bg; ctx.fillRect(0, 0, W, H);
-    DRAW[this.id](ctx, PAL.dark, this.state());
+    var pal = screenPal();
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+    DRAW[this.id](ctx, pal, this.state());
     if (!this.graphBox.hidden){
       var g = fit(this.gv, this.gctx);
       if (g){
         this.gctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
-        drawGraph(this.gctx, g.w, g.h, this.id, this.t, this.tanBox.checked, PAL.dark);
+        drawGraph(this.gctx, g.w, g.h, this.id, this.t, this.tanBox.checked, pal);
       }
     }
   };
@@ -573,6 +586,7 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  document.addEventListener('sst-theme', function(){ sims.forEach(function(s){ s.dirty = true; }); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ sims.forEach(function(s){ s.dirty = true; }); renderPrintFigures(); });
   else renderPrintFigures();
 

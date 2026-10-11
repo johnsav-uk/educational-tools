@@ -13,7 +13,8 @@
 <style>
 /* ── Tokens ─────────────────────────────────────────────────────────────
    Dark is the bare :root set, on the site-wide palette (assets/sst/sst.css).
-   Light is the explicit choice from the theme button. --lbl-* stay hex:
+   Light is the site's Light / Dark toggle (.theme-light, from
+   assets/sst/sst.js). --lbl-* stay hex:
    the 3D view reads them with getPropertyValue. */
 :root{
   --chem:#5cd5c7; --phys:#c3b0fd; --bio:#8bd28d; --alevel:#b199f4; --gcse:#f3b94c;
@@ -32,18 +33,18 @@
   --gcse-ui:#f3b94c; --alevel-ui:#b199f4;
   color-scheme:dark;
 }
-:root[data-theme="light"]{
-  --chem:#a8281e; --phys:#14509b; --bio:#166534; --alevel:#6b3fa0; --gcse:#a04d10;
-  --bg:#eef1f6; --bg2:#e3e8f1;
-  --ink:#141a24; --ink2:#4a5566; --ink3:#7a8596;
-  --card:rgba(255,255,255,.72); --card-solid:#ffffff; --line:rgba(20,26,36,.12); --line2:rgba(20,26,36,.2);
-  --chip:rgba(20,26,36,.05); --chip-hover:rgba(20,26,36,.1);
-  --accent:#0f766e; --accent-ink:#ffffff;
+.theme-light{
+  --chem:#00736a; --phys:#6b4cae; --bio:#2f7434; --alevel:#6c4ab3; --gcse:#975d00;
+  --bg:#f1f5f8; --bg2:#e8edf3;
+  --ink:#142030; --ink2:#354150; --ink3:#596473;
+  --card:#ffffff; --card-solid:#ffffff; --line:#d5dbe3; --line2:#b5bfc9;
+  --chip:#e8edf3; --chip-hover:#dde3ea;
+  --accent:#0076cc; --accent-ink:#ffffff;
   --hl:#d97706; --star:#b45309; --err:#dc2626; --ok:#15803d;
   --root:#0369a1; --prefix:#7c3aed; --suffix:#be123c; --unsat:#0f766e; --stereo:#b45309;
-  --sketch-bg:rgba(255,255,255,.6); --grid:rgba(20,26,36,.06);
-  --view-bg:radial-gradient(120% 100% at 50% 0%, #ffffff 0%, #e6ebf3 100%);
-  --shadow:0 10px 30px -12px rgba(20,30,60,.25);
+  --sketch-bg:#f8fafd; --grid:rgba(20,32,48,.06);
+  --view-bg:#f8fafd;
+  --shadow:none;
   --lbl-C:#1d2430; --lbl-H:#6b7684; --lbl-O:#d02b2b; --lbl-N:#2447d6; --lbl-F:#4d8c1a; --lbl-Cl:#168a16; --lbl-Br:#8a2222; --lbl-I:#7a1a8a;
   --gcse-ui:var(--gcse); --alevel-ui:var(--alevel);
   color-scheme:light;
@@ -269,9 +270,7 @@ body.presenting .tags .tag { font-size: var(--sst-pr-label); }
       <button type="button" class="lvl-alevel" data-mode="alevel" aria-pressed="true">A-Level</button>
     </div>
     <select id="preset" class="select" aria-label="Preset molecules"></select>
-    <button type="button" id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme" title="Light / dark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-    </button>
+    <button type="button" id="themeBtn" class="icon-btn" data-sst-theme-toggle><i class="sst-theme-icon"></i></button>
   </div>
 </header>
 
@@ -2441,19 +2440,13 @@ $('#btnExplain').onclick = () => {
   $('#nameCard').classList.toggle('explaining', explain);
   renderSketch(); update3D(false);
 };
-function applyTheme(t) {
-  if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
-  renderSketch();
-}
-$('#themeBtn').onclick = () => {
-  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = cur === 'dark' ? 'light' : 'dark'; store.set('theme', next); applyTheme(next);
-};
+// Light / dark is the site's toggle (assets/sst/sst.js); #themeBtn carries
+// data-sst-theme-toggle. Both views repaint when it changes.
+document.addEventListener('sst-theme', () => { renderSketch(); update3D(false); });
 new ResizeObserver(() => renderSketch()).observe($('#sketchWrap'));
 
 // ---------- start ----------
 (function init() {
-  const th = store.get('theme'); if (th) applyTheme(th);
   buildToolbar();
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
   document.querySelectorAll('[data-style]').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === drawStyle));

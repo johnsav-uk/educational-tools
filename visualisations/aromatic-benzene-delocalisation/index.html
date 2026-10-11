@@ -106,6 +106,21 @@
 </style>
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 <link rel="stylesheet" href="../../assets/sst/skin.css">
+<style>
+  /* Light theme: the energy diagram is SVG drawn with pale strokes and fills
+     for a navy ground. CSS outranks SVG presentation attributes, so the
+     light set swaps each one for a shade that reads on white. */
+  .theme-light .bg-\[\#080d16\]\/70 { background-color: var(--sst-stage); }
+  .theme-light main svg [fill="#e2e8f0"] { fill: #142030; } .theme-light main svg [stroke="#e2e8f0"] { stroke: #142030; }
+  .theme-light main svg [fill="#cbd5e1"] { fill: #354150; } .theme-light main svg [stroke="#cbd5e1"] { stroke: #354150; }
+  .theme-light main svg [fill="#94a3b8"] { fill: #596473; } .theme-light main svg [stroke="#94a3b8"] { stroke: #596473; }
+  .theme-light main svg [fill="#fda4af"] { fill: #be123c; } .theme-light main svg [stroke="#fda4af"] { stroke: #be123c; }
+  .theme-light main svg [fill="#fecdd3"] { fill: #9f1239; } .theme-light main svg [stroke="#fecdd3"] { stroke: #9f1239; }
+  .theme-light main svg [fill="#fb7185"] { fill: #e11d48; } .theme-light main svg [stroke="#fb7185"] { stroke: #e11d48; }
+  .theme-light main svg [fill="#34d399"] { fill: #047857; } .theme-light main svg [stroke="#34d399"] { stroke: #047857; }
+  .theme-light main svg [fill="#fbbf24"] { fill: #b45309; } .theme-light main svg [stroke="#fbbf24"] { stroke: #b45309; }
+  .theme-light main svg [fill="#22d3ee"] { fill: #0e7490; } .theme-light main svg [stroke="#22d3ee"] { stroke: #0e7490; }
+</style>
 </head>
 <body>
 <script src="../../assets/sst/sst.js"></script>

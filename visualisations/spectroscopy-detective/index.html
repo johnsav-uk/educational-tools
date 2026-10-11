@@ -181,6 +181,13 @@
     display:none;
   }
   .peak-feedback.show{display:block;}
+  /* Light theme (the site bar's Light / Dark toggle). */
+  .theme-light{
+    --bg:#f1f5f8; --panel:#ffffff; --panel-border:#d5dbe3; --text:#142030; --muted:#596473;
+    --accent:#0068b2; --accent2:#975d00; --danger:#c0392b; --success:#1b7a52; --input-bg:#ffffff;
+  }
+  .theme-light header{ background:#f8fafd; }
+  .theme-light :is(.formula-badge, .peak-row .peak-num){ background:#e8edf3; }
   .peak-feedback.correct{background:rgba(74,222,128,0.12); color:var(--success);}
   .peak-feedback.incorrect{background:rgba(248,113,113,0.12); color:var(--danger);}
   #clueList{
@@ -788,7 +795,18 @@ function build13CTrace(peaks){
   return buildNeedleTrace(peaks.map(p=>({x:p.delta, height:75})));
 }
 
+// Chart colours follow the site's light / dark theme (assets/sst/sst.js).
+function chartPal(){
+  return document.documentElement.classList.contains('theme-light')
+    ? { paper:'#ffffff', plot:'#f8fafd', font:'#142030', grid:'#e1e6ec', ir:'#0284c7', irFill:'rgba(2,132,199,0.08)',
+        mark:'#b45309', ms:'#b45309', h:'#7c3aed', cmark:'#0f766e', c13:'#059669' }
+    : { paper:'#0d1928', plot:'#091321', font:'#e6edf3', grid:'#182535', ir:'#38bdf8', irFill:'rgba(56,189,248,0.08)',
+        mark:'#f0b429', ms:'#fbbf24', h:'#a78bfa', cmark:'#4fd1c5', c13:'#34d399' };
+}
+document.addEventListener('sst-theme', () => { if (document.getElementById('chart').data) renderChart(); });
+
 function renderChart(){
+  const P = chartPal();
   const mol = currentMolecule();
   const instr = state.instrument;
   document.getElementById('chartTitle').textContent = INSTRUMENT_META[instr].title + ' — ' + mol.name + ' (' + formatFormula(mol.formula) + ')';
@@ -800,12 +818,12 @@ function renderChart(){
 
   if(instr === 'ir'){
     const {xs,y} = buildIRTrace(mol.ir.peaks);
-    traces.push({x:xs, y:y, mode:'lines', line:{color:'#38bdf8', width:2}, fill:'tozeroy', fillcolor:'rgba(56,189,248,0.08)', hoverinfo:'skip'});
+    traces.push({x:xs, y:y, mode:'lines', line:{color:P.ir, width:2}, fill:'tozeroy', fillcolor:P.irFill, hoverinfo:'skip'});
     mol.ir.peaks.forEach((p,i)=>{
-      shapes.push({type:'line', x0:p.x, x1:p.x, y0:0, y1:100, line:{color:'#f0b429', width:1, dash:'dot'}});
-      annotations.push({x:p.x, y:104, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+      shapes.push({type:'line', x0:p.x, x1:p.x, y0:0, y1:100, line:{color:P.mark, width:1, dash:'dot'}});
+      annotations.push({x:p.x, y:104, text:String(i+1), showarrow:false, font:{color:P.mark, size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.ir.xlabel, autorange:'reversed', range:[4000,400], gridcolor:'#182535'}, yaxis:{title:'Transmittance / %', range:[0,110], gridcolor:'#182535'} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ir.xlabel, autorange:'reversed', range:[4000,400], gridcolor:P.grid}, yaxis:{title:'Transmittance / %', range:[0,110], gridcolor:P.grid} };
   } else if(instr === 'ms'){
     const xVals = mol.ms.peaks.map(p=>p.mz);
     const stickX = [], stickY = [];
@@ -813,35 +831,35 @@ function renderChart(){
       stickX.push(p.mz, p.mz, null);
       stickY.push(0, p.intensity, null);
     });
-    traces.push({x:stickX, y:stickY, mode:'lines', line:{color:'#fbbf24', width:2.5}, hoverinfo:'skip'});
+    traces.push({x:stickX, y:stickY, mode:'lines', line:{color:P.ms, width:2.5}, hoverinfo:'skip'});
     mol.ms.peaks.forEach((p,i)=>{
-      annotations.push({x:p.mz, y:p.intensity+6, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+      annotations.push({x:p.mz, y:p.intensity+6, text:String(i+1), showarrow:false, font:{color:P.mark, size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.ms.xlabel, range:[0, Math.max(...xVals)+15], gridcolor:'#182535'}, yaxis:{title:'Relative intensity / %', range:[0,115], gridcolor:'#182535'} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.ms.xlabel, range:[0, Math.max(...xVals)+15], gridcolor:P.grid}, yaxis:{title:'Relative intensity / %', range:[0,115], gridcolor:P.grid} };
   } else if(instr === 'nmr1h'){
     const {needle, broad} = build1HTrace(mol.nmr1h.peaks);
     if(broad){
-      traces.push({x:broad.x, y:broad.y, mode:'lines', line:{color:'#a78bfa', width:2}, hoverinfo:'skip'});
+      traces.push({x:broad.x, y:broad.y, mode:'lines', line:{color:P.h, width:2}, hoverinfo:'skip'});
     }
-    traces.push({x:needle.x, y:needle.y, mode:'lines', line:{color:'#a78bfa', width:2.5}, hoverinfo:'skip'});
+    traces.push({x:needle.x, y:needle.y, mode:'lines', line:{color:P.h, width:2.5}, hoverinfo:'skip'});
     mol.nmr1h.peaks.forEach((p,i)=>{
-      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:95, line:{color:'#4fd1c5', width:1, dash:'dot'}});
-      annotations.push({x:p.delta, y:99, text:String(i+1), showarrow:false, font:{color:'#4fd1c5', size:12, weight:700}});
+      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:95, line:{color:P.cmark, width:1, dash:'dot'}});
+      annotations.push({x:p.delta, y:99, text:String(i+1), showarrow:false, font:{color:P.cmark, size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr1h.xlabel, autorange:'reversed', range:[12.5,-0.5], gridcolor:'#182535'}, yaxis:{title:'Intensity', range:[0,105], gridcolor:'#182535', showticklabels:false} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr1h.xlabel, autorange:'reversed', range:[12.5,-0.5], gridcolor:P.grid}, yaxis:{title:'Intensity', range:[0,105], gridcolor:P.grid, showticklabels:false} };
   } else if(instr === 'nmr13c'){
     const {x,y} = build13CTrace(mol.nmr13c.peaks);
-    traces.push({x:x, y:y, mode:'lines', line:{color:'#34d399', width:2.5}, hoverinfo:'skip'});
+    traces.push({x:x, y:y, mode:'lines', line:{color:P.c13, width:2.5}, hoverinfo:'skip'});
     mol.nmr13c.peaks.forEach((p,i)=>{
-      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:80, line:{color:'#f0b429', width:1, dash:'dot'}});
-      annotations.push({x:p.delta, y:85, text:String(i+1), showarrow:false, font:{color:'#f0b429', size:12, weight:700}});
+      shapes.push({type:'line', x0:p.delta, x1:p.delta, y0:0, y1:80, line:{color:P.mark, width:1, dash:'dot'}});
+      annotations.push({x:p.delta, y:85, text:String(i+1), showarrow:false, font:{color:P.mark, size:12, weight:700}});
     });
-    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr13c.xlabel, autorange:'reversed', range:[225,-5], gridcolor:'#182535'}, yaxis:{title:'Intensity', range:[0,95], gridcolor:'#182535', showticklabels:false} };
+    layoutExtra = { xaxis:{title:INSTRUMENT_META.nmr13c.xlabel, autorange:'reversed', range:[225,-5], gridcolor:P.grid}, yaxis:{title:'Intensity', range:[0,95], gridcolor:P.grid, showticklabels:false} };
   }
 
   const layout = Object.assign({
-    paper_bgcolor:'#0d1928', plot_bgcolor:'#091321',
-    font:{color:'#e6edf3', size:12},
+    paper_bgcolor:P.paper, plot_bgcolor:P.plot,
+    font:{color:P.font, size:12},
     margin:{l:55,r:20,t:20,b:45},
     shapes:shapes, annotations:annotations,
     showlegend:false

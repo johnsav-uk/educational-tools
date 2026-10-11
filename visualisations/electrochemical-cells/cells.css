@@ -7,8 +7,8 @@
   --line:var(--sst-line); --line2:var(--sst-line-strong);
   --blue:var(--sst-blue); --btn:var(--sst-blue-btn); --soft:var(--sst-blue-soft); --btnink:#fff;
   --chem:var(--sst-chem); --good:var(--sst-green); --warn:var(--sst-amber); --bad:var(--sst-red);
-  --goodbg:oklch(0.25 0.05 155); --warnbg:oklch(0.26 0.05 80); --badbg:oklch(0.24 0.05 25);
-  --stage:#091321; --electron:#f2c94c; --cation:#b199f4; --anion:#5fd3a8;
+  --goodbg:var(--sst-good-bg); --warnbg:var(--sst-warn-bg); --badbg:var(--sst-bad-bg);
+  --stage:var(--sst-stage); --electron:#f2c94c; --cation:#b199f4; --anion:#5fd3a8;
   color-scheme:dark;
 }
 *{ box-sizing:border-box; }
@@ -231,6 +231,38 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
 /* ── Print: A4 ──────────────────────────────────────────────────── */
 @page{ size:A4; margin:14mm 14mm 16mm; }
+/* ── Light theme (the site bar's Light / Dark toggle) ───────────────────────
+   cell.js draws for a navy stage. Its colours are SVG attributes, which CSS
+   outranks, so each one that would vanish on the light stage is swapped for
+   a counterpart here. Electrodes and solutions keep their real colours. */
+.theme-light .steps li.done::before{ background:oklch(.93 .05 155); }
+.theme-light #cellSvg [fill="#edf2f8"]{ fill:#142030; } .theme-light #cellSvg [stroke="#edf2f8"]{ stroke:#142030; }
+.theme-light #cellSvg [fill="#8693a5"]{ fill:#596473; } .theme-light #cellSvg [stroke="#8693a5"]{ stroke:#596473; }
+.theme-light #cellSvg [fill="#2c3d52"]{ fill:#aab5c2; } .theme-light #cellSvg [stroke="#2c3d52"]{ stroke:#aab5c2; }
+.theme-light #cellSvg [fill="#0d1928"]{ fill:#ffffff; } .theme-light #cellSvg [stroke="#0d1928"]{ stroke:#ffffff; }
+.theme-light #cellSvg [fill="#3a4c63"]{ fill:#9aa8b8; } .theme-light #cellSvg [stroke="#3a4c63"]{ stroke:#9aa8b8; }
+.theme-light #cellSvg [fill="#8a98ab"]{ fill:#56657a; } .theme-light #cellSvg [stroke="#8a98ab"]{ stroke:#56657a; }
+.theme-light #cellSvg [fill="#9fb4cc"]{ fill:#7d93ab; } .theme-light #cellSvg [stroke="#9fb4cc"]{ stroke:#7d93ab; }
+.theme-light #cellSvg [stroke="#f2c94c"]{ stroke:#b98a00; }
+.theme-light #cellSvg [fill="#b199f4"]{ fill:#7c5cd6; } .theme-light #cellSvg [stroke="#b199f4"]{ stroke:#7c5cd6; }
+.theme-light #cellSvg [fill="#5fd3a8"]{ fill:#1f9e74; } .theme-light #cellSvg [stroke="#5fd3a8"]{ stroke:#1f9e74; }
+.theme-light #cellSvg [fill="#7fd99a"]{ fill:#1b7a52; } .theme-light #cellSvg [stroke="#7fd99a"]{ stroke:#1b7a52; }
+.theme-light #cellSvg [fill="#ff8a7a"]{ fill:#c0392b; } .theme-light #cellSvg [stroke="#ff8a7a"]{ stroke:#c0392b; }
+.theme-light #cellSvg [fill="#47b5fa"]{ fill:#0076cc; } .theme-light #cellSvg [stroke="#47b5fa"]{ stroke:#0076cc; }
+.theme-light #cellSvg [fill="#ff9b9e"]{ fill:#c0392b; } .theme-light #cellSvg [stroke="#ff9b9e"]{ stroke:#c0392b; }
+.theme-light #cellSvg [fill="#8fd0ff"]{ fill:#0068b2; } .theme-light #cellSvg [stroke="#8fd0ff"]{ stroke:#0068b2; }
+.theme-light #cellSvg [fill="#ffd2cc"]{ fill:#9f1239; } .theme-light #cellSvg [stroke="#ffd2cc"]{ stroke:#9f1239; }
+.theme-light #cellSvg [fill="#cfe0f2"]{ fill:#7d93ab; } .theme-light #cellSvg [stroke="#cfe0f2"]{ stroke:#7d93ab; }
+.theme-light #cellSvg [fill="#13202f"]{ fill:#c9d1db; } .theme-light #cellSvg [stroke="#13202f"]{ stroke:#c9d1db; }
+.theme-light #cellSvg [fill="#0b1522"]{ fill:#eef2f6; } .theme-light #cellSvg [stroke="#0b1522"]{ stroke:#eef2f6; }
+.theme-light #cellSvg [fill="#7fc4ff"]{ fill:#2f8fd8; } .theme-light #cellSvg [stroke="#7fc4ff"]{ stroke:#2f8fd8; }
+.theme-light #cellSvg [fill="#ff9b8a"]{ fill:#d9534f; } .theme-light #cellSvg [stroke="#ff9b8a"]{ stroke:#d9534f; }
+.theme-light #cellSvg [fill="#b9e27e"]{ fill:#5f9a22; } .theme-light #cellSvg [stroke="#b9e27e"]{ stroke:#5f9a22; }
+.theme-light #cellSvg [fill="rgba(13,25,40,0.9)"]{ fill:rgba(255,255,255,0.92); } .theme-light #cellSvg [stroke="rgba(13,25,40,0.9)"]{ stroke:rgba(255,255,255,0.92); }
+.theme-light #cellSvg [fill="rgba(60,20,24,0.94)"]{ fill:rgba(253,236,236,0.96); } .theme-light #cellSvg [stroke="rgba(60,20,24,0.94)"]{ stroke:rgba(253,236,236,0.96); }
+.theme-light #cellSvg [fill="rgba(207,224,242,0.5)"]{ fill:rgba(80,100,125,0.45); } .theme-light #cellSvg [stroke="rgba(207,224,242,0.5)"]{ stroke:rgba(80,100,125,0.45); }
+.theme-light #cellSvg [fill="rgba(242,201,76,0.85)"]{ fill:rgba(185,138,0,0.85); } .theme-light #cellSvg [stroke="rgba(242,201,76,0.85)"]{ stroke:rgba(185,138,0,0.85); }
+
 @media print{
   html,body{ background:#fff !important; color:#000; height:auto !important; overflow:visible !important; display:block !important; }
   body{ font-size:10.5pt; line-height:1.4; }

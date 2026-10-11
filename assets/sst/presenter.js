@@ -56,6 +56,7 @@
     top.className = 'sst-pres-top sst-teacher';
     top.innerHTML = '<span class="sst-pres-title"></span>' +
       '<span class="sst-pres-keys">P or Esc to leave · D to annotate</span>' +
+      '<button type="button" class="sst-theme-btn" data-sst-theme-toggle><i class="sst-theme-icon"></i><span class="sst-theme-label"></span></button>' +
       '<button type="button" class="sst-pres-full" title="Full screen">Full screen</button>' +
       '<button type="button" class="sst-pres-exit" title="Leave presenter mode (Esc)">Exit</button>';
     top.querySelector('.sst-pres-title').textContent = title();
@@ -68,6 +69,7 @@
     deck.className = 'sst-deck sst-deck--strip sst-pres-deck';
     deck.setAttribute('aria-label', 'Slides'); deck.setAttribute('aria-live', 'polite');
     document.body.appendChild(top); document.body.appendChild(deck);
+    if (window.SST_THEME) SST_THEME.paint();
   }
 
   // Fixed positioning escapes to the viewport unless an ancestor has a

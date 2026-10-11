@@ -32,6 +32,12 @@
   --sst-chem: oklch(0.8 0.11 185);
   --sst-phys: oklch(0.8 0.11 295);
   --sst-bio: oklch(0.8 0.12 145);
+  /* Behind a canvas, scene or diagram (hex: three.js reads it), and the
+     tinted backgrounds of right / caution / wrong feedback. */
+  --sst-stage: #091321;
+  --sst-good-bg: oklch(0.25 0.05 155);
+  --sst-warn-bg: oklch(0.26 0.05 80);
+  --sst-bad-bg: oklch(0.24 0.05 25);
 
   --sst-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* One typeface everywhere, counters included: no monospace faces (their dotted or
@@ -52,6 +58,49 @@
   --sst-pr-label:   max(18px, min(1.7vw, 3vh));
   --sst-pr-figure:  max(32px, min(4.4vw, 7.8vh));
   --sst-pr-control: max(15px, min(1.1vw, 2vh));
+}
+
+/* ---------- Light theme ----------
+   Dark is the default. Light is the viewer's choice from the Light / Dark
+   button in the site bar (sst.js), remembered across the whole site. sst.js
+   puts .theme-light or .theme-dark on both <html> and <body>: on <html> so a
+   tool's own :root variables written as var(--sst-*) resolve to these values,
+   and on <body> as Time of Flight first did. Anything a tool colours itself
+   gets a .theme-light block after its :root block, and canvases or three.js
+   scenes repaint on the 'sst-theme' event. Hex equivalents for canvas use are
+   in CLAUDE.md. */
+.theme-light {
+  color-scheme: light;
+  --sst-bg: oklch(0.968 0.006 250);
+  --sst-bg-deep: oklch(0.945 0.009 250);
+  --sst-panel: oklch(0.985 0.004 250);
+  --sst-card: oklch(1 0 0);
+  --sst-raised: oklch(0.95 0.008 250);
+  --sst-input: oklch(1 0 0);
+  --sst-line: oklch(0.89 0.012 250);
+  --sst-line-strong: oklch(0.8 0.018 250);
+  --sst-text: oklch(0.24 0.035 255);
+  --sst-text-body: oklch(0.37 0.03 255);
+  --sst-text-muted: oklch(0.5 0.028 255);
+  --sst-blue: oklch(0.5 0.15 245);
+  --sst-blue-btn: oklch(0.55 0.17 245);
+  --sst-blue-soft: oklch(0.93 0.04 240);
+  --sst-violet: oklch(0.5 0.16 295);
+  --sst-violet-btn: oklch(0.52 0.17 295);
+  --sst-violet-soft: oklch(0.93 0.04 295);
+  --sst-coral: oklch(0.56 0.16 32);
+  --sst-coral-btn: oklch(0.58 0.17 32);
+  --sst-coral-soft: oklch(0.94 0.035 32);
+  --sst-green: oklch(0.52 0.13 155);
+  --sst-amber: oklch(0.53 0.12 70);
+  --sst-red: oklch(0.55 0.19 25);
+  --sst-chem: oklch(0.5 0.09 185);
+  --sst-phys: oklch(0.5 0.15 295);
+  --sst-bio: oklch(0.5 0.12 145);
+  --sst-stage: #f8fafd;
+  --sst-good-bg: oklch(0.95 0.04 155);
+  --sst-warn-bg: oklch(0.95 0.045 80);
+  --sst-bad-bg: oklch(0.95 0.035 25);
 }
 
 /* Tailwind's font-mono and the browser's monospace defaults for code, kbd, pre and
@@ -97,6 +146,21 @@
   background: var(--sst-blue-soft); color: oklch(0.88 0.08 240);
 }
 .sst-kind--play { background: var(--sst-violet-soft); color: oklch(0.88 0.08 295); }
+.theme-light .sst-kind { color: var(--sst-blue); }
+.theme-light .sst-kind--play { color: var(--sst-violet); }
+.theme-light .sst-bar--lang .sst-kind { color: var(--sst-coral); }
+
+/* Light / Dark: the last item in the bar, kept on phones as an icon. */
+.sst-bar .sst-theme-nav {
+  display: flex; align-items: center; gap: 6px; height: var(--sst-bar-h); padding: 0 12px; border: 0; background: none;
+  color: var(--sst-text); font: inherit; cursor: pointer;
+}
+.sst-theme-icon { display: inline-flex; font-style: normal; flex: none; }
+.sst-theme-icon svg { width: 1.15em; height: 1.15em; }
+.sst-bar .sst-theme-icon svg { width: 16px; height: 16px; }
+.sst-bar .sst-theme-nav:hover { color: var(--sst-blue); box-shadow: inset 0 -2px 0 var(--sst-blue); }
+.sst-bar .sst-theme-nav:focus-visible { outline: 2px solid var(--sst-blue); outline-offset: -2px; border-radius: 4px; }
+.sst-bar--lang .sst-theme-nav:hover { color: var(--sst-coral); box-shadow: inset 0 -2px 0 var(--sst-coral); }
 
 .sst-nav { display: flex; align-items: center; gap: 2px; flex: none; margin-left: auto; }
 .sst-nav a { display: flex; align-items: center; height: var(--sst-bar-h); padding: 0 12px; }
@@ -117,6 +181,8 @@
   .sst-word, .sst-kind { display: none; }
   .sst-nav a:not(.sst-keep) { display: none; }
   .sst-nav a { padding: 0 9px; }
+  .sst-bar .sst-theme-nav { padding: 0 9px; }
+  .sst-bar .sst-theme-nav span { display: none; }
 }
 @media print { .sst-bar { display: none; } }
 
@@ -249,6 +315,7 @@ body.sst-pres .sst-pres-off { display: none !important; }
   border: 1px solid var(--sst-line-strong); background: var(--sst-card); color: var(--sst-text);
 }
 .sst-pres-top button:hover { border-color: var(--sst-text-muted); }
+.sst-pres-top .sst-theme-btn { display: inline-flex; align-items: center; gap: .45em; }
 .sst-pres-top button:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
 .sst-pres-deck {
   position: fixed; z-index: 2147482600; box-sizing: border-box;

@@ -8,7 +8,7 @@ const D2R = Math.PI / 180;
 
 /* CPK-style colours, plus generic placeholders for the custom builder */
 const ELEMENTS = {
-  H:  { colour: 0xf3f6fb, radius: 0.30, label: 'H'  },
+  H:  { colour: 0xf3f6fb, colourLight: 0xaab4c0, radius: 0.30, label: 'H'  },
   C:  { colour: 0x4a4f57, radius: 0.44, label: 'C'  },
   N:  { colour: 0x3b5cf0, radius: 0.44, label: 'N'  },
   O:  { colour: 0xef2f2f, radius: 0.43, label: 'O'  },
@@ -20,7 +20,7 @@ const ELEMENTS = {
   S:  { colour: 0xf5e050, radius: 0.50, label: 'S'  },
   Xe: { colour: 0x3fa7c4, radius: 0.52, label: 'Xe' },
   X:  { colour: 0x2dd4bf, radius: 0.50, label: 'X'  },
-  Y:  { colour: 0xb8c4d4, radius: 0.36, label: 'Y'  }
+  Y:  { colour: 0xb8c4d4, colourLight: 0x66727f, radius: 0.36, label: 'Y'  }
 };
 
 /* ---- helpers for building direction vectors -------------------------------- */
@@ -346,11 +346,14 @@ function arcPoints(a, b, radius, segments) {
   return pts;
 }
 
+// Near-white atoms and bonds are drawn a shade darker on the light stage.
+const lightTheme = () => document.documentElement.classList.contains('theme-light');
+
 function atomMesh(symbol, radius) {
   const el = ELEMENTS[symbol] || ELEMENTS.Y;
   const geo = new THREE.SphereGeometry(radius, 48, 36);
   const mat = new THREE.MeshStandardMaterial({
-    color: el.colour,
+    color: (lightTheme() && el.colourLight) || el.colour,
     roughness: 0.32,
     metalness: 0.12,
     envMapIntensity: 0.6
@@ -388,7 +391,7 @@ function buildMolecule(spec, opts) {
   const loneDirs = g.lones.map(function (d) { return new THREE.Vector3(d[0], d[1], d[2]).normalize(); });
 
   // --- bonds + outer atoms ------------------------------------------------
-  const bondMat = new THREE.MeshStandardMaterial({ color: 0xdfe7f1, roughness: 0.45, metalness: 0.05 });
+  const bondMat = new THREE.MeshStandardMaterial({ color: lightTheme() ? 0x5a6573 : 0xdfe7f1, roughness: 0.45, metalness: 0.05 });
   const up = new THREE.Vector3(0, 1, 0);
 
   bondDirs.forEach(function (dir) {
@@ -469,7 +472,10 @@ function buildMolecule(spec, opts) {
 /* Imperative viewer wrapper — created once, then fed new specs. */
 function createViewer(mount) {
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070b12, 0.028);
+  // The fog takes the stage colour of the site's light / dark theme.
+  const fogColour = () => document.documentElement.classList.contains('theme-light') ? 0xf8fafd : 0x070b12;
+  scene.fog = new THREE.FogExp2(fogColour(), 0.028);
+  document.addEventListener('sst-theme', () => scene.fog.color.setHex(fogColour()));
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
   camera.position.set(3.4, 2.6, 7.4);
@@ -514,7 +520,10 @@ function createViewer(mount) {
     });
   }
 
+  let lastSpec = null, lastOpts = null;
+  document.addEventListener('sst-theme', () => { if (lastSpec) setMolecule(lastSpec, lastOpts); });
   function setMolecule(spec, opts) {
+    lastSpec = spec; lastOpts = opts;
     if (current) { root.remove(current); clear(current); }
     current = buildMolecule(spec, opts);
     root.add(current);

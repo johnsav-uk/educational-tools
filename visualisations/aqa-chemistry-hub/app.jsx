@@ -874,7 +874,11 @@ function OrbitalViewer3D() {
   useEffect(() => {
     const mount = mountRef.current;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#020617');
+    // Follows the site's light / dark theme (--sst-stage, assets/sst/sst.css).
+    const stageColour = () => getComputedStyle(document.documentElement).getPropertyValue('--sst-stage').trim() || '#020617';
+    scene.background = new THREE.Color(stageColour());
+    const onTheme = () => { scene.background = new THREE.Color(stageColour()); };
+    document.addEventListener('sst-theme', onTheme);
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 500);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -939,6 +943,7 @@ function OrbitalViewer3D() {
       ro.disconnect();
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      document.removeEventListener('sst-theme', onTheme);
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };

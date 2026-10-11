@@ -11,7 +11,19 @@
   'use strict';
   var AE = window.AE = window.AE || {};
   var D = AE.DATA;
-  var TEXT = '#edf2f8', MUTED = '#8693a5', LINE = '#182535', PANEL = '#091321';
+  // Follows the site's light / dark theme (assets/sst/sst.js). Chart options
+  // read it through functions, so a switch only needs an update().
+  var THEMES = {
+    dark:  { text: '#edf2f8', muted: '#8693a5', line: '#182535', panel: '#091321', mark: '#2b3a4e' },
+    light: { text: '#142030', muted: '#596473', line: '#e1e6ec', panel: '#f8fafd', mark: '#c9d1db' }
+  };
+  var P = {};
+  function useTheme() {
+    Object.assign(P, THEMES[document.documentElement.classList.contains('theme-light') ? 'light' : 'dark']);
+    if (window.Chart) Chart.defaults.color = P.muted;
+  }
+  useTheme();
+  function muted() { return P.muted; }
   function colOf(id) { return D.GASES.filter(function (g) { return g.id === id; })[0].col; }
   var LINES = [
     { id: 'n2', label: 'Nitrogen (N₂)', col: colOf('n2'), dash: [2, 4] },
@@ -41,7 +53,6 @@
       });
       if (!window.Chart) { els.doughnut.parentNode.classList.add('no-chart'); return; }
       Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
-      Chart.defaults.color = MUTED;
       Chart.defaults.animation = false;
 
       this.donut = new Chart(els.doughnut.getContext('2d'), {
@@ -51,7 +62,7 @@
           datasets: [{
             data: gases.map(function () { return 1; }),
             backgroundColor: gases.map(function (g) { return g.col; }),
-            borderColor: PANEL, borderWidth: 2, hoverOffset: 4
+            borderColor: function () { return P.panel; }, borderWidth: 2, hoverOffset: 4
           }]
         },
         options: {
@@ -68,11 +79,11 @@
         id: 'marker',
         afterDatasetsDraw: function (chart) {
           var x = chart.scales.x.getPixelForValue(self.s || 0), a = chart.chartArea, g = chart.ctx;
-          g.save(); g.strokeStyle = TEXT; g.lineWidth = 2; g.setLineDash([5, 4]);
+          g.save(); g.strokeStyle = P.text; g.lineWidth = 2; g.setLineDash([5, 4]);
           g.beginPath(); g.moveTo(x, a.top); g.lineTo(x, a.bottom); g.stroke(); g.setLineDash([]);
           LINES.forEach(function (ln) {
             var y = chart.scales.y.getPixelForValue(self.v ? self.v.gas[ln.id] : 0);
-            g.beginPath(); g.arc(x, y, 5, 0, 7); g.fillStyle = ln.col; g.fill(); g.lineWidth = 2; g.strokeStyle = PANEL; g.stroke();
+            g.beginPath(); g.arc(x, y, 5, 0, 7); g.fillStyle = ln.col; g.fill(); g.lineWidth = 2; g.strokeStyle = P.panel; g.stroke();
           });
           g.restore();
         }
@@ -95,16 +106,16 @@
             x: {
               type: 'linear', min: 0, max: 1,
               afterBuildTicks: function (ax) { ax.ticks = nodes.map(function (n) { return { value: n }; }); },
-              ticks: { color: MUTED, maxRotation: 0, font: { size: 11 }, callback: function (val) { var b = D.byaAt(val); return b < 0.005 ? 'Now' : (b >= 1 ? b.toFixed(1) : Math.round(b * 1000) + 'M'); } },
-              grid: { color: LINE },
-              title: { display: true, text: 'Billion years ago (M = million). Stretched scale, as on the timeline', color: MUTED, font: { size: 11 } }
+              ticks: { color: muted, maxRotation: 0, font: { size: 11 }, callback: function (val) { var b = D.byaAt(val); return b < 0.005 ? 'Now' : (b >= 1 ? b.toFixed(1) : Math.round(b * 1000) + 'M'); } },
+              grid: { color: function () { return P.line; } },
+              title: { display: true, text: 'Billion years ago (M = million). Stretched scale, as on the timeline', color: muted, font: { size: 11 } }
             },
             /* only the two values the specification gives are marked */
             y: {
-              min: 0, max: 100, grid: { color: function (c) { return c.tick && (c.tick.value === 20 || c.tick.value === 80) ? '#2b3a4e' : 'transparent'; } },
+              min: 0, max: 100, grid: { color: function (c) { return c.tick && (c.tick.value === 20 || c.tick.value === 80) ? P.mark : 'transparent'; } },
               afterBuildTicks: function (ax) { ax.ticks = [{ value: 20 }, { value: 80 }]; },
-              ticks: { color: MUTED, callback: function (v) { return 'about ' + v + '%'; } },
-              title: { display: true, text: 'Amount (simplified)', color: MUTED, font: { size: 11 } }
+              ticks: { color: muted, callback: function (v) { return 'about ' + v + '%'; } },
+              title: { display: true, text: 'Amount (simplified)', color: muted, font: { size: 11 } }
             }
           },
           plugins: {
@@ -149,4 +160,10 @@
       }
     }
   };
+  document.addEventListener('sst-theme', function () {
+    useTheme();
+    var c = AE.Charts;
+    if (c.donut) c.donut.update('none');
+    if (c.line) c.line.update('none');
+  });
 })();

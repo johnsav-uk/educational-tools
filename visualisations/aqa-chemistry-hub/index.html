@@ -21,7 +21,7 @@
 <style>
   :root { color-scheme: dark; }
   html, body { height: 100%; }
-  body { margin: 0; background: #050e1a; }
+  body { margin: 0; background: var(--sst-bg); }
   /* the 3D canvas swallows wheel events for zoom; keep the page scrollable elsewhere */
   canvas { touch-action: none; }
 </style>
@@ -31,68 +31,84 @@
      generated build, so it is not edited). This block repaints exactly the
      utilities they use onto the site's dark navy palette (assets/sst/sst.css):
      slate greys become the navy scale, the red accent becomes the site blue,
-     A-Level purple stays purple, and pale tints become low-alpha washes. -->
+     A-Level purple stays purple, and pale tints become low-alpha washes.
+     In light mode (.theme-light) only the accent swap applies. -->
 <style>
   html, body, .font-sans { font-family: var(--sst-font) !important; }
-  body { color: #edf2f8; }
-  .bg-white { background-color: #0d1928 !important; }
-  .bg-white\/60 { background-color: rgba(13,25,40,.6) !important; }
-  .bg-slate-50 { background-color: #091321 !important; }
-  .bg-slate-100 { background-color: #142132 !important; }
-  .bg-slate-800 { background-color: #0086dd !important; }
-  .bg-slate-950 { background-color: #030915 !important; }
-  .border-slate-200, .divide-slate-100 > * + * { border-color: #182535 !important; }
-  .border-slate-300 { border-color: #253447 !important; }
-  .border-slate-500, .border-slate-700 { border-color: #3a4a5e !important; }
-  .border-slate-800 { border-color: #0086dd !important; }
-  .text-slate-900 { color: #edf2f8 !important; }
-  .text-slate-800 { color: #dfe6ef !important; }
-  .text-slate-700 { color: #bbc5d1 !important; }
-  .text-slate-600 { color: #a3afbf !important; }
-  .text-slate-500 { color: #8693a5 !important; }
-  .text-slate-400 { color: #66758a !important; }
+  :root:not(.theme-light) body { color: #edf2f8; }
+  :root:not(.theme-light) .bg-white { background-color: #0d1928 !important; }
+  :root:not(.theme-light) .bg-white\/60 { background-color: rgba(13,25,40,.6) !important; }
+  :root:not(.theme-light) .bg-slate-50 { background-color: #091321 !important; }
+  :root:not(.theme-light) .bg-slate-100 { background-color: #142132 !important; }
+  :root:not(.theme-light) .bg-slate-800 { background-color: #0086dd !important; }
+  :root:not(.theme-light) .bg-slate-950 { background-color: #030915 !important; }
+  :root:not(.theme-light) .border-slate-200, :root:not(.theme-light) .divide-slate-100 > * + * { border-color: #182535 !important; }
+  :root:not(.theme-light) .border-slate-300 { border-color: #253447 !important; }
+  :root:not(.theme-light) .border-slate-500, :root:not(.theme-light) .border-slate-700 { border-color: #3a4a5e !important; }
+  :root:not(.theme-light) .border-slate-800 { border-color: #0086dd !important; }
+  :root:not(.theme-light) .text-slate-900 { color: #edf2f8 !important; }
+  :root:not(.theme-light) .text-slate-800 { color: #dfe6ef !important; }
+  :root:not(.theme-light) .text-slate-700 { color: #bbc5d1 !important; }
+  :root:not(.theme-light) .text-slate-600 { color: #a3afbf !important; }
+  :root:not(.theme-light) .text-slate-500 { color: #8693a5 !important; }
+  :root:not(.theme-light) .text-slate-400 { color: #66758a !important; }
 
-  .bg-red-600 { background-color: #0086dd !important; }
-  .bg-red-700, .hover\:bg-red-700:hover { background-color: #0070b8 !important; }
-  .bg-red-50 { background-color: rgba(71,181,250,.10) !important; }
-  .text-red-700 { color: #47b5fa !important; }
-  .text-red-800 { color: #8fd0fb !important; }
-  .border-red-600, .border-red-500 { border-color: #0086dd !important; }
-  .border-red-400, .border-red-300 { border-color: rgba(71,181,250,.45) !important; }
-  .ring-red-200 { --tw-ring-color: rgba(71,181,250,.35) !important; }
-  .accent-red-600 { accent-color: #0086dd !important; }
+  :root:not(.theme-light) .bg-red-600 { background-color: #0086dd !important; }
+  :root:not(.theme-light) .bg-red-700, :root:not(.theme-light) .hover\:bg-red-700:hover { background-color: #0070b8 !important; }
+  :root:not(.theme-light) .bg-red-50 { background-color: rgba(71,181,250,.10) !important; }
+  :root:not(.theme-light) .text-red-700 { color: #47b5fa !important; }
+  :root:not(.theme-light) .text-red-800 { color: #8fd0fb !important; }
+  :root:not(.theme-light) .border-red-600, :root:not(.theme-light) .border-red-500 { border-color: #0086dd !important; }
+  :root:not(.theme-light) .border-red-400, :root:not(.theme-light) .border-red-300 { border-color: rgba(71,181,250,.45) !important; }
+  :root:not(.theme-light) .ring-red-200 { --tw-ring-color: rgba(71,181,250,.35) !important; }
+  :root:not(.theme-light) .accent-red-600 { accent-color: #0086dd !important; }
 
-  .bg-purple-50 { background-color: rgba(177,153,244,.10) !important; }
-  .bg-purple-100 { background-color: rgba(177,153,244,.18) !important; }
-  .text-purple-700 { color: #b199f4 !important; }
-  .text-purple-800 { color: #c9b8f8 !important; }
-  .text-purple-900 { color: #dcd0fb !important; }
+  :root:not(.theme-light) .bg-purple-50 { background-color: rgba(177,153,244,.10) !important; }
+  :root:not(.theme-light) .bg-purple-100 { background-color: rgba(177,153,244,.18) !important; }
+  :root:not(.theme-light) .text-purple-700 { color: #b199f4 !important; }
+  :root:not(.theme-light) .text-purple-800 { color: #c9b8f8 !important; }
+  :root:not(.theme-light) .text-purple-900 { color: #dcd0fb !important; }
 
-  .bg-emerald-50 { background-color: rgba(99,209,143,.10) !important; }
-  .text-emerald-700, .text-emerald-800 { color: #63d18f !important; }
-  .border-emerald-300 { border-color: rgba(99,209,143,.4) !important; }
-  .bg-amber-50 { background-color: rgba(243,185,76,.10) !important; }
-  .text-amber-900 { color: #f3b94c !important; }
-  .border-amber-300 { border-color: rgba(243,185,76,.4) !important; }
-  .bg-rose-50 { background-color: rgba(246,109,103,.10) !important; }
-  .border-rose-300 { border-color: rgba(246,109,103,.4) !important; }
-  .bg-orange-50 { background-color: rgba(240,153,90,.10) !important; }
-  .border-orange-300 { border-color: rgba(240,153,90,.4) !important; }
+  :root:not(.theme-light) .bg-emerald-50 { background-color: rgba(99,209,143,.10) !important; }
+  :root:not(.theme-light) .text-emerald-700, :root:not(.theme-light) .text-emerald-800 { color: #63d18f !important; }
+  :root:not(.theme-light) .border-emerald-300 { border-color: rgba(99,209,143,.4) !important; }
+  :root:not(.theme-light) .bg-amber-50 { background-color: rgba(243,185,76,.10) !important; }
+  :root:not(.theme-light) .text-amber-900 { color: #f3b94c !important; }
+  :root:not(.theme-light) .border-amber-300 { border-color: rgba(243,185,76,.4) !important; }
+  :root:not(.theme-light) .bg-rose-50 { background-color: rgba(246,109,103,.10) !important; }
+  :root:not(.theme-light) .border-rose-300 { border-color: rgba(246,109,103,.4) !important; }
+  :root:not(.theme-light) .bg-orange-50 { background-color: rgba(240,153,90,.10) !important; }
+  :root:not(.theme-light) .border-orange-300 { border-color: rgba(240,153,90,.4) !important; }
   .shadow-sm, .shadow, .shadow-md { box-shadow: none !important; }
 
-  .hover\:bg-slate-50:hover { background-color: #142132 !important; }
-  .hover\:bg-slate-100:hover { background-color: #1b2a3e !important; }
-  .hover\:bg-red-50:hover { background-color: rgba(71,181,250,.12) !important; }
-  .hover\:text-slate-800:hover { color: #edf2f8 !important; }
-  .hover\:text-red-700:hover { color: #47b5fa !important; }
-  .hover\:border-red-400:hover, .hover\:border-red-500:hover { border-color: #47b5fa !important; }
-  .hover\:border-slate-500:hover { border-color: #66758a !important; }
+  :root:not(.theme-light) .hover\:bg-slate-50:hover { background-color: #142132 !important; }
+  :root:not(.theme-light) .hover\:bg-slate-100:hover { background-color: #1b2a3e !important; }
+  :root:not(.theme-light) .hover\:bg-red-50:hover { background-color: rgba(71,181,250,.12) !important; }
+  :root:not(.theme-light) .hover\:text-slate-800:hover { color: #edf2f8 !important; }
+  :root:not(.theme-light) .hover\:text-red-700:hover { color: #47b5fa !important; }
+  :root:not(.theme-light) .hover\:border-red-400:hover, :root:not(.theme-light) .hover\:border-red-500:hover { border-color: #47b5fa !important; }
+  :root:not(.theme-light) .hover\:border-slate-500:hover { border-color: #66758a !important; }
 
   /* Recharts draws with presentation attributes, which CSS outranks */
-  .recharts-cartesian-grid line { stroke: #182535 !important; }
-  .recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line { stroke: #3a4a5e !important; }
-  .recharts-text, .recharts-label { fill: #8693a5 !important; }
-  .recharts-tooltip-wrapper .recharts-default-tooltip { background: #0d1928 !important; border-color: #253447 !important; }
+  :root:not(.theme-light) .recharts-cartesian-grid line { stroke: #182535 !important; }
+  :root:not(.theme-light) .recharts-cartesian-axis-line, :root:not(.theme-light) .recharts-cartesian-axis-tick-line { stroke: #3a4a5e !important; }
+  :root:not(.theme-light) .recharts-text, :root:not(.theme-light) .recharts-label { fill: #8693a5 !important; }
+  :root:not(.theme-light) .recharts-tooltip-wrapper .recharts-default-tooltip { background: #0d1928 !important; border-color: #253447 !important; }
+  /* Light (the site bar's Light / Dark toggle): the components' own light
+     utilities show through, with the red accent swapped for the site blue. */
+  .theme-light .bg-red-600, .theme-light .bg-slate-800 { background-color: #0076cc !important; }
+  .theme-light .bg-red-700, .theme-light .hover\:bg-red-700:hover { background-color: #0068b2 !important; }
+  .theme-light .bg-red-50, .theme-light .hover\:bg-red-50:hover { background-color: #e6f2fb !important; }
+  .theme-light .text-red-700, .theme-light .hover\:text-red-700:hover { color: #0068b2 !important; }
+  .theme-light .text-red-800 { color: #00578f !important; }
+  .theme-light .border-red-600, .theme-light .border-red-500, .theme-light .border-slate-800 { border-color: #0076cc !important; }
+  .theme-light .border-red-400, .theme-light .border-red-300,
+  .theme-light .hover\:border-red-400:hover, .theme-light .hover\:border-red-500:hover { border-color: #8cc4ea !important; }
+  .theme-light .ring-red-200 { --tw-ring-color: rgba(0,118,204,.25) !important; }
+  .theme-light .accent-red-600 { accent-color: #0076cc !important; }
+  .theme-light .bg-slate-50 { background-color: var(--sst-bg) !important; }
+  .theme-light .bg-slate-950 { background-color: var(--sst-stage) !important; }
+  .theme-light .text-slate-400 { color: #64748b !important; }
 </style>
 </head>
 <body>

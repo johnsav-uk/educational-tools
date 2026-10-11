@@ -23,6 +23,7 @@ var D2R = Math.PI / 180;
 var ELEMENTS = {
   H: {
     colour: 0xf3f6fb,
+    colourLight: 0xaab4c0,
     radius: 0.30,
     label: 'H'
   },
@@ -83,6 +84,7 @@ var ELEMENTS = {
   },
   Y: {
     colour: 0xb8c4d4,
+    colourLight: 0x66727f,
     radius: 0.36,
     label: 'Y'
   }
@@ -628,11 +630,15 @@ function arcPoints(a, b, radius, segments) {
   }
   return pts;
 }
+// Near-white atoms and bonds are drawn a shade darker on the light stage.
+var lightTheme = function lightTheme() {
+  return document.documentElement.classList.contains('theme-light');
+};
 function atomMesh(symbol, radius) {
   var el = ELEMENTS[symbol] || ELEMENTS.Y;
   var geo = new THREE.SphereGeometry(radius, 48, 36);
   var mat = new THREE.MeshStandardMaterial({
-    color: el.colour,
+    color: lightTheme() && el.colourLight || el.colour,
     roughness: 0.32,
     metalness: 0.12,
     envMapIntensity: 0.6
@@ -678,7 +684,7 @@ function buildMolecule(spec, opts) {
 
   // --- bonds + outer atoms ------------------------------------------------
   var bondMat = new THREE.MeshStandardMaterial({
-    color: 0xdfe7f1,
+    color: lightTheme() ? 0x5a6573 : 0xdfe7f1,
     roughness: 0.45,
     metalness: 0.05
   });
@@ -762,7 +768,10 @@ function buildMolecule(spec, opts) {
 /* Imperative viewer wrapper — created once, then fed new specs. */
 function createViewer(mount) {
   var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070b12, 0.028);
+  // The fog takes the stage colour of the site's light / dark theme.
+  const fogColour = () => document.documentElement.classList.contains('theme-light') ? 0xf8fafd : 0x070b12;
+  scene.fog = new THREE.FogExp2(fogColour(), 0.028);
+  document.addEventListener('sst-theme', () => scene.fog.color.setHex(fogColour()));
   var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
   camera.position.set(3.4, 2.6, 7.4);
   var renderer = new THREE.WebGLRenderer({
@@ -805,7 +814,14 @@ function createViewer(mount) {
       }
     });
   }
+  var lastSpec = null,
+    lastOpts = null;
+  document.addEventListener('sst-theme', function () {
+    if (lastSpec) setMolecule(lastSpec, lastOpts);
+  });
   function setMolecule(spec, opts) {
+    lastSpec = spec;
+    lastOpts = opts;
     if (current) {
       root.remove(current);
       clear(current);

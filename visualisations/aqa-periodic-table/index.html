@@ -8,7 +8,8 @@
 <style>
 /* ── Tokens ───────────────────────────────────────────────────────────
    Dark is the bare :root set, on the site-wide palette (assets/sst/sst.css).
-   Light is the explicit choice from the theme button. */
+   Light is the site's Light / Dark toggle (assets/sst/sst.js), which puts
+   .theme-light on <html>; the element pastels below are this tool's own. */
 :root{
   --font: var(--sst-font);
   /* AQA sets its papers and data sheets in Arial; element tiles and formulae keep it so they look like the exam */
@@ -30,11 +31,11 @@
   --shadow:none;
   --r:12px;
 }
-:root[data-theme="light"]{
-  --bg:#f6f2ea; --panel:#fffdf8; --panel2:#efe9dd; --line:#d6cdbb; --line2:#b9ae98;
-  --ink:#1b1813; --dim:#51493e; --muted:#6e665a; --focus:#0b63c9;
-  --hide:#cfc6b4;
-  --chem:#a8281e; --gcse:#a04d10; --alevel:#6b3fa0;
+.theme-light{
+  --bg:#f1f5f8; --panel:#ffffff; --panel2:#e8edf3; --line:#d5dbe3; --line2:#b5bfc9;
+  --ink:#142030; --dim:#354150; --muted:#596473; --focus:#0068b2;
+  --hide:#c9d1db;
+  --chem:#00736a; --gcse:#975d00; --alevel:#6c4ab3;
 
   --c-alkali:#ffd3cc; --c-alkaline:#ffe2bf; --c-trans:#f8e7a6; --c-post:#dbe3ec;
   --c-metalloid:#d3edd6; --c-nonmetal:#cbe4fb; --c-halogen:#e1d8ff; --c-noble:#cdeeed;
@@ -47,8 +48,8 @@
   --bl-s:#b3261e; --bl-p:#1c5fa8; --bl-d:#7d6000; --bl-f:#2c7a3c;
 
   --seq-lo:#f1f4f8; --seq-en:#23408f; --seq-ie:#0b5b51; --seq-rad:#8f3d0a; --seq-inv:#ffffff;
-  --nodata:#ebe6dc;
-  --shadow:0 10px 32px -14px rgba(40,30,10,.4);
+  --nodata:#e8edf3;
+  --shadow:none;
   --r:12px;
 }
 /* High contrast: stronger ink, heavier rules, no pastel ambiguity */
@@ -85,7 +86,7 @@ sub,sup{ line-height:0; }
 .btn[hidden]{ display:none; }
 .btn[aria-pressed="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
 .btn.primary{ background:#0086dd; color:#fff; border-color:#0086dd; }
-:root[data-theme="light"] .btn.primary{ background:var(--chem); border-color:var(--chem); }
+.theme-light .btn.primary{ background:#0076cc; border-color:#0076cc; }
 .btn svg{ width:16px; height:16px; }
 .icon-btn{ width:36px; padding:0; justify-content:center; }
 
@@ -486,9 +487,8 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg>
         Present
       </button>
-      <button class="btn" id="themeBtn" title="Switch between light and dark mode">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        <span class="theme-label">Dark mode</span>
+      <button class="btn" id="themeBtn" data-sst-theme-toggle>
+        <i class="sst-theme-icon"></i><span class="sst-theme-label">Light</span>
       </button>
       <button class="btn icon-btn" id="contrastBtn" aria-pressed="false" aria-label="High contrast" title="High contrast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg>
@@ -611,7 +611,7 @@ kbd{ font-family:var(--mono); font-size:.85em; border:1px solid var(--line2); bo
       <button class="btn" id="pzReveal" title="R">Reset</button>
     </div>
     <button class="btn" id="pzPlain" aria-pressed="false" title="Uncoloured tiles, like the exam sheet">Plain</button>
-    <button class="btn" id="pzTheme" title="Switch between light and dark mode"><span class="theme-label">Dark mode</span></button>
+    <button class="btn" id="pzTheme" data-sst-theme-toggle><i class="sst-theme-icon"></i><span class="sst-theme-label">Light</span></button>
     <button class="btn icon-btn" id="pzHelp" aria-label="Keyboard shortcuts" aria-expanded="false" title="Shortcuts (H)">?</button>
     <button class="btn icon-btn" id="pzFull" aria-label="Full screen" title="Full screen (F)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
@@ -2044,18 +2044,9 @@ $('#pz').addEventListener('keydown', e => {
 /* ════════════════════════════════════════════════════════════════════════
    THEME & CONTRAST
    ════════════════════════════════════════════════════════════════════════ */
+// Light / dark is the site's (assets/sst/sst.js): #themeBtn and #pzTheme
+// carry data-sst-theme-toggle, so sst.js runs them.
 const root = document.documentElement;
-const sysDark = () => true;   // site default is dark
-function applyTheme(t){
-  if (t) root.dataset.theme = t; else delete root.dataset.theme;
-  const dark = t ? t === 'dark' : sysDark();
-  $$('.theme-label').forEach(l => l.textContent = dark ? 'Light mode' : 'Dark mode');
-}
-applyTheme(store.get('ptx-theme'));
-$$('#themeBtn, #pzTheme').forEach(b => b.addEventListener('click', () => {
-  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : sysDark();
-  const t = dark ? 'light' : 'dark'; store.set('ptx-theme', t); applyTheme(t);
-}));
 function applyContrast(on){ if (on) root.dataset.contrast = 'high'; else delete root.dataset.contrast; $('#contrastBtn').setAttribute('aria-pressed', on); }
 applyContrast(store.get('ptx-contrast') === '1');
 $('#contrastBtn').addEventListener('click', () => { const on = !root.dataset.contrast; store.set('ptx-contrast', on ? '1' : '0'); applyContrast(on); });
