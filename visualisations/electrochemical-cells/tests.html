@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Electrochemical Cell Builder — tests</title>
+<style>
+  body { margin: 0; padding: 24px; background: #050e1a; color: #edf2f8; font: 14px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  #summary { font-size: 16px; font-weight: 700; margin: 8px 0 16px; }
+  .pass { color: #7fd99a; } .fail { color: #ff8a7a; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  td, th { text-align: left; padding: 3px 8px; border-bottom: 1px solid #182535; vertical-align: top; }
+  h2 { font-size: 15px; margin: 18px 0 4px; color: #47b5fa; }
+  /* On screen but invisible: browsers stop rendering off-screen frames, which would stop resize events. */
+  #frame { position: fixed; left: 0; top: 0; width: 1280px; height: 800px; border: 0; opacity: 0; pointer-events: none; z-index: -1; }
+</style>
+</head>
+<body>
+<h1>Electrochemical Cell Builder: tests</h1>
+<p>Chemistry engine tests (A–F from the brief, plus every pair of half-cells), then page tests (G) that drive the real page in a hidden frame.</p>
+<div id="summary">Running…</div>
+<div id="out"></div>
+<script src="js/engine.js?v=9"></script>
+<script src="js/pagetests.js?v=9"></script>
+<script src="js/tests.js?v=9"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electrochemical Cell Builder (beta)</title>
+<meta name="description" content="Build electrochemical cells and watch the electrons and ions move. AQA GCSE Chemistry (4.5.2 simple cells, batteries and fuel cells; 4.4.3 electrolysis) and AQA A-level Chemistry (3.1.11 electrode potentials, E°cell, cell representation and Required practical 8).">
+<link rel="stylesheet" href="cells.css?v=9">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top" id="top">
+  <div class="grow">
+    <h1>Electrochemical Cell Builder <span class="chip beta">beta</span></h1>
+    <p class="lede">Build a cell, predict what it will do, then watch the electrons and ions move. GCSE simple cells, batteries, fuel cells and electrolysis; A-level electrode potentials, E°cell and Required practical 8.</p>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnPresent" type="button" title="Presenter mode: the cell on the board (P)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Presenter mode
+    </button>
+    <button class="btn" id="btnAnnotate" type="button" title="Draw over the page (D)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4zM14 6l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      Annotate
+    </button>
+    <button class="btn" id="btnPrint" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Questions &amp; worksheets
+    </button>
+  </div>
+</header>
+
+<main class="app" id="app">
+  <!-- ═════════ Left: build your cell ═════════ -->
+  <aside class="build sst-teacher" id="build" aria-label="Build your cell">
+    <div class="levels" role="tablist" aria-label="Level">
+      <button type="button" role="tab" data-level="gcse" aria-selected="true">GCSE</button>
+      <button type="button" role="tab" data-level="alevel" aria-selected="false">A-level</button>
+    </div>
+    <nav class="acts" id="acts" aria-label="Activities"></nav>
+    <div id="controls" class="controls"></div>
+    <div class="play">
+      <button class="btn" id="btnPlay" type="button">Pause animation</button>
+      <button class="btn" id="btnReset" type="button" title="Reset this activity's cell and predictions (a results table is kept)">Reset</button>
+    </div>
+  </aside>
+
+  <!-- ═════════ Centre: the cell ═════════ -->
+  <section class="centre" aria-labelledby="actTitle">
+    <div class="act-head" id="actHead"></div>
+    <div class="stage" id="stage">
+      <svg id="cellSvg" viewBox="0 0 960 600" role="img" aria-label="Cell diagram" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="legend" id="legend" aria-label="Key"></div>
+  </section>
+
+  <!-- ═════════ Right: results and explanation ═════════ -->
+  <aside class="info" id="info" aria-label="Results and explanation">
+    <section class="card readout" id="readout" aria-live="polite"></section>
+    <section class="card" id="predictCard"></section>
+    <section class="card" id="explainCard"><details open><summary>Explanation</summary><div id="explainBody"></div></details></section>
+    <section class="card" id="resultsCard"></section>
+  </aside>
+</main>
+
+<div id="srLive" class="sr-only" aria-live="polite"></div>
+<div id="boardNotes" class="sr-only" aria-hidden="true"></div>
+
+<!-- ═════════ Print: results from this session ═════════ -->
+<section class="print-only doc" id="printResults"></section>
+
+<!-- ═════════ Print: GCSE worksheet ═════════ -->
+<section class="print-only doc" id="wsGcse">
+  <div class="print-head"><div><h1>Chemical cells, fuel cells and electrolysis</h1><div class="sub">Student worksheet · AQA GCSE Chemistry 4.5.2.1, 4.5.2.2, 4.4.3</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>26</b> marks. <span class="tag">HT</span> marks a Higher Tier question.</p>
+
+  <div class="q"><h3><span class="n">1</span> A student made simple cells by dipping two different metals into sodium chloride solution and connecting them to a voltmeter. The table shows the results.</h3>
+    <table class="ws-table data"><thead><tr><th>Metals</th><th>Voltage / V</th></tr></thead><tbody><tr><td>magnesium and copper</td><td>1.30</td></tr><tr><td>zinc and copper</td><td>0.75</td></tr><tr><td>iron and copper</td><td>0.40</td></tr></tbody></table>
+    <p><b>1.1</b> Which metal is the negative electrode in the zinc and copper cell? Give a reason for your answer.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.2</b> Predict the voltage of a cell made from magnesium and zinc in sodium chloride solution. Explain how you used the data.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">Voltage = ………… V [2 marks]</p></div>
+  <div class="q"><p><b>1.3</b> The student made a cell with two copper electrodes. Explain why the voltmeter read 0.00 V.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.4</b> Give one variable the student should keep the same to make this a fair test.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.5</b> The student repeated the zinc and copper cell three times and got 0.74 V, 0.77 V and 0.75 V. Calculate the mean.</p><div class="ws-lines"><i></i></div><p class="mk">Mean = ………… V [1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">2</span> Batteries</h3><p><b>2.1</b> A battery contains three cells connected in series. Each cell gives 1.5 V. What is the voltage of the battery?</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>2.2</b> Alkaline batteries are non-rechargeable. Explain why an alkaline battery eventually stops working.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>2.3</b> Explain how a rechargeable battery can be recharged.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">3</span> A hydrogen fuel cell with an acidic electrolyte is used to power a car.</h3><p><b>3.1</b> Write a balanced equation for the overall reaction in the fuel cell.</p><div class="ws-lines"><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>3.2</b> Give one advantage and one disadvantage of hydrogen fuel cells compared with rechargeable batteries for powering cars.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>3.3</b> <span class="tag">HT</span> Write half-equations for the reactions at the negative electrode and at the positive electrode.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">4</span> Electrolysis with inert electrodes</h3><p><b>4.1</b> Solid lead bromide does not conduct electricity, but molten lead bromide does. Explain why.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.2</b> Name the product at each electrode when molten lead bromide is electrolysed.</p><p>Cathode (negative electrode): ………………………… &nbsp;&nbsp; Anode (positive electrode): …………………………</p><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.3</b> Sodium chloride solution is electrolysed. Name the product at the cathode and explain why sodium is not produced.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.4</b> Name the products at each electrode when copper(II) sulfate solution is electrolysed.</p><p>Cathode: ………………………… &nbsp;&nbsp; Anode: …………………………</p><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.5</b> <span class="tag">HT</span> Complete the half-equation for the reaction at the anode in the electrolysis of sodium chloride solution.</p><p class="eqn">2Cl<sup>−</sup> → Cl<sub>2</sub> + ……………</p><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>4.6</b> <span class="tag">HT</span> Is the reaction in 4.5 oxidation or reduction? Give a reason.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+</section>
+
+<section class="print-only doc" id="msGcse">
+  <div class="print-head"><div><h1>Chemical cells, fuel cells and electrolysis: mark scheme</h1><div class="sub">Teacher copy · AQA GCSE Chemistry 4.5.2.1, 4.5.2.2, 4.4.3</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [2]</h4><ul><li>zinc (1)</li><li>zinc is more reactive than copper (1)</li></ul><p class="dna">Do not accept “zinc is a better conductor”.</p></div>
+  <div class="ms-q"><h4>1.2 [2]</h4><ul><li>1.30 − 0.75 = <b>0.55</b> V (1) (allow 0.50 – 0.60)</li><li>the voltage depends on the difference in reactivity / magnesium and zinc are closer together in reactivity than magnesium and copper (1)</li></ul></div>
+  <div class="ms-q"><h4>1.3 [1]</h4><ul><li>the metals are the same, so there is no difference in reactivity</li></ul></div>
+  <div class="ms-q"><h4>1.4 [1]</h4><ul><li>any one from: the electrolyte / its concentration; the temperature; the depth the metals are dipped in / the distance between them; the same voltmeter</li></ul><p class="dna">Do not accept “the metals” (this is the independent variable).</p></div>
+  <div class="ms-q"><h4>1.5 [1]</h4><ul><li>(0.74 + 0.77 + 0.75) ÷ 3 = <b>0.75</b> (V)</li></ul></div>
+  <div class="ms-q"><h4>2.1 [1]</h4><ul><li>4.5 V</li></ul></div>
+  <div class="ms-q"><h4>2.2 [1]</h4><ul><li>the chemical reactions stop when one of the reactants has been used up</li></ul><p class="dna">Do not accept “it runs out of electrons / charge / energy”.</p></div>
+  <div class="ms-q"><h4>2.3 [1]</h4><ul><li>an external electrical current is supplied, which reverses the chemical reactions</li></ul></div>
+  <div class="ms-q"><h4>3.1 [2]</h4><ul><li>2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O: correct formulae (1); balanced (1)</li></ul><p class="dna">Allow multiples, e.g. H<sub>2</sub> + ½O<sub>2</sub> → H<sub>2</sub>O.</p></div>
+  <div class="ms-q"><h4>3.2 [2]</h4><ul><li>advantage, any one: the only product is water; refuelled quickly; does not need recharging from the mains; does not lose capacity with repeated recharging (1)</li><li>disadvantage, any one: hydrogen is a flammable gas / difficult to store; hydrogen is often made from fossil fuels / its production needs energy; few refuelling stations; fuel cells are expensive (1)</li></ul></div>
+  <div class="ms-q"><h4>3.3 [2]</h4><ul><li>negative electrode: 2H<sub>2</sub> → 4H<sup>+</sup> + 4e<sup>−</sup> (1)</li><li>positive electrode: O<sub>2</sub> + 4H<sup>+</sup> + 4e<sup>−</sup> → 2H<sub>2</sub>O (1)</li></ul><p class="dna">Allow multiples (e.g. H<sub>2</sub> → 2H<sup>+</sup> + 2e<sup>−</sup>). Alkaline equations score only if the student states an alkaline electrolyte; the question says acidic.</p></div>
+  <div class="ms-q"><h4>4.1 [2]</h4><ul><li>in the solid the ions are fixed in a lattice / cannot move (1)</li><li>when molten the ions are free to move (and carry the charge) (1)</li></ul><p class="dna">Do not accept “electrons move”: 0 marks for the reference to electrons.</p></div>
+  <div class="ms-q"><h4>4.2 [2]</h4><ul><li>cathode: lead (1); anode: bromine (1)</li></ul><p class="dna">Do not accept “bromide” for bromine.</p></div>
+  <div class="ms-q"><h4>4.3 [2]</h4><ul><li>hydrogen (1)</li><li>sodium is more reactive than hydrogen (1)</li></ul></div>
+  <div class="ms-q"><h4>4.4 [2]</h4><ul><li>cathode: copper (1); anode: oxygen (1)</li></ul><p class="dna">Do not accept “sulfur” or “sulfur dioxide” at the anode.</p></div>
+  <div class="ms-q"><h4>4.5 [1]</h4><ul><li>2e<sup>−</sup></li></ul></div>
+  <div class="ms-q"><h4>4.6 [1]</h4><ul><li>oxidation, because the chloride ions lose electrons</li></ul></div>
+</section>
+
+<!-- ═════════ Print: A-level worksheet ═════════ -->
+<section class="print-only doc" id="wsAlevel">
+  <div class="print-head"><div><h1>Electrode potentials and electrochemical cells</h1><div class="sub">Student worksheet · AQA A-level Chemistry 3.1.11 · Required practical 8</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>33</b> marks. Use these data.</p>
+  <table class="ws-table data"><thead><tr><th>Half-equation</th><th>E° / V</th></tr></thead><tbody>
+    <tr><td>Zn<sup>2+</sup>(aq) + 2e<sup>−</sup> ⇌ Zn(s)</td><td>−0.76</td></tr>
+    <tr><td>Fe<sup>2+</sup>(aq) + 2e<sup>−</sup> ⇌ Fe(s)</td><td>−0.44</td></tr>
+    <tr><td>2H<sup>+</sup>(aq) + 2e<sup>−</sup> ⇌ H<sub>2</sub>(g)</td><td>0.00</td></tr>
+    <tr><td>Cu<sup>2+</sup>(aq) + 2e<sup>−</sup> ⇌ Cu(s)</td><td>+0.34</td></tr>
+    <tr><td>I<sub>2</sub>(aq) + 2e<sup>−</sup> ⇌ 2I<sup>−</sup>(aq)</td><td>+0.54</td></tr>
+    <tr><td>Fe<sup>3+</sup>(aq) + e<sup>−</sup> ⇌ Fe<sup>2+</sup>(aq)</td><td>+0.77</td></tr>
+    <tr><td>Ag<sup>+</sup>(aq) + e<sup>−</sup> ⇌ Ag(s)</td><td>+0.80</td></tr></tbody></table>
+
+  <div class="q"><h3><span class="n">1</span> The diagram shows a cell made from a zinc half-cell and a copper half-cell under standard conditions.</h3>
+    <figure class="fig"><svg viewBox="0 0 520 250" role="img" aria-label="Zinc and copper half-cells joined by a salt bridge and a voltmeter">
+      <g fill="none" stroke="#000" stroke-width="1.6">
+        <path d="M40,100V230H200V100M320,100V230H480V100"/><path d="M40,140H200M320,140H480" stroke-dasharray="4 3"/>
+        <rect x="100" y="60" width="20" height="150" fill="#ddd"/><rect x="400" y="60" width="20" height="150" fill="#f0c9a8"/>
+        <path d="M170,190V90H350V190" stroke-width="16" stroke="#000"/><path d="M170,190V90H350V190" stroke-width="12" stroke="#fff"/>
+        <path d="M110,60V30H235M285,30H410V60"/><circle cx="260" cy="30" r="22" fill="#fff"/>
+      </g>
+      <g font-family="sans-serif" font-size="13" text-anchor="middle"><text x="260" y="35" font-weight="700">V</text><text x="110" y="248">zinc, Zn²⁺(aq) 1.00 mol dm⁻³</text><text x="410" y="248">copper, Cu²⁺(aq) 1.00 mol dm⁻³</text><text x="260" y="82">salt bridge</text></g>
+    </svg></figure>
+    <p><b>1.1</b> Write the conventional representation of this cell.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.2</b> Calculate the EMF of this cell.</p><div class="ws-lines"><i></i></div><p class="mk">EMF = ………… V [1 mark]</p></div>
+  <div class="q"><p><b>1.3</b> Identify the negative electrode and state the direction of electron flow in the external circuit.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.4</b> The salt bridge is a strip of filter paper soaked in saturated potassium nitrate solution. Explain its function. Explain why potassium chloride should not be used in a cell containing a silver half-cell.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>1.5</b> Explain why a high-resistance voltmeter is used.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">2</span> A cell is made from a zinc half-cell and a silver half-cell.</h3><p><b>2.1</b> Write an equation for the overall reaction when the cell produces a current.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>2.2</b> A student calculated the EMF as 2 × (+0.80) − (−0.76) = +2.36 V. Explain the error and give the correct EMF.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">3</span> Predicting reactions</h3><p><b>3.1</b> Use the data to show that iron(III) ions oxidise iodide ions under standard conditions. Write an equation for the reaction.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>3.2</b> Explain, using the data, why copper(II) ions do not oxidise iron(II) ions.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>3.3</b> Suggest why a reaction with a positive E°<sub>cell</sub> might not be seen to happen.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">4</span> The standard hydrogen electrode</h3><p><b>4.1</b> Describe the standard hydrogen electrode, including the conditions used.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>4.2</b> The cell Pt(s) | H<sub>2</sub>(g) | H<sup>+</sup>(aq) || Fe<sup>2+</sup>(aq) | Fe(s) is set up. Calculate E°<sub>cell</sub> for the cell as written and explain what its sign shows.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">5</span> Required practical 8: measuring the EMF of a copper–silver cell</h3><p><b>5.1</b> Describe how you would set up the cell and measure its EMF.</p><div class="ws-lines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p class="mk">[6 marks]</p></div>
+  <div class="q"><p><b>5.2</b> The student measured 0.43 V. Calculate E°<sub>cell</sub> and give two reasons why the measured value may be different.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>5.3</b> The concentration of the copper(II) sulfate solution is decreased to 0.10 mol dm<sup>−3</sup>. Predict and explain the effect on the EMF of the cell.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+</section>
+
+<section class="print-only doc" id="msAlevel">
+  <div class="print-head"><div><h1>Electrode potentials and electrochemical cells: mark scheme</h1><div class="sub">Teacher copy · AQA A-level Chemistry 3.1.11 · Required practical 8</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [1]</h4><ul><li>Zn(s) | Zn<sup>2+</sup>(aq) || Cu<sup>2+</sup>(aq) | Cu(s)</li></ul><p class="dna">Ignore state symbols. Do not accept a single line for the salt bridge. By convention the negative electrode (zinc, oxidation) is written on the left; the sides swapped scores only if E°<sub>cell</sub> in 1.2 is then given as −1.10 V for the cell as written.</p></div>
+  <div class="ms-q"><h4>1.2 [1]</h4><ul><li>(+0.34) − (−0.76) = <b>+1.10 V</b></li></ul></div>
+  <div class="ms-q"><h4>1.3 [2]</h4><ul><li>zinc is the negative electrode (1)</li><li>electrons flow (through the wire) from zinc to copper (1)</li></ul><p class="dna">Do not accept electrons flowing through the salt bridge or the solution.</p></div>
+  <div class="ms-q"><h4>1.4 [3]</h4><ul><li>allows ions to move (between the half-cells) / completes the circuit (1)</li><li>maintains electrical neutrality / balances the charge in each half-cell (1)</li><li>chloride ions would react with silver ions to form a precipitate of silver chloride (so the concentration of Ag<sup>+</sup> would change) (1)</li></ul><p class="dna">Do not accept “allows electrons to flow”.</p></div>
+  <div class="ms-q"><h4>1.5 [1]</h4><ul><li>so that (almost) no current flows, so the measured potential difference is the EMF / the concentrations do not change</li></ul></div>
+  <div class="ms-q"><h4>2.1 [1]</h4><ul><li>Zn + 2Ag<sup>+</sup> → Zn<sup>2+</sup> + 2Ag</li></ul><p class="dna">Electrons must not appear. Ignore state symbols.</p></div>
+  <div class="ms-q"><h4>2.2 [2]</h4><ul><li>electrode potentials must not be multiplied (by the coefficient in the balanced equation) (1)</li><li>(+0.80) − (−0.76) = <b>+1.56 V</b> (1)</li></ul></div>
+  <div class="ms-q"><h4>3.1 [3]</h4><ul><li>E°<sub>cell</sub> = 0.77 − 0.54 = +0.23 V (1)</li><li>positive (so the reaction is feasible) / E°(Fe<sup>3+</sup>/Fe<sup>2+</sup>) is more positive than E°(I<sub>2</sub>/I<sup>−</sup>) (1)</li><li>2Fe<sup>3+</sup> + 2I<sup>−</sup> → 2Fe<sup>2+</sup> + I<sub>2</sub> (1)</li></ul></div>
+  <div class="ms-q"><h4>3.2 [2]</h4><ul><li>E°cell for Cu<sup>2+</sup> + 2Fe<sup>2+</sup> → Cu + 2Fe<sup>3+</sup> = 0.34 − 0.77 = −0.43 V (1)</li><li>negative, so not feasible / E°(Cu<sup>2+</sup>/Cu) is less positive than E°(Fe<sup>3+</sup>/Fe<sup>2+</sup>), so Cu<sup>2+</sup> is the weaker oxidising agent (1)</li></ul></div>
+  <div class="ms-q"><h4>3.3 [1]</h4><ul><li>the activation energy is high / the reaction is very slow (E° tells you nothing about the rate); or the conditions are not standard</li></ul></div>
+  <div class="ms-q"><h4>4.1 [3]</h4><ul><li>hydrogen gas bubbled over a platinum electrode (1)</li><li>dipping into a solution of H<sup>+</sup> ions at 1.00 mol dm<sup>−3</sup> (e.g. 1.00 mol dm<sup>−3</sup> HCl) (1)</li><li>at 298 K and 100 kPa (1)</li></ul><p class="dna">Allow 1 bar; allow platinum black; allow 0.5 mol dm<sup>−3</sup> H<sub>2</sub>SO<sub>4</sub>. Do not accept 1 atm or 101 kPa. Do not accept 1 mol dm<sup>−3</sup> H<sub>2</sub>SO<sub>4</sub>.</p></div>
+  <div class="ms-q"><h4>4.2 [2]</h4><ul><li>E°<sub>cell</sub> = E°<sub>right</sub> − E°<sub>left</sub> = −0.44 − 0.00 = <b>−0.44 V</b> (1)</li><li>negative, so the reaction as written (H<sub>2</sub> reducing Fe<sup>2+</sup>) is not feasible; the reverse is: iron is oxidised and the iron electrode is the negative electrode (1)</li></ul></div>
+  <div class="ms-q"><h4>5.1 [6]</h4><p>One mark for each point, up to 6:</p><ul><li>clean the copper and silver electrodes with emery paper</li><li>copper in 1.00 mol dm<sup>−3</sup> copper(II) sulfate solution; silver in 1.00 mol dm<sup>−3</sup> silver nitrate solution, in separate beakers</li><li>salt bridge: filter paper soaked in saturated potassium nitrate solution dipping into both solutions</li><li>connect the electrodes to a high-resistance voltmeter</li><li>record the reading (and its sign / which electrode is positive) once it is steady</li><li>at 298 K / a controlled temperature; repeat with fresh solutions and filter paper and take a mean</li></ul><p class="dna">A salt bridge of potassium chloride loses that mark (reacts with Ag<sup>+</sup>).</p></div>
+  <div class="ms-q"><h4>5.2 [2]</h4><ul><li>E°<sub>cell</sub> = 0.80 − 0.34 = +0.46 V (1)</li><li>any two reasons for (1): concentrations not exactly 1.00 mol dm<sup>−3</sup>; temperature not 298 K; oxide layer / impurities on the electrodes; a small current flows through the voltmeter</li></ul><p class="dna">Do not accept “electrons lost in the salt bridge” or “electrodes too small”.</p></div>
+  <div class="ms-q"><h4>5.3 [3]</h4><ul><li>the EMF increases (1)</li><li>a lower [Cu<sup>2+</sup>] moves the equilibrium Cu<sup>2+</sup> + 2e<sup>−</sup> ⇌ Cu to the left (1)</li><li>so the copper electrode potential becomes less positive / more negative; the copper electrode is the negative electrode in this cell, so the difference between the electrode potentials increases (1)</li></ul></div>
+</section>
+
+<!-- ═════════ Print dialog ═════════ -->
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Questions &amp; worksheets</h2>
+    <p>Formatted for A4 portrait. In the print window, choose <b>Save as PDF</b> to download, or pick a printer.</p>
+    <fieldset>
+      <legend>Level</legend>
+      <label><input type="radio" name="pLevel" value="gcse" checked> <span><b>GCSE</b> (AQA Chemistry 4.5.2, 4.4.3)</span></label>
+      <label><input type="radio" name="pLevel" value="alevel"> <span><b>A-level</b> (AQA Chemistry 3.1.11, Required practical 8)</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Include</legend>
+      <label><input type="checkbox" id="pWs" checked> <span><b>Student worksheet</b>: exam-style questions with marks and answer space</span></label>
+      <label><input type="checkbox" id="pMs"> <span><b>Teacher mark scheme</b>, starting on a new page</span></label>
+      <label><input type="checkbox" id="pRes"> <span><b>My results</b> from this session</span></label>
+    </fieldset>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="js/engine.js?v=9"></script>
+<script src="js/content.js?v=9"></script>
+<script src="js/challenges.js?v=9"></script>
+<script src="js/cell.js?v=9"></script>
+<script src="js/ui.js?v=9"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
