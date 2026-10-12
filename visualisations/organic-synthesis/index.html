@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organic Synthesis Pathways (beta)</title>
+<meta name="description" content="Turn one organic molecule into another by choosing reagents and conditions, and find out why each step works or fails. AQA GCSE Chemistry (4.7) and AQA A-level Chemistry (3.3): alkenes, alcohols, halogenoalkanes, carbonyls, acids, esters, nitriles, amines and benzene.">
+<link rel="stylesheet" href="synthesis.css?v=2">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top" id="top">
+  <div class="grow">
+    <h1>Organic Synthesis Pathways <span class="chip beta">beta</span></h1>
+    <p class="lede">Turn the start molecule into the target one step at a time: pick a reagent, choose its conditions, and see what forms and why. Any valid route counts.</p>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnPresent" type="button" title="Presenter mode: the pathway on the board (P)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Presenter mode
+    </button>
+    <button class="btn" id="btnPrint" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Questions &amp; worksheets
+    </button>
+  </div>
+</header>
+
+<div class="toolbar sst-teacher" id="toolbar">
+  <div class="field">Level
+    <div class="seg" id="levelSeg" role="tablist" aria-label="Level">
+      <button type="button" role="tab" data-level="gcse" aria-selected="true">GCSE</button>
+      <button type="button" role="tab" data-level="alevel" aria-selected="false">A-level</button>
+    </div>
+  </div>
+  <label class="field grow">Puzzle
+    <select id="puzzleSel"></select>
+  </label>
+  <label class="field grow" id="startField" hidden>Start molecule
+    <select id="startSel"></select>
+  </label>
+  <div class="field">Structures
+    <div class="seg" id="styleSeg" role="group" aria-label="Structure style">
+      <button type="button" data-style="displayed" aria-pressed="true">Displayed</button>
+      <button type="button" data-style="skeletal" aria-pressed="false">Skeletal</button>
+      <button type="button" data-style="structural" aria-pressed="false">Structural</button>
+    </div>
+  </div>
+  <label class="check" id="enrichWrap" hidden title="Real chemistry that is not on either AQA specification"><input type="checkbox" id="enrich"> <span>Beyond AQA</span></label>
+  <div class="tb-actions">
+    <button class="btn" id="btnHint" type="button">Hint</button>
+    <button class="btn" id="btnReset" type="button" title="Clear the pathway and start again">Reset</button>
+  </div>
+</div>
+
+<main class="app" id="app">
+  <section class="stage" id="stage" aria-label="Synthesis pathway">
+    <p class="puzzle-intro" id="puzzleIntro"></p>
+    <div class="pathway" id="pathway" role="list" aria-label="Pathway from the start molecule to the target"></div>
+    <div class="tried" id="tried" aria-label="Reactions tried from the end of the pathway"></div>
+    <div id="boardMsg"></div>
+  </section>
+
+  <div class="lower">
+    <aside class="shelf sst-teacher" id="shelf" aria-label="Reagent shelf"></aside>
+    <div class="side">
+      <section class="composer sst-teacher" id="composer" aria-label="Next step"></section>
+      <section class="explain" id="explain" aria-live="polite" aria-label="Explanation"></section>
+    </div>
+  </div>
+</main>
+
+<div class="sr-only" id="srLive" role="status" aria-live="polite"></div>
+
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Questions &amp; worksheets</h2>
+    <p>Formatted for A4 portrait. In the print window, choose <b>Save as PDF</b> to download, or pick a printer.</p>
+    <fieldset>
+      <legend>Level</legend>
+      <label><input type="radio" name="pLevel" value="gcse" checked> <span><b>GCSE</b> (AQA Chemistry 4.7 Organic chemistry), 25 marks</span></label>
+      <label><input type="radio" name="pLevel" value="alevel"> <span><b>A-level</b> (AQA Chemistry 3.3 Organic chemistry), 40 marks</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Include</legend>
+      <label><input type="checkbox" id="pWs" checked> <span><b>Student worksheet</b>: exam-style questions with marks and answer space</span></label>
+      <label><input type="checkbox" id="pMs"> <span><b>Teacher mark scheme</b>, starting on a new page, with “do not accept” notes</span></label>
+    </fieldset>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<section class="doc print-only" id="wsGcse"></section>
+<section class="doc print-only" id="msGcse"></section>
+<section class="doc print-only" id="wsAlevel"></section>
+<section class="doc print-only" id="msAlevel"></section>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/engine.js?v=2"></script>
+<script src="js/structure.js?v=2"></script>
+<script src="js/challenges.js?v=2"></script>
+<script src="js/content.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

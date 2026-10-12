@@ -1,0 +1,342 @@
+/* Organic Synthesis Pathways: page styles.
+   Local names map onto the site tokens in assets/sst/sst.css, so the light and
+   dark themes need no code here: the structures are SVG coloured by classes that
+   read the same tokens. The print block at the bottom swaps everything for
+   black-on-white A4. */
+:root{
+  --paper:var(--sst-bg); --panel:var(--sst-panel); --card:var(--sst-card); --raised:var(--sst-raised); --input:var(--sst-input);
+  --ink:var(--sst-text); --body:var(--sst-text-body); --muted:var(--sst-text-muted);
+  --line:var(--sst-line); --line2:var(--sst-line-strong);
+  --blue:var(--sst-blue); --btn:var(--sst-blue-btn); --soft:var(--sst-blue-soft); --btnink:#fff;
+  --chem:var(--sst-chem); --good:var(--sst-green); --warn:var(--sst-amber); --bad:var(--sst-red);
+  --goodbg:var(--sst-good-bg); --warnbg:var(--sst-warn-bg); --badbg:var(--sst-bad-bg);
+  --stage:var(--sst-stage);
+  color-scheme:dark;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; }
+body{
+  background:var(--paper); color:var(--ink);
+  font:16px/1.5 var(--sst-font); font-variant-numeric:tabular-nums;
+  -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased;
+}
+sub,sup{ font-size:.72em; line-height:0; }
+button,select,input,textarea{ font:inherit; color:inherit; }
+a{ color:var(--blue); }
+[hidden]{ display:none !important; }
+.sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.muted{ color:var(--muted); }
+.small{ font-size:.86rem; }
+.print-only{ display:none; }
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.top{
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 24px;
+  padding:12px clamp(16px,2vw,24px) 8px; max-width:1800px; margin:0 auto; width:100%;
+}
+.top .grow{ flex:1 1 420px; min-width:0; }
+.top h1{ margin:0; font-size:clamp(1.25rem,2.2vw,1.6rem); line-height:1.15; letter-spacing:-.015em; }
+.top .lede{ margin:.25em 0 0; color:var(--body); max-width:90ch; font-size:.92rem; }
+.actions{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:.75rem; font-weight:600; border:1px solid currentColor; color:var(--muted); white-space:nowrap; vertical-align:.2em; }
+.chip.beta{ color:var(--warn); }
+.badge{ display:inline-block; font-size:.7rem; font-weight:700; padding:0 6px; border-radius:5px; border:1px solid currentColor; line-height:1.55; white-space:nowrap; vertical-align:.1em; color:var(--muted); }
+.badge.a{ color:var(--warn); } .badge.e{ color:var(--sst-violet); } .badge.m{ color:var(--bad); } .badge.r{ color:var(--chem); } .badge.g{ color:var(--good); }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+  padding:9px 14px; border-radius:10px; border:1px solid var(--line2); min-height:40px;
+  background:var(--card); color:var(--ink); font-weight:600; font-size:.92em; line-height:1.2; text-align:center;
+  transition:border-color 150ms ease, background-color 150ms ease;
+}
+.btn:hover:not(:disabled){ border-color:var(--muted); }
+.btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible{ outline:3px solid var(--blue); outline-offset:2px; }
+.btn.primary{ background:var(--btn); border-color:var(--btn); color:var(--btnink); }
+.btn.primary:hover:not(:disabled){ background:oklch(0.55 0.17 245); }
+.btn:disabled{ opacity:.42; cursor:default; }
+.btn svg{ width:18px; height:18px; flex:none; }
+.btn.sm{ padding:6px 10px; font-size:.84em; min-height:34px; }
+.btn.wide{ width:100%; }
+select, input[type="text"]{
+  background:var(--input); border:1px solid var(--line2); border-radius:8px; padding:7px 9px; min-height:40px; width:100%;
+}
+.seg{ display:flex; border:1px solid var(--line2); border-radius:10px; overflow:hidden; flex:none; }
+.seg button{ flex:1; border:0; background:var(--card); padding:8px 12px; min-height:40px; cursor:pointer; font-weight:600; font-size:.88em; color:var(--muted); white-space:nowrap; }
+.seg button + button{ border-left:1px solid var(--line2); }
+.seg button[aria-pressed="true"], .seg button[aria-selected="true"]{ background:var(--soft); color:var(--ink); box-shadow:inset 0 -3px 0 var(--blue); }
+.check{ display:flex; gap:9px; align-items:center; font-size:.9rem; cursor:pointer; padding:3px 0; font-weight:600; }
+.check input{ width:18px; height:18px; accent-color:var(--blue); flex:none; }
+
+/* ── Tool bar ───────────────────────────────────────────────────── */
+.toolbar{
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 16px; max-width:1800px; margin:0 auto; width:100%;
+  padding:6px clamp(16px,2vw,24px) 10px;
+}
+.toolbar .field{ display:flex; flex-direction:column; gap:3px; font-size:.78rem; color:var(--muted); font-weight:700; }
+.toolbar .field.grow{ flex:1 1 260px; min-width:200px; max-width:420px; }
+.toolbar .field select{ font-weight:600; }
+.toolbar .tb-actions{ display:flex; gap:8px; margin-left:auto; }
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.app{ width:100%; max-width:1800px; margin:0 auto; padding:0 clamp(12px,1.6vw,20px) 24px; display:grid; gap:12px; grid-template-columns:minmax(0,1fr); }
+.lower{ display:grid; gap:12px; grid-template-columns:minmax(0,1.15fr) minmax(340px,1fr); align-items:start; }
+.side{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+@media (max-width:899px){ .lower{ grid-template-columns:minmax(0,1fr); } }
+/* Wide screens: shelf, next step and explanation side by side, so the result of React is in view. */
+@media (min-width:1280px){
+  body:not(.presenting) .lower{ grid-template-columns:minmax(0,1.1fr) minmax(330px,.85fr) minmax(0,1.15fr); }
+  body:not(.presenting) .side{ display:contents; }
+  body:not(.presenting) .composer{ position:sticky; top:12px; }
+}
+
+/* ── The pathway (the model) ────────────────────────────────────── */
+.stage{ background:var(--stage); border:1px solid var(--line); border-radius:14px; padding:14px; min-width:0; }
+.puzzle-intro{ margin:0 0 10px; padding:0 2px; color:var(--body); }
+.puzzle-intro b{ color:var(--ink); }
+.puzzle-intro .goal{ display:block; margin-top:2px; font-size:.86rem; color:var(--muted); }
+.pathway{ display:flex; align-items:center; gap:0; overflow-x:auto; padding:6px 2px 10px; min-height:230px; }
+.pw-mol{
+  flex:none; width:auto; min-width:160px; max-width:440px; background:var(--card); border:1px solid var(--line2); border-radius:12px; padding:8px 8px 9px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:3px; position:relative;
+}
+.pw-mol.start{ border-color:var(--blue); }
+.pw-mol.target{ border-color:var(--chem); border-style:dashed; }
+.pw-mol.end{ box-shadow:0 0 0 2px var(--blue); }
+.pw-mol .tag{ position:absolute; top:-9px; left:10px; font-size:.68rem; font-weight:700; background:var(--stage); padding:0 6px; color:var(--muted); }
+.mol-struct{ display:flex; align-items:center; justify-content:center; min-height:110px; width:100%; max-width:100%; }
+.mol-struct svg{ max-width:100%; height:auto; display:block; }
+.mol-name{ font-weight:700; font-size:.88rem; line-height:1.2; }
+.mol-name small{ display:block; font-weight:500; color:var(--muted); font-size:.74rem; }
+.mol-meta{ font-size:.78rem; color:var(--muted); }
+.mol-badges{ display:flex; flex-wrap:wrap; gap:3px; justify-content:center; min-height:0; }
+.pw-step{ flex:none; width:168px; display:flex; flex-direction:column; align-items:center; gap:2px; position:relative; }
+.step-btn{
+  all:unset; box-sizing:border-box; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; padding:4px 6px; border-radius:10px; text-align:center;
+}
+.step-btn:hover{ background:var(--card); }
+.step-btn:focus-visible{ outline:3px solid var(--blue); outline-offset:1px; }
+.step-btn.on{ background:var(--card); box-shadow:inset 0 0 0 1px var(--blue); }
+.step-btn .reagent{ font-weight:700; font-size:.8rem; line-height:1.2; color:var(--ink); }
+.step-btn .cond{ font-size:.74rem; line-height:1.2; color:var(--muted); }
+.step-btn svg.arr{ width:100%; height:22px; color:var(--blue); }
+.step-btn.poor svg.arr{ color:var(--bad); }
+.step-btn.back svg.arr{ color:var(--chem); }
+.step-badges{ display:flex; flex-wrap:wrap; gap:3px; justify-content:center; min-height:0; }
+.undo{ all:unset; cursor:pointer; font-size:.72rem; font-weight:700; color:var(--muted); padding:1px 7px; border-radius:6px; border:1px solid var(--line2); }
+.undo:hover{ color:var(--ink); border-color:var(--muted); }
+.undo:focus-visible{ outline:3px solid var(--blue); outline-offset:1px; }
+.pw-gap{ flex:none; width:150px; display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--muted); font-size:.78rem; text-align:center; padding:0 6px; }
+.pw-gap .dash{ width:100%; border-top:2px dashed var(--line2); height:0; margin:10px 0; }
+.pw-gap b{ color:var(--ink); }
+.status-line{ margin:6px 2px 0; font-weight:700; }
+.status-line.good{ color:var(--good); } .status-line.warn{ color:var(--warn); }
+.tried{ margin:6px 2px 0; font-size:.84rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 6px; align-items:center; }
+.tried .tr{ border:1px solid var(--line2); border-radius:999px; padding:0 8px; font-size:.78rem; background:var(--card); }
+.tried .tr.none{ border-color:var(--bad); } .tried .tr.warn{ border-color:var(--warn); }
+.solved{ margin:10px 0 0; padding:10px 14px; border-radius:12px; background:var(--goodbg); border:1px solid var(--good); }
+.solved h2{ margin:0 0 4px; font-size:1.1rem; }
+.solved p{ margin:3px 0; font-size:.92rem; }
+.solved .row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.hint-box{ margin:8px 0 0; padding:8px 12px; border-radius:10px; border:1px solid var(--warn); background:var(--warnbg); font-size:.92rem; }
+.hint-box p{ margin:0; }
+
+/* ── Shelf: the reagent cards ─────────────────────────────────── */
+.shelf{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px 16px; min-width:0; }
+.shelf h2, .composer h2{ margin:0; font-size:.8rem; letter-spacing:.03em; color:var(--muted); font-weight:700; }
+.shelf-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px; margin-bottom:10px; }
+.shelf-head span{ font-size:.82rem; color:var(--muted); }
+.groups{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px 20px; }
+.cardgroup h3{ margin:0 0 6px; font-size:.74rem; color:var(--muted); font-weight:700; letter-spacing:.02em; }
+.cards{ display:flex; flex-wrap:wrap; gap:6px; }
+.rcard{
+  border:1px solid var(--line2); background:var(--card); border-radius:9px; padding:6px 10px; font-size:.86rem; font-weight:600; cursor:pointer; text-align:left; line-height:1.25; color:var(--body);
+  transition:border-color 150ms ease, background-color 150ms ease;
+}
+.rcard:hover{ border-color:var(--muted); color:var(--ink); }
+.rcard.test{ border-style:dashed; }
+.rcard[aria-pressed="true"]{ background:var(--soft); border-color:var(--blue); border-style:solid; color:var(--ink); box-shadow:inset 0 -2px 0 var(--blue); }
+.rcard .badge{ margin-left:4px; }
+
+/* ── Next step: direction, reagent, conditions, React ─────────────── */
+.composer{ background:var(--panel); border:1px solid var(--line2); border-radius:14px; padding:14px 16px 16px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.cmp-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.cmp-count{ font-size:.8rem; color:var(--muted); font-weight:600; }
+.modes{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.modes button{ white-space:normal; min-width:0; line-height:1.25; }   /* long names wrap instead of being clipped on a phone */
+.cmp-steps{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; counter-reset:cmp; }
+.cmp-steps > li{ position:relative; padding-left:36px; min-height:26px; counter-increment:cmp; }
+.cmp-steps > li::before{
+  content:counter(cmp); position:absolute; left:0; top:0; width:26px; height:26px; border-radius:50%; box-sizing:border-box;
+  border:1.5px solid var(--line2); display:grid; place-items:center; font-size:.78rem; font-weight:700; color:var(--muted);
+}
+.cmp-steps > li.now::before{ border-color:var(--blue); color:var(--blue); }
+.cmp-steps > li.done::before{ background:var(--btn); border-color:var(--btn); color:var(--btnink); }
+.cmp-k{ display:block; font-size:.76rem; font-weight:700; color:var(--muted); margin:3px 0 4px; }
+.cmp-steps b{ font-size:1rem; color:var(--ink); }
+.cmp-wait{ color:var(--muted); font-size:.9rem; }
+.cmp-steps > li.later .cmp-wait{ opacity:.7; }
+.cmp-note{ margin:0; color:var(--body); font-size:.92rem; }
+.profiles{ display:flex; flex-direction:column; gap:6px; }
+.prof{ display:flex; gap:9px; align-items:flex-start; border:1px solid var(--line2); background:var(--card); border-radius:9px; padding:7px 10px; cursor:pointer; font-size:.9rem; }
+.prof:hover{ border-color:var(--muted); }
+.prof input{ margin-top:3px; accent-color:var(--blue); flex:none; }
+.prof:has(input:checked){ border-color:var(--blue); background:var(--soft); }
+.prof span{ line-height:1.3; }
+.warn-note{ margin:6px 0 0; font-size:.84rem; color:var(--warn); }
+.partner{ margin:6px 0 0; font-size:.84rem; color:var(--muted); }
+.composer #preSearch{ margin-bottom:6px; }
+.cmp-pre{ display:block; margin:0 0 6px; }
+.precursor-list{ position:relative; max-height:200px; overflow:auto; border:1px solid var(--line2); border-radius:9px; background:var(--card); }
+.precursor-list button{ display:flex; width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); background:none; padding:6px 10px; cursor:pointer; font-size:.88rem; color:var(--body); gap:8px; align-items:baseline; }
+.precursor-list button:last-child{ border-bottom:0; }
+.precursor-list button:hover{ background:var(--raised); }
+.precursor-list button[aria-pressed="true"]{ background:var(--soft); color:var(--ink); font-weight:700; }
+.precursor-list button small{ color:var(--muted); }
+.go{ display:flex; gap:8px; }
+.go .btn{ flex:1; min-height:46px; font-size:1rem; }
+.composer .choice{ margin:0; border-style:solid; background:var(--soft); }
+
+/* ── Explanation ────────────────────────────────────────────────── */
+.explain{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; min-width:0; }
+.explain h3{ margin:0 0 2px; font-size:1.05rem; line-height:1.25; }
+.explain p{ margin:6px 0; font-size:.94rem; color:var(--body); }
+.explain .ex-cond{ color:var(--muted); font-size:.86rem; margin-top:0; }
+.explain .status{ font-weight:700; border-radius:9px; padding:7px 10px; border:1px solid var(--line); margin:8px 0; color:var(--ink); }
+.explain .status.s-ok{ background:var(--goodbg); border-color:var(--good); }
+.explain .status.s-warn{ background:var(--warnbg); border-color:var(--warn); }
+.explain .status.s-bad{ background:var(--badbg); border-color:var(--bad); }
+.explain .status.s-info{ background:var(--card); border-color:var(--line2); }
+.explain .eq{ font-size:1.02rem; background:var(--stage); border:1px solid var(--line2); border-radius:9px; padding:7px 12px; color:var(--ink); overflow-x:auto; }
+.explain ul{ margin:6px 0; padding-left:1.2em; }
+.explain li{ font-size:.92rem; color:var(--body); margin:3px 0; }
+.explain .prods{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0; }
+.explain .prod{ background:var(--stage); border:1px solid var(--line); border-radius:10px; padding:4px 8px; text-align:center; font-size:.8rem; }
+.explain .prod .pn{ font-weight:700; }
+.explain .prod svg{ max-height:90px; width:auto; max-width:200px; }
+.mechbox{ margin:10px 0 0; border:1px solid var(--blue); border-radius:11px; padding:8px 12px; background:var(--card); }
+.mechbox h3{ color:var(--blue); font-size:.98rem; }
+.mechbox p, .mechbox li{ font-size:.9rem; }
+.choice{ margin:8px 0; padding:10px 12px; border:1px dashed var(--blue); border-radius:10px; }
+.ex-undo{ margin:8px 0 !important; }
+.choice p{ margin:0 0 6px; font-weight:700; }
+.choice .row{ display:flex; flex-wrap:wrap; gap:6px; }
+.ex-empty{ color:var(--muted); }
+
+/* ── Structures ─────────────────────────────────────────────────── */
+.struct{ overflow:visible; }
+.struct line{ stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+.struct .ringc{ fill:none; stroke:currentColor; stroke-width:2; }
+.struct text{ fill:currentColor; font-weight:600; }
+.struct .el-C{ fill:var(--chem); }
+.struct .el-H{ fill:var(--muted); font-weight:500; }
+.struct .el-O{ fill:var(--bad); }
+.struct .el-N, .struct .el-NO2{ fill:var(--blue); }
+.struct .el-Cl, .struct .el-Br, .struct .el-I{ fill:var(--good); }
+.struct .lbl{ fill:var(--ink); font-weight:600; }
+.struct .sub{ font-size:70%; }
+
+@media (min-width:768px){
+  body:not(.presenting) .pathway > :first-child{ margin-left:auto; }
+  body:not(.presenting) .pathway > :last-child{ margin-right:auto; }
+}
+
+/* ── Responsive: the pathway runs top to bottom on a phone ───────── */
+@media (max-width:767px){
+  .pathway{ flex-direction:column; align-items:stretch; overflow-x:hidden; gap:0; }
+  .pw-mol{ width:100%; max-width:340px; align-self:center; }
+  .pw-step{ width:100%; max-width:340px; align-self:center; flex-direction:row; align-items:stretch; justify-content:center; gap:10px; padding:2px 0; }
+  .step-btn{ flex-direction:row; align-items:center; gap:10px; justify-content:center; text-align:left; }
+  .step-btn .reagent{ flex:1; text-align:right; } .step-btn .cond{ flex:1; text-align:left; }
+  .step-btn svg.arr{ width:26px; height:58px; transform:rotate(90deg); flex:none; margin:-18px -10px; }
+  .step-btn .rc{ display:flex; flex:1; }
+  .pw-gap{ width:100%; max-width:340px; align-self:center; flex-direction:row; padding:6px 0; }
+  .pw-gap .dash{ height:40px; width:0; border-top:0; border-left:2px dashed var(--line2); margin:0 10px; }
+  .toolbar .field.grow{ max-width:none; }
+  .top .actions .btn{ flex:1 1 auto; }
+}
+
+/* ── Presenter mode: text at the board sizes ─────────────────────── */
+body.presenting .sst-teacher{ font-size:var(--sst-pr-control); }
+body.presenting :is(.shelf, .composer) :is(.rcard, .prof, .btn, select, input, button, h2, h3, p, small, span, b, .cmp-k){ font-size:var(--sst-pr-control); }
+body.presenting .composer{ overflow:auto; gap:8px; padding:10px 12px; }
+body.presenting .cmp-steps{ gap:8px; }
+body.presenting .cmp-steps > li.start{ display:none; }   /* the board already marks “You are here” */
+body.presenting .go{ position:sticky; bottom:-10px; background:var(--panel); padding:6px 0 10px; margin-bottom:-10px; }   /* React stays in view on a short board */
+body.presenting .go .btn{ min-height:40px; }
+body.presenting .shelf{ overflow:auto; }
+body.presenting .shelf-head span{ display:none; }
+body.presenting .stage{ padding:16px; display:flex; flex-direction:column; border-radius:12px; }
+body.presenting .pathway{ flex-wrap:wrap; overflow:auto; gap:10px 0; align-content:flex-start; flex:1 1 auto; min-height:0; align-items:center; }
+body.presenting .pw-mol{ width:auto; min-width:var(--pr-card,200px); max-width:none; padding:10px 12px; }
+body.presenting .mol-name{ font-size:var(--sst-pr-label); }
+body.presenting .mol-name small, body.presenting .mol-meta{ font-size:var(--sst-pr-label); }
+body.presenting .mol-struct{ min-height:0; }
+body.presenting .pw-step{ width:auto; min-width:var(--pr-step,200px); }
+body.presenting .step-btn .reagent{ font-size:var(--sst-pr-label); }
+body.presenting .step-btn .cond{ font-size:var(--sst-pr-label); }
+body.presenting .step-btn svg.arr{ height:30px; }
+body.presenting .pw-mol .tag, body.presenting .badge{ font-size:var(--sst-pr-label); }
+body.presenting .pw-gap{ font-size:var(--sst-pr-label); width:auto; min-width:140px; }
+body.presenting .undo{ font-size:var(--sst-pr-control); }
+body.presenting .solved{ font-size:var(--sst-pr-text); }
+body.presenting .status-line{ font-size:var(--sst-pr-label); }
+body.presenting .tried{ display:none; }
+
+/* ── Light theme: only what the tokens do not carry ──────────────── */
+.theme-light .explain .eq{ background:var(--sst-stage); }
+
+/* ── Dialog ─────────────────────────────────────────────────────── */
+dialog{ background:var(--panel); color:var(--ink); border:1px solid var(--line2); border-radius:14px; padding:0; max-width:min(560px,92vw); }
+dialog::backdrop{ background:rgba(0,0,0,.55); }
+dialog form{ padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+dialog h2{ margin:0; font-size:1.2rem; }
+dialog p{ margin:0; color:var(--body); font-size:.92rem; }
+dialog fieldset{ border:1px solid var(--line2); border-radius:10px; padding:8px 12px; margin:0; display:flex; flex-direction:column; gap:6px; }
+dialog legend{ font-size:.78rem; color:var(--muted); font-weight:700; padding:0 6px; }
+dialog label{ display:flex; gap:9px; align-items:flex-start; font-size:.92rem; cursor:pointer; }
+dialog label input{ margin-top:4px; accent-color:var(--blue); }
+dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+
+/* ── Print: A4, black on white, mark scheme only when asked ──────── */
+@page{ size:A4; margin:14mm 14mm; }
+@media print{
+  html,body{ background:#fff !important; color:#000; height:auto !important; overflow:visible !important; display:block !important; }
+  body{ font-size:10.5pt; line-height:1.4; }
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .sst-bar, .top, .toolbar, .app, dialog, #srLive, .sst-ink, .sst-inkbar, .sst-ink-fab, .sst-pres-top, .sst-pres-deck{ display:none !important; }
+  .print-only{ display:block; }
+  /* A plain Ctrl+P prints the GCSE worksheet only: never a mark scheme. */
+  body:not(.print-custom) #msGcse, body:not(.print-custom) #wsAlevel, body:not(.print-custom) #msAlevel{ display:none !important; }
+  body.print-custom .print-only{ display:none; }
+  body.print-custom.p-ws-gcse #wsGcse, body.print-custom.p-ms-gcse #msGcse, body.print-custom.p-ws-alevel #wsAlevel, body.print-custom.p-ms-alevel #msAlevel{ display:block; }
+  .doc{ break-before:page; }
+  .doc:first-of-type{ break-before:auto; }
+  .print-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:8px; }
+  .print-head h1{ font-size:15pt; margin:0; }
+  .print-head .sub{ font-size:9pt; color:#444; }
+  .fill-in{ display:flex; gap:18px; font-size:10pt; margin:0 0 10px; }
+  .fill-in span{ flex:1; border-bottom:1px solid #000; padding-bottom:2px; }
+  .doc h3{ font-size:11pt; margin:10pt 0 4pt; font-weight:700; break-after:avoid; }
+  .doc h3 .n{ display:inline-block; min-width:1.4em; }
+  .q{ break-inside:avoid; margin:0 0 7pt; }
+  .q p, .part p{ margin:3pt 0; }
+  .part{ break-inside:avoid; }
+  .mk{ font-weight:700; font-size:9.5pt; white-space:nowrap; }
+  .ws-lines i{ display:block; height:8.5mm; border-bottom:1px solid #999; }
+  .draw-box{ height:30mm; border:1px solid #777; border-radius:3px; margin:3pt 0 5pt; }
+  .fig-row{ display:flex; gap:14pt; flex-wrap:wrap; margin:4pt 0; }
+  .fig{ margin:0; break-inside:avoid; text-align:center; }
+  .fig figcaption{ font-size:8pt; color:#555; }
+  .doc svg.struct{ max-height:34mm; width:auto; }
+  .doc .struct line, .doc .struct .ringc{ stroke:#000; }
+  .doc .struct text, .doc .struct .el{ fill:#000 !important; }
+  .route-fig{ display:flex; align-items:center; gap:4pt; margin:6pt 0; flex-wrap:wrap; }
+  .rf-mol{ text-align:center; font-size:8.5pt; } .rf-q{ width:22mm; height:14mm; border:1px dashed #666; border-radius:4px; display:grid; place-items:center; font-weight:700; color:#666; }
+  .rf-arrow{ text-align:center; font-size:12pt; line-height:1; } .rf-arrow span{ display:block; font-size:7.5pt; }
+  .ms-q{ break-inside:avoid; margin:0 0 7pt; }
+  .ms-q h4{ margin:0 0 2pt; font-size:10.5pt; }
+  .ms-part{ margin:2pt 0 3pt 8pt; }
+  .ms-part ul{ margin:0; padding-left:1.2em; }
+  .dna{ margin:2pt 0 0; font-style:italic; font-size:9.5pt; }
+  .note{ margin:2pt 0 0; font-size:9.5pt; color:#333; }
+}

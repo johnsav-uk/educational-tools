@@ -2536,7 +2536,8 @@ function Toggle({ on, set, label }) {
 /* ── Section 1: the mechanism player ──────────────────────────────────── */
 
 function Player() {
-  const [mid, setMid] = useState('ea-ethene-hbr');
+  const [mid, setMid] = useState(() => { const m = /mech=([\w-]+)/.exec(location.hash); return m && MECHANISMS.some(x => x.id === m[1]) ? m[1] : 'ea-ethene-hbr'; });
+  useEffect(() => { try { history.replaceState(null, '', '#mech=' + mid); } catch (e) {} }, [mid]);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [dipoles, setDipoles] = useState(true);
