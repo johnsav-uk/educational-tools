@@ -189,5 +189,11 @@ window.SST_TOOLS = [
     blurb: "Bid, dare and bank the winnings in a list-naming game show for the whole class.",
     kind: "Revision Game", levels: ["KS3", "GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
     image: "who-dares-wins.png",
-    keywords: "who dares wins bidding list naming game show bank risk" }
+    keywords: "who dares wins bidding list naming game show bank risk" },
+
+  { title: "Who Wants to Be a Science Millionaire? (beta)", url: "games/science/millionaire/",
+    blurb: "Climb a fifteen-question prize ladder with 50:50, Ask the Audience and Phone a Friend, using only the topics your class has been taught.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
+    image: "science-millionaire.png",
+    keywords: "who wants to be a millionaire science millionaire quiz game show multiple choice lifelines 50:50 fifty fifty ask the audience phone a friend safety net prize ladder starter plenary revision whiteboard class aqa 8461 8462 8463 8464 trilogy combined science separate foundation higher edexcel pearson 1bi0 1ch0 1ph0 1sc0 cell biology organisation infection bioenergetics homeostasis inheritance ecology atomic structure bonding quantitative chemical changes energy rates organic analysis atmosphere resources electricity particle model radioactivity forces waves magnetism space physics" }
 ];

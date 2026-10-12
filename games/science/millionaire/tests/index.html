@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test results — Who Wants to Be a Science Millionaire?</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; background: #0b1426; color: #e8eefc; }
+  h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 24px 0 8px; }
+  #summary { padding: 10px 14px; border-radius: 8px; font-weight: 700; margin: 12px 0; }
+  .pass { background: #0d3b26; } .fail { background: #5a1a17; }
+  li { list-style: none; padding: 2px 0; } li.ok::before { content: "✓ "; color: #5be09a; } li.bad::before { content: "✗ "; color: #ff8b84; }
+  li small { color: #ff8b84; display: block; margin-left: 20px; }
+  table { border-collapse: collapse; } td, th { padding: 3px 12px; border-bottom: 1px solid #243659; text-align: right; } th:first-child, td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<h1>Who Wants to Be a Science Millionaire? — tests</h1>
+<p>Runs the engine, lifeline, selection and bank tests, then renders every audio cue offline and measures it.</p>
+<div id="summary">Running…</div>
+<ul id="list"></ul>
+<h2>Audio levels (offline render through the game’s output chain)</h2>
+<table id="audio"></table>
+<script src="../taxonomy.js"></script>
+<script src="../engine.js"></script>
+<script src="../lifelines.js"></script>
+<script src="../select.js"></script>
+<script src="../audio.js"></script>
+<script src="../bank/_helper.js"></script>
+<script>
+  ['B1','B2','B3','B4','B5','B6','B7','C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','P1','P2','P3','P4','P5','P6','P7','P8'].forEach(function (u) { document.write('<script src="../bank/' + u + '.js"><\/script>'); });
+</script>
+<script src="core-tests.js"></script>
+<script src="audio-tests.js"></script>
+<script>
+  window.addEventListener('load', function () {
+    var pass = 0, fail = 0, ul = document.getElementById('list');
+    var T = {
+      test: function (name, fn) {
+        var li = document.createElement('li');
+        try { fn(); pass++; li.className = 'ok'; li.textContent = name; } catch (e) { fail++; li.className = 'bad'; li.textContent = name; var s = document.createElement('small'); s.textContent = e.message; li.appendChild(s); }
+        ul.appendChild(li);
+      },
+      eq: function (a, b, m) { if (a !== b) throw new Error((m ? m + ': ' : '') + 'expected ' + JSON.stringify(b) + ' but got ' + JSON.stringify(a)); },
+      ok: function (c, m) { if (!c) throw new Error(m || 'assertion failed'); }
+    };
+    window.SSM_CORE_TESTS(window.SSM, T);
+    function done() {
+      var s = document.getElementById('summary');
+      s.className = fail ? 'fail' : 'pass'; s.textContent = pass + ' passed, ' + fail + ' failed';
+      window.SSM_TEST_RESULT = { pass: pass, fail: fail };
+    }
+    if (window.OfflineAudioContext) {
+      window.SSM_AUDIO_TESTS(T).then(function (table) {
+        var t = document.getElementById('audio');
+        t.innerHTML = '<tr><th>cue</th><th>channel</th><th>seconds</th><th>peak dBFS</th><th>rms dBFS</th><th>tail dBFS</th></tr>' + table.map(function (r) { return '<tr><td>' + r.cue + '</td><td>' + r.channel + '</td><td>' + r.seconds + '</td><td>' + r.peakDb + '</td><td>' + r.rmsDb + '</td><td>' + r.tailDb + '</td></tr>'; }).join('');
+        window.SSM_AUDIO_TABLE = table;
+        done();
+      }).catch(function (e) { fail++; var li = document.createElement('li'); li.className = 'bad'; li.textContent = 'audio tests crashed: ' + e.message; ul.appendChild(li); done(); });
+    } else { done(); }
+  });
+</script>
+</body>
+</html>
