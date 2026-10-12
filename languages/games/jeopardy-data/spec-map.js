@@ -51,12 +51,12 @@ window.LJ_SPEC = {
       codes: { french: "1FR1", spanish: "1SP1", german: "1GN1" },
       note: "Pearson sets six broad thematic contexts and an indicative list of subjects, not sub-topics. Each column is one context; questions are drawn from the strands that cover its listed subjects.",
       categories: [
-        { id: "e-c1", label: "My personal world", short: "My personal world", ref: "Thematic context 1 (family, friends, relationships; customs and celebrations)", strands: ["identity", "customs"] },
-        { id: "e-c2", label: "Lifestyle and wellbeing", short: "Lifestyle & wellbeing", ref: "Thematic context 2 (food and drink, sports, physical and mental wellbeing; free time)", strands: ["healthy", "freetime"] },
-        { id: "e-c3", label: "My neighbourhood", short: "My neighbourhood", ref: "Thematic context 3 (places in town, the natural world, environmental issues)", strands: ["environment"] },
+        { id: "e-c1", label: "My personal world", short: "My personal world", ref: "Thematic context 1 (family, friends, relationships; customs and celebrations)", strands: ["identity", "customs", "e-equality"] },
+        { id: "e-c2", label: "Lifestyle and wellbeing", short: "Lifestyle & wellbeing", ref: "Thematic context 2 (food and drink, sports, physical and mental wellbeing; free time)", strands: ["healthy", "freetime", "e-wellbeing"] },
+        { id: "e-c3", label: "My neighbourhood", short: "My neighbourhood", ref: "Thematic context 3 (places in town, shopping, the natural world, environmental issues)", strands: ["environment", "e-shopping"] },
         { id: "e-c4", label: "Media and technology", short: "Media & technology", ref: "Thematic context 4 (social media and gaming, music, TV and film)", strands: ["media", "celebrity"] },
         { id: "e-c5", label: "Studying and my future", short: "Studying & my future", ref: "Thematic context 5 (school, future opportunities such as work and travel)", strands: ["education"] },
-        { id: "e-c6", label: "Travel and tourism", short: "Travel & tourism", ref: "Thematic context 6 (transport, tourist attractions, accommodation)", strands: ["travel"] },
+        { id: "e-c6", label: "Travel and tourism", short: "Travel & tourism", ref: "Thematic context 6 (transport, tourist attractions, accommodation)", strands: ["travel", "e-transport"] },
         { id: "e-g-1", label: "Grammar: verbs and tenses", short: "Grammar: verbs & tenses", ref: "Appendix 2: Grammar (Verbs; Verbs: Tenses)", strands: ["g-verbs"] },
         { id: "e-g-2", label: "Grammar: nouns, adjectives and word order", short: "Grammar: nouns, adjectives & word order", ref: "Appendix 2: Grammar (Nouns, pronouns and determiners; Adjectives; Adverbs; Prepositions)", strands: ["g-forms"] }
       ],

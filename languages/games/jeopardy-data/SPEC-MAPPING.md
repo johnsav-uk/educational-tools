@@ -10,7 +10,7 @@ Page: `languages/games/language-jeopardy.html` (beta). Reference for look and be
 | `language-jeopardy.html` | The game. Its inline CSS is a verbatim copy of the Science page's; the script is the Science script with a setup step (board, language, six topics) in front and a loader that turns the data below into the Science `DATA` shape. |
 | `language-jeopardy-sst.css` | Copy of `games/science/gameshow-sst.css` in Savage Language Tools' coral, plus focus rings and the topic chips. Kept separate so Science changes never reach this page. |
 | `jeopardy-data/spec-map.js` | Which official topic each column is, per board, and which question strands feed it. |
-| `jeopardy-data/french.js`, `spanish.js`, `german.js` | The question banks, one file per language. |
+| `jeopardy-data/french.js`, `spanish.js`, `german.js` | The shared question banks, one file per language. `*-edexcel.js` hold the Edexcel-only strands. |
 
 ## Specifications used
 
@@ -59,14 +59,24 @@ game, not something Pearson states.
 
 ## Content: what exists, honestly
 
-- 165 questions per language (11 strands x 5 tiers x 3 questions), 495 in total.
-  Each board/language combination can reach all 165 of its language's questions, so each of the six
-  combinations has more than 100 questions.
-- **The two boards share one pool per language.** A question is filed under a topic strand, and each
-  board's columns are built from the strands, so many questions appear under both boards. This is
-  accurate where the topics overlap, but there are no Edexcel-only or AQA-only items yet. Board-specific
-  questions (for example Edexcel's picture-task contexts, or AQA's "Celebrity culture" depth) are the
-  obvious next addition.
+- Shared pool: 165 questions per language (11 strands x 5 tiers x 3 questions). A question is filed under a
+  topic strand and each board's columns are built from strands, so these 165 appear on both boards where the
+  topics overlap.
+- **Edexcel-only strands:** 40 more questions per language (4 strands x 5 tiers x 2 questions), in
+  `french-edexcel.js`, `spanish-edexcel.js` and `german-edexcel.js`. They cover subjects Pearson lists in its
+  thematic contexts that AQA's nine topics do not name, and never appear on an AQA board.
+  Edexcel boards therefore reach 205 questions per language (615 across the three), AQA boards 165 (495).
+
+  | Strand | Edexcel column | Pearson subject it covers |
+  | --- | --- | --- |
+  | `e-equality` | My personal world | equality |
+  | `e-wellbeing` | Lifestyle and wellbeing | mental well-being |
+  | `e-shopping` | My neighbourhood | shopping (includes a formal shop role-play) |
+  | `e-transport` | Travel and tourism | transport |
+
+  The Edexcel columns that took extra strands now hold more variants per tile, so they vary more between games.
+- AQA has no AQA-only strands yet. Its distinctive content (for example deeper "Celebrity culture" and
+  "Customs, festivals and celebrations" questions) is the obvious next addition.
 - Tiers: 100 single words, 200 short phrases, 300 a grammar form, 400 a sentence, 500 an extended or
   multi-tense sentence. "Higher" in a note marks a structure from the Higher-only grammar lists.
 - Grammar limited to what both specifications' current lists allow. No subjunctive, pluperfect or
