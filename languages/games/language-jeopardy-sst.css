@@ -1,0 +1,116 @@
+/* Language Jeopardy on the site palette: a copy of games/science/gameshow-sst.css, kept separate so
+   changes to the Science game never reach this page. Savage Language Tools uses coral where the
+   science games use blue and violet; Jeopardy's yellow values and the team colours stay. */
+
+:root {
+  color-scheme: dark;
+  --stage1: var(--sst-bg); --stage2: var(--sst-bg); --stage3: var(--sst-bg);
+  --panel: var(--sst-card); --panel-edge: var(--sst-line-strong);
+  --text: var(--sst-text); --muted: var(--sst-text-muted);
+  --amber: var(--sst-coral);
+  --display: var(--sst-font);
+  --body: var(--sst-font);
+}
+
+/* Stage: flat navy. The body's own padding moves onto .wrap so the site bar
+   can run edge to edge. */
+body { background: var(--sst-bg) !important; padding: 0 !important; }
+body::before { display: none !important; }
+.wrap { padding: clamp(20px, 4vw, 40px) 16px 48px; }
+
+/* Title: the show's name in the site face, no plaque */
+.titlebar {
+  background: none !important; box-shadow: none !important; border: 0 !important;
+  padding: 4px 0 !important;
+}
+.titlebar::before { display: none !important; }
+.titlebar h1 {
+  font-family: var(--sst-font) !important; font-weight: 800 !important;
+  letter-spacing: -0.02em !important; text-shadow: none !important;
+}
+.titlebar .sub { letter-spacing: .06em; font-weight: 500; }
+
+/* Setup card */
+.setup {
+  background: var(--sst-panel) !important; border: 1px solid var(--sst-line) !important;
+  border-radius: 14px; box-shadow: none !important;
+}
+.setup .step {
+  font-family: var(--sst-font) !important; font-weight: 700; font-size: 12px;
+  letter-spacing: .08em; color: var(--sst-text-muted) !important;
+}
+.chip {
+  min-height: 44px; background: transparent !important; border: 1px solid var(--sst-line-strong) !important;
+  color: oklch(0.8 0.02 250) !important; font: 500 14px var(--sst-font) !important;
+  box-shadow: none !important; transform: none !important;
+}
+.chip:hover { border-color: var(--sst-coral) !important; }
+.chip.on {
+  background: var(--sst-coral-soft) !important; border-color: var(--sst-coral) !important;
+  color: oklch(0.92 0.05 32) !important; font-weight: 600 !important;
+}
+.team-field input, .answer-input-row input {
+  background: var(--sst-input) !important; border: 1px solid var(--sst-line-strong) !important;
+  border-radius: 8px !important; font-family: var(--sst-font) !important; font-size: 16px !important;
+}
+.team-field input:focus, .answer-input-row input:focus { border-color: var(--sst-coral) !important; }
+.start, .win .again {
+  min-height: 50px; border-radius: 8px !important; border: 0 !important;
+  background: var(--sst-coral-btn) !important; color: #fff !important; box-shadow: none !important;
+  font: 600 16px var(--sst-font) !important; letter-spacing: 0 !important; filter: none !important;
+}
+.start:hover, .win .again:hover { background: oklch(0.64 0.17 32) !important; }
+.tune-btn, .rules, .answer-key {
+  background: var(--sst-card) !important; border-color: var(--sst-line-strong) !important;
+  font-family: var(--sst-font) !important;
+}
+
+/* Game */
+.scard, .win .fscard, .catcard, .bid-status, .bank-prompt {
+  background: var(--sst-card) !important; box-shadow: none !important; border-color: var(--sst-line) !important;
+}
+.scard .who, .win .fscard .who, .m-cat { font-family: var(--sst-font) !important; font-weight: 700 !important; }
+.ctrl {
+  min-height: 44px; background: transparent !important; border: 1px solid var(--sst-line-strong) !important;
+  color: var(--sst-text-body) !important; font: 500 13px var(--sst-font) !important;
+}
+.ctrl:hover { border-color: var(--sst-coral) !important; color: var(--sst-text) !important; }
+
+/* Question modal */
+.backdrop { background: rgba(3, 9, 21, .85) !important; backdrop-filter: none !important; }
+.modal {
+  background: var(--sst-panel) !important; border: 1px solid var(--sst-line-strong) !important;
+  border-radius: 14px !important; box-shadow: none !important;
+}
+.m-ans, .m-note { background: var(--sst-card) !important; }
+.mbtn { font-family: var(--sst-font) !important; border-radius: 8px !important; min-height: 44px; }
+.mbtn.reveal { background: var(--sst-coral-btn) !important; color: #fff !important; }
+.mbtn.none { border-color: var(--sst-line-strong) !important; }
+
+/* Win overlay */
+.win { background: rgba(3, 9, 21, .94) !important; }
+.win h2 { font-family: var(--sst-font) !important; font-weight: 800 !important; text-shadow: none !important; }
+
+/* Light theme (the site bar's Light / Dark toggle). The show titles are
+   yellow or white for a dark stage; on the light page they take the ink. */
+.theme-light .titlebar h1 { color: var(--sst-text) !important; }
+.theme-light .chip { color: var(--sst-text-body) !important; }
+.theme-light .chip:hover { border-color: var(--sst-coral) !important; }
+.theme-light .chip.on { color: var(--sst-coral) !important; }
+/* Team names written in their team colour (often an inline style): darkened
+   on the light page so the hue still says which team it is. */
+.theme-light :is(.scard .who, .win .fscard .who, [style*="color:var(--team"]) { filter: brightness(.7); }
+
+/* Language Jeopardy additions ------------------------------------------------ */
+button.chip { font-family: var(--sst-font); }
+button.chip:focus-visible, .ctrl:focus-visible, .mbtn:focus-visible, .start:focus-visible, .win .again:focus-visible {
+  outline: 2px solid var(--sst-coral); outline-offset: 2px;
+}
+.tile:focus-visible { outline: 2px solid var(--sst-coral); outline-offset: 2px; }
+.chip.on[aria-pressed="true"]::before { content: "\2713\00a0"; }
+.spec-tag { margin-top: 6px; font-size: 12.5px; color: var(--sst-text-muted); text-align: center; }
+.pick-count { font-weight: 700; color: var(--sst-text); }
+.pick-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.m-note .val { white-space: pre-line; }
+.theme-light .cathead { color: #fff; }
+.start[disabled] { opacity: .45; cursor: not-allowed; }

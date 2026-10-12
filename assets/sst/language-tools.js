@@ -28,6 +28,12 @@ window.SLT_TOOLS = [
     image: "spanish-connect4.png", featured: true,
     keywords: "spanish espanol español conecta 4 connect four vocabulary vocab mfl languages modern foreign edexcel pearson gcse 1sp1 team game starter plenary retrieval" },
 
+  { title: "Language Jeopardy (beta)", url: "languages/games/language-jeopardy.html",
+    blurb: "Pick six GCSE topics for AQA or Pearson Edexcel French, Spanish or German, then win points for translating, conjugating and decoding.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
+    image: "language-jeopardy.png",
+    keywords: "jeopardy board quiz categories points team game starter plenary retrieval translation grammar vocabulary aqa 8652 8662 8692 edexcel pearson 1fr1 1gn1 1sp1 french francais german deutsch spanish espanol mfl languages modern foreign thematic contexts identity relationships healthy living education work free time customs festivals celebrity travel tourism media technology environment" },
+
   { title: "Interleaved Grid Challenge", url: "languages/games/interleaved-grid.html",
     blurb: "Pick a card from a grid of French, Spanish or German translations, worth more points the longer ago the topic was taught, and push for the higher-tier bonus.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
