@@ -89,7 +89,7 @@
 
   function friend(q, elim, rng) {
     var d = clamp(q.diff || 3, 1, 5);
-    var persona = pick(PERSONAS, rng);
+    var persona = pick(SSM.PERSONAS || PERSONAS, rng);   // a sister game (Language Millionaire) supplies its own friends
     var liveWrong = wrongAlive(q, elim);
     var nAlive = liveWrong.length + 1;
     var p = FR_BASE[d];

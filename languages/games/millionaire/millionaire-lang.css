@@ -1,0 +1,23 @@
+/* Who Wants to Be a Language Millionaire? — on top of games/science/millionaire/millionaire.css.
+   Savage Language Tools uses coral where the science games use violet, so the setup screen's accent
+   tokens are remapped here (both themes, since --sst-coral* are redefined under .theme-light).
+   The stage keeps the science game's dark navy and amber in both themes. */
+.su {
+  --sst-violet: var(--sst-coral);
+  --sst-violet-soft: var(--sst-coral-soft);
+  --sst-violet-btn: var(--sst-coral-btn);
+}
+
+/* the intro mark: two speech bubbles instead of the spinning atom */
+.mx-bubbles { animation: bob 3.2s ease-in-out infinite alternate; overflow: visible; }
+.mx-bubbles path:first-child { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.mx-bubbles path:last-child { fill: currentColor; stroke: #050e1a; stroke-width: 2; stroke-linejoin: round; }
+@keyframes bob { from { transform: translateY(-4px); } to { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .mx-bubbles { animation: none; } }
+
+/* the show's own title in the target language, under the English one */
+.mx-intro-show { margin: -4px 0 14px; color: var(--amber); font-size: clamp(16px, 2vw, 30px); font-weight: 700; font-style: italic; animation: introIn 1.1s cubic-bezier(.2, .8, .2, 1) .9s both; }
+.mx-intro-show:empty { display: none; }
+.su-btn--go:hover:not(:disabled) { background: var(--sst-coral); color: #1b0d09; }
+/* the science page colours its groups by subject (B / C / P); here every group is coral */
+.su-subj { --c: var(--sst-coral); }
