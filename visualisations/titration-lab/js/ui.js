@@ -79,9 +79,33 @@
     { key: 'alevel-redox', title: 'A-level: redox with potassium manganate(VII)', text: 'AQA A-level Chemistry 3.2.5.5 redox titrations of Fe²⁺ and C₂O₄²⁻ with MnO₄⁻, and 3.2.5.6 autocatalysis by Mn²⁺.' }
   ];
   var MODE = { guided: 'Guided', independent: 'Independent', mystery: 'Mystery' };
+  // GCSE or A-level first, so each level sees only its own experiments.
+  var LEVELS = {
+    gcse: { name: 'GCSE', groups: ['gcse'], spec: 'AQA GCSE Chemistry 4.4.2.5 · Required practical 2',
+      what: ['Strong acid with strong alkali, with one indicator', 'Rough titration, then repeats to concordant titres', 'Concentration in mol/dm³, and g/dm³ at Higher Tier'] },
+    alevel: { name: 'A-level', groups: ['alevel-ab', 'alevel-redox'], spec: 'AQA A-level Chemistry RP1 · 3.1.12.5 · 3.2.5.5 · 3.2.5.6',
+      what: ['Required practical 1: make a standard solution', 'Weak acids and bases: choose the indicator from the pH curve', 'Redox titrations with potassium manganate(VII)'] }
+  };
+  var LEVEL_KEY = 'sst-titration-level';
+  function savedLevel() { try { var v = localStorage.getItem(LEVEL_KEY); return LEVELS[v] ? v : null; } catch (e) { return null; } }
+  function setLevel(v) { ui.level = v; try { if (v) localStorage.setItem(LEVEL_KEY, v); else localStorage.removeItem(LEVEL_KEY); } catch (e) { /* storage blocked */ } }
   function buildPicker() {
     var prog = progress(), html = '';
-    GROUPS.forEach(function (g) {
+    if (ui.level === undefined) ui.level = savedLevel();
+    if (!ui.level) {
+      html += '<h2 class="level-q">Which course are you studying?</h2><div class="levels">' + Object.keys(LEVELS).map(function (k) {
+        var L = LEVELS[k], n = X.LIST.filter(function (d) { return L.groups.indexOf(d.pathway) >= 0; }).length;
+        return '<button type="button" class="level-btn" data-level="' + k + '"><span class="pill level">' + L.name + '</span><b>' + L.name + ' titrations</b><span class="spec">' + L.spec + '</span>' +
+          '<ul>' + L.what.map(function (w) { return '<li>' + w + '</li>'; }).join('') + '</ul><span class="foot">' + n + ' experiments <span aria-hidden="true">→</span></span></button>';
+      }).join('') + '</div>';
+      $('#pickerGroups').innerHTML = html;
+      $$('#pickerGroups [data-level]').forEach(function (b) { b.addEventListener('click', function () { setLevel(b.getAttribute('data-level')); buildPicker(); }); });
+      return;
+    }
+    html += '<div class="level-bar"><span class="seg" role="group" aria-label="Course">' + Object.keys(LEVELS).map(function (k) {
+      return '<button type="button" data-level="' + k + '" aria-pressed="' + (k === ui.level) + '">' + LEVELS[k].name + '</button>';
+    }).join('') + '</span><span class="muted">' + LEVELS[ui.level].spec + '</span></div>';
+    GROUPS.filter(function (g) { return LEVELS[ui.level].groups.indexOf(g.key) >= 0; }).forEach(function (g) {
       html += '<section class="group"><h2>' + g.title + '</h2><p>' + g.text + '</p><div class="cards">';
       X.LIST.filter(function (d) { return d.pathway === g.key; }).forEach(function (d) {
         var p = prog[d.id];
@@ -94,12 +118,14 @@
       html += '</div></section>';
     });
     $('#pickerGroups').innerHTML = html;
+    $$('#pickerGroups .level-bar [data-level]').forEach(function (b) { b.addEventListener('click', function () { setLevel(b.getAttribute('data-level')); buildPicker(); }); });
     $$('#pickerGroups .card-btn').forEach(function (b) { b.addEventListener('click', function () { openBrief(b.getAttribute('data-exp'), newSeed()); }); });
   }
 
   /* ---------- Brief ---------- */
   function openBrief(id, seed, sample) {
     var def = X.byId(id);
+    ui.level = def.pathway === 'gcse' ? 'gcse' : 'alevel';
     ui.run = X.instantiate(id, seed, sample || (def.samples ? ui.choices.sample || def.samples[0].key : undefined));
     ui.choices = { aliquot: 'pipette25', sample: ui.run.sample };
     renderBrief();
@@ -1358,7 +1384,7 @@
   /* ---------- Printing ---------- */
   function openPrint(preset) {
     var dlg = $('#printDlg');
-    var level = ui.run && !ui.run.gcse ? 'alevel' : 'gcse';
+    var level = ui.run ? (ui.run.gcse ? 'gcse' : 'alevel') : ui.level || 'gcse';
     $$('#printDlg input[name="pLevel"]').forEach(function (r) { r.checked = r.value === level; });
     $('#pWs').checked = !preset; $('#pMs').checked = false;
     $('#pReport').checked = !!(preset && preset.indexOf('report') >= 0) || (!preset && !!ui.submitted);
