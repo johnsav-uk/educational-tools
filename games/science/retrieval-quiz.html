@@ -317,38 +317,51 @@ td.col-del{width:30px;text-align:center}
 
 <div id="wa-header">
   <div id="wa-title-block"><div id="wa-title">GCSE Science Retrieval Presenter</div><div class="subtitle">Biology · Chemistry · Physics — AQA GCSE</div></div>
-  <div id="mode-bar"><button class="mode-btn active" data-mode="presenter" onclick="setMode('presenter')">&#127941; Presenter</button><button class="mode-btn" data-mode="editor" onclick="setMode('editor')">&#9998; Edit Questions</button></div>
-  <label id="wa-joke-toggle" title="Easter-egg jokes"><input type="checkbox" id="chk-joke" checked><span>🥚</span></label>
-  <label id="wa-sound-toggle" title="Sound on/off (press M)"><input type="checkbox" id="chk-sound" checked><span id="wa-sound-icon">🔊</span></label>
+  <div id="mode-bar"><button class="mode-btn active" data-mode="presenter" onclick="setMode('presenter')">Presenter</button><button class="mode-btn" data-mode="editor" onclick="setMode('editor')">Edit questions</button></div>
 </div>
 
 <div id="presenter-panel" style="display:flex;flex-direction:column;gap:10px;">
-<!-- Settings screen: the choice buttons drive the selects (kept, hidden, as the
-     settings the rest of the page reads); Start swaps to the question view. -->
+<!-- Settings screen, laid out as Millionaire's. The tiles and tick boxes drive the
+     hidden selects and RP, which are the settings the rest of the page reads;
+     Start swaps to the question view. -->
 <div id="rp-setup">
 <div class="rp-cards">
-<section class="rp-card"><h2><span class="rp-num">1</span>Course</h2>
-<div class="rp-field"><span class="rp-label">Course</span><div class="rp-chips" data-for="sel-course"></div><select class="rp-native" id="sel-course"><option value="combined">Combined Science</option><option value="separates">Separate Science</option></select></div>
-<div class="rp-field"><span class="rp-label">Tier</span><div class="rp-chips" data-for="sel-tier"></div><select class="rp-native" id="sel-tier"><option value="F">Foundation Tier</option><option value="H">Higher Tier</option></select></div>
-<select class="rp-native" id="sel-year" aria-hidden="true" tabindex="-1"><option value="all">All Topics (Full Course)</option><option value="10">Year 10 Only</option><option value="11">Year 11 Only</option></select>
-</section>
-<section class="rp-card" id="rp-topics-card"><div class="rp-cardhead"><h2 id="rp-h-topics"><span class="rp-num">2</span>Topics</h2>
-<div class="rp-bulk"><button type="button" class="rp-btn" id="rp-all">Select everything</button><button type="button" class="rp-btn" id="rp-none">Clear</button></div></div>
-<p class="rp-total" id="rp-total" aria-live="polite"></p>
-<p class="rp-note">Tick every topic your class has been taught. Press <b>Focus</b> on the one you are teaching now: it supplies the main questions, and the ticked topics are interleaved with it. Your choices are remembered for next time.</p>
-<div class="rp-field rp-yearrow"><span class="rp-label">Show</span><div class="rp-row" id="rp-year" role="group" aria-label="Show topics from"></div></div>
-<div class="rp-accwrap"><div id="rp-acc" class="rp-acc"></div></div>
-<div class="rp-field rp-nowteach" id="wa-subtopic-row"><span class="rp-label" id="rp-focuslabel">Taught up to</span><div class="rp-chips" data-for="sel-subtopic"></div><select class="rp-native" id="sel-subtopic"></select></div>
+<section class="rp-card" aria-labelledby="rp-h-course"><h2 id="rp-h-course"><span class="rp-num">1</span>Course</h2>
+<div class="rp-fields">
+<fieldset class="rp-seg" data-for="sel-course"><legend>Course</legend><label><input type="radio" name="rp-course" value="combined"><span>Combined Science</span></label><label><input type="radio" name="rp-course" value="separates"><span>Separate Sciences</span></label></fieldset>
+<fieldset class="rp-seg" data-for="sel-tier"><legend>Tier</legend><label><input type="radio" name="rp-tier" value="F"><span>Foundation</span></label><label><input type="radio" name="rp-tier" value="H"><span>Higher</span></label></fieldset>
+<fieldset class="rp-seg" data-for="sel-layout"><legend>Layout</legend><label><input type="radio" name="rp-layout" value="flashcard"><span>One at a time</span></label><label><input type="radio" name="rp-layout" value="matrix"><span>Five on the board</span></label></fieldset>
+<div class="rp-seg"><span class="rp-legend" id="rp-timer-lbl">Time for each question</span><div class="rp-stepper" role="group" aria-labelledby="rp-timer-lbl"><button type="button" class="rp-step" id="rp-tminus" aria-label="Less time">&minus;</button><output id="rp-tval" for="sel-timer" aria-live="polite">60 seconds</output><button type="button" class="rp-step" id="rp-tplus" aria-label="More time">+</button></div></div>
+</div>
+<p class="rp-note rp-coursenote">AQA 8464 (Trilogy) or 8461/8462/8463. Combined Science leaves out content that is only in the Separate Sciences; Foundation leaves out Higher-tier-only content.</p>
+<select class="rp-native" id="sel-course" aria-hidden="true" tabindex="-1"><option value="combined">Combined Science</option><option value="separates">Separate Science</option></select>
+<select class="rp-native" id="sel-tier" aria-hidden="true" tabindex="-1"><option value="F">Foundation Tier</option><option value="H">Higher Tier</option></select>
+<select class="rp-native" id="sel-layout" aria-hidden="true" tabindex="-1"><option value="flashcard">Flashcard Mode (1-by-1)</option><option value="matrix">5-Question Board</option></select>
+<input type="hidden" id="sel-timer" value="60">
+<select class="rp-native" id="sel-year" aria-hidden="true" tabindex="-1"><option value="all">All Topics (Full Course)</option></select>
+<select class="rp-native" id="sel-subject" aria-hidden="true" tabindex="-1"></select>
 <select class="rp-native" id="sel-topic" aria-hidden="true" tabindex="-1"></select>
+<div class="rp-native" id="wa-subtopic-row"><select id="sel-subtopic" aria-hidden="true" tabindex="-1"></select></div>
 </section>
-<section class="rp-card"><h2><span class="rp-num">3</span>Session</h2>
-<div class="rp-field"><span class="rp-label">Practise</span><div class="rp-row" id="rp-type" role="group" aria-label="What to practise"></div></div>
-<div class="rp-field" id="rp-subjfield"><span class="rp-label">Subject</span><div class="rp-chips" data-for="sel-subject"></div><select class="rp-native" id="sel-subject"></select></div>
-<div class="rp-field"><span class="rp-label">Layout</span><div class="rp-chips" data-for="sel-layout"></div><select class="rp-native" id="sel-layout"><option value="flashcard">Flashcard Mode (1-by-1)</option><option value="matrix">5-Question Board</option></select></div>
-<div class="rp-field"><span class="rp-label">Timer</span><div class="rp-chips" data-for="sel-timer"></div><select class="rp-native" id="sel-timer"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">2 minutes</option></select></div>
+<section class="rp-card" aria-labelledby="rp-h-now"><div class="rp-cardhead"><h2 id="rp-h-now"><span class="rp-num">2</span>Current topic</h2>
+<div class="rp-bulk"><button type="button" class="rp-btn" id="rp-nofocus" aria-pressed="false">None</button></div></div>
+<p class="rp-note">The topic you are teaching now gives three of every five questions. Untick any subtopics you haven't reached yet. Choose None for a round made only from interleaved topics.</p>
+<div class="rp-accwrap"><div id="rp-acc-now" class="rp-acc"></div></div>
+</section>
+<section class="rp-card" aria-labelledby="rp-h-mix"><div class="rp-cardhead"><h2 id="rp-h-mix"><span class="rp-num">3</span>Interleaved topics</h2>
+<div class="rp-bulk"><button type="button" class="rp-btn" id="rp-all">Select everything</button><button type="button" class="rp-btn" id="rp-none">Clear</button></div></div>
+<p class="rp-note">Tick everything your class has been taught. The other two questions in every five come from here, across all three sciences. Required practicals are at the end of each subject.</p>
+<div class="rp-accwrap"><div id="rp-acc" class="rp-acc"></div></div>
 </section>
 </div>
-<aside class="rp-summary"><h2>Your session</h2><div class="rp-count"><span id="rp-count">0</span> questions match</div><span id="wa-bank-stats"></span><button class="wbtn primary" id="btn-start"><svg class="icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Start Session</button><p class="rp-keys"><kbd>Space</kbd> starts, reveals and moves on.</p></aside>
+<aside class="rp-summary" aria-label="Your session"><h2>Your session</h2>
+<div class="rp-count"><span id="rp-count">0</span><span class="rp-countlbl">questions match</span></div>
+<ul class="rp-msgs" id="rp-msgs" aria-live="polite"></ul>
+<button class="wbtn primary" id="btn-start"><svg class="icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Start session</button>
+<label class="rp-check"><input type="checkbox" id="chk-sound" checked><span>Sound on</span></label>
+<label class="rp-check"><input type="checkbox" id="chk-joke" checked><span>Finish each round with a joke</span></label>
+<span id="wa-bank-stats" hidden></span>
+<p class="rp-keys">Playing: <span><kbd>Space</kbd> reveal, then next</span> · <span><kbd>M</kbd> sound</span> · <span><kbd>Esc</kbd> settings</span></p></aside>
 </div>
 <div id="rp-play" class="hidden">
 <div id="rp-playbar"><button class="wbtn" id="btn-settings" type="button"><svg class="icon" viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Settings</button><span id="rp-now"></span><button class="wbtn reveal" id="btn-reveal"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal</button><button class="wbtn" id="btn-next"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>Next</button></div>
@@ -832,14 +845,14 @@ function playJingle(){
   noiseHit(0.1,{delay:0.45,vol:0.07,freq:2600});
 }
 
-;let session=[],sessionIdx=0,revealed=false,timerInterval=null,usedJokes=[];var RP={taught:[],focus:'',type:'topics',upto:{}};const $=id=>document.getElementById(id);const S=()=>DATA.subjects[$('sel-subject').value];function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}function jokeEnabled(){return $('chk-joke').checked}function getMode(){const v=$('sel-topic').value;if(v==='paper1'||v==='paper2')return'paper';if(v==='rp-paper1'||v==='rp-paper2')return'rp';if(v==='random-all')return'random';return'topic'}function parseCommandWords(t){['DESCRIBE','EXPLAIN','SUGGEST','STATE','DEFINE','COMPARE','EVALUATE','CALCULATE','INTERPRET','MATCH','USE','LIST','BALANCE','DRAW','PREDICT','WRITE'].forEach(w=>t=t.replace(new RegExp('\\b'+w+'\\b','gi'),'<span class="cmd">'+w+'</span>'));return t}function populateSubjects(){$('sel-subject').innerHTML='';Object.entries(DATA.subjects).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;$('sel-subject').appendChild(o)});populateTopics()}function populateTopics(){const d=S(),yr=$('sel-year').value,sel=$('sel-topic'),prior=sel.value;sel.innerHTML='';function group(label,opts){const g=document.createElement('optgroup');g.label=label;opts.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.text;g.appendChild(opt)});sel.appendChild(g)}if(yr!=='11')group('— Year 10 / Paper 1 Topics —',d.paper1.map(t=>({value:t,text:d.topics[t]})));if(yr!=='10')group('— Year 11 / Paper 2 Topics —',d.paper2.map(t=>({value:t,text:d.topics[t]})));const rev=[];if(yr==='all'||yr==='10')rev.push({value:'paper1',text:'📝 Paper 1 Revision'});if(yr==='all'||yr==='11')rev.push({value:'paper2',text:'📝 Paper 2 Revision'});if(yr==='all')rev.push({value:'random-all',text:'🎲 Full Subject Random'});group('— Revision —',rev);const rp=[];if(yr==='all'||yr==='10')rp.push({value:'rp-paper1',text:'🔬 Paper 1 Practicals'});if(yr==='all'||yr==='11')rp.push({value:'rp-paper2',text:'🔬 Paper 2 Practicals'});group('— Required Practicals —',rp);const vals=Array.from(sel.options).map(o=>o.value);if(vals.includes(prior))sel.value=prior;populateSubtopics();updateStats();updateDots()}function populateSubtopics(){const d=S(),mode=getMode(),row=$('wa-subtopic-row'),sel=$('sel-subtopic');if(mode!=='topic'){row.classList.add('hidden');return}row.classList.remove('hidden');const subs=d.subtopics[$('sel-topic').value]||[],prior=sel.value;sel.innerHTML='';subs.forEach((s,i)=>{const opt=document.createElement('option');opt.value=s.id;opt.textContent=(i+1)+'. '+s.label;sel.appendChild(opt)});const ids=subs.map(s=>s.id);sel.value=ids.includes(prior)?prior:ids[ids.length-1];updateStats()}function filterQ(topic,subs,sk){const d=sk?DATA.subjects[sk]:S(),tier=$('sel-tier').value,course=$('sel-course').value;return(d.questions[topic]||[]).filter(q=>!(course==='combined'&&q.sep)&&!(tier==='F'&&q.tier==='H')&&(!subs||subs.includes(q.sub)))}function allQ(){const d=S();let out=[];d.sequence.forEach(t=>out.push(...filterQ(t,null).map(q=>({...q,_topic:t}))));return out}function filterRP(k){const d=S(),m=d.rpMeta[k];if(!m)return[];if($('sel-course').value==='combined'&&m.sep)return[];return filterQ(m.topic,null).filter(q=>q.rp===k)}function preceding(t){const d=S(),i=d.sequence.indexOf(t);return i<0?[]:d.sequence.slice(0,i)}function taughtList(ex){return RP.taught.filter(k=>k!==ex).map(k=>{const p=k.split(':');return{s:p[0],t:p[1]}}).filter(x=>DATA.subjects[x.s]&&DATA.subjects[x.s].topics[x.t])}function mixPool(ex){const out=[];taughtList(ex).forEach(x=>out.push(...filterQ(x.t,null,x.s).map(q=>({...q,_topic:x.t,_s:x.s,_type:'mixed'}))));return out}function updateStats(){const d=S(),m=getMode();let n,lab=d.label;if(m==='topic'){const t=$('sel-topic').value,ex=$('sel-subject').value+':'+t,subs=(d.subtopics[t]||[]).map(s=>s.id),idx=subs.indexOf($('sel-subtopic').value),cov=idx<0?null:subs.slice(0,idx+1),tl=taughtList(ex).length;n=filterQ(t,cov).length+mixPool(ex).length;lab=(d.topics[t]||d.label)+' + '+tl+' taught topic'+(tl===1?'':'s')}else n=allQ().length;$('wa-bank-stats').textContent=lab+' · '+n+' eligible questions · '+($('sel-course').value==='combined'?'Combined':'Separate')+' · '+($('sel-tier').value==='F'?'Foundation':'Higher')}function addJoke(){if(!jokeEnabled())return;const avail=DATA.jokes.filter((_,i)=>!usedJokes.includes(i)),pool=avail.length?avail:DATA.jokes,j=pool[Math.floor(Math.random()*pool.length)];usedJokes.push(DATA.jokes.indexOf(j));if(usedJokes.length>DATA.jokes.length-2)usedJokes=[];session.push({...j,_type:'joke',tier:'!'})}function take(pool,n,used){const out=[];for(const q of shuffle(pool)){if(!used.has(q.q)){out.push(q);used.add(q.q)}if(out.length===n)break}return out}function buildTopicSession(topic){const d=S(),subs=(d.subtopics[topic]||[]).map(s=>s.id),idx=subs.indexOf($('sel-subtopic').value),covered=subs.slice(0,idx+1),used=new Set();let topicQs=take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'topic'})),3,used),mix=mixPool($('sel-subject').value+':'+topic);session=[...topicQs,...take(mix,2,used)];if(session.length<5)session.push(...take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'mixed'})),5-session.length,used));if(session.length<5)session.push(...take(allQ().map(q=>({...q,_type:'mixed'})),5-session.length,used));session=session.slice(0,5);addJoke();sessionIdx=0;updateDots()}function buildPaperSession(v){const d=S(),topics=v==='paper1'?d.paper1:d.paper2,used=new Set();let pool=[];topics.forEach(t=>pool.push(...filterQ(t,null).map(q=>({...q,_topic:t,_type:'revision'}))));session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildRPSession(v){const d=S(),keys=Object.keys(d.rpMeta).filter(k=>d.rpMeta[k].paper===(v==='rp-paper1'?1:2)),used=new Set();let pool=[];keys.forEach(k=>{const m=d.rpMeta[k];filterRP(k).forEach(q=>pool.push({...q,_topic:m.topic,_rpKey:k,_type:'rp'}))});session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildSession(){const v=$('sel-topic').value,m=getMode();if(m==='paper')buildPaperSession(v);else if(m==='rp')buildRPSession(v);else if(m==='random'){const used=new Set();session=take(allQ().map(q=>({...q,_type:'revision'})),5,used);addJoke();sessionIdx=0}else buildTopicSession(v);renderOutputView()}function updateDots(){const prog=$('wa-progress');prog.innerHTML='';const non=session.filter(q=>q._type!=='joke');non.forEach((q,i)=>{const d=document.createElement('div');d.className='prog-dot '+q._type+(i<sessionIdx?' done':i===sessionIdx?' current':'');prog.appendChild(d)});if(jokeEnabled()){const d=document.createElement('div');d.className='prog-dot joke'+(non.length<sessionIdx?' done':non.length===sessionIdx?' current':'');prog.appendChild(d)}const m=getMode(),cur=$('sel-topic').value;$('wa-mixed-note').textContent=m==='topic'?(()=>{const n=taughtList($('sel-subject').value+':'+cur).length;return n?'Interleaved from '+n+' taught topic'+(n===1?'':'s'):'No taught topics ticked yet'})():m==='paper'?(cur==='paper1'?'Paper 1 revision':'Paper 2 revision'):m==='rp'?'Required practical retrieval':'Full subject random retrieval'}function fitText(){if($('sel-layout').value==='matrix')return;const el=$('wa-q-text'),stage=$('wa-stage'),P=window.SST_PRESENT,floor=P?Math.round(P.px('--sst-pr-text')):30;let size=Math.max(58,P?Math.round(P.px('--sst-pr-title')):58);el.style.fontSize=size+'px';const avail=stage.clientHeight*.42;while(el.scrollHeight>avail&&size>floor){size-=2;el.style.fontSize=size+'px'}fitAnswer()}
+;let session=[],sessionIdx=0,revealed=false,timerInterval=null,usedJokes=[];var RP={taught:[],rps:[],focus:'',subs:{}};const $=id=>document.getElementById(id);const S=()=>DATA.subjects[$('sel-subject').value];function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}function jokeEnabled(){return $('chk-joke').checked}function getMode(){return RP.focus?'topic':'mix'}function parseCommandWords(t){['DESCRIBE','EXPLAIN','SUGGEST','STATE','DEFINE','COMPARE','EVALUATE','CALCULATE','INTERPRET','MATCH','USE','LIST','BALANCE','DRAW','PREDICT','WRITE'].forEach(w=>t=t.replace(new RegExp('\\b'+w+'\\b','gi'),'<span class="cmd">'+w+'</span>'));return t}function populateSubjects(){$('sel-subject').innerHTML='';Object.entries(DATA.subjects).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;$('sel-subject').appendChild(o)});populateTopics()}function populateTopics(){const d=S(),yr=$('sel-year').value,sel=$('sel-topic'),prior=sel.value;sel.innerHTML='';function group(label,opts){const g=document.createElement('optgroup');g.label=label;opts.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.text;g.appendChild(opt)});sel.appendChild(g)}if(yr!=='11')group('— Year 10 / Paper 1 Topics —',d.paper1.map(t=>({value:t,text:d.topics[t]})));if(yr!=='10')group('— Year 11 / Paper 2 Topics —',d.paper2.map(t=>({value:t,text:d.topics[t]})));const rev=[];if(yr==='all'||yr==='10')rev.push({value:'paper1',text:'📝 Paper 1 Revision'});if(yr==='all'||yr==='11')rev.push({value:'paper2',text:'📝 Paper 2 Revision'});if(yr==='all')rev.push({value:'random-all',text:'🎲 Full Subject Random'});group('— Revision —',rev);const rp=[];if(yr==='all'||yr==='10')rp.push({value:'rp-paper1',text:'🔬 Paper 1 Practicals'});if(yr==='all'||yr==='11')rp.push({value:'rp-paper2',text:'🔬 Paper 2 Practicals'});group('— Required Practicals —',rp);const vals=Array.from(sel.options).map(o=>o.value);if(vals.includes(prior))sel.value=prior;populateSubtopics();updateStats();updateDots()}function populateSubtopics(){const d=S(),mode=getMode(),row=$('wa-subtopic-row'),sel=$('sel-subtopic');if(mode!=='topic'){row.classList.add('hidden');return}row.classList.remove('hidden');const subs=d.subtopics[$('sel-topic').value]||[],prior=sel.value;sel.innerHTML='';subs.forEach((s,i)=>{const opt=document.createElement('option');opt.value=s.id;opt.textContent=(i+1)+'. '+s.label;sel.appendChild(opt)});const ids=subs.map(s=>s.id);sel.value=ids.includes(prior)?prior:ids[ids.length-1];updateStats()}function filterQ(topic,subs,sk){const d=sk?DATA.subjects[sk]:S(),tier=$('sel-tier').value,course=$('sel-course').value;return(d.questions[topic]||[]).filter(q=>!(course==='combined'&&q.sep)&&!(tier==='F'&&q.tier==='H')&&(!subs||subs.includes(q.sub)))}function allQ(){const d=S();let out=[];d.sequence.forEach(t=>out.push(...filterQ(t,null).map(q=>({...q,_topic:t}))));return out}function filterRP(k){const d=S(),m=d.rpMeta[k];if(!m)return[];if($('sel-course').value==='combined'&&m.sep)return[];return filterQ(m.topic,null).filter(q=>q.rp===k)}function preceding(t){const d=S(),i=d.sequence.indexOf(t);return i<0?[]:d.sequence.slice(0,i)}function taughtList(ex){return RP.taught.filter(k=>k!==ex).map(k=>{const p=k.split(':');return{s:p[0],t:p[1]}}).filter(x=>DATA.subjects[x.s]&&DATA.subjects[x.s].topics[x.t])}function rpQs(s,k){const d=DATA.subjects[s],m=d&&d.rpMeta[k];if(!m||($('sel-course').value==='combined'&&m.sep))return[];return filterQ(m.topic,null,s).filter(q=>q.rp===k)}function rpList(){return RP.rps.map(k=>{const p=k.split(':');return{s:p[0],k:p[1]}}).filter(x=>DATA.subjects[x.s]&&DATA.subjects[x.s].rpMeta[x.k]&&rpQs(x.s,x.k).length)}function focusSubs(t){const all=(S().subtopics[t]||[]).map(s=>s.id),c=RP.subs[$('sel-subject').value+':'+t];return !all.length?null:c?all.filter(x=>c.includes(x)):all}function mixPool(ex){const out=[];taughtList(ex).forEach(x=>out.push(...filterQ(x.t,null,x.s).map(q=>({...q,_topic:x.t,_s:x.s,_type:'mixed'}))));rpList().forEach(x=>out.push(...rpQs(x.s,x.k).map(q=>({...q,_topic:DATA.subjects[x.s].rpMeta[x.k].topic,_s:x.s,_rpKey:x.k,_type:'rp'}))));return out}function updateStats(){const d=S(),m=getMode(),t=$('sel-topic').value,ex=m==='topic'?$('sel-subject').value+':'+t:'',tl=taughtList(ex).length,seen=new Set();(m==='topic'?filterQ(t,focusSubs(t)):[]).concat(mixPool(ex)).forEach(q=>seen.add(q.q));const n=seen.size,lab=(m==='topic'?(d.topics[t]||d.label)+' + ':'')+tl+' interleaved topic'+(tl===1?'':'s');$('wa-bank-stats').textContent=lab+' · '+n+' eligible questions · '+($('sel-course').value==='combined'?'Combined':'Separate')+' · '+($('sel-tier').value==='F'?'Foundation':'Higher')}function addJoke(){if(!jokeEnabled())return;const avail=DATA.jokes.filter((_,i)=>!usedJokes.includes(i)),pool=avail.length?avail:DATA.jokes,j=pool[Math.floor(Math.random()*pool.length)];usedJokes.push(DATA.jokes.indexOf(j));if(usedJokes.length>DATA.jokes.length-2)usedJokes=[];session.push({...j,_type:'joke',tier:'!'})}function take(pool,n,used){const out=[];for(const q of shuffle(pool)){if(!used.has(q.q)){out.push(q);used.add(q.q)}if(out.length===n)break}return out}function buildMixSession(){const used=new Set();session=take(mixPool(''),5,used);addJoke();sessionIdx=0;updateDots()}function buildTopicSession(topic){const covered=focusSubs(topic),used=new Set();let topicQs=take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'topic'})),3,used),mix=mixPool($('sel-subject').value+':'+topic);session=[...topicQs,...take(mix,2,used)];if(session.length<5)session.push(...take(filterQ(topic,covered).map(q=>({...q,_topic:topic,_type:'mixed'})),5-session.length,used));if(session.length<5)session.push(...take(mix,5-session.length,used));session=session.slice(0,5);addJoke();sessionIdx=0;updateDots()}function buildPaperSession(v){const d=S(),topics=v==='paper1'?d.paper1:d.paper2,used=new Set();let pool=[];topics.forEach(t=>pool.push(...filterQ(t,null).map(q=>({...q,_topic:t,_type:'revision'}))));session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildRPSession(v){const d=S(),keys=Object.keys(d.rpMeta).filter(k=>d.rpMeta[k].paper===(v==='rp-paper1'?1:2)),used=new Set();let pool=[];keys.forEach(k=>{const m=d.rpMeta[k];filterRP(k).forEach(q=>pool.push({...q,_topic:m.topic,_rpKey:k,_type:'rp'}))});session=take(pool,5,used);addJoke();sessionIdx=0;updateDots()}function buildSession(){const v=$('sel-topic').value,m=getMode();if(m==='mix')buildMixSession();else if(m==='paper')buildPaperSession(v);else if(m==='rp')buildRPSession(v);else if(m==='random'){const used=new Set();session=take(allQ().map(q=>({...q,_type:'revision'})),5,used);addJoke();sessionIdx=0}else buildTopicSession(v);renderOutputView()}function updateDots(){const prog=$('wa-progress');prog.innerHTML='';const non=session.filter(q=>q._type!=='joke');non.forEach((q,i)=>{const d=document.createElement('div');d.className='prog-dot '+q._type+(i<sessionIdx?' done':i===sessionIdx?' current':'');prog.appendChild(d)});if(jokeEnabled()){const d=document.createElement('div');d.className='prog-dot joke'+(non.length<sessionIdx?' done':non.length===sessionIdx?' current':'');prog.appendChild(d)}const m=getMode(),cur=$('sel-topic').value;$('wa-mixed-note').textContent=m==='topic'?(()=>{const n=taughtList($('sel-subject').value+':'+cur).length;return n?'Interleaved from '+n+' taught topic'+(n===1?'':'s'):'No taught topics ticked yet'})():m==='paper'?(cur==='paper1'?'Paper 1 revision':'Paper 2 revision'):m==='rp'?'Required practical retrieval':(()=>{const n=taughtList('').length,r=rpList().length;return'Interleaved from '+n+' topic'+(n===1?'':'s')+(r?' and '+r+' practical'+(r===1?'':'s'):'')})()}function fitText(){if($('sel-layout').value==='matrix')return;const el=$('wa-q-text'),stage=$('wa-stage'),P=window.SST_PRESENT,floor=P?Math.round(P.px('--sst-pr-text')):30;let size=Math.max(58,P?Math.round(P.px('--sst-pr-title')):58);el.style.fontSize=size+'px';const avail=stage.clientHeight*.42;while(el.scrollHeight>avail&&size>floor){size-=2;el.style.fontSize=size+'px'}fitAnswer()}
 // Text stays at board size (--sst-pr-* in sst.css). When a question and its answer won't both
 // fit on the stage, the answer takes the stage by itself, like turning to the next slide.
 // Board layout: one answer open at a time, so the board stays on one screen at board-size text.
 // Reveal steps through them in order; clicking a card opens its answer or closes it.
 function showBoardAnswer(box){const was=box.classList.contains('shown');document.querySelectorAll('.multi-a-box.shown').forEach(b=>b.classList.remove('shown'));if(!was)box.classList.add('shown')}
 function fitAnswer(){const st=$('wa-stage');if(!$('wa-answer').classList.contains('shown')){st.classList.remove('ans-only');st.dataset.h=st.offsetHeight;return}if(st.offsetHeight>+st.dataset.h+2)st.classList.add('ans-only')}
-function modeClass(){const m=getMode();return m==='rp'?'rp-mode':(m==='paper'||m==='random')?'paper-mode':''}function showCurrent(){if(!session.length)return;const d=S(),item=session[sessionIdx];revealed=false;$('wa-stage').className=item._type==='joke'?'dadjoke':modeClass();$('wa-topic-badge').textContent=item._type==='joke'?'🥚 Easter egg — you\'ve earned it':item._type==='rp'?'🔬 '+(d.rpMeta[item._rpKey]?.label||'Required Practical'):item._type==='revision'?'📝 Revision · '+d.short[item._topic]:item._type==='mixed'?'🔀 Deeper Recall · '+(item._s&&item._s!==$('sel-subject').value?DATA.subjects[item._s].label+' · ':'')+(item._s?DATA.subjects[item._s]:d).topics[item._topic]:'🎯 Active Topic · '+d.topics[item._topic];$('wa-q-text').innerHTML=parseCommandWords(item.q);$('wa-ans-text').textContent=item.a;$('wa-answer').className='';$('wa-click-hint').style.display='';const tb=$('wa-tier-badge');if(item._type==='joke'){tb.textContent='🥚';tb.className='wa-tier tier-joke'}else if(item.tier==='F'){tb.textContent='Foundation';tb.className='wa-tier tier-F'}else{tb.textContent='Higher';tb.className='wa-tier tier-H'}updateDots();setTimeout(fitText,10);if(item._type==='joke'){clearInterval(timerInterval);$('wa-timer-section').className=''}else startTimer()}function renderMatrix(){const d=S(),box=$('wa-multi-stage');box.innerHTML='';session.filter(q=>q._type!=='joke').forEach((q,i)=>{const card=document.createElement('div');card.className='multi-card card-'+q._type;const head=q._type==='rp'?'🔬 '+(d.rpMeta[q._rpKey]?.label||'Required Practical'):q._type==='revision'?'📝 '+d.short[q._topic]:q._type==='mixed'?'🔀 '+(q._s?DATA.subjects[q._s]:d).short[q._topic]:'🎯 '+d.short[q._topic];card.innerHTML='<div class="multi-card-header">Question '+(i+1)+' <span>'+head+'</span></div><div class="multi-q-text">'+parseCommandWords(q.q)+'</div><div class="multi-a-box">'+q.a+'</div>';card.onclick=()=>showBoardAnswer(card.querySelector('.multi-a-box'));box.appendChild(card)})}function renderOutputView(){if($('sel-layout').value==='matrix'){$('wa-stage').style.display='none';$('wa-multi-stage').style.display='flex';clearInterval(timerInterval);$('wa-timer-section').className='';renderMatrix()}else{$('wa-stage').style.display='flex';$('wa-multi-stage').style.display='none';showCurrent()}}function revealAnswer(){if(!session.length){buildSession();return}if($('sel-layout').value==='matrix'){const boxes=[...document.querySelectorAll('.multi-a-box')],open=boxes.findIndex(b=>b.classList.contains('shown'));showBoardAnswer(boxes[(open+1)%boxes.length]);return}if(revealed)return;revealed=true;clearInterval(timerInterval);$('wa-answer').className='shown';const item=session[sessionIdx];$('wa-stage').className=(item._type==='joke'?'dadjoke':modeClass())+' answered';$('wa-click-hint').style.display='none';$('wa-timer-section').className='';if(item._type==='joke')playJingle()}function nextQuestion(){if($('sel-layout').value==='matrix'){buildSession();return}if(!session.length){buildSession();return}if(!revealed){revealAnswer();return}if(sessionIdx<session.length-1){sessionIdx++;renderOutputView()}else buildSession()}function startTimer(){clearInterval(timerInterval);const secs=parseInt($('sel-timer').value,10),sec=$('wa-timer-section'),cd=$('wa-countdown'),bar=$('wa-timer-bar');if(!secs){sec.className='';return}sec.className='active';let elapsed=0;cd.textContent=secs;bar.style.width='100%';timerInterval=setInterval(()=>{elapsed++;const rem=secs-elapsed;cd.textContent=Math.max(0,rem);bar.style.width=Math.max(0,rem/secs*100)+'%';if(rem<=0){clearInterval(timerInterval);playEnd()}},1000)}function handleStageClick(){if(!revealed)revealAnswer()}$('btn-start').addEventListener('click',e=>{e.stopPropagation();buildSession()});$('btn-reveal').addEventListener('click',e=>{e.stopPropagation();revealAnswer()});$('btn-next').addEventListener('click',e=>{e.stopPropagation();nextQuestion()});['sel-subject','sel-year','sel-course'].forEach(id=>$(id).addEventListener('change',populateTopics));$('sel-topic').addEventListener('change',populateSubtopics);$('sel-layout').addEventListener('change',renderOutputView);$('sel-tier').addEventListener('change',()=>{const tb=$('wa-tier-badge');tb.textContent=$('sel-tier').value==='F'?'Foundation':'Higher';tb.className='wa-tier '+($('sel-tier').value==='F'?'tier-F':'tier-H');updateStats()});$('chk-joke').addEventListener('change',updateDots);document.addEventListener('keydown',e=>{if(edIsVisible())return;if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;if(['Space','Enter','ArrowRight','PageDown'].includes(e.code)){e.preventDefault();if(!session.length)buildSession();else if(!revealed)revealAnswer();else nextQuestion()}});window.addEventListener('resize',fitText);populateSubjects();
+function modeClass(){const it=session[sessionIdx];return it&&it._type==='rp'?'rp-mode':''}function showCurrent(){if(!session.length)return;const d=S(),item=session[sessionIdx];revealed=false;$('wa-stage').className=item._type==='joke'?'dadjoke':modeClass();$('wa-topic-badge').textContent=item._type==='joke'?'🥚 Easter egg — you\'ve earned it':item._type==='rp'?'🔬 '+((item._s?DATA.subjects[item._s]:d).rpMeta[item._rpKey]?.label||'Required Practical'):item._type==='revision'?'📝 Revision · '+d.short[item._topic]:item._type==='mixed'?'🔀 Deeper Recall · '+(item._s&&item._s!==$('sel-subject').value?DATA.subjects[item._s].label+' · ':'')+(item._s?DATA.subjects[item._s]:d).topics[item._topic]:'🎯 Active Topic · '+d.topics[item._topic];$('wa-q-text').innerHTML=parseCommandWords(item.q);$('wa-ans-text').textContent=item.a;$('wa-answer').className='';$('wa-click-hint').style.display='';const tb=$('wa-tier-badge');if(item._type==='joke'){tb.textContent='🥚';tb.className='wa-tier tier-joke'}else if(item.tier==='F'){tb.textContent='Foundation';tb.className='wa-tier tier-F'}else{tb.textContent='Higher';tb.className='wa-tier tier-H'}updateDots();setTimeout(fitText,10);if(item._type==='joke'){clearInterval(timerInterval);$('wa-timer-section').className=''}else startTimer()}function renderMatrix(){const d=S(),box=$('wa-multi-stage');box.innerHTML='';session.filter(q=>q._type!=='joke').forEach((q,i)=>{const card=document.createElement('div');card.className='multi-card card-'+q._type;const head=q._type==='rp'?'🔬 '+((q._s?DATA.subjects[q._s]:d).rpMeta[q._rpKey]?.label||'Required Practical'):q._type==='revision'?'📝 '+d.short[q._topic]:q._type==='mixed'?'🔀 '+(q._s?DATA.subjects[q._s]:d).short[q._topic]:'🎯 '+d.short[q._topic];card.innerHTML='<div class="multi-card-header">Question '+(i+1)+' <span>'+head+'</span></div><div class="multi-q-text">'+parseCommandWords(q.q)+'</div><div class="multi-a-box">'+q.a+'</div>';card.onclick=()=>showBoardAnswer(card.querySelector('.multi-a-box'));box.appendChild(card)})}function renderOutputView(){if($('sel-layout').value==='matrix'){$('wa-stage').style.display='none';$('wa-multi-stage').style.display='flex';clearInterval(timerInterval);$('wa-timer-section').className='';renderMatrix()}else{$('wa-stage').style.display='flex';$('wa-multi-stage').style.display='none';showCurrent()}}function revealAnswer(){if(!session.length){buildSession();return}if($('sel-layout').value==='matrix'){const boxes=[...document.querySelectorAll('.multi-a-box')],open=boxes.findIndex(b=>b.classList.contains('shown'));showBoardAnswer(boxes[(open+1)%boxes.length]);return}if(revealed)return;revealed=true;clearInterval(timerInterval);$('wa-answer').className='shown';const item=session[sessionIdx];$('wa-stage').className=(item._type==='joke'?'dadjoke':modeClass())+' answered';$('wa-click-hint').style.display='none';$('wa-timer-section').className='';if(item._type==='joke')playJingle()}function nextQuestion(){if($('sel-layout').value==='matrix'){buildSession();return}if(!session.length){buildSession();return}if(!revealed){revealAnswer();return}if(sessionIdx<session.length-1){sessionIdx++;renderOutputView()}else buildSession()}function startTimer(){clearInterval(timerInterval);const secs=parseInt($('sel-timer').value,10),sec=$('wa-timer-section'),cd=$('wa-countdown'),bar=$('wa-timer-bar');if(!secs){sec.className='';return}sec.className='active';let elapsed=0;cd.textContent=secs;bar.style.width='100%';timerInterval=setInterval(()=>{elapsed++;const rem=secs-elapsed;cd.textContent=Math.max(0,rem);bar.style.width=Math.max(0,rem/secs*100)+'%';if(rem<=0){clearInterval(timerInterval);playEnd()}},1000)}function handleStageClick(){if(!revealed)revealAnswer()}$('btn-start').addEventListener('click',e=>{e.stopPropagation();buildSession()});$('btn-reveal').addEventListener('click',e=>{e.stopPropagation();revealAnswer()});$('btn-next').addEventListener('click',e=>{e.stopPropagation();nextQuestion()});['sel-subject','sel-year','sel-course'].forEach(id=>$(id).addEventListener('change',populateTopics));$('sel-topic').addEventListener('change',populateSubtopics);$('sel-layout').addEventListener('change',renderOutputView);$('sel-tier').addEventListener('change',()=>{const tb=$('wa-tier-badge');tb.textContent=$('sel-tier').value==='F'?'Foundation':'Higher';tb.className='wa-tier '+($('sel-tier').value==='F'?'tier-F':'tier-H');updateStats()});$('chk-joke').addEventListener('change',updateDots);document.addEventListener('keydown',e=>{if(edIsVisible())return;if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;if(['Space','Enter','ArrowRight','PageDown'].includes(e.code)){e.preventDefault();if(!session.length)buildSession();else if(!revealed)revealAnswer();else nextQuestion()}});window.addEventListener('resize',fitText);populateSubjects();
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1201,8 +1214,9 @@ function initEditor(){
   if(chk){
     try{ chk.checked = localStorage.getItem('wa-sound-off') !== '1'; }catch(e){}
     const paint = () => {
-      $$('wa-sound-icon').textContent = chk.checked ? '🔊' : '🔇';
-      $$('wa-sound-toggle').classList.toggle('muted', !chk.checked);
+      const ic = $$('wa-sound-icon'), tg = $$('wa-sound-toggle');
+      if(ic) ic.textContent = chk.checked ? '🔊' : '🔇';
+      if(tg) tg.classList.toggle('muted', !chk.checked);
     };
     chk.addEventListener('change', () => {
       paint();
@@ -1219,60 +1233,12 @@ initEditor();
 </script>
 
 <script>
-/* Settings screen. Each .rp-chips row mirrors the select named in data-for: a
-   button per option (grouped as the select's optgroups are), and a click sets the
-   select and fires its change event, so the page's own listeners do the rest.
-   Rows rebuild whenever the page refills a select (subject, year and topic do). */
+/* Settings screen <-> question view. Start (or Space) swaps to the questions;
+   Settings or Esc comes back. */
 (function () {
   const $ = id => document.getElementById(id);
   const setup = $('rp-setup'), play = $('rp-play');
-
-  function syncRow(row, sel) {
-    row.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === sel.value)));
-  }
-  function chipLabel(t) { return t.replace(/\s*Tier$/, '').replace(/\s*\(1-by-1\)/, ''); }
-  function buildRow(row, sel) {
-    row.textContent = '';
-    const addChips = (opts, host) => opts.forEach(o => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'rp-chip'; b.dataset.value = o.value;
-      b.textContent = chipLabel(o.textContent);
-      b.addEventListener('click', () => {
-        if (sel.value === o.value) return;
-        sel.value = o.value;
-        sel.dispatchEvent(new Event('change'));
-        syncRow(row, sel);
-      });
-      host.appendChild(b);
-    });
-    [...sel.children].forEach(child => {
-      if (child.tagName === 'OPTGROUP') {
-        const g = document.createElement('div');
-        g.className = 'rp-group';
-        const h = document.createElement('span');
-        h.className = 'rp-group-label';
-        h.textContent = child.label.replace(/^[\s—-]+|[\s—-]+$/g, '');
-        g.appendChild(h);
-        const wrap = document.createElement('div');
-        wrap.className = 'rp-group-chips';
-        addChips([...child.children], wrap);
-        g.appendChild(wrap);
-        row.appendChild(g);
-      } else {
-        addChips([child], row);
-      }
-    });
-    syncRow(row, sel);
-  }
-  document.querySelectorAll('.rp-chips').forEach(row => {
-    const sel = $(row.dataset.for);
-    buildRow(row, sel);
-    new MutationObserver(() => buildRow(row, sel)).observe(sel, { childList: true, subtree: true });
-    sel.addEventListener('change', () => syncRow(row, sel));
-  });
-  // Selects the page sets in code without a change event (the subtopic after a topic change).
-  ['sel-subject', 'sel-year', 'sel-topic', 'sel-course', 'sel-tier'].forEach(id => $(id).addEventListener('change', () =>
-    setTimeout(() => document.querySelectorAll('.rp-chips').forEach(row => syncRow(row, $(row.dataset.for))), 0)));
+  function chipLabel(t) { return t.replace(/\s*Tier$/, ''); }
 
   // The big number in the summary comes from the page's own stats line.
   const stats = $('wa-bank-stats');
@@ -1285,7 +1251,8 @@ initEditor();
     if (!setup.classList.contains('hidden')) {
       setup.classList.add('hidden');
       play.classList.remove('hidden');
-      $('rp-now').textContent = [optText('sel-subject'), optText('sel-topic'), chipLabel(optText('sel-tier'))].filter(Boolean).join(' · ');
+      const f = RP.focus.split(':'), d = DATA.subjects[f[0]];
+      $('rp-now').textContent = [RP.focus && d ? d.topics[f[1]] + ' + interleaved' : 'Interleaved topics', chipLabel(optText('sel-tier'))].join(' · ');
     }
   }
   function showSetup() {
@@ -1305,33 +1272,34 @@ initEditor();
 })();
 </script>
 <script>
-/* Topics card. Three collapsible subject sections of tick boxes (what the class
-   has been taught, interleaved) with one Focus button (what is being taught now,
-   the main questions). The page's own hidden selects stay the settings the rest
-   reads: Focus drives sel-subject + sel-topic, "Practise" drives sel-topic for the
-   revision and practical modes, and RP.taught feeds the interleaved pool.
-   Everything is remembered in localStorage so next lesson starts where this one stopped. */
+/* Settings screen, after Millionaire's. Three cards and a summary:
+   1 Course: tiles for course, tier and layout (each drives a hidden select) and
+     a stepper for the time on each question.
+   2 Current topic: one topic (RP.focus) and the subtopics reached so far
+     (RP.subs). It gives three of every five questions; None leaves it out.
+   3 Interleaved topics: every topic (RP.taught) and required practical (RP.rps)
+     already taught, grouped by paper. The other two questions come from here.
+   The page's hidden selects stay the settings the rest reads: the current topic
+   drives sel-subject + sel-topic. Everything is remembered in localStorage so the
+   next lesson starts where this one stopped. */
 (function () {
   const $ = id => document.getElementById(id);
-  const KEY = 'sst-retrieval-setup-v1';
+  const KEY = 'sst-retrieval-setup-v2', OLD = 'sst-retrieval-setup-v1';
   const SUBJ = Object.keys(DATA.subjects);
   const DOT = { biology: 'var(--sst-bio)', chemistry: 'var(--sst-chem)', physics: 'var(--sst-phys)' };
   const NAME = s => DATA.subjects[s].label.replace(/^[^\p{L}]+/u, '');
-  const TYPES = [['topics', 'Focus + taught topics'], ['paper1', 'Paper 1 revision'], ['paper2', 'Paper 2 revision'],
-    ['random-all', 'Full subject random'], ['rp-paper1', 'Paper 1 practicals'], ['rp-paper2', 'Paper 2 practicals']];
-  const YEARS = [['all', 'All topics'], ['10', 'Year 10 (Paper 1)'], ['11', 'Year 11 (Paper 2)']];
-  let year = 'all';
-  const open = {};
-  const acc = $('rp-acc');
+  const TIMES = [0, 10, 15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+  const accNow = $('rp-acc-now'), accMix = $('rp-acc');
 
   const exists = k => { const p = String(k).split(':'); return !!(DATA.subjects[p[0]] && DATA.subjects[p[0]].topics[p[1]]); };
-  const usable = (s, t) => filterQ(t, null, s).length > 0;
-  const visible = (s, t) => year === 'all' || DATA.subjects[s][year === '10' ? 'paper1' : 'paper2'].includes(t);
-  const lsGet = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+  const rpExists = k => { const p = String(k).split(':'); return !!(DATA.subjects[p[0]] && DATA.subjects[p[0]].rpMeta[p[1]]); };
+  const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
-        taught: RP.taught, focus: RP.focus, type: RP.type, upto: RP.upto, year,
+        focus: RP.focus, subs: RP.subs, taught: RP.taught, rps: RP.rps,
         course: $('sel-course').value, tier: $('sel-tier').value, layout: $('sel-layout').value, timer: $('sel-timer').value
       }));
     } catch (e) {}
@@ -1342,134 +1310,223 @@ initEditor();
     sel.value = v; sel.dispatchEvent(new Event('change'));
   }
 
+  /* ---------- what each topic, subtopic and practical holds ---------- */
+  const topicN = (s, t) => filterQ(t, null, s).length;
+  const subN = (s, t, id) => filterQ(t, [id], s).length;
+  const rpN = (s, k) => rpQs(s, k).length;
+  const rpShown = (s, k) => !($('sel-course').value === 'combined' && DATA.subjects[s].rpMeta[k].sep);
+  const rpKeys = (s, paper) => Object.keys(DATA.subjects[s].rpMeta).filter(k => DATA.subjects[s].rpMeta[k].paper === paper);
+  const subsOf = (s, t) => DATA.subjects[s].subtopics[t] || [];
+  const subsOn = key => { const p = key.split(':'), all = subsOf(p[0], p[1]).map(x => x.id), c = RP.subs[key]; return c ? all.filter(x => c.includes(x)) : all; };
+
   /* ---------- build once ---------- */
   const chev = '<svg class="rp-chev" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 5.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  acc.innerHTML = SUBJ.map(s => {
+  const head = (s, id, tick) => '<div class="rp-subjhead' + (tick ? ' has-tick' : '') + '">' +
+    '<button type="button" class="rp-subjbtn" aria-expanded="false" aria-controls="' + id + '"><span class="rp-dot" aria-hidden="true"></span><span class="rp-sname">' + esc(NAME(s)) + '</span><span class="rp-scount"></span>' + chev + '</button>' +
+    (tick ? '<label class="rp-subjtick"><input type="checkbox" data-subjcb="' + s + '" aria-label="Tick all ' + esc(NAME(s)) + '"></label>' : '') + '</div>';
+
+  accNow.innerHTML = SUBJ.map(s => {
     const d = DATA.subjects[s];
-    return '<div class="rp-subj" data-s="' + s + '" style="--c:' + DOT[s] + '">' +
-      '<div class="rp-subjhead">' +
-      '<button type="button" class="rp-subjbtn" aria-expanded="false" aria-controls="rp-panel-' + s + '"><span class="rp-dot" aria-hidden="true"></span><span class="rp-sname">' + esc(NAME(s)) + '</span><span class="rp-scount"></span>' + chev + '</button>' +
-      '<label class="rp-subjtick"><input type="checkbox" data-subjcb="' + s + '" aria-label="Tick all ' + esc(NAME(s)) + ' topics"></label>' +
-      '</div>' +
-      '<ul class="rp-tlist" id="rp-panel-' + s + '" hidden>' +
-      d.sequence.map(t => '<li class="rp-trow" data-t="' + t + '"><label><input type="checkbox" data-tcb="' + t + '"><span class="rp-tname">' + esc(d.topics[t]) + '</span></label><span class="rp-tcount"></span><button type="button" class="rp-focus" data-focus="' + t + '" aria-pressed="false" aria-label="Teach ' + esc(d.topics[t]) + ' now">Focus</button></li>').join('') +
-      '</ul></div>';
+    const group = (label, list) => '<div class="rp-group"><div class="rp-ghead"><span>' + label + '</span></div>' +
+      list.map(t => '<div class="rp-unit" data-t="' + t + '"><div class="rp-trow"><label><input type="radio" name="rp-focus" value="' + s + ':' + t + '"><span class="rp-tname">' + esc(d.topics[t]) + '</span></label><span class="rp-tcount"></span></div>' +
+        '<ul class="rp-subs" hidden>' + subsOf(s, t).map(x => '<li class="rp-sub" data-sub="' + x.id + '"><label><input type="checkbox" data-subcb="' + x.id + '"><span>' + esc(x.label) + '</span></label><span class="rp-tcount"></span></li>').join('') + '</ul></div>').join('') + '</div>';
+    return '<div class="rp-subj" data-s="' + s + '" style="--c:' + DOT[s] + '">' + head(s, 'rp-now-' + s, false) +
+      '<div class="rp-panel" id="rp-now-' + s + '" hidden>' + group('Paper 1', d.paper1) + group('Paper 2', d.paper2) + '</div></div>';
   }).join('');
 
-  $('rp-type').innerHTML = TYPES.map(t => '<button type="button" class="rp-chip" data-type="' + t[0] + '" aria-pressed="false">' + t[1] + '</button>').join('');
-  $('rp-year').innerHTML = YEARS.map(t => '<button type="button" class="rp-chip" data-year="' + t[0] + '" aria-pressed="false">' + t[1] + '</button>').join('');
+  accMix.innerHTML = SUBJ.map(s => {
+    const d = DATA.subjects[s];
+    const group = (g, label, rows) => '<div class="rp-group" data-g="' + g + '"><label class="rp-ghead"><input type="checkbox" data-groupcb="' + g + '"><span>' + label + '</span><span class="rp-gcount"></span></label>' + rows + '</div>';
+    const trows = list => list.map(t => '<div class="rp-trow" data-t="' + t + '"><label><input type="checkbox" data-tcb="' + t + '"><span class="rp-tname">' + esc(d.topics[t]) + '</span></label><span class="rp-tcount"></span></div>').join('');
+    const rrows = list => list.map(k => '<div class="rp-trow" data-rp="' + k + '"><label><input type="checkbox" data-rpcb="' + k + '"><span class="rp-tname">' + esc(d.rpMeta[k].label) + '</span></label><span class="rp-tcount"></span></div>').join('');
+    return '<div class="rp-subj" data-s="' + s + '" style="--c:' + DOT[s] + '">' + head(s, 'rp-mix-' + s, true) +
+      '<div class="rp-panel" id="rp-mix-' + s + '" hidden>' +
+      group('t1', 'Paper 1', trows(d.paper1)) + group('t2', 'Paper 2', trows(d.paper2)) +
+      '<div class="rp-ptitle">Required practicals</div>' +
+      group('r1', 'Paper 1', rrows(rpKeys(s, 1))) + group('r2', 'Paper 2', rrows(rpKeys(s, 2))) +
+      '</div></div>';
+  }).join('');
 
-  /* ---------- state -> hidden selects ---------- */
-  function applySel() {
-    if (RP.type === 'topics') {
-      const p = RP.focus.split(':');
-      setSelect('sel-subject', p[0]);
-      setSelect('sel-topic', p[1]);
-      const sub = RP.upto[RP.focus];
-      if (sub) setSelect('sel-subtopic', sub);
-    } else setSelect('sel-topic', RP.type);
+  /* ---------- course tiles and the timer stepper ---------- */
+  const segs = [...document.querySelectorAll('fieldset.rp-seg[data-for]')];
+  segs.forEach(fs => fs.addEventListener('change', e => { if (e.target.checked) setSelect(fs.dataset.for, e.target.value); }));
+  function syncSegs() { segs.forEach(fs => fs.querySelectorAll('input').forEach(i => { i.checked = i.value === $(fs.dataset.for).value; })); }
+  function timeText(t) {
+    if (!t) return 'No timer';
+    const m = Math.floor(t / 60), sec = t % 60;
+    return t < 120 ? t + ' seconds' : plural(m, 'minute') + (sec ? ' ' + sec + ' s' : '');
   }
+  function setTime(t) {
+    $('sel-timer').value = String(t);
+    $('rp-tval').textContent = timeText(t);
+    const i = TIMES.indexOf(t);
+    $('rp-tminus').disabled = i <= 0; $('rp-tplus').disabled = i >= TIMES.length - 1;
+    save();
+  }
+  function stepTime(dir) {
+    const i = TIMES.indexOf(+$('sel-timer').value);
+    setTime(TIMES[Math.max(0, Math.min(TIMES.length - 1, (i < 0 ? 6 : i) + dir))]);
+  }
+  $('rp-tminus').addEventListener('click', () => stepTime(-1));
+  $('rp-tplus').addEventListener('click', () => stepTime(1));
 
   /* ---------- refresh the visible state ---------- */
+  const tick = (list, key, on) => { const i = list.indexOf(key); if (on && i < 0) list.push(key); if (!on && i >= 0) list.splice(i, 1); };
+  function paintTick(cb, n, N) { cb.disabled = N === 0; cb.checked = N > 0 && n === N; cb.indeterminate = n > 0 && n < N; }
+
   function refresh() {
-    let tot = 0, on = 0;
-    const f0 = RP.focus.split(':');
-    if (!usable(f0[0], f0[1])) {   // e.g. a Separate-only topic after switching to Combined
-      outer: for (const s of SUBJ) for (const t of DATA.subjects[s].sequence) if (usable(s, t)) { RP.focus = s + ':' + t; break outer; }
-    }
+    if (RP.focus && !topicN(...RP.focus.split(':'))) RP.focus = '';   // e.g. a Separate-only topic after switching to Combined
+    syncSegs();
+
+    // 2. Current topic
     SUBJ.forEach(s => {
-      const box = acc.querySelector('[data-s="' + s + '"]');
-      let n = 0, N = 0;
-      DATA.subjects[s].sequence.forEach(t => {
-        const row = box.querySelector('[data-t="' + t + '"]');
-        const vis = visible(s, t), q = filterQ(t, null, s).length, ok = q > 0;
-        const key = s + ':' + t, isFocus = RP.focus === key, ticked = isFocus || RP.taught.includes(key);
-        row.hidden = !vis;
-        row.classList.toggle('is-off', !ok);
-        row.classList.toggle('is-focus', isFocus && RP.type === 'topics');
-        const cb = row.querySelector('input');
-        cb.checked = ok && ticked; cb.disabled = !ok || isFocus;
-        const fb = row.querySelector('.rp-focus');
-        fb.disabled = !ok; fb.setAttribute('aria-pressed', String(isFocus && RP.type === 'topics'));
-        row.querySelector('.rp-tcount').textContent = ok ? q : '–';
-        if (vis && ok) { N++; if (ticked) n++; }
+      const box = accNow.querySelector('[data-s="' + s + '"]'), d = DATA.subjects[s];
+      let cur = '';
+      box.querySelectorAll('.rp-unit').forEach(u => {
+        const t = u.dataset.t, key = s + ':' + t, n = topicN(s, t), on = RP.focus === key;
+        const r = u.querySelector('input[type=radio]');
+        r.checked = on; r.disabled = !n;
+        u.classList.toggle('is-off', !n); u.classList.toggle('is-focus', on);
+        u.querySelector('.rp-trow .rp-tcount').textContent = n || '–';
+        const ul = u.querySelector('.rp-subs'), sOn = on ? subsOn(key) : [];
+        ul.hidden = !on || !ul.children.length;
+        if (on) {
+          cur = d.topics[t];
+          ul.querySelectorAll('.rp-sub').forEach(li => {
+            const id = li.dataset.sub, k = subN(s, t, id), cb = li.querySelector('input');
+            cb.checked = !!k && sOn.includes(id); cb.disabled = !k;
+            li.classList.toggle('is-off', !k);
+            li.querySelector('.rp-tcount').textContent = k || '–';
+          });
+        }
       });
-      box.querySelector('.rp-scount').textContent = n + ' of ' + N;
-      const sc = box.querySelector('[data-subjcb]');
-      sc.disabled = N === 0; sc.checked = N > 0 && n === N; sc.indeterminate = n > 0 && n < N;
-      tot += N; on += n;
+      box.querySelector('.rp-scount').textContent = cur || 'Not chosen';
+      box.classList.toggle('has-focus', !!cur);
     });
-    $('rp-total').textContent = on + ' of ' + tot + ' topics ticked';
-    TYPES.forEach(t => $('rp-type').querySelector('[data-type="' + t[0] + '"]').setAttribute('aria-pressed', String(RP.type === t[0])));
-    YEARS.forEach(t => $('rp-year').querySelector('[data-year="' + t[0] + '"]').setAttribute('aria-pressed', String(year === t[0])));
-    $('rp-subjfield').hidden = RP.type === 'topics';
-    const fp = RP.focus.split(':');
-    $('rp-focuslabel').textContent = (DATA.subjects[fp[0]].topics[fp[1]] || '') + ': taught up to';
-    applySel();
+    $('rp-nofocus').setAttribute('aria-pressed', String(!RP.focus));
+
+    // 3. Interleaved topics and practicals
+    SUBJ.forEach(s => {
+      const box = accMix.querySelector('[data-s="' + s + '"]');
+      let sn = 0, sN = 0;
+      box.querySelectorAll('.rp-group').forEach(g => {
+        let n = 0, N = 0;
+        g.querySelectorAll('.rp-trow').forEach(row => {
+          const t = row.dataset.t, k = row.dataset.rp, cb = row.querySelector('input');
+          let q, on, isCur = false;
+          if (t) { const key = s + ':' + t; q = topicN(s, t); isCur = RP.focus === key; on = RP.taught.includes(key); }
+          else { row.hidden = !rpShown(s, k); if (row.hidden) return; q = rpN(s, k); on = RP.rps.includes(s + ':' + k); }
+          cb.checked = !!q && (on || isCur); cb.disabled = !q || isCur;
+          row.classList.toggle('is-off', !q); row.classList.toggle('is-cur', isCur);
+          row.querySelector('.rp-tcount').textContent = isCur ? 'Current' : (q || '–');
+          if (q && !isCur) { N++; if (on) n++; }
+        });
+        g.hidden = !g.querySelector('.rp-trow:not([hidden])');
+        g.querySelector('.rp-gcount').textContent = N ? n + ' of ' + N : '';
+        paintTick(g.querySelector('[data-groupcb]'), n, N);
+        sn += n; sN += N;
+      });
+      box.querySelector('.rp-ptitle').hidden = !box.querySelector('[data-g^="r"]:not([hidden])');
+      box.querySelector('.rp-scount').textContent = sn + ' of ' + sN + ' ticked';
+      paintTick(box.querySelector('[data-subjcb]'), sn, sN);
+    });
+
+    // hidden selects, then the page's own stats line
+    if (RP.focus) { const p = RP.focus.split(':'); setSelect('sel-subject', p[0]); setSelect('sel-topic', p[1]); }
     updateStats();
+    summary();
     save();
   }
 
-  /* ---------- events ---------- */
-  function tick(key, on) {
-    const i = RP.taught.indexOf(key);
-    if (on && i < 0) RP.taught.push(key);
-    if (!on && i >= 0) RP.taught.splice(i, 1);
+  /* ---------- the summary card ---------- */
+  function counts() {
+    const ex = RP.focus, f = ex.split(':'), fq = ex ? filterQ(f[1], subsOn(ex), f[0]) : [];
+    const mix = new Set(mixPool(ex).map(q => q.q)), all = new Set(mix);
+    fq.forEach(q => all.add(q.q));
+    return { fN: fq.length, mN: mix.size, total: all.size, topics: taughtList(ex).length, rps: rpList().length };
   }
-  function setFocus(key) {
-    if (RP.focus && RP.focus !== key) tick(RP.focus, true);   // the topic you leave stays in the taught list
-    RP.focus = key; RP.type = 'topics';
-  }
-  acc.addEventListener('change', e => {
-    const t = e.target, row = t.closest('.rp-trow'), box = t.closest('.rp-subj');
-    if (t.hasAttribute('data-subjcb')) {
-      const s = t.getAttribute('data-subjcb');
-      DATA.subjects[s].sequence.forEach(x => { if (visible(s, x) && usable(s, x) && s + ':' + x !== RP.focus) tick(s + ':' + x, t.checked); });
-    } else if (row) tick(box.getAttribute('data-s') + ':' + row.getAttribute('data-t'), t.checked);
-    refresh();
-  });
-  acc.addEventListener('click', e => {
-    const f = e.target.closest('.rp-focus'), h = e.target.closest('.rp-subjbtn');
-    if (f) { setFocus(f.closest('.rp-subj').getAttribute('data-s') + ':' + f.getAttribute('data-focus')); refresh(); }
-    else if (h) {
-      const box = h.closest('.rp-subj'), s = box.getAttribute('data-s'), o = h.getAttribute('aria-expanded') !== 'true';
-      open[s] = o; h.setAttribute('aria-expanded', String(o)); $('rp-panel-' + s).hidden = !o;
+  function summary() {
+    const c = counts(), f = RP.focus.split(':'), name = RP.focus ? DATA.subjects[f[0]].topics[f[1]] : '';
+    const from = [c.topics ? plural(c.topics, 'topic') : '', c.rps ? plural(c.rps, 'practical') : ''].filter(Boolean).join(' and ');
+    $('rp-count').textContent = c.total;
+    const msgs = [];
+    if (RP.focus && !c.fN) msgs.push(['err', 'No questions in the ticked subtopics of ' + name + '. Tick at least one.']);
+    else if (!RP.focus && !c.mN) msgs.push(['err', 'Choose a current topic, or tick some interleaved topics.']);
+    else {
+      if (RP.focus && !c.mN) msgs.push(['warn', 'Nothing interleaved is ticked, so every question comes from ' + name + '.']);
+      if (c.total < 5) msgs.push(['warn', 'Only ' + c.total + ' questions match, so rounds will be short.']);
+      if (!RP.focus || c.mN) msgs.push(['ok', RP.focus
+        ? 'Ready: each round of five has three questions on ' + name + ' and two interleaved from ' + from + '.'
+        : 'Ready: each round of five is interleaved from ' + from + '.']);
     }
-  });
-  $('rp-all').addEventListener('click', () => {
-    SUBJ.forEach(s => DATA.subjects[s].sequence.forEach(t => { if (visible(s, t) && usable(s, t)) tick(s + ':' + t, true); }));
+    $('rp-msgs').innerHTML = msgs.map(m => '<li class="' + m[0] + '">' + esc(m[1]) + '</li>').join('');
+    $('btn-start').disabled = msgs[0][0] === 'err';
+  }
+  // Space starts a session too, so it checks the same thing Start does.
+  const build = buildSession;
+  buildSession = function () { if ($('btn-start').disabled) return; return build.apply(this, arguments); };
+
+  /* ---------- events ---------- */
+  function toggleOpen(h) {
+    const o = h.getAttribute('aria-expanded') !== 'true';
+    h.setAttribute('aria-expanded', String(o)); $(h.getAttribute('aria-controls')).hidden = !o;
+  }
+  accNow.addEventListener('click', e => { const h = e.target.closest('.rp-subjbtn'); if (h) toggleOpen(h); });
+  accNow.addEventListener('change', e => {
+    const t = e.target;
+    if (t.name === 'rp-focus') {
+      if (RP.focus && RP.focus !== t.value) tick(RP.taught, RP.focus, true);   // the topic you leave joins the interleaved list
+      RP.focus = t.value; tick(RP.taught, RP.focus, false);
+    } else if (t.hasAttribute('data-subcb')) {
+      const p = RP.focus.split(':'), all = subsOf(p[0], p[1]).map(x => x.id), on = subsOn(RP.focus);
+      tick(on, t.getAttribute('data-subcb'), t.checked);
+      RP.subs[RP.focus] = all.filter(x => on.includes(x));
+      if (RP.subs[RP.focus].length === all.length) delete RP.subs[RP.focus];
+    }
     refresh();
   });
-  $('rp-none').addEventListener('click', () => {
-    SUBJ.forEach(s => DATA.subjects[s].sequence.forEach(t => { if (visible(s, t)) tick(s + ':' + t, false); }));
+  $('rp-nofocus').addEventListener('click', () => { if (RP.focus) tick(RP.taught, RP.focus, true); RP.focus = ''; refresh(); });
+
+  accMix.addEventListener('click', e => { const h = e.target.closest('.rp-subjbtn'); if (h) toggleOpen(h); });
+  function setRows(rows, on) {
+    rows.forEach(row => {
+      const cb = row.querySelector('input'), s = row.closest('.rp-subj').dataset.s;
+      if (row.hidden || cb.disabled) return;
+      if (row.dataset.t) tick(RP.taught, s + ':' + row.dataset.t, on); else tick(RP.rps, s + ':' + row.dataset.rp, on);
+    });
+  }
+  accMix.addEventListener('change', e => {
+    const t = e.target, row = t.closest('.rp-trow');
+    if (t.hasAttribute('data-subjcb')) setRows(t.closest('.rp-subj').querySelectorAll('.rp-trow'), t.checked);
+    else if (t.hasAttribute('data-groupcb')) setRows(t.closest('.rp-group').querySelectorAll('.rp-trow'), t.checked);
+    else if (row) setRows([row], t.checked);
     refresh();
   });
-  $('rp-type').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { RP.type = b.getAttribute('data-type'); refresh(); } });
-  $('rp-year').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { year = b.getAttribute('data-year'); refresh(); } });
+  $('rp-all').addEventListener('click', () => { setRows(accMix.querySelectorAll('.rp-trow'), true); refresh(); });
+  $('rp-none').addEventListener('click', () => { setRows(accMix.querySelectorAll('.rp-trow'), false); refresh(); });
+
   ['sel-course', 'sel-tier'].forEach(id => $(id).addEventListener('change', () => setTimeout(refresh, 0)));
-  ['sel-layout', 'sel-timer'].forEach(id => $(id).addEventListener('change', save));
-  $('sel-subtopic').addEventListener('change', () => {
-    if (RP.type === 'topics' && $('sel-subtopic').value) RP.upto[RP.focus] = $('sel-subtopic').value;
-    updateStats(); save();
-  });
+  $('sel-layout').addEventListener('change', () => { syncSegs(); save(); });
   if (typeof setMode === 'function') {   // the editor may have changed the questions
     const sm = setMode;
     setMode = function (m) { const r = sm.apply(this, arguments); if (m === 'presenter') refresh(); return r; };
   }
 
   /* ---------- start up from what was remembered ---------- */
-  const saved = lsGet() || {};
-  year = ['all', '10', '11'].includes(saved.year) ? saved.year : 'all';
-  RP.type = TYPES.some(t => t[0] === saved.type) ? saved.type : 'topics';
+  const saved = lsGet(KEY) || lsGet(OLD) || {};
   RP.taught = Array.isArray(saved.taught) ? saved.taught.filter(exists) : [];
-  RP.upto = saved.upto && typeof saved.upto === 'object' ? saved.upto : {};
-  RP.focus = exists(saved.focus) ? saved.focus : SUBJ[0] + ':' + DATA.subjects[SUBJ[0]].sequence[0];
-  setSelect('sel-course', saved.course); setSelect('sel-tier', saved.tier);
-  setSelect('sel-layout', saved.layout); setSelect('sel-timer', saved.timer);
+  RP.rps = Array.isArray(saved.rps) ? saved.rps.filter(rpExists) : [];
+  RP.subs = saved.subs && typeof saved.subs === 'object' ? saved.subs : {};
+  RP.focus = saved.focus === '' ? '' : exists(saved.focus) ? saved.focus : SUBJ[0] + ':' + DATA.subjects[SUBJ[0]].sequence[0];
+  tick(RP.taught, RP.focus, false);
+  setSelect('sel-course', saved.course); setSelect('sel-tier', saved.tier); setSelect('sel-layout', saved.layout);
+  const t0 = parseInt(saved.timer, 10);
+  setTime(TIMES.includes(t0) ? t0 : 60);
   refresh();
+  // open the subject holding the current topic
+  const fh = RP.focus && accNow.querySelector('[data-s="' + RP.focus.split(':')[0] + '"] .rp-subjbtn');
+  if (fh) toggleOpen(fh);
 })();
-
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
 </body>

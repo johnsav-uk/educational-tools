@@ -175,49 +175,89 @@ option, optgroup { background: var(--sst-card); color: var(--sst-text); }
 .multi-a-box { font-size: var(--sst-pr-label); line-height: 1.3; }
 
 /* ---------- Settings screen ----------
-   Choices sit on their own screen, as in Millionaire; the question view keeps
-   only Settings, Reveal and Next above the stage. Violet: a Play tool. */
+   Choices sit on their own screen, laid out and sized as Millionaire's setup
+   (millionaire.css .su-*); the question view keeps only Settings, Reveal and
+   Next above the stage. Violet: a Play tool. */
+#wa-outer:has(#rp-setup:not(.hidden)) { max-width: 1240px; }
 .rp-native { display: none !important; }
-#rp-setup { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
-.rp-cards { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.rp-card, .rp-summary {
-  background: var(--sst-card); border: 1px solid var(--sst-line); border-radius: 12px; padding: 20px 22px;
-}
+#rp-setup { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.rp-cards { display: grid; gap: 20px; min-width: 0; }
+.rp-card, .rp-summary { background: var(--sst-panel); border: 1px solid var(--sst-line); border-radius: 12px; padding: 20px; }
 .rp-card h2, .rp-summary h2 {
   display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
-  font: 700 18px var(--sst-font); color: var(--sst-text); letter-spacing: -0.01em;
+  font: 700 18px var(--sst-font); color: var(--sst-text); letter-spacing: 0;
 }
 .rp-num {
-  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 999px;
-  border: 1px solid var(--sst-line-strong); font-size: 13px; color: var(--sst-text-muted);
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--sst-violet-soft); color: var(--sst-violet); font-size: 14px; font-weight: 700;
 }
-.rp-field { margin-top: 14px; }
-.rp-card h2 + .rp-field { margin-top: 0; }
-#rp-setup #wa-subtopic-row { display: block; }
-.rp-label { display: block; margin-bottom: 8px; font: 600 13px var(--sst-font); color: var(--sst-text-muted); }
-.rp-chips, .rp-group-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.rp-group { flex: 1 0 100%; }
-.rp-group + .rp-group { margin-top: 12px; }
-.rp-group-label { display: block; margin-bottom: 6px; font: 600 12px var(--sst-font); color: var(--sst-text-muted); }
-.rp-chip {
-  min-height: 44px; padding: 8px 16px; border-radius: 8px; cursor: pointer; text-align: left;
-  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text-body);
-  font: 600 14px/1.3 var(--sst-font);
+.rp-cardhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.rp-cardhead h2 { margin-bottom: 8px; }
+.rp-bulk { display: flex; gap: 8px; margin-bottom: 8px; }
+.rp-btn {
+  min-height: 40px; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text);
+  font: 600 14px var(--sst-font);
 }
-.rp-chip:hover { border-color: var(--sst-violet); color: var(--sst-text); }
-.rp-chip[aria-pressed="true"] { background: var(--sst-violet-soft); border-color: var(--sst-violet); color: var(--sst-text); }
-.rp-chip:focus-visible { outline: 2px solid var(--sst-violet); outline-offset: 2px; }
+.rp-btn:hover { border-color: var(--sst-text-muted); }
+.rp-btn[aria-pressed="true"] { background: var(--sst-violet-soft); border-color: var(--sst-violet); }
+.rp-note { margin: 0 0 14px; font: 400 14px/1.5 var(--sst-font); color: var(--sst-text-muted); }
+.rp-fields + .rp-note { margin: 16px 0 0; }
+.rp-btn:focus-visible, .rp-subjbtn:focus-visible, .rp-step:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
 
-.rp-summary { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
-.rp-summary h2 { margin: 0; }
-.rp-count { font: 500 14px var(--sst-font); color: var(--sst-text-muted); }
-.rp-count span {
-  display: block; font-size: 44px; font-weight: 800; line-height: 1.1; color: var(--sst-text);
-  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+/* Course tiles: equal-width segments, as Millionaire's .seg */
+.rp-legend { margin-bottom: 0 !important; }   /* the row gap spaces it, as a legend's margin does */
+.rp-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px 20px; }
+.rp-seg { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.rp-seg legend, .rp-legend { padding: 0; margin-bottom: 8px; width: 100%; font: 600 13px var(--sst-font); color: var(--sst-text-muted); }
+.rp-seg label { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
+.rp-seg input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.rp-seg label span {
+  flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+  min-height: 60px; padding: 8px; border: 1px solid var(--sst-line-strong); border-radius: 8px;
+  background: transparent; color: var(--sst-text-body); font: 500 15px/1.2 var(--sst-font);
+  transition: background .12s, border-color .12s;
 }
-.rp-summary #wa-bank-stats { font-size: 13px; line-height: 1.5; white-space: normal; margin: 0; text-align: left; }
-.rp-summary #btn-start { justify-content: center; min-height: 50px; font-size: 16px; }
-.rp-keys { margin: 0; font: 500 12px var(--sst-font); color: var(--sst-text-muted); }
+.rp-seg input:hover + span { border-color: var(--sst-text-muted); }
+.rp-seg input:checked + span { background: var(--sst-violet-soft); border-color: var(--sst-violet); color: var(--sst-text); font-weight: 700; }
+.rp-seg input:focus-visible + span { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+
+/* Timer stepper: minus, the time, plus, in one tile-height row */
+.rp-stepper { flex: 1 1 100%; display: grid; grid-template-columns: 60px minmax(0, 1fr) 60px; gap: 8px; }
+.rp-step {
+  min-height: 60px; border-radius: 8px; cursor: pointer; border: 1px solid var(--sst-line-strong);
+  background: transparent; color: var(--sst-text); font: 600 24px/1 var(--sst-font);
+}
+.rp-step:hover:not(:disabled) { border-color: var(--sst-violet); background: var(--sst-violet-soft); }
+.rp-step:disabled { opacity: .35; cursor: not-allowed; }
+#rp-tval {
+  display: flex; align-items: center; justify-content: center; border-radius: 8px;
+  border: 1px solid var(--sst-violet); background: var(--sst-violet-soft);
+  font: 700 15px var(--sst-font); color: var(--sst-text); font-variant-numeric: tabular-nums;
+}
+
+/* Summary */
+.rp-summary { position: sticky; top: 16px; display: grid; gap: 10px; }
+.rp-summary h2 { margin: 0 0 4px; }
+.rp-count { display: flex; align-items: baseline; gap: 10px; }
+.rp-count > span:first-child {
+  font: 800 52px/1 var(--sst-font); color: var(--sst-text); letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+}
+.rp-countlbl { font: 400 15px var(--sst-font); color: var(--sst-text-body); }
+.rp-msgs { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 8px; }
+.rp-msgs li {
+  padding: 10px 12px; border-radius: 8px; font: 400 14px/1.4 var(--sst-font);
+  border: 1px solid var(--sst-line); background: var(--sst-card); color: var(--sst-text-body);
+}
+.rp-msgs li.err { background: var(--sst-bad-bg); border-color: var(--sst-red); color: var(--sst-text); }
+.rp-msgs li.warn { background: var(--sst-warn-bg); border-color: var(--sst-amber); color: var(--sst-text); }
+.rp-msgs li.ok { background: var(--sst-good-bg); border-color: var(--sst-green); color: var(--sst-text); }
+.rp-summary #btn-start { justify-content: center; width: 100%; min-height: 54px; font-size: 18px; font-weight: 700; border: 0; }
+.rp-summary #btn-start:disabled { opacity: .45; cursor: not-allowed; }
+.rp-check { display: flex; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 400 14px var(--sst-font); color: var(--sst-text); }
+.rp-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--sst-violet-btn); cursor: pointer; }
+.rp-keys { margin: 6px 0 0; font: 400 12px/2 var(--sst-font); color: var(--sst-text-muted); }
+.rp-keys span { white-space: nowrap; }
 .rp-keys kbd {
   font: 600 11px var(--sst-font); padding: 1px 6px; border-radius: 4px;
   border: 1px solid var(--sst-line-strong); color: var(--sst-text-body); background: transparent;
@@ -237,61 +277,62 @@ option, optgroup { background: var(--sst-card); color: var(--sst-text); }
   .rp-summary { position: static; }
 }
 
-/* ---------- Topics card: collapsible subject sections ----------
-   Shares its look with the Millionaire setup. Three columns when the card is
-   wide enough (a container query, so it follows the card, not the window). */
-#wa-outer:has(#rp-setup:not(.hidden)) { max-width: 1480px; }
-.rp-cardhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
-.rp-cardhead h2 { margin-bottom: 8px; }
-.rp-bulk { display: flex; gap: 8px; margin-bottom: 8px; }
-.rp-btn {
-  min-height: 44px; padding: 8px 18px; border-radius: 8px; cursor: pointer;
-  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text);
-  font: 600 14px var(--sst-font);
-}
-.rp-btn:hover { border-color: var(--sst-text-muted); }
-.rp-btn:focus-visible, .rp-subjbtn:focus-visible, .rp-focus:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
-.rp-total { margin: 0 0 6px; font: 700 15px var(--sst-font); color: var(--sst-text); font-variant-numeric: tabular-nums; }
-.rp-note { margin: 0 0 14px; font: 500 14px/1.5 var(--sst-font); color: var(--sst-text-muted); }
-.rp-note b { color: var(--sst-text-body); }
-.rp-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.rp-row .rp-chip { text-align: center; }
-.rp-yearrow { margin: 0 0 14px; }
-.rp-field[hidden] { display: none; }
-
+/* ---------- Subject accordions (cards 2 and 3) ----------
+   Millionaire's collapsible subjects: three columns when the card is wide enough
+   (a container query, so it follows the card, not the window). */
 .rp-accwrap { container-type: inline-size; }
 .rp-acc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
-@container (min-width: 760px) { .rp-acc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.rp-subj { border: 1px solid var(--sst-line); border-radius: 10px; background: var(--sst-panel); overflow: hidden; }
+@container (min-width: 720px) { .rp-acc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rp-subj { border: 1px solid var(--sst-line); border-radius: 10px; background: var(--sst-card); overflow: hidden; }
 .rp-subjhead { position: relative; }
 .rp-subjbtn {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 60px; padding: 8px 98px 8px 14px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-content: center;
+  width: 100%; min-height: 60px; padding: 8px 54px 8px 14px;
   background: transparent; border: 0; cursor: pointer; text-align: left; color: var(--sst-text); font: 700 17px var(--sst-font);
 }
+.has-tick .rp-subjbtn { padding-right: 98px; }
 .rp-subjbtn:hover { background: var(--sst-raised); }
-.rp-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
-.rp-sname { flex: 0 1 auto; min-width: 0; }
-.rp-scount { margin-left: auto; font: 600 14px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rp-subjbtn:focus-visible { outline-offset: -3px; }
+.rp-dot { grid-row: 1 / span 2; align-self: center; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.rp-sname { min-width: 0; }
+.rp-scount {
+  grid-column: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 13px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums;
+}
+.rp-subj.has-focus .rp-scount { color: var(--sst-violet); }
 .rp-chev { position: absolute; right: 14px; top: 50%; margin-top: -9px; color: var(--sst-text-muted); transition: transform .15s; }
 .rp-subjbtn[aria-expanded="true"] .rp-chev { transform: rotate(180deg); }
 .rp-subjtick { position: absolute; right: 44px; top: 50%; margin-top: -22px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
-.rp-subj input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--sst-violet-btn); cursor: pointer; }
-.rp-subj input[type=checkbox]:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
-.rp-subj input[type=checkbox]:disabled { cursor: not-allowed; }
-.rp-tlist { list-style: none; margin: 0; padding: 4px 8px 8px; border-top: 1px solid var(--sst-line); background: var(--sst-bg-deep, var(--sst-bg)); }
-.rp-tlist[hidden], .rp-trow[hidden] { display: none; }
-.rp-trow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; min-height: 52px; padding: 2px 6px; border-radius: 8px; }
-.rp-trow label { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; padding: 8px 0; font: 500 15px/1.3 var(--sst-font); color: var(--sst-text-body); }
-.rp-trow.is-off label { color: var(--sst-text-muted); cursor: not-allowed; }
-.rp-trow.is-focus { background: var(--sst-violet-soft); }
-.rp-trow.is-focus label { color: var(--sst-text); }
-.rp-tcount { font: 600 13px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums; min-width: 2.2em; text-align: right; }
-.rp-focus {
-  min-height: 40px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
-  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text-body); font: 600 14px var(--sst-font);
+.rp-subj input[type=checkbox], .rp-subj input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--sst-violet-btn); cursor: pointer; }
+.rp-subjtick input[type=checkbox] { width: 24px; height: 24px; }
+.rp-subj input:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.rp-subj input:disabled { cursor: not-allowed; }
+.rp-panel { border-top: 1px solid var(--sst-line); padding-bottom: 6px; }
+.rp-panel[hidden], .rp-group[hidden], .rp-trow[hidden], .rp-subs[hidden], .rp-ptitle[hidden] { display: none; }
+
+/* Paper 1 / Paper 2 groups, and the practicals heading above theirs */
+.rp-ghead {
+  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 10px 14px 4px;
+  font: 700 12px var(--sst-font); letter-spacing: .06em; text-transform: uppercase; color: var(--sst-text-muted);
 }
-.rp-focus:hover:not(:disabled) { border-color: var(--sst-violet); color: var(--sst-text); }
-.rp-focus[aria-pressed="true"] { background: var(--sst-violet-btn); border-color: var(--sst-violet-btn); color: #fff; }
-.rp-focus:disabled { opacity: .4; cursor: not-allowed; }
-.rp-nowteach { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--sst-line); }
+label.rp-ghead { cursor: pointer; }
+.rp-gcount { margin-left: auto; letter-spacing: 0; text-transform: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rp-ptitle {
+  margin: 10px 0 0; padding: 12px 14px 0; border-top: 1px solid var(--sst-line);
+  font: 700 15px var(--sst-font); color: var(--sst-text);
+}
+
+.rp-trow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 48px; padding: 0 14px; }
+.rp-trow label { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; padding: 6px 0; font: 600 15px/1.25 var(--sst-font); color: var(--sst-text); }
+.rp-tcount { font: 600 13px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums; min-width: 2.2em; text-align: right; }
+.rp-trow.is-off label, .rp-unit.is-off .rp-trow label { color: var(--sst-text-muted); font-weight: 500; cursor: not-allowed; }
+.rp-trow.is-cur .rp-tcount { color: var(--sst-violet); }
+.rp-unit.is-focus > .rp-trow { background: var(--sst-violet-soft); }
+
+/* Subtopics of the current topic */
+.rp-subs { margin: 0; padding: 4px 14px 10px 30px; list-style: none; background: var(--sst-bg-deep, var(--sst-bg)); }
+.rp-sub { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.rp-sub label { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; font: 400 14px/1.3 var(--sst-font); color: var(--sst-text-body); }
+.rp-sub.is-off label { color: var(--sst-text-muted); cursor: not-allowed; }
+.rp-sub .rp-tcount { font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { .rp-chev { transition: none; } }
