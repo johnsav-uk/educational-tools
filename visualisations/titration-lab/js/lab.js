@@ -18,13 +18,14 @@
   var E = root.TitrationEngine, X = root.TitrationExperiments;
   var A = E.APPARATUS;
 
-  var STREAM_cm3_s = { fast: 0.8, slow: 0.1 };   // tap fully open; tap cracked to a steady drip
+  var STREAM_cm3_s = { fast: 1.5, slow: 0.15 };  // tap fully open; tap cracked to a steady drip
+  var DRIP_s = 1 / 3;                             // in a drip, one drop every third of a second
   var POUR_cm3_s = 1.6;                           // the step buttons let their volume run at this rate
   var FUNNEL_RESIDUE_cm3 = 0.25, FUNNEL_DRIP_cm3_s = 0.004;
   var FLASK_RINSE_ANALYTE_cm3 = 0.40, FLASK_WET_WATER_cm3 = 0.5;
   var BLOW_OUT_cm3 = 0.04;
   var ACID_VOLUME_cm3 = 10;
-  var SWIRL_s = 1.2;                              // one swirl of the flask, for the drawing
+  var SWIRL_s = 1.4;                              // one swirl of the flask, for the drawing
   var ENDPOINT_WINDOW = { early: -0.03, late: 0.12 };   // cm³ either side of the indicator's (or the first excess's) endpoint
 
   function res(kind, msg, code, extra) {
@@ -204,7 +205,7 @@
       if (!open) { b.tap = false; return event(res('info', 'Tap closed.', 'tap-closed')); }
       var no = canRun();
       if (no) return event(no);
-      b.tap = true;
+      b.tap = true; b.dripT = DRIP_s * 0.7;
       return event(res('info', 'Tap open' + (b.flow === 'fast' ? '.' : ', running drop by drop.'), 'tap-open'));
     };
     // A step: about 1.0, 0.5 or 0.1 cm³, or one drop. Real taps don't deliver
@@ -511,6 +512,9 @@
       return out;
     }
 
+    // Where the flask stands against the endpoint now, without recording anything.
+    lab.endpointNow = function () { return s.trial && s.trial.initialRec !== null && s.flask ? endpointStatus() : null; };
+
     lab.setTrialKind = function (kind) {
       var t = ensureTrial();
       t.kind = kind === 'rough' ? 'rough' : 'precise';
@@ -526,7 +530,11 @@
       if (b.tap) {
         var no = canRun();
         if (no) b.tap = false;
-        else runOut(STREAM_cm3_s[b.flow] * dt);
+        else if (b.flow === 'slow') {
+          // Drop by drop: whole drops, not a trickle.
+          b.dripT = (b.dripT || 0) + dt;
+          while (b.dripT >= DRIP_s && b.tap) { b.dripT -= DRIP_s; runOut(Math.max(0.03, A.drop.volume_cm3 + rng.gauss() * A.drop.sd_cm3)); }
+        } else runOut(STREAM_cm3_s[b.flow] * dt);
       }
       if (b.pending > 0) {
         var no2 = canRun();

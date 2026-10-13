@@ -67,6 +67,7 @@
     $('#btnChange').hidden = view === 'picker';
     $('#hTitle').textContent = view === 'picker' || !ui.run ? 'Titration Lab' : 'Titration Lab: ' + ui.run.def.title;
     if (view !== 'lab') stopLoop(); else startLoop();
+    $('#stages').hidden = !(view === 'lab' || view === 'analyse');
     if (view === 'lab' || view === 'analyse') renderStages();
     window.scrollTo(0, 0);
     if (window.SST_PRESENTER) setTimeout(function () { SST_PRESENTER.layout(); }, 30);
@@ -214,7 +215,7 @@
     run.aliquotDeviceKind = E.APPARATUS[ui.choices.aliquot || 'pipette25'].kind;
     ui.lab = L.create(run, { choices: { aliquot: ui.choices.aliquot } });
     ui.hints = 0; ui.calc = {}; ui.submitted = null; ui.ticks = null; ui.prepCalc = {}; ui.lastColour = null;
-    ui.tickV = null; ui.meanV = null; ui.reading = false; ui.auto = false;
+    ui.tickV = null; ui.meanV = null; ui.t = freshT(); ui.auto = false;
     // Learn first for the guided experiment and for RP1, whose solution is new to
     // everyone; Test me for the rest. Chosen afresh for each experiment opened.
     if (!ui.setupMode) ui.setupMode = run.mode === 'guided' || run.prep ? 'learn' : 'test';
@@ -234,7 +235,7 @@
     ui.lab = L.create(ui.run, { choices: { aliquot: ui.choices.aliquot } });
     if (prep && ui.stage !== 'prep') ui.lab.state.prep = prep;
     if (ui.stage === 'prep') ui.prepCalc = {};
-    newSetup(); ui.lastColour = null; ui.reading = false;
+    newSetup(); ui.lastColour = null; ui.t = freshT();
     buildScene();
     feedback(null);
     refresh(true);
@@ -254,7 +255,6 @@
     }
     svg.querySelectorAll('text').forEach(function (t) { t.setAttribute('data-fs', t.getAttribute('font-size') || '13'); });
     $('#clock').hidden = !(run.type === 'redox' && run.warm);
-    buildTitrate();
     sizeForBoard();
   }
 
@@ -270,8 +270,8 @@
       ui.lens.update(lab);
       // New scale numbers in the lens need their board size.
       if (ui.lens.redrawn) { ui.lens.redrawn = false; if (document.body.classList.contains('presenting')) sizeForBoard(['#lensSvg']); }
+      if (ui.scene.redrawn) { ui.scene.redrawn = false; if (document.body.classList.contains('presenting')) sizeForBoard(['#benchSvg']); }
       paintChip();
-      liveAmount();
       var key = stateKey();
       if (key !== ui.lastKey) { ui.lastKey = key; refresh(); }
     }
@@ -282,7 +282,8 @@
   // What, if it changed, means the panels need redrawing.
   function stateKey() {
     var s = ui.lab.state, b = s.burette, t = s.trial, p = s.prep;
-    return [ui.stage, ui.reading, b.reading === null, b.funnel, b.tap, b.pending > 0, b.jetAir > 0, b.reading !== null && b.reading < 0, s.flaskState, s.under, s.tile, s.keepSwirling,
+    var tb = ui.stage === 'titrate' && t && t.initialRec !== null ? [Math.floor(t.readingChange * 10), s.flask.un.vol > 0.003, s.flask.un.vol > 0.005, s.swirlAnim > 0, b.flow, b.reading >= 50 - 1e-9].join('/') : '';
+    return [ui.stage, tb, b.reading === null, b.funnel, b.tap, b.pending > 0, b.jetAir > 0, b.reading !== null && b.reading < 0, s.flaskState, s.under, s.tile, s.keepSwirling,
       t ? [t.initialRec, t.kind, t.acid, t.warmedTo, s.flask && s.flask.indicator].join('/') : '-', s.trials.length, s.flask ? s.flask.describe().key : '',
       p ? [p.m0, p.m1, p.m2, p.tipped, p.dissolved, p.poured, p.funnel, p.stoppered, p.inversions, p.finished, p.rinses.beaker, p.rinses.rod, p.rinses.funnel, p.bottleRinsed, Math.round(p.flaskWater_cm3 * 20)].join('/') : ''].join('|');
   }
@@ -345,7 +346,7 @@
     var h = list.map(function (st, i) {
       return '<li class="' + (i < idx ? 'done' : i === idx ? 'now' : '') + '"' + (i === idx ? ' aria-current="step"' : '') + '><span class="n" aria-hidden="true">' + (i < idx ? '✓' : i + 1) + '</span>' + st[1] + '</li>';
     }).join('');
-    ['#stages', '#stagesAn'].forEach(function (sel) { var e = $(sel); if (e && e.innerHTML !== h) e.innerHTML = h; });
+    var e = $('#stages'); if (e.innerHTML !== h) e.innerHTML = h;
   }
 
   /* ---------- Stage 1: set up, one click on the apparatus per step ---------- */
@@ -489,7 +490,7 @@
     refresh();
   }
   // Teacher's shortcut: do every remaining step.
-  function skipSetup() {
+  function skipSetup(quiet) {
     var st = ui.setup, guard = 0, ss;
     while ((ss = setupState()).next && guard++ < 40) {
       var x = ss.next, id = x.right ? x.right[0] : undefined, r = x.act(id);
@@ -498,6 +499,7 @@
       st.log.push({ id: x.id, method: x.methodFor ? x.methodFor(id) : x.method, why: x.why });
     }
     st.last = 'Set up for you'; st.skipped = true; st.note = null;
+    if (quiet) return;
     ui.lastKey = ''; refresh();
   }
   function renderSetup() {
@@ -557,7 +559,7 @@
     if (prep) wirePrepCalc();
     var hn = $('#hintNext');
     if (hn) hn.addEventListener('click', function () { st.showNext = true; st.hints++; ui.hints++; renderSetup(); });
-    if ($('#toTitrate')) $('#toTitrate').addEventListener('click', function () { ui.stage = 'titrate'; feedback(null); refresh(true); });
+    if ($('#toTitrate')) $('#toTitrate').addEventListener('click', function () { ui.stage = 'titrate'; ui.t = freshT(); feedback(null); refresh(true); });
     if ($('#toTest')) $('#toTest').addEventListener('click', function () { restartSetup('test'); });
     var list = $('#methodBody ol.method'), card = $('#method');
     if (!ss.next) card.scrollTop = 0;
@@ -565,158 +567,224 @@
     boardNotes();
   }
 
-  /* ---------- Stage 2: the titration ---------- */
-  function titrateState() {
-    var s = ui.lab.state, t = s.trial;
-    if (!t && s.flaskState === 'done') return 'done';
-    if (!t || t.initialRec === null) return 'initial';
-    return ui.reading ? 'final' : 'add';
-  }
+  /* ---------- Stage 2: the titration ----------
+     Instruction card | the apparatus, as large as the screen allows | results,
+     with every control in one dock underneath. The student reads the burette
+     and types each volume into the table: nothing is filled in for them. */
+  function freshT() { return { initialTyped: '', finalTyped: '', msg: null, startKey: null, tableKey: '' }; }
+  function tr() { return ui.t || (ui.t = freshT()); }
   function trialName(t) {
     if (!t) return '';
     if (t.kind === 'rough') return 'Rough titration';
     var list = ui.lab.state.trials.concat(ui.lab.state.trial ? [ui.lab.state.trial] : []).filter(function (x) { return x.kind === 'precise'; });
     return 'Titration ' + (list.indexOf(t) + 1);
   }
-  // The panel is built once per bench, so the hold button keeps its pointer.
-  function buildTitrate() {
-    var run = ui.run, redox = run.type === 'redox';
-    $('#titrateBody').innerHTML =
-      '<p class="step-text" id="tStep"></p><p class="hint" id="tHint"></p>' +
-      '<div class="t-read" id="tRead"><label for="readingIn">Burette reading</label><div class="reading"><input id="readingIn" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" maxlength="6" title="To 2 decimal places, ending in 0 or 5 (R to jump here)"><span class="unit">cm³</span>' +
-        '<button class="btn primary" type="button" id="recBtn">Record</button></div></div>' +
-      '<div class="t-add sst-teacher" id="tAdd">' +
-        '<p class="live" id="tLive" aria-hidden="true"></p>' +
-        '<div class="grp"><span class="lbl">Tap</span><button class="btn hold" type="button" id="holdBtn" aria-describedby="holdHelp">Hold to run</button>' +
-          '<span class="seg" role="group" aria-label="Flow"><button type="button" data-flow="slow" aria-pressed="true">Drip</button><button type="button" data-flow="fast" aria-pressed="false">Stream</button></span>' +
-          '<span id="holdHelp" class="sr-only">Press and hold, or hold the space bar, to keep the tap open. Release to close it. You can also press and hold the tap on the burette.</span></div>' +
-        '<div class="grp"><span class="lbl">Add</span><button class="btn" type="button" data-add="1.0" title="About 1.0 cm³ (key 1)">+1.0</button><button class="btn" type="button" data-add="0.5" title="About 0.5 cm³ (key 2)">+0.5</button>' +
-          '<button class="btn" type="button" data-add="0.1" title="About 0.1 cm³ (key 3)">+0.1</button><button class="btn" type="button" data-add="drop" title="One drop, about 0.05 cm³ (key 4)">1 drop</button></div>' +
-        '<div class="grp"><span class="lbl">Mix</span><button class="btn swirl" type="button" id="swirlBtn" title="Swirl the flask (S), or click the flask">Swirl</button>' +
-          '<button class="btn" type="button" id="keepSwirl" aria-pressed="false" title="Swirl with one hand while the other works the tap">Keep swirling</button>' +
-          (redox ? '<button class="btn" type="button" id="waitBtn">Wait 30 s</button>' : '') + '</div>' +
-        '<button class="btn primary wide" type="button" id="stopBtn">Stop: read the final volume</button>' +
-      '</div>' +
-      '<div class="t-done" id="tDone"></div>';
-    var hold = $('#holdBtn');
-    function open() { if (hold.classList.contains('down')) return; var r = ui.lab.tap(true, ui.lab.state.burette.flow); if (r.ok) hold.classList.add('down'); else feedback(r); }
-    function close() { if (!hold.classList.contains('down')) return; hold.classList.remove('down'); ui.lab.tap(false); announce('Tap closed.'); ui.lastKey = ''; }
-    ui.tapOpen = open; ui.tapClose = close;
-    hold.addEventListener('pointerdown', function (e) { e.preventDefault(); hold.setPointerCapture && hold.setPointerCapture(e.pointerId); open(); });
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) { hold.addEventListener(ev, close); });
-    hold.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    hold.addEventListener('keydown', function (e) { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); open(); } });
-    hold.addEventListener('keyup', function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); close(); } });
-    hold.addEventListener('blur', close);
-    $$('#tAdd [data-flow]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        ui.lab.state.burette.flow = b.getAttribute('data-flow');
-        $$('#tAdd [data-flow]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      });
-    });
-    $$('#tAdd [data-add]').forEach(function (b) { b.addEventListener('click', function () { act(function () { return ui.lab.add(b.getAttribute('data-add')); }); }); });
-    $('#swirlBtn').addEventListener('click', swirl);
-    $('#keepSwirl').addEventListener('click', function () { act(function () { return ui.lab.setKeepSwirling(!ui.lab.state.keepSwirling); }); });
-    if ($('#waitBtn')) $('#waitBtn').addEventListener('click', function () { act(function () { return ui.lab.wait(30); }); });
-    $('#stopBtn').addEventListener('click', function () {
-      if (ui.lab.state.burette.pending > 0) return;
-      close(); ui.lab.tap(false); ui.reading = true; feedback(null); refresh(); $('#readingIn').focus();
-    });
-    $('#recBtn').addEventListener('click', record);
-    $('#readingIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); record(); } });
+  function roughTitre() { var r = ui.lab.state.trials[0]; return r && r.titre !== undefined ? r.titre : null; }
+  // The indicator's colours, from the experiment, for the words on screen.
+  function colours() {
+    var run = ui.run, s = ui.lab.state;
+    if (run.type === 'redox') return { from: 'colourless', to: 'pale pink', redox: true };
+    var id = (s.flask && s.flask.indicator) || (s.trials[0] || {}).indicator || run.indicator, ind = E.INDICATORS[id];
+    if (!ind) return { from: 'its first colour', to: 'a new colour' };
+    var acidIn = !!ACIDS[run.titrant.id];
+    return { from: acidIn ? ind.alkaliColour : ind.acidColour, to: id === 'methylOrange' ? 'orange' : id === 'bromothymolBlue' ? 'green' : acidIn ? ind.acidColour : 'pale ' + ind.alkaliColour };
   }
-  function swirl() { act(function () { return ui.lab.swirl(); }); }
-  function record() {
-    var input = $('#readingIn'), which = titrateState() === 'initial' ? 'initial' : 'final', r;
-    r = act(function () { return which === 'initial' ? ui.lab.recordInitial(input.value) : ui.lab.recordFinal(input.value); });
-    if (r && r.ok) { input.value = ''; if (which === 'final') { ui.lastColour = null; ui.reading = false; } refresh(); }
-    else input.focus();
+  // Where this titration is.
+  function titrateState() {
+    var s = ui.lab.state, t = s.trial;
+    if (!t && s.flaskState === 'done') return 'done';
+    if (!t || t.initialRec === null) return 'initial';
+    return 'run';
   }
-  // Set up the next titration in one go: the steps were learnt in stage 1.
-  function nextTitration() {
-    var lab = ui.lab, s = lab.state, run = ui.run, first = s.trials[s.trials.length - 1] || {}, extra = '';
-    var rough = s.trials[0] && s.trials[0].titre ? s.trials[0].titre : 25;
-    act(function () {
-      lab.emptyFlask();
-      if (s.burette.reading === null || 50 - s.burette.reading < rough + 3) {
-        lab.setFunnel(true); lab.fillBurette(); lab.setFunnel(false); lab.place('waste'); lab.primeJet();
-        extra = ' The burette was topped up and run onto the scale.';
-      }
-      lab.pipette('touch');
-      var what = '';
-      if (run.type === 'redox') { lab.addAcid(first.acid || 'H2SO4'); what = 'dilute sulfuric acid'; if (first.warmedTo) { lab.warm(first.warmedTo); what += ', warmed to ' + first.warmedTo + ' °C'; } }
-      else { var id = first.indicator || run.indicator; lab.addIndicator(id); what = '3 drops of ' + E.INDICATORS[id].name.toLowerCase(); }
-      lab.place('flask');
-      return { ok: true, kind: 'good', msg: 'Flask washed out with distilled water, a fresh ' + s.device.recordAs + ' cm³ portion in, with ' + what + ', and back on the tile.' + extra };
-    });
-    ui.reading = false; ui.lastColour = null;
-    refresh();
+  // The flask's colour has changed from where this titration started, and stayed changed when mixed.
+  function colourChanged() {
+    var s = ui.lab.state, T = tr();
+    return !!(s.flask && T.startKey && s.flask.describe().key !== T.startKey);
   }
-  function liveAmount() {
-    if (ui.stage !== 'titrate') return;
-    var t = ui.lab.state.trial, el = $('#tLive');
-    if (!el) return;
-    var txt = t && t.initialRec !== null ? 'Run in so far: about ' + (Math.floor(t.readingChange * 10) / 10).toFixed(1) + ' cm³' : '';
-    if (el.textContent !== txt) el.textContent = txt;
+  function unmixed() { var f = ui.lab.state.flask; return f ? f.un.vol : 0; }
+  // The final reading can be taken: tap shut, something added, mixed, and the colour has changed.
+  function finalReady() {
+    var s = ui.lab.state, b = s.burette, t = s.trial;
+    return titrateState() === 'run' && !b.tap && b.pending <= 0 && t.readingChange > 0 && unmixed() < 0.005 && s.swirlAnim <= 0 && colourChanged();
   }
-  function renderTitrate() {
-    var lab = ui.lab, s = lab.state, run = ui.run, st = titrateState(), R = lab.results();
-    var t = s.trial, lastT = s.trials[s.trials.length - 1], rough = s.trials[0];
-    var redox = run.type === 'redox', tN = nm(run.titrant.id);
-    $('#tRead').hidden = st !== 'initial' && st !== 'final';
-    $('#tAdd').hidden = st !== 'add';
-    $('#tDone').hidden = st !== 'done';
-    var title = st === 'done' ? trialName(lastT) + ': done' : (t ? trialName(t) : (s.trials.length ? 'Titration ' + (R.precise.length + 1) : 'Rough titration'));
-    $('#titrateTitle').textContent = title;
-    var step = '', hint = '';
-    if (st === 'initial') {
-      step = 'Read the burette and record the initial reading';
-      hint = 'Use the magnified view: read the ' + (redox ? 'top' : 'bottom') + ' of the meniscus, to 2 decimal places ending in 0 or 5, such as 0.35.';
-      $('#recBtn').textContent = 'Record initial reading';
-    } else if (st === 'add') {
-      step = 'Add the ' + tN + ', swirling, ' + endpointWords();
-      if (t.kind === 'rough') hint = 'This is the rough titration: add about 1 cm³ at a time, swirling after each, until the colour changes. It shows roughly where the endpoint is.';
-      else if (rough && rough.titre) hint = 'Add quickly to about ' + Math.max(0, Math.floor(rough.titre - 1)) + ' cm³ (1 cm³ before your rough titre of ' + f2(rough.titre) + '), then drop by drop, swirling after each drop. Stop at the first permanent change.';
-      else hint = 'Add drop by drop near the endpoint, swirling after each drop.';
-      hint += ' Click the flask to swirl it; press and hold the tap to run.';
-    } else if (st === 'final') {
-      step = 'Read the burette and record the final reading';
-      hint = 'Read the ' + (redox ? 'top' : 'bottom') + ' of the meniscus in the magnified view. Changed your mind? <button class="linkbtn" type="button" id="moreBtn">Add more ' + esc(tN) + '</button>';
-      $('#recBtn').textContent = 'Record final reading';
-    } else {
-      step = 'Titre ' + f2(lastT.titre) + ' cm³';
-    }
-    // The instruction itself is in the prompt above the bench.
-    $('#tStep').innerHTML = st === 'done' ? step : '';
-    $('#tHint').innerHTML = hint;
-    if ($('#moreBtn')) $('#moreBtn').addEventListener('click', function () { ui.reading = false; refresh(); });
-    if (st === 'add') {
-      var busy = s.burette.pending > 0;
-      $$('#tAdd [data-add]').forEach(function (b) { b.disabled = busy; });
-      $('#stopBtn').disabled = busy;
-      $('#keepSwirl').setAttribute('aria-pressed', String(s.keepSwirling));
-    }
-    if (st === 'done') {
-      var h = '', conc = R.concordant.length >= 2;
-      if (lastT.kind === 'rough') h += '<p>That was the rough titration. Now do accurate ones: add quickly to about 1 cm³ before ' + f2(lastT.titre) + ' cm³, then drop by drop.</p>';
-      else if (conc) h += '<p class="verdict good">Concordant: ' + R.concordant.map(function (x) { return trialName(x).toLowerCase(); }).join(' and ').replace(/titration (\d+) and titration/g, 'titrations $1 and') + ' agree within ' + run.concordanceTol_cm3.toFixed(2) + ' cm³.</p>';
-      else h += '<p class="verdict warn">Not concordant yet: you need two accurate titres within ' + run.concordanceTol_cm3.toFixed(2) + ' cm³ of each other.</p>';
-      if (conc) h += '<button class="btn primary wide" type="button" id="toCalc">Calculate the concentration</button><button class="btn wide" type="button" id="nextBtn">Do another titration</button>';
-      else {
-        h += '<button class="btn primary wide" type="button" id="nextBtn">Next titration</button>';
-        if (R.precise.length >= 3) h += '<button class="btn sm wide" type="button" id="toCalc">Calculate anyway</button>';
-      }
-      $('#tDone').innerHTML = h;
-      $('#nextBtn').addEventListener('click', nextTitration);
-      if ($('#toCalc')) $('#toCalc').addEventListener('click', openAnalyse);
-    }
-    ui.scene.setCue(st === 'add' && !s.trials.length && !t.readingChange ? [{ part: 'tap' }] : []);
-    // The prompt: the one thing to do now.
-    say(st === 'done' ? (lastT.kind === 'rough' ? 'Rough titre ' : 'Titre ') + f2(lastT.titre) + ' cm³' + (conc ? ': concordant results' : '') : step, st === 'done' ? 'done' : '');
-    boardNotes();
+  // A typed burette reading against what the meniscus really shows.
+  function judgeReading(text, truth) {
+    var t = String(text || '').trim(), redox = ui.run.titrant.id === 'KMnO4', where = redox ? 'top' : 'bottom';
+    if (!/^\d{1,2}(\.\d{1,2})?$/.test(t)) return { ok: false, lead: 'Type a number.', text: 'Enter the burette reading in cm³, for example 24.65.' };
+    if (!E.validReadingFormat(t)) return { ok: false, lead: 'Check the format.', text: 'Burette readings are given to 2 d.p., to the nearest 0.05 cm³ (for example 24.65).' };
+    var v = parseFloat(t), d = Math.abs(v - truth);
+    if (d <= 0.05 + 1e-6) return { ok: true, v: v };
+    if (Math.abs(v - (50 - truth)) < 0.08) return { ok: false, lead: 'Read from the top.', text: 'A burette scale increases downwards, so the numbers get bigger as the level falls.' };
+    if (d <= 0.15) return { ok: false, lead: 'Close.', text: 'Look again at the ' + where + ' of the meniscus in the magnifier.' };
+    return { ok: false, lead: 'Not quite.', text: 'Read at eye level to the ' + where + ' of the meniscus, using the magnifier.' };
+  }
+  function checkInitial() {
+    var T = tr(), s = ui.lab.state, j = judgeReading(T.initialTyped, s.burette.reading);
+    if (!j.ok) { T.msg = j; return refresh(); }
+    var r = ui.lab.recordInitial(f2(j.v));
+    if (!r.ok) { T.msg = { lead: 'Not yet.', text: r.msg }; return refresh(); }
+    T.msg = null; T.startKey = s.flask ? s.flask.describe().key : null; T.initialTyped = '';
+    announce('Initial reading recorded: ' + f2(j.v) + ' cm³.');
+    ui.lastKey = ''; refresh();
+  }
+  function checkFinal() {
+    var T = tr(), s = ui.lab.state;
+    if (!finalReady()) return;
+    var j = judgeReading(T.finalTyped, s.burette.reading);
+    if (!j.ok) { T.msg = j; return refresh(); }
+    var r = ui.lab.recordFinal(f2(j.v));
+    if (!r.ok) { T.msg = { lead: 'Not yet.', text: r.msg }; return refresh(); }
+    T.msg = null; T.finalTyped = ''; T.recordMsg = r;
+    announce('Final reading recorded. Titre ' + f2(r.trial.titre) + ' cm³.');
+    ui.lastKey = ''; refresh();
+  }
+  function toggleRun() {
+    var lab = ui.lab, b = lab.state.burette;
+    if (titrateState() !== 'run') return;
+    tr().msg = null; tr().finalTyped = '';
+    if (b.tap) lab.tap(false);
+    else { var r = lab.tap(true, b.flow); if (!r.ok) tr().msg = { lead: 'Not yet.', text: r.msg }; }
+    ui.lastKey = ''; refresh();
+  }
+  function oneDrop() {
+    var lab = ui.lab;
+    if (titrateState() !== 'run') return;
+    tr().msg = null; tr().finalTyped = '';
+    if (lab.state.burette.tap) lab.tap(false);
+    var r = lab.add('drop');
+    if (!r.ok) tr().msg = { lead: 'Not yet.', text: r.msg };
+    ui.lastKey = ''; refresh();
+  }
+  function swirl() { if (ui.lab.state.flask) { ui.lab.swirl(); tr().msg = null; ui.lastKey = ''; refresh(); } }
+  function setFlow(f) { ui.lab.state.burette.flow = f; ui.lab.state.burette.dripT = 0; ui.lastKey = ''; refresh(); }
+  // A fresh portion in a washed flask, under a refilled burette: each titration
+  // starts at a new level, so every initial reading has to be read afresh.
+  function freshPortion() {
+    var lab = ui.lab, s = lab.state, run = ui.run, last = s.trials[s.trials.length - 1] || s.trial || {};
+    var ind = last.indicator || (s.flask && s.flask.indicator) || run.indicator, acid = last.acid || (s.trial && s.trial.acid) || 'H2SO4', warm = last.warmedTo || (s.trial && s.trial.warmedTo);
+    lab.emptyFlask();
+    if (s.burette.reading !== null) lab.emptyBurette();
+    lab.setFunnel(true); lab.fillBurette(); lab.setFunnel(false); lab.place('waste'); lab.primeJet();
+    lab.pipette('touch');
+    if (run.type === 'redox') { lab.addAcid(acid); if (warm) lab.warm(warm); }
+    else lab.addIndicator(ind);
+    lab.place('flask');
+    var T = ui.t = freshT();
+    T.note = { lead: 'Ready.', text: 'Fresh portion in the flask and the burette refilled to a new level: read it before you start.' };
+    ui.lastColour = null; ui.lastKey = ''; refresh();
+  }
+  function redoRun() {
+    if (!confirm('Redo this titration? The burette is refilled and this run isn’t recorded.')) return;
+    freshPortion();
+  }
+  // Start the titrations again from scratch, with the set-up already done.
+  function startAgainTitrate() {
+    var fresh = !!ui.submitted;
+    if (!confirm(fresh ? 'Start the titrations again with a new unknown? Your results will be cleared.' : 'Start the titrations again? Your results will be cleared.')) return;
+    if (fresh) ui.run = X.instantiate(ui.run.id, newSeed(), ui.run.sample);
+    var prep = ui.lab.state.prep;
+    ui.lab = L.create(ui.run, { choices: { aliquot: ui.choices.aliquot } });
+    if (prep && !fresh) ui.lab.state.prep = prep;
+    else if (prep) { ui.inPrep = true; ui.stage = 'prep'; newSetup(); buildScene(); ui.lastKey = ''; return refresh(true); }
+    ui.calc = {}; ui.submitted = null; ui.ticks = null; ui.tickV = null; ui.meanV = null; ui.auto = false;
+    var keep = ui.stage; ui.stage = 'setup'; newSetup(); skipSetup(true); ui.stage = keep;
+    buildScene(); ui.t = freshT(); ui.lastColour = null; ui.lastKey = ''; refresh(true);
   }
 
-  /* ---------- Results ---------- */
+  function renderTitrate() {
+    var lab = ui.lab, s = lab.state, b = s.burette, run = ui.run, st = titrateState(), R = lab.results(), T = tr();
+    var t = s.trial, lastT = s.trials[s.trials.length - 1], cur = st === 'done' ? lastT : t;
+    var rough = roughTitre(), redox = run.type === 'redox', tN = nm(run.titrant.id), col = colours();
+    var accurate = cur && cur.kind === 'precise';
+    // The card: step, one instruction, a quieter line.
+    var label = st === 'done' ? trialName(lastT) : t ? trialName(t) : (s.trials.length ? 'Titration ' + (R.precise.length + 1) : 'Rough titration');
+    var endTxt = col.redox ? 'until the first pale pink colour stays' : 'until the indicator ' + (accurate ? 'just ' : '') + 'changes from ' + col.from + ' to ' + col.to;
+    var instr, sub = '';
+    if (st === 'initial') { instr = 'Read the burette and type the initial reading into the table.'; sub = 'Use the magnifier. Readings go to 2 decimal places, to the nearest 0.05 cm³.'; }
+    else if (st === 'run') {
+      instr = (accurate ? 'Add the ' : 'Add the ') + tN + (accurate ? ', swirling, ' : ' quickly, swirling, ') + endTxt + '.';
+      sub = accurate && rough !== null ? 'Your rough titre was ' + f2(rough) + ' cm³. Run in fast to about ' + Math.max(0, Math.floor(rough - 3)) + ' cm³, then add drops.' : 'This first run shows roughly where the endpoint is. Overshooting is fine.';
+      if (run.warm && redox) sub += ' Keep the flask warm: the pink fades slowly at first.';
+    } else {
+      instr = 'Titre ' + f2(lastT.titre) + ' cm³.';
+      sub = R.concordant.length >= 2 ? 'Your accurate titres are concordant: on to the calculation.' : lastT.kind === 'rough' ? 'Now the accurate titrations, adding drop by drop near the end.' : 'Repeat until two accurate titres agree within ' + run.concordanceTol_cm3.toFixed(2) + ' cm³.';
+    }
+    setText('#tLabel', label.toUpperCase()); setText('#tInstr', instr); setText('#tSub', sub);
+    // The feedback line: the first that applies.
+    var fb = titrateFeedback(st, cur, accurate, rough, col);
+    var fh = '<strong>' + fb.lead + '</strong> ' + fb.text;
+    var box = $('#tFb');
+    if (box.innerHTML !== fh) box.innerHTML = fh;
+    box.className = 't-fb ' + fb.kind;
+    // A cue on the flask when it needs swirling.
+    ui.scene.setCue(fb.swirl ? [{ part: 'flask' }] : st === 'run' && !t.readingChange && !b.tap ? [{ part: 'tap' }] : []);
+    renderDock(st, cur, accurate, rough, R);
+    boardNotes();
+  }
+  function setText(sel, txt) { var e = $(sel); if (e.textContent !== txt) e.textContent = txt; }
+  function titrateFeedback(st, cur, accurate, rough, col) {
+    var s = ui.lab.state, b = s.burette, T = tr(), changed = colourChanged(), mix = unmixed();
+    var desc = s.flask ? s.flask.describe().text : '';
+    if (T.msg) return { kind: 'warn', lead: T.msg.lead, text: T.msg.text };
+    if (st === 'initial') return T.note && s.trials.length ? { kind: 'info', lead: T.note.lead, text: T.note.text } : { kind: 'info', lead: 'Read the burette.', text: 'Use the magnifier, type the initial reading into the table, then check it.' };
+    if (st === 'done') {
+      var r = T.recordMsg, extra = r && r.kind === 'mistake' ? ' ' + r.msg.replace(/^Final reading recorded:[^.]*\.[^.]*\.[^.]*\.\s*/, '') : '';
+      return { kind: r && r.kind === 'mistake' ? 'warn' : 'good', lead: 'Recorded.', text: 'Titre ' + f2(cur.titre) + ' cm³ is in the table.' + extra };
+    }
+    if (b.reading !== null && b.reading >= 50 - 1e-9) return { kind: 'warn', lead: 'Burette empty.', text: 'Use Redo this run to refill it and start this titration again.' };
+    if (changed && b.tap) return { kind: 'warn', lead: 'Stop!', text: 'The flask has turned ' + col.to + '. Close the tap.' };
+    if (changed && mix < 0.005 && b.pending <= 0) {
+      if (!accurate) return { kind: 'good', lead: 'Endpoint.', text: 'The colour has changed. Read the burette and type the final volume.' };
+      var e = ui.lab.endpointNow();
+      if (e && e.status === 'overshot' && e.past_cm3 > 0.25) return { kind: 'warn', lead: 'Overshot.', text: 'You went past the endpoint. Read the burette anyway, or redo this run.' };
+      return { kind: 'good', lead: 'Endpoint.', text: 'The flask has just turned ' + col.to + '. Read the burette and type the final volume.' };
+    }
+    if (!b.tap && b.pending <= 0 && mix >= 0.003 && s.swirlAnim <= 0 && !s.keepSwirling) return { kind: 'info', lead: 'Swirl.', text: 'Click the flask to mix before you judge the colour.', swirl: true };
+    var t = s.trial, run_ = t ? t.readingChange : 0;
+    if (accurate && rough !== null && b.flow === 'fast' && run_ > rough - 3) return { kind: 'warn', lead: 'Slow down.', text: 'You’re within 3 cm³ of your rough titre. Switch to Drip.' };
+    if (accurate && rough !== null && b.flow === 'slow' && b.tap && run_ > rough - 0.6) return { kind: 'info', lead: 'Nearly there.', text: 'Stop and use 1 drop at a time, swirling after each.' };
+    if (!run_ && !b.tap) return { kind: 'info', lead: 'Ready.', text: 'Click Start, or the tap, to open it. Click the flask to swirl it.' };
+    return { kind: 'info', lead: s.swirlAnim > 0 || s.keepSwirling ? 'Swirling.' : 'Good.', text: 'The flask is ' + desc + '.' };
+  }
+  // The dock: Start/Stop, Stream/Drip, 1 drop, Keep swirling, Redo, and the reading checks.
+  function renderDock(st, cur, accurate, rough, R) {
+    var s = ui.lab.state, b = s.burette, dock = $('#tDock'), h, key;
+    var ready = st === 'run' && finalReady(), glow = st === 'run' && accurate && rough !== null && s.trial.readingChange > rough - 1;
+    key = [st, b.tap, b.flow, s.keepSwirling, ready, glow, b.pending > 0, R.concordant.length >= 2, s.trials.length].join('|');
+    if (dock.getAttribute('data-key') === key) return;
+    dock.setAttribute('data-key', key);
+    if (st === 'initial') h = '<button class="btn primary big" type="button" data-d="initial">Check initial reading</button>';
+    else if (st === 'done') {
+      var conc = R.concordant.length >= 2;
+      h = '<span class="t-rec">Titre recorded: <b>' + f2(cur.titre) + ' cm³</b></span>' +
+        (conc ? '<button class="btn primary big" type="button" data-d="calc">Calculate</button><button class="btn" type="button" data-d="next">One more titration</button>'
+          : '<button class="btn primary big" type="button" data-d="next">Next titration</button>');
+    } else {
+      h = '<button class="btn big ' + (b.tap ? 'stop' : 'primary') + '" type="button" data-d="run" aria-pressed="' + b.tap + '">' + (b.tap ? 'Stop' : 'Start') + '</button>' +
+        '<span class="seg" role="group" aria-label="Flow"><button type="button" data-d="fast" aria-pressed="' + (b.flow === 'fast') + '">Stream</button><button type="button" data-d="slow" aria-pressed="' + (b.flow === 'slow') + '">Drip</button></span>' +
+        '<button class="btn' + (glow ? ' glow' : '') + '" type="button" data-d="drop"' + (b.pending > 0 ? ' disabled' : '') + ' title="One drop, about 0.05 cm³">1 drop</button>' +
+        '<button class="btn" type="button" data-d="keep" aria-pressed="' + s.keepSwirling + '">Keep swirling</button>' +
+        '<button class="btn ghost" type="button" data-d="redo">Redo this run</button>' +
+        (ready ? '<button class="btn go big" type="button" data-d="final">Check final reading</button>' : '');
+    }
+    dock.innerHTML = h;
+    $$('#tDock [data-d]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var d = btn.getAttribute('data-d');
+        if (d === 'initial') checkInitial();
+        else if (d === 'final') checkFinal();
+        else if (d === 'run') toggleRun();
+        else if (d === 'fast' || d === 'slow') setFlow(d);
+        else if (d === 'drop') oneDrop();
+        else if (d === 'keep') { ui.lab.setKeepSwirling(!s.keepSwirling); ui.lastKey = ''; refresh(); }
+        else if (d === 'redo') redoRun();
+        else if (d === 'next') freshPortion();
+        else if (d === 'calc') openAnalyse();
+      });
+    });
+  }
+
+  /* ---------- Results, on the page: typed readings and concordance ---------- */
   function renderResults() {
     var lab = ui.lab, s = lab.state, h = '';
     if (ui.inPrep) {
@@ -728,29 +796,49 @@
         '<tr><td>Mass transferred</td><td>' + (p.massUsed() === null ? '—' : p.massUsed().toFixed(2) + ' g') + '</td></tr>' +
         '<tr><td>Inversions</td><td>' + p.inversions + '</td></tr></tbody></table>';
       $('#resultsTitle').textContent = 'Weighing';
-      $('#resultsBody').innerHTML = h;
+      if ($('#resultsBody').innerHTML !== h) $('#resultsBody').innerHTML = h;
+      $('#results').removeAttribute('data-key');
       return;
     }
-    $('#resultsTitle').textContent = 'Results';
-    var R = lab.results(), rows = s.trials.slice();
+    var R = lab.results(), rows = s.trials.slice(), st = titrateState(), T = tr(), ready = st === 'run' && finalReady();
     if (s.trial) rows.push(s.trial);
-    h += '<table class="res"><thead><tr><th>Titration</th><th>Initial / cm³</th><th>Final / cm³</th><th>Titre / cm³</th><th><span class="sr-only">Concordant</span></th></tr></thead><tbody>';
-    if (!rows.length) h += '<tr><td colspan="5" class="muted">No titrations yet.</td></tr>';
+    // Rebuilt only when its shape changes, so typing keeps its place.
+    var key = [rows.length, st, ready, R.concordantNs.join(','), s.trials.map(function (x) { return x.titre; }).join(',')].join('|');
+    if ($('#results').getAttribute('data-key') === key) return;
+    $('#results').setAttribute('data-key', key);
+    $('#resultsTitle').innerHTML = 'Results <span class="units">volumes in cm³</span>';
+    h += '<table class="res"><thead><tr><th>Titration</th><th>Initial</th><th>Final</th><th>Titre</th></tr></thead><tbody>';
+    if (!rows.length) h += '<tr><td colspan="4" class="muted">No titrations yet.</td></tr>';
     rows.forEach(function (t) {
-      var cur = t === s.trial, conc = R.concordantNs.indexOf(t.n) >= 0 && R.concordant.length >= 2;
-      h += '<tr class="' + (t.kind === 'rough' ? 'rough' : '') + (cur ? ' current' : '') + (conc ? ' conc' : '') + '"><td>' + (t.kind === 'rough' ? 'Rough' : trialName(t).replace('Titration ', '')) + '</td>' +
-        '<td>' + (t.initialRec === null ? '—' : f2(t.initialRec)) + '</td><td>' + (t.finalRec === null ? '—' : f2(t.finalRec)) + '</td><td>' + (t.titre === undefined ? '—' : f2(t.titre)) + '</td><td>' + (conc ? '<span title="Concordant">✓</span>' : '') + '</td></tr>';
+      var cur = t === s.trial, conc = R.concordant.length >= 2 && R.concordantNs.indexOf(t.n) >= 0;
+      var name = t.kind === 'rough' ? 'Rough' : trialName(t).replace('Titration ', '');
+      var ini = t.initialRec !== null ? f2(t.initialRec) : cur ? '<input class="cell" id="inInitial" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.00" aria-label="Initial burette reading in cm³" value="' + esc(T.initialTyped) + '">' : '—';
+      var fin = t.finalRec !== null ? f2(t.finalRec) : cur && ready ? '<input class="cell" id="inFinal" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="0.00" aria-label="Final burette reading in cm³" value="' + esc(T.finalTyped) + '">' : '—';
+      h += '<tr class="' + (cur ? 'current' : '') + (conc ? ' conc' : '') + (t.kind === 'rough' ? ' rough' : '') + '"><td>' + name + '</td><td>' + ini + '</td><td>' + fin + '</td><td class="titre">' + (t.titre === undefined ? '—' : f2(t.titre)) + '</td></tr>';
     });
     h += '</tbody></table>';
+    // Concordance.
+    var P = R.precise.map(function (x) { return x.titre; }), best = null;
+    for (var i = 0; i < P.length; i++) for (var j = i + 1; j < P.length; j++) { var d = Math.abs(P[i] - P[j]); if (best === null || d < best) best = d; }
+    var tol = ui.run.concordanceTol_cm3;
+    if (R.concordant.length >= 2) h += '<div class="conc-banner good"><b>Concordant</b><span>' + R.concordant.length + ' titres within ' + tol.toFixed(2) + ' cm³. Mean titre = ' + f2(R.meanRaw) + ' cm³.</span></div>';
+    else if (P.length >= 2) h += '<div class="conc-banner warn"><b>Not concordant yet</b><span>Your closest two accurate titres differ by ' + f2(best) + ' cm³. Aim for ' + tol.toFixed(2) + ' cm³ or less.</span></div>';
+    else h += '<div class="conc-banner"><b>Aim: concordant titres</b><span>Two accurate titres within ' + tol.toFixed(2) + ' cm³. The rough one doesn’t count.</span></div>';
     h += '<div class="res-actions"><button class="btn sm ghost" type="button" id="restartBtn">Start again</button></div>';
+    var hadFocus = document.activeElement && document.activeElement.id;
     $('#resultsBody').innerHTML = h;
-    $('#restartBtn').addEventListener('click', function () {
-      // Once the answer has been revealed, starting again gets a new unknown.
-      var fresh = !!ui.submitted;
-      if (!confirm(fresh ? 'Start this experiment again with a new unknown? Your results so far will be cleared.' : 'Start this experiment again with the same unknown? Your results so far will be cleared.')) return;
-      if (fresh) ui.run = X.instantiate(ui.run.id, newSeed(), ui.run.sample);
-      startLab();
-    });
+    var ii = $('#inInitial'), fi = $('#inFinal');
+    if (ii) {
+      ii.addEventListener('input', function () { T.initialTyped = ii.value; if (T.msg) { T.msg = null; renderTitrate(); } });
+      ii.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); checkInitial(); } });
+      if (hadFocus === 'inInitial' || st === 'initial' && ui.focusReading) ii.focus();
+    }
+    if (fi) {
+      fi.addEventListener('input', function () { T.finalTyped = fi.value; if (T.msg) { T.msg = null; renderTitrate(); } });
+      fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); checkFinal(); } });
+      if (hadFocus === 'inFinal') fi.focus();
+    }
+    $('#restartBtn').addEventListener('click', startAgainTitrate);
   }
 
   /* ---------- RP1: the standard solution, one click per step ---------- */
@@ -858,10 +946,10 @@
   function boardNotes() {
     var notes = $('#boardNotes');
     if (!notes) { notes = document.createElement('div'); notes.id = 'boardNotes'; notes.className = 'sr-only'; notes.setAttribute('aria-hidden', 'true'); document.body.appendChild(notes); }
-    var s = ui.lab.state, html = '<h3>' + $('#promptSay').innerHTML.replace(/<span class="(count|tick)"[^>]*>.*?<\/span>\s*/g, '') + '</h3>';
-    var fb = $('#feedback').innerHTML;
+    var s = ui.lab.state, titr = ui.stage === 'titrate';
+    var html = '<h3>' + (titr ? esc($('#tInstr').textContent) : $('#promptSay').innerHTML.replace(/<span class="(count|tick)"[^>]*>.*?<\/span>\s*/g, '')) + '</h3>';
+    var fb = titr ? $('#tFb').innerHTML : $('#feedback').innerHTML;
     if (fb) html += '<p>' + fb + '</p>';
-    if (s.flask && ui.sceneKind === 'titration' && ui.stage === 'titrate') html += '<p>The flask is ' + esc(s.flask.describe().text) + '.</p>';
     if (notes.innerHTML !== html) notes.innerHTML = html;
   }
 
@@ -874,7 +962,9 @@
     document.body.classList.toggle('stage-prep', stage === 'prep');
     $('#method').hidden = stage === 'titrate';
     $('#titrate').hidden = stage !== 'titrate';
+    $('#tDock').hidden = stage !== 'titrate';
     $('#results').hidden = stage === 'setup';
+    if (titr && ui.scene.view !== (stage === 'titrate' ? 'titrate' : 'bench')) { ui.scene.setView(stage === 'titrate' ? 'titrate' : 'bench'); force = true; }
     renderStages();
     if (stage === 'prep') { renderSetup(); renderResults(); }
     else if (stage === 'setup' && titr) renderSetup();
@@ -893,25 +983,10 @@
     if (ui.stage === 'setup' || ui.stage === 'prep') return setupClick(p.part, p.id);
     if (ui.stage === 'titrate') {
       var st = titrateState();
-      if (p.part === 'flask' && st === 'add') swirl();
-      else if ((p.part === 'burette' || p.part === 'tap') && (st === 'initial' || st === 'final')) $('#readingIn').focus();
+      if (p.part === 'flask') swirl();
+      else if (p.part === 'tap' && st === 'run') toggleRun();
+      else if (p.part === 'burette' || p.part === 'tap') { var i = $('#inInitial') || $('#inFinal'); if (i) i.focus(); }
     }
-  }
-  // Press and hold the tap on the burette to run the titrant.
-  function onBenchDown(e) {
-    var p = benchPart(e);
-    if (!p || p.part !== 'tap' || ui.stage !== 'titrate' || titrateState() !== 'add') return;
-    e.preventDefault();
-    ui.svgTap = true;
-    var r = ui.lab.tap(true, ui.lab.state.burette.flow);
-    if (!r.ok) { feedback(r); ui.svgTap = false; }
-    else $('#holdBtn').classList.add('down');
-  }
-  function onBenchUp() {
-    if (!ui.svgTap) return;
-    ui.svgTap = false;
-    $('#holdBtn').classList.remove('down');
-    ui.lab.tap(false); announce('Tap closed.'); ui.lastKey = '';
   }
 
   /* ---------- Analysis ---------- */
@@ -1313,13 +1388,11 @@
   /* ---------- Presenter mode: text on the bench sized for the board ---------- */
   function sizeForBoard(only) {
     var presenting = document.body.classList.contains('presenting');
-    // On a phone, the titration bench is cropped to the stand, burette and flask.
-    // Not while setting up: every piece of apparatus has to be there to click.
-    var bsvg = $('#benchSvg'), crop = ui.sceneKind === 'titration' && ui.stage === 'titrate' && !presenting && window.innerWidth < 560;
+    // While titrating, the drawing is cropped to the stand, burette, flask and magnifier.
+    var bsvg = $('#benchSvg');
     if (bsvg && ui.sceneKind) {
-      var vb = crop ? '100 0 640 600' : '0 0 960 600';
+      var vb = ui.sceneKind === 'titration' && ui.scene.viewBox ? ui.scene.viewBox() : '0 0 960 600';
       if (bsvg.getAttribute('viewBox') !== vb) bsvg.setAttribute('viewBox', vb);
-      $('#bench').classList.toggle('crop', crop);
     }
     (only ? only.map(function (x) { return [x, 1]; }) : [['#benchSvg', 1], ['#lensSvg', 1]]).forEach(function (pair) {
       var svg = $(pair[0]); if (!svg) return;
@@ -1374,10 +1447,8 @@
     var t = e.target;
     if (e.ctrlKey || e.metaKey || e.altKey || (t && t.closest && t.closest('input, textarea, select, [contenteditable="true"], dialog'))) return;
     var k = e.key.toLowerCase(), st = titrateState();
-    var map = { '1': '1.0', '2': '0.5', '3': '0.1', '4': 'drop' };
-    if (map[k] && st === 'add') { e.preventDefault(); act(function () { return ui.lab.add(map[k]); }); }
-    else if (k === 's' && st === 'add') { e.preventDefault(); swirl(); }
-    else if (k === 'r' && (st === 'initial' || st === 'final')) { e.preventDefault(); $('#readingIn').focus(); }
+    if (k === 's' && st === 'run') { e.preventDefault(); swirl(); }
+    else if (k === 'r') { var i = $('#inInitial') || $('#inFinal'); if (i) { e.preventDefault(); i.focus(); } }
   }
 
   /* ---------- Start ---------- */
@@ -1392,11 +1463,9 @@
     $('#btnPrint').addEventListener('click', function () { openPrint(null); });
     $('#printDlg').addEventListener('close', function () { if ($('#printDlg').returnValue === 'print') doPrint(); });
     $('#benchSvg').addEventListener('click', onBenchClick);
-    $('#benchSvg').addEventListener('pointerdown', onBenchDown);
     $('#benchSvg').addEventListener('keydown', function (e) {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-part]')) { e.preventDefault(); onBenchClick(e); }
     });
-    ['pointerup', 'pointercancel', 'blur'].forEach(function (ev) { window.addEventListener(ev, onBenchUp); });
     $('#codeGo').addEventListener('click', function () {
       var c = parseCode($('#codeIn').value);
       if (!c) { $('#codeMsg').textContent = 'That isn’t a code from this page: it looks like 3-K7Q2.'; return; }
@@ -1408,8 +1477,8 @@
     new MutationObserver(function () { setTimeout(sizeForBoard, 60); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     if (window.SST_PRESENTER) {
       SST_PRESENTER.setup({
-        stage: function () { return ui.view === 'lab' ? (ui.stage === 'titrate' ? ['#bench', '#results'] : '#bench') : ui.view === 'analyse' ? '#analyse' : ui.view === 'brief' ? '#brief' : '#picker'; },
-        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? '#titrate' : '#method'; },
+        stage: function () { return ui.view === 'lab' ? '#bench' : ui.view === 'analyse' ? '#analyse' : ui.view === 'brief' ? '#brief' : '#picker'; },
+        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? ['#tDock', '#results'] : ['#method', '#results']; },
         notes: function () { return ui.view === 'lab' ? '#boardNotes' : null; },
         hide: '#srLive, #prompt',
         rows: true, ratio: 0.62

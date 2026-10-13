@@ -138,10 +138,9 @@ body.in-lab{ height:100dvh; display:flex; flex-direction:column; overflow:hidden
 body.in-lab .top{ flex:none; }
 .lab{
   flex:1 1 auto; min-height:0; width:100%; max-width:1800px; margin:0 auto;
-  display:grid; grid-template-columns:minmax(0,1fr) clamp(320px,27vw,430px); grid-template-rows:auto minmax(0,1fr); gap:10px 12px;
+  display:grid; grid-template-columns:minmax(0,1fr) clamp(320px,27vw,430px); grid-template-rows:minmax(0,1fr); gap:10px 12px;
   padding:0 clamp(12px,2vw,24px) 12px;
 }
-.lab > .stages{ grid-column:1 / -1; }
 
 /* Stage strip: where you are in the practical. */
 .stages{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
@@ -152,7 +151,17 @@ body.in-lab .top{ flex:none; }
 .stages li.done .n{ background:oklch(.3 .07 155); color:var(--good); }
 .stages li.now{ color:var(--ink); border-color:var(--blue); background:var(--soft); }
 .stages li.now .n{ background:var(--btn); color:#fff; }
-.analyse .stages{ margin:0 0 12px; }
+/* In the lab: the page header, the stages and the tools in one slim row. */
+body:is(.in-lab,.in-analyse) .top{ flex-wrap:nowrap; align-items:center; gap:10px 16px; padding-top:8px; padding-bottom:8px; }
+body:is(.in-lab,.in-analyse) .top .grow{ flex:0 1 auto; min-width:0; }
+body:is(.in-lab,.in-analyse) .top h1{ font-size:clamp(1rem,1.5vw,1.2rem); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body:is(.in-lab,.in-analyse) .top .lede{ display:none; }
+body:is(.in-lab,.in-analyse) .top .stages{ flex:1 1 auto; flex-wrap:nowrap; }
+body:is(.in-lab,.in-analyse) .top .actions{ flex:none; flex-wrap:nowrap; }
+body:is(.in-lab,.in-analyse) .top .actions .btn{ padding:8px 10px; min-height:40px; }
+body:is(.in-lab,.in-analyse) .top .actions .btn:not(.primary) .blabel{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+@media (max-width:1180px){ body:is(.in-lab,.in-analyse) .top .actions .btn .blabel{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; } }
+@media (max-width:980px){ body:is(.in-lab,.in-analyse) .top{ flex-wrap:wrap; } body:is(.in-lab,.in-analyse) .top .stages{ order:3; flex-basis:100%; flex-wrap:wrap; } }
 
 /* The prompt: one clear action, big, above the bench. */
 .prompt{ flex:none; display:flex; flex-direction:column; gap:6px; }
@@ -206,7 +215,54 @@ body.in-lab .top{ flex:none; }
 .side{ display:flex; flex-direction:column; gap:10px; min-height:0; }
 .side .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; overflow:auto; min-height:0; }
 #method{ flex:1 1 auto; }
-#titrate{ flex:0 1 auto; }
+/* Stage 2: instruction card | the apparatus | results, and the dock below. */
+body.stage-titrate .lab{ grid-template-columns:clamp(240px,21vw,310px) minmax(0,1fr) clamp(260px,23vw,330px); grid-template-rows:minmax(0,1fr) auto;
+  grid-template-areas:"card bench res" "dock dock dock"; padding-top:4px; }
+body.stage-titrate .stagecol, body.stage-titrate .side{ display:contents; }
+body.stage-titrate #prompt, body.stage-titrate .lens, body.stage-titrate .colourchip{ display:none; }
+body.stage-titrate #titrate{ grid-area:card; align-self:start; }
+body.stage-titrate #bench{ grid-area:bench; min-height:0; }
+body.stage-titrate #results{ grid-area:res; align-self:start; max-height:100%; }
+body.stage-titrate #tDock{ grid-area:dock; }
+#benchSvg:not(.titrate-view) .mag-only{ display:none; }
+#benchSvg.titrate-view .shelf-only{ display:none; }
+.t-card{ padding:16px !important; }
+.t-label{ margin:0; font-size:.72rem; font-weight:700; letter-spacing:.12em; color:var(--blue); }
+.t-instr{ margin:8px 0 0; font-size:1.06rem; line-height:1.4; font-weight:600; }
+.t-sub{ margin:8px 0 0; font-size:.84rem; line-height:1.45; color:var(--muted); }
+.t-sub:empty{ display:none; }
+.t-fb{ margin-top:14px; padding:10px 12px; border-radius:10px; font-size:.9rem; line-height:1.4; border:1px solid var(--line); background:var(--card); }
+.t-fb.good{ border-color:oklch(.5 .1 155); background:var(--goodbg); }
+.t-fb.warn{ border-color:oklch(.55 .12 80); background:var(--warnbg); }
+.t-fb.info{ border-color:oklch(.5 .1 245); background:var(--soft); }
+.t-dock{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px; padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+.t-dock .btn, .t-dock .seg button{ min-height:46px; }
+.t-dock .btn.big{ min-width:150px; font-size:1rem; }
+.btn.stop{ background:#b42318; border-color:#b42318; color:#fff; }
+.btn.go{ background:#17794a; border-color:#17794a; color:#fff; animation:goPulse 1.6s ease-out infinite; }
+.btn.glow{ border-color:var(--blue); box-shadow:0 0 0 3px oklch(.6 .14 245 / .35); }
+@keyframes goPulse{ 0%{ box-shadow:0 0 0 0 oklch(.6 .13 155 / .7); } 100%{ box-shadow:0 0 0 14px oklch(.6 .13 155 / 0); } }
+@media (prefers-reduced-motion:reduce){ .btn.go{ animation:none; } }
+.t-rec{ font-size:1rem; color:var(--body); }
+.t-rec b{ color:var(--good); }
+#results .units{ font-size:.75rem; font-weight:500; color:var(--muted); margin-left:6px; }
+table.res tr.current td{ background:var(--soft); }
+table.res td.titre{ font-weight:700; }
+table.res tr:not(.current) td.titre{ color:var(--good); }
+table.res tr.rough td.titre{ color:var(--body); }
+input.cell{ width:5.2em; padding:4px 6px; font-size:.95rem; font-weight:700; text-align:right; border-radius:6px; border:1px solid var(--line2); background:var(--input); color:var(--ink); }
+input.cell:focus-visible{ outline:3px solid var(--blue); outline-offset:1px; }
+.conc-banner{ margin-top:12px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); font-size:.88rem; line-height:1.4; }
+.conc-banner b{ display:block; }
+.conc-banner.good{ border-color:oklch(.5 .1 155); background:var(--goodbg); }
+.conc-banner.warn{ border-color:oklch(.55 .12 80); background:var(--warnbg); }
+@media (max-width:980px){
+  body.stage-titrate .lab{ display:flex; flex-direction:column; }
+  body.stage-titrate .stagecol, body.stage-titrate .side{ display:contents; }
+  body.stage-titrate #titrate{ order:1; align-self:stretch; } body.stage-titrate #bench{ order:2; min-height:440px; aspect-ratio:auto; }
+  body.stage-titrate #results{ align-self:stretch; }
+  body.stage-titrate #tDock{ order:3; position:sticky; bottom:0; z-index:5; } body.stage-titrate #results{ order:4; }
+}
 body.stage-titrate #results{ flex:1 1 auto; max-height:none; }
 .setup-mode{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin:0 0 12px; }
 .setup-mode:empty{ display:none; }
@@ -372,6 +428,12 @@ body.presenting #picker .group > p, body.presenting #picker .picker-note{ font-s
 body.presenting .analyse{ font-size:var(--sst-pr-label); }
 body.presenting .analyse h2{ font-size:var(--sst-pr-title); }
 body.presenting .feedback{ display:none; }
+body.presenting #results{ overflow:auto; }
+body.presenting.stage-titrate table.res th, body.presenting.stage-titrate table.res td{ padding:.08em .18em; }
+body.presenting.stage-titrate input.cell{ width:4.2em; font-size:1em; }
+body.presenting .t-card, body.presenting .t-instr, body.presenting .t-fb, body.presenting #results{ font-size:var(--sst-pr-label); }
+body.presenting .t-sub, body.presenting .t-label, body.presenting .conc-banner, body.presenting #results .units{ font-size:var(--sst-pr-label); }
+body.presenting .t-dock .btn, body.presenting .t-dock .seg button, body.presenting .t-rec{ font-size:var(--sst-pr-control); }
 body.presenting #method, body.presenting #titrate{ font-size:var(--sst-pr-label); }
 body.presenting #method h3, body.presenting #titrate h3{ font-size:var(--sst-pr-label); }
 body.presenting .steps li, body.presenting .steps li .why, body.presenting .step-text, body.presenting #titrate .hint, body.presenting .score span{ font-size:var(--sst-pr-label); }
