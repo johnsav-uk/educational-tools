@@ -126,6 +126,7 @@
   function openBrief(id, seed, sample) {
     var def = X.byId(id);
     ui.level = def.pathway === 'gcse' ? 'gcse' : 'alevel';
+    ui.setupMode = null;
     ui.run = X.instantiate(id, seed, sample || (def.samples ? ui.choices.sample || def.samples[0].key : undefined));
     ui.choices = { aliquot: 'pipette25', sample: ui.run.sample };
     renderBrief();
@@ -214,7 +215,9 @@
     ui.lab = L.create(run, { choices: { aliquot: ui.choices.aliquot } });
     ui.hints = 0; ui.calc = {}; ui.submitted = null; ui.ticks = null; ui.prepCalc = {}; ui.lastColour = null;
     ui.tickV = null; ui.meanV = null; ui.reading = false; ui.auto = false;
-    if (!ui.setupMode) ui.setupMode = run.mode === 'guided' ? 'learn' : 'test';
+    // Learn first for the guided experiment and for RP1, whose solution is new to
+    // everyone; Test me for the rest. Chosen afresh for each experiment opened.
+    if (!ui.setupMode) ui.setupMode = run.mode === 'guided' || run.prep ? 'learn' : 'test';
     ui.inPrep = !!run.prep;
     ui.stage = ui.inPrep ? 'prep' : 'setup';
     newSetup();
