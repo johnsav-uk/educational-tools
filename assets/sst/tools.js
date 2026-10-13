@@ -191,6 +191,13 @@ window.SST_TOOLS = [
     image: "mass-weight.png",
     keywords: "mass weight difference w = m x g w=mg weight equals mass times gravitational field strength g n/kg newtons per kilogram 9.8 10 n/kg kilograms kg newtons n force of gravity gravity gravitational pull solar system planets sun mercury venus earth moon mars jupiter saturn uranus neptune pluto dwarf planet surface gravity weigh on other planets weightless weightlessness astronaut space newtonmeter newton meter spring balance forcemeter bathroom scales jump height moon jump dropping hammer feather apollo calculator worked examples rearrange quiz presenter mode whiteboard ks3 physics forces year 7 year 8 year 9" },
 
+  { title: "Who Wants to Be a Science Millionaire? (beta)", url: "games/science/millionaire/",
+    topic: "games",
+    blurb: "Climb a fifteen-question prize ladder with 50:50, Ask the Audience and Phone a Friend, using only the topics your class has been taught.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
+    image: "science-millionaire.png",
+    keywords: "who wants to be a millionaire science millionaire quiz game show multiple choice lifelines 50:50 fifty fifty ask the audience phone a friend safety net prize ladder starter plenary revision whiteboard class aqa 8461 8462 8463 8464 trilogy combined science separate foundation higher edexcel pearson 1bi0 1ch0 1ph0 1sc0 cell biology organisation infection bioenergetics homeostasis inheritance ecology atomic structure bonding quantitative chemical changes energy rates organic analysis atmosphere resources electricity particle model radioactivity forces waves magnetism space physics" },
+
   { title: "Science Retrieval Presenter", url: "games/science/retrieval-quiz.html",
     topic: "games",
     blurb: "Timed recall across biology, chemistry and physics, mixing in earlier topics and required practicals.",
@@ -231,12 +238,5 @@ window.SST_TOOLS = [
     blurb: "Bid, dare and bank the winnings in a list-naming game show for the whole class.",
     kind: "Revision Game", levels: ["KS3", "GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
     image: "who-dares-wins.png",
-    keywords: "who dares wins bidding list naming game show bank risk" },
-
-  { title: "Who Wants to Be a Science Millionaire? (beta)", url: "games/science/millionaire/",
-    topic: "games",
-    blurb: "Climb a fifteen-question prize ladder with 50:50, Ask the Audience and Phone a Friend, using only the topics your class has been taught.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game", "Interactive"],
-    image: "science-millionaire.png",
-    keywords: "who wants to be a millionaire science millionaire quiz game show multiple choice lifelines 50:50 fifty fifty ask the audience phone a friend safety net prize ladder starter plenary revision whiteboard class aqa 8461 8462 8463 8464 trilogy combined science separate foundation higher edexcel pearson 1bi0 1ch0 1ph0 1sc0 cell biology organisation infection bioenergetics homeostasis inheritance ecology atomic structure bonding quantitative chemical changes energy rates organic analysis atmosphere resources electricity particle model radioactivity forces waves magnetism space physics" }
+    keywords: "who dares wins bidding list naming game show bank risk" }
 ];

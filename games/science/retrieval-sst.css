@@ -43,7 +43,6 @@ html, body { background-color: var(--sst-bg); background-image: none; }
   background: var(--sst-panel); border: 1px solid var(--sst-line); border-radius: 14px; min-height: 0;
 }
 #wa-header::after { display: none; }
-#wa-logo { border: 1px solid var(--sst-line); border-radius: 8px; }
 #wa-title { font-family: var(--sst-font); font-weight: 800; font-size: clamp(16px, 1.8vw, 20px); letter-spacing: -0.01em; color: var(--sst-text); text-shadow: none; }
 .subtitle { color: var(--sst-text-muted); opacity: 1; }
 #wa-joke-toggle, #wa-sound-toggle {
