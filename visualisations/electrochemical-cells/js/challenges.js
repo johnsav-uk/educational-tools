@@ -21,7 +21,8 @@
     var ids = pool || E.HALF_CELLS.map(function (x) { return x.id; }), a, b, n = 0;
     do { a = pick(rnd, ids); b = pick(rnd, ids); n++; }
     while ((a === b || (needDiffN && E.halfCell(a).n === E.halfCell(b).n)) && n < 200);
-    return [a, b];
+    // Negative electrode (more negative E°) on the left, as the bench draws it.
+    return E.halfCell(a).E <= E.halfCell(b).E ? [a, b] : [b, a];
   }
 
   /* ---------- GCSE ---------- */

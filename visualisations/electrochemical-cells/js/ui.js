@@ -52,6 +52,18 @@
   };
   function st() { if (!ui.st[ui.act]) ui.st[ui.act] = defaults(ui.act); return ui.st[ui.act]; }
   function act() { return K.activity(ui.act); }
+  /* The bench follows the convention: the half-cell with the more negative E°
+     (the negative electrode) goes on the left. Not in the required practical,
+     where pupils set the cell up and find the positive terminal themselves, nor
+     for the EMF of a cell "as written", which is about the order chosen. */
+  function conventional(s) {
+    if (!/^(series|emf|conditions|daniell)$/.test(ui.act) || (ui.act === 'emf' && s.asWritten)) return false;
+    var L = E.halfCell(s.left), R = E.halfCell(s.right);
+    if (!L || !R || L.E <= R.E) return false;
+    var t = s.left; s.left = s.right; s.right = t;
+    t = s.concL; s.concL = s.concR; s.concR = t;
+    return true;
+  }
 
   /* ---------- Engine results for the current activity ---------- */
   function galvanicHalf(id) { return E.halfCell(id); }
@@ -166,8 +178,9 @@
       h += '<button class="btn primary wide" type="button" data-act="connect" id="c-connect">' + (s.connected ? 'Disconnect and predict again' : 'Connect the voltmeter') + '</button>';
     } else if (ui.act === 'series' || ui.act === 'emf') {
       h += '<h3>Choose two half-cells</h3>' + select('left', 'Left half-cell', HALF_OPTS, s.left) + select('right', 'Right half-cell', HALF_OPTS, s.right);
-      h += '<button class="btn sm" type="button" data-act="swap">Swap left and right</button>';
       if (ui.act === 'emf') h += toggle('asWritten', 'Treat the cell as written: the left half-cell is oxidised', s.asWritten);
+      if (ui.act === 'emf' && s.asWritten) h += '<button class="btn sm" type="button" data-act="swap">Swap left and right</button>';
+      else h += '<p class="hint-line">The more negative half-cell (the negative electrode) always goes on the left.</p>';
       h += '<button class="btn primary wide" type="button" data-act="connect" id="c-connect">' + (s.connected ? 'Disconnect and predict again' : 'Connect the voltmeter') + '</button>';
     } else if (ui.act === 'rp8') {
       h += '<h3>Left half-cell</h3>' + select('lEl', 'Electrode', RP8_EL_OPTS, s.lEl) + select('lSol', 'Solution (1.00 mol dm⁻³)', RP8_SOL_OPTS, s.lSol);
@@ -178,6 +191,7 @@
     } else if (ui.act === 'conditions') {
       h += '<h3>Half-cells</h3>' + select('left', 'Left half-cell', HALF_OPTS, s.left) + select('concL', 'Left concentration of ' + E.uni(E.halfCell(s.left).ion), CONC_OPTS, s.concL);
       h += select('right', 'Right half-cell', HALF_OPTS, s.right) + select('concR', 'Right concentration of ' + E.uni(E.halfCell(s.right).ion), CONC_OPTS, s.concR);
+      h += '<p class="hint-line">The more negative half-cell (the negative electrode) always goes on the left.</p>';
       h += '<p class="hint-line">Temperature: 298 K. Temperature also changes a cell\'s voltage, but this simulator does not model it, so it stays at 298 K.</p>';
     } else if (a.scene === 'challenge') {
       h += challengeControls();
@@ -301,13 +315,15 @@
       return h;
     }
     h += '<h3>Predict first</h3>';
-    h += q('ox', 'Which half-cell will be oxidised?', [['left', 'Left: ' + L.name], ['right', 'Right: ' + R.name]], s.pred.ox, s.connected);
-    h += q('pos', 'Which electrode will be positive?', [['left', 'Left: ' + L.name], ['right', 'Right: ' + R.name]], s.pred.pos, s.connected);
+    // By name, in alphabetical order: the sides would give the answer away.
+    var byName = [L, R].slice().sort(function (a, b) { return a.name < b.name ? -1 : 1; }).map(function (h) { return [h.id, K.cap(h.name)]; });
+    h += q('ox', 'Which half-cell will be oxidised?', byName, s.pred.ox, s.connected);
+    h += q('pos', 'Which electrode will be positive?', byName, s.pred.pos, s.connected);
     h += q('e', 'How do electrons travel?', [['lr', 'Through the wire, left to right'], ['rl', 'Through the wire, right to left'], ['bridge', 'Through the salt bridge']], s.pred.e, s.connected);
     if (s.connected && g.bridgeOk && g.bridgeOk.ok) {
-      var c = g.cell, anSide = c.anode.id === L.id ? 'left' : 'right', catSide = anSide === 'left' ? 'right' : 'left';
-      if (s.pred.ox) h += fb(s.pred.ox === anSide, s.pred.ox === anSide ? 'The ' + c.anode.name + ' half-cell has the less positive E° (' + v(c.anode.E) + '), so it loses electrons: oxidation.' : 'The ' + (s.pred.ox === 'left' ? L : R).name + ' half-cell has the more positive E°, so it is reduced. The half-cell with the less positive E° is oxidised.');
-      if (s.pred.pos) h += fb(s.pred.pos === catSide, s.pred.pos === catSide ? 'You chose the more positive reduction potential as the positive electrode. Reduction happens at this electrode.' : 'The positive electrode is the one where reduction happens: the half-cell with the more positive E°, ' + c.cathode.name + '.');
+      var c = g.cell, anSide = c.anode.id === L.id ? 'left' : 'right';
+      if (s.pred.ox) h += fb(s.pred.ox === c.anode.id, s.pred.ox === c.anode.id ? 'The ' + c.anode.name + ' half-cell has the less positive E° (' + v(c.anode.E) + '), so it loses electrons: oxidation.' : 'The ' + c.cathode.name + ' half-cell has the more positive E°, so it is reduced. The half-cell with the less positive E° is oxidised.');
+      if (s.pred.pos) h += fb(s.pred.pos === c.cathode.id, s.pred.pos === c.cathode.id ? 'You chose the more positive reduction potential as the positive electrode. Reduction happens at this electrode.' : 'The positive electrode is the one where reduction happens: the half-cell with the more positive E°, ' + c.cathode.name + '.');
       if (s.pred.e) h += s.pred.e === 'bridge' ? fb(false, 'The salt bridge completes the ionic pathway and keeps the charges balanced; it does not carry electrons. Electrons travel through the external wire.') :
         fb(s.pred.e === (anSide === 'left' ? 'lr' : 'rl'), 'The electrons travel from the negative electrode (' + c.anode.name + ') to the positive electrode (' + c.cathode.name + ') through the external circuit.');
     }
@@ -505,6 +521,7 @@
     if (sc.type === 'simple') { var rs = E.simpleCell(sc.m1, sc.m2, sc.el); return { type: 'simple', m1: sc.m1, m2: sc.m2, electrolyte: sc.el, result: rs, connected: answered, meterText: answered ? rs.typical.toFixed(2) + ' V' : '—', show: { roles: true, flow: true } }; }
     if (sc.type === 'galvanic') {
       var cell = E.buildCell(sc.left, sc.right), L = E.halfCell(sc.left), R = E.halfCell(sc.right);
+      if (L && R && L.E > R.E) { var tl = L; L = R; R = tl; }
       return { type: 'galvanic', left: L, right: R, bridge: 'kno3', cell: cell, connected: true, circuitOk: true, meter: true,
         meterText: answered ? v2(cell.emf) : '?', vLead: cell.cathode.id === L.id ? 'left' : 'right', show: { roles: answered || sc.roles, flow: answered, values: sc.values } };
     }
@@ -620,6 +637,8 @@
     if (ui.act === 'rp8' && /^(lEl|lSol|rEl|rSol|bridge)$/.test(k)) { s.ans = {}; s.readIn = ''; s.readNote = ''; s.predV = null; s.predIn = ''; s.predNote = ''; s.reasons = {}; s.reasonsChecked = false; ui.results.rp8 = []; s.trial = 0; }
     if (ui.act === 'electrolysis' && k === 'id') { s.supply = false; s.pred = {}; buildControls(); }
     if (ui.act === 'conditions' && (k === 'left' || k === 'right')) buildControls();
+    if (ui.act === 'emf' && k === 'asWritten') buildControls();
+    if ((k === 'left' || k === 'right' || k === 'asWritten') && conventional(s)) { buildControls(); say('Half-cells swapped: the negative electrode goes on the left.'); }
     refresh();
   }
   function onClick(e) {

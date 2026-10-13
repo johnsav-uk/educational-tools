@@ -153,9 +153,13 @@
       text(g, x, y + i * 19, ln, { 'text-anchor': anchor, fill: i === 0 ? (colour || C.text) : C.muted, 'font-size': i === 0 ? 16 : 14, 'font-weight': i === 0 ? 700 : 500, 'class': i === 0 ? 'role' : 'role sub', 'data-y0': y, 'data-line': i });
     });
   }
+  // A solid disc on the top of the electrode itself, clear of the wire above it,
+  // so it can't be read as belonging to the wire or the meter. Solid red / blue
+  // with a white sign stays distinct on a copper electrode.
   function signBadge(g, x, y, sign) {
-    el('circle', { cx: x, cy: y, r: 13, fill: sign === '+' ? 'rgba(229,72,77,0.18)' : 'rgba(71,181,250,0.16)', stroke: sign === '+' ? C.red : C.blue, 'stroke-width': 1.5 }, g);
-    el('path', { d: sign === '+' ? 'M' + (x - 6) + ',' + y + 'H' + (x + 6) + 'M' + x + ',' + (y - 6) + 'V' + (y + 6) : 'M' + (x - 6) + ',' + y + 'H' + (x + 6), stroke: C.text, 'stroke-width': 2.4 }, g);
+    var pos = sign === '+';
+    el('circle', { cx: x, cy: y, r: 12, fill: pos ? '#d93a40' : '#1f7fd6', stroke: '#ffffff', 'stroke-width': 1.5, 'class': 'sign-badge' }, g);
+    el('path', { d: pos ? 'M' + (x - 6) + ',' + y + 'H' + (x + 6) + 'M' + x + ',' + (y - 6) + 'V' + (y + 6) : 'M' + (x - 6) + ',' + y + 'H' + (x + 6), stroke: '#ffffff', 'stroke-width': 3, 'stroke-linecap': 'round', 'class': 'sign-mark' }, g);
   }
   // A warning across the bottom of the scene, wrapped to the scene's width.
   function banner(g, msg, y, cx, width) {
@@ -255,7 +259,7 @@
   function roleTags(g, x, side, lines, sign) {
     var tx = side === 'left' ? x - 30 : x + 30, anchor = side === 'left' ? 'end' : 'start';
     tag(g, tx, 214, lines, anchor, sign === '+' ? '#ff9b9e' : '#8fd0ff');
-    signBadge(g, x, 172, sign);
+    signBadge(g, x, G.eTop + 22, sign);
   }
   // Ions made at an electrode drift away from it; ions used drift towards it.
   Scene.prototype.electrodeIons = function (layer, x, ch, outward, hc) {
@@ -272,6 +276,9 @@
   var ELYTE_TINT = { nacl: TINT.salt, h2so4: TINT.acid, lemon: TINT.lemon, water: TINT.water };
   Scene.prototype.simple = function (m) {
     var g = el('g', {}, this.svg), lw = el('g', {}, g), ls = el('g', {}, g), fx = el('g', {}, g), top = el('g', {}, g);
+    // The more reactive metal (the negative electrode) is always drawn on the left.
+    var mA = E.METAL[m.m1], mB = E.METAL[m.m2];
+    if (mA && mB && mA.reactivity > mB.reactivity) m = Object.assign({}, m, { m1: m.m2, m2: m.m1 });
     var x1 = 390, x2 = 570, el1 = E.METAL[m.m1], el2 = E.METAL[m.m2], elyte = E.ELECTROLYTE[m.electrolyte];
     beaker(ls, 290, 262, 380, 238, 312, elyte ? ELYTE_TINT[elyte.id] : 'rgba(159,180,204,0.04)', elyte ? elyte.name : 'empty beaker');
     if (el1) { electrode(ls, x1, 186, 452, el1.symbol, 30); text(top, x1 - 34, 290, el1.name, { 'text-anchor': 'end', fill: C.text, 'font-size': 17, 'font-weight': 700 }); }
@@ -285,7 +292,7 @@
       if (m.show.roles) {
         tag(top, negLeft ? x1 - 34 : x2 + 34, 316, ['negative (−)'], negLeft ? 'end' : 'start', '#8fd0ff');
         tag(top, negLeft ? x2 + 34 : x1 - 34, 316, ['positive (+)'], negLeft ? 'start' : 'end', '#ff9b9e');
-        signBadge(top, xn, 172, '−'); signBadge(top, xp, 172, '+');
+        signBadge(top, xn, 208, '−'); signBadge(top, xp, 208, '+');
       }
       if (m.show.flow) {
         this.flow(fx, [[xn, 192], [xn, 150], [negLeft ? 430 : 530, 150], [negLeft ? 430 : 530, 112], [negLeft ? 530 : 430, 112], [negLeft ? 530 : 430, 150], [xp, 150], [xp, 192]], 12, 'e', { speed: 60 });

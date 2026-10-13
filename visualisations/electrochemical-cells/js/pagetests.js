@@ -72,9 +72,9 @@
         t.ok('the meter in the diagram shows the same reading', D.getElementById('meterText').textContent === r.reading.toFixed(2) + ' V');
         t.ok('zinc is labelled negative in the diagram', /negative \(−\)/.test(svgText()));
         t.ok('both predictions get explained feedback', D.querySelectorAll('#predictCard .fb.good').length === 2 && /more reactive/.test(txt('#predictCard')));
-        // Electrons start at zinc (right, x = 570) and the chevron points left.
+        // Zinc was chosen as electrode 2 but is drawn on the left (the negative side), so the chevrons point right.
         var chev = D.querySelector('#cellSvg path[transform*="rotate(180)"]');
-        t.ok('electron chevrons point from zinc (right) to copper (left)', !!chev);
+        t.ok('zinc drawn on the left: electron chevrons point left to right', !chev && /^Zinc$/i.test(D.querySelector('#cellSvg text[text-anchor="end"]').textContent));
         t.ok('electrons are drawn (markers present)', markers() > 0);
         P.set({ m2: 'cu' });
         t.ok('two copper electrodes: 0.00 V and an explanation, no electrons', /0\.00 V/.test(txt('#readout')) && /same metal/.test(txt('#readout')) && markers() === 0);
@@ -102,7 +102,7 @@
 
       step(function () {
         t.group('Test A/B/C in the page: A-level cells');
-        P.go('alevel', 'daniell'); P.set({ pred: { ox: 'left', pos: 'right', e: 'bridge' } });
+        P.go('alevel', 'daniell'); P.set({ pred: { ox: 'zn', pos: 'cu', e: 'bridge' } });
         D.getElementById('c-connect').click();
       });
       step(function () {
