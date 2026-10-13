@@ -229,7 +229,8 @@
     ui.setupMode = mode;
     var prep = ui.lab.state.prep;
     ui.lab = L.create(ui.run, { choices: { aliquot: ui.choices.aliquot } });
-    if (prep) ui.lab.state.prep = prep;
+    if (prep && ui.stage !== 'prep') ui.lab.state.prep = prep;
+    if (ui.stage === 'prep') ui.prepCalc = {};
     newSetup(); ui.lastColour = null; ui.reading = false;
     buildScene();
     feedback(null);
@@ -242,7 +243,6 @@
       ui.scene = new B.PrepScene(svg, run); ui.lens = new B.NeckLens(lens); ui.sceneKind = 'prep';
       $('#lensCap').textContent = 'Bottom of the meniscus on the mark';
       svg.setAttribute('aria-label', 'Balance with weighing bottle, beaker with glass rod, 250.0 cm³ volumetric flask, deionised water and dropper.');
-      ui.tab = 'weigh';
     } else {
       ui.scene = new B.TitrationScene(svg, run); ui.lens = new B.BuretteLens(lens, run); ui.sceneKind = 'titration';
       $('#lensCap').innerHTML = run.titrant.id === 'KMnO4' ? '<span class="cap-long">Too dark to see through: </span>read the top of the meniscus' : 'Read the bottom of the meniscus';
@@ -251,7 +251,6 @@
     }
     svg.querySelectorAll('text').forEach(function (t) { t.setAttribute('data-fs', t.getAttribute('font-size') || '13'); });
     $('#clock').hidden = !(run.type === 'redox' && run.warm);
-    buildDock();
     buildTitrate();
     sizeForBoard();
   }
@@ -361,6 +360,7 @@
     return 'until the indicator just changes from ' + from + ' to ' + to;
   }
   function setupSteps() {
+    if (ui.stage === 'prep') return prepSteps();
     var run = ui.run, lab = ui.lab, s = lab.state, redox = run.type === 'redox';
     var tN = nm(run.titrant.id), aN = run.prep ? 'sodium carbonate solution' : nm(run.analyte.id);
     if (!/solution|sample/.test(aN)) aN += ' solution';
@@ -430,6 +430,7 @@
   }
   // The rest of the method, for the end of the set-up.
   function methodTail() {
+    if (ui.stage === 'prep') return ['Calculate the concentration from the mass used: amount = mass ÷ ' + ui.run.standard.Mr.toFixed(1) + ' g mol⁻¹, then concentration = amount ÷ 0.2500 dm³.'];
     var run = ui.run, tN = nm(run.titrant.id), redox = run.type === 'redox';
     return [
       'Read the burette at eye level, from the ' + (redox ? 'top' : 'bottom') + ' of the meniscus, and record the initial reading to 2 decimal places.',
@@ -438,7 +439,7 @@
       'Repeat until you have concordant titres, within ' + run.concordanceTol_cm3.toFixed(2) + ' cm³ of each other, and take their mean.'
     ];
   }
-  var PART_NAME = { wash: 'wash bottle', funnel: 'funnel', waste: 'waste beaker', tap: 'tap on the burette', pipette: 'pipette', flask: 'conical flask', tile: 'white tile', burette: 'burette' };
+  var PART_NAME = { balance: 'balance', beaker: 'beaker', rod: 'glass rod', vflask: 'volumetric flask', stopper: 'stopper', dropper: 'dropper', solid: 'jar of sodium carbonate', wash: 'wash bottle', funnel: 'funnel', waste: 'waste beaker', tap: 'tap on the burette', pipette: 'pipette', flask: 'conical flask', tile: 'white tile', burette: 'burette' };
   function partName(st) {
     var run = ui.run;
     if (st.part === 'titrant') return 'bottle of ' + nm(run.titrant.id);
@@ -515,11 +516,12 @@
     }
     // The prompt above the bench.
     var counter = '<span class="count">' + (!ss.next ? 'All ' + total + ' steps' : st.last ? 'Step ' + n + ' of ' + total : total + ' steps') + '</span>';
-    if (!ss.next) say(counter + (st.skipped ? 'Set up for you: ready to titrate' : 'Set-up complete: ready to titrate'), 'done');
+    var prep = ui.stage === 'prep', task = prep ? 'make the standard solution' : 'set up the titration';
+    if (!ss.next) say(counter + (prep ? 'Standard solution made: now work out its concentration' : st.skipped ? 'Set up for you: ready to titrate' : 'Set-up complete: ready to titrate'), 'done');
     else if (st.last) say(counter + st.last, 'done');
-    else say(counter + (learn ? 'Set up the titration: click the highlighted apparatus' : 'Test me: set up the titration from memory'), 'start');
+    else say(counter + (learn ? (prep ? 'Make the standard solution' : 'Set up the titration') + ': click the highlighted apparatus' : 'Test me: ' + task + ' from memory'), 'start');
     if (st.note) feedback(st.note);
-    else if (!ss.next) feedback({ kind: 'good', msg: 'Everything is ready. Start the titration from the panel.' });
+    else if (!ss.next) feedback({ kind: 'good', msg: prep ? 'Calculate the concentration of your solution in the panel, then go on to the titration.' : 'Everything is ready. Start the titration from the panel.' });
     else if (learn) feedback({ kind: 'info', msg: 'Next: click the highlighted <b>' + partName(ss.next) + '</b>.' });
     else feedback({ kind: 'info', msg: 'Click the apparatus in the order you would use it.' + (st.mistakes ? ' Mistakes so far: ' + st.mistakes + '.' : '') });
     // The cue on the bench.
@@ -527,13 +529,15 @@
     // The method, written up as it is done; once it is complete, the way on first.
     var h = '';
     if (!ss.next) {
-      if (!learn && !st.skipped) h += '<p class="verdict ' + (st.mistakes ? 'warn' : 'good') + '">' + (st.mistakes ? 'Set up with ' + st.mistakes + ' mistake' + (st.mistakes === 1 ? '' : 's') : 'Set up with no mistakes') + (st.hints ? ' and ' + st.hints + ' hint' + (st.hints === 1 ? '' : 's') : '') + '.</p>';
-      h += '<button class="btn primary wide" type="button" id="toTitrate">Start the titration</button>';
-      if (learn) h += '<button class="btn sm wide" type="button" id="toTest">Now test me on the set-up</button>';
+      if (!learn && !st.skipped) h += '<p class="verdict ' + (st.mistakes ? 'warn' : 'good') + '">' + (prep ? 'Made' : 'Set up') + (st.mistakes ? ' with ' + st.mistakes + ' mistake' + (st.mistakes === 1 ? '' : 's') : ' with no mistakes') + (st.hints ? ' and ' + st.hints + ' hint' + (st.hints === 1 ? '' : 's') : '') + '.</p>';
+      if (prep) h += prepCalcHtml('conc');
+      else h += '<button class="btn primary wide" type="button" id="toTitrate">Start the titration</button>';
+      if (learn) h += '<button class="btn sm wide" type="button" id="toTest">Now test me on ' + (prep ? 'making the solution' : 'the set-up') + '</button>';
       h += '<hr class="sep">';
     }
     if (learn || !ss.next) {
       $('#methodTitle').textContent = ss.next ? 'Method' : (learn ? 'Your method' : 'The method');
+      if (prep && !st.log.length) h += prepCalcHtml('mass');
       if (!st.log.length) h += '<p class="muted">Each step appears here as you click it. By the end you’ll have the whole method.</p>';
       h += '<ol class="steps method">' + st.log.map(function (x, i) {
         return '<li class="done' + (i === st.log.length - 1 && ss.next ? ' now' : '') + '">' + x.method + (learn && x.why ? '<span class="why">' + x.why + '</span>' : '') + '</li>';
@@ -542,11 +546,12 @@
       h += '</ol>';
     } else {
       $('#methodTitle').textContent = 'Test me';
-      h += '<p>Set up the titration from memory: click each piece of apparatus in the order you would use it. There’s no method to follow and nothing is highlighted.</p>';
+      h += '<p>' + (prep ? 'Make the standard solution' : 'Set up the titration') + ' from memory: click each piece of apparatus in the order you would use it. There’s no method to follow and nothing is highlighted.</p>';
       h += '<div class="score"><div><b>' + n + '</b><span>of ' + total + ' steps</span></div><div><b>' + st.mistakes + '</b><span>mistake' + (st.mistakes === 1 ? '' : 's') + '</span></div><div><b>' + st.hints + '</b><span>hint' + (st.hints === 1 ? '' : 's') + '</span></div></div>';
       h += '<button class="btn sm" type="button" id="hintNext"' + (st.showNext ? ' disabled' : '') + '>' + (st.showNext ? 'Highlighted on the bench' : 'Show me the next step') + '</button>';
     }
     $('#methodBody').innerHTML = h;
+    if (prep) wirePrepCalc();
     var hn = $('#hintNext');
     if (hn) hn.addEventListener('click', function () { st.showNext = true; st.hints++; ui.hints++; renderSetup(); });
     if ($('#toTitrate')) $('#toTitrate').addEventListener('click', function () { ui.stage = 'titrate'; feedback(null); refresh(true); });
@@ -721,7 +726,6 @@
         '<tr><td>Inversions</td><td>' + p.inversions + '</td></tr></tbody></table>';
       $('#resultsTitle').textContent = 'Weighing';
       $('#resultsBody').innerHTML = h;
-      var br = $('#balRead'); if (br) br.textContent = p.balance().toFixed(2) + ' g';
       return;
     }
     $('#resultsTitle').textContent = 'Results';
@@ -746,109 +750,67 @@
     });
   }
 
-  /* ---------- RP1: making the standard solution ---------- */
-  function buildDock() {
-    var dock = $('#dock');
-    if (ui.sceneKind !== 'prep') { dock.innerHTML = ''; return; }
-    dock.innerHTML = '<div class="grp"><span class="lbl">Make up to the mark</span>' +
-      '<button class="btn" type="button" data-prep="fill-bottle">Wash bottle: towards the mark</button>' +
-      '<button class="btn" type="button" data-prep="fill-drop">Dropper: 1 drop</button></div>' +
-      '<div class="grp"><span class="lbl">Mix</span><button class="btn" type="button" data-prep="stopper">Stopper</button>' +
-      '<button class="btn" type="button" data-prep="invert">Invert the flask</button></div>' +
-      '<div class="grp"><span class="lbl">Balance</span><span class="muted" id="balRead"></span></div>';
-    $$('#dock [data-prep]').forEach(function (b) { b.addEventListener('click', function () { prepAction(b.getAttribute('data-prep')); }); });
-  }
-  function btn(label, action, opts) {
-    opts = opts || {};
-    return '<button class="btn' + (opts.cls ? ' ' + opts.cls : '') + '" type="button" data-act="' + action + '"' + (opts.pressed !== undefined ? ' aria-pressed="' + opts.pressed + '"' : '') + (opts.disabled ? ' disabled' : '') + '>' + label + '</button>';
-  }
-  var PREP_TABS = [['weigh', 'Weigh'], ['dissolve', 'Dissolve'], ['transfer', 'Transfer'], ['makeup', 'Make up']];
-  function renderActions() {
-    var tabs = PREP_TABS, s = ui.lab.state;
-    if (!tabs.some(function (t) { return t[0] === ui.tab; })) ui.tab = tabs[0][0];
-    $('#actionTabs').innerHTML = tabs.map(function (t) {
-      return '<button type="button" role="tab" id="tab-' + t[0] + '" aria-selected="' + (t[0] === ui.tab) + '" aria-controls="actionPanel" data-tab="' + t[0] + '">' + t[1] + '</button>';
-    }).join('');
-    $$('#actionTabs [data-tab]').forEach(function (b, i, all) {
-      b.tabIndex = b.getAttribute('aria-selected') === 'true' ? 0 : -1;
-      b.addEventListener('click', function () { ui.tab = b.getAttribute('data-tab'); renderActions(); });
-      b.addEventListener('keydown', function (e) {
-        var d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-        if (!d) return;
-        e.preventDefault();
-        ui.tab = all[(i + d + all.length) % all.length].getAttribute('data-tab'); renderActions();
-        var now = $('#actionTabs [aria-selected="true"]'); if (now) now.focus();
-      });
-    });
-    var h = '<div class="acts" role="tabpanel" aria-labelledby="tab-' + ui.tab + '">';
-    if (ui.tab === 'weigh') {
-      var p = s.prep;
-      h += massRows(p) + '<h4>Weigh by difference</h4>' + btn('Record the empty bottle', 'prep:m0') +
-        btn('Add a spatula of solid', 'prep:scoop') + btn('Add a little', 'prep:small') + btn('Add a pinch', 'prep:pinch') + btn('Take a little out', 'prep:remove') +
-        btn('Record the bottle + solid', 'prep:m1') + btn('Tip the solid into the beaker', 'prep:tip') + btn('Reweigh the bottle', 'prep:m2') +
-        btn('Rinse the bottle into the beaker', 'prep:rinseBottle', { cls: 'full' });
-    } else if (ui.tab === 'dissolve') {
-      h += '<h4>Dissolve</h4>' + btn('Add about 100 cm³ deionised water', 'prep:water', { cls: 'full' }) + btn('Stir with the glass rod', 'prep:stir', { cls: 'full' });
-    } else if (ui.tab === 'transfer') {
-      var pp = s.prep;
-      h += '<h4>Into the volumetric flask</h4>' + btn(pp.funnel ? 'Take the funnel out' : 'Put the funnel in the flask', 'prep:funnel', { pressed: pp.funnel, cls: 'full' }) +
-        btn('Pour the solution in', 'prep:pour', { cls: 'full' }) +
-        '<h4>Rinse into the flask (deionised water)</h4>' + btn('Rinse the beaker', 'prep:rinse:beaker') + btn('Rinse the glass rod', 'prep:rinse:rod') + btn('Rinse the funnel', 'prep:rinse:funnel', { cls: 'full' });
-    } else if (ui.tab === 'makeup') {
-      h += '<h4>To the mark</h4>' + btn('Wash bottle: towards the mark', 'prep:fill-bottle') + btn('Dropper: 1 drop', 'prep:fill-drop') +
-        '<h4>Mix</h4>' + btn('Stopper', 'prep:stopper') + btn('Invert the flask', 'prep:invert') +
-        '<h4>Finished?</h4>' + btn('The solution is made', 'prep:finish', { cls: 'full' }) + btn('Start the solution again', 'prep:restart', { cls: 'full' });
-    }
-    h += '</div>';
-    $('#actionPanel').innerHTML = h;
-    $$('#actionPanel [data-act]').forEach(function (b) { b.addEventListener('click', function () { prepAction(b.getAttribute('data-act').replace(/^prep:/, '')); }); });
-  }
-  function massRows(p) {
-    function row(label, v) { return '<div class="massrow"><span>' + label + '</span><b>' + (v === null ? '—' : v.toFixed(2) + ' g') + '</b></div>'; }
-    return '<div class="full" style="grid-column:1/-1">' + row('Balance now', p.balance()) + row('Empty bottle (m₀)', p.m0) + row('Bottle + solid (m₁)', p.m1) + row('Bottle after tipping (m₂)', p.m2) + '</div>';
-  }
-  function prepAction(code) {
-    var p = ui.lab.state.prep, parts = code.split(':');
-    if (!p) return;
-    act(function () {
-      switch (parts[0]) {
-        case 'm0': case 'm1': case 'm2': return p.recordMass(parts[0]);
-        case 'scoop': return p.addSolid('scoop');
-        case 'small': return p.addSolid('small');
-        case 'pinch': return p.addSolid('pinch');
-        case 'remove': return p.addSolid('remove');
-        case 'tip': return p.tip();
-        case 'rinseBottle': return p.rinseBottle();
-        case 'water': return p.addWater();
-        case 'stir': return p.stir();
-        case 'funnel': return p.setFunnel(!p.funnel);
-        case 'pour': return p.pour();
-        case 'rinse': return p.rinse(parts[1]);
-        case 'fill-bottle': return p.fillWater('bottle');
-        case 'fill-drop': return p.fillWater('drop');
-        case 'stopper': return p.stopper();
-        case 'invert': return p.invert();
-        case 'finish': return p.finish();
-        case 'restart': var rr = ui.lab.restartPrep(); if (rr.ok) ui.prepCalc = {}; return rr;
-      }
-    });
-  }
-  function renderPrep() {
-    var s = ui.lab.state, steps = s.prep.steps(), now = steps.filter(function (x) { return x.current; })[0];
-    $('#methodTitle').textContent = 'Make the standard solution';
-    $('#setupMode').innerHTML = '';
-    var h = '<ol class="steps">' + steps.map(function (st) { return '<li class="' + (st.done ? 'done' : '') + (st.current ? ' now' : '') + '">' + st.text + '</li>'; }).join('') + '</ol>';
-    h += prepCalcHtml();
-    $('#methodBody').innerHTML = h;
-    wirePrepCalc();
-    say(now ? now.text : 'Standard solution made', now ? '' : 'done');
-    boardNotes();
+  /* ---------- RP1: the standard solution, one click per step ---------- */
+  function prepSteps() {
+    var p = ui.lab.state.prep, std = ui.run.standard, want = std.target_M * 0.25 * std.Mr;
+    function all(list) { var r; for (var i = 0; i < list.length; i++) { r = list[i](); if (!r.ok) return r; } return r; }
+    return [
+      { id: 'solid', part: 'solid', needs: [], say: 'Add about ' + want.toFixed(2) + ' g of sodium carbonate to the weighing bottle',
+        method: 'Add about ' + want.toFixed(2) + ' g of anhydrous sodium carbonate to a weighing bottle on the balance.',
+        why: std.target_M.toFixed(3) + ' mol dm⁻³ × 0.2500 dm³ = ' + (std.target_M * 0.25).toFixed(4) + ' mol; × ' + std.Mr.toFixed(1) + ' g mol⁻¹ = ' + want.toFixed(2) + ' g.',
+        act: function () {
+          var r, g = 0;
+          while (p.bottleSolid_g < want - 0.6 && g++ < 20) r = p.addSolid('scoop');
+          while (p.bottleSolid_g < want - 0.08 && g++ < 40) r = p.addSolid('small');
+          while (p.bottleSolid_g < want - 0.02 && g++ < 60) r = p.addSolid('pinch');
+          return r || p.addSolid('pinch');
+        } },
+      { id: 'm1', part: 'balance', needs: ['solid'], say: 'Record the mass of the bottle and solid',
+        method: 'Record the mass of the weighing bottle and solid.', why: 'The balance reads to 0.01 g.',
+        act: function () { return p.recordMass('m1'); } },
+      { id: 'tip', part: 'beaker', needs: ['m1'], say: 'Tip the solid into the beaker',
+        method: 'Tip the solid into a clean beaker.', why: 'A few grains always stay behind in the bottle.',
+        act: function () { return p.tip(); } },
+      { id: 'm2', part: 'balance', needs: ['tip'], say: 'Reweigh the weighing bottle',
+        method: 'Reweigh the bottle. Mass of solid used = (bottle + solid) − (bottle after tipping).', why: 'Weighing by difference counts only the solid that reached the beaker.',
+        act: function () { return p.recordMass('m2'); } },
+      { id: 'water', part: 'wash', needs: ['tip'], say: 'Add about 100 cm³ of deionised water to the beaker',
+        method: 'Add about 100 cm³ of deionised water to the beaker.', why: 'Less than 250 cm³, so there is room for the washings later.',
+        act: function () { return p.addWater(); } },
+      { id: 'stir', part: 'rod', needs: ['water'], say: 'Stir with the glass rod until the solid dissolves',
+        method: 'Stir with a glass rod until all the solid has dissolved.', why: 'Undissolved solid would be left behind in the beaker.',
+        act: function () { var r, g = 0; while (!p.dissolved && g++ < 10) r = p.stir(); return r; } },
+      { id: 'funnel-in', part: 'funnel', needs: [], say: 'Put the funnel in the volumetric flask',
+        method: 'Put a funnel in the neck of a 250.0 cm³ volumetric flask.', why: 'The neck is too narrow to pour into without spilling.',
+        act: function () { return p.setFunnel(true); } },
+      { id: 'pour', part: 'beaker', needs: ['stir', 'funnel-in'], say: 'Pour the solution into the volumetric flask',
+        method: 'Pour the solution through the funnel into the volumetric flask.', why: 'A film of solution still coats the beaker, the rod and the funnel.',
+        act: function () { return p.pour(); } },
+      { id: 'rinse', part: 'wash', needs: ['pour'], say: 'Rinse the beaker, rod and funnel into the flask',
+        method: 'Rinse the beaker and glass rod twice with deionised water, and the funnel, adding all the washings to the flask.', why: 'Solution left on the glass would be lost, and the concentration would come out low.',
+        act: function () { return all([function () { return p.rinse('beaker'); }, function () { return p.rinse('beaker'); }, function () { return p.rinse('rod'); }, function () { return p.rinse('funnel'); }]); } },
+      { id: 'funnel-out', part: 'funnel', needs: ['rinse'], say: 'Take the funnel out of the flask',
+        method: 'Remove the funnel.', why: 'Water left in the funnel could run in after you have reached the mark.',
+        act: function () { return p.setFunnel(false); } },
+      { id: 'fill', part: 'wash', needs: ['funnel-out'], say: 'Fill with deionised water to just below the mark',
+        method: 'Add deionised water until the level is just below the mark.', why: 'Stop short: water can’t be taken back out.',
+        act: function () { return p.fillWater('bottle'); } },
+      { id: 'drops', part: 'dropper', needs: ['fill'], say: 'Add water drop by drop until the meniscus sits on the mark',
+        method: 'Add deionised water drop by drop with a dropper until the bottom of the meniscus sits on the mark, viewed at eye level.', why: 'The magnified view shows the neck and the mark.',
+        act: function () { var r, g = 0; while (p.flaskWater_cm3 < p.PREP.flaskVolume_cm3 - 0.025 && g++ < 80) r = p.fillWater('drop'); return r || { ok: true, kind: 'good', msg: 'On the mark.' }; } },
+      { id: 'stopper', part: 'stopper', needs: ['drops'], say: 'Stopper the flask',
+        method: 'Put the stopper in the flask.', why: 'So nothing spills when you mix it.',
+        act: function () { return p.stopper(); } },
+      { id: 'invert', part: 'vflask', needs: ['stopper', 'm2'], say: 'Invert the flask several times to mix',
+        method: 'Invert the flask several times to mix the solution.', why: 'Unmixed, the water added last stays at the top, so portions pipetted from it would differ.',
+        act: function () { var r; for (var i = 0; i < p.PREP.inversionsNeeded + 2; i++) { r = p.invert(); if (!r.ok) return r; } return p.finish(); } }
+    ];
   }
 
   // RP1: the calculations around the standard solution.
-  function prepCalcHtml() {
+  function prepCalcHtml(which) {
     var p = ui.lab.state.prep, std = ui.run.standard, c = ui.prepCalc, h = '';
-    h += '<div class="calc-step"><label for="pcMass">Mass of Na<sub>2</sub>CO<sub>3</sub> needed for 250.0 cm³ of ' + std.target_M.toFixed(3) + ' mol dm⁻³</label>' +
+    if (which === 'mass') return '<div class="calc-step"><label for="pcMass">Mass of Na<sub>2</sub>CO<sub>3</sub> needed for 250.0 cm³ of ' + std.target_M.toFixed(3) + ' mol dm⁻³</label>' +
       '<div class="calc-row"><input id="pcMass" type="text" inputmode="decimal" value="' + esc(c.mass || '') + '"><span>g</span><button class="btn sm" type="button" id="pcMassGo">Check</button></div>' +
       '<div class="verdict ' + (c.massV ? c.massV.cls : '') + '">' + (c.massV ? c.massV.msg : '') + '</div></div>';
     if (p.finished) {
@@ -869,7 +831,7 @@
       else if (closeTo(v, want * 1000, 0.01)) c.massV = { cls: 'bad', msg: 'Check the volume: 250.0 cm³ is 0.2500 dm³.' };
       else if (closeTo(v, 0.0250, 0.01)) c.massV = { cls: 'warn', msg: 'That’s the amount in moles. Multiply by M<sub>r</sub> to get the mass.' };
       else c.massV = { cls: 'bad', msg: 'Not quite. Moles = concentration × volume in dm³, then mass = moles × M<sub>r</sub>.' };
-      renderPrep();
+      renderSetup();
     });
     var cg = $('#pcConcGo');
     if (cg) cg.addEventListener('click', function () {
@@ -879,7 +841,7 @@
       else if (closeTo(v, m / std.Mr, 0.006)) c.concV = { cls: 'warn', msg: 'That’s the amount in moles. Divide by the volume in dm³ (0.2500).' };
       else if (closeTo(v, want / 1000, 0.006) || closeTo(v, want * 1000, 0.006)) c.concV = { cls: 'bad', msg: 'Check the volume: use 0.2500 dm³, not 250.0.' };
       else c.concV = { cls: 'bad', msg: 'Not quite: moles = mass ÷ M<sub>r</sub>, then concentration = moles ÷ 0.2500 dm³.' + (c.concTries >= 3 ? ' It is ' + sf(want, 4) + ' mol dm⁻³.' : '') };
-      renderPrep();
+      renderSetup();
     });
     var go = $('#toTitration');
     if (go) go.addEventListener('click', function () {
@@ -908,12 +870,10 @@
     document.body.classList.toggle('stage-titrate', stage === 'titrate');
     document.body.classList.toggle('stage-prep', stage === 'prep');
     $('#method').hidden = stage === 'titrate';
-    $('#actions').hidden = stage !== 'prep';
-    $('#dock').hidden = stage !== 'prep';
     $('#titrate').hidden = stage !== 'titrate';
     $('#results').hidden = stage === 'setup';
     renderStages();
-    if (stage === 'prep') { renderPrep(); renderActions(); renderResults(); }
+    if (stage === 'prep') { renderSetup(); renderResults(); }
     else if (stage === 'setup' && titr) renderSetup();
     else if (titr) { renderTitrate(); renderResults(); }
     if (force) { sizeForBoard(); if (window.SST_PRESENTER) setTimeout(function () { SST_PRESENTER.layout(); }, 30); }
@@ -927,12 +887,7 @@
   function onBenchClick(e) {
     var p = benchPart(e);
     if (!p) return;
-    if (ui.sceneKind === 'prep') {
-      var map = { balance: 'weigh', beaker: 'dissolve', vflask: 'makeup' };
-      if (map[p.part]) { ui.tab = map[p.part]; renderActions(); var first = $('#actionPanel button'); if (first) first.focus({ preventScroll: true }); }
-      return;
-    }
-    if (ui.stage === 'setup') return setupClick(p.part, p.id);
+    if (ui.stage === 'setup' || ui.stage === 'prep') return setupClick(p.part, p.id);
     if (ui.stage === 'titrate') {
       var st = titrateState();
       if (p.part === 'flask' && st === 'add') swirl();
@@ -1451,7 +1406,7 @@
     if (window.SST_PRESENTER) {
       SST_PRESENTER.setup({
         stage: function () { return ui.view === 'lab' ? (ui.stage === 'titrate' ? ['#bench', '#results'] : '#bench') : ui.view === 'analyse' ? '#analyse' : ui.view === 'brief' ? '#brief' : '#picker'; },
-        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? '#titrate' : ui.stage === 'prep' ? ['#dock', '#actions'] : '#method'; },
+        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? '#titrate' : '#method'; },
         notes: function () { return ui.view === 'lab' ? '#boardNotes' : null; },
         hide: '#srLive, #prompt',
         rows: true, ratio: 0.62

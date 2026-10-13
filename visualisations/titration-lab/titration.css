@@ -169,7 +169,7 @@ body.in-lab .top{ flex:none; }
 .benchpanel{ position:relative; flex:1 1 auto; min-height:0; background:var(--stage); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 #benchSvg{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:manipulation; }
 #benchSvg text{ font-family:var(--sst-font); font-variant-numeric:tabular-nums; }
-#benchSvg .part:hover, #benchSvg .part:focus-visible{ outline:none; }
+#benchSvg .part:hover, #benchSvg .part:focus{ outline:none; }
 #benchSvg .part:hover > [stroke]:not(.hit), #benchSvg .part:focus-visible > [stroke]:not(.hit), #benchSvg path.part:hover, #benchSvg rect.part:hover, #benchSvg .part:focus-visible:not(g){ stroke:var(--blue); }
 #benchSvg .part:focus-visible > [stroke]:not(.hit){ stroke-width:2.5; }
 .lens{
@@ -330,7 +330,7 @@ body.in-analyse{ height:auto; overflow:auto; display:block; }
   .dock{ position:sticky; bottom:0; z-index:5; border-radius:12px; padding:8px; gap:8px; }
   .stages li{ padding:3px 10px 3px 4px; font-size:.82rem; }
   .prompt{ position:sticky; top:0; z-index:5; background:var(--paper); padding:6px 0; }
-  body.stage-setup .lens{ display:none; }
+  body.stage-setup .lens, body.stage-prep .lens{ display:none; }
   .dock .grp + .grp{ padding-left:0; border-left:0; }
   .side{ overflow:visible; }
   .side .card{ max-height:none !important; overflow:visible; }
