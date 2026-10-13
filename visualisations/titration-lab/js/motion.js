@@ -72,7 +72,7 @@
   function base(a) {
     return { reading: a.reading === null ? EMPTY : a.reading, liq: 'titrant', jetFull: a.jetFull, tap: a.tap ? 90 : 0, rig: 0,
       funnel: a.funnel ? 1 : 0, fx: a.fx, fy: 0, wx: a.wx, wy: 0, tile: a.tile ? 1 : 0,
-      vol: a.vol, abs: a.abs, haze: a.haze, T: a.T, thermo: false };
+      vol: a.vol, abs: a.abs, haze: a.haze, T: a.T, thermo: false, pipVol: 0 };
   }
   function flaskTop(v) { return 505 + v.fy - B.flaskHeight(v.vol); }
   function wasteTop(k) { return 505 - Math.min(70, 4 + k.a.wasteVol * 0.6); }
@@ -157,7 +157,7 @@
       ph(1.3, 'Rinse the pipette with the solution it will measure.', function (p, v) { v.pip = between(PIP_BENCH, P.up, p, 40); v.filler = 'on'; v.caps = { analyte: ease(p) }; }),
       ph(0.6, null, function (p, v) { v.pip = between(P.up, P.dip, p); v.filler = 'on'; v.caps = { analyte: 1 }; }),
       ph(0.5, null, function (p, v) { v.pip = P.dip; v.filler = 'on'; v.sq = ease(p); v.caps = { analyte: 1 }; }),
-      ph(0.9, 'Draw up a little of the solution with the filler.', function (p, v) { v.pip = P.dip; v.filler = 'on'; v.sq = 1 - ease(seg(p, 0, 0.4)); v.pipVol = 4 * ease(p); v.caps = { analyte: 1 }; }),
+      ph(0.9, 'Draw up a little of the solution with the filler.', function (p, v) { v.pip = P.dip; v.filler = 'on'; v.sq = 1 - ease(seg(p, 0, 0.4)); v.pipVol = 6 * ease(p); v.caps = { analyte: 1 }; }),
       ph(1.6, 'Tilt and turn it, so the solution wets the whole of the inside.', function (p, v) {
         var lift = between(P.dip, P.up, seg(p, 0, 0.3));
         lift.a = -62 * Math.sin(Math.PI * seg(p, 0.3, 1));
@@ -165,7 +165,7 @@
       }),
       ph(1.0, null, function (p, v) { v.pip = between(P.up, over, p, 30); v.filler = 'on'; }),
       ph(0.4, null, function (p, v) { v.pip = between(over, w, p); v.filler = 'on'; }),
-      ph(1.0, 'Run it into the waste beaker.', function (p, v) { v.pip = w; v.filler = 'on'; v.pipVol = 4 * (1 - ease(p)); }),
+      ph(1.0, 'Run it into the waste beaker.', function (p, v) { v.pip = w; v.filler = 'on'; v.pipVol = 6 * (1 - ease(p)); v.stream = { d: 'M' + w.x + ',' + (w.y + 3) + ' L' + w.x + ',' + f1(wasteTop(k)), col: PIP_LIQ, w: 1.4 }; }),
       ph(1.3, null, function (p, v) { v.pip = between(w, PIP_BENCH, p, 60); v.filler = 'on'; v.pipVol = 0; })
     ];
   };
@@ -423,7 +423,7 @@
     var c = this.cur, v = base(c.k.a), t = 0;
     for (var i = 0; i < c.phases.length; i++) {
       var x = c.phases[i];
-      TRANSIENT.forEach(function (n) { v[n] = null; }); v.sq = 0; v.pipVol = 0;
+      TRANSIENT.forEach(function (n) { v[n] = null; }); v.sq = 0;
       if (c.t < t + x.d) { x.fn((c.t - t) / x.d, v); v.clock = c.t; return v; }
       x.fn(1, v); t += x.d;
     }
