@@ -326,13 +326,33 @@ td.col-del{width:30px;text-align:center}
 </div>
 
 <div id="presenter-panel" style="display:flex;flex-direction:column;gap:10px;">
-<div id="wa-toolbar"><select id="sel-subject"></select><select id="sel-course"><option value="combined">Combined Science</option><option value="separates">Separate Science</option></select><select id="sel-year"><option value="all">All Topics (Full Course)</option><option value="10">Year 10 Only</option><option value="11">Year 11 Only</option></select><select id="sel-topic"></select></div>
-<div id="wa-subtopic-row"><label for="sel-subtopic">Subtopic:</label><select id="sel-subtopic"></select></div>
-<div id="wa-toolbar2"><select id="sel-tier"><option value="F">Foundation Tier</option><option value="H">Higher Tier</option></select><select id="sel-layout"><option value="flashcard">Flashcard Mode (1-by-1)</option><option value="matrix">5-Question Board</option></select></div>
-<div id="wa-toolbar3"><select id="sel-timer" style="width:auto;min-width:120px"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">2 minutes</option></select><button class="wbtn primary" id="btn-start"><svg class="icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Start Session</button><button class="wbtn reveal" id="btn-reveal"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal</button><button class="wbtn" id="btn-next"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>Next</button><span id="wa-bank-stats"></span></div>
+<!-- Settings screen: the choice buttons drive the selects (kept, hidden, as the
+     settings the rest of the page reads); Start swaps to the question view. -->
+<div id="rp-setup">
+<div class="rp-cards">
+<section class="rp-card"><h2><span class="rp-num">1</span>Course</h2>
+<div class="rp-field"><span class="rp-label">Subject</span><div class="rp-chips" data-for="sel-subject"></div><select class="rp-native" id="sel-subject"></select></div>
+<div class="rp-field"><span class="rp-label">Course</span><div class="rp-chips" data-for="sel-course"></div><select class="rp-native" id="sel-course"><option value="combined">Combined Science</option><option value="separates">Separate Science</option></select></div>
+<div class="rp-field"><span class="rp-label">Tier</span><div class="rp-chips" data-for="sel-tier"></div><select class="rp-native" id="sel-tier"><option value="F">Foundation Tier</option><option value="H">Higher Tier</option></select></div>
+</section>
+<section class="rp-card"><h2><span class="rp-num">2</span>Topic</h2>
+<div class="rp-field"><span class="rp-label">Year</span><div class="rp-chips" data-for="sel-year"></div><select class="rp-native" id="sel-year"><option value="all">All Topics (Full Course)</option><option value="10">Year 10 Only</option><option value="11">Year 11 Only</option></select></div>
+<div class="rp-field"><span class="rp-label">Topic</span><div class="rp-chips" data-for="sel-topic"></div><select class="rp-native" id="sel-topic"></select></div>
+<div class="rp-field" id="wa-subtopic-row"><span class="rp-label">Taught up to</span><div class="rp-chips" data-for="sel-subtopic"></div><select class="rp-native" id="sel-subtopic"></select></div>
+</section>
+<section class="rp-card"><h2><span class="rp-num">3</span>Session</h2>
+<div class="rp-field"><span class="rp-label">Layout</span><div class="rp-chips" data-for="sel-layout"></div><select class="rp-native" id="sel-layout"><option value="flashcard">Flashcard Mode (1-by-1)</option><option value="matrix">5-Question Board</option></select></div>
+<div class="rp-field"><span class="rp-label">Timer</span><div class="rp-chips" data-for="sel-timer"></div><select class="rp-native" id="sel-timer"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">2 minutes</option></select></div>
+</section>
+</div>
+<aside class="rp-summary"><h2>Your session</h2><div class="rp-count"><span id="rp-count">0</span> questions match</div><span id="wa-bank-stats"></span><button class="wbtn primary" id="btn-start"><svg class="icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Start Session</button><p class="rp-keys"><kbd>Space</kbd> starts, reveals and moves on.</p></aside>
+</div>
+<div id="rp-play" class="hidden">
+<div id="rp-playbar"><button class="wbtn" id="btn-settings" type="button"><svg class="icon" viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Settings</button><span id="rp-now"></span><button class="wbtn reveal" id="btn-reveal"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Reveal</button><button class="wbtn" id="btn-next"><svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>Next</button></div>
 <div id="wa-stage" onclick="handleStageClick()"><div id="wa-topic-badge">Choose settings and click start</div><div id="wa-q-text" style="font-size:32px">Ready when you are</div><div id="wa-answer"><div id="wa-ans-label">Answer</div><div id="wa-ans-text"></div></div><div id="wa-timer-section"><div id="wa-countdown">60</div><div id="wa-timer-bar-wrap"><div id="wa-timer-bar"></div></div></div><div id="wa-click-hint">click anywhere or press <kbd style="font-family:Plus Jakarta Sans, system-ui, sans-serif;font-variant-numeric:tabular-nums;font-size:10px;padding:1px 5px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#555">Space</kbd> to reveal answer</div></div>
 <div id="wa-multi-stage"></div>
 <div id="wa-footer" class="sst-teacher"><div id="wa-progress"></div><div id="wa-mixed-note">Safe timeline recall tracking</div><span class="wa-tier tier-F" id="wa-tier-badge">Foundation</span></div>
+</div>
 </div>
 
 <div id="editor-panel">
@@ -816,7 +836,7 @@ function playJingle(){
 // Reveal steps through them in order; clicking a card opens its answer or closes it.
 function showBoardAnswer(box){const was=box.classList.contains('shown');document.querySelectorAll('.multi-a-box.shown').forEach(b=>b.classList.remove('shown'));if(!was)box.classList.add('shown')}
 function fitAnswer(){const st=$('wa-stage');if(!$('wa-answer').classList.contains('shown')){st.classList.remove('ans-only');st.dataset.h=st.offsetHeight;return}if(st.offsetHeight>+st.dataset.h+2)st.classList.add('ans-only')}
-function modeClass(){const m=getMode();return m==='rp'?'rp-mode':(m==='paper'||m==='random')?'paper-mode':''}function showCurrent(){if(!session.length)return;const d=S(),item=session[sessionIdx];revealed=false;$('wa-stage').className=item._type==='joke'?'dadjoke':modeClass();$('wa-topic-badge').textContent=item._type==='joke'?'🥚 Easter egg — you\'ve earned it':item._type==='rp'?'🔬 '+(d.rpMeta[item._rpKey]?.label||'Required Practical'):item._type==='revision'?'📝 Revision · '+d.short[item._topic]:item._type==='mixed'?'🔀 Deeper Recall · '+d.topics[item._topic]:'🎯 Active Topic · '+d.topics[item._topic];$('wa-q-text').innerHTML=parseCommandWords(item.q);$('wa-ans-text').textContent=item.a;$('wa-answer').className='';$('wa-click-hint').style.display='';const tb=$('wa-tier-badge');if(item._type==='joke'){tb.textContent='🥚';tb.className='wa-tier tier-joke'}else if(item.tier==='F'){tb.textContent='Foundation';tb.className='wa-tier tier-F'}else{tb.textContent='Higher';tb.className='wa-tier tier-H'}updateDots();setTimeout(fitText,10);if(item._type==='joke'){clearInterval(timerInterval);$('wa-timer-section').className=''}else startTimer()}function renderMatrix(){const d=S(),box=$('wa-multi-stage');box.innerHTML='';session.filter(q=>q._type!=='joke').forEach((q,i)=>{const card=document.createElement('div');card.className='multi-card card-'+q._type;const head=q._type==='rp'?'🔬 '+(d.rpMeta[q._rpKey]?.label||'Required Practical'):q._type==='revision'?'📝 '+d.short[q._topic]:q._type==='mixed'?'🔀 '+d.short[q._topic]:'🎯 '+d.short[q._topic];card.innerHTML='<div class="multi-card-header">Question '+(i+1)+' <span>'+head+'</span></div><div class="multi-q-text">'+parseCommandWords(q.q)+'</div><div class="multi-a-box">'+q.a+'</div>';card.onclick=()=>showBoardAnswer(card.querySelector('.multi-a-box'));box.appendChild(card)})}function renderOutputView(){if($('sel-layout').value==='matrix'){$('wa-stage').style.display='none';$('wa-multi-stage').style.display='flex';clearInterval(timerInterval);$('wa-timer-section').className='';renderMatrix()}else{$('wa-stage').style.display='flex';$('wa-multi-stage').style.display='none';showCurrent()}}function revealAnswer(){if(!session.length){buildSession();return}if($('sel-layout').value==='matrix'){const boxes=[...document.querySelectorAll('.multi-a-box')],open=boxes.findIndex(b=>b.classList.contains('shown'));showBoardAnswer(boxes[(open+1)%boxes.length]);return}if(revealed)return;revealed=true;clearInterval(timerInterval);$('wa-answer').className='shown';const item=session[sessionIdx];$('wa-stage').className=(item._type==='joke'?'dadjoke':modeClass())+' answered';$('wa-click-hint').style.display='none';$('wa-timer-section').className='';if(item._type==='joke')playJingle()}function nextQuestion(){if($('sel-layout').value==='matrix'){buildSession();return}if(!session.length){buildSession();return}if(!revealed){revealAnswer();return}if(sessionIdx<session.length-1){sessionIdx++;renderOutputView()}else buildSession()}function startTimer(){clearInterval(timerInterval);const secs=parseInt($('sel-timer').value,10),sec=$('wa-timer-section'),cd=$('wa-countdown'),bar=$('wa-timer-bar');if(!secs){sec.className='';return}sec.className='active';let elapsed=0;cd.textContent=secs;bar.style.width='100%';timerInterval=setInterval(()=>{elapsed++;const rem=secs-elapsed;cd.textContent=Math.max(0,rem);bar.style.width=Math.max(0,rem/secs*100)+'%';if(rem<=0){clearInterval(timerInterval);playEnd()}},1000)}function handleStageClick(){if(!revealed)revealAnswer()}$('btn-start').addEventListener('click',e=>{e.stopPropagation();buildSession()});$('btn-reveal').addEventListener('click',e=>{e.stopPropagation();revealAnswer()});$('btn-next').addEventListener('click',e=>{e.stopPropagation();nextQuestion()});['sel-subject','sel-year','sel-course'].forEach(id=>$(id).addEventListener('change',populateTopics));$('sel-topic').addEventListener('change',populateSubtopics);$('sel-layout').addEventListener('change',renderOutputView);$('sel-tier').addEventListener('change',()=>{const tb=$('wa-tier-badge');tb.textContent=$('sel-tier').value==='F'?'Foundation':'Higher';tb.className='wa-tier '+($('sel-tier').value==='F'?'tier-F':'tier-H');updateStats()});$('chk-joke').addEventListener('change',updateDots);document.addEventListener('keydown',e=>{if(edIsVisible())return;if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;if(['Space','Enter','ArrowRight','PageDown'].includes(e.code)){e.preventDefault();if(!session.length)buildSession();else if(!revealed)revealAnswer();else nextQuestion()}});window.addEventListener('resize',fitText);populateSubjects(); initEditor();
+function modeClass(){const m=getMode();return m==='rp'?'rp-mode':(m==='paper'||m==='random')?'paper-mode':''}function showCurrent(){if(!session.length)return;const d=S(),item=session[sessionIdx];revealed=false;$('wa-stage').className=item._type==='joke'?'dadjoke':modeClass();$('wa-topic-badge').textContent=item._type==='joke'?'🥚 Easter egg — you\'ve earned it':item._type==='rp'?'🔬 '+(d.rpMeta[item._rpKey]?.label||'Required Practical'):item._type==='revision'?'📝 Revision · '+d.short[item._topic]:item._type==='mixed'?'🔀 Deeper Recall · '+d.topics[item._topic]:'🎯 Active Topic · '+d.topics[item._topic];$('wa-q-text').innerHTML=parseCommandWords(item.q);$('wa-ans-text').textContent=item.a;$('wa-answer').className='';$('wa-click-hint').style.display='';const tb=$('wa-tier-badge');if(item._type==='joke'){tb.textContent='🥚';tb.className='wa-tier tier-joke'}else if(item.tier==='F'){tb.textContent='Foundation';tb.className='wa-tier tier-F'}else{tb.textContent='Higher';tb.className='wa-tier tier-H'}updateDots();setTimeout(fitText,10);if(item._type==='joke'){clearInterval(timerInterval);$('wa-timer-section').className=''}else startTimer()}function renderMatrix(){const d=S(),box=$('wa-multi-stage');box.innerHTML='';session.filter(q=>q._type!=='joke').forEach((q,i)=>{const card=document.createElement('div');card.className='multi-card card-'+q._type;const head=q._type==='rp'?'🔬 '+(d.rpMeta[q._rpKey]?.label||'Required Practical'):q._type==='revision'?'📝 '+d.short[q._topic]:q._type==='mixed'?'🔀 '+d.short[q._topic]:'🎯 '+d.short[q._topic];card.innerHTML='<div class="multi-card-header">Question '+(i+1)+' <span>'+head+'</span></div><div class="multi-q-text">'+parseCommandWords(q.q)+'</div><div class="multi-a-box">'+q.a+'</div>';card.onclick=()=>showBoardAnswer(card.querySelector('.multi-a-box'));box.appendChild(card)})}function renderOutputView(){if($('sel-layout').value==='matrix'){$('wa-stage').style.display='none';$('wa-multi-stage').style.display='flex';clearInterval(timerInterval);$('wa-timer-section').className='';renderMatrix()}else{$('wa-stage').style.display='flex';$('wa-multi-stage').style.display='none';showCurrent()}}function revealAnswer(){if(!session.length){buildSession();return}if($('sel-layout').value==='matrix'){const boxes=[...document.querySelectorAll('.multi-a-box')],open=boxes.findIndex(b=>b.classList.contains('shown'));showBoardAnswer(boxes[(open+1)%boxes.length]);return}if(revealed)return;revealed=true;clearInterval(timerInterval);$('wa-answer').className='shown';const item=session[sessionIdx];$('wa-stage').className=(item._type==='joke'?'dadjoke':modeClass())+' answered';$('wa-click-hint').style.display='none';$('wa-timer-section').className='';if(item._type==='joke')playJingle()}function nextQuestion(){if($('sel-layout').value==='matrix'){buildSession();return}if(!session.length){buildSession();return}if(!revealed){revealAnswer();return}if(sessionIdx<session.length-1){sessionIdx++;renderOutputView()}else buildSession()}function startTimer(){clearInterval(timerInterval);const secs=parseInt($('sel-timer').value,10),sec=$('wa-timer-section'),cd=$('wa-countdown'),bar=$('wa-timer-bar');if(!secs){sec.className='';return}sec.className='active';let elapsed=0;cd.textContent=secs;bar.style.width='100%';timerInterval=setInterval(()=>{elapsed++;const rem=secs-elapsed;cd.textContent=Math.max(0,rem);bar.style.width=Math.max(0,rem/secs*100)+'%';if(rem<=0){clearInterval(timerInterval);playEnd()}},1000)}function handleStageClick(){if(!revealed)revealAnswer()}$('btn-start').addEventListener('click',e=>{e.stopPropagation();buildSession()});$('btn-reveal').addEventListener('click',e=>{e.stopPropagation();revealAnswer()});$('btn-next').addEventListener('click',e=>{e.stopPropagation();nextQuestion()});['sel-subject','sel-year','sel-course'].forEach(id=>$(id).addEventListener('change',populateTopics));$('sel-topic').addEventListener('change',populateSubtopics);$('sel-layout').addEventListener('change',renderOutputView);$('sel-tier').addEventListener('change',()=>{const tb=$('wa-tier-badge');tb.textContent=$('sel-tier').value==='F'?'Foundation':'Higher';tb.className='wa-tier '+($('sel-tier').value==='F'?'tier-F':'tier-H');updateStats()});$('chk-joke').addEventListener('change',updateDots);document.addEventListener('keydown',e=>{if(edIsVisible())return;if(['SELECT','INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;if(['Space','Enter','ArrowRight','PageDown'].includes(e.code)){e.preventDefault();if(!session.length)buildSession();else if(!revealed)revealAnswer();else nextQuestion()}});window.addEventListener('resize',fitText);populateSubjects();
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1190,8 +1210,97 @@ function initEditor(){
   }
 })();
 
+// Runs here, after LS_KEY and the editor's other constants are defined: called from
+// the top of the script it read LS_KEY too early, so saved edits never loaded.
+initEditor();
 </script>
 
+<script>
+/* Settings screen. Each .rp-chips row mirrors the select named in data-for: a
+   button per option (grouped as the select's optgroups are), and a click sets the
+   select and fires its change event, so the page's own listeners do the rest.
+   Rows rebuild whenever the page refills a select (subject, year and topic do). */
+(function () {
+  const $ = id => document.getElementById(id);
+  const setup = $('rp-setup'), play = $('rp-play');
+
+  function syncRow(row, sel) {
+    row.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === sel.value)));
+  }
+  function chipLabel(t) { return t.replace(/\s*Tier$/, '').replace(/\s*\(1-by-1\)/, ''); }
+  function buildRow(row, sel) {
+    row.textContent = '';
+    const addChips = (opts, host) => opts.forEach(o => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'rp-chip'; b.dataset.value = o.value;
+      b.textContent = chipLabel(o.textContent);
+      b.addEventListener('click', () => {
+        if (sel.value === o.value) return;
+        sel.value = o.value;
+        sel.dispatchEvent(new Event('change'));
+        syncRow(row, sel);
+      });
+      host.appendChild(b);
+    });
+    [...sel.children].forEach(child => {
+      if (child.tagName === 'OPTGROUP') {
+        const g = document.createElement('div');
+        g.className = 'rp-group';
+        const h = document.createElement('span');
+        h.className = 'rp-group-label';
+        h.textContent = child.label.replace(/^[\s—-]+|[\s—-]+$/g, '');
+        g.appendChild(h);
+        const wrap = document.createElement('div');
+        wrap.className = 'rp-group-chips';
+        addChips([...child.children], wrap);
+        g.appendChild(wrap);
+        row.appendChild(g);
+      } else {
+        addChips([child], row);
+      }
+    });
+    syncRow(row, sel);
+  }
+  document.querySelectorAll('.rp-chips').forEach(row => {
+    const sel = $(row.dataset.for);
+    buildRow(row, sel);
+    new MutationObserver(() => buildRow(row, sel)).observe(sel, { childList: true, subtree: true });
+    sel.addEventListener('change', () => syncRow(row, sel));
+  });
+  // Selects the page sets in code without a change event (the subtopic after a topic change).
+  ['sel-subject', 'sel-year', 'sel-topic', 'sel-course', 'sel-tier'].forEach(id => $(id).addEventListener('change', () =>
+    setTimeout(() => document.querySelectorAll('.rp-chips').forEach(row => syncRow(row, $(row.dataset.for))), 0)));
+
+  // The big number in the summary comes from the page's own stats line.
+  const stats = $('wa-bank-stats');
+  const count = () => { const m = /(\d+) eligible/.exec(stats.textContent); $('rp-count').textContent = m ? m[1] : '0'; };
+  new MutationObserver(count).observe(stats, { childList: true, characterData: true, subtree: true });
+  count();
+
+  function optText(id) { const sel = $(id), o = sel.options[sel.selectedIndex]; return o ? o.textContent : ''; }
+  function showPlay() {
+    if (!setup.classList.contains('hidden')) {
+      setup.classList.add('hidden');
+      play.classList.remove('hidden');
+      $('rp-now').textContent = [optText('sel-subject'), optText('sel-topic'), chipLabel(optText('sel-tier'))].filter(Boolean).join(' · ');
+    }
+  }
+  function showSetup() {
+    clearInterval(timerInterval);
+    session = []; sessionIdx = 0; revealed = false;
+    play.classList.add('hidden');
+    setup.classList.remove('hidden');
+    $('btn-start').focus();
+  }
+  // Every way into a session (Start, Space, Next at the end) goes through buildSession.
+  const build = buildSession;
+  buildSession = function () { showPlay(); return build.apply(this, arguments); };
+  $('btn-settings').addEventListener('click', e => { e.stopPropagation(); showSetup(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !play.classList.contains('hidden') && !edIsVisible()) showSetup();
+  });
+})();
+</script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

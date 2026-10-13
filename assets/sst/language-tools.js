@@ -10,23 +10,11 @@
 //           words a teacher types in the target language.
 // image:    16:10 screenshot under assets/img/tools/.
 window.SLT_TOOLS = [
-  { title: "French Connect 4", url: "languages/games/french-connect4.html",
-    blurb: "Puissance 4: pick a GCSE topic, then answer French vocabulary questions to drop your counters.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["French", "Revision Game", "Interactive"],
+  { title: "Vocab Connect 4", url: "languages/games/connect4.html",
+    blurb: "Pick French, German or Spanish and a GCSE topic, then match vocabulary to drop your counters.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
     image: "french-connect4.png", featured: true,
-    keywords: "french francais français puissance 4 connect four vocabulary vocab mfl languages modern foreign aqa gcse 8652 team game starter plenary retrieval" },
-
-  { title: "German Connect 4", url: "languages/games/german-connect4.html",
-    blurb: "Vier gewinnt: pick a GCSE topic, then answer German vocabulary questions to drop your counters.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["German", "Revision Game", "Interactive"],
-    image: "german-connect4.png", featured: true,
-    keywords: "german deutsch vier gewinnt connect four vocabulary vocab mfl languages modern foreign aqa gcse 8662 team game starter plenary retrieval" },
-
-  { title: "Spanish Connect 4", url: "languages/games/spanish-connect4.html",
-    blurb: "Conecta 4: pick a GCSE topic, then answer Spanish vocabulary questions to drop your counters.",
-    kind: "Revision Game", levels: ["GCSE"], tags: ["Spanish", "Revision Game", "Interactive"],
-    image: "spanish-connect4.png", featured: true,
-    keywords: "spanish espanol español conecta 4 connect four vocabulary vocab mfl languages modern foreign edexcel pearson gcse 1sp1 team game starter plenary retrieval" },
+    keywords: "connect four connect 4 vocabulary vocab mfl languages modern foreign team game starter plenary retrieval french francais français puissance 4 aqa 8652 german deutsch vier gewinnt aqa 8662 spanish espanol español conecta 4 edexcel pearson 1sp1 gcse" },
 
   { title: "Language Jeopardy (beta)", url: "languages/games/language-jeopardy.html",
     blurb: "Pick six GCSE topics for AQA or Pearson Edexcel French, Spanish or German, then win points for translating, conjugating and decoding.",
