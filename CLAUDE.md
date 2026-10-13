@@ -203,7 +203,11 @@ shelves and filters and every tool's site bar all read from this one list:
   ("mass spec", "crude oil", "plum pudding"), so make it generous and include
   spec references.
 - `image` is a 1600×1000 screenshot in `assets/img/tools/`, taken with the site
-  bar cropped off. A missing file falls back to a striped placeholder.
+  bar cropped off. Then run `python assets/img/tools/make-thumbs.py`, which
+  writes the 800×500 WebP in `thumbs/` that the homepage tile actually loads
+  (about 30 KB against 200–500 KB for the PNG, so tiles don't sit striped on a
+  school network). Without a thumbnail the tile falls back to the PNG, and
+  without either to a striped placeholder.
 - `topic` is the shelf it sits on. The homepage catalogue rests on one shelf per
   topic (one row each, "Show all" opens the rest), with the topics as tabs
   above; search or a subject / level filter switches to a flat grid of matches.

@@ -112,11 +112,19 @@
     var media = el('div', 'tile-media');
     if (t.image) {
       var img = el('img');
-      img.src = ROOT + 'assets/img/tools/' + t.image;
+      // Tiles load the small WebP from thumbs/ (make-thumbs.py writes them); a tool
+      // without one falls back to its full screenshot, then to the striped placeholder.
+      var full = ROOT + 'assets/img/tools/' + t.image;
+      img.src = ROOT + 'assets/img/tools/thumbs/' + t.image.replace(/\.\w+$/, '.webp');
       img.alt = '';
+      img.width = 800;
+      img.height = 500;
       img.loading = 'lazy';
       img.decoding = 'async';
-      img.addEventListener('error', function () { img.remove(); });
+      img.addEventListener('error', function () {
+        if (img.src.indexOf('/thumbs/') !== -1) img.src = full;
+        else img.remove();
+      });
       media.appendChild(img);
     }
 
