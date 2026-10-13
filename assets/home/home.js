@@ -105,8 +105,9 @@
     return n;
   }
 
-  function buildTile(t) {
-    var a = el('a', 'tile');
+  // On a shelf the topic already says the subject, so the subject pill is left off there.
+  function buildTile(t, onShelf) {
+    var a = el('a', 'tile tile--' + t.type);
     a.href = ROOT + t.url;
 
     var media = el('div', 'tile-media');
@@ -136,7 +137,7 @@
     var pill = el('span', 'pill', t.subject);
     pill.style.setProperty('--h', HUE[t.subject]);
     var pills = el('span', 'tile-pills');
-    pills.appendChild(pill);
+    if (!onShelf) pills.appendChild(pill);
     var lvl = el('span', 'pill pill--level', t.levelLabel);
     if (t.levels.length > 1) {
       lvl.title = t.levels.join(' and ');
@@ -144,8 +145,6 @@
     }
     pills.appendChild(lvl);
     foot.appendChild(pills);
-    foot.appendChild(el('span', 'tile-go tile-go--' + t.type,
-      (t.type === 'play' ? 'Play' : 'Explore') + ' →'));
     body.appendChild(foot);
 
     a.appendChild(media);
@@ -199,7 +198,7 @@
     head.appendChild(more);
     sec.appendChild(head);
     var tiles = el('div', 'tiles');
-    tools.forEach(function (t) { tiles.appendChild(buildTile(t)); });
+    tools.forEach(function (t) { tiles.appendChild(buildTile(t, true)); });
     sec.appendChild(tiles);
     if (open) sec.classList.add('is-open');
     shelvesHost.appendChild(sec);
@@ -220,8 +219,6 @@
   function renderShelves() {
     shelvesHost.textContent = '';
     var ofType = TOOLS.filter(function (t) { return state.type === 'all' || t.type === state.type; });
-    var featured = ofType.filter(function (t) { return t.featured; });
-    if (featured.length) buildShelf('featured', 'Featured', featured);
     TOPICS.forEach(function (tp) {
       var list = ofType.filter(function (t) { return t.topic === tp.id; });
       if (list.length) buildShelf(tp.id, tp.title, list);
@@ -299,6 +296,13 @@
   }
 
   searchEl.addEventListener('input', function (e) { state.query = e.target.value; render(); });
+  // The search box sits in the hero; Enter (Search on a phone keyboard) jumps down to the results.
+  searchEl.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    $('all').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.matchMedia('(pointer: coarse)').matches) searchEl.blur();
+  });
   resetEl.addEventListener('click', function () { reset(); searchEl.focus(); });
   $('empty-reset').addEventListener('click', function () { reset(); searchEl.focus(); });
 
@@ -328,10 +332,10 @@
     });
   });
 
-  // Header search icon: jump to the catalogue and put the cursor in the search box.
+  // Header search icon: jump to the search box, wherever the page puts it, and focus it.
   $('search-jump').addEventListener('click', function (e) {
     e.preventDefault();
-    $('all').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    (searchEl.closest('.hero') || $('all')).scrollIntoView({ behavior: 'smooth', block: 'start' });
     searchEl.focus({ preventScroll: true });
   });
 
@@ -343,6 +347,21 @@
   if (featuredGrid) TOOLS.filter(function (t) { return t.featured; }).forEach(function (t) {
     featuredGrid.appendChild(buildTile(t));
   });
+
+  // Featured tools as a line of quick links under the hero search.
+  var picks = $('hero-picks');
+  if (picks) {
+    TOOLS.filter(function (t) { return t.featured; }).forEach(function (t) {
+      var a = el('a', null, t.title.replace(/\s*\(beta\)/i, ''));
+      a.href = ROOT + t.url;
+      picks.appendChild(a);
+    });
+    picks.hidden = picks.children.length < 2;
+  }
+
+  // The old path cards' anchors (#visualisations, #games) arrive as Explore / Play.
+  if (location.hash === '#visualisations') state.type = 'explore';
+  if (location.hash === '#games') state.type = 'play';
 
   // Tool pages link back with ?type=explore|play#all, so arrive pre-filtered.
   var wanted = /[?&]type=(explore|play)\b/.exec(location.search);
