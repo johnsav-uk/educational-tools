@@ -45,8 +45,9 @@
 
   /* ---------- Conical flask geometry ----------
      A frustum from the base (radius 75 px) to the shoulder (radius 17 px) over
-     95 px, holding 250 cm³ to the shoulder. Volume to liquid height by bisection. */
-  var FL = { base: 75, neck: 17, body: 95, neckH: 46, cap: 250 };
+     95 px, holding 100 cm³ to the shoulder, so a 25 cm³ portion stands deep
+     enough to see its colour. Volume to liquid height by bisection. */
+  var FL = { base: 75, neck: 17, body: 95, neckH: 46, cap: 100 };
   function frustumVol(h) {
     var r = FL.base - (FL.base - FL.neck) * h / FL.body;
     return Math.PI / 3 * h * (FL.base * FL.base + FL.base * r + r * r);
@@ -97,7 +98,11 @@
     });
 
     // Tile (under the burette).
-    this.tile = el('rect', { x: 286, y: 504, width: 188, height: 7, rx: 1, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, g);
+    this.tile = el('rect', { x: 286, y: 504, width: 188, height: 7, rx: 1, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1, 'data-part': 'tile', class: 'part' }, g);
+    this.tileParked = el('g', { 'data-part': 'tile', class: 'part' }, g);
+    el('rect', { x: 30, y: 560, width: 150, height: 9, rx: 1.5, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, this.tileParked);
+    el('rect', { x: 26, y: 548, width: 158, height: 26, fill: 'transparent' }, this.tileParked);
+    text(this.tileParked, 105, 590, 'white tile', { 'font-size': 12, class: 'cap' });
 
     // Burette.
     var bu = el('g', { 'data-part': 'burette', class: 'part' }, g);
@@ -117,10 +122,13 @@
     el('path', { d: 'M' + (BU.x - 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x - 2.5) + ',' + (BU.jetEnd - 4) + ' L' + (BU.x - 1) + ',' + BU.jetEnd + ' M' + (BU.x + 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x + 2.5) + ',' + (BU.jetEnd - 4) + ' L' + (BU.x + 1) + ',' + BU.jetEnd,
       fill: 'none', stroke: C.glass, 'stroke-width': 1.3 }, bu);
     el('rect', { x: BU.x - 5, y: BU.tap - 1, width: 10, height: 10, rx: 2, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, bu);
-    this.tapHandle = el('rect', { x: BU.x - 16, y: BU.tap + 2, width: 32, height: 4, rx: 2, fill: C.blue }, bu);
+    var tapG = el('g', { 'data-part': 'tap', class: 'part' }, g);
+    this.tapG = tapG;
+    el('rect', { x: BU.x - 30, y: BU.tap - 12, width: 60, height: 32, fill: 'transparent' }, tapG);
+    this.tapHandle = el('rect', { x: BU.x - 16, y: BU.tap + 2, width: 32, height: 4, rx: 2, fill: C.blue }, tapG);
     this.tapLabel = text(g, BU.x + 46, BU.tap + 8, 'tap', { 'font-size': 12, 'text-anchor': 'start' });
     // Funnel in the top.
-    this.funnelIn = el('path', { d: 'M352,4 L408,4 L384,26 L384,40 L376,40 L376,26 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5 }, g);
+    this.funnelIn = el('path', { d: 'M352,4 L408,4 L384,26 L384,40 L376,40 L376,26 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5, 'data-part': 'funnel', class: 'part' }, g);
     text(g, BU.x + 46, 70, 'burette', { 'font-size': 12, 'text-anchor': 'start' });
 
     // Stream and drop from the jet.
@@ -140,6 +148,9 @@
     el('circle', { cx: 10, cy: -26, r: 4, fill: '#d9574a' }, this.thermo);
     this.thermoText = text(this.thermo, 30, -112, '', { 'text-anchor': 'start', fill: C.text, 'font-size': 14, 'font-weight': 600 });
     this.flaskLabel = text(this.flaskG, 0, 30, 'conical flask', { 'font-size': 12, class: 'cap' });
+    this.swirlMark = el('g', { opacity: 0, fill: 'none', stroke: C.blue, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, this.flaskG);
+    el('path', { d: 'M-92,-38 A92,22 0 0 0 40,-18 M40,-18 l-12,-8 M40,-18 l-13,6' }, this.swirlMark);
+    el('path', { d: 'M92,-62 A92,22 0 0 0 -40,-82 M-40,-82 l12,8 M-40,-82 l13,-6' }, this.swirlMark);
 
     // Waste beaker.
     this.waste = el('g', { 'data-part': 'waste', class: 'part' }, g);
@@ -149,8 +160,9 @@
 
     // Shelf: bottles, indicator or acid, wash bottle, pipette, spare funnel.
     var shelf = el('g', {}, g);
-    function bottle(x, w, h, fill, labelTop, labelBottom, part, labelUnit) {
+    function bottle(x, w, h, fill, labelTop, labelBottom, part, labelUnit, id) {
       var b = el('g', { 'data-part': part, class: 'part' }, shelf);
+      if (id) b.setAttribute('data-id', id);
       el('rect', { x: x - w / 2, y: 505 - h, width: w, height: h, rx: 6, fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, b);
       el('rect', { x: x - w / 2 + 2, y: 505 - h * 0.62, width: w - 4, height: h * 0.62 - 2, rx: 4, fill: fill }, b);
       el('rect', { x: x - w * 0.18, y: 505 - h - 14, width: w * 0.36, height: 14, rx: 2, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, b);
@@ -173,14 +185,14 @@
     text(shelf, 712, 532, run.prep ? 'standard' : 'to pipette', { 'font-size': 12, class: 'cap' });
     if (redox) {
       var acids = [['H2SO4', 'H₂SO₄'], ['HCl', 'HCl'], ['HNO3', 'HNO₃']];
-      acids.forEach(function (a, i) { bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid'); });
+      acids.forEach(function (a, i) { bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid', null, a[0]); });
       text(shelf, 828, 532, 'acids', { 'font-size': 12, class: 'cap' });
     } else {
       var inds = (run.indicatorOptions && run.indicatorOptions.length ? run.indicatorOptions : [run.indicator]).filter(Boolean);
       var short = { phenolphthalein: 'phenol-', methylOrange: 'methyl', bromothymolBlue: 'bromo-', universal: 'universal' };
       var short2 = { phenolphthalein: 'phthalein', methylOrange: 'orange', bromothymolBlue: 'thymol bl.', universal: 'indicator' };
       inds.forEach(function (id, i) {
-        var b = el('g', { 'data-part': 'indicator', class: 'part' }, shelf), x = 782 + i * 42;
+        var b = el('g', { 'data-part': 'indicator', 'data-id': id, class: 'part' }, shelf), x = 782 + i * 42;
         el('rect', { x: x - 14, y: 455, width: 28, height: 50, rx: 4, fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.3 }, b);
         el('path', { d: 'M' + (x - 5) + ',455 L' + (x - 5) + ',440 Q' + x + ',428 ' + (x + 5) + ',440 L' + (x + 5) + ',455', fill: C.rubber }, b);
         text(b, x, 475, short[id] || id, { fill: C.text, 'font-size': 8.5 });
@@ -198,6 +210,7 @@
     var pip = el('g', { 'data-part': 'pipette', class: 'part' }, g);
     this.pipG = pip;
     if (run.aliquotDeviceKind !== 'cylinder') {
+      el('rect', { x: 554, y: 552, width: 326, height: 34, fill: 'transparent' }, pip);
       el('path', { d: 'M560,566 L640,566 L650,560 L720,560 L730,566 L830,566', fill: 'none', stroke: C.glass, 'stroke-width': 1.6 }, pip);
       el('path', { d: 'M560,572 L640,572 L650,578 L720,578 L730,572 L830,572', fill: 'none', stroke: C.glass, 'stroke-width': 1.6 }, pip);
       el('line', { x1: 800, x2: 800, y1: 564, y2: 574, stroke: C.text, 'stroke-width': 1 }, pip);
@@ -208,10 +221,25 @@
       text(pip, 640, 594, 'measuring cylinder', { 'font-size': 12, class: 'cap' });
     }
     // Spare funnel on the bench.
-    this.funnelOut = el('path', { d: 'M500,470 L548,470 L528,488 L528,505 L520,505 L520,488 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4, 'data-part': 'funnel', class: 'part' }, g);
+    this.funnelOut = el('g', { 'data-part': 'funnel', class: 'part' }, g);
+    el('path', { d: 'M552,470 L600,470 L580,488 L580,505 L572,505 L572,488 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.funnelOut);
+    text(this.funnelOut, 576, 532, 'funnel', { 'font-size': 12, class: 'cap' });
 
-    // Clickable parts carry a part name; the UI listens on the svg.
-    svg.querySelectorAll('.part').forEach(function (p) { p.style.cursor = 'pointer'; });
+    // Clickable parts carry a part name; the UI listens on the svg. Each is a
+    // button for the keyboard too (Tab to it, Enter or Space to use it).
+    var NAMES = { burette: 'burette', tap: 'burette tap', funnel: 'funnel', flask: 'conical flask', waste: 'waste beaker', tile: 'white tile',
+      titrant: 'bottle of ' + plain(lab(run.titrant.id)), analyte: 'bottle of ' + plain(lab(run.analyte.id)), wash: 'wash bottle of distilled water',
+      pipette: run.aliquotDeviceKind === 'cylinder' ? 'measuring cylinder' : 'pipette and filler' };
+    svg.querySelectorAll('.part').forEach(function (p) {
+      var part = p.getAttribute('data-part'), id = p.getAttribute('data-id');
+      var name = part === 'indicator' ? (E.INDICATORS[id] ? E.INDICATORS[id].name : 'indicator') : part === 'acid' ? 'dilute ' + { H2SO4: 'sulfuric', HCl: 'hydrochloric', HNO3: 'nitric' }[id] + ' acid' : NAMES[part] || part;
+      p.style.cursor = 'pointer';
+      p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', name);
+    });
+    // The cue: a ring round the apparatus to click next.
+    this.cueG = el('g', { class: 'cue', 'pointer-events': 'none' }, svg);
+    this.cues = [];
+    this.lastFill = null; this.fromFill = null;
     this.reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.t = 0;
   }
@@ -233,10 +261,11 @@
     var open = b.tap || b.pending > 0;
     set(this.tapHandle, { transform: open ? 'rotate(90 ' + BU.x + ' ' + (BU.tap + 4) + ')' : '', fill: open ? C.amber : C.blue });
     set(this.funnelIn, { display: b.funnel ? 'inline' : 'none' });
+    set(this.tileParked, { display: s.tile ? 'none' : 'inline' });
     set(this.funnelOut, { display: b.funnel ? 'none' : 'inline' });
 
     // Where things stand.
-    var under = s.under, fx = under === 'flask' ? 380 : 130, wx = under === 'waste' ? 380 : 520;
+    var under = s.under, fx = under === 'flask' ? 380 : 130, wx = under === 'waste' ? 380 : 510;
     var hasFlaskLiquid = !!s.flask && s.flask.totalVol() > 0;
     set(this.flaskG, { transform: 'translate(' + fx + ',505)' });
     setText(this.flaskLabel, s.tile && under === 'flask' ? 'flask on white tile' : 'conical flask');
@@ -264,23 +293,76 @@
       // Colourless liquid on the tile would vanish: give it the glass tint.
       var clear = ap.abs[0] + ap.abs[1] + ap.abs[2] < 0.03;
       var fill = clear ? (bg === C.white ? 'rgba(200,214,230,0.55)' : C.clear) : rgb(col);
-      var swirl = s.swirlAnim > 0 && !this.reduced ? Math.sin(s.swirlAnim * 18) * 4 : 0;
-      set(this.flaskBody, { transform: swirl ? 'rotate(' + swirl.toFixed(1) + ' 0 0)' : '' });
+      var dur = (root.TitrationLab && root.TitrationLab.SWIRL_s) || 1.2;
+      var swirling = s.swirlAnim > 0 || (s.keepSwirling && under === 'flask');
+      var ph = s.swirlAnim > 0 ? (dur - s.swirlAnim) / dur : (this.t % 1.2) / 1.2;
+      var amp = s.swirlAnim > 0 ? Math.sin(Math.PI * Math.min(1, ph * 1.15)) : 0.45;
+      if (swirling && !this.reduced) {
+        var a = ph * Math.PI * 4;
+        set(this.flaskBody, { transform: 'translate(' + (Math.cos(a) * 9 * amp).toFixed(1) + ',' + (Math.sin(a) * 2 * amp).toFixed(1) + ') rotate(' + (Math.sin(a) * 5 * amp).toFixed(1) + ' 0 -40)' });
+      } else set(this.flaskBody, { transform: '' });
+      set(this.swirlMark, { opacity: swirling ? (0.25 + 0.65 * (s.swirlAnim > 0 ? amp : 0.5)).toFixed(2) : 0 });
+      // The colour spreads through the flask over the swirl, not in one frame.
+      if (s.swirlAnim > 0 && this.fromFill && !clear) {
+        var k = Math.min(1, ph * 1.4);
+        fill = rgb(this.fromFill.map(function (c0, i) { return c0 + (col[i] - c0) * k; }));
+      } else if (s.swirlAnim <= 0) this.fromFill = null;
+      if (s.swirlAnim > 0 && !this.fromFill && this.lastFill) this.fromFill = this.lastFill;
+      if (s.swirlAnim <= 0) this.lastFill = clear ? null : col.slice();
       set(this.flLiquid, { d: flaskLiquid(0, base, h), fill: fill });
       set(this.flHaze, { d: flaskLiquid(0, base, h), 'fill-opacity': Math.min(0.85, ap.haze * 2500).toFixed(3) });
       var r = FL.base - (FL.base - FL.neck) * h / FL.body;
       set(this.flSurface, { x1: -r + 2, x2: r - 2, y1: -h, y2: -h, stroke: clear ? C.clearTop : rgb(col.map(function (c) { return c * 0.8; })) });
       if (ap.plume && under === 'flask') {
         var pc = liquidColour(ap.plume.abs, bg);
+        this.lastPlume = { fill: rgb(pc), strength: ap.plume.strength };
         set(this.flPlume, { cx: 0, cy: -h + 8, rx: 10 + 16 * ap.plume.strength, ry: 4 + 5 * ap.plume.strength, fill: rgb(pc), opacity: (0.35 + 0.6 * ap.plume.strength).toFixed(2) });
-      } else set(this.flPlume, { opacity: 0 });
+      } else if (s.swirlAnim > 0 && this.lastPlume && !this.reduced) {
+        var fade = 1 - ph, lp = this.lastPlume;
+        set(this.flPlume, { cx: 0, cy: -h * 0.55, rx: (10 + 16 * lp.strength) + ph * 55, ry: (4 + 5 * lp.strength) + ph * h * 0.35, fill: lp.fill, opacity: (fade * (0.35 + 0.6 * lp.strength)).toFixed(2) });
+      } else { this.lastPlume = null; set(this.flPlume, { opacity: 0 }); }
       var warm = f.T > 26;
       set(this.thermo, { opacity: warm || run.warm ? 1 : 0 });
       setText(this.thermoText, Math.round(f.T) + ' °C');
     } else {
       set(this.flLiquid, { fill: 'none', d: '' }); set(this.flHaze, { 'fill-opacity': 0 }); set(this.flPlume, { opacity: 0 }); set(this.flSurface, { stroke: 'none' });
-      set(this.flaskBody, { transform: '' }); set(this.thermo, { opacity: 0 });
+      set(this.flaskBody, { transform: '' }); set(this.thermo, { opacity: 0 }); set(this.swirlMark, { opacity: 0 });
     }
+    this.drawCue();
+  };
+
+  /* The cue: rings round each part to click next, given as
+     [{ part: 'titrant' }, { part: 'indicator', id: 'phenolphthalein' }].
+     Drawn from where the part is on screen, so it follows the flask. */
+  TitrationScene.prototype.setCue = function (list) {
+    this.cues = list || [];
+    this.cueKey = null;
+  };
+  TitrationScene.prototype.drawCue = function () {
+    var svg = this.svg, g = this.cueG, self = this;
+    var parts = [];
+    this.cues.forEach(function (c) {
+      svg.querySelectorAll('[data-part="' + c.part + '"]' + (c.id ? '[data-id="' + c.id + '"]' : '')).forEach(function (n) {
+        if (n.closest('[display="none"]') || n.getAttribute('display') === 'none') return;
+        parts.push(n);
+      });
+    });
+    var ctm = svg.getScreenCTM && svg.getScreenCTM();
+    if (!ctm || !parts.length) { if (g.childNodes.length) g.innerHTML = ''; return; }
+    var inv = ctm.inverse(), boxes = parts.map(function (n) {
+      var r = n.getBoundingClientRect(), p1 = svg.createSVGPoint(), p2 = svg.createSVGPoint();
+      p1.x = r.left; p1.y = r.top; p2.x = r.right; p2.y = r.bottom;
+      p1 = p1.matrixTransform(inv); p2 = p2.matrixTransform(inv);
+      return [Math.round(p1.x - 8), Math.round(p1.y - 8), Math.round(p2.x - p1.x + 16), Math.round(p2.y - p1.y + 16)];
+    });
+    var key = boxes.join('|');
+    if (key === this.cueKey) return;
+    this.cueKey = key;
+    g.innerHTML = '';
+    boxes.forEach(function (b) {
+      el('rect', { x: b[0], y: b[1], width: b[2], height: b[3], rx: 10, fill: 'none', stroke: C.amber, 'stroke-width': 3, class: 'cue-ring' }, g);
+    });
+    self.cueBoxes = boxes;
   };
 
   /* The magnified burette: 3 cm³ either side of the meniscus. Clear liquids
@@ -307,7 +389,7 @@
     var r = b.reading, cy = 120;
     var key = Math.round(r * 100);
     if (this.lastKey !== key) {
-      this.lastKey = key;
+      this.lastKey = key; this.redrawn = true;
       // Ticks from r − 2 to r + 2 at 0.1 cm³; labels on whole numbers.
       this.scale.innerHTML = '';
       var first = Math.floor((r - 2.1) * 10), last = Math.ceil((r + 2.1) * 10);

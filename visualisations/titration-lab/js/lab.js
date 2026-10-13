@@ -24,6 +24,7 @@
   var FLASK_RINSE_ANALYTE_cm3 = 0.40, FLASK_WET_WATER_cm3 = 0.5;
   var BLOW_OUT_cm3 = 0.04;
   var ACID_VOLUME_cm3 = 10;
+  var SWIRL_s = 1.2;                              // one swirl of the flask, for the drawing
   var ENDPOINT_WINDOW = { early: -0.03, late: 0.12 };   // cm³ either side of the indicator's (or the first excess's) endpoint
 
   function res(kind, msg, code, extra) {
@@ -185,6 +186,18 @@
       return liquid;
     }
 
+    // Run a little to waste: fills the jet below the tap and brings the
+    // meniscus onto the scale, just below 0.00.
+    lab.primeJet = function () {
+      var b = s.burette;
+      if (b.reading === null) return event(res('invalid', 'Fill the burette first.', 'prime-empty'));
+      if (s.under !== 'waste') return event(res('invalid', 'Put the waste beaker under the burette first.', 'prime-no-waste'));
+      if (midTitration()) return event(res('invalid', 'Finish this titration first.', 'prime-mid'));
+      var v = b.jetAir + Math.max(0, -b.reading) + E.round(rng.between(0.1, 0.6), 2);
+      runOut(v); b.tap = false; b.pending = 0;
+      return event(res('good', 'A little run into the waste beaker: the jet below the tap is full and the level is on the scale.', 'prime'));
+    };
+
     lab.tap = function (open, flow) {
       var b = s.burette;
       if (flow) b.flow = flow;
@@ -218,7 +231,7 @@
 
     lab.swirl = function () {
       if (!s.flask || s.flask.totalVol() <= 0) return event(res('harmless', 'The flask is empty.', 'swirl-empty'));
-      s.flask.swirl(); s.swirlAnim = 0.8;
+      s.flask.swirl(); s.swirlAnim = SWIRL_s;
       return event(res('good', 'Swirled. The flask is ' + s.flask.describe().text + '.', 'swirl'));
     };
     lab.setKeepSwirling = function (on) {
@@ -526,7 +539,8 @@
         if (s.trial && s.trial.initialRec !== null) s.trial.funnelDripped += d;
       }
       if (s.flask) {
-        if (s.keepSwirling && s.flask.un.vol > 0) s.flask.swirl();
+        // While the flask is being swirled, drops that land are mixed in too.
+        if ((s.keepSwirling || s.swirlAnim > 0) && s.flask.un.vol > 0) s.flask.swirl();
         s.flask.step(dt);
       }
       s.swirlAnim = Math.max(0, s.swirlAnim - dt);
@@ -829,5 +843,5 @@
     return p;
   }
 
-  root.TitrationLab = { create: create, STREAM_cm3_s: STREAM_cm3_s, ENDPOINT_WINDOW: ENDPOINT_WINDOW, PREP: PREP };
+  root.TitrationLab = { create: create, SWIRL_s: SWIRL_s, STREAM_cm3_s: STREAM_cm3_s, ENDPOINT_WINDOW: ENDPOINT_WINDOW, PREP: PREP };
 })(typeof self !== 'undefined' ? self : this);
