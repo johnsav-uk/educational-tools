@@ -243,6 +243,27 @@ body.stage-titrate #tDock{ grid-area:dock; }
 .btn.glow{ border-color:var(--blue); box-shadow:0 0 0 3px oklch(.6 .14 245 / .35); }
 @keyframes goPulse{ 0%{ box-shadow:0 0 0 0 oklch(.6 .13 155 / .7); } 100%{ box-shadow:0 0 0 14px oklch(.6 .13 155 / 0); } }
 @media (prefers-reduced-motion:reduce){ .btn.go{ animation:none; } }
+/* Watch: the method animated, with its controls under the bench. */
+.w-dock{ flex:none; flex-direction:column; gap:8px; }
+.w-bar{ width:100%; height:4px; border-radius:2px; background:var(--line2); overflow:hidden; }
+.w-bar i{ display:block; height:100%; width:0; background:var(--blue); }
+.w-dots{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:2px; }
+.w-dot{ position:relative; width:24px; height:24px; padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; }
+.w-dot::after{ content:""; position:absolute; inset:8px; border-radius:50%; background:var(--line2); }
+.w-dot.done::after{ background:var(--blue); opacity:.55; }
+.w-dot.now::after{ inset:5px; background:var(--blue); }
+.w-dot:hover::after{ background:var(--muted); }
+.w-dot:focus-visible{ outline:3px solid var(--blue); outline-offset:0; }
+.w-btns{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.w-btns .btn{ min-height:46px; }
+.w-btns .btn.big{ min-width:140px; }
+body.watching .colourchip{ display:none; }
+@media (max-width:900px){ .w-dock{ position:sticky; bottom:0; z-index:5; padding:8px; gap:6px; } .w-btns .btn.big{ min-width:110px; } }
+@media (max-width:560px){
+  .w-dot{ width:20px; height:20px; } .w-dot::after{ inset:6px; } .w-dot.now::after{ inset:3px; }
+  .w-btns{ gap:6px; flex-wrap:nowrap; } .w-btns .btn{ padding:8px 12px; }
+  .w-btns .btn:not(.big) span{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+}
 .t-rec{ font-size:1rem; color:var(--body); }
 .t-rec b{ color:var(--good); }
 #results .units{ font-size:.75rem; font-weight:500; color:var(--muted); margin-left:6px; }
@@ -461,6 +482,8 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .theme-light .steps li.done::before{ background:oklch(.93 .05 155); }
 .theme-light .stages li.done .n{ background:oklch(.93 .05 155); }
 .theme-light #benchSvg .cue-ring{ stroke:#b7791f; }
+.theme-light #benchSvg .actors [fill="rgba(159,180,204,0.45)"]{ fill:rgba(70,105,145,0.35); }
+.theme-light #benchSvg .actors [stroke="rgba(159,180,204,0.55)"]{ stroke:rgba(70,105,145,0.55); }
 /* The bench, burette lens and pH curve are SVG drawn for a navy stage.
    CSS outranks SVG attributes, so in light mode each colour that would
    vanish is swapped here; liquids, steel and the balance display keep theirs. */

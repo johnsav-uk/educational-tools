@@ -141,10 +141,13 @@
     this.tileParked = el('g', { 'data-part': 'tile', class: 'part shelf-only' }, g);
     el('rect', { x: 30, y: 560, width: 150, height: 9, rx: 3, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, this.tileParked);
     el('rect', { x: 26, y: 548, width: 158, height: 26, fill: 'transparent', class: 'hit' }, this.tileParked);
-    text(this.tileParked, 105, 590, 'white tile', { 'font-size': 12, class: 'cap' });
+    this.tileLabel = text(this.tileParked, 105, 590, 'white tile', { 'font-size': 12, class: 'cap' });
 
     // Burette.
-    var bu = el('g', { 'data-part': 'burette', class: 'part' }, g);
+    // The burette, its tap and funnel ride in one rig, which motion.js can
+    // lower in the clamp so the top is below eye level for filling.
+    this.rig = el('g', {}, g);
+    var bu = el('g', { 'data-part': 'burette', class: 'part' }, this.rig);
     this.buLiquid = el('rect', { x: BU.x - BU.w / 2 + 1.5, width: BU.w - 3, fill: C.clear }, bu);
     this.buBelow = el('path', { d: 'M' + (BU.x - 6.5) + ',310 Q' + (BU.x - 6.5) + ',318 ' + (BU.x - 3) + ',' + BU.tap + ' L' + (BU.x + 3) + ',' + BU.tap + ' Q' + (BU.x + 6.5) + ',318 ' + (BU.x + 6.5) + ',310 Z', fill: C.clear }, bu);
     this.buTop = el('line', { x1: BU.x - BU.w / 2 + 1.5, x2: BU.x + BU.w / 2 - 1.5, stroke: C.clearTop, 'stroke-width': 1.5 }, bu);
@@ -165,14 +168,14 @@
       ' M' + (BU.x + 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x + 2.5) + ',' + (BU.jetEnd - 6) + ' Q' + (BU.x + 2.5) + ',' + (BU.jetEnd - 1) + ' ' + (BU.x + 1) + ',' + BU.jetEnd,
       fill: 'none', stroke: C.glass, 'stroke-width': 1.3 }, bu);
     el('circle', { cx: BU.x, cy: BU.tap + 4, r: 6.5, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, bu);
-    var tapG = el('g', { 'data-part': 'tap', class: 'part' }, g);
+    var tapG = el('g', { 'data-part': 'tap', class: 'part' }, this.rig);
     this.tapG = tapG;
     this.tapHandle = el('rect', { x: BU.x - 17, y: BU.tap + 1.5, width: 34, height: 5, rx: 2.5, fill: C.blue }, tapG);
     el('rect', { x: BU.x - 30, y: BU.tap - 12, width: 60, height: 32, fill: 'transparent', class: 'hit' }, tapG);
-    this.tapLabel = text(g, BU.x + 46, BU.tap + 8, 'tap', { 'font-size': 12, 'text-anchor': 'start' });
+    this.tapLabel = text(this.rig, BU.x + 46, BU.tap + 8, 'tap', { 'font-size': 12, 'text-anchor': 'start' });
     // Funnel in the top.
-    this.funnelIn = el('path', { d: funnelPath(380, 4), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5, 'data-part': 'funnel', class: 'part' }, g);
-    text(g, BU.x + 46, 70, 'burette', { 'font-size': 12, 'text-anchor': 'start' });
+    this.funnelIn = el('path', { d: funnelPath(380, 4), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5, 'data-part': 'funnel', class: 'part' }, this.rig);
+    text(this.rig, BU.x + 46, 70, 'burette', { 'font-size': 12, 'text-anchor': 'start' });
 
     // Stream and drop from the jet.
     this.stream = el('line', { x1: BU.x, x2: BU.x, y1: BU.jetEnd, y2: BU.jetEnd + 60, 'stroke-width': 2.5, stroke: 'none' }, g);
@@ -213,14 +216,14 @@
       el('path', { d: 'M' + (x - nk) + ',' + T0 + ' Q' + L0 + ',' + T0 + ' ' + L0 + ',' + (T0 + sh) + ' L' + L0 + ',497 Q' + L0 + ',505 ' + (L0 + 8) + ',505 L' + (R0 - 8) + ',505 Q' + R0 + ',505 ' + R0 + ',497 L' + R0 + ',' + (T0 + sh) + ' Q' + R0 + ',' + T0 + ' ' + (x + nk) + ',' + T0 + ' Z',
         fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, b);
       el('rect', { x: x - w / 2 + 2, y: 505 - h * 0.62, width: w - 4, height: h * 0.62 - 2, rx: 6, fill: fill }, b);
-      el('rect', { x: x - w * 0.18, y: 505 - h - 13, width: w * 0.36, height: 14, rx: 4, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, b);
+      var cap = el('rect', { x: x - w * 0.18, y: 505 - h - 13, width: w * 0.36, height: 14, rx: 4, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, b);
       var lh = labelUnit ? 34 : 24;
       el('rect', { x: x - w / 2 + 4, y: 505 - h * 0.55, width: w - 8, height: lh, rx: 4, fill: '#0d1928', stroke: C.leader, 'stroke-width': 1 }, b);
       var y0 = 505 - h * 0.55;
       var t1 = text(b, x, y0 + 11, labelTop, { fill: C.text, 'font-size': 10.5, 'font-weight': 600 });
       var t2 = text(b, x, y0 + 21, labelBottom, { fill: C.text, 'font-size': 9.5 });
       if (labelUnit) text(b, x, y0 + 30.5, labelUnit, { fill: C.label, 'font-size': 8.5 });
-      return { g: b, t1: t1, t2: t2 };
+      return { g: b, t1: t1, t2: t2, cap: cap, x: x, mouth: 505 - h };
     }
     var lab = function (id) { return (root.TitrationExperiments.LABELS[id] || {}).formula || id; };
     function plain(html) { return html.replace(/<sub>(.*?)<\/sub>/g, function (m, d) { return d.split('').map(function (c) { return '₀₁₂₃₄₅₆₇₈₉'[+c] || c; }).join(''); }).replace(/<sup>(.*?)<\/sup>/g, function (m, d) { return d.replace(/2/g, '²').replace(/\+/g, '⁺').replace(/−/g, '⁻').replace(/-/g, '⁻'); }).replace(/<[^>]+>/g, ''); }
@@ -233,9 +236,11 @@
     text(shelf, 712, 532, run.prep ? 'standard' : 'to pipette', { 'font-size': 12, class: 'cap' });
     if (redox) {
       var acids = [['H2SO4', 'H₂SO₄'], ['HCl', 'HCl'], ['HNO3', 'HNO₃']];
-      acids.forEach(function (a, i) { bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid', null, a[0]); });
+      self.acidBottles = {};
+      acids.forEach(function (a, i) { self.acidBottles[a[0]] = bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid', null, a[0]); });
       text(shelf, 828, 532, 'acids', { 'font-size': 12, class: 'cap' });
     } else {
+      self.indBottles = {};
       var inds = (run.indicatorOptions && run.indicatorOptions.length ? run.indicatorOptions : [run.indicator]).filter(Boolean);
       var short = { phenolphthalein: 'phenol-', methylOrange: 'methyl', bromothymolBlue: 'bromo-', universal: 'universal' };
       var short2 = { phenolphthalein: 'phthalein', methylOrange: 'orange', bromothymolBlue: 'thymol bl.', universal: 'indicator' };
@@ -243,7 +248,8 @@
         var b = el('g', { 'data-part': 'indicator', 'data-id': id, class: 'part' }, shelf), x = 782 + i * 42;
         el('path', { d: 'M' + (x - 6) + ',455 Q' + (x - 16) + ',455 ' + (x - 16) + ',463 L' + (x - 16) + ',498 Q' + (x - 16) + ',505 ' + (x - 9) + ',505 L' + (x + 9) + ',505 Q' + (x + 16) + ',505 ' + (x + 16) + ',498 L' + (x + 16) + ',463 Q' + (x + 16) + ',455 ' + (x + 6) + ',455 Z',
           fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.3 }, b);
-        el('path', { d: 'M' + (x - 5) + ',456 L' + (x - 5) + ',441 Q' + x + ',426 ' + (x + 5) + ',441 L' + (x + 5) + ',456 Z', fill: C.rubber }, b);
+        var teat = el('path', { d: 'M' + (x - 5) + ',456 L' + (x - 5) + ',441 Q' + x + ',426 ' + (x + 5) + ',441 L' + (x + 5) + ',456 Z', fill: C.rubber }, b);
+        self.indBottles[id] = { g: b, teat: teat, x: x };
         text(b, x, 475, short[id] || id, { fill: C.text, 'font-size': 8.5 });
         text(b, x, 485, short2[id] || '', { fill: C.text, 'font-size': 8.5 });
       });
@@ -251,6 +257,7 @@
     }
     // Wash bottle.
     var wb = el('g', { 'data-part': 'wash', class: 'part' }, shelf);
+    this.washG = wb;
     el('path', { d: 'M912,505 Q904,505 904,497 L904,450 Q904,438 916,438 L928,438 Q940,438 940,450 L940,497 Q940,505 932,505 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, wb);
     el('path', { d: 'M922,438 L922,424 L946,410', fill: 'none', stroke: C.glass, 'stroke-width': 2 }, wb);
     text(shelf, 922, 532, 'distilled', { 'font-size': 12, class: 'cap' });
@@ -273,6 +280,9 @@
     this.funnelOut = el('g', { 'data-part': 'funnel', class: 'part shelf-only' }, g);
     el('path', { d: funnelPath(576, 469), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.funnelOut);
     text(this.funnelOut, 576, 532, 'funnel', { 'font-size': 12, class: 'cap' });
+
+    // Moving apparatus for the step animations (motion.js draws into it).
+    this.actors = el('g', { class: 'actors', 'pointer-events': 'none' }, g);
 
     // Clickable parts carry a part name; the UI listens on the svg. Each is a
     // button for the keyboard too (Tab to it, Enter or Space to use it).
@@ -314,28 +324,20 @@
     this.t += dt || 0;
     var purple = run.titrant.id === 'KMnO4';
     var liq = purple ? C.purple : C.clear, liqTop = purple ? C.purpleTop : C.clearTop;
-    // Burette level.
-    if (b.reading === null) {
-      set(this.buLiquid, { y: 312, height: 0 }); set(this.buBelow, { fill: 'none' }); set(this.buTop, { stroke: 'none' });
-    } else {
-      var y = Math.max(BU.top + 4, buretteY(b.reading));
-      set(this.buLiquid, { y: y, height: Math.max(0, 312 - y), fill: liq }); set(this.buBelow, { fill: liq });
-      set(this.buTop, { y1: y, y2: y, stroke: liqTop });
-    }
-    set(this.jetLiquid, { fill: b.reading !== null && b.jetAir <= 0 ? liq : 'none' });
+    this.paintBurette(b.reading, liq, liqTop, b.reading !== null && b.jetAir <= 0);
     var open = b.tap || b.pending > 0;
-    set(this.tapHandle, { transform: open ? 'rotate(90 ' + BU.x + ' ' + (BU.tap + 4) + ')' : '', fill: open ? C.amber : C.blue });
+    this.setTap(this.ease('tap', open ? 90 : 0, dt, 14));
     set(this.funnelIn, { display: b.funnel ? 'inline' : 'none' });
     set(this.tileParked, { display: s.tile ? 'none' : 'inline' });
     set(this.funnelOut, { display: b.funnel ? 'none' : 'inline' });
 
     // Where things stand.
-    var under = s.under, fx = under === 'flask' ? 380 : 130, wx = under === 'waste' ? 380 : 510;
+    var under = s.under, fx = this.ease('fx', under === 'flask' ? 380 : 130, dt, 7), wx = this.ease('wx', under === 'waste' ? 380 : 510, dt, 7);
     var hasFlaskLiquid = !!s.flask && s.flask.totalVol() > 0;
     set(this.flaskG, { transform: 'translate(' + fx + ',505)' });
     setText(this.flaskLabel, s.tile && under === 'flask' ? 'flask on white tile' : 'conical flask');
     set(this.waste, { transform: 'translate(' + wx + ',505)' });
-    set(this.tile, { display: s.tile ? 'inline' : 'none', x: fx - 94 });
+    set(this.tile, { display: s.tile ? 'inline' : 'none', x: 286 });
     var wasteH = Math.min(70, 4 + s.waste_cm3 * 0.6);
     set(this.wasteLiquid, { y: -wasteH - 1.5, height: wasteH, fill: s.waste_cm3 > 0 ? liq : 'none' });
 
@@ -401,6 +403,31 @@
     if (this.view === 'titrate') this.updateMag(b);
     this.drawCue();
   };
+  // The burette's liquid at a reading (null: empty; past 50: draining out of the scale).
+  TitrationScene.prototype.paintBurette = function (reading, liq, liqTop, jetFull) {
+    var y = reading === null ? 312 : Math.max(BU.top + 4, buretteY(reading));
+    if (y >= 312) {
+      set(this.buLiquid, { y: 312, height: 0 }); set(this.buTop, { stroke: 'none' });
+      set(this.buBelow, { fill: reading !== null && y < 326 ? liq : 'none' });
+    } else {
+      set(this.buLiquid, { y: f1(y), height: f1(Math.max(0, 312 - y)), fill: liq }); set(this.buBelow, { fill: liq });
+      set(this.buTop, { y1: f1(y), y2: f1(y), stroke: liqTop });
+    }
+    set(this.jetLiquid, { fill: jetFull ? liq : 'none' });
+  };
+  TitrationScene.prototype.setTap = function (ang) {
+    set(this.tapHandle, { transform: ang > 0.5 ? 'rotate(' + f1(ang) + ' ' + BU.x + ' ' + (BU.tap + 4) + ')' : '', fill: ang > 5 ? C.amber : C.blue });
+  };
+  // Positions glide to where the state puts them (at once with reduced motion).
+  TitrationScene.prototype.ease = function (key, target, dt, rate) {
+    this.eased = this.eased || {};
+    var v = this.eased[key];
+    if (v === undefined || this.reduced || !dt) v = target;
+    else v += (target - v) * Math.min(1, dt * rate);
+    if (Math.abs(target - v) < 0.3) v = target;
+    this.eased[key] = v;
+    return v;
+  };
   TitrationScene.prototype.setView = function (v) {
     this.view = v;
     this.svg.classList.toggle('titrate-view', v === 'titrate');
@@ -444,6 +471,7 @@
   };
   TitrationScene.prototype.drawCue = function () {
     var svg = this.svg, g = this.cueG, self = this;
+    if (this.hold) { if (g.childNodes.length) g.innerHTML = ''; this.cueKey = null; return; }
     var parts = [];
     this.cues.forEach(function (c) {
       svg.querySelectorAll('[data-part="' + c.part + '"]' + (c.id ? '[data-id="' + c.id + '"]' : '')).forEach(function (n) {
@@ -658,5 +686,6 @@
   PrepScene.prototype.setCue = TitrationScene.prototype.setCue;
   PrepScene.prototype.drawCue = TitrationScene.prototype.drawCue;
 
-  root.TitrationBench = { TitrationScene: TitrationScene, BuretteLens: BuretteLens, PrepScene: PrepScene, NeckLens: NeckLens, liquidColour: liquidColour, C: C, flaskHeight: flaskHeight };
+  root.TitrationBench = { TitrationScene: TitrationScene, BuretteLens: BuretteLens, PrepScene: PrepScene, NeckLens: NeckLens, liquidColour: liquidColour, C: C, flaskHeight: flaskHeight,
+    el: el, set: set, rgb: rgb, f1: f1, FL: FL, BU: BU, buretteY: buretteY, flaskBand: flaskBand, lightTheme: lightTheme };
 })(typeof self !== 'undefined' ? self : this);

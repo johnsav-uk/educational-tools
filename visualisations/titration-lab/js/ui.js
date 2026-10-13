@@ -7,7 +7,7 @@
    from the lab's actual state and the student's own numbers. */
 (function () {
   'use strict';
-  var E = window.TitrationEngine, X = window.TitrationExperiments, L = window.TitrationLab, B = window.TitrationBench;
+  var E = window.TitrationEngine, X = window.TitrationExperiments, L = window.TitrationLab, B = window.TitrationBench, M = window.TitrationMotion;
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -167,7 +167,7 @@
         run.indicatorOptions.map(function (id) { var i = E.INDICATORS[id]; return '<tr><td>' + i.name + '</td><td>' + i.range[0].toFixed(1) + ' – ' + i.range[1].toFixed(1) + '</td><td>' + i.acidColour + ' → ' + i.alkaliColour + '</td></tr>'; }).join('') + '</tbody></table>';
     }
     h += '<h3>How this works</h3><ol class="howto">' + (run.prep ? '<li><b>Make the standard solution</b> of sodium carbonate.</li>' : '') +
-      '<li><b>Set up.</b> Click the apparatus on the bench, one step at a time. In <i>Learn</i> the next piece is highlighted and the method writes itself beside the bench; <i>Test me</i> asks for the same clicks from memory.</li>' +
+      '<li><b>Set up.</b> <i>Watch</i> plays every step of the method as an animation. Then click the apparatus on the bench, one step at a time. In <i>Learn</i> the next piece is highlighted and the method writes itself beside the bench; <i>Test me</i> asks for the same clicks from memory.</li>' +
       '<li><b>Titrate.</b> Read the burette, add the titrant and swirl until the colour changes, then read it again. Repeat until your titres are concordant.</li>' +
       '<li><b>Calculate</b> the concentration from the mean of your concordant titres, step by step or worked out for you.</li></ol>' +
       (run.mode === 'guided' ? '' : '<p class="muted">Readings are checked only for format: misread the burette and it shows in your results.</p>');
@@ -221,10 +221,13 @@
     if (!ui.setupMode) ui.setupMode = run.mode === 'guided' || run.prep ? 'learn' : 'test';
     ui.inPrep = !!run.prep;
     ui.stage = ui.inPrep ? 'prep' : 'setup';
+    if (ui.inPrep && ui.setupMode === 'watch') ui.setupMode = 'learn';
+    ui.watch = null;
     newSetup();
     buildScene();
     show('lab');
     feedback(null);
+    if (ui.setupMode === 'watch') return startWatch();
     refresh(true);
   }
   function newSetup() { ui.setup = { done: {}, log: [], mistakes: 0, hints: 0, wrong: 0, showNext: false, last: null, note: null }; }
@@ -235,20 +238,22 @@
     ui.lab = L.create(ui.run, { choices: { aliquot: ui.choices.aliquot } });
     if (prep && ui.stage !== 'prep') ui.lab.state.prep = prep;
     if (ui.stage === 'prep') ui.prepCalc = {};
-    newSetup(); ui.lastColour = null; ui.t = freshT();
+    newSetup(); ui.lastColour = null; ui.t = freshT(); ui.watch = null;
     buildScene();
     feedback(null);
+    if (mode === 'watch' && ui.stage === 'setup') return startWatch();
     refresh(true);
   }
 
   function buildScene() {
     var run = ui.run, svg = $('#benchSvg'), lens = $('#lensSvg');
     if (ui.inPrep) {
-      ui.scene = new B.PrepScene(svg, run); ui.lens = new B.NeckLens(lens); ui.sceneKind = 'prep';
+      ui.scene = new B.PrepScene(svg, run); ui.lens = new B.NeckLens(lens); ui.sceneKind = 'prep'; ui.motion = null;
       $('#lensCap').textContent = 'Bottom of the meniscus on the mark';
       svg.setAttribute('aria-label', 'Balance with weighing bottle, beaker with glass rod, 250.0 cm³ volumetric flask, deionised water and dropper.');
     } else {
       ui.scene = new B.TitrationScene(svg, run); ui.lens = new B.BuretteLens(lens, run); ui.sceneKind = 'titration';
+      ui.motion = M ? new M(ui.scene, run) : null;
       $('#lensCap').innerHTML = run.titrant.id === 'KMnO4' ? '<span class="cap-long">Too dark to see through: </span>read the top of the meniscus' : 'Read the bottom of the meniscus';
       $('#lensBox').title = 'Magnified burette scale at the meniscus. Each small division is 0.10 cm³.';
       svg.setAttribute('aria-label', 'Clamp stand holding a 50 cm³ burette, with a conical flask, white tile, waste beaker, reagent bottles, ' + (run.type === 'redox' ? 'acids' : 'indicators') + ', wash bottle, funnel and pipette. Click the apparatus to use it.');
@@ -264,10 +269,15 @@
     ui.last = t;
     var lab = ui.lab;
     if (lab) {
-      lab.tick(dt);
+      var watching = watchOn();
+      if (!watching) lab.tick(dt);
+      if (ui.motion) { var ended = ui.motion.tick(dt); if (watching) watchTick(dt, ended); }
+      if (lab !== ui.lab) lab = ui.lab;
       if (lab.state.stopMsg) { feedback({ kind: 'info', msg: lab.state.stopMsg }); lab.state.stopMsg = null; }
       ui.scene.update(lab, dt);
-      ui.lens.update(lab);
+      var moving = ui.motion && ui.motion.active();
+      if (moving) ui.motion.render();
+      ui.lens.update(moving ? ui.motion.lensLab() : lab);
       // New scale numbers in the lens need their board size.
       if (ui.lens.redrawn) { ui.lens.redrawn = false; if (document.body.classList.contains('presenting')) sizeForBoard(['#lensSvg']); }
       if (ui.scene.redrawn) { ui.scene.redrawn = false; if (document.body.classList.contains('presenting')) sizeForBoard(['#benchSvg']); }
@@ -291,7 +301,7 @@
   /* ---------- Colour chip and live announcements ---------- */
   function paintChip() {
     var s = ui.lab.state, chip = $('#colourChip');
-    if (ui.sceneKind !== 'titration' || !s.flask || s.flask.totalVol() <= 0) { chip.classList.add('off'); return; }
+    if (ui.sceneKind !== 'titration' || !s.flask || s.flask.totalVol() <= 0 || (ui.motion && ui.motion.active())) { chip.classList.add('off'); return; }
     chip.classList.remove('off');
     var d = s.flask.describe(), ap = s.flask.appearance();
     var col = B.liquidColour(ap.abs, B.C.white);
@@ -478,8 +488,11 @@
       st.note = { kind: 'mistake', msg: cand.wrongWhy(id) };
       return renderSetup();
     }
+    if (ui.motion) ui.motion.stop();
+    var from = ui.motion ? M.snap(ui.lab) : null;
     var r = cand.act(id);
     if (!r.ok) { st.note = { kind: r.kind, msg: r.msg }; return renderSetup(); }
+    if (ui.motion) ui.motion.start(cand.id, from, M.snap(ui.lab), { rate: 1.3, txt: motionText() });
     st.done[cand.id] = true;
     st.log.push({ id: cand.id, method: cand.methodFor ? cand.methodFor(id) : cand.method, why: cand.why });
     st.last = cand.sayFor ? cand.sayFor(id) : cand.say;
@@ -492,6 +505,7 @@
   // Teacher's shortcut: do every remaining step.
   function skipSetup(quiet) {
     var st = ui.setup, guard = 0, ss;
+    if (ui.motion) ui.motion.stop();
     while ((ss = setupState()).next && guard++ < 40) {
       var x = ss.next, id = x.right ? x.right[0] : undefined, r = x.act(id);
       if (!r.ok) break;
@@ -502,23 +516,30 @@
     if (quiet) return;
     ui.lastKey = ''; refresh();
   }
+  var MODES = { watch: 'Watch', learn: 'Learn', test: 'Test me' };
+  function renderModes(n, skip) {
+    var list = ui.stage === 'prep' ? ['learn', 'test'] : ['watch', 'learn', 'test'];
+    var mode = '<span class="seg" role="group" aria-label="Set-up mode">' + list.map(function (m) {
+      return '<button type="button" data-mode="' + m + '" aria-pressed="' + (ui.setupMode === m) + '"' + (m === 'watch' ? ' title="Watch every step of the method, animated"' : '') + '>' + MODES[m] + '</button>';
+    }).join('') + '</span>' +
+      (skip ? '<button class="btn sm ghost" type="button" id="skipSetup" title="Do the remaining steps for me">Skip set-up</button>' : '');
+    if ($('#setupMode').innerHTML === mode) return;
+    $('#setupMode').innerHTML = mode;
+    $$('#setupMode [data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var m = b.getAttribute('data-mode');
+        if (m === ui.setupMode) return;
+        if (n > 0 && !confirm('Start the set-up again in ' + MODES[m] + ' mode?')) return;
+        restartSetup(m);
+      });
+    });
+    if ($('#skipSetup')) $('#skipSetup').addEventListener('click', skipSetup);
+  }
   function renderSetup() {
+    if (watchOn()) return renderWatch();
     var st = ui.setup, ss = setupState(), learn = ui.setupMode === 'learn', total = ss.steps.length, n = total - ss.left.length;
     // Mode switch.
-    var mode = '<span class="seg" role="group" aria-label="Set-up mode"><button type="button" data-mode="learn" aria-pressed="' + learn + '">Learn</button><button type="button" data-mode="test" aria-pressed="' + !learn + '">Test me</button></span>' +
-      (ss.next ? '<button class="btn sm ghost" type="button" id="skipSetup" title="Do the remaining steps for me">Skip set-up</button>' : '');
-    if ($('#setupMode').innerHTML !== mode) {
-      $('#setupMode').innerHTML = mode;
-      $$('#setupMode [data-mode]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var m = b.getAttribute('data-mode');
-          if (m === ui.setupMode) return;
-          if (n > 0 && !confirm('Start the set-up again in ' + (m === 'learn' ? 'Learn' : 'Test me') + ' mode?')) return;
-          restartSetup(m);
-        });
-      });
-      if ($('#skipSetup')) $('#skipSetup').addEventListener('click', skipSetup);
-    }
+    renderModes(n, !!ss.next);
     // The prompt above the bench.
     var counter = '<span class="count">' + (!ss.next ? 'All ' + total + ' steps' : st.last ? 'Step ' + n + ' of ' + total : total + ' steps') + '</span>';
     var prep = ui.stage === 'prep', task = prep ? 'make the standard solution' : 'set up the titration';
@@ -564,6 +585,174 @@
     var list = $('#methodBody ol.method'), card = $('#method');
     if (!ss.next) card.scrollTop = 0;
     else if (list && list.lastElementChild) { var li = list.lastElementChild; card.scrollTop = Math.max(0, li.offsetTop - card.offsetTop - card.clientHeight + li.offsetHeight + 20); }
+    boardNotes();
+  }
+
+  /* ---------- Watch: the whole method, animated ----------
+     One list of steps drives it: the set-up steps above, in the order Learn
+     uses, then a titration to the endpoint. Each step's end state is its
+     action on a lab of its own (the student's results are never touched); its
+     start state is the end state of the step before, and its duration is its
+     animation's. Going to any step builds a fresh lab and does every step
+     before it, so Back, Skip and the dots always land on the right state. */
+  function watchOn() { return ui.setupMode === 'watch' && ui.stage === 'setup' && !!ui.watch && ui.view === 'lab'; }
+  function motionText() {
+    var c = colours();
+    return { where: ui.run.titrant.id === 'KMnO4' ? 'top' : 'bottom', from: c.from, to: c.to, titrant: nm(ui.run.titrant.id) };
+  }
+  function reading2() { return f2(E.nearestHalfTenth(ui.lab.state.burette.reading)); }
+  // Run titrant in to about 0.35 cm³ short of the endpoint, swirling.
+  function demoRun() {
+    var lab = ui.lab, t = lab.state.trial, e = lab.endpointNow(), g = 0;
+    var target = (e && isFinite(e.endpoint_cm3) ? e.endpoint_cm3 : e && isFinite(e.equivalence_cm3) ? e.equivalence_cm3 : 20) - 0.35;
+    while (t.delivered < target - 1.05 && g++ < 80) { lab.add('1.0'); while (lab.state.burette.pending > 0) lab.tick(0.5); lab.swirl(); }
+    while (t.delivered < target - 0.1 && g++ < 200) { lab.add('0.1'); while (lab.state.burette.pending > 0) lab.tick(0.25); lab.swirl(); }
+    lab.wait(2);
+    return { ok: true };
+  }
+  // Drop by drop, swirling, until the colour has changed for good; then read it.
+  function demoEnd() {
+    var lab = ui.lab, g = 0, e, start = lab.state.flask.describe().key;
+    do { lab.add('drop'); lab.swirl(); lab.wait(ui.run.type === 'redox' ? 3 : 1.5); e = lab.endpointNow(); }
+    while ((lab.state.flask.describe().key === start || (e && e.status === 'early')) && g++ < 60);
+    return lab.recordFinal(reading2());
+  }
+  function watchSteps() {
+    var run = ui.run, redox = run.type === 'redox', where = redox ? 'top' : 'bottom', tN = nm(run.titrant.id);
+    var list = setupSteps().map(function (x) {
+      var id = x.right ? x.right[0] : undefined;
+      return { id: x.id, name: x.sayFor && id ? x.sayFor(id) : x.say, method: x.methodFor ? x.methodFor(id) : x.method, why: x.why,
+        end: function () { return x.act(id); } };
+    });
+    return list.concat([
+      { id: 'initial', name: 'Read the initial burette reading', method: 'Read the burette at eye level, from the ' + where + ' of the meniscus, and record the initial reading to 2 decimal places.',
+        why: 'Each small division is 0.10 cm³; read to the nearest 0.05 cm³.', end: function () { return ui.lab.recordInitial(reading2()); } },
+      { id: 'run', name: 'Titrate: add the ' + tN + ', swirling', method: 'Add the ' + tN + ' from the burette, swirling the flask all the time. Near the endpoint, slow down to drop by drop.',
+        why: 'Swirling mixes each addition in, so the colour you see is the whole flask.', end: demoRun },
+      { id: 'end', name: 'Stop at the endpoint and work out the titre', method: 'Stop ' + endpointWords() + '. Close the tap, read the burette again and work out the titre: final reading − initial reading.',
+        why: 'Then repeat until you have concordant titres, within ' + run.concordanceTol_cm3.toFixed(2) + ' cm³ of each other.', end: demoEnd }
+    ]);
+  }
+  function settle() { var s = ui.lab.state; s.swirlAnim = 0; s.dropAnim = 0; s.burette.dripT = 0; }
+  // A fresh lab for the watched run, with the standard solution carried over in RP1.
+  function watchLab() {
+    ui.lab = L.create(ui.run, { choices: { aliquot: ui.choices.aliquot } });
+    if (ui.watch && ui.watch.prep) ui.lab.state.prep = ui.watch.prep;
+  }
+  function startWatch() {
+    ui.watch = { i: 0, playing: true, hold: 0, prep: ui.lab.state.prep, cap: '', n: 0 };
+    // The flask's colour at the endpoint, for the flash where each drop lands.
+    watchLab();
+    var all = watchSteps();
+    all.forEach(function (x) { x.end(); settle(); });
+    ui.watch.endAbs = M.snap(ui.lab).abs;
+    ui.watch.n = all.length;
+    watchGo(0, true);
+  }
+  function watchGo(i, play) {
+    var W = ui.watch;
+    if (ui.motion) ui.motion.stop();
+    watchLab();
+    var steps = watchSteps(), n = steps.length;
+    i = Math.max(0, Math.min(n, i));
+    for (var j = 0; j < i; j++) { steps[j].end(); settle(); }
+    W.steps = steps; W.n = n; W.i = i; W.playing = !!play; W.hold = 0; W.caps = null;
+    if (i < n) {
+      var from = M.snap(ui.lab);
+      steps[i].end(); settle();
+      var to = M.snap(ui.lab), opts = { txt: motionText(), endAbs: W.endAbs };
+      W.caps = ui.motion ? ui.motion.captions(steps[i].id, from, to, opts) : [];
+      var moving = ui.motion && ui.motion.start(steps[i].id, from, to, opts);
+      if (moving && !play) ui.motion.paused = true;
+      W.cap = moving ? ui.motion.caption() : W.caps.join(' ') || steps[i].why;
+      announce('Step ' + (i + 1) + ' of ' + n + ': ' + steps[i].name + '.');
+    } else W.playing = false;
+    W.key = '';
+    ui.lastKey = '';
+    refresh();
+  }
+  // Each frame: captions follow the animation; a finished step waits, then the next one plays.
+  function watchTick(dt, ended) {
+    var W = ui.watch;
+    if (!W) return;
+    var moving = ui.motion && ui.motion.active();
+    if (moving) { var c = ui.motion.caption(); if (c) W.cap = c; }
+    if (!moving && W.playing && W.i < W.n) {
+      W.hold += dt;
+      // Long enough to read the caption; longer when nothing moved (reduced motion).
+      var wait = ui.motion && ui.motion.reduced ? Math.min(14, Math.max(4, W.cap.length * 0.045)) : 1.4;
+      if (W.hold >= wait) return watchGo(W.i + 1, true);
+    }
+    paintWatch();
+  }
+  function watchControl(what) {
+    var W = ui.watch;
+    if (!W) return;
+    var moving = ui.motion && ui.motion.active();
+    if (what === 'back') watchGo(W.i - 1, W.playing);
+    else if (what === 'skip') { if (W.i < W.n) watchGo(W.i + 1, W.playing); }
+    else if (what === 'replay') watchGo(Math.min(W.i, W.n - 1), true);
+    else if (what === 'play') {
+      if (W.i >= W.n) return watchGo(0, true);
+      W.playing = !W.playing;
+      if (moving) ui.motion.paused = !W.playing;
+      W.hold = 0;
+      paintWatch();
+    } else if (/^\d+$/.test(what)) watchGo(+what, W.playing);
+  }
+  // The dock and the caption, kept current every frame without rebuilding the buttons.
+  function paintWatch() {
+    var W = ui.watch, dock = $('#wDock');
+    if (!W || dock.hidden) return;
+    var done = W.i >= W.n, moving = ui.motion && ui.motion.active();
+    var frac = done ? 1 : (W.i + (moving ? ui.motion.progress() : 1)) / W.n;
+    var bar = $('#wBar i'); bar.style.width = (frac * 100).toFixed(1) + '%';
+    $('#wBar').setAttribute('aria-valuenow', Math.round(frac * 100));
+    var playing = W.playing && !done, label = done ? 'Play again' : playing ? 'Pause' : 'Play';
+    var pb = $('#wDock [data-w="play"]');
+    if (pb.getAttribute('data-state') !== label) {
+      pb.setAttribute('data-state', label);
+      pb.querySelector('.wl').textContent = label;
+      pb.setAttribute('aria-label', label === 'Play again' ? 'Play the whole method again' : label);
+      pb.querySelector('.wi-play').style.display = playing ? 'none' : '';
+      pb.querySelector('.wi-pause').style.display = playing ? '' : 'none';
+    }
+    var cap = done ? 'That’s one titration. Repeat it until two titres agree within ' + ui.run.concordanceTol_cm3.toFixed(2) + ' cm³, then take their mean.' : W.cap;
+    if (W.shown !== cap) { W.shown = cap; feedback({ kind: done ? 'good' : 'info', msg: esc(cap) }); boardNotes(); }
+  }
+  function renderWatch() {
+    var W = ui.watch, n = W.n, i = W.i, done = i >= n, step = W.steps[Math.min(i, n - 1)];
+    renderModes(0, false);
+    say('<span class="count">' + (done ? 'All ' + n + ' steps' : 'Step ' + (i + 1) + ' of ' + n) + '</span>' + (done ? 'That’s the whole method' : esc(step.name)), done ? 'done' : 'start');
+    ui.scene.setCue([]);
+    $('#methodTitle').textContent = 'Watch the method';
+    var key = [i, n].join('|');
+    if (W.key !== key) {
+      W.key = key;
+      var h = '';
+      if (done) h += '<p class="verdict good">You’ve watched every step. Now do it yourself.</p><button class="btn primary wide" type="button" id="wLearn">Now try it: Learn</button><button class="btn sm wide" type="button" id="wTest">Test me on the set-up</button><hr class="sep">';
+      else h += '<p class="muted">Each step plays in turn, with the technique point under the heading. Use the controls under the bench to pause, go back, skip or replay a step.</p>';
+      h += '<ol class="steps method">' + W.steps.map(function (x, j) {
+        return '<li class="' + (j < i ? 'done' : j === i ? 'now' : '') + '"' + (j === i ? ' aria-current="step"' : '') + '>' + x.method + (x.why ? '<span class="why">' + x.why + '</span>' : '') + '</li>';
+      }).join('') + '</ol>';
+      $('#methodBody').innerHTML = h;
+      if ($('#wLearn')) $('#wLearn').addEventListener('click', function () { restartSetup('learn'); });
+      if ($('#wTest')) $('#wTest').addEventListener('click', function () { restartSetup('test'); });
+      var card = $('#method'), li = $('#methodBody li.now');
+      if (done || !li) card.scrollTop = 0;
+      else card.scrollTop = Math.max(0, li.offsetTop - card.offsetTop - card.clientHeight / 2 + li.offsetHeight);
+      // Progress dots, one per step: each jumps to the start of its step. Focus stays on them for the keyboard.
+      var had = document.activeElement, onDot = had && had.classList && had.classList.contains('w-dot');
+      $('#wDots').innerHTML = W.steps.map(function (x, j) {
+        return '<li><button type="button" class="w-dot' + (j < i ? ' done' : j === i ? ' now' : '') + '" data-w="' + j + '" aria-label="Step ' + (j + 1) + ': ' + esc(x.name) + '"' + (j === i ? ' aria-current="step"' : '') + '></button></li>';
+      }).join('');
+      $$('#wDots [data-w]').forEach(function (b) { b.addEventListener('click', function () { watchControl(b.getAttribute('data-w')); }); });
+      $('#wDock [data-w="back"]').disabled = i <= 0;
+      $('#wDock [data-w="skip"]').disabled = done;
+      if (onDot || (had && had.disabled)) ($('#wDots .w-dot.now') && onDot ? $('#wDots .w-dot.now') : $('#wDock [data-w="play"]')).focus();
+    }
+    W.shown = null;
+    paintWatch();
     boardNotes();
   }
 
@@ -963,6 +1152,8 @@
     $('#method').hidden = stage === 'titrate';
     $('#titrate').hidden = stage !== 'titrate';
     $('#tDock').hidden = stage !== 'titrate';
+    $('#wDock').hidden = !watchOn();
+    document.body.classList.toggle('watching', watchOn());
     $('#results').hidden = stage === 'setup';
     if (titr && ui.scene.view !== (stage === 'titrate' ? 'titrate' : 'bench')) { ui.scene.setView(stage === 'titrate' ? 'titrate' : 'bench'); force = true; }
     renderStages();
@@ -979,7 +1170,7 @@
   }
   function onBenchClick(e) {
     var p = benchPart(e);
-    if (!p) return;
+    if (!p || watchOn()) return;
     if (ui.stage === 'setup' || ui.stage === 'prep') return setupClick(p.part, p.id);
     if (ui.stage === 'titrate') {
       var st = titrateState();
@@ -1473,12 +1664,13 @@
     });
     $('#codeIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#codeGo').click(); } });
     document.addEventListener('keydown', onKey);
+    $$('#wDock [data-w]').forEach(function (b) { b.addEventListener('click', function () { watchControl(b.getAttribute('data-w')); }); });
     window.addEventListener('resize', function () { clearTimeout(ui.rs); ui.rs = setTimeout(sizeForBoard, 80); });
     new MutationObserver(function () { setTimeout(sizeForBoard, 60); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     if (window.SST_PRESENTER) {
       SST_PRESENTER.setup({
         stage: function () { return ui.view === 'lab' ? '#bench' : ui.view === 'analyse' ? '#analyse' : ui.view === 'brief' ? '#brief' : '#picker'; },
-        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? ['#tDock', '#results'] : ['#method', '#results']; },
+        side: function () { return ui.view !== 'lab' ? null : ui.stage === 'titrate' ? ['#tDock', '#results'] : watchOn() ? ['#wDock', '#method'] : ['#method', '#results']; },
         notes: function () { return ui.view === 'lab' ? '#boardNotes' : null; },
         hide: '#srLive, #prompt',
         rows: true, ratio: 0.62
