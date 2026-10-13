@@ -79,7 +79,7 @@
     return closed ? out + ' Z' : out;
   }
   // The liquid is a band from the base to its level, clipped to the glass.
-  function flaskBand(h) { return 'M' + (-FL.base - 2) + ',' + f1(-h) + ' H' + (FL.base + 2) + ' V2 H' + (-FL.base - 2) + ' Z'; }
+  function flaskBand(h) { return 'M' + (-FL.base - 24) + ',' + f1(-h) + ' H' + (FL.base + 24) + ' V40 H' + (-FL.base - 24) + ' Z'; }
   var clipN = 0;
   function flaskLiquid(cx, base, h) {
     var r = FL.base - (FL.base - FL.neck) * h / FL.body, y = base - h;
@@ -109,6 +109,10 @@
 
   /* ---------- Burette geometry ---------- */
   var BU = { x: 380, w: 16, top: 18, y0: 44, k: 5.2, tap: 326, jetEnd: 374 };
+  // The magnifier in the titration view: centre, radius, drawing units per cm³.
+  var MAG = { x: 556, y: 160, r: 86, k: 70 };
+  // The titration view: the stand, burette, flask and magnifier, and nothing else.
+  var TITRATE_VB = '226 0 440 556';
   function buretteY(r) { return BU.y0 + r * BU.k; }
 
   /* ===================== Titration scene ===================== */
@@ -134,7 +138,7 @@
 
     // Tile (under the burette).
     this.tile = el('rect', { x: 286, y: 504, width: 188, height: 7, rx: 3, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1, 'data-part': 'tile', class: 'part' }, g);
-    this.tileParked = el('g', { 'data-part': 'tile', class: 'part' }, g);
+    this.tileParked = el('g', { 'data-part': 'tile', class: 'part shelf-only' }, g);
     el('rect', { x: 30, y: 560, width: 150, height: 9, rx: 3, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, this.tileParked);
     el('rect', { x: 26, y: 548, width: 158, height: 26, fill: 'transparent', class: 'hit' }, this.tileParked);
     text(this.tileParked, 105, 590, 'white tile', { 'font-size': 12, class: 'cap' });
@@ -195,13 +199,13 @@
     el('path', { d: 'M92,-62 A92,22 0 0 0 -40,-82 M-40,-82 l12,8 M-40,-82 l13,-6' }, this.swirlMark);
 
     // Waste beaker.
-    this.waste = el('g', { 'data-part': 'waste', class: 'part' }, g);
+    this.waste = el('g', { 'data-part': 'waste', class: 'part shelf-only' }, g);
     el('path', { d: 'M-39,-87 Q-34,-86 -34,-80 L-34,-7 Q-34,0 -27,0 L27,0 Q34,0 34,-7 L34,-81 Q34,-85 37,-86', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5 }, this.waste);
     this.wasteLiquid = el('rect', { x: -32.5, width: 65, y: -6, height: 4.5, fill: C.clear }, this.waste);
     text(this.waste, 0, 30, 'waste beaker', { 'font-size': 12, class: 'cap' });
 
     // Shelf: bottles, indicator or acid, wash bottle, pipette, spare funnel.
-    var shelf = el('g', {}, g);
+    var shelf = el('g', { class: 'shelf-only' }, g);
     function bottle(x, w, h, fill, labelTop, labelBottom, part, labelUnit, id) {
       var b = el('g', { 'data-part': part, class: 'part' }, shelf);
       if (id) b.setAttribute('data-id', id);
@@ -252,7 +256,7 @@
     text(shelf, 922, 532, 'distilled', { 'font-size': 12, class: 'cap' });
     text(shelf, 922, 546, 'water', { 'font-size': 12, class: 'cap' });
     // Pipette with filler, lying on the bench front.
-    var pip = el('g', { 'data-part': 'pipette', class: 'part' }, g);
+    var pip = el('g', { 'data-part': 'pipette', class: 'part shelf-only' }, g);
     this.pipG = pip;
     if (run.aliquotDeviceKind !== 'cylinder') {
       el('path', { d: 'M562,566 L632,566 C646,566 646,556 664,556 L706,556 C724,556 724,566 738,566 L830,566 M562,572 L632,572 C646,572 646,582 664,582 L706,582 C724,582 724,572 738,572 L830,572 M562,566 Q557,569 562,572',
@@ -266,7 +270,7 @@
       text(pip, 640, 594, 'measuring cylinder', { 'font-size': 12, class: 'cap' });
     }
     // Spare funnel on the bench.
-    this.funnelOut = el('g', { 'data-part': 'funnel', class: 'part' }, g);
+    this.funnelOut = el('g', { 'data-part': 'funnel', class: 'part shelf-only' }, g);
     el('path', { d: funnelPath(576, 469), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.funnelOut);
     text(this.funnelOut, 576, 532, 'funnel', { 'font-size': 12, class: 'cap' });
 
@@ -281,6 +285,22 @@
       p.style.cursor = 'pointer';
       p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', name);
     });
+    // The magnifier for the titration view.
+    var lg = el('g', { class: 'mag-only', 'pointer-events': 'none' }, svg);
+    this.magG = lg;
+    this.magLink = el('line', { x1: BU.x + 11, x2: MAG.x - MAG.r, stroke: C.blue, 'stroke-width': 1.4, opacity: 0.8 }, lg);
+    this.magRing = el('circle', { cx: BU.x, r: 11, fill: 'none', stroke: C.blue, 'stroke-width': 1.6 }, lg);
+    var lensClip = 'magClip' + (++clipN);
+    el('circle', { cx: MAG.x, cy: MAG.y, r: MAG.r }, el('clipPath', { id: lensClip }, el('defs', {}, lg)));
+    el('circle', { cx: MAG.x, cy: MAG.y, r: MAG.r, fill: '#091321' }, lg);
+    var inner = el('g', { 'clip-path': 'url(#' + lensClip + ')' }, lg);
+    this.magLiquid = el('path', { d: '', fill: 'none' }, inner);
+    this.magScale = el('g', {}, inner);
+    el('line', { x1: MAG.x - 34, x2: MAG.x - 34, y1: MAG.y - MAG.r, y2: MAG.y + MAG.r, stroke: C.glass, 'stroke-width': 1.5 }, inner);
+    el('line', { x1: MAG.x + 46, x2: MAG.x + 46, y1: MAG.y - MAG.r, y2: MAG.y + MAG.r, stroke: C.glass, 'stroke-width': 1.5 }, inner);
+    el('circle', { cx: MAG.x, cy: MAG.y, r: MAG.r, fill: 'none', stroke: C.glass, 'stroke-width': 3 }, lg);
+    this.magCap = text(lg, MAG.x, MAG.y + MAG.r + 20, run.titrant.id === 'KMnO4' ? 'Read the top of the meniscus' : 'Read the bottom of the meniscus', { 'font-size': 12, class: 'cap' });
+
     // The cue: a ring round the apparatus to click next.
     this.cueG = el('g', { class: 'cue', 'pointer-events': 'none' }, svg);
     this.cues = [];
@@ -354,12 +374,17 @@
       } else if (s.swirlAnim <= 0) this.fromFill = null;
       if (s.swirlAnim > 0 && !this.fromFill && this.lastFill) this.fromFill = this.lastFill;
       if (s.swirlAnim <= 0) this.lastFill = clear ? null : col.slice();
-      set(this.flLiquid, { d: flaskBand(h), fill: fill });
+      // The surface sloshes as the flask circles.
+      var slosh = swirling && !this.reduced ? Math.sin(ph * Math.PI * 4 + Math.PI / 2) * 7 * amp : 0;
+      var st = slosh ? 'rotate(' + slosh.toFixed(1) + ' 0 ' + f1(-h) + ')' : '';
+      set(this.flLiquid, { d: flaskBand(h), fill: fill, transform: st });
+      set(this.flHaze, { transform: st });
       set(this.flHaze, { d: flaskBand(h), 'fill-opacity': Math.min(0.85, ap.haze * 2500).toFixed(3) });
       var r = FL.base - (FL.base - FL.neck) * h / FL.body;
       set(this.flSurface, { x1: -r + 2, x2: r - 2, y1: -h, y2: -h, stroke: clear ? C.clearTop : rgb(col.map(function (c) { return c * 0.8; })) });
       if (ap.plume && under === 'flask') {
-        var pc = liquidColour(ap.plume.abs, bg);
+        // Capped, so a strong local flash reads as deep colour, not black.
+        var pc = liquidColour(ap.plume.abs.map(function (a) { return Math.min(a, 0.9); }), bg);
         this.lastPlume = { fill: rgb(pc), strength: ap.plume.strength };
         set(this.flPlume, { cx: 0, cy: -h + 8, rx: 10 + 16 * ap.plume.strength, ry: 4 + 5 * ap.plume.strength, fill: rgb(pc), opacity: (0.35 + 0.6 * ap.plume.strength).toFixed(2) });
       } else if (s.swirlAnim > 0 && this.lastPlume && !this.reduced) {
@@ -373,7 +398,41 @@
       set(this.flLiquid, { fill: 'none', d: '' }); set(this.flHaze, { 'fill-opacity': 0 }); set(this.flPlume, { opacity: 0 }); set(this.flSurface, { stroke: 'none' });
       set(this.flaskBody, { transform: '' }); set(this.thermo, { opacity: 0 }); set(this.swirlMark, { opacity: 0 });
     }
+    if (this.view === 'titrate') this.updateMag(b);
     this.drawCue();
+  };
+  TitrationScene.prototype.setView = function (v) {
+    this.view = v;
+    this.svg.classList.toggle('titrate-view', v === 'titrate');
+    this.magKey = null;
+  };
+  TitrationScene.prototype.viewBox = function () { return this.view === 'titrate' ? TITRATE_VB : '0 0 960 600'; };
+  // A zoomed scale that slides past a fixed meniscus. It never shows a number
+  // for the reading: the student reads it.
+  TitrationScene.prototype.updateMag = function (b) {
+    var purple = this.run.titrant.id === 'KMnO4';
+    if (b.reading === null) { set(this.magG, { display: 'none' }); return; }
+    set(this.magG, { display: 'inline' });
+    var r = Math.max(0, Math.min(50, b.reading)), ry = buretteY(r);
+    set(this.magRing, { cy: f1(ry) }); set(this.magLink, { y1: f1(ry), y2: f1(ry + (MAG.y - ry) * 0.5) });
+    set(this.magLink, { x2: f1(MAG.x - MAG.r * Math.cos(Math.atan2(MAG.y - ry, MAG.x - BU.x))), y2: f1(MAG.y - MAG.r * Math.sin(Math.atan2(MAG.y - ry, MAG.x - BU.x))) });
+    var key = Math.round(b.reading * 200);
+    if (key === this.magKey) return;
+    this.magKey = key;
+    var k = MAG.k, cy = MAG.y, x0 = MAG.x - 34;
+    this.magScale.innerHTML = '';
+    var first = Math.floor((b.reading - 1.2) * 10), last = Math.ceil((b.reading + 1.2) * 10);
+    for (var i = first; i <= last; i++) {
+      var v = i / 10, y = cy + (v - b.reading) * k;
+      if (v < -0.001 || v > 50.001) continue;
+      var whole = i % 10 === 0, half = i % 5 === 0;
+      el('line', { x1: x0, x2: x0 + (whole ? 30 : half ? 21 : 12), y1: f1(y), y2: f1(y), stroke: C.text, 'stroke-width': whole ? 1.8 : 1.1 }, this.magScale);
+      if (whole) text(this.magScale, x0 - 6, f1(y + 5), String(Math.round(v)), { 'text-anchor': 'end', fill: C.text, 'font-size': 15, 'font-weight': 700, class: 'lens-num' });
+    }
+    var depth = 0.15 * k, yWall = purple ? cy : cy - depth, yMid = purple ? cy + depth : cy, x1 = x0 + 1, x2 = MAG.x + 45;
+    set(this.magLiquid, { d: 'M' + x1 + ',' + f1(yWall) + ' Q' + f1((x1 + x2) / 2) + ',' + f1(2 * yMid - yWall) + ' ' + x2 + ',' + f1(yWall) + ' L' + x2 + ',' + (cy + MAG.r) + ' L' + x1 + ',' + (cy + MAG.r) + ' Z',
+      fill: purple ? C.purple : 'rgba(159,180,204,0.32)', stroke: purple ? C.purpleTop : C.clearTop, 'stroke-width': 1.4 });
+    this.redrawn = true;
   };
 
   /* The cue: rings round each part to click next, given as
