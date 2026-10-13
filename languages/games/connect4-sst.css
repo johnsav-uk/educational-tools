@@ -57,6 +57,16 @@ body {
 }
 .topic-bar select:focus { outline: none; border-color: var(--sst-coral); }
 .topic-meta { color: var(--sst-text-muted); font-weight: 500; }
+/* Language picker, in the coral of the language site */
+.lang-label { font-family: var(--sst-font); color: var(--sst-text); }
+.lang-btn {
+  font-family: var(--sst-font); background: transparent; color: var(--sst-text-body);
+  border: 1px solid var(--sst-line-strong);
+}
+.lang-btn:hover { border-color: var(--sst-coral); color: var(--sst-text); }
+.lang-btn[aria-pressed="true"] { background: var(--sst-coral-soft); border-color: var(--sst-coral); color: oklch(0.92 0.05 32); }
+.theme-light .lang-btn[aria-pressed="true"] { color: var(--sst-coral); }
+.lang-btn:focus-visible { outline: 2px solid var(--sst-coral); outline-offset: 2px; }
 .instructions {
   background: rgba(248, 144, 124, .08); border-left: 3px solid var(--sst-coral);
   color: var(--sst-text-body); font-weight: 500;
