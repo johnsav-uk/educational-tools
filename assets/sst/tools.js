@@ -142,7 +142,7 @@ window.SST_TOOLS = [
     image: "atmosphere-evolution.png",
     keywords: "evolution of the earths atmosphere early atmosphere volcanoes volcanic activity carbon dioxide oxygen nitrogen water vapour condensed oceans dissolved carbonates precipitated sediments algae photosynthesis plants fossil fuels coal crude oil natural gas limestone sedimentary rock methane ammonia mars venus four fifths one fifth 80% 20% 200 million years 2.7 billion theory evidence 4.9.1 4.9.1.1 4.9.1.2 4.9.1.3 4.9.1.4 5.9.1 trilogy combined science worksheet mark scheme" },
 
-  { title: "Titration Lab (beta)", url: "visualisations/titration-lab/",
+  { title: "Titration Lab", url: "visualisations/titration-lab/",
     topic: "reactions",
     blurb: "Rinse, fill and read a burette, titrate to the endpoint and calculate the unknown from your own concordant titres, from GCSE neutralisation to manganate(VII).",
     kind: "Interactive", levels: ["GCSE", "A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],

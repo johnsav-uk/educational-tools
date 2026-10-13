@@ -441,6 +441,7 @@ body.presenting #results{ padding:6px 12px; }
 body.presenting #results h3{ display:none; }
 body.presenting #results .res-actions{ display:none; }
 body.presenting .sst-teacher{ font-size:var(--sst-pr-control); }
+body.presenting #method .verdict{ font-size:var(--sst-pr-label); }
 body.presenting .dock .lbl{ font-size:.8em; }
 body.presenting #picker .card-btn b{ font-size:var(--sst-pr-label); }
 body.presenting #picker .card-btn .d, body.presenting #picker .card-btn .foot, body.presenting #picker .card-btn .num{ font-size:var(--sst-pr-label); }
