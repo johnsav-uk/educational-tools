@@ -34,6 +34,12 @@ window.SLT_TOOLS = [
     image: "language-jeopardy.png",
     keywords: "jeopardy board quiz categories points team game starter plenary retrieval translation grammar vocabulary aqa 8652 8662 8692 edexcel pearson 1fr1 1gn1 1sp1 french francais german deutsch spanish espanol mfl languages modern foreign thematic contexts identity relationships healthy living education work free time customs festivals celebrity travel tourism media technology environment" },
 
+  { title: "Who Wants to Be a Language Millionaire? (beta)", url: "languages/games/millionaire/",
+    blurb: "Climb a fifteen-question prize ladder in GCSE French, German or Spanish for AQA or Pearson Edexcel, with 50:50, Ask the Audience and Phone a Friend.",
+    kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],
+    image: "language-millionaire.png",
+    keywords: "who wants to be a millionaire language millionaire qui veut gagner des millions wer wird millionar millionär quien quiere ser millonario quiz game show multiple choice lifelines 50:50 fifty fifty ask the audience phone a friend safety net prize ladder starter plenary revision whiteboard class aqa 8652 8662 8692 edexcel pearson 1fr1 1gn1 1sp1 french francais français german deutsch spanish espanol español mfl languages modern foreign foundation higher vocabulary vocab grammar tenses translation identity relationships healthy living education work free time customs festivals celebrity travel tourism media technology environment shopping transport equality wellbeing" },
+
   { title: "Interleaved Grid Challenge", url: "languages/games/interleaved-grid.html",
     blurb: "Pick a card from a grid of French, Spanish or German translations, worth more points the longer ago the topic was taught, and push for the higher-tier bonus.",
     kind: "Revision Game", levels: ["GCSE"], tags: ["French", "German", "Spanish", "Revision Game", "Interactive"],

@@ -33,6 +33,7 @@
   }
 
   function subId(q) { return q.u + ':' + q.s; }
+  function subjName(s) { var S = (TAX().subjects || []).filter(function (x) { return x.id === s; })[0]; return S ? S.name : s; }
   function isSep(q) { var sb = TAX().subs[subId(q)]; return !!(q.sep || (sb && sb.sepOnly) || (TAX().units[q.u] || {}).sepOnly); }
   function isHtOnly(q) { var sb = TAX().subs[subId(q)]; return q.t === 'H' || !!(sb && sb.htOnly); }
 
@@ -241,7 +242,7 @@
       if (minS === 0) res.warnings.push('One of the chosen subjects has no questions under these settings, so it will not appear.');
     }
     var picked = {}; (cfg.subs || []).forEach(function (s) { picked[SSM.TAX.subs[s] ? SSM.TAX.subs[s].unit.charAt(0) : '?'] = true; });
-    Object.keys(picked).forEach(function (s) { if (!subjUsed[s]) res.warnings.push((s === 'B' ? 'Biology' : s === 'C' ? 'Chemistry' : 'Physics') + ' topics are selected but none have questions for this board, course and tier, so they will not appear.'); });
+    Object.keys(picked).forEach(function (s) { if (!subjUsed[s]) res.warnings.push(subjName(s) + ' topics are selected but none have questions for this board, course and tier, so they will not appear.'); });
     res.ok = true;
     return res;
   }

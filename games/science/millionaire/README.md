@@ -9,6 +9,9 @@ Static page, no build step, no backend, no external services. Plain scripts (no 
 
 ## Files
 
+`engine.js`, `lifelines.js`, `select.js`, `audio.js` and `millionaire.css` are also loaded by the language version,
+`languages/games/millionaire/`, so a change here reaches both games.
+
 | File | Job |
 | --- | --- |
 | `index.html` | Page: teacher setup, stage, panels. Loads the site bar (`assets/sst/sst.js`). |

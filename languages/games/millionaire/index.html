@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Wants to Be a Language Millionaire? (beta) — Savage Language Tools</title>
+<meta name="description" content="A GCSE French, German and Spanish quiz for AQA and Pearson Edexcel in the style of a televised million-pound game show: fifteen questions, three lifelines and two safety nets, built from the topics your class has studied.">
+<link rel="stylesheet" href="../../../assets/sst/sst.css">
+<link rel="stylesheet" href="../../../games/science/millionaire/millionaire.css">
+<link rel="stylesheet" href="millionaire-lang.css">
+</head>
+<body>
+<script src="../../../assets/sst/sst.js"></script>
+
+<div id="app">
+
+<!-- ================= TEACHER SETUP ================= -->
+<main id="setup" class="su" aria-labelledby="su-title">
+  <header class="su-head">
+    <p class="su-kicker">GCSE French · German · Spanish · Revision game</p>
+    <h1 id="su-title">Who Wants to Be a Language Millionaire? <span class="su-beta">beta</span></h1>
+    <p class="su-lede">Fifteen questions, three lifelines, two safety nets. Choose the language, the exam board and the topics your class has studied, then put it on the board.</p>
+  </header>
+
+  <form id="setup-form" class="su-grid" autocomplete="off" novalidate>
+    <div class="su-left">
+
+      <section class="su-card" aria-labelledby="su-h-course">
+        <h2 id="su-h-course"><span class="su-n">1</span> Course</h2>
+        <div class="su-fields">
+          <fieldset class="seg" data-key="lang"><legend>Language</legend>
+            <label><input type="radio" name="lang" value="french"><span lang="fr">Français</span></label>
+            <label><input type="radio" name="lang" value="german"><span lang="de">Deutsch</span></label>
+            <label><input type="radio" name="lang" value="spanish"><span lang="es">Español</span></label>
+          </fieldset>
+          <fieldset class="seg" data-key="board"><legend>Exam board</legend>
+            <label><input type="radio" name="board" value="AQA"><span>AQA</span></label>
+            <label><input type="radio" name="board" value="Edexcel"><span>Pearson Edexcel</span></label>
+          </fieldset>
+          <fieldset class="seg" data-key="tier"><legend>Tier</legend>
+            <label><input type="radio" name="tier" value="F"><span>Foundation</span></label>
+            <label><input type="radio" name="tier" value="H"><span>Higher</span></label>
+          </fieldset>
+          <fieldset class="seg" data-key="difficulty"><legend>How hard should the ladder be?</legend>
+            <label><input type="radio" name="difficulty" value="gentle"><span>Gentle</span></label>
+            <label><input type="radio" name="difficulty" value="standard"><span>Standard</span></label>
+            <label><input type="radio" name="difficulty" value="challenge"><span>Challenge</span></label>
+          </fieldset>
+          <fieldset class="seg" data-key="length"><legend>Game length</legend>
+            <label><input type="radio" name="length" value="5"><span>5 questions</span></label>
+            <label><input type="radio" name="length" value="10"><span>10 questions</span></label>
+            <label><input type="radio" name="length" value="15"><span>15 questions</span></label>
+          </fieldset>
+        </div>
+        <p class="su-note" id="su-courseNote"></p>
+      </section>
+
+      <section class="su-card" aria-labelledby="su-h-topics">
+        <div class="su-cardhead">
+          <h2 id="su-h-topics"><span class="su-n">2</span> Topics</h2>
+          <div class="su-bulk">
+            <button type="button" class="su-btn su-btn--ghost" id="su-all">Select everything</button>
+            <button type="button" class="su-btn su-btn--ghost" id="su-none">Clear</button>
+          </div>
+        </div>
+        <p class="su-note">Tick what your class has been taught. Open a topic to choose individual subtopics. Questions only ever come from ticked topics.</p>
+        <div id="su-topics" class="su-topics"></div>
+      </section>
+
+    </div>
+
+    <aside class="su-right" aria-label="Your game">
+      <div class="su-sum" id="su-sum" aria-live="polite">
+        <h2>Your game</h2>
+        <div class="su-count"><span id="su-poolN">0</span><span class="su-countlbl" id="su-poolLbl">questions match</span></div>
+        <div class="su-hist" id="su-hist" aria-hidden="true"></div>
+        <p class="su-histlbl" id="su-histLbl"></p>
+        <ul class="su-msgs" id="su-msgs"></ul>
+        <div class="su-actions">
+          <button type="button" class="su-btn su-btn--go" id="su-start">Start game</button>
+          <label class="su-check"><input type="checkbox" id="su-sound" checked> <span>Sound on</span></label>
+          <label class="su-check"><input type="checkbox" id="su-auto"> <span>Move on automatically after a correct answer</span></label>
+        </div>
+        <details class="su-adv">
+          <summary>Game code</summary>
+          <p class="su-note">Each game has a number. Enter the same number with the same settings to replay exactly the same questions.</p>
+          <input type="text" inputmode="numeric" id="su-seed" placeholder="Random" aria-label="Game code">
+        </details>
+        <p class="su-keys">Playing: <span><kbd>A</kbd>–<kbd>D</kbd> choose</span> · <span><kbd>Enter</kbd> final answer</span> · <span><kbd>5</kbd> <kbd>6</kbd> <kbd>7</kbd> lifelines</span> · <span><kbd>W</kbd> walk away</span> · <span><kbd>M</kbd> sound</span> · <span><kbd>F</kbd> full screen</span></p>
+      </div>
+    </aside>
+  </form>
+</main>
+
+<!-- ================= THE GAME ================= -->
+<section id="stage" class="mx" hidden data-state="ready" aria-label="Game">
+  <div class="mx-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <div class="mx-top">
+    <button type="button" class="mx-chip" id="btn-exit"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Setup</span></button>
+
+    <div class="mx-lifelines" role="group" aria-label="Lifelines">
+      <button type="button" class="mx-life" data-life="fifty" aria-label="50:50, removes two wrong answers (key 5)" title="50:50 (5)"><span class="mx-life-txt">50:50</span></button>
+      <button type="button" class="mx-life" data-life="audience" aria-label="Ask the Audience (key 6)" title="Ask the Audience (6)">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="17" width="5" height="10" rx="1"/><rect x="13.5" y="8" width="5" height="19" rx="1"/><rect x="22" y="13" width="5" height="14" rx="1"/></svg></button>
+      <button type="button" class="mx-life" data-life="friend" aria-label="Phone a Friend (key 7)" title="Phone a Friend (7)">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 5h4l2 6-3 2c1.4 3 3.6 5.2 6.6 6.6l2-3 6 2v4c0 1.6-1.4 3-3 3C14.5 25.6 6.4 17.5 6 8c0-1.6 1.4-3 3-3z"/></svg></button>
+    </div>
+
+    <div class="mx-tools">
+      <button type="button" class="mx-chip mx-chip--icon" id="btn-sound" aria-pressed="true" aria-label="Sound on (M)" title="Sound (M)"></button>
+      <button type="button" class="mx-chip mx-chip--icon" id="btn-full" aria-label="Full screen (F)" title="Full screen (F)"></button>
+      <button type="button" class="mx-chip mx-chip--icon" id="btn-ladder" aria-label="Show prize ladder" title="Prize ladder"></button>
+    </div>
+  </div>
+
+  <div class="mx-board">
+    <div class="mx-main">
+      <div class="mx-banner" id="banner" aria-hidden="true">
+        <span class="mx-bq" id="bq"></span><span class="mx-bp" id="bp"></span><span class="mx-bt" id="bt"></span>
+      </div>
+
+      <div class="mx-qzone">
+        <div class="mx-q" id="qpanel" role="group" aria-labelledby="qtext">
+          <div class="mx-qbody">
+            <p class="mx-qtext" id="qtext"></p>
+            <div class="mx-qdata" id="qdata" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mx-answers" id="answers" role="group" aria-label="Answers"></div>
+
+      <div class="mx-foot" id="foot">
+        <div class="mx-info" id="info"></div>
+        <div class="mx-actions" id="actions"></div>
+      </div>
+    </div>
+
+    <aside class="mx-ladder" id="ladderWrap" aria-label="Prize ladder">
+      <ol id="ladder" class="mx-rungs"></ol>
+    </aside>
+  </div>
+
+  <!-- panels over the stage -->
+  <div class="mx-overlay" id="overlay" hidden>
+    <div class="mx-panel mx-intro" id="pnl-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" hidden>
+      <svg class="mx-atom mx-bubbles" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 3h9a5 5 0 0 1 5 5v3a5 5 0 0 1-5 5H9.5L5 19.5v-4.1A5 5 0 0 1 2 11V8a5 5 0 0 1 5-5Z"/><path d="M14 12h9a5 5 0 0 1 5 5v2.5a5 5 0 0 1-3 4.6V28l-4.5-3.5H14a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5Z"/></svg>
+      <p class="mx-intro-k">Savage Language Tools presents</p>
+      <h2 id="intro-title" class="mx-intro-t">Who Wants to Be a<br><span id="intro-lang">Language Millionaire?</span></h2>
+      <p class="mx-intro-show" id="intro-show"></p>
+      <p class="mx-intro-s" id="intro-sub"></p>
+      <button type="button" class="mx-btn mx-btn--ghost" id="btn-skip">Skip intro</button>
+    </div>
+
+    <div class="mx-panel mx-aud" id="pnl-audience" role="dialog" aria-modal="true" aria-labelledby="aud-title" hidden>
+      <h2 id="aud-title">Ask the Audience</h2>
+      <p class="mx-psub">The audience has voted.</p>
+      <div class="mx-bars" id="aud-bars"></div>
+      <button type="button" class="mx-btn" id="aud-close">Back to the question</button>
+    </div>
+
+    <div class="mx-panel mx-phone" id="pnl-phone" role="dialog" aria-modal="true" aria-labelledby="ph-title" hidden>
+      <div class="mx-ph-head">
+        <div class="mx-avatar" id="ph-avatar" aria-hidden="true"></div>
+        <div><h2 id="ph-title">Phone a Friend</h2><p class="mx-psub" id="ph-status">Calling…</p></div>
+      </div>
+      <div class="mx-ph-lines" id="ph-lines" aria-live="polite"></div>
+      <button type="button" class="mx-btn" id="ph-close">Hang up</button>
+    </div>
+
+    <div class="mx-panel mx-walk" id="pnl-walk" role="alertdialog" aria-modal="true" aria-labelledby="walk-title" aria-describedby="walk-desc" hidden>
+      <h2 id="walk-title">Walk away?</h2>
+      <p class="mx-walk-amt" id="walk-amt"></p>
+      <p class="mx-psub" id="walk-desc"></p>
+      <div class="mx-row">
+        <button type="button" class="mx-btn mx-btn--ghost" id="walk-no">Keep playing</button>
+        <button type="button" class="mx-btn mx-btn--amber" id="walk-yes">Walk away</button>
+      </div>
+    </div>
+
+    <div class="mx-panel mx-result" id="pnl-result" role="dialog" aria-modal="true" aria-labelledby="res-title" hidden>
+      <p class="mx-res-k" id="res-kicker"></p>
+      <h2 id="res-title" class="mx-res-t"></h2>
+      <p class="mx-res-prize" id="res-prize"></p>
+      <p class="mx-psub" id="res-sub"></p>
+      <dl class="mx-res-stats" id="res-stats"></dl>
+      <details class="mx-review"><summary>Review the questions</summary><ol id="res-review"></ol></details>
+      <div class="mx-row mx-row--wrap">
+        <button type="button" class="mx-btn mx-btn--amber" id="res-again">Play again</button>
+        <button type="button" class="mx-btn" id="res-same">Replay these questions</button>
+        <button type="button" class="mx-btn mx-btn--ghost" id="res-setup">Change setup</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mx-confetti" id="confetti" aria-hidden="true"></div>
+</section>
+
+<div id="live" class="mx-sr" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+
+<script src="taxonomy.js"></script>
+<!-- the science game's rules, lifelines, selection and sound, shared unchanged -->
+<script src="../../../games/science/millionaire/engine.js"></script>
+<script src="../../../games/science/millionaire/lifelines.js"></script>
+<script src="../../../games/science/millionaire/select.js"></script>
+<script src="../../../games/science/millionaire/audio.js"></script>
+<!-- question banks: one file per language -->
+<script src="bank/helper.js"></script>
+<script src="bank/french.js"></script>
+<script src="bank/german.js"></script>
+<script src="bank/spanish.js"></script>
+<script src="ui.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
