@@ -272,4 +272,9 @@ python -m http.server 8765 --directory .
 ```
 
 `visualisations/.claude/launch.json` starts the same server from inside Claude
-Code. What you see is what GitHub Pages will serve.
+Code. What you see is what GitHub Pages will serve, with one exception: Pages
+runs Jekyll, which silently drops any file or folder whose name starts with `_`
+(or `.`). The local server still serves them, so the page works here and
+breaks live. Don't name a file `_helper.js`, `_data.json` and so on. Science
+Millionaire lost its whole question bank this way: `bank/_helper.js` 404'd, so
+every bank file threw and no topic could be ticked.
