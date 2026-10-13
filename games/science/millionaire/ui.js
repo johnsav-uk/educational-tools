@@ -66,13 +66,15 @@
     return 'No questions yet for this board, course and tier';
   }
 
+  var SUBJ_CHEV = '<svg class="su-schev" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 5.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function buildTopics() {
     var host = $('su-topics');
     var html = '';
     TAX.subjects.forEach(function (S) {
-      html += '<div class="su-subj" data-s="' + S.id + '"><div class="su-subjhead"><span class="su-dot"></span><h3>' + S.name + '</h3><span class="su-subjcount" data-subjcount="' + S.id + '"></span>' +
-        '<button type="button" class="su-mini" data-act="all" data-s="' + S.id + '" aria-label="Select all ' + S.name + ' topics">All</button>' +
-        '<button type="button" class="su-mini" data-act="none" data-s="' + S.id + '" aria-label="Clear all ' + S.name + ' topics">None</button></div>';
+      html += '<div class="su-subj" data-s="' + S.id + '"><div class="su-subjhead">' +
+        '<button type="button" class="su-subjbtn" aria-expanded="false" aria-controls="su-panel-' + S.id + '"><span class="su-dot" aria-hidden="true"></span><span class="su-sname">' + S.name + '</span><span class="su-subjcount" data-subjcount="' + S.id + '"></span>' + SUBJ_CHEV + '</button>' +
+        '<label class="su-subjtick"><input type="checkbox" data-subjcb="' + S.id + '" aria-label="Tick all ' + S.name + ' topics"></label></div>' +
+        '<div class="su-panel" id="su-panel-' + S.id + '" hidden>';
       S.units.forEach(function (uid) {
         var u = TAX.units[uid];
         html += '<div class="su-unit" data-u="' + uid + '"><div class="su-urow">' +
@@ -85,7 +87,7 @@
         });
         html += '</ul></div>';
       });
-      html += '</div>';
+      html += '</div></div>';
     });
     host.innerHTML = html;
   }
@@ -103,7 +105,7 @@
     $('su-courseNote').textContent = (cfg.board === 'AQA' ? 'AQA ' : 'Pearson Edexcel ') + codeTxt + (cfg.course === 'combined' ? '. Combined Science leaves out content that is only in the Separate Sciences.' : '. Includes the Separate Sciences extension content.') + (cfg.tier === 'F' ? ' Foundation games leave out Higher-tier-only content.' : ' Higher games draw on Foundation and Higher content, weighted towards Higher as the ladder climbs.') + ' Topics follow AQA order; most questions test content shared by both boards.';
 
     TAX.subjects.forEach(function (S) {
-      var subjTotal = 0, subjSel = 0;
+      var subjTotal = 0, subjSel = 0, subjUse = 0, subjOn = 0;
       S.units.forEach(function (uid) {
         var subIds = Object.keys(TAX.subs).filter(function (k) { return TAX.subs[k].unit === uid; });
         var usable = subIds.filter(function (s) { return avail.bySub[s]; });
@@ -118,7 +120,7 @@
         qs('[data-ref="' + uid + '"]').textContent = cfg.board === 'Edexcel' ? 'Edexcel: ' + u.edx : SSM.specRef(uid, 'AQA', cfg.course);
         var total = avail.byUnit[uid] || 0;
         var sel = 0; usable.forEach(function (s) { if (chosen[s]) sel += avail.bySub[s]; });
-        subjTotal += total; subjSel += sel;
+        subjTotal += total; subjSel += sel; subjUse += usable.length; subjOn += onCount;
         qs('[data-ucount="' + uid + '"]').textContent = usable.length ? total : '–';
         subIds.forEach(function (sid) {
           var n = avail.bySub[sid] || 0, el = qs('[data-sub="' + sid + '"]');
@@ -130,6 +132,8 @@
         });
       });
       qs('[data-subjcount="' + S.id + '"]').textContent = subjSel + ' of ' + subjTotal;
+      var scb = qs('[data-subjcb="' + S.id + '"]');
+      scb.disabled = subjUse === 0; scb.checked = subjUse > 0 && subjOn === subjUse; scb.indeterminate = subjOn > 0 && subjOn < subjUse;
     });
 
     // summary
@@ -173,6 +177,9 @@
       else if (t.hasAttribute('data-unit')) {
         var uid = t.getAttribute('data-unit'), av = SEL.availability(BANK, selCfg());
         Object.keys(TAX.subs).filter(function (k) { return TAX.subs[k].unit === uid && av.bySub[k]; }).forEach(function (s) { setSub(s, t.checked); });
+      } else if (t.hasAttribute('data-subjcb')) {
+        var sid = t.getAttribute('data-subjcb'), av2 = SEL.availability(BANK, selCfg());
+        Object.keys(TAX.subs).filter(function (k) { return TAX.subs[k].unit.charAt(0) === sid && av2.bySub[k]; }).forEach(function (s) { setSub(s, t.checked); });
       } else if (t.hasAttribute('data-subcb')) { setSub(t.getAttribute('data-subcb'), t.checked); }
       else if (t.id === 'su-sound') cfg.sound = t.checked;
       else if (t.id === 'su-auto') cfg.auto = t.checked;
@@ -184,6 +191,9 @@
       if (b.hasAttribute('data-exp')) {
         var uid = b.getAttribute('data-exp'), open = b.getAttribute('aria-expanded') !== 'true';
         b.setAttribute('aria-expanded', open); $('subs-' + uid).hidden = !open; expanded[uid] = open;
+      } else if (b.classList.contains('su-subjbtn')) {
+        var pid = b.getAttribute('aria-controls'), op = b.getAttribute('aria-expanded') !== 'true';
+        b.setAttribute('aria-expanded', op); $(pid).hidden = !op;
       } else if (b.getAttribute('data-act')) {
         var S = b.getAttribute('data-s'), on = b.getAttribute('data-act') === 'all';
         Object.keys(TAX.subs).filter(function (k) { return TAX.subs[k].unit.charAt(0) === S; }).forEach(function (s) { setSub(s, on); });

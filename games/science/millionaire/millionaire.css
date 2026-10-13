@@ -419,3 +419,25 @@ body.mx-calm .mx *, body.mx-calm .mx *::before, body.mx-calm .mx *::after { anim
   .mx-rung.now { outline: 3px solid Highlight; outline-offset: -3px; }
   .mx-a.correct, .mx-a.wrong { outline: 3px solid CanvasText; }
 }
+
+/* Topics: three collapsible subject sections (science setup only; the language
+   game's topic card keeps the plain layout because it lacks .su-topics--acc). */
+.su-card:has(> .su-topics--acc) { container-type: inline-size; }
+.su-topics--acc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+@container (min-width: 720px) { .su-topics--acc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.su-topics--acc .su-subjhead { position: relative; padding: 0; border-bottom: 0; display: block; }
+.su-subjbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 60px; padding: 8px 98px 8px 14px; background: transparent; border: 0; cursor: pointer; text-align: left; color: var(--sst-text); font: 700 17px var(--sst-font); }
+.su-subjbtn:hover { background: var(--sst-raised); }
+.su-subjbtn:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: -3px; }
+.su-subjbtn .su-subjcount { margin-left: auto; font-size: 14px; white-space: nowrap; }
+.su-schev { position: absolute; right: 14px; top: 50%; margin-top: -9px; color: var(--sst-text-muted); transition: transform .15s; }
+.su-subjbtn[aria-expanded="true"] .su-schev { transform: rotate(180deg); }
+.su-subjtick { position: absolute; right: 44px; top: 50%; margin-top: -22px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
+.su-subjtick input { width: 24px; height: 24px; margin: 0; accent-color: var(--sst-violet-btn); cursor: pointer; }
+.su-subjtick input:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.su-panel { border-top: 1px solid var(--sst-line); }
+.su-panel[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .su-schev { transition: none; } }
+.su-subjbtn { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 0; align-content: center; }
+.su-subjbtn .su-dot { grid-row: 1 / span 2; align-self: center; }
+.su-subjbtn .su-subjcount { margin-left: 0; font-size: 13px; grid-column: 2; }

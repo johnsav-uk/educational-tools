@@ -236,3 +236,62 @@ option, optgroup { background: var(--sst-card); color: var(--sst-text); }
   #rp-setup { grid-template-columns: 1fr; }
   .rp-summary { position: static; }
 }
+
+/* ---------- Topics card: collapsible subject sections ----------
+   Shares its look with the Millionaire setup. Three columns when the card is
+   wide enough (a container query, so it follows the card, not the window). */
+#wa-outer:has(#rp-setup:not(.hidden)) { max-width: 1480px; }
+.rp-cardhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.rp-cardhead h2 { margin-bottom: 8px; }
+.rp-bulk { display: flex; gap: 8px; margin-bottom: 8px; }
+.rp-btn {
+  min-height: 44px; padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text);
+  font: 600 14px var(--sst-font);
+}
+.rp-btn:hover { border-color: var(--sst-text-muted); }
+.rp-btn:focus-visible, .rp-subjbtn:focus-visible, .rp-focus:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.rp-total { margin: 0 0 6px; font: 700 15px var(--sst-font); color: var(--sst-text); font-variant-numeric: tabular-nums; }
+.rp-note { margin: 0 0 14px; font: 500 14px/1.5 var(--sst-font); color: var(--sst-text-muted); }
+.rp-note b { color: var(--sst-text-body); }
+.rp-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.rp-row .rp-chip { text-align: center; }
+.rp-yearrow { margin: 0 0 14px; }
+.rp-field[hidden] { display: none; }
+
+.rp-accwrap { container-type: inline-size; }
+.rp-acc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+@container (min-width: 760px) { .rp-acc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rp-subj { border: 1px solid var(--sst-line); border-radius: 10px; background: var(--sst-panel); overflow: hidden; }
+.rp-subjhead { position: relative; }
+.rp-subjbtn {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 60px; padding: 8px 98px 8px 14px;
+  background: transparent; border: 0; cursor: pointer; text-align: left; color: var(--sst-text); font: 700 17px var(--sst-font);
+}
+.rp-subjbtn:hover { background: var(--sst-raised); }
+.rp-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
+.rp-sname { flex: 0 1 auto; min-width: 0; }
+.rp-scount { margin-left: auto; font: 600 14px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rp-chev { position: absolute; right: 14px; top: 50%; margin-top: -9px; color: var(--sst-text-muted); transition: transform .15s; }
+.rp-subjbtn[aria-expanded="true"] .rp-chev { transform: rotate(180deg); }
+.rp-subjtick { position: absolute; right: 44px; top: 50%; margin-top: -22px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
+.rp-subj input[type=checkbox] { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--sst-violet-btn); cursor: pointer; }
+.rp-subj input[type=checkbox]:focus-visible { outline: 3px solid var(--sst-blue); outline-offset: 2px; }
+.rp-subj input[type=checkbox]:disabled { cursor: not-allowed; }
+.rp-tlist { list-style: none; margin: 0; padding: 4px 8px 8px; border-top: 1px solid var(--sst-line); background: var(--sst-bg-deep, var(--sst-bg)); }
+.rp-tlist[hidden], .rp-trow[hidden] { display: none; }
+.rp-trow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; min-height: 52px; padding: 2px 6px; border-radius: 8px; }
+.rp-trow label { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; padding: 8px 0; font: 500 15px/1.3 var(--sst-font); color: var(--sst-text-body); }
+.rp-trow.is-off label { color: var(--sst-text-muted); cursor: not-allowed; }
+.rp-trow.is-focus { background: var(--sst-violet-soft); }
+.rp-trow.is-focus label { color: var(--sst-text); }
+.rp-tcount { font: 600 13px var(--sst-font); color: var(--sst-text-muted); font-variant-numeric: tabular-nums; min-width: 2.2em; text-align: right; }
+.rp-focus {
+  min-height: 40px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sst-line-strong); color: var(--sst-text-body); font: 600 14px var(--sst-font);
+}
+.rp-focus:hover:not(:disabled) { border-color: var(--sst-violet); color: var(--sst-text); }
+.rp-focus[aria-pressed="true"] { background: var(--sst-violet-btn); border-color: var(--sst-violet-btn); color: #fff; }
+.rp-focus:disabled { opacity: .4; cursor: not-allowed; }
+.rp-nowteach { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--sst-line); }
+@media (prefers-reduced-motion: reduce) { .rp-chev { transition: none; } }
