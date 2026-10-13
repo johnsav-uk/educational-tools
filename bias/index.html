@@ -2213,18 +2213,21 @@ class SceneRenderer {
       const u0 = Math.max(0, uL), u1 = Math.min(tw, uR), d0 = (u0 - uL) * k, d1 = (u1 - uL) * k;
       const vrow = Math.min(tex.height - 1, Math.max(0, Math.floor((wy - TEX.Y0) / s)));
       if (u1 > u0 && d1 > d0) g.drawImage(tex, u0, vrow, u1 - u0, 1, d0, sy, d1 - d0, row);
-      // near-field grain
+      // near-field grain; each screen row shows one tile row, the offsets wrapped into the 256-texel tile
+      // so they stay small (iOS Safari draws patterns at reduced precision, and offsets in the tens of
+      // thousands of pixels made consecutive rows repeat the tile, smearing it into vertical streaks)
       if (canMatrix && t < 42) {
+        const wrap = (v, n) => ((v % n) + n) % n, ex = -cam.F * cam.x / t;
         const ds = 0.0034, a = cam.F * ds / t;
         if (a > 0.55) {
           g.globalAlpha = clamp((a - 0.55) / 1.2, 0, 1) * 0.9;
-          blades.setTransform(new DOMMatrix([a, 0, 0, row, cam.cx - cam.F * cam.x / t, sy - Math.floor(wy / ds) * row]));
+          blades.setTransform(new DOMMatrix([a, 0, 0, row, cam.cx + wrap(ex, 256 * a), sy - wrap(Math.floor(wy / ds), 256) * row]));
           g.fillStyle = blades; g.fillRect(0, sy, Wd, row);
         }
         const dm = 0.013, am = cam.F * dm / t;
         if (am > 0.45) {
           g.globalAlpha = clamp((am - 0.45) / 0.8, 0, 1);
-          mottle.setTransform(new DOMMatrix([am, 0, 0, row, cam.cx - cam.F * cam.x / t, sy - Math.floor(wy / dm) * row]));
+          mottle.setTransform(new DOMMatrix([am, 0, 0, row, cam.cx + wrap(ex, 256 * am), sy - wrap(Math.floor(wy / dm), 256) * row]));
           g.fillStyle = mottle; g.fillRect(0, sy, Wd, row);
         }
         g.globalAlpha = 1;
