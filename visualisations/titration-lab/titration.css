@@ -88,6 +88,19 @@ input::placeholder{ color:oklch(.5 .03 255); }
 .card-btn .foot{ margin-top:auto; padding-top:8px; border-top:1px solid var(--line); color:var(--muted); font-size:.8rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .card-btn .done{ color:var(--good); font-weight:700; }
 .swatch{ display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid var(--line2); vertical-align:-1px; }
+.level-q{ font-size:clamp(1.2rem,2.2vw,1.6rem); margin:18px 0 14px; }
+.levels{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:16px; max-width:1000px; }
+.level-btn{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; text-align:left; cursor:pointer; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; color:var(--ink); }
+.level-btn:hover{ border-color:var(--blue); }
+.level-btn:focus-visible{ outline:3px solid var(--blue); outline-offset:2px; }
+.level-btn b{ font-size:1.4rem; line-height:1.2; }
+.level-btn .spec{ color:var(--muted); font-size:.88rem; }
+.level-btn ul{ margin:4px 0 0; padding-left:1.1em; color:var(--body); }
+.level-btn li{ margin:2px 0; }
+.level-btn .foot{ margin-top:auto; padding-top:10px; color:var(--blue); font-weight:700; }
+.level-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:8px 0 4px; }
+body.presenting .level-btn, body.presenting .level-q{ font-size:var(--sst-pr-label); }
+body.presenting .level-btn b{ font-size:var(--sst-pr-title); }
 .picker-note{ margin-top:26px; color:var(--body); display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .code-entry{ display:inline-flex; align-items:center; gap:8px; font-weight:600; }
 .code-entry input{ width:9em; text-transform:uppercase; }
@@ -125,15 +138,40 @@ body.in-lab{ height:100dvh; display:flex; flex-direction:column; overflow:hidden
 body.in-lab .top{ flex:none; }
 .lab{
   flex:1 1 auto; min-height:0; width:100%; max-width:1800px; margin:0 auto;
-  display:grid; grid-template-columns:minmax(0,1fr) clamp(320px,27vw,430px); gap:12px;
+  display:grid; grid-template-columns:minmax(0,1fr) clamp(320px,27vw,430px); grid-template-rows:auto minmax(0,1fr); gap:10px 12px;
   padding:0 clamp(12px,2vw,24px) 12px;
 }
+.lab > .stages{ grid-column:1 / -1; }
+
+/* Stage strip: where you are in the practical. */
+.stages{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.stages li{ display:flex; align-items:center; gap:8px; padding:5px 14px 5px 6px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-weight:600; font-size:.9rem; }
+.stages li + li::before{ content:""; }
+.stages .n{ width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:.78rem; font-weight:700; background:var(--raised); color:var(--muted); }
+.stages li.done{ color:var(--body); }
+.stages li.done .n{ background:oklch(.3 .07 155); color:var(--good); }
+.stages li.now{ color:var(--ink); border-color:var(--blue); background:var(--soft); }
+.stages li.now .n{ background:var(--btn); color:#fff; }
+.analyse .stages{ margin:0 0 12px; }
+
+/* The prompt: one clear action, big, above the bench. */
+.prompt{ flex:none; display:flex; flex-direction:column; gap:6px; }
+.prompt-say{ margin:0; font-size:clamp(1.15rem,1.9vw,1.6rem); font-weight:700; line-height:1.25; letter-spacing:-.01em; min-height:1.25em; }
+.prompt-say .count{ display:inline-block; vertical-align:.18em; margin-right:10px; padding:2px 10px; border-radius:999px; background:var(--raised); color:var(--body); font-size:.55em; font-weight:700; letter-spacing:.02em; }
+.prompt-say .tick{ color:var(--good); }
+.prompt .feedback{ margin:0; font-size:.95rem; }
+
+/* The highlighted apparatus. */
+#benchSvg .cue-ring{ animation:cuePulse 1.3s ease-in-out infinite; }
+@keyframes cuePulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+@media (prefers-reduced-motion:reduce){ #benchSvg .cue-ring{ animation:none; } }
 .stagecol{ display:flex; flex-direction:column; gap:10px; min-height:0; min-width:0; }
 .benchpanel{ position:relative; flex:1 1 auto; min-height:0; background:var(--stage); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 #benchSvg{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:manipulation; }
 #benchSvg text{ font-family:var(--sst-font); font-variant-numeric:tabular-nums; }
-#benchSvg .part:hover, #benchSvg .part:focus-visible{ outline:none; }
-#benchSvg .part:hover > *:first-child{ stroke:var(--blue); }
+#benchSvg .part:hover, #benchSvg .part:focus{ outline:none; }
+#benchSvg .part:hover > [stroke]:not(.hit), #benchSvg .part:focus-visible > [stroke]:not(.hit), #benchSvg path.part:hover, #benchSvg rect.part:hover, #benchSvg .part:focus-visible:not(g){ stroke:var(--blue); }
+#benchSvg .part:focus-visible > [stroke]:not(.hit){ stroke-width:2.5; }
 .lens{
   position:absolute; top:10px; right:10px; margin:0; width:clamp(118px,15%,190px);
   background:var(--stage); border:1px solid var(--line2); border-radius:10px; overflow:hidden;
@@ -167,7 +205,38 @@ body.in-lab .top{ flex:none; }
 
 .side{ display:flex; flex-direction:column; gap:10px; min-height:0; }
 .side .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; overflow:auto; min-height:0; }
-#method{ flex:1 1 40%; }
+#method{ flex:1 1 auto; }
+#titrate{ flex:0 1 auto; }
+body.stage-titrate #results{ flex:1 1 auto; max-height:none; }
+.setup-mode{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin:0 0 12px; }
+.setup-mode:empty{ display:none; }
+.btn.ghost{ background:transparent; border-color:transparent; color:var(--muted); }
+.btn.ghost:hover:not(:disabled){ border-color:var(--line2); color:var(--ink); }
+.btn.wide{ width:100%; margin-top:8px; }
+.linkbtn{ background:none; border:0; padding:0; color:var(--blue); font-weight:600; cursor:pointer; text-decoration:underline; }
+.steps.method li{ color:var(--body); font-weight:400; }
+.steps.method li.now{ color:var(--ink); font-weight:600; }
+.steps.method li.tail{ color:var(--body); }
+.steps.method li.tail::before{ background:var(--raised); color:var(--muted); }
+.score{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+.score div{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px; text-align:center; }
+.score b{ display:block; font-size:1.5rem; line-height:1.1; }
+.score span{ color:var(--muted); font-size:.8rem; }
+.howto{ padding-left:1.2em; }
+.sep{ border:0; border-top:1px solid var(--line); margin:14px 0 12px; }
+.howto li{ margin:0 0 6px; }
+/* Stage 2: the titration panel. */
+.step-text:empty{ display:none; }
+.step-text{ margin:0 0 4px; font-weight:700; font-size:1.05rem; line-height:1.3; }
+#titrate .hint{ margin:0 0 12px; color:var(--body); font-size:.9rem; }
+.t-read label{ display:block; font-weight:600; font-size:.9rem; margin-bottom:4px; color:var(--muted); }
+.t-add{ display:flex; flex-direction:column; gap:10px; }
+.t-add .grp{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.t-add .lbl{ width:2.6em; font-size:.75rem; color:var(--muted); font-weight:700; }
+.t-add .btn{ min-height:44px; }
+.t-add .live{ margin:0; font-size:.9rem; color:var(--body); min-height:1.4em; }
+.t-done p{ margin:0 0 8px; }
+.res tr.conc td{ color:var(--good); font-weight:700; }
 #actions{ flex:0 1 auto; max-height:46%; }
 #results{ flex:0 0 auto; max-height:30%; }
 .side .card h3{ margin:0 0 8px; font-size:.95rem; }
@@ -259,6 +328,9 @@ body.in-analyse{ height:auto; overflow:auto; display:block; }
   .lens figcaption{ font-size:.66rem; padding:3px 5px; }
   .colourchip{ font-size:.78rem; padding:4px 8px; left:6px; top:6px; }
   .dock{ position:sticky; bottom:0; z-index:5; border-radius:12px; padding:8px; gap:8px; }
+  .stages li{ padding:3px 10px 3px 4px; font-size:.82rem; }
+  .prompt{ position:sticky; top:0; z-index:5; background:var(--paper); padding:6px 0; }
+  body.stage-setup .lens, body.stage-prep .lens{ display:none; }
   .dock .grp + .grp{ padding-left:0; border-left:0; }
   .side{ overflow:visible; }
   .side .card{ max-height:none !important; overflow:visible; }
@@ -300,6 +372,11 @@ body.presenting #picker .group > p, body.presenting #picker .picker-note{ font-s
 body.presenting .analyse{ font-size:var(--sst-pr-label); }
 body.presenting .analyse h2{ font-size:var(--sst-pr-title); }
 body.presenting .feedback{ display:none; }
+body.presenting #method, body.presenting #titrate{ font-size:var(--sst-pr-label); }
+body.presenting #method h3, body.presenting #titrate h3{ font-size:var(--sst-pr-label); }
+body.presenting .steps li, body.presenting .steps li .why, body.presenting .step-text, body.presenting #titrate .hint, body.presenting .score span{ font-size:var(--sst-pr-label); }
+body.presenting .t-add .lbl{ font-size:.8em; width:auto; }
+body.presenting .setup-mode .seg button{ font-size:var(--sst-pr-control); }
 
 /* ── Dialog ─────────────────────────────────────────────────────── */
 dialog{ background:var(--panel); color:var(--ink); border:1px solid var(--line2); border-radius:14px; padding:20px 22px; max-width:min(560px,calc(100vw - 32px)); }
@@ -320,6 +397,8 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .theme-light .colourchip, .theme-light .clock{ background:oklch(1 0 0 / .92); }
 .theme-light .hold.down{ background:oklch(.93 .06 80); }
 .theme-light .steps li.done::before{ background:oklch(.93 .05 155); }
+.theme-light .stages li.done .n{ background:oklch(.93 .05 155); }
+.theme-light #benchSvg .cue-ring{ stroke:#b7791f; }
 /* The bench, burette lens and pH curve are SVG drawn for a navy stage.
    CSS outranks SVG attributes, so in light mode each colour that would
    vanish is swapped here; liquids, steel and the balance display keep theirs. */

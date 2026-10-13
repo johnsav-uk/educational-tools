@@ -45,8 +45,9 @@
 
   /* ---------- Conical flask geometry ----------
      A frustum from the base (radius 75 px) to the shoulder (radius 17 px) over
-     95 px, holding 250 cm³ to the shoulder. Volume to liquid height by bisection. */
-  var FL = { base: 75, neck: 17, body: 95, neckH: 46, cap: 250 };
+     95 px, holding 100 cm³ to the shoulder, so a 25 cm³ portion stands deep
+     enough to see its colour. Volume to liquid height by bisection. */
+  var FL = { base: 75, neck: 17, body: 95, neckH: 46, cap: 100 };
   function frustumVol(h) {
     var r = FL.base - (FL.base - FL.neck) * h / FL.body;
     return Math.PI / 3 * h * (FL.base * FL.base + FL.base * r + r * r);
@@ -59,16 +60,51 @@
     for (var i = 0; i < 30; i++) { var m = (lo + hi) / 2; if (frustumVol(m) * FL_SCALE < v) lo = m; else hi = m; }
     return (lo + hi) / 2;
   }
-  function flaskPath(cx, base) {
-    var top = base - FL.body, nt = top - FL.neckH;
-    return 'M' + (cx - FL.neck) + ',' + nt + ' L' + (cx - FL.neck) + ',' + top + ' L' + (cx - FL.base + 4) + ',' + (base - 4) +
-      ' Q' + (cx - FL.base) + ',' + base + ' ' + (cx - FL.base + 8) + ',' + base + ' L' + (cx + FL.base - 8) + ',' + base +
-      ' Q' + (cx + FL.base) + ',' + base + ' ' + (cx + FL.base - 4) + ',' + (base - 4) + ' L' + (cx + FL.neck) + ',' + top + ' L' + (cx + FL.neck) + ',' + nt;
+  // Points along the sloping side, from the shoulder (0) to the base corner (1).
+  function flaskSide(cx, base, sign, t) {
+    var top = base - FL.body;
+    return [cx + sign * (FL.neck + (FL.base - FL.neck) * t), top + FL.body * t];
   }
+  function f1(v) { return Math.round(v * 10) / 10; }
+  function pt(p) { return f1(p[0]) + ',' + f1(p[1]); }
+  function flaskPath(cx, base, closed) {
+    var top = base - FL.body, nt = top - FL.neckH, n = FL.neck, out = '';
+    var sL = flaskSide(cx, base, -1, 0.12), cL = flaskSide(cx, base, -1, 0.9), sR = flaskSide(cx, base, 1, 0.12), cR = flaskSide(cx, base, 1, 0.9);
+    out += 'M' + (cx - n - 3) + ',' + (nt - 2) + ' Q' + (cx - n) + ',' + (nt - 1) + ' ' + (cx - n) + ',' + (nt + 4);
+    out += ' L' + (cx - n) + ',' + (top - 9) + ' Q' + (cx - n) + ',' + top + ' ' + pt(sL);
+    out += ' L' + pt(cL) + ' Q' + (cx - FL.base) + ',' + base + ' ' + (cx - FL.base + 16) + ',' + base;
+    out += ' L' + (cx + FL.base - 16) + ',' + base + ' Q' + (cx + FL.base) + ',' + base + ' ' + pt(cR);
+    out += ' L' + pt(sR) + ' Q' + (cx + n) + ',' + top + ' ' + (cx + n) + ',' + (top - 9);
+    out += ' L' + (cx + n) + ',' + (nt + 4) + ' Q' + (cx + n) + ',' + (nt - 1) + ' ' + (cx + n + 3) + ',' + (nt - 2);
+    return closed ? out + ' Z' : out;
+  }
+  // The liquid is a band from the base to its level, clipped to the glass.
+  function flaskBand(h) { return 'M' + (-FL.base - 2) + ',' + f1(-h) + ' H' + (FL.base + 2) + ' V2 H' + (-FL.base - 2) + ' Z'; }
+  var clipN = 0;
   function flaskLiquid(cx, base, h) {
     var r = FL.base - (FL.base - FL.neck) * h / FL.body, y = base - h;
     return 'M' + (cx - r + 1.5) + ',' + y + ' L' + (cx - FL.base + 5) + ',' + (base - 5) + ' Q' + (cx - FL.base + 1.5) + ',' + (base - 1.5) + ' ' + (cx - FL.base + 9) + ',' + (base - 1.5) +
       ' L' + (cx + FL.base - 9) + ',' + (base - 1.5) + ' Q' + (cx + FL.base - 1.5) + ',' + (base - 1.5) + ' ' + (cx + FL.base - 5) + ',' + (base - 5) + ' L' + (cx + r - 1.5) + ',' + y + ' Z';
+  }
+
+  // A filter funnel: rim at y, a curved cone and the stem.
+  function funnelPath(cx, y) {
+    return 'M' + (cx - 26) + ',' + y + ' Q' + cx + ',' + (y - 3) + ' ' + (cx + 26) + ',' + y + ' C' + (cx + 20) + ',' + (y + 10) + ' ' + (cx + 5) + ',' + (y + 14) + ' ' + (cx + 4) + ',' + (y + 22) +
+      ' L' + (cx + 4) + ',' + (y + 34) + ' Q' + cx + ',' + (y + 37) + ' ' + (cx - 4) + ',' + (y + 34) + ' L' + (cx - 4) + ',' + (y + 22) + ' C' + (cx - 5) + ',' + (y + 14) + ' ' + (cx - 20) + ',' + (y + 10) + ' ' + (cx - 26) + ',' + y + ' Z';
+  }
+
+  // A ground-glass stopper with its top at y.
+  function stopperPath(cx, y) {
+    return 'M' + (cx - 13) + ',' + (y + 4) + ' Q' + (cx - 13) + ',' + y + ' ' + (cx - 9) + ',' + y + ' L' + (cx + 9) + ',' + y + ' Q' + (cx + 13) + ',' + y + ' ' + (cx + 13) + ',' + (y + 4) +
+      ' L' + (cx + 13) + ',' + (y + 7) + ' L' + (cx + 8) + ',' + (y + 9) + ' L' + (cx + 7) + ',' + (y + 20) + ' Q' + cx + ',' + (y + 22) + ' ' + (cx - 7) + ',' + (y + 20) + ' L' + (cx - 8) + ',' + (y + 9) + ' L' + (cx - 13) + ',' + (y + 7) + ' Z';
+  }
+  // Every clickable part is a button for the keyboard too.
+  function partsAsButtons(svg, names) {
+    svg.querySelectorAll('.part').forEach(function (p) {
+      p.style.cursor = 'pointer';
+      p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button');
+      if (!p.getAttribute('aria-label')) p.setAttribute('aria-label', names[p.getAttribute('data-part')] || p.getAttribute('data-part'));
+    });
   }
 
   /* ---------- Burette geometry ---------- */
@@ -81,30 +117,37 @@
     var redox = run.type === 'redox', self = this;
     svg.setAttribute('viewBox', '0 0 960 600');
     svg.innerHTML = '';
-    var g = el('g', {}, svg);
+    var g = el('g', { 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
     this.g = g;
     // Bench.
     el('rect', { x: 0, y: 510, width: 960, height: 90, fill: C.bench }, g);
     el('line', { x1: 0, y1: 510.5, x2: 960, y2: 510.5, stroke: C.benchTop, 'stroke-width': 1.5 }, g);
     // Stand.
-    el('rect', { x: 236, y: 498, width: 230, height: 12, rx: 2, fill: C.steelDark }, g);
-    el('rect', { x: 258, y: 26, width: 8, height: 472, fill: C.steel }, g);
+    el('rect', { x: 236, y: 497, width: 230, height: 13, rx: 5, fill: C.steelDark }, g);
+    el('rect', { x: 258, y: 24, width: 8, height: 476, rx: 4, fill: C.steel }, g);
     [104, 236].forEach(function (y) {
-      el('rect', { x: 266, y: y - 3, width: 100, height: 6, fill: C.steel }, g);
-      el('rect', { x: 254, y: y - 7, width: 16, height: 14, rx: 2, fill: C.steelDark }, g);
-      el('rect', { x: 364, y: y - 9, width: 6, height: 18, rx: 1, fill: C.steel }, g);
-      el('rect', { x: 390, y: y - 9, width: 6, height: 18, rx: 1, fill: C.steel }, g);
+      el('rect', { x: 266, y: y - 3, width: 100, height: 6, rx: 3, fill: C.steel }, g);
+      el('rect', { x: 253, y: y - 8, width: 18, height: 16, rx: 5, fill: C.steelDark }, g);
+      el('rect', { x: 363, y: y - 10, width: 7, height: 20, rx: 3, fill: C.steel }, g);
+      el('rect', { x: 390, y: y - 10, width: 7, height: 20, rx: 3, fill: C.steel }, g);
     });
 
     // Tile (under the burette).
-    this.tile = el('rect', { x: 286, y: 504, width: 188, height: 7, rx: 1, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, g);
+    this.tile = el('rect', { x: 286, y: 504, width: 188, height: 7, rx: 3, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1, 'data-part': 'tile', class: 'part' }, g);
+    this.tileParked = el('g', { 'data-part': 'tile', class: 'part' }, g);
+    el('rect', { x: 30, y: 560, width: 150, height: 9, rx: 3, fill: C.tile, stroke: C.tileEdge, 'stroke-width': 1 }, this.tileParked);
+    el('rect', { x: 26, y: 548, width: 158, height: 26, fill: 'transparent', class: 'hit' }, this.tileParked);
+    text(this.tileParked, 105, 590, 'white tile', { 'font-size': 12, class: 'cap' });
 
     // Burette.
     var bu = el('g', { 'data-part': 'burette', class: 'part' }, g);
     this.buLiquid = el('rect', { x: BU.x - BU.w / 2 + 1.5, width: BU.w - 3, fill: C.clear }, bu);
-    this.buBelow = el('path', { d: 'M' + (BU.x - 6.5) + ',312 L' + (BU.x - 3) + ',' + BU.tap + ' L' + (BU.x + 3) + ',' + BU.tap + ' L' + (BU.x + 6.5) + ',312 Z', fill: C.clear }, bu);
+    this.buBelow = el('path', { d: 'M' + (BU.x - 6.5) + ',310 Q' + (BU.x - 6.5) + ',318 ' + (BU.x - 3) + ',' + BU.tap + ' L' + (BU.x + 3) + ',' + BU.tap + ' Q' + (BU.x + 6.5) + ',318 ' + (BU.x + 6.5) + ',310 Z', fill: C.clear }, bu);
     this.buTop = el('line', { x1: BU.x - BU.w / 2 + 1.5, x2: BU.x + BU.w / 2 - 1.5, stroke: C.clearTop, 'stroke-width': 1.5 }, bu);
-    el('path', { d: 'M' + (BU.x - BU.w / 2) + ',' + BU.top + ' L' + (BU.x - BU.w / 2) + ',312 L' + (BU.x - 4) + ',' + BU.tap + ' M' + (BU.x + BU.w / 2) + ',' + BU.top + ' L' + (BU.x + BU.w / 2) + ',312 L' + (BU.x + 4) + ',' + BU.tap,
+    el('path', { d: 'M' + (BU.x - BU.w / 2 - 2) + ',' + (BU.top - 2) + ' Q' + (BU.x - BU.w / 2) + ',' + (BU.top - 1) + ' ' + (BU.x - BU.w / 2) + ',' + (BU.top + 3) +
+      ' L' + (BU.x - BU.w / 2) + ',308 Q' + (BU.x - BU.w / 2) + ',318 ' + (BU.x - 4) + ',' + BU.tap +
+      ' M' + (BU.x + BU.w / 2 + 2) + ',' + (BU.top - 2) + ' Q' + (BU.x + BU.w / 2) + ',' + (BU.top - 1) + ' ' + (BU.x + BU.w / 2) + ',' + (BU.top + 3) +
+      ' L' + (BU.x + BU.w / 2) + ',308 Q' + (BU.x + BU.w / 2) + ',318 ' + (BU.x + 4) + ',' + BU.tap,
       fill: 'none', stroke: C.glass, 'stroke-width': 1.5 }, bu);
     // Scale: every 1 cm³, labelled every 5.
     for (var r = 0; r <= 50; r++) {
@@ -114,13 +157,17 @@
     }
     // Tap and jet.
     this.jetLiquid = el('rect', { x: BU.x - 1.5, y: BU.tap + 10, width: 3, height: BU.jetEnd - BU.tap - 12, fill: 'none' }, bu);
-    el('path', { d: 'M' + (BU.x - 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x - 2.5) + ',' + (BU.jetEnd - 4) + ' L' + (BU.x - 1) + ',' + BU.jetEnd + ' M' + (BU.x + 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x + 2.5) + ',' + (BU.jetEnd - 4) + ' L' + (BU.x + 1) + ',' + BU.jetEnd,
+    el('path', { d: 'M' + (BU.x - 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x - 2.5) + ',' + (BU.jetEnd - 6) + ' Q' + (BU.x - 2.5) + ',' + (BU.jetEnd - 1) + ' ' + (BU.x - 1) + ',' + BU.jetEnd +
+      ' M' + (BU.x + 2.5) + ',' + (BU.tap + 8) + ' L' + (BU.x + 2.5) + ',' + (BU.jetEnd - 6) + ' Q' + (BU.x + 2.5) + ',' + (BU.jetEnd - 1) + ' ' + (BU.x + 1) + ',' + BU.jetEnd,
       fill: 'none', stroke: C.glass, 'stroke-width': 1.3 }, bu);
-    el('rect', { x: BU.x - 5, y: BU.tap - 1, width: 10, height: 10, rx: 2, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, bu);
-    this.tapHandle = el('rect', { x: BU.x - 16, y: BU.tap + 2, width: 32, height: 4, rx: 2, fill: C.blue }, bu);
+    el('circle', { cx: BU.x, cy: BU.tap + 4, r: 6.5, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, bu);
+    var tapG = el('g', { 'data-part': 'tap', class: 'part' }, g);
+    this.tapG = tapG;
+    this.tapHandle = el('rect', { x: BU.x - 17, y: BU.tap + 1.5, width: 34, height: 5, rx: 2.5, fill: C.blue }, tapG);
+    el('rect', { x: BU.x - 30, y: BU.tap - 12, width: 60, height: 32, fill: 'transparent', class: 'hit' }, tapG);
     this.tapLabel = text(g, BU.x + 46, BU.tap + 8, 'tap', { 'font-size': 12, 'text-anchor': 'start' });
     // Funnel in the top.
-    this.funnelIn = el('path', { d: 'M352,4 L408,4 L384,26 L384,40 L376,40 L376,26 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5 }, g);
+    this.funnelIn = el('path', { d: funnelPath(380, 4), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5, 'data-part': 'funnel', class: 'part' }, g);
     text(g, BU.x + 46, 70, 'burette', { 'font-size': 12, 'text-anchor': 'start' });
 
     // Stream and drop from the jet.
@@ -130,9 +177,12 @@
     // Flask (under the burette or parked to the left).
     this.flaskG = el('g', { 'data-part': 'flask', class: 'part' }, g);
     this.flaskBody = el('g', {}, this.flaskG);
-    this.flLiquid = el('path', { d: '', fill: 'none' }, this.flaskBody);
-    this.flHaze = el('path', { d: '', fill: 'rgb(122,74,34)', 'fill-opacity': 0 }, this.flaskBody);
-    this.flPlume = el('ellipse', { cx: 0, cy: 0, rx: 12, ry: 6, fill: 'none', opacity: 0 }, this.flaskBody);
+    var clipId = 'flaskClip' + (++clipN);
+    el('path', { d: flaskPath(0, 0, true) }, el('clipPath', { id: clipId }, el('defs', {}, this.flaskBody)));
+    var inside = el('g', { 'clip-path': 'url(#' + clipId + ')' }, this.flaskBody);
+    this.flLiquid = el('path', { d: '', fill: 'none' }, inside);
+    this.flHaze = el('path', { d: '', fill: 'rgb(122,74,34)', 'fill-opacity': 0 }, inside);
+    this.flPlume = el('ellipse', { cx: 0, cy: 0, rx: 12, ry: 6, fill: 'none', opacity: 0 }, inside);
     this.flSurface = el('line', { stroke: C.clearTop, 'stroke-width': 1.2 }, this.flaskBody);
     this.flGlass = el('path', { d: flaskPath(0, 0), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.6 }, this.flaskBody);
     this.thermo = el('g', { opacity: 0 }, this.flaskG);
@@ -140,22 +190,28 @@
     el('circle', { cx: 10, cy: -26, r: 4, fill: '#d9574a' }, this.thermo);
     this.thermoText = text(this.thermo, 30, -112, '', { 'text-anchor': 'start', fill: C.text, 'font-size': 14, 'font-weight': 600 });
     this.flaskLabel = text(this.flaskG, 0, 30, 'conical flask', { 'font-size': 12, class: 'cap' });
+    this.swirlMark = el('g', { opacity: 0, fill: 'none', stroke: C.blue, 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, this.flaskG);
+    el('path', { d: 'M-92,-38 A92,22 0 0 0 40,-18 M40,-18 l-12,-8 M40,-18 l-13,6' }, this.swirlMark);
+    el('path', { d: 'M92,-62 A92,22 0 0 0 -40,-82 M-40,-82 l12,8 M-40,-82 l13,-6' }, this.swirlMark);
 
     // Waste beaker.
     this.waste = el('g', { 'data-part': 'waste', class: 'part' }, g);
-    el('path', { d: 'M-34,-82 L-34,-4 Q-34,0 -30,0 L30,0 Q34,0 34,-4 L34,-82 M-34,-82 L-38,-86', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5 }, this.waste);
+    el('path', { d: 'M-39,-87 Q-34,-86 -34,-80 L-34,-7 Q-34,0 -27,0 L27,0 Q34,0 34,-7 L34,-81 Q34,-85 37,-86', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.5 }, this.waste);
     this.wasteLiquid = el('rect', { x: -32.5, width: 65, y: -6, height: 4.5, fill: C.clear }, this.waste);
     text(this.waste, 0, 30, 'waste beaker', { 'font-size': 12, class: 'cap' });
 
     // Shelf: bottles, indicator or acid, wash bottle, pipette, spare funnel.
     var shelf = el('g', {}, g);
-    function bottle(x, w, h, fill, labelTop, labelBottom, part, labelUnit) {
+    function bottle(x, w, h, fill, labelTop, labelBottom, part, labelUnit, id) {
       var b = el('g', { 'data-part': part, class: 'part' }, shelf);
-      el('rect', { x: x - w / 2, y: 505 - h, width: w, height: h, rx: 6, fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, b);
-      el('rect', { x: x - w / 2 + 2, y: 505 - h * 0.62, width: w - 4, height: h * 0.62 - 2, rx: 4, fill: fill }, b);
-      el('rect', { x: x - w * 0.18, y: 505 - h - 14, width: w * 0.36, height: 14, rx: 2, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, b);
+      if (id) b.setAttribute('data-id', id);
+      var L0 = x - w / 2, R0 = x + w / 2, T0 = 505 - h, nk = w * 0.2, sh = Math.min(16, h * 0.18);
+      el('path', { d: 'M' + (x - nk) + ',' + T0 + ' Q' + L0 + ',' + T0 + ' ' + L0 + ',' + (T0 + sh) + ' L' + L0 + ',497 Q' + L0 + ',505 ' + (L0 + 8) + ',505 L' + (R0 - 8) + ',505 Q' + R0 + ',505 ' + R0 + ',497 L' + R0 + ',' + (T0 + sh) + ' Q' + R0 + ',' + T0 + ' ' + (x + nk) + ',' + T0 + ' Z',
+        fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, b);
+      el('rect', { x: x - w / 2 + 2, y: 505 - h * 0.62, width: w - 4, height: h * 0.62 - 2, rx: 6, fill: fill }, b);
+      el('rect', { x: x - w * 0.18, y: 505 - h - 13, width: w * 0.36, height: 14, rx: 4, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, b);
       var lh = labelUnit ? 34 : 24;
-      el('rect', { x: x - w / 2 + 4, y: 505 - h * 0.55, width: w - 8, height: lh, rx: 2, fill: '#0d1928', stroke: C.leader, 'stroke-width': 1 }, b);
+      el('rect', { x: x - w / 2 + 4, y: 505 - h * 0.55, width: w - 8, height: lh, rx: 4, fill: '#0d1928', stroke: C.leader, 'stroke-width': 1 }, b);
       var y0 = 505 - h * 0.55;
       var t1 = text(b, x, y0 + 11, labelTop, { fill: C.text, 'font-size': 10.5, 'font-weight': 600 });
       var t2 = text(b, x, y0 + 21, labelBottom, { fill: C.text, 'font-size': 9.5 });
@@ -173,16 +229,17 @@
     text(shelf, 712, 532, run.prep ? 'standard' : 'to pipette', { 'font-size': 12, class: 'cap' });
     if (redox) {
       var acids = [['H2SO4', 'H₂SO₄'], ['HCl', 'HCl'], ['HNO3', 'HNO₃']];
-      acids.forEach(function (a, i) { bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid'); });
+      acids.forEach(function (a, i) { bottle(782 + i * 46, 38, 74, C.clear, a[1], 'dilute', 'acid', null, a[0]); });
       text(shelf, 828, 532, 'acids', { 'font-size': 12, class: 'cap' });
     } else {
       var inds = (run.indicatorOptions && run.indicatorOptions.length ? run.indicatorOptions : [run.indicator]).filter(Boolean);
       var short = { phenolphthalein: 'phenol-', methylOrange: 'methyl', bromothymolBlue: 'bromo-', universal: 'universal' };
       var short2 = { phenolphthalein: 'phthalein', methylOrange: 'orange', bromothymolBlue: 'thymol bl.', universal: 'indicator' };
       inds.forEach(function (id, i) {
-        var b = el('g', { 'data-part': 'indicator', class: 'part' }, shelf), x = 782 + i * 42;
-        el('rect', { x: x - 14, y: 455, width: 28, height: 50, rx: 4, fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.3 }, b);
-        el('path', { d: 'M' + (x - 5) + ',455 L' + (x - 5) + ',440 Q' + x + ',428 ' + (x + 5) + ',440 L' + (x + 5) + ',455', fill: C.rubber }, b);
+        var b = el('g', { 'data-part': 'indicator', 'data-id': id, class: 'part' }, shelf), x = 782 + i * 42;
+        el('path', { d: 'M' + (x - 6) + ',455 Q' + (x - 16) + ',455 ' + (x - 16) + ',463 L' + (x - 16) + ',498 Q' + (x - 16) + ',505 ' + (x - 9) + ',505 L' + (x + 9) + ',505 Q' + (x + 16) + ',505 ' + (x + 16) + ',498 L' + (x + 16) + ',463 Q' + (x + 16) + ',455 ' + (x + 6) + ',455 Z',
+          fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.3 }, b);
+        el('path', { d: 'M' + (x - 5) + ',456 L' + (x - 5) + ',441 Q' + x + ',426 ' + (x + 5) + ',441 L' + (x + 5) + ',456 Z', fill: C.rubber }, b);
         text(b, x, 475, short[id] || id, { fill: C.text, 'font-size': 8.5 });
         text(b, x, 485, short2[id] || '', { fill: C.text, 'font-size': 8.5 });
       });
@@ -190,7 +247,7 @@
     }
     // Wash bottle.
     var wb = el('g', { 'data-part': 'wash', class: 'part' }, shelf);
-    el('path', { d: 'M904,505 L904,448 Q904,438 914,438 L930,438 Q940,438 940,448 L940,505 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, wb);
+    el('path', { d: 'M912,505 Q904,505 904,497 L904,450 Q904,438 916,438 L928,438 Q940,438 940,450 L940,497 Q940,505 932,505 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, wb);
     el('path', { d: 'M922,438 L922,424 L946,410', fill: 'none', stroke: C.glass, 'stroke-width': 2 }, wb);
     text(shelf, 922, 532, 'distilled', { 'font-size': 12, class: 'cap' });
     text(shelf, 922, 546, 'water', { 'font-size': 12, class: 'cap' });
@@ -198,8 +255,9 @@
     var pip = el('g', { 'data-part': 'pipette', class: 'part' }, g);
     this.pipG = pip;
     if (run.aliquotDeviceKind !== 'cylinder') {
-      el('path', { d: 'M560,566 L640,566 L650,560 L720,560 L730,566 L830,566', fill: 'none', stroke: C.glass, 'stroke-width': 1.6 }, pip);
-      el('path', { d: 'M560,572 L640,572 L650,578 L720,578 L730,572 L830,572', fill: 'none', stroke: C.glass, 'stroke-width': 1.6 }, pip);
+      el('path', { d: 'M562,566 L632,566 C646,566 646,556 664,556 L706,556 C724,556 724,566 738,566 L830,566 M562,572 L632,572 C646,572 646,582 664,582 L706,582 C724,582 724,572 738,572 L830,572 M562,566 Q557,569 562,572',
+        fill: 'none', stroke: C.glass, 'stroke-width': 1.6 }, pip);
+      el('rect', { x: 554, y: 552, width: 326, height: 34, fill: 'transparent', class: 'hit' }, pip);
       el('line', { x1: 800, x2: 800, y1: 564, y2: 574, stroke: C.text, 'stroke-width': 1 }, pip);
       el('rect', { x: 830, y: 560, width: 44, height: 18, rx: 9, fill: C.rubber }, pip);
       text(pip, 700, 594, 'pipette and filler', { 'font-size': 12, class: 'cap' });
@@ -208,10 +266,25 @@
       text(pip, 640, 594, 'measuring cylinder', { 'font-size': 12, class: 'cap' });
     }
     // Spare funnel on the bench.
-    this.funnelOut = el('path', { d: 'M500,470 L548,470 L528,488 L528,505 L520,505 L520,488 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4, 'data-part': 'funnel', class: 'part' }, g);
+    this.funnelOut = el('g', { 'data-part': 'funnel', class: 'part' }, g);
+    el('path', { d: funnelPath(576, 469), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.funnelOut);
+    text(this.funnelOut, 576, 532, 'funnel', { 'font-size': 12, class: 'cap' });
 
-    // Clickable parts carry a part name; the UI listens on the svg.
-    svg.querySelectorAll('.part').forEach(function (p) { p.style.cursor = 'pointer'; });
+    // Clickable parts carry a part name; the UI listens on the svg. Each is a
+    // button for the keyboard too (Tab to it, Enter or Space to use it).
+    var NAMES = { burette: 'burette', tap: 'burette tap', funnel: 'funnel', flask: 'conical flask', waste: 'waste beaker', tile: 'white tile',
+      titrant: 'bottle of ' + plain(lab(run.titrant.id)), analyte: 'bottle of ' + plain(lab(run.analyte.id)), wash: 'wash bottle of distilled water',
+      pipette: run.aliquotDeviceKind === 'cylinder' ? 'measuring cylinder' : 'pipette and filler' };
+    svg.querySelectorAll('.part').forEach(function (p) {
+      var part = p.getAttribute('data-part'), id = p.getAttribute('data-id');
+      var name = part === 'indicator' ? (E.INDICATORS[id] ? E.INDICATORS[id].name : 'indicator') : part === 'acid' ? 'dilute ' + { H2SO4: 'sulfuric', HCl: 'hydrochloric', HNO3: 'nitric' }[id] + ' acid' : NAMES[part] || part;
+      p.style.cursor = 'pointer';
+      p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', name);
+    });
+    // The cue: a ring round the apparatus to click next.
+    this.cueG = el('g', { class: 'cue', 'pointer-events': 'none' }, svg);
+    this.cues = [];
+    this.lastFill = null; this.fromFill = null;
     this.reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.t = 0;
   }
@@ -233,10 +306,11 @@
     var open = b.tap || b.pending > 0;
     set(this.tapHandle, { transform: open ? 'rotate(90 ' + BU.x + ' ' + (BU.tap + 4) + ')' : '', fill: open ? C.amber : C.blue });
     set(this.funnelIn, { display: b.funnel ? 'inline' : 'none' });
+    set(this.tileParked, { display: s.tile ? 'none' : 'inline' });
     set(this.funnelOut, { display: b.funnel ? 'none' : 'inline' });
 
     // Where things stand.
-    var under = s.under, fx = under === 'flask' ? 380 : 130, wx = under === 'waste' ? 380 : 520;
+    var under = s.under, fx = under === 'flask' ? 380 : 130, wx = under === 'waste' ? 380 : 510;
     var hasFlaskLiquid = !!s.flask && s.flask.totalVol() > 0;
     set(this.flaskG, { transform: 'translate(' + fx + ',505)' });
     setText(this.flaskLabel, s.tile && under === 'flask' ? 'flask on white tile' : 'conical flask');
@@ -264,23 +338,76 @@
       // Colourless liquid on the tile would vanish: give it the glass tint.
       var clear = ap.abs[0] + ap.abs[1] + ap.abs[2] < 0.03;
       var fill = clear ? (bg === C.white ? 'rgba(200,214,230,0.55)' : C.clear) : rgb(col);
-      var swirl = s.swirlAnim > 0 && !this.reduced ? Math.sin(s.swirlAnim * 18) * 4 : 0;
-      set(this.flaskBody, { transform: swirl ? 'rotate(' + swirl.toFixed(1) + ' 0 0)' : '' });
-      set(this.flLiquid, { d: flaskLiquid(0, base, h), fill: fill });
-      set(this.flHaze, { d: flaskLiquid(0, base, h), 'fill-opacity': Math.min(0.85, ap.haze * 2500).toFixed(3) });
+      var dur = (root.TitrationLab && root.TitrationLab.SWIRL_s) || 1.2;
+      var swirling = s.swirlAnim > 0 || (s.keepSwirling && under === 'flask');
+      var ph = s.swirlAnim > 0 ? (dur - s.swirlAnim) / dur : (this.t % 1.2) / 1.2;
+      var amp = s.swirlAnim > 0 ? Math.sin(Math.PI * Math.min(1, ph * 1.15)) : 0.45;
+      if (swirling && !this.reduced) {
+        var a = ph * Math.PI * 4;
+        set(this.flaskBody, { transform: 'translate(' + (Math.cos(a) * 9 * amp).toFixed(1) + ',' + (Math.sin(a) * 2 * amp).toFixed(1) + ') rotate(' + (Math.sin(a) * 5 * amp).toFixed(1) + ' 0 -40)' });
+      } else set(this.flaskBody, { transform: '' });
+      set(this.swirlMark, { opacity: swirling ? (0.25 + 0.65 * (s.swirlAnim > 0 ? amp : 0.5)).toFixed(2) : 0 });
+      // The colour spreads through the flask over the swirl, not in one frame.
+      if (s.swirlAnim > 0 && this.fromFill && !clear) {
+        var k = Math.min(1, ph * 1.4);
+        fill = rgb(this.fromFill.map(function (c0, i) { return c0 + (col[i] - c0) * k; }));
+      } else if (s.swirlAnim <= 0) this.fromFill = null;
+      if (s.swirlAnim > 0 && !this.fromFill && this.lastFill) this.fromFill = this.lastFill;
+      if (s.swirlAnim <= 0) this.lastFill = clear ? null : col.slice();
+      set(this.flLiquid, { d: flaskBand(h), fill: fill });
+      set(this.flHaze, { d: flaskBand(h), 'fill-opacity': Math.min(0.85, ap.haze * 2500).toFixed(3) });
       var r = FL.base - (FL.base - FL.neck) * h / FL.body;
       set(this.flSurface, { x1: -r + 2, x2: r - 2, y1: -h, y2: -h, stroke: clear ? C.clearTop : rgb(col.map(function (c) { return c * 0.8; })) });
       if (ap.plume && under === 'flask') {
         var pc = liquidColour(ap.plume.abs, bg);
+        this.lastPlume = { fill: rgb(pc), strength: ap.plume.strength };
         set(this.flPlume, { cx: 0, cy: -h + 8, rx: 10 + 16 * ap.plume.strength, ry: 4 + 5 * ap.plume.strength, fill: rgb(pc), opacity: (0.35 + 0.6 * ap.plume.strength).toFixed(2) });
-      } else set(this.flPlume, { opacity: 0 });
+      } else if (s.swirlAnim > 0 && this.lastPlume && !this.reduced) {
+        var fade = 1 - ph, lp = this.lastPlume;
+        set(this.flPlume, { cx: 0, cy: -h * 0.55, rx: (10 + 16 * lp.strength) + ph * 55, ry: (4 + 5 * lp.strength) + ph * h * 0.35, fill: lp.fill, opacity: (fade * 0.5 * (0.35 + 0.6 * lp.strength)).toFixed(2) });
+      } else { this.lastPlume = null; set(this.flPlume, { opacity: 0 }); }
       var warm = f.T > 26;
       set(this.thermo, { opacity: warm || run.warm ? 1 : 0 });
       setText(this.thermoText, Math.round(f.T) + ' °C');
     } else {
       set(this.flLiquid, { fill: 'none', d: '' }); set(this.flHaze, { 'fill-opacity': 0 }); set(this.flPlume, { opacity: 0 }); set(this.flSurface, { stroke: 'none' });
-      set(this.flaskBody, { transform: '' }); set(this.thermo, { opacity: 0 });
+      set(this.flaskBody, { transform: '' }); set(this.thermo, { opacity: 0 }); set(this.swirlMark, { opacity: 0 });
     }
+    this.drawCue();
+  };
+
+  /* The cue: rings round each part to click next, given as
+     [{ part: 'titrant' }, { part: 'indicator', id: 'phenolphthalein' }].
+     Drawn from where the part is on screen, so it follows the flask. */
+  TitrationScene.prototype.setCue = function (list) {
+    this.cues = list || [];
+    this.cueKey = null;
+  };
+  TitrationScene.prototype.drawCue = function () {
+    var svg = this.svg, g = this.cueG, self = this;
+    var parts = [];
+    this.cues.forEach(function (c) {
+      svg.querySelectorAll('[data-part="' + c.part + '"]' + (c.id ? '[data-id="' + c.id + '"]' : '')).forEach(function (n) {
+        if (n.closest('[display="none"]') || n.getAttribute('display') === 'none') return;
+        parts.push(n);
+      });
+    });
+    var ctm = svg.getScreenCTM && svg.getScreenCTM();
+    if (!ctm || !parts.length) { if (g.childNodes.length) g.innerHTML = ''; return; }
+    var inv = ctm.inverse(), boxes = parts.map(function (n) {
+      var r = n.getBoundingClientRect(), p1 = svg.createSVGPoint(), p2 = svg.createSVGPoint();
+      p1.x = r.left; p1.y = r.top; p2.x = r.right; p2.y = r.bottom;
+      p1 = p1.matrixTransform(inv); p2 = p2.matrixTransform(inv);
+      return [Math.round(p1.x - 8), Math.round(p1.y - 8), Math.round(p2.x - p1.x + 16), Math.round(p2.y - p1.y + 16)];
+    });
+    var key = boxes.join('|');
+    if (key === this.cueKey) return;
+    this.cueKey = key;
+    g.innerHTML = '';
+    boxes.forEach(function (b) {
+      el('rect', { x: b[0], y: b[1], width: b[2], height: b[3], rx: 10, fill: 'none', stroke: C.amber, 'stroke-width': 3, class: 'cue-ring' }, g);
+    });
+    self.cueBoxes = boxes;
   };
 
   /* The magnified burette: 3 cm³ either side of the meniscus. Clear liquids
@@ -307,7 +434,7 @@
     var r = b.reading, cy = 120;
     var key = Math.round(r * 100);
     if (this.lastKey !== key) {
-      this.lastKey = key;
+      this.lastKey = key; this.redrawn = true;
       // Ticks from r − 2 to r + 2 at 0.1 cm³; labels on whole numbers.
       this.scale.innerHTML = '';
       var first = Math.floor((r - 2.1) * 10), last = Math.ceil((r + 2.1) * 10);
@@ -344,7 +471,7 @@
     this.svg = svg; this.run = run;
     svg.setAttribute('viewBox', '0 0 960 600');
     svg.innerHTML = '';
-    var g = el('g', {}, svg);
+    var g = el('g', { 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
     el('rect', { x: 0, y: 510, width: 960, height: 90, fill: C.bench }, g);
     el('line', { x1: 0, y1: 510.5, x2: 960, y2: 510.5, stroke: C.benchTop, 'stroke-width': 1.5 }, g);
     // Balance.
@@ -356,16 +483,19 @@
     text(g, 155, 532, 'balance (2 d.p.)', { 'font-size': 12, class: 'cap' });
     // Weighing bottle on the pan.
     this.bottle = el('g', {}, g);
-    el('path', { d: 'M135,430 L135,392 L175,392 L175,430 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.bottle);
+    el('path', { d: 'M135,392 L135,424 Q135,430 141,430 L169,430 Q175,430 175,424 L175,392', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.bottle);
     this.bottleSolid = el('rect', { x: 137, width: 36, y: 428, height: 0, fill: '#e9eef5' }, this.bottle);
     text(this.bottle, 155, 384, 'weighing bottle', { 'font-size': 11, class: 'cap' });
     // Beaker with rod.
     var bk = el('g', { 'data-part': 'beaker', class: 'part' }, g);
     this.beakerLiquid = el('rect', { x: 327, width: 106, y: 504, height: 0, fill: C.clear }, bk);
     this.beakerSolid = el('ellipse', { cx: 380, cy: 500, rx: 0, ry: 4, fill: '#e9eef5' }, bk);
-    el('path', { d: 'M325,370 L325,500 Q325,505 330,505 L430,505 Q435,505 435,500 L435,370 M325,370 L319,364', fill: 'none', stroke: C.glass, 'stroke-width': 1.5 }, bk);
-    this.rod = el('line', { x1: 400, y1: 350, x2: 365, y2: 498, stroke: C.glass, 'stroke-width': 3, 'stroke-linecap': 'round' }, bk);
+    el('path', { d: 'M319,363 Q325,364 325,370 L325,499 Q325,505 331,505 L429,505 Q435,505 435,499 L435,370 Q435,365 439,364', fill: 'none', stroke: C.glass, 'stroke-width': 1.5 }, bk);
+    el('path', { d: 'M319,363 Q325,364 325,370 L325,499 Q325,505 331,505 L429,505 Q435,505 435,499 L435,370 Q435,365 439,364 Z', fill: 'transparent', stroke: 'none', class: 'hit' }, bk);
     text(g, 380, 532, 'beaker', { 'font-size': 12, class: 'cap' });
+    this.rod = el('g', { 'data-part': 'rod', class: 'part' }, g);
+    el('line', { x1: 446, y1: 338, x2: 414, y2: 498, stroke: C.glass, 'stroke-width': 3, 'stroke-linecap': 'round' }, this.rod);
+    el('line', { x1: 446, y1: 338, x2: 414, y2: 498, stroke: 'transparent', 'stroke-width': 12, class: 'hit' }, this.rod);
     // Volumetric flask.
     var vf = el('g', { 'data-part': 'vflask', class: 'part' }, g);
     this.vf = vf;
@@ -375,24 +505,38 @@
       ' A' + VF.bulbR + ',' + VF.bulbR + ' 0 1 0 ' + (VF.x + nx) + ',' + (VF.bulbY - VF.bulbR + 4) + ' L' + (VF.x + nx) + ',' + VF.neckTop,
       fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.6 }, vf);
     el('line', { x1: VF.x - nx - 4, x2: VF.x + nx + 4, y1: VF.mark, y2: VF.mark, stroke: C.text, 'stroke-width': 1.4 }, vf);
-    this.stopper = el('rect', { x: VF.x - nx - 3, y: VF.neckTop - 18, width: VF.neckW + 6, height: 20, rx: 4, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, vf);
-    this.vfFunnel = el('path', { d: 'M' + (VF.x - 34) + ',' + (VF.neckTop - 36) + ' L' + (VF.x + 34) + ',' + (VF.neckTop - 36) + ' L' + (VF.x + 5) + ',' + (VF.neckTop - 8) + ' L' + (VF.x + 5) + ',' + (VF.neckTop + 26) + ' L' + (VF.x - 5) + ',' + (VF.neckTop + 26) + ' L' + (VF.x - 5) + ',' + (VF.neckTop - 8) + ' Z',
-      fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, vf);
+    this.stopper = el('path', { d: stopperPath(VF.x, VF.neckTop - 18), fill: C.steelDark, stroke: C.glass, 'stroke-width': 1, 'data-part': 'stopper', class: 'part' }, vf);
+    this.vfFunnel = el('path', { d: funnelPath(VF.x, VF.neckTop - 34), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4, 'data-part': 'funnel', class: 'part' }, vf);
+    this.funnelParked = el('g', { 'data-part': 'funnel', class: 'part' }, g);
+    el('path', { d: funnelPath(780, 469), fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, this.funnelParked);
+    text(this.funnelParked, 780, 532, 'funnel', { 'font-size': 12, class: 'cap' });
+    this.stopperParked = el('g', { 'data-part': 'stopper', class: 'part' }, g);
+    el('path', { d: stopperPath(775, 556), fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, this.stopperParked);
+    el('rect', { x: 755, y: 548, width: 40, height: 36, fill: 'transparent', class: 'hit' }, this.stopperParked);
+    text(this.stopperParked, 775, 594, 'stopper', { 'font-size': 12, class: 'cap' });
     text(g, VF.x, 532, '250.0 cm³ volumetric flask', { 'font-size': 12 });
     text(vf, VF.x + 40, VF.mark + 4, 'mark', { 'text-anchor': 'start', 'font-size': 12 });
     // Wash bottle and dropper.
-    el('path', { d: 'M834,505 L834,448 Q834,438 844,438 L860,438 Q870,438 870,448 L870,505 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, g);
-    el('path', { d: 'M852,438 L852,424 L876,410', fill: 'none', stroke: C.glass, 'stroke-width': 2 }, g);
-    text(g, 852, 532, 'deionised', { 'font-size': 12, class: 'cap' }); text(g, 852, 546, 'water', { 'font-size': 12, class: 'cap' });
-    el('path', { d: 'M900,505 L900,430 M906,505 L906,430', stroke: C.glass, 'stroke-width': 1.3 }, g);
-    el('rect', { x: 896, y: 410, width: 14, height: 22, rx: 6, fill: C.rubber }, g);
-    text(g, 903, 562, 'dropper', { 'font-size': 12, class: 'cap' });
+    var wb = el('g', { 'data-part': 'wash', class: 'part' }, g);
+    el('path', { d: 'M842,505 Q834,505 834,497 L834,450 Q834,438 846,438 L858,438 Q870,438 870,450 L870,497 Q870,505 862,505 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, wb);
+    el('path', { d: 'M852,438 L852,424 L876,410', fill: 'none', stroke: C.glass, 'stroke-width': 2 }, wb);
+    text(wb, 852, 532, 'deionised', { 'font-size': 12, class: 'cap' }); text(wb, 852, 546, 'water', { 'font-size': 12, class: 'cap' });
+    var dr = el('g', { 'data-part': 'dropper', class: 'part' }, g);
+    el('path', { d: 'M900,432 L900,500 Q903,507 906,500 L906,432', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.3 }, dr);
+    el('rect', { x: 896, y: 410, width: 14, height: 24, rx: 7, fill: C.rubber }, dr);
+    el('rect', { x: 888, y: 404, width: 30, height: 108, fill: 'transparent', class: 'hit' }, dr);
+    text(dr, 903, 562, 'dropper', { 'font-size': 12, class: 'cap' });
     // Stock jar of the solid.
-    el('rect', { x: 470, y: 445, width: 60, height: 60, rx: 6, fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, g);
-    el('rect', { x: 472, y: 470, width: 56, height: 33, rx: 4, fill: '#e9eef5', 'fill-opacity': 0.8 }, g);
-    text(g, 500, 532, 'Na₂CO₃(s)', { 'font-size': 12, class: 'cap' });
-    text(g, 500, 546, 'anhydrous', { 'font-size': 11, class: 'cap' });
+    var jar = el('g', { 'data-part': 'solid', class: 'part' }, g);
+    el('path', { d: 'M478,445 Q470,445 470,453 L470,497 Q470,505 478,505 L522,505 Q530,505 530,497 L530,453 Q530,445 522,445 Z', fill: C.glassFill, stroke: C.glass, 'stroke-width': 1.4 }, jar);
+    el('rect', { x: 472, y: 470, width: 56, height: 33, rx: 6, fill: '#e9eef5', 'fill-opacity': 0.8 }, jar);
+    el('rect', { x: 474, y: 437, width: 52, height: 9, rx: 4, fill: C.steelDark, stroke: C.glass, 'stroke-width': 1 }, jar);
+    text(jar, 500, 532, 'Na₂CO₃(s)', { 'font-size': 12, class: 'cap' });
+    text(jar, 500, 546, 'anhydrous', { 'font-size': 11, class: 'cap' });
     this.t = 0; this.flip = 0;
+    this.cueG = el('g', { class: 'cue', 'pointer-events': 'none' }, svg);
+    this.cues = [];
+    partsAsButtons(svg, { balance: 'balance', beaker: 'beaker', rod: 'glass rod', vflask: '250.0 cm³ volumetric flask', funnel: 'funnel', stopper: 'stopper', wash: 'wash bottle of deionised water', dropper: 'dropper', solid: 'jar of anhydrous sodium carbonate' });
   }
   PrepScene.prototype.update = function (lab, dt) {
     var p = lab.state.prep;
@@ -417,12 +561,15 @@
       set(this.vfLiquid, { d: d, fill: 'rgba(159,180,204,0.40)', stroke: C.clearTop, 'stroke-width': 1 });
     } else set(this.vfLiquid, { d: '', fill: 'none', stroke: 'none' });
     set(this.stopper, { display: p.stoppered ? 'inline' : 'none' });
+    set(this.stopperParked, { display: p.stoppered ? 'none' : 'inline' });
     set(this.vfFunnel, { display: p.funnel ? 'inline' : 'none' });
-    // A quick turn of the flask each time it is inverted.
-    if (this.lastInv !== p.inversions) { this.lastInv = p.inversions; if (p.inversions) this.flip = 0.6; }
+    set(this.funnelParked, { display: p.funnel ? 'none' : 'inline' });
+    // The flask turns over once for each inversion (twice at most, to keep it short).
+    if (this.lastInv !== p.inversions) { var n = p.inversions - (this.lastInv || 0); this.lastInv = p.inversions; if (n > 0) this.flip = 0.6 * Math.min(2, n); }
     this.flip = Math.max(0, this.flip - (dt || 0));
-    var ang = this.flip > 0 && !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 180 * Math.sin(Math.PI * this.flip / 0.6) : 0;
+    var ang = this.flip > 0 && !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 180 * Math.abs(Math.sin(Math.PI * this.flip / 0.6)) : 0;
     set(this.vf, { transform: ang ? 'rotate(' + ang.toFixed(0) + ' ' + VF.x + ' 330)' : '' });
+    this.drawCue();
   };
 
   /* The neck of the volumetric flask, magnified: ±1 cm³ around the mark. */
@@ -448,6 +595,9 @@
     var depth = 10;
     set(this.liquid, { d: 'M41,' + (y - depth) + ' Q80,' + (y + depth) + ' 119,' + (y - depth) + ' L119,240 L41,240 Z', fill: 'rgba(159,180,204,0.32)', stroke: C.clearTop, 'stroke-width': 1.4 });
   };
+
+  PrepScene.prototype.setCue = TitrationScene.prototype.setCue;
+  PrepScene.prototype.drawCue = TitrationScene.prototype.drawCue;
 
   root.TitrationBench = { TitrationScene: TitrationScene, BuretteLens: BuretteLens, PrepScene: PrepScene, NeckLens: NeckLens, liquidColour: liquidColour, C: C, flaskHeight: flaskHeight };
 })(typeof self !== 'undefined' ? self : this);

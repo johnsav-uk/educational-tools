@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Titration Lab (beta)</title>
 <meta name="description" content="A virtual titration laboratory for AQA GCSE Chemistry (4.4.2.5, Required practical 2) and AQA A-level Chemistry (Required practical 1, 3.1.12.5, 3.2.5.5 and 3.2.5.6): rinse and fill the burette, pipette, titrate to the endpoint, get concordant titres and calculate the unknown concentration, including potassium manganate(VII) redox titrations.">
-<link rel="stylesheet" href="titration.css?v=1791701729">
+<link rel="stylesheet" href="titration.css?v=1792200000">
 <link rel="stylesheet" href="../../assets/sst/sst.css">
 </head>
 <body>
@@ -64,7 +64,12 @@
 
 <!-- ═════════ The laboratory ═════════ -->
 <main id="lab" class="lab" hidden>
+  <ol class="stages" id="stages" aria-label="Stages of the practical"></ol>
   <div class="stagecol">
+    <div class="prompt" id="prompt">
+      <p class="prompt-say" id="promptSay" aria-live="polite"></p>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+    </div>
     <div class="benchpanel" id="bench">
       <svg id="benchSvg" role="img" aria-label="The laboratory bench"></svg>
       <figure class="lens" id="lensBox">
@@ -74,20 +79,18 @@
       <div class="colourchip" id="colourChip" aria-hidden="true"><i></i><span></span></div>
       <div class="clock" id="clock" hidden></div>
     </div>
-    <div class="dock sst-no-deck-keys sst-teacher" id="dock" aria-label="Titration controls"></div>
   </div>
   <aside class="side">
     <section class="card" id="method" aria-labelledby="methodTitle">
-      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <div class="setup-mode sst-teacher" id="setupMode"></div>
       <h3 id="methodTitle">Method</h3>
       <div id="methodBody"></div>
     </section>
-    <section class="card sst-teacher" id="actions" aria-labelledby="actionsTitle">
-      <h3 id="actionsTitle" class="sr-only">Apparatus</h3>
-      <div class="tabs" role="tablist" id="actionTabs"></div>
-      <div id="actionPanel"></div>
+    <section class="card sst-no-deck-keys" id="titrate" aria-labelledby="titrateTitle" hidden>
+      <h3 id="titrateTitle">Titration</h3>
+      <div id="titrateBody"></div>
     </section>
-    <section class="card" id="results" aria-labelledby="resultsTitle">
+    <section class="card" id="results" aria-labelledby="resultsTitle" hidden>
       <h3 id="resultsTitle">Results</h3>
       <div id="resultsBody"></div>
     </section>
@@ -96,10 +99,11 @@
 
 <!-- ═════════ Analysis, answer and report ═════════ -->
 <main id="analyse" class="analyse" hidden aria-labelledby="analyseTitle">
+  <ol class="stages" id="stagesAn" aria-label="Stages of the practical"></ol>
   <div class="analyse-head">
-    <h2 id="analyseTitle">Analyse your results</h2>
+    <h2 id="analyseTitle">Calculate the concentration</h2>
     <div class="actions">
-      <button class="btn" id="backToBench" type="button">Back to the bench</button>
+      <button class="btn" id="backToBench" type="button">Back to the titration</button>
     </div>
   </div>
   <div class="analyse-grid">
@@ -253,11 +257,11 @@
 
 <script src="../../assets/sst/present.js"></script>
 <script src="../../assets/sst/presenter.js"></script>
-<script src="js/engine.js?v=1791701729"></script>
-<script src="js/experiments.js?v=1791701729"></script>
-<script src="js/lab.js?v=1791701729"></script>
-<script src="js/bench.js?v=1791701729"></script>
-<script src="js/ui.js?v=1791701729"></script>
+<script src="js/engine.js?v=1792200000"></script>
+<script src="js/experiments.js?v=1792200000"></script>
+<script src="js/lab.js?v=1792200000"></script>
+<script src="js/bench.js?v=1792200000"></script>
+<script src="js/ui.js?v=1792200000"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
