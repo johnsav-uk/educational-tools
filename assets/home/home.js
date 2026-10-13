@@ -9,6 +9,8 @@
   var TOOLS = CFG.tools || window.SST_TOOLS || [];
   var ROOT = CFG.root || '';
   var SCIENCES = ["Chemistry", "Physics", "Biology"];
+  // Topic shelves (science only for now). With none, the catalogue is the flat grid alone.
+  var TOPICS = (CFG.topics || (CFG.tools ? [] : window.SST_TOPICS) || []).slice();
 
   // Pill hue per subject label (oklch H). Pills render as oklch(0.3 0.06 H) on oklch(0.86 0.1 H).
   var HUE = CFG.hue || { Chemistry: 185, Physics: 295, Biology: 145, Mixed: 75 };
@@ -33,7 +35,16 @@
              t.subject + " " + (t.keywords || "")).toLowerCase();
   });
 
-  var state = { query: "", type: "all", subject: "all", level: "all" };
+  if (TOPICS.length) {
+    var known = {};
+    TOPICS.forEach(function (tp) { known[tp.id] = true; });
+    if (TOOLS.some(function (t) { return !known[t.topic]; })) {
+      TOPICS.push({ id: "more", label: "More", title: "More tools" });
+      TOOLS.forEach(function (t) { if (!known[t.topic]) t.topic = "more"; });
+    }
+  }
+
+  var state = { query: "", type: "all", topic: "all", subject: "all", level: "all", open: {} };
 
   var $ = function (id) { return document.getElementById(id); };
   var grid = $('grid');
@@ -41,6 +52,11 @@
   var typeHost = $('type-filter');
   var subjectHost = $('subject-filter');
   var levelHost = $('level-filter');
+  var topicHost = $('topic-filter');
+  var shelvesHost = $('shelves');
+  var moreFilters = $('more-filters');
+  var filterToggle = $('filter-toggle');
+  var filterBadge = $('filter-badge');
   var countEl = $('count');
   var emptyEl = $('empty');
   var searchEl = $('search');
@@ -77,6 +93,7 @@
     var q = state.query.trim().toLowerCase();
     return TOOLS.filter(function (t) {
       return (state.type === "all" || t.type === state.type) &&
+             (state.topic === "all" || t.topic === state.topic) &&
              subjectMatches(t, state.subject) && levelMatches(t, state.level) && queryMatches(t, q);
     });
   }
@@ -95,11 +112,19 @@
     var media = el('div', 'tile-media');
     if (t.image) {
       var img = el('img');
-      img.src = ROOT + 'assets/img/tools/' + t.image;
+      // Tiles load the small WebP from thumbs/ (make-thumbs.py writes them); a tool
+      // without one falls back to its full screenshot, then to the striped placeholder.
+      var full = ROOT + 'assets/img/tools/' + t.image;
+      img.src = ROOT + 'assets/img/tools/thumbs/' + t.image.replace(/\.\w+$/, '.webp');
       img.alt = '';
+      img.width = 800;
+      img.height = 500;
       img.loading = 'lazy';
       img.decoding = 'async';
-      img.addEventListener('error', function () { img.remove(); });
+      img.addEventListener('error', function () {
+        if (img.src.indexOf('/thumbs/') !== -1) img.src = full;
+        else img.remove();
+      });
       media.appendChild(img);
     }
 
@@ -144,28 +169,133 @@
     });
   }
 
+  // Shelves are the resting view: one row per topic, opened in place with "Show all".
+  // Searching, picking a topic, subject or level swaps them for the flat grid of matches.
+  function shelvesMode() {
+    return TOPICS.length > 0 && state.topic === 'all' && !state.query.trim() &&
+           state.subject === 'all' && state.level === 'all';
+  }
+
+  function buildShelf(id, title, tools) {
+    var sec = el('section', 'shelf');
+    sec.dataset.shelf = id;
+    var head = el('div', 'shelf-head');
+    var h = el('h3', 'shelf-title');
+    var name = el('span', null, title);
+    h.appendChild(name);
+    h.appendChild(el('span', 'shelf-count', String(tools.length)));
+    head.appendChild(h);
+    var more = el('button', 'shelf-more');
+    more.type = 'button';
+    more.hidden = true;
+    var open = !!state.open[id];
+    more.textContent = open ? 'Show fewer' : 'Show all ' + tools.length + ' →';
+    more.setAttribute('aria-expanded', String(open));
+    more.addEventListener('click', function () {
+      state.open[id] = !state.open[id];
+      render();
+      if (!state.open[id]) sec.scrollIntoView({ block: 'nearest' });
+    });
+    head.appendChild(more);
+    sec.appendChild(head);
+    var tiles = el('div', 'tiles');
+    tools.forEach(function (t) { tiles.appendChild(buildTile(t)); });
+    sec.appendChild(tiles);
+    if (open) sec.classList.add('is-open');
+    shelvesHost.appendChild(sec);
+  }
+
+  // A closed shelf shows as many tiles as fit on one row of the grid at this width.
+  function clampShelves() {
+    if (!shelvesHost) return;
+    Array.prototype.forEach.call(shelvesHost.querySelectorAll('.shelf'), function (sec) {
+      var tiles = sec.querySelector('.tiles');
+      var cols = getComputedStyle(tiles).gridTemplateColumns.split(' ').filter(Boolean).length || 1;
+      var open = sec.classList.contains('is-open');
+      Array.prototype.forEach.call(tiles.children, function (tile, i) { tile.hidden = !open && i >= cols; });
+      sec.querySelector('.shelf-more').hidden = tiles.children.length <= cols;
+    });
+  }
+
+  function renderShelves() {
+    shelvesHost.textContent = '';
+    var ofType = TOOLS.filter(function (t) { return state.type === 'all' || t.type === state.type; });
+    var featured = ofType.filter(function (t) { return t.featured; });
+    if (featured.length) buildShelf('featured', 'Featured', featured);
+    TOPICS.forEach(function (tp) {
+      var list = ofType.filter(function (t) { return t.topic === tp.id; });
+      if (list.length) buildShelf(tp.id, tp.title, list);
+    });
+    clampShelves();
+    return ofType.length;
+  }
+
   function render() {
-    var list = matches();
+    // A topic with nothing of the chosen type (Revision games under Explore) falls back to all.
+    if (state.topic !== 'all' && !TOOLS.some(function (t) {
+      return t.topic === state.topic && (state.type === 'all' || t.type === state.type);
+    })) state.topic = 'all';
+    var shelves = shelvesMode();
+    var list = shelves ? [] : matches();
 
     grid.textContent = '';
     list.forEach(function (t) { grid.appendChild(buildTile(t)); });
+    grid.hidden = shelves;
+    if (shelvesHost) {
+      shelvesHost.hidden = !shelves;
+      if (shelves) {
+        var n = renderShelves();
+        countEl.textContent = n + ' tools, grouped by topic';
+      } else {
+        shelvesHost.textContent = '';
+      }
+    }
 
-    countEl.textContent = list.length + ' of ' + TOOLS.length + ' shown';
-    emptyEl.hidden = list.length !== 0;
-    resetEl.hidden = !(state.query.trim() || state.type !== 'all' || state.subject !== 'all' || state.level !== 'all');
+    if (!shelves) countEl.textContent = list.length + ' of ' + TOOLS.length + ' shown';
+    emptyEl.hidden = shelves || list.length !== 0;
+    var extra = (state.subject !== 'all' ? 1 : 0) + (state.level !== 'all' ? 1 : 0);
+    resetEl.hidden = !(state.query.trim() || state.type !== 'all' || state.topic !== 'all' || extra);
 
     if (typeHost) syncPressed(typeHost, state.type);
+    if (topicHost) {
+      syncPressed(topicHost, state.topic);
+      // Only offer topics that have tools of the chosen type.
+      Array.prototype.forEach.call(topicHost.children, function (b) {
+        b.hidden = b.dataset.value !== 'all' && !TOOLS.some(function (t) {
+          return t.topic === b.dataset.value && (state.type === 'all' || t.type === state.type);
+        });
+      });
+    }
     syncPressed(subjectHost, state.subject);
     syncPressed(levelHost, state.level);
+    if (filterBadge) {
+      filterBadge.hidden = !extra;
+      filterBadge.textContent = extra;
+    }
   }
 
   function reset() {
     state.query = '';
     state.type = 'all';
+    state.topic = 'all';
     state.subject = 'all';
     state.level = 'all';
     searchEl.value = '';
     render();
+  }
+
+  if (filterToggle) filterToggle.addEventListener('click', function () {
+    var show = moreFilters.hidden;
+    moreFilters.hidden = !show;
+    filterToggle.setAttribute('aria-expanded', String(show));
+  });
+
+  if (shelvesHost && window.ResizeObserver) {
+    var lastW = 0;
+    new ResizeObserver(function (entries) {
+      var w = Math.round(entries[0].contentRect.width);
+      if (w !== lastW) { lastW = w; clampShelves(); }
+    }).observe(shelvesHost);
   }
 
   searchEl.addEventListener('input', function (e) { state.query = e.target.value; render(); });
@@ -176,6 +306,7 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-type-filter]'), function (link) {
     link.addEventListener('click', function () {
       state.type = link.dataset.typeFilter;
+      state.topic = 'all';
       state.subject = 'all';
       state.level = 'all';
       state.query = '';
@@ -188,6 +319,7 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-subject-filter]'), function (link) {
     link.addEventListener('click', function () {
       state.type = 'all';
+      state.topic = 'all';
       state.subject = link.dataset.subjectFilter;
       state.level = 'all';
       state.query = '';
@@ -215,8 +347,18 @@
   // Tool pages link back with ?type=explore|play#all, so arrive pre-filtered.
   var wanted = /[?&]type=(explore|play)\b/.exec(location.search);
   if (wanted) state.type = wanted[1];
+  var wantedTopic = /[?&]topic=([\w-]+)/.exec(location.search);
+  if (wantedTopic && TOPICS.some(function (tp) { return tp.id === wantedTopic[1]; })) state.topic = wantedTopic[1];
 
   if (typeHost) buildChoices(typeHost, TYPES, 'type', 'seg');
+  if (topicHost && TOPICS.length) {
+    buildChoices(topicHost, [["all", "All topics"]].concat(TOPICS.map(function (tp) { return [tp.id, tp.label]; })),
+      'topic', 'chip');
+  } else if (topicHost) {
+    topicHost.hidden = true;
+  }
+  // Without shelves there is nothing to tidy away, so subject and level stay out in the open.
+  if (filterToggle && !TOPICS.length) { filterToggle.hidden = true; moreFilters.hidden = false; }
   buildChoices(subjectHost, SUBJECTS, 'subject', 'chip');
   buildChoices(levelHost, LEVELS, 'level', 'chip');
   render();

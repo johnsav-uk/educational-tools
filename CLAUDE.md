@@ -181,12 +181,13 @@ Keep the meaning consistent inside tools too.
 
 ## Adding a tool to the index
 
-Add one entry to `assets/sst/tools.js`. The homepage catalogue, its counts and
-filters, the featured row and every tool's site bar all read from this one list:
+Add one entry to `assets/sst/tools.js`. The homepage catalogue, its counts,
+shelves and filters and every tool's site bar all read from this one list:
 
 ```js
 { title: "...", url: "visualisations/<folder>/",
   blurb: "One sentence, active voice, what the reader will actually do.",
+  topic: "reactions",
   kind: "Interactive", levels: ["A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
   image: "<folder>.png",
   keywords: "hidden synonym string — exam language, spec codes, common misspellings" },
@@ -202,8 +203,18 @@ filters, the featured row and every tool's site bar all read from this one list:
   ("mass spec", "crude oil", "plum pudding"), so make it generous and include
   spec references.
 - `image` is a 1600×1000 screenshot in `assets/img/tools/`, taken with the site
-  bar cropped off. A missing file falls back to a striped placeholder.
-- `featured: true` puts it in the homepage's "Featured tools" row.
+  bar cropped off. Then run `python assets/img/tools/make-thumbs.py`, which
+  writes the 800×500 WebP in `thumbs/` that the homepage tile actually loads
+  (about 30 KB against 200–500 KB for the PNG, so tiles don't sit striped on a
+  school network). Without a thumbnail the tile falls back to the PNG, and
+  without either to a striped placeholder.
+- `topic` is the shelf it sits on. The homepage catalogue rests on one shelf per
+  topic (one row each, "Show all" opens the rest), with the topics as tabs
+  above; search or a subject / level filter switches to a flat grid of matches.
+  The topics and their order are `window.SST_TOPICS` at the top of `tools.js`:
+  pick an existing id, or add a topic there when a new area has three or more
+  tools. A tool with an unknown topic lands on a "More tools" shelf.
+- `featured: true` puts it on the "Featured" shelf, first in the catalogue.
 - Label a tool that is not finished `(beta)` in its title, here and on the page
   (`<title>` and any chip in its heading). An Explore tool comes out of beta
   once it has presenter mode, questions and annotation as described above,
