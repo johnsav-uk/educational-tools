@@ -3,7 +3,7 @@
 const path = require('path'), root = path.join(__dirname, '..') + path.sep;
 global.SSM = {};
 ['taxonomy.js', 'engine.js', 'lifelines.js', 'select.js'].forEach(f => require(root + f));
-require(root + 'bank/_helper.js');
+require(root + 'bank/helper.js');
 const units = [...Array(7)].map((_, i) => 'B' + (i + 1)).concat([...Array(10)].map((_, i) => 'C' + (i + 1)), [...Array(8)].map((_, i) => 'P' + (i + 1)));
 const only = process.argv[2];
 units.forEach(u => require(root + 'bank/' + u + '.js'));
