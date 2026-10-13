@@ -566,6 +566,7 @@
         audio.play('lock', { level: lv });
         announce('Final answer locked: ' + LETTERS[g.locked] + '.');
         var S = SSM.audio.suspenseSecs(lv);
+        audio.rushBed(0.65 + S);   // the bed speeds up and brightens all the way to the reveal
         later(650, function () { audio.play('suspense', { level: lv, secs: S, layer: true }); });
         laterEvent(650 + S * 1000, 'REVEAL');
         break;

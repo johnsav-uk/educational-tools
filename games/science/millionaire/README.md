@@ -17,7 +17,7 @@ Static page, no build step, no backend, no external services. Plain scripts (no 
 | `engine.js` | Pure rules + explicit state machine, ladders (15 / 10 / 5), seeded RNG. No DOM, no timers. |
 | `lifelines.js` | 50:50, Ask the Audience, Phone a Friend. Local, seeded, difficulty-aware. |
 | `select.js` | Question selection: filters, de-duplication, difficulty ladder, subject/topic balance, warnings. Separate from the UI. |
-| `audio.js` | Web Audio sound design: 19 synthesised cues, thinking bed, ducking, mute, clean-up. No audio files. |
+| `audio.js` | Web Audio sound design: 19 synthesised cues, thinking bed (a D-minor pulse that tightens up the ladder and rushes to each reveal), ducking, mute, clean-up. No audio files. `tests/listen.html` auditions it. |
 | `ui.js` | Setup screen and stage. All sound and timing is triggered from one engine listener. |
 | `bank/` | Question bank, one file per unit (see below). |
 | `tests/` | Node and browser tests (see below). |

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listen — Who Wants to Be a Science Millionaire?</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; max-width: 760px; background: #0b1426; color: #e8eefc; }
+  h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 24px 0 8px; }
+  p { color: #9fb2dc; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: 600 14px system-ui, sans-serif; padding: 10px 16px; border-radius: 8px; border: 1px solid #3a6bdc; background: #0f2561; color: #e8eefc; cursor: pointer; }
+  button:hover { background: #11296b; }
+  button.stop { border-color: #d9443d; background: #4a1411; }
+  #now { margin-top: 16px; font-weight: 600; color: #ffd470; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<h1>Who Wants to Be a Science Millionaire? — listen</h1>
+<p>Plays the game's own sounds through the same audio manager the game uses, so you can judge the thinking bed and how it
+meets the lock-in and suspense cues without playing a whole game.</p>
+
+<h2>Thinking bed</h2>
+<div class="row">
+  <button data-bed="0">Question 1</button>
+  <button data-bed="0.5">Question 8</button>
+  <button data-bed="0.86">Question 13</button>
+  <button data-bed="1">Question 15</button>
+</div>
+
+<h2>A question, start to finish</h2>
+<p>About eight seconds of bed, then a final answer, the build-up and the reveal, exactly as the game times them.</p>
+<div class="row">
+  <button data-run="0" data-res="correct">Question 1, correct</button>
+  <button data-run="0.29" data-res="safe">Question 5 (safety net)</button>
+  <button data-run="0.64" data-res="wrong">Question 10, wrong</button>
+  <button data-run="1" data-res="million">Question 15, the million</button>
+</div>
+
+<h2>&nbsp;</h2>
+<div class="row"><button class="stop" id="stop">Stop</button></div>
+<div id="now" role="status"></div>
+
+<script src="../audio.js"></script>
+<script>
+  var A = SSM.audio.create(), timers = [];
+  function say(t) { document.getElementById('now').textContent = t; }
+  function stop() { timers.forEach(clearTimeout); timers = []; A.stopAll(0.2); say(''); }
+  function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  document.querySelectorAll('[data-bed]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      stop(); A.init();
+      var lv = +b.getAttribute('data-bed');
+      A.play('questionIn', { level: lv }); A.startBed(lv);
+      say('Bed: ' + b.textContent + ' (level ' + lv + ', ' + Math.round(SSM.audio.bedBpm(lv)) + ' bpm). Press Stop to end.');
+    });
+  });
+  document.querySelectorAll('[data-run]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      stop(); A.init();
+      var lv = +b.getAttribute('data-run'), res = b.getAttribute('data-res'), S = SSM.audio.suspenseSecs(lv);
+      A.play('questionIn', { level: lv }); A.startBed(lv);
+      say(b.textContent + ': thinking…');
+      later(8000, function () {
+        A.play('lock', { level: lv }); A.rushBed(0.65 + S);
+        say(b.textContent + ': final answer…');
+        later(650, function () { A.play('suspense', { level: lv, secs: S, layer: true }); });
+        later(650 + S * 1000, function () { A.stopBed(0.5); A.play(res, { level: lv }); say(b.textContent + ': ' + res); });
+      });
+    });
+  });
+  document.getElementById('stop').addEventListener('click', stop);
+</script>
+</body>
+</html>

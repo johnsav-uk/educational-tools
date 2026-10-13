@@ -142,7 +142,7 @@
     return { dur: 0.12 };
   } };
 
-  CUES.lock = { channel: 'sting', duck: 1, build: function (c, out, t, o) {
+  CUES.lock = { channel: 'sting', duck: 1, duckFor: 0.45, build: function (c, out, t, o) {
     var lv = o.level || 0;
     thump(c, out, t, 0.36 + 0.24 * lv, 120, 36, 0.4);
     noise(c, out, t, 0.2, { type: 'lowpass', f0: 1800, f1: 300, vol: 0.14 + 0.08 * lv, attack: 0.004 });
@@ -154,8 +154,8 @@
 
   /* The build-up between locking and the reveal. opts.secs sets its length. */
   CUES.suspense = { channel: 'sting', build: function (c, out, t, o) {
-    var lv = o.level || 0, d = o.secs || 2.4, vol = 0.1 + 0.1 * lv;
-    // tense, slightly dissonant string cluster with accelerating tremolo and an opening filter
+    var lv = o.level || 0, d = o.secs || 2.4, vol = 0.13 + 0.12 * lv;
+    // tense string cluster on the bed's notes (D, A and the flat second, Eb) with accelerating tremolo and an opening filter
     ['D3', 'A3', 'Eb4'].forEach(function (n, i) {
       var g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
       g.gain.linearRampToValueAtTime(vol / 2, t + d * 0.7);
@@ -172,8 +172,7 @@
       });
       f.connect(trem); trem.connect(g); g.connect(out);
     });
-    var gap = 0.7, x = 0.15, k = 0;
-    while (x < d - 0.2) { thump(c, out, t + x, 0.14 + 0.16 * (x / d) + 0.1 * lv, 90, 40, 0.18); x += gap; gap = Math.max(0.26, gap * 0.82); k++; }
+    // no drum hits of its own: the thinking bed carries the pulse and speeds up under this (AudioManager.rushBed)
     noise(c, out, t, d, { f0: 600, f1: 6000 + 2000 * lv, vol: 0.05 + 0.04 * lv, attack: d * 0.6, swell: true, release: 0.04, q: 1.5 });
     return { dur: d };
   } };
@@ -306,6 +305,82 @@
     return { dur: 0.6 };
   } };
 
+  /* ---------- the thinking bed ----------
+     Original, in D minor. A resonant bass throb on every beat plays a two-bar figure that leans on the flat second
+     (D D D D | D D Eb D); a dark held pad breathes slowly underneath and a tense high pair (A and Bb, a semitone
+     apart) joins it as the stakes rise; high ticks enter above about level 0.4 and fill every quaver near the top;
+     above 0.55 a lighter throb lands between the beats, so the pulse tightens. Level 0 → 58 bpm, dark and sparse;
+     level 1 → 84 bpm, brighter and busier. 'rush' (0–1) is the run-up to a reveal: faster, brighter, louder.
+     Everything is scheduled one quaver at a time, so a live context and an offline test render share the code. */
+  var BED_BASS = ['D2', 'D2', 'D2', 'D2', 'D2', 'D2', 'Eb2', 'D2'];
+  function bedBpm(level, rush) { return (58 + 26 * level) * (1 + 0.5 * (rush || 0)); }
+  function bedQuaver(level, rush) { return 30 / bedBpm(level, rush); }
+
+  /* One throb: detuned saws over a sine an octave down, through a resonant lowpass that snaps open and closes. */
+  function throb(c, out, t, freq, vol, len, bright) {
+    var f = c.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 5;
+    f.frequency.setValueAtTime(70, t);
+    f.frequency.exponentialRampToValueAtTime(bright, t + 0.03);
+    f.frequency.exponentialRampToValueAtTime(80, t + len);
+    var g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    f.connect(g); g.connect(out);
+    [[1, 'sawtooth', -6], [1, 'sawtooth', 6], [0.5, 'sine', 0]].forEach(function (p) {
+      var os = c.createOscillator(); os.type = p[1]; os.frequency.value = freq * p[0]; os.detune.value = p[2];
+      os.connect(f); os.start(t); os.stop(t + len + 0.05);
+    });
+  }
+  function tick(c, out, t, freq, vol) {
+    noise(c, out, t, 0.012, { type: 'highpass', f0: 6500, vol: vol * 0.8, attack: 0.001 });
+    voice(c, out, t, freq, 0.004, { type: 'sine', vol: vol, attack: 0.001, release: 0.05 });
+  }
+  /* Quaver n of the bed (n counts from 0 at the start of the bed). */
+  function bedStep(c, out, t, n, level, rush) {
+    var lv = Math.min(1, level + 0.4 * (rush || 0)), beat = n >> 1, on = n % 2 === 0, q = bedQuaver(level, rush);
+    var note = hz(BED_BASS[beat % BED_BASS.length]), bright = 240 + 760 * lv, swell = 1 + 0.6 * (rush || 0);
+    if (on) throb(c, out, t, note, (beat % 4 === 0 ? 0.3 : 0.24) * (0.8 + 0.3 * lv) * swell, q * 1.8, bright * swell);
+    else if (lv > 0.55) throb(c, out, t, note, (0.08 + 0.14 * (lv - 0.55) / 0.45) * swell, q * 0.9, bright * 0.75);
+    if (lv > 0.4 && (!on || lv > 0.72)) tick(c, out, t, hz(on ? 'D7' : 'A6'), 0.012 + 0.026 * lv);
+  }
+  /* The held layers. Returns { nodes, set(level, rush, at) }. */
+  function bedLayers(c, out, t) {
+    var nodes = [];
+    function osc(type, f, det, to) { var o = c.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det || 0; o.connect(to); o.start(t); nodes.push(o); return o; }
+    function lfo(rate, depth, param) { var o = c.createOscillator(), g = c.createGain(); o.frequency.value = rate; g.gain.value = depth; o.connect(g); g.connect(param); o.start(t); nodes.push(o); }
+    // dark pad: D3 F3 A3 over a D2 sine, slowly breathing
+    var low = c.createGain(); low.gain.value = 0.0001; low.connect(out);
+    var breath = c.createGain(); breath.gain.value = 0.8; breath.connect(low);
+    var lowF = c.createBiquadFilter(); lowF.type = 'lowpass'; lowF.Q.value = 0.8; lowF.frequency.value = 300; lowF.connect(breath);
+    lfo(0.21, 0.2, breath.gain);
+    ['D3', 'F3', 'A3'].forEach(function (n, i) { osc('sawtooth', hz(n), -7, lowF); osc('sawtooth', hz(n), 7 + i, lowF); });
+    osc('sine', hz('D2'), 0, low);
+    // high tension: A4 against Bb4, string-style tremolo
+    var high = c.createGain(); high.gain.value = 0.0001; high.connect(out);
+    var trem = c.createGain(); trem.gain.value = 0.65; trem.connect(high);
+    var highF = c.createBiquadFilter(); highF.type = 'lowpass'; highF.frequency.value = 2600; highF.connect(trem);
+    lfo(6.5, 0.35, trem.gain);
+    ['A4', 'Bb4'].forEach(function (n) { osc('triangle', hz(n), -4, highF); osc('sawtooth', hz(n), 5, highF); });
+    return {
+      nodes: nodes,
+      set: function (level, rush, at) {
+        var lv = Math.min(1, level + 0.4 * (rush || 0)), k = rush ? 0.3 : 0.8;
+        low.gain.setTargetAtTime(0.05 + 0.03 * lv + 0.04 * (rush || 0), at, k);
+        lowF.frequency.setTargetAtTime(260 + 900 * lv, at, k);
+        high.gain.setTargetAtTime(Math.max(0.0001, lv > 0.45 ? (lv - 0.45) * 0.07 : 0.0001), at, k);
+      }
+    };
+  }
+  /* Render secs of the bed into out from t0 (for tests). With rush, it ramps from 0 to that value over the render. */
+  function renderBed(c, out, t0, secs, level, rush) {
+    var L = bedLayers(c, out, t0), x = t0 + 0.05, n = 0;
+    L.set(level, 0, t0);
+    if (rush) L.set(level, rush, t0 + secs * 0.3);
+    while (x < t0 + secs) { var r = rush ? rush * (x - t0) / secs : 0; bedStep(c, out, x, n++, level, r); x += bedQuaver(level, r); }
+    L.nodes.forEach(function (o) { o.stop(t0 + secs + 0.2); });
+  }
+
   /* How long the build-up lasts for a given level: short and brisk early, a little longer near the top. */
   function suspenseSecs(level) { return 1.5 + 2.2 * Math.pow(Math.max(0, Math.min(1, level)), 1.3); }
 
@@ -390,7 +465,7 @@
       var entry = { name: name, group: group, channel: def.channel, end: now + info.dur + 0.1 };
       this.active.push(entry);
       this.log.push(name);
-      if (def.duck) this._duck(info.dur);
+      if (def.duck) this._duck(def.duckFor || info.dur);
       this._gc();
       return info.dur;
     } catch (e) { return 0; }
@@ -422,59 +497,42 @@
     } catch (e) {}
   };
 
-  /* ---- Thinking bed: low drone + heartbeat pulse; gets faster, brighter and fuller with level (0–1). ---- */
+  /* ---- Thinking bed (bedStep / bedLayers above): held layers plus a quaver scheduler that runs a little ahead. ---- */
   P.startBed = function (level) {
     this.bedWanted = level; this.bedLevel = level;
     if (!this.ready || this.muted) return;
     if (this.bed) { this.setBedLevel(level); return; }
     try {
       var c = this.ctx, t = c.currentTime, out = c.createGain();
-      out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(0.5, t + 1.2);
+      out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(0.4, t + 1.2);
       out.connect(this.bedBus);
-      var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.1; lp.frequency.value = 200 + 600 * level;
-      lp.connect(out);
-      var nodes = [];
-      [['D2', 'sawtooth', 0], ['A2', 'sawtooth', 7], ['D1', 'sine', 0]].forEach(function (s) {
-        var os = c.createOscillator(); os.type = s[1]; os.frequency.value = hz(s[0]); os.detune.value = s[2];
-        var g = c.createGain(); g.gain.value = s[1] === 'sine' ? 0.5 : 0.22;
-        os.connect(g); g.connect(lp); os.start(t); nodes.push(os);
-      });
-      var lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.09; lg.gain.value = 110;
-      lfo.connect(lg); lg.connect(lp.frequency); lfo.start(t); nodes.push(lfo);
-      // upper strings arrive as the stakes rise
-      var up = c.createGain(); up.gain.value = 0.0001; up.connect(out);
-      var upf = c.createBiquadFilter(); upf.type = 'lowpass'; upf.frequency.value = 1100; upf.connect(up);
-      var trem = c.createOscillator(), tg = c.createGain(); trem.frequency.value = 6; tg.gain.value = 0.35; trem.connect(tg); tg.connect(up.gain); trem.start(t); nodes.push(trem);
-      ['F3', 'A3', 'D4'].forEach(function (n, i) {
-        var os = c.createOscillator(); os.type = 'sawtooth'; os.frequency.value = hz(n); os.detune.value = (i - 1) * 6;
-        os.connect(upf); os.start(t); nodes.push(os);
-      });
-      var bed = this.bed = { out: out, lp: lp, up: up, nodes: nodes, timer: null, nextBeat: t + 0.3, level: level, mgr: this, beat: 0 };
+      var L = bedLayers(c, out, t);
+      var bed = this.bed = { out: out, layers: L, nodes: L.nodes, timer: null, next: t + 0.25, n: 0, level: level, rush: null };
       this.setBedLevel(level);
       var mgr = this;
-      bed.timer = setInterval(function () {      // schedule heartbeat pulses a little ahead of time
+      bed.timer = setInterval(function () {
         if (mgr.bed !== bed) return;
         var now = mgr.ctx.currentTime;
-        var bpm = 52 + 36 * bed.level, step = 60 / bpm;
-        while (bed.nextBeat < now + 0.5) {
-          var b = bed.nextBeat, v = 0.2 + 0.2 * bed.level;
-          thump(mgr.ctx, bed.out, b, v, 80, 40, 0.2);
-          thump(mgr.ctx, bed.out, b + step * 0.22, v * 0.55, 80, 40, 0.16);
-          if (bed.level > 0.45) noise(mgr.ctx, bed.out, b + step * 0.5, 0.05, { type: 'highpass', f0: 7000, vol: 0.02 + 0.03 * bed.level });
-          bed.nextBeat += step;
+        while (bed.next < now + 0.4) {
+          var r = bed.rush ? Math.max(0, Math.min(1, (bed.next - bed.rush.t0) / bed.rush.secs)) : 0;
+          bedStep(mgr.ctx, bed.out, bed.next, bed.n++, bed.level, r);
+          bed.next += bedQuaver(bed.level, r);
         }
-      }, 120);
+      }, 100);
     } catch (e) { this.bed = null; }
   };
   P.setBedLevel = function (level) {
     this.bedLevel = level; this.bedWanted = level;
     var b = this.bed; if (!b) return;
-    b.level = level;
+    b.level = level; b.rush = null;
+    try { b.layers.set(level, 0, this.ctx.currentTime); } catch (e) {}
+  };
+  /* The run-up to a reveal: over secs the bed speeds up by half, brightens and swells, until it is stopped. */
+  P.rushBed = function (secs) {
+    var b = this.bed; if (!b) return;
     var t = this.ctx.currentTime;
-    try {
-      b.lp.frequency.setTargetAtTime(220 + 700 * level, t, 0.8);
-      b.up.gain.setTargetAtTime(Math.max(0.0001, level > 0.3 ? (level - 0.3) * 0.16 : 0.0001), t, 0.8);
-    } catch (e) {}
+    b.rush = { t0: t, secs: Math.max(0.5, secs) };
+    try { b.layers.set(b.level, 1, t + secs * 0.3); } catch (e) {}
   };
   P._killBed = function (fade) {
     var b = this.bed; if (!b) return;
@@ -497,5 +555,5 @@
     if (this.bedBus && this.ctx) { try { var t = this.ctx.currentTime; this.bedBus.gain.cancelScheduledValues(t); this.bedBus.gain.setValueAtTime(1, t + fade); } catch (e) {} }
   };
 
-  SSM.audio = { AudioManager: AudioManager, CUES: CUES, makeChain: makeChain, suspenseSecs: suspenseSecs, hz: hz, create: function () { return new AudioManager(); } };
+  SSM.audio = { AudioManager: AudioManager, CUES: CUES, makeChain: makeChain, suspenseSecs: suspenseSecs, renderBed: renderBed, bedBpm: bedBpm, hz: hz, create: function () { return new AudioManager(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -44,7 +44,44 @@
       .then(function () { return render('lock', { level: 1 }, 3); }).then(function (a) { levels.l1 = a; })
       .then(function () { return render('suspense', { level: 0, secs: SSM.audio.suspenseSecs(0) }, 6); }).then(function (a) { levels.s0 = a; })
       .then(function () { return render('suspense', { level: 1, secs: SSM.audio.suspenseSecs(1) }, 6); }).then(function (a) { levels.s1 = a; });
+    // the thinking bed, rendered through the bed bus at the same 0.4 level the manager uses
+    function renderBed(level, rush, secs) {
+      var ctx = new OfflineAudioContext(2, Math.ceil(SR * secs), SR);
+      var chain = SSM.audio.makeChain(ctx, 0.85);
+      var g = ctx.createGain(); g.gain.value = 0.4; g.connect(chain.bed);
+      SSM.audio.renderBed(ctx, g, 0.015, secs - 0.4, level, rush);
+      return ctx.startRendering().then(function (buf) {
+        var a = analyse(buf), d = buf.getChannelData(0), zc = 0;
+        for (var i = 1; i < d.length; i++) if ((d[i - 1] < 0) !== (d[i] < 0)) zc++;
+        a.brightness = zc / (d.length / SR);    // zero crossings per second: a rough measure of brightness
+        return a;
+      });
+    }
+    var bed = {};
+    chain = chain.then(function () { return renderBed(0, 0, 6); }).then(function (a) { bed.b0 = a; })
+      .then(function () { return renderBed(0.5, 0, 6); }).then(function (a) { bed.b5 = a; })
+      .then(function () { return renderBed(1, 0, 6); }).then(function (a) { bed.b1 = a; })
+      .then(function () { return renderBed(1, 1, 5); }).then(function (a) { bed.rush = a; });
+
     return chain.then(function () {
+      T.test('the thinking bed plays cleanly at every level and sits under the stingers', function () {
+        ['b0', 'b5', 'b1', 'rush'].forEach(function (k) {
+          var a = bed[k];
+          T.ok(a.nan === 0, k + ' NaN');
+          T.ok(a.rms > 0.004, k + ' bed is silent (rms ' + a.rms.toFixed(4) + ')');
+          T.ok(a.peak < 0.98, k + ' bed clips (peak ' + a.peak.toFixed(3) + ')');
+          T.ok(a.tailRms < 0.01, k + ' bed does not stop cleanly');
+        });
+        var loudestSting = Math.max.apply(null, names.filter(function (n) { return SSM.audio.CUES[n].channel === 'sting'; }).map(function (n) { return db(out[n].rms); }));
+        T.ok(db(bed.b1.rms) < loudestSting - 4, 'bed at the top ' + db(bed.b1.rms).toFixed(1) + ' dB is not well under the stingers (' + loudestSting.toFixed(1) + ')');
+      });
+      T.test('the bed tightens up the ladder: faster, brighter and fuller at the top, and again in the run-up to a reveal', function () {
+        T.ok(SSM.audio.bedBpm(1) > SSM.audio.bedBpm(0) && SSM.audio.bedBpm(1, 1) > SSM.audio.bedBpm(1), 'tempo rises');
+        T.ok(bed.b1.brightness > bed.b0.brightness, 'brighter at the top (' + Math.round(bed.b0.brightness) + ' → ' + Math.round(bed.b1.brightness) + ' crossings/s)');
+        T.ok(bed.b1.rms > bed.b0.rms && bed.b5.rms > bed.b0.rms, 'fuller at the top (' + db(bed.b0.rms).toFixed(1) + ' → ' + db(bed.b5.rms).toFixed(1) + ' → ' + db(bed.b1.rms).toFixed(1) + ' dB)');
+        T.ok(bed.rush.rms > bed.b1.rms, 'the run-up to a reveal is bigger than the bed at rest');
+      });
+
       var table = names.map(function (n) { var a = out[n]; return { cue: n, channel: SSM.audio.CUES[n].channel, seconds: +a.seconds.toFixed(2), peakDb: +db(a.peak).toFixed(1), rmsDb: +db(a.rms).toFixed(1), tailDb: +db(a.tailRms).toFixed(1), nan: a.nan }; });
 
       T.test('every cue makes sound, with no NaN samples', function () {
