@@ -79,22 +79,11 @@
     </a>
   </section>
 
-  <section class="featured" aria-labelledby="featured-title">
-    <div class="section-head">
-      <div>
-        <h2 id="featured-title">Featured tools</h2>
-        <p>The most-used tools this term.</p>
-      </div>
-      <a class="link-arrow" href="#all" data-type-filter="all">View all tools<span aria-hidden="true">→</span></a>
-    </div>
-    <div class="tiles" id="featured-grid"></div>
-  </section>
-
   <section class="catalogue" id="all" aria-labelledby="all-title">
     <span id="catalog" aria-hidden="true"></span><!-- the previous homepage's anchor, kept for old links and QR codes -->
     <div class="section-head">
       <div>
-        <h2 id="all-title">All tools</h2>
+        <h2 id="all-title">Browse the tools</h2>
         <p id="count" aria-live="polite">22 of 22 shown</p>
       </div>
       <label class="search">
@@ -105,11 +94,18 @@
     <div class="filters">
       <div class="filter-groups">
         <div class="segmented" id="type-filter" role="group" aria-label="Tool type"></div>
+        <div class="chips" id="topic-filter" role="group" aria-label="Topic"></div>
+      </div>
+      <div class="filter-actions">
+        <button type="button" class="text-btn" id="reset" hidden>Clear filters</button>
+        <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" aria-controls="more-filters">Subject &amp; level<span class="filter-badge" id="filter-badge" hidden></span></button>
+      </div>
+      <div class="more-filters" id="more-filters" hidden>
         <div class="chips" id="subject-filter" role="group" aria-label="Subject"></div>
         <div class="chips" id="level-filter" role="group" aria-label="Level"></div>
       </div>
-      <button type="button" class="text-btn" id="reset" hidden>Clear filters</button>
     </div>
+    <div class="shelves" id="shelves"></div>
     <div class="tiles" id="grid"></div>
     <div class="empty" id="empty" hidden>
       <strong>No tools match</strong>
