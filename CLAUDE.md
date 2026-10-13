@@ -211,10 +211,13 @@ shelves and filters and every tool's site bar all read from this one list:
 - `topic` is the shelf it sits on. The homepage catalogue rests on one shelf per
   topic (one row each, "Show all" opens the rest), with the topics as tabs
   above; search or a subject / level filter switches to a flat grid of matches.
+  Tiles on a shelf leave off the subject pill (the topic says it); tiles in
+  the flat grid show it.
   The topics and their order are `window.SST_TOPICS` at the top of `tools.js`:
   pick an existing id, or add a topic there when a new area has three or more
   tools. A tool with an unknown topic lands on a "More tools" shelf.
-- `featured: true` puts it on the "Featured" shelf, first in the catalogue.
+- `featured: true` lists it in the "Popular" links under the homepage's search
+  box. Keep it to about five.
 - Label a tool that is not finished `(beta)` in its title, here and on the page
   (`<title>` and any chip in its heading). An Explore tool comes out of beta
   once it has presenter mode, questions and annotation as described above,

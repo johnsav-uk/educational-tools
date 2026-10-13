@@ -97,11 +97,11 @@ button { font: inherit; cursor: pointer; }
 .hero { background: var(--bg-hero); border-bottom: 1px solid var(--line); }
 .hero .container {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
-  gap: clamp(32px, 5vw, 56px); align-items: center; padding-block: clamp(40px, 6vw, 72px);
+  gap: clamp(32px, 5vw, 56px); align-items: center; padding-block: clamp(28px, 3.6vw, 48px);
 }
-.hero-copy { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.hero-copy { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .hero h1 {
-  margin: 0; font-size: clamp(38px, 5.4vw, 60px); font-weight: 700; line-height: 1.05;
+  margin: 0; font-size: clamp(36px, 4.6vw, 54px); font-weight: 700; line-height: 1.05;
   letter-spacing: -0.03em; text-wrap: balance;
 }
 .hero h1 em { font-style: normal; color: var(--blue); }
@@ -119,6 +119,17 @@ button { font: inherit; cursor: pointer; }
 .btn--ghost { border-color: oklch(0.45 0.04 255); }
 .btn--ghost:hover { border-color: var(--violet-btn); color: var(--text); }
 .hero-meta { font-size: 13px; color: var(--text-muted); }
+.hero-meta a { color: var(--text-body); font-weight: 600; }
+.hero-meta a:hover { color: var(--blue); }
+
+/* The search box leads the hero; featured tools sit under it as quick links. */
+.hero-find { display: flex; flex-direction: column; gap: 12px; }
+.hero .search--hero { flex: none; max-width: 520px; min-height: 56px; }
+.hero .search--hero input { height: 54px; font-size: 17px; }
+.hero-picks { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; font-size: 13px; }
+.hero-picks span { color: var(--text-muted); }
+.hero-picks a { color: var(--text-body); font-weight: 600; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.hero-picks a:hover { color: var(--blue); text-decoration-color: currentColor; }
 
 .hero-figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .hero-figure figcaption { font-size: 12px; color: var(--text-muted); text-align: right; }
@@ -211,9 +222,8 @@ button { font: inherit; cursor: pointer; }
   background: transparent; color: var(--text-body);
   box-shadow: inset 0 0 0 1px oklch(0.4 0.04 255); padding: 4px 9px;
 }
-.tile-go { font-size: 12px; font-weight: 600; white-space: nowrap; }
-.tile-go--explore { color: var(--blue); }
-.tile-go--play { color: var(--violet); }
+/* Games keep their violet on hover, as the Play side of the site. */
+.tile--play:hover { border-color: oklch(0.55 0.12 295); }
 
 /* ---------- Catalogue panel ---------- */
 .catalogue {
@@ -221,6 +231,11 @@ button { font: inherit; cursor: pointer; }
   background: var(--bg-panel); border: 1px solid var(--line); border-radius: 14px;
   scroll-margin-top: 16px;
 }
+/* Straight after the hero (no path cards above it), it needs its own gap. */
+main > .catalogue:first-child { margin-top: clamp(24px, 3vw, 36px); }
+.section-head--compact { align-items: baseline; justify-content: flex-start; gap: 4px 14px; }
+.catalogue .section-head--compact { margin-bottom: 16px; }
+.section-head--compact h2 { font-size: 22px; }
 .catalogue .section-head { gap: 16px 24px; margin-bottom: 20px; }
 .catalogue .tile { --tile-bg: var(--bg-card); }
 .catalogue .tile-media { --stripe-a: oklch(0.24 0.035 255); --stripe-b: oklch(0.22 0.033 255); }
@@ -441,6 +456,7 @@ button.btn--primary:disabled { opacity: 0.6; cursor: default; }
 .theme-light .path-media { --stripe-a: oklch(0.93 0.025 var(--h)); --stripe-b: oklch(0.95 0.02 var(--h)); }
 .theme-light .tile { --tile-bg: oklch(1 0 0); border-color: oklch(0.88 0.012 250); }
 .theme-light .tile:hover { border-color: oklch(0.6 0.1 245); }
+.theme-light .tile--play:hover { border-color: oklch(0.6 0.12 295); }
 .theme-light :is(.tile-media, .catalogue .tile-media) { --stripe-a: oklch(0.93 0.01 250); --stripe-b: oklch(0.95 0.01 250); }
 .theme-light .tile-blurb { color: var(--text-body); }
 .theme-light .pill { background: oklch(0.93 0.04 var(--h)); color: oklch(0.42 0.1 var(--h)); }
@@ -468,3 +484,5 @@ button.btn--primary:disabled { opacity: 0.6; cursor: default; }
   #topic-filter::-webkit-scrollbar { display: none; }
   .segmented { align-self: flex-start; }
 }
+/* On a phone the hero screenshot only pushes the tools a screen further down. */
+@media (max-width: 640px) { .hero-copy ~ .hero-figure { display: none; } }

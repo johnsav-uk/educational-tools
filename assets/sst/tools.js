@@ -10,7 +10,7 @@
 //           searches land ("mass spec", "crude oil", "plum pudding").
 // image:    16:10 screenshot under assets/img/tools/. Missing files fall back to a placeholder.
 // topic:    the id of its shelf on the homepage, from SST_TOPICS below.
-// featured: shown in the "Featured" shelf (order follows this list).
+// featured: listed under the homepage search as a "Popular" link (order follows this list).
 
 // Homepage shelves, in order. label is the short tab name, title the shelf heading.
 // A tool whose topic isn't listed here lands on a "More tools" shelf at the end.

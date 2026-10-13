@@ -38,12 +38,14 @@
   <div class="container">
     <div class="hero-copy">
       <h1>Interactive science tools for <em>curious minds</em></h1>
-      <p class="hero-lede">Explore 3D models, visualisations and simulations, or test your knowledge with revision games. Built for KS4 to A-Level, free for classroom use, no sign-in required.</p>
-      <div class="actions">
-        <a class="btn btn--primary" href="#all" data-type-filter="explore">Explore tools<span aria-hidden="true">→</span></a>
-        <a class="btn btn--ghost" href="#all" data-type-filter="play">Play games<span aria-hidden="true">→</span></a>
+      <p class="hero-lede"><span data-tool-count>31 tools</span> to explore 3D models, visualisations and simulations, or test your knowledge with revision games. Built for KS4 to <span style="white-space: nowrap">A-Level</span>, free for classroom use, no sign-in required.</p>
+      <div class="hero-find">
+        <label class="search search--hero">
+          <span class="search-icon" aria-hidden="true"></span>
+          <input id="search" type="search" placeholder="What are you teaching? e.g. rates" aria-label="Search tools" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        </label>
+        <p class="hero-picks" id="hero-picks" hidden><span>Popular:</span></p>
       </div>
-      <div class="hero-meta" data-tool-count>22 tools</div>
     </div>
     <figure class="hero-figure">
       <div class="frame"><img src="assets/img/hero.png" width="1600" height="1000" alt="3D render of molecular shapes from the Shapes of Simple Molecules and Ions tool" fetchpriority="high" onerror="this.remove()"></div>
@@ -54,42 +56,12 @@
 
 <main id="main" class="container">
 
-  <section class="paths" id="paths" aria-label="Choose a path">
-    <a class="path path--explore" id="visualisations" href="#all" data-type-filter="explore">
-      <div class="path-body">
-        <div class="path-head">
-          <span class="path-icon" aria-hidden="true"><span class="diamond"></span></span>
-          <span class="path-title"><strong>Explore</strong><span>3D models &amp; visualisations</span></span>
-        </div>
-        <p>Rotate, section and slow down: time of flight spectrometry, fractionating columns and the atom through time.</p>
-        <span class="path-btn">Browse Explore<span aria-hidden="true">→</span></span>
-      </div>
-      <div class="frame path-media"><img src="assets/img/path-explore.png" alt="" loading="lazy" onerror="this.remove()"></div>
-    </a>
-    <a class="path path--play" id="games" href="#all" data-type-filter="play">
-      <div class="path-body">
-        <div class="path-head">
-          <span class="path-icon" aria-hidden="true"><svg width="18" height="20" viewBox="0 0 18 20"><path d="M11 1 L2 12 H9 L7 19 L16 8 H9 Z" fill="none" stroke="oklch(0.82 0.12 295)" stroke-width="2" stroke-linejoin="round"/></svg></span>
-          <span class="path-title"><strong>Play</strong><span>Revision games &amp; challenges</span></span>
-        </div>
-        <p>Mr Savage’s House of Games: quiz shows, retrieval grids and beat-the-clock rounds for starters, plenaries and last-minute recall.</p>
-        <span class="path-btn">Browse Play<span aria-hidden="true">→</span></span>
-      </div>
-      <div class="frame path-media"><img src="assets/img/path-play.png" alt="" loading="lazy" onerror="this.remove()"></div>
-    </a>
-  </section>
-
   <section class="catalogue" id="all" aria-labelledby="all-title">
     <span id="catalog" aria-hidden="true"></span><!-- the previous homepage's anchor, kept for old links and QR codes -->
-    <div class="section-head">
-      <div>
-        <h2 id="all-title">Browse the tools</h2>
-        <p id="count" aria-live="polite">22 of 22 shown</p>
-      </div>
-      <label class="search">
-        <span class="search-icon" aria-hidden="true"></span>
-        <input id="search" type="search" placeholder="Search tools…" aria-label="Search tools" autocomplete="off" spellcheck="false">
-      </label>
+    <span id="visualisations" aria-hidden="true"></span><span id="games" aria-hidden="true"></span><!-- the old path cards' anchors; home.js turns them into Explore / Play -->
+    <div class="section-head section-head--compact">
+      <h2 id="all-title">Browse the tools</h2>
+      <p id="count" aria-live="polite">31 tools</p>
     </div>
     <div class="filters">
       <div class="filter-groups">
