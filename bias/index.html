@@ -142,6 +142,25 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .share-targets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
 .share-msg{margin:6px 0 14px;color:var(--cream-2)}
 .on-err:empty{display:none}
+/* quick match */
+.on-quick{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:6px 0 22px;padding:14px 16px;border:1px solid var(--line-2);border-radius:var(--r);background:rgba(236,229,210,.03)}
+.on-quick[hidden]{display:none}
+.on-quick .lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.on-count{margin:4px 0 0;font-size:13.5px;color:var(--cream-2)}
+.on-search{display:flex;align-items:center;gap:16px;margin:10px 0 0}
+.on-big{font-size:22px;line-height:1.2;color:var(--cream)}
+.qm-pulse{flex:none;width:14px;height:14px;border-radius:50%;background:var(--gold);animation:qmPulse 1.6s ease-out infinite}
+@keyframes qmPulse{0%{box-shadow:0 0 0 0 rgba(201,168,98,.55)}100%{box-shadow:0 0 0 16px rgba(201,168,98,0)}}
+.qmchip{border:0;font:inherit;font-size:12.5px;cursor:pointer;pointer-events:auto}
+.qmchip .dot{background:var(--gold);box-shadow:0 0 0 3px rgba(201,168,98,.2);animation:curDot 1.6s ease-in-out infinite}
+.qmcard{position:absolute;left:50%;top:calc(var(--gut) + 64px);transform:translateX(-50%);z-index:30;display:flex;align-items:center;flex-wrap:wrap;gap:12px 22px;padding:14px 14px 16px 18px;max-width:calc(100% - 2*var(--gut));width:max-content;overflow:hidden;background:var(--panel-strong);border-color:rgba(201,168,98,.45)}
+.qmcard[hidden]{display:none}
+#onRoom.quick > .kicker:first-child,#onRoom.quick .room-code,#onRoom.quick > .room-link{display:none}
+.qmcard .nt{font-family:var(--serif);font-size:18px;margin-top:3px}
+.qmcard .nd{font-size:12.5px;color:var(--cream-2);margin-top:2px;max-width:380px}
+.qm-acts{display:flex;gap:8px;margin-left:auto}
+.qm-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform-origin:left;opacity:.8}
+@media (prefers-reduced-motion: reduce){.qm-pulse,.qmchip .dot{animation:none}}
 
 /* ---------- thumb band ---------- */
 /* a round deliver button inside the weight ring (a swing meter), the hand to its left, fine aim to its right */
@@ -484,6 +503,10 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .netchip{padding:0 12px;height:40px}
   .netchip .ntx{display:none}
   .on-choose{grid-template-columns:1fr}
+  .on-quick{flex-direction:column;align-items:stretch}
+  .qmcard{top:calc(var(--gut) + 54px);width:calc(100% - 2*var(--gut))}
+  .qm-acts{width:100%}
+  .qm-acts .btn{flex:1}
 }
 @media (max-width: 370px){
   .hv-btn span{display:none}
@@ -553,6 +576,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       </button>
     </div>
     <div class="top-actions">
+      <button class="netchip panel qmchip" id="qmChip" hidden title="Looking for a quick match"><span class="dot"></span><span class="ntx" id="qmTxt">Looking for a game</span></button>
       <div class="netchip panel" id="netChip" role="status" hidden><span class="dot"></span><span class="ntx" id="netTxt"></span></div>
       <button class="icon-btn hv-btn" id="btnHeadView" aria-pressed="true" aria-controls="headPanel" title="Head view (H)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><circle cx="6.5" cy="9" r="2.6"/><circle cx="17" cy="15" r="2.6"/><circle cx="15.5" cy="7" r="2.6"/></svg><span>Head</span>
@@ -587,6 +611,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   <div class="notice panel" id="notice" role="dialog" aria-live="polite">
     <div><div class="nt" id="noticeT"></div><div class="nd" id="noticeD"></div></div>
     <button class="btn primary" id="noticeBtn">Continue</button>
+  </div>
+  <div class="qmcard panel" id="qmCard" role="alertdialog" aria-labelledby="qmT" aria-describedby="qmD" hidden>
+    <div><div class="kicker" style="color:var(--gold)">Quick match</div><div class="nt" id="qmT"></div><div class="nd" id="qmD"></div></div>
+    <div class="qm-acts"><button class="btn ghost" id="qmNo">Not now</button><button class="btn primary" id="qmYes">Play</button></div>
+    <div class="qm-bar" id="qmBar"></div>
   </div>
 
   <footer class="controls busy" id="controls" aria-label="Delivery controls">
@@ -649,7 +678,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
-        <button class="menu-item" id="mOnline">Play a friend online</button>
+        <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
         <nav class="title-links" aria-label="Help and settings">
@@ -674,7 +703,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <button type="button" class="chip on-menu" id="onMenu">‹ Main menu</button>
       <div class="kicker">Play online · singles</div>
       <h2 id="onH">Play someone on another computer</h2>
-      <p id="onLede">One of you creates a room and sends the code or the link; the other joins with it. Each of you bowls on your own computer and watches the other's bowls run.</p>
+      <p id="onLede">Play whoever's about, or send a friend a room code. Each of you bowls on your own computer and watches the other's bowls run.</p>
       <div id="onIdent">
         <div class="grid2">
           <div class="field"><label for="onName">Your name</label><input class="input" id="onName" maxlength="16" placeholder="Eleanor"></div>
@@ -682,10 +711,19 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         </div>
         <div class="field"><span class="lbl">Your colour</span><div class="swatches" id="onCol" role="radiogroup" aria-label="Your colour"></div></div>
       </div>
+      <div class="on-quick" id="onQuick">
+        <div><span class="lbl">Quick match</span><p class="on-count" id="onCount">Four ends against whoever else is looking.</p></div>
+        <button type="button" class="btn primary" id="onFind">Find me a game</button>
+      </div>
       <div class="on-choose" id="onChoose">
-        <div class="field"><span class="lbl">Start a game</span><button type="button" class="btn primary" id="onCreate">Create a room</button></div>
+        <div class="field"><span class="lbl">Play a friend</span><button type="button" class="btn" id="onCreate">Create a room</button></div>
         <div class="field"><label for="onCode">Or join with a code</label>
           <div class="room-link"><input class="input" id="onCode" maxlength="4" autocapitalize="characters" spellcheck="false" placeholder="K7QD"><button type="button" class="btn" id="onJoin">Join</button></div></div>
+      </div>
+      <div id="onQueue" hidden>
+        <div class="on-search"><span class="qm-pulse" aria-hidden="true"></span><div><div class="on-big" id="onQT">Looking for an opponent…</div><div class="fine" id="onQS"></div></div></div>
+        <p class="fine" style="margin:16px 0 0">Quick matches are singles over four ends on a random green, with a toss for the jack. You can keep playing the computer while you wait: we'll tell you as soon as someone turns up.</p>
+        <div style="margin-top:14px"><button type="button" class="btn" id="onWhile">Play the computer while I wait</button></div>
       </div>
       <div id="onRoom" hidden>
         <div class="kicker" style="margin-top:6px">Room code</div>
@@ -4382,12 +4420,13 @@ const Net = {
   saveSession() { try { sessionStorage.setItem('bias.net', JSON.stringify({ code: this.code, token: this.token, who: this.who })); } catch (e) { /* unavailable */ } },
   loadSession() { try { return JSON.parse(sessionStorage.getItem('bias.net') || 'null'); } catch (e) { return null; } },
   clearSession() { try { sessionStorage.removeItem('bias.net'); } catch (e) { /* unavailable */ } },
-  open(code, create, who) {
+  // quick: a room the lobby opened for a quick match, so seat 0 starts it on standard conditions
+  open(code, create, who, quick) {
     this.close(); who = { ...who, level: myLevel() };
     const s = this.loadSession();
     Object.assign(this, { code, create: !!create, who, state: 'connecting', token: s && s.code === code ? s.token : null,
-      seat: null, peers: [], lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0 });
-    this.connect();
+      seat: null, peers: [], lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0, quick: !!quick, quickSent: false });
+    this.connect(); Lobby.sync();
   },
   connect() {
     clearTimeout(this.retryTimer);
@@ -4465,7 +4504,8 @@ const Net = {
 };
 
 function startOnlineMatch(s, rest) {
-  Net.inMatch = true; Net.matchNo = s.matchNo; Net.lastSeq = Math.max(Net.lastSeq, s.seq);
+  Net.inMatch = true; Net.matchNo = s.matchNo; Net.lastSeq = Math.max(Net.lastSeq, s.seq); Net.quick = false;   // a rematch is set up as usual
+  if (Coach.on) Coach.stop();
   for (const id of ['onlineScrim', 'titleScrim', 'setupScrim', 'sumScrim', 'overScrim']) if ($(id).classList.contains('show')) UI.close(id);
   UI.noticeCb = null; $('notice').classList.remove('show');
   const players = s.players.map(p => ({ name: String(p.name || 'Player').slice(0, 16), profileId: String(p.profileId), colour: String(p.colour) }));
@@ -4490,7 +4530,7 @@ function startOnlineMatch(s, rest) {
 }
 
 const OnlineUI = {
-  stage: 'choose',   // choose (name, bowls, colour; create or join) | room
+  stage: 'choose',   // choose (name, bowls, colour; quick match, create or join) | queue (looking for a quick match) | room
   col: store.get('on.col', 'claret'),
   who() { return { name: ($('onName').value.trim() || 'Player').slice(0, 16), profileId: $('onProf').value, colour: this.col, level: myLevel() }; },
   // the player changed Standard/Expert: tell the other side straight away
@@ -4500,7 +4540,8 @@ const OnlineUI = {
     if ($('onlineScrim').classList.contains('show')) this.render();
   },
   open(code) {
-    if (!Net.on) {
+    if (!Net.on && Lobby.queued && !code) this.stage = 'queue';
+    else if (!Net.on) {
       this.stage = 'choose';
       $('onName').value = store.get('on.name', ''); fillProfileSelect($('onProf'), store.get('on.prof', 'dp-pro')); this.paintCol();
       $('onCode').value = code || '';
@@ -4528,14 +4569,22 @@ const OnlineUI = {
     return u.toString();
   },
   render() {
-    const room = this.stage === 'room', host = Net.seat === 0 || (Net.seat == null && Net.create), peer = Net.peer(), here = !!(peer && peer.online);
-    $('onIdent').hidden = room; $('onChoose').hidden = room; $('onRoom').hidden = !room; $('onLede').hidden = room;
-    $('onH').textContent = room ? (Net.code ? `Room ${Net.code}` : 'Room') : 'Play someone on another computer';
+    const room = this.stage === 'room', queue = this.stage === 'queue', quick = room && Net.quick && !Net.inMatch;
+    const host = !quick && (Net.seat === 0 || (Net.seat == null && Net.create)), peer = Net.peer(), here = !!(peer && peer.online);
+    $('onIdent').hidden = room || queue; $('onQuick').hidden = room || queue; $('onChoose').hidden = room || queue; $('onLede').hidden = room || queue;
+    $('onRoom').hidden = !room; $('onQueue').hidden = !queue; $('onRoom').classList.toggle('quick', quick);
+    $('onH').textContent = queue || quick ? 'Quick match' : room ? (Net.code ? `Room ${Net.code}` : 'Room') : 'Play someone on another computer';
+    QM.paint();
+    if (queue) {
+      $('onGo').hidden = true; $('onBack').textContent = 'Stop looking'; $('onMenu').textContent = '‹ Main menu';
+      return;
+    }
     $('onCodeBig').textContent = Net.code || '—'; $('onLink').value = Net.code ? this.link() : '';
     let st;
     if (Net.state === 'connecting') st = 'Connecting…';
     else if (Net.state === 'retry') st = 'Connection lost. Trying again…';
     else if (Net.state === 'off') st = 'Not connected.';
+    else if (quick) st = here ? `Found ${peer.who.name}. Walking out to the green…` : peer ? `${peer.who.name} has dropped out. Waiting for them to come back…` : 'Found an opponent. Waiting for them to arrive…';
     else if (!peer) st = host ? 'Waiting for your opponent. Send them the code or the link.' : 'Waiting for the other player…';
     else if (!here) st = `${peer.who.name} has dropped out. Waiting for them to come back…`;
     else st = host ? `${peer.who.name} has joined. Choose the conditions, then walk out.` : `You're in ${peer.who.name}'s room. ${peer.who.name} is choosing the conditions…`;
@@ -4546,22 +4595,44 @@ const OnlineUI = {
     $('onMenu').textContent = room ? '‹ Leave and go to menu' : '‹ Main menu';
   },
   go() {
-    const peer = Net.peer(); if (!peer || !peer.online || Net.seat !== 0 || Net.state !== 'open') return;
-    const [ft, fn] = $('onFmt').value.split(':'), green = $('onGreen').value;
-    const T = green === 'set' ? +$('onSpeed').value : randomGreen();
-    const leadV = $('onLead').value, toss = leadV === 'toss', leader = toss ? (Math.random() < 0.5 ? 0 : 1) : +leadV;
+    if (!this.setup($('onFmt').value, $('onGreen').value, +$('onSpeed').value, $('onLead').value)) return;
+    store.set('on.fmt', $('onFmt').value); store.set('on.green', $('onGreen').value); if ($('onGreen').value === 'set') store.set('on.T', +$('onSpeed').value);
+    $('onGo').disabled = true;
+  },
+  // Seat 0 sends the conditions; both players start from them.
+  setup(fmt, green, speed, leadV) {
+    const peer = Net.peer(); if (!peer || !peer.online || Net.seat !== 0 || Net.state !== 'open') return false;
+    const [ft, fn] = fmt.split(':'), T = green === 'set' ? speed : randomGreen();
+    const toss = leadV === 'toss', leader = toss ? (Math.random() < 0.5 ? 0 : 1) : +leadV;
     const me = Net.who, them = peer.who, c0 = me.colour || 'claret';
     const c1 = them.colour && them.colour !== c0 ? them.colour : (c0 === 'navy' ? 'claret' : 'navy');
-    store.set('on.fmt', $('onFmt').value); store.set('on.green', green); if (green === 'set') store.set('on.T', T);
     Net.send({ t: 'setup', players: [{ name: me.name, profileId: me.profileId, colour: c0 }, { name: them.name, profileId: them.profileId, colour: c1 }],
       T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
-    $('onGo').disabled = true;
+    return true;
+  },
+  // A quick match starts by itself on standard conditions once both players are in the room.
+  quickStart() {
+    if (!Net.quick || Net.quickSent || Net.inMatch || Net.seat !== 0) return;
+    if (this.setup('ends:4', 'random', 13, 'toss')) Net.quickSent = true;
   },
   // Either button: out of the room (if in one) and back to the main menu in one step.
   back() {
     if (Net.on) Net.leave();
+    if (Lobby.queued) Lobby.unqueue();
     this.stage = 'choose'; UI.close('onlineScrim'); showTitle();
   },
+  // To the main menu; still looking for a game if we were.
+  menu() {
+    if (this.stage !== 'queue') { this.back(); return; }
+    UI.close('onlineScrim'); showTitle();
+  },
+  find() {
+    const w = this.remember();
+    this.stage = 'queue'; Lobby.queue(w); this.msg(''); this.render();
+    if (Lobby.state !== 'open') this.msg('Connecting to the clubhouse…');
+  },
+  // keep playing the computer while waiting for an opponent
+  whileWaiting() { UI.close('onlineScrim'); if (game.mode === 'title') quickPlay(store.get('m.level', 'club')); },   // the standard last chosen
   copy() {
     const t = this.link(), done = () => { $('onCopy').textContent = 'Copied'; setTimeout(() => $('onCopy').textContent = 'Copy link', 1600); };
     if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => { $('onLink').select(); });
@@ -4579,6 +4650,7 @@ const OnlineUI = {
       else { t = `Online · ${Net.code}`; warn = false; }
       $('netTxt').textContent = t; chip.title = t; chip.classList.toggle('warn', warn);
     }
+    Lobby.sync(); this.quickStart();
     if ($('onlineScrim').classList.contains('show')) this.render();
   },
   peer(m, old) {
@@ -4601,6 +4673,139 @@ const OnlineUI = {
     this.status();
   }
 };
+/* The lobby (bias-relay's Lobby): every open copy of the game keeps one quiet connection to it,
+   for the count of who's about, and to wait in the queue for a quick match. The relay pairs two
+   waiting players and offers each the other; when both accept it opens a room and sends the code. */
+const Lobby = {
+  ws: null, state: 'off', retries: 0, timer: 0, pingTimer: 0, s: 'idle',
+  here: 0, playing: 0, waiting: 0, counted: false,
+  queued: false, since: 0, who: null, offer: null,
+  start() {
+    if (/[?&]test\b/.test(location.search)) return;   // self-tests stay offline
+    this.connect();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && !this.ws) { this.retries = 0; this.connect(); } });
+  },
+  connect() {
+    clearTimeout(this.timer);
+    let ws; try { ws = new WebSocket(`${RELAY}/lobby`); } catch (e) { this.retry(); return; }
+    this.ws = ws; this.state = 'connecting';
+    ws.onopen = () => {
+      this.state = 'open'; this.retries = 0;
+      ws.send(JSON.stringify({ t: 'hello', build: BUILD, s: this.s }));
+      if (this.queued) ws.send(JSON.stringify({ t: 'queue', who: this.who }));
+      clearInterval(this.pingTimer); this.pingTimer = setInterval(() => this.send({ t: 'ping' }), 30000);
+      if (this.queued) OnlineUI.msg('');
+    };
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.receive(m); };
+    ws.onclose = () => {
+      if (this.ws !== ws) return;
+      this.ws = null; this.state = 'off'; this.counted = false; clearInterval(this.pingTimer);
+      if (this.offer) { this.offer = null; QM.hideCard(); }
+      QM.paint(); this.retry();
+    };
+  },
+  retry() {
+    if (document.hidden && !this.queued) return;   // back when the page is looked at again
+    this.timer = setTimeout(() => this.connect(), Math.min(60000, 1500 * 2 ** this.retries++));
+  },
+  send(m) { if (this.ws && this.ws.readyState === 1) { this.ws.send(JSON.stringify(m)); return true; } return false; },
+  // 'playing' while in an online room: counted as playing, and out of the queue
+  sync() {
+    const s = Net.on ? 'playing' : 'idle';
+    if (s === this.s) return;
+    this.s = s; this.send({ t: 'state', s });
+    if (s === 'playing' && this.queued) { this.queued = false; this.offer = null; QM.hideCard(); QM.paint(); }
+  },
+  queue(who) {
+    this.queued = true; this.since = Date.now(); this.who = { name: who.name };
+    this.send({ t: 'queue', who: this.who }); QM.paint();
+  },
+  unqueue() {
+    this.queued = false; this.offer = null; QM.hideCard();
+    this.send({ t: 'unqueue' }); QM.paint();
+  },
+  receive(m) {
+    switch (m.t) {
+      case 'count': Object.assign(this, { here: m.here | 0, playing: m.playing | 0, waiting: m.waiting | 0, counted: true }); QM.paint(); break;
+      case 'offer': if (this.queued) { this.offer = { id: m.id, name: String((m.peer && m.peer.name) || 'Someone').slice(0, 16), secs: m.secs || 30, at: Date.now(), accepted: false }; QM.offer(); } break;
+      case 'ready': if (this.offer && this.offer.id === m.id) QM.ready(); break;
+      case 'offerOff': if (this.offer && this.offer.id === m.id) { const n = this.offer.name; this.offer = null; QM.offerOff(n); } break;
+      case 'unqueued': this.queued = false; this.offer = null; QM.unqueued(m.why); break;
+      case 'go': this.queued = false; this.offer = null; QM.go(m.code); break;
+    }
+  },
+  accept() { if (this.offer && !this.offer.accepted) { this.offer.accepted = true; this.send({ t: 'accept', id: this.offer.id }); } },
+  decline() { if (this.offer) { this.send({ t: 'decline', id: this.offer.id }); this.offer = null; } }
+};
+
+// What the player sees of the lobby: the count, the waiting screen, the chip, the offer card.
+const QM = {
+  clock: 0, barTimer: 0,
+  others() { return Math.max(0, Lobby.here - 1); },
+  waitText() { const s = Math.floor((Date.now() - Lobby.since) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; },
+  paint() {
+    const o = this.others(), w = Math.max(0, Lobby.waiting - (Lobby.queued ? 1 : 0));
+    const here = !Lobby.counted ? '' : o === 0 ? 'No one else is here right now.' : `${o} other${o === 1 ? '' : 's'} here now` + (w ? `, ${w} looking for a game.` : '.');
+    $('onCount').textContent = 'Four ends against whoever else is looking.' + (here ? ' ' + here : '');
+    const sub = Lobby.queued ? `Looking for a game · ${this.waitText()}` : Lobby.counted && o ? `${o} other${o === 1 ? '' : 's'} here now` : '';
+    $('mOnlineSub').textContent = sub; $('mOnlineSub').hidden = !sub;
+    $('onQS').textContent = Lobby.queued ? `Waiting ${this.waitText()}` + (Lobby.counted ? ` · ${o === 0 ? 'no one else here yet' : `${o} other${o === 1 ? '' : 's'} here`}` : ' · connecting…') : '';
+    if (!Lobby.offer) $('onQT').textContent = 'Looking for an opponent…';
+    $('qmChip').hidden = !Lobby.queued || Net.on;
+    $('qmTxt').textContent = Lobby.offer ? `${Lobby.offer.name} found` : `Looking for a game · ${this.waitText()}`;
+    clearInterval(this.clock);
+    if (Lobby.queued) this.clock = setInterval(() => this.paint(), 1000);
+  },
+  chime() {
+    if (!Sound.ctx || Sound.muted) return;
+    const t = Sound.ctx.currentTime + 0.02;
+    Sound.note(t, 659, 659, 0.22, 0.18, 0); Sound.note(t + 0.16, 880, 880, 0.42, 0.16, 0);
+  },
+  // Waiting on the quick-match screen: take it at once. Busy with something else: ask.
+  offer() {
+    const o = Lobby.offer;
+    this.chime(); this.paint();
+    if ($('onlineScrim').classList.contains('show') && OnlineUI.stage === 'queue') {
+      $('onQT').textContent = `Found ${o.name}. Starting…`; Lobby.accept(); return;
+    }
+    const busy = game.mode === 'match' ? ' Your game against the computer will end.' : game.mode === 'practice' ? ' Your practice will end.' : '';
+    $('qmT').textContent = `${o.name} is ready for a game`;
+    $('qmD').textContent = `Four ends, singles. Play them now?${busy}`;
+    $('qmYes').disabled = false; $('qmNo').disabled = false; $('qmYes').textContent = 'Play';
+    $('qmCard').hidden = false;
+    const bar = $('qmBar'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)';
+    void bar.offsetWidth; bar.style.transition = `transform ${o.secs}s linear`; bar.style.transform = 'scaleX(0)';
+    UI.announce(`${o.name} is ready for a quick match.`);
+    setTimeout(() => { if (!$('qmCard').hidden) $('qmYes').focus({ preventScroll: true }); }, 80);
+  },
+  ready() { if (!$('qmCard').hidden && !Lobby.offer.accepted) $('qmD').textContent = `${Lobby.offer.name} has said yes. Play them now?`; },
+  yes() {
+    if (!Lobby.offer) return;
+    Lobby.accept(); $('qmYes').disabled = true; $('qmNo').disabled = true; $('qmYes').textContent = 'Starting…';
+    $('qmD').textContent = `Waiting for ${Lobby.offer.name}…`;
+  },
+  no() { Lobby.decline(); Lobby.queued = false; this.hideCard(); this.paint(); UI.toast("You've stopped looking for a game."); },
+  hideCard() { $('qmCard').hidden = true; if ($('qmCard').contains(document.activeElement)) document.activeElement.blur(); },
+  offerOff(name) {
+    this.hideCard(); this.paint();
+    UI.toast(`${name} wasn't ready after all. Still looking…`);
+  },
+  unqueued(why) {
+    this.hideCard(); this.paint();
+    if (why === 'timeout') UI.toast("You missed a quick match, so you've stopped looking. Find another any time from Play online.", 'warn');
+    if ($('onlineScrim').classList.contains('show') && OnlineUI.stage === 'queue') { OnlineUI.stage = 'choose'; OnlineUI.open(); }
+  },
+  // Both said yes: into the room the lobby opened.
+  go(code) {
+    this.hideCard(); this.paint();
+    if (Coach.on) Coach.stop();
+    for (const el of document.querySelectorAll('.scrim.show')) if (el.id !== 'onlineScrim') UI.close(el.id);
+    if (Net.on) Net.leave();
+    Net.open(code, false, { ...OnlineUI.who(), name: Lobby.who.name }, true);
+    OnlineUI.stage = 'room'; OnlineUI.open();
+  }
+};
+
 // Share. On a phone the phone's own share sheet; everywhere else (and if that fails) a panel with the
 // link, a Copy button and plain links to WhatsApp, X, Facebook and email, so there is always something to click.
 const gameLink = () => { const u = new URL(location.href); u.search = ''; u.hash = ''; return u.toString(); };
@@ -4637,7 +4842,12 @@ $('onCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preven
 $('onCode').addEventListener('input', () => { const el = $('onCode'), v = el.value.toUpperCase(); if (v !== el.value) el.value = v; });
 $('onGo').onclick = () => OnlineUI.go();
 $('onBack').onclick = () => OnlineUI.back();
-$('onMenu').onclick = () => OnlineUI.back();
+$('onMenu').onclick = () => OnlineUI.menu();
+$('onFind').onclick = () => OnlineUI.find();
+$('onWhile').onclick = () => OnlineUI.whileWaiting();
+$('qmYes').onclick = () => QM.yes();
+$('qmNo').onclick = () => QM.no();
+$('qmChip').onclick = () => { if (game.phase === 'charge') game.cancelCharge(); OnlineUI.open(); };
 $('onCopy').onclick = () => OnlineUI.copy();
 $('onGreen').addEventListener('change', () => OnlineUI.paintGreen());
 $('onSpeed').addEventListener('input', () => updateSpeedOut($('onSpeed'), $('onSpeedOut')));
@@ -4833,13 +5043,14 @@ $('btnHeadView').onclick = () => setHeadView(!Settings.headView);
 window.addEventListener('keydown', e => {
   Sound.init();
   const tag = (e.target.tagName || '').toLowerCase();
+  if (e.target.closest && e.target.closest('#qmCard') && (e.key === 'Enter' || e.key === ' ')) return;   // the card's own buttons
   if (e.key === 'Escape') {
     if (game.phase === 'charge') { game.cancelCharge('Delivery cancelled.'); return; }
     if ($('shareScrim').classList.contains('show')) { UI.close('shareScrim'); return; }
     const open = document.querySelector('.scrim.show');
     if (open) {
       const id = open.id;
-      if (id === 'onlineScrim') OnlineUI.back();
+      if (id === 'onlineScrim') OnlineUI.menu();
       else if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
@@ -5134,7 +5345,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
@@ -5154,6 +5365,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classLis
   if (s && s.code && s.token && (!q || q === s.code)) { OnlineUI.stage = 'room'; Net.open(s.code, false, s.who || { name: store.get('on.name', 'Player') || 'Player', profileId: store.get('on.prof', 'dp-pro'), colour: store.get('on.col', 'claret') }); }
   else if (ROOM_RE.test(q)) OnlineUI.open(q);
 }
+Lobby.start(); QM.paint();
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 })();
