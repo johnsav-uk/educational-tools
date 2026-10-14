@@ -828,8 +828,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="seg"><button id="sdOn" aria-pressed="true">On</button><button id="sdOff" aria-pressed="false">Off</button></div></div>
       <div class="toggle-row"><div><div class="tl">Birdsong</div><div class="td">Blackbirds, robins and a wood pigeon in the trees round the green.</div></div>
         <div class="seg"><button id="bdOn" aria-pressed="true">On</button><button id="bdOff" aria-pressed="false">Off</button></div></div>
-      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced motion swaps camera moves for a single cut, and stops idle animation.</div></div>
-        <div class="seg"><button id="mvAuto" aria-pressed="true">System</button><button id="mvLess" aria-pressed="false">Reduced</button></div></div>
+      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced swaps the camera's moves for a single cut to the head, and stops idle animation.<span id="mvNote" hidden> It started on Reduced because this computer asks apps for less motion.</span></div></div>
+        <div class="seg"><button id="mvFull" aria-pressed="true">Full</button><button id="mvLess" aria-pressed="false">Reduced</button></div></div>
       <div class="sheet-actions"><button class="btn primary" id="settingsDone">Done</button></div>
     </div>
   </div>
@@ -2862,7 +2862,8 @@ const Sound = {
 const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false, lessonSeen: false, headView: true }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', Settings);
 const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-const reduced = () => Settings.motion === 'less' || mqReduce.matches;
+// 'auto' follows the computer's reduced-motion setting until the player picks Full or Reduced themselves
+const reduced = () => Settings.motion === 'less' || (Settings.motion === 'auto' && mqReduce.matches);
 
 const DISCIPLINES = {
   singles: { id: 'singles', name: 'Singles', positions: 1, bowls: 4, roles: [''] },
@@ -4339,7 +4340,9 @@ bindPair('trOn', 'trOff', () => Settings.trace, v => Settings.trace = v);
 bindPair('lvStd', 'lvExp', () => !Settings.expert, v => { Settings.expert = !v; UI.refresh(); if (typeof OnlineUI !== 'undefined') OnlineUI.levelChanged(); });
 bindPair('sdOn', 'sdOff', () => Settings.sound, v => { Settings.sound = v; Sound.setMuted(!v); paintSound(); });
 bindPair('bdOn', 'bdOff', () => Settings.birds, v => { Settings.birds = v; Sound.setBirds(v); });
-bindPair('mvAuto', 'mvLess', () => Settings.motion === 'auto', v => Settings.motion = v ? 'auto' : 'less');
+bindPair('mvFull', 'mvLess', () => !reduced(), v => Settings.motion = v ? 'full' : 'less');
+const paintMotionNote = () => { $('mvNote').hidden = !(Settings.motion === 'auto' && mqReduce.matches); };
+paintMotionNote(); $('mvFull').addEventListener('click', paintMotionNote); $('mvLess').addEventListener('click', paintMotionNote);
 $('settingsDone').onclick = () => { UI.close('settingsScrim'); if (game.mode === 'title') showTitle(); };
 function paintSound() {
   $('btnSound').setAttribute('aria-pressed', String(!Settings.sound)); $('btnSound').setAttribute('aria-label', Settings.sound ? 'Mute sound' : 'Unmute sound');
