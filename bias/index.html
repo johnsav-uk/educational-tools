@@ -819,7 +819,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="seg"><button id="sdOn" aria-pressed="true">On</button><button id="sdOff" aria-pressed="false">Off</button></div></div>
       <div class="toggle-row"><div><div class="tl">Birdsong</div><div class="td">Blackbirds, robins and a wood pigeon in the trees round the green.</div></div>
         <div class="seg"><button id="bdOn" aria-pressed="true">On</button><button id="bdOff" aria-pressed="false">Off</button></div></div>
-      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced motion cuts camera moves and idle animation.</div></div>
+      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced motion swaps camera moves for a single cut, and stops idle animation.</div></div>
         <div class="seg"><button id="mvAuto" aria-pressed="true">System</button><button id="mvLess" aria-pressed="false">Reduced</button></div></div>
       <div class="sheet-actions"><button class="btn primary" id="settingsDone">Done</button></div>
     </div>
@@ -2196,9 +2196,11 @@ class SceneRenderer {
     g.fillStyle = rgba(mixRgb(PAL.lawn, PAL.haze, .45)); g.fillRect(0, Math.max(0, hz), Wd, Hd);
     this.renderFarFields(g, dir);
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'medium';
-    const blades = this._bladePat || (this._bladePat = g.createPattern(Art.blades, 'repeat'));
-    const mottle = this._mottlePat || (this._mottlePat = g.createPattern(Art.mottle, 'repeat'));
-    const canMatrix = typeof DOMMatrix !== 'undefined' && blades && blades.setTransform;
+    // the grain tiles, repeated side by side into strips wide enough to span the screen at the smallest scale drawn
+    const strip = (img, minA, key) => { const n = Math.ceil(Wd / minA / img.width) + 2;
+      if (!this[key] || this[key].n !== n) { const c = makeCanvas(img.width * n, img.height), cg = c.getContext('2d'); for (let i = 0; i < n; i++) cg.drawImage(img, i * img.width, 0); this[key] = { c, n }; }
+      return this[key].c; };
+    const blades = strip(Art.blades, 0.55, '_bladeStrip'), mottle = strip(Art.mottle, 0.45, '_mottleStrip');
     let prevY = null;
     for (let sy = top; sy < Hd; sy += row) {
       const v = (cam.cy - (sy + row * .5)) / cam.F, dz = v * cam.cp - cam.sp; if (dz >= -1e-6) continue;
@@ -2213,22 +2215,20 @@ class SceneRenderer {
       const u0 = Math.max(0, uL), u1 = Math.min(tw, uR), d0 = (u0 - uL) * k, d1 = (u1 - uL) * k;
       const vrow = Math.min(tex.height - 1, Math.max(0, Math.floor((wy - TEX.Y0) / s)));
       if (u1 > u0 && d1 > d0) g.drawImage(tex, u0, vrow, u1 - u0, 1, d0, sy, d1 - d0, row);
-      // near-field grain; each screen row shows one tile row, the offsets wrapped into the 256-texel tile
-      // so they stay small (iOS Safari draws patterns at reduced precision, and offsets in the tens of
-      // thousands of pixels made consecutive rows repeat the tile, smearing it into vertical streaks)
-      if (canMatrix && t < 42) {
-        const wrap = (v, n) => ((v % n) + n) % n, ex = -cam.F * cam.x / t;
+      // near-field grain: each screen row shows one row of a 256-texel tile, cut from a pre-tiled strip with
+      // drawImage. (A pattern moved with setTransform row by row drew every row with the first row's offset on
+      // iOS Safari, which keeps the old transform when the same pattern is set as fillStyle again: vertical streaks.)
+      if (t < 42) {
+        const wrap = (v, n) => ((v % n) + n) % n, ex = cam.cx - cam.F * cam.x / t;
         const ds = 0.0034, a = cam.F * ds / t;
         if (a > 0.55) {
           g.globalAlpha = clamp((a - 0.55) / 1.2, 0, 1) * 0.9;
-          blades.setTransform(new DOMMatrix([a, 0, 0, row, cam.cx + wrap(ex, 256 * a), sy - wrap(Math.floor(wy / ds), 256) * row]));
-          g.fillStyle = blades; g.fillRect(0, sy, Wd, row);
+          g.drawImage(blades, wrap(-ex / a, 256), wrap(Math.floor(wy / ds), 256), Wd / a, 1, 0, sy, Wd, row);
         }
         const dm = 0.013, am = cam.F * dm / t;
         if (am > 0.45) {
           g.globalAlpha = clamp((am - 0.45) / 0.8, 0, 1);
-          mottle.setTransform(new DOMMatrix([am, 0, 0, row, cam.cx + wrap(ex, 256 * am), sy - wrap(Math.floor(wy / dm), 256) * row]));
-          g.fillStyle = mottle; g.fillRect(0, sy, Wd, row);
+          g.drawImage(mottle, wrap(-ex / am, 256), wrap(Math.floor(wy / dm), 256), Wd / am, 1, 0, sy, Wd, row);
         }
         g.globalAlpha = 1;
       }
@@ -2873,7 +2873,7 @@ const randomGreen = () => 11 + 0.5 * Math.floor(Math.random() * 11);
    and how carefully it weighs them. Its errors use their own random stream; the
    physics stays deterministic. */
 const AI_LEVELS = [
-  { id: 'starter', name: 'Starter', aimSD: 1.25, wSD: .055, greenSD: 1.0, biasSD: .22, learn: .25, tactics: 0, samples: 0, think: [1.6, 2.6], blurb: 'Learning the game: a rough idea of line and length.' },
+  { id: 'starter', name: 'Starter', aimSD: 1.7, wSD: .075, greenSD: 1.3, biasSD: .28, learn: .12, tactics: 0, samples: 0, think: [1.6, 2.6], blurb: 'Learning the game: a rough idea of line and length.' },
   { id: 'club', name: 'Club', aimSD: .60, wSD: .027, greenSD: .4, biasSD: .10, learn: .45, tactics: 1, samples: 1, think: [1.3, 2.2], blurb: 'A steady club bowler who draws to the jack and picks the open hand.' },
   { id: 'league', name: 'League', aimSD: .42, wSD: .020, greenSD: .35, biasSD: .07, learn: .55, tactics: 2, samples: 2, think: [1.1, 1.9], blurb: 'Reads the head: trails the jack, rests on shot bowls, guards when holding.' },
   { id: 'county', name: 'County', aimSD: .26, wSD: .012, greenSD: .2, biasSD: .035, learn: .70, tactics: 3, samples: 3, think: [1.0, 1.7], blurb: 'Accurate, quick to read the green, and willing to drive when it is down.' },
@@ -2883,6 +2883,7 @@ const aiLevel = id => AI_LEVELS.find(l => l.id === id) || AI_LEVELS[1];
 let aiRand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
 const aiGauss = () => { let u = 0; while (u === 0) u = aiRand(); const v = aiRand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
 const DEG = Math.PI / 180;
+const SWING_T = 1.9;   // seconds for the swing meter to run from nothing to full weight
 function meterFor(speed) {
   if (speed >= Weight.toSpeed(1)) return 1;
   let lo = 0, hi = 1; for (let i = 0; i < 34; i++) { const m = (lo + hi) / 2; if (Weight.toSpeed(m) < speed) lo = m; else hi = m; }
@@ -3187,7 +3188,7 @@ class Game {
       this.aim = lerp(x.from, x.to, easeInOut(x.t / x.dur)); this.ui.refreshAim();
       if (x.t >= x.dur) { this.aim = x.to; x.stage = 'charge'; x.t = 0; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.pulse = reduced() ? null : 0; this.ui.refresh(); }
     } else if (x.stage === 'charge') {
-      this.weight = Math.min(x.weight, x.t / 1.5);
+      this.weight = Math.min(x.weight, x.t / SWING_T);
       if (this.weight >= x.weight) { this.aiExec = null; this.aiTurn = false; this.deliver(x.weight); }
     }
   }
@@ -3517,7 +3518,7 @@ class Game {
     if (this.timers.length) { const due = this.timers.filter(t => t.t <= this.clock); if (due.length) { this.timers = this.timers.filter(t => t.t > this.clock); due.forEach(t => t.fn()); } }
     if (this.ai) this.aiUpdate(dt);
     if (this.link) this.netPump();
-    if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; const u = (this.charge.t / 1.5) % 2; this.weight = u <= 1 ? u : 2 - u; }
+    if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; const u = (this.charge.t / SWING_T) % 2; this.weight = u <= 1 ? u : 2 - u; }
     if (this.pulse != null) { this.pulse += dt / 1.1; if (this.pulse >= 1) this.pulse = this.phase === 'charge' && !reduced() ? 0 : null; }
     if (this.anim) {
       this.anim.t += dt;
@@ -4049,11 +4050,14 @@ function updateCamera(dt, snap) {
     if (game.zoom && (game.phase === 'aim' || game.phase === 'charge')) {
       const F = F0 * 2.6 * 1.28 / CAM.lens, ty = game.world.jack ? game.world.jack.y : game.matFront + 27;
       tgt = { ...tgt, F, pitch: pitchFor(camY, z0, F, ty, Hd * 0.5, Hd) };
-    } else if (game.camMode === 'follow' && Settings.follow && !rm && game.trackY != null) {
-      const j = game.world.jack, jy = j && !game.world.delivered ? j.y : (j ? j.y : Math.min(W.GREEN_LEN - 2, game.matFront + 27));
-      const maxY = Math.max(camY, Math.min(jy - 6.2, W.GREEN_LEN - 7.6));
-      const y = clamp(game.trackY - 6.6, camY, maxY), k = clamp((y - camY) / Math.max(1, maxY - camY), 0, 1);
-      const z = lerp(z0, 1.9, k), lookY = lerp(rel.y, jy, k), sy = lerp(relY, Hd * 0.6, k);
+    } else if (game.camMode === 'follow' && Settings.follow && game.trackY != null) {
+      // with reduced motion the camera doesn't glide: it holds at the mat, then cuts once to the head, framed on
+      // where the jack lay before this bowl (half way up), or on the jack itself once it settles after being rolled
+      const j = game.world.jack, nominal = Math.min(W.GREEN_LEN - 2, game.matFront + 27);
+      const jy = !rm ? (j ? j.y : nominal) : game.jackFrom ? game.jackFrom.y : j && j.state !== 'moving' ? j.y : null;
+      const maxY = jy == null ? camY : Math.max(camY, Math.min(jy - 6.2, W.GREEN_LEN - 7.6));
+      const y = rm ? (jy != null && game.trackY > (game.matFront + jy) / 2 ? maxY : camY) : clamp(game.trackY - 6.6, camY, maxY), k = clamp((y - camY) / Math.max(1, maxY - camY), 0, 1);
+      const z = lerp(z0, 1.9, k), lookY = lerp(rel.y, jy ?? rel.y, k), sy = lerp(relY, Hd * 0.6, k);
       tgt = { x: 0, y, z, F: F0, pitch: Math.min(tiltMax, bankCap(y, z, F0, Hd), pitchFor(y, z, F0, lookY, sy, Hd)) }; rate = 2.2;
     }
   }
