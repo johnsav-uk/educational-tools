@@ -335,6 +335,13 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .menu-item.second{font-size:17px;color:var(--cream-2)}
 .menu-item.second .mi-sub{font-size:12px;color:var(--muted)}
 .menu-item[hidden]{display:none}
+.title .menu[hidden]{display:none}
+.level-head{font-family:var(--serif);font-size:24px;color:var(--cream);margin:0 0 8px}
+.level-head span{display:block;font-family:var(--sans);font-size:12.5px;color:var(--cream-2);margin-top:2px}
+.level-list{display:flex;flex-direction:column;gap:2px;width:100%}
+.title .level-list .menu-item{font-size:18px}
+.level-list .mi-tag{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;font-family:var(--sans);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;vertical-align:3px;border:1px solid rgba(201,168,98,.7);color:var(--gold)}
+.title .menu-item.primary .mi-tag{border-color:rgba(22,32,27,.45);color:rgba(22,32,27,.7)}
 .title .menu-item.primary,.title .menu-item.primary:hover,.title .menu-item.primary:focus-visible{background:var(--cream);color:var(--ink);border-color:var(--cream);text-shadow:none;width:auto;margin:2px 0 10px -18px;padding:11px 56px 11px 22px}
 .title .menu-item.primary:hover,.title .menu-item.primary:focus-visible{background:#f7f0de}
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.62)}
@@ -643,7 +650,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <p class="sub">Flat-green lawn bowls, on a summer afternoon</p>
       <div class="menu">
         <button class="menu-item lead" id="mResume" hidden>Return to the game</button>
-        <button class="menu-item lead" id="mQuick">Play<span class="mi-sub" id="mQuickSub">A short match against the club's computer</span></button>
+        <button class="menu-item lead" id="mQuick">Play<span class="mi-sub" id="mQuickSub">Four ends v the computer · choose how good</span></button>
         <button class="menu-item" id="mPractice">Practice on the green<span class="mi-sub">Free play, with a guided first lesson</span></button>
         <div class="rule"></div>
         <button class="menu-item second" id="mSetup">Set up a match<span class="mi-sub">Two players, the computer, pairs or triples</span></button>
@@ -653,6 +660,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item minor" id="mRules">Rules used in this game</button>
         <button class="menu-item minor" id="mSettings">Settings</button>
         <button class="menu-item minor" id="mShare">Share this game</button>
+      </div>
+      <div class="menu" id="levelMenu" hidden>
+        <button class="menu-item minor" id="levelBack">‹ Back</button>
+        <div class="level-head">Choose your opponent<span>Four ends of singles against the club's computer</span></div>
+        <div id="levelList" class="level-list"></div>
       </div>
       <div class="foot" id="titleFoot">Two players on one device, or online. Mouse, keyboard or touch.</div>
     </div>
@@ -4132,7 +4144,7 @@ function fillSwatches(el, value, onPick, disabledId) {
 const setup = {
   col: [store.get('m.col0', 'claret'), store.get('m.col1', 'navy')],
   aiName: store.get('m.aiName', 'Computer'),
-  disc: store.get('m.disc', 'singles'), opp: store.get('m.opp', 'human'), level: store.get('m.level', 'club'),
+  disc: store.get('m.disc', 'singles'), opp: store.get('m.opp', 'human'), level: store.get('m.level', 'starter'),
   names: [store.get('m.name0', 'Eleanor'), store.get('m.name1', 'Thomas')],          // singles players
   teams: [store.get('m.team0', 'Ashcombe'), store.get('m.team1', 'Visitors')],        // team names
   members: [store.get('m.members0', { Lead: 'Margaret', Second: 'Peter', Skip: 'Eleanor' }), store.get('m.members1', { Lead: 'Ruth', Second: 'Geoffrey', Skip: 'Thomas' })]
@@ -4243,10 +4255,11 @@ $('setupGo').onclick = () => {
 /* Play: no form to fill in. Singles against the computer over 4 ends, using whatever name, bowls,
    colours, standard and green speed setting were last chosen in Set up a match (by default: a random
    green, kept secret until the end). */
-function quickPlay() {
+function quickPlay(level) {
   if (Net.on) Net.leave();
+  store.set('m.level', level);
   UI.close('titleScrim');
-  const level = store.get('m.level', 'club'), lead = Math.random() < 0.5 ? 0 : 1;
+  const lead = Math.random() < 0.5 ? 0 : 1;
   const players = [
     { name: (store.get('m.name0', null) || 'You').slice(0, 16), profileId: store.get('m.prof0', 'dp-pro'), colour: store.get('m.col0', 'claret') },
     { name: (store.get('m.aiName', 'Computer') || 'Computer').slice(0, 16), profileId: store.get('m.prof1', 'hs-classic'), colour: store.get('m.col1', 'navy') }];
@@ -4634,7 +4647,7 @@ $('onFmt').innerHTML = $('fmt').innerHTML; $('onGreen').innerHTML = $('greenMode
 // Title & in-game menu
 function showTitle() {
   const inGame = game.mode !== 'title';
-  $('mQuickSub').textContent = `Four ends v the computer · ${aiLevel(store.get('m.level', 'club')).name}`;
+  showMainMenu();
   // the one primary action: back to the game when one is going, otherwise Play
   $('mResume').classList.toggle('primary', inGame); $('mQuick').classList.toggle('primary', !inGame);
   $('mResume').hidden = !inGame;
@@ -4643,7 +4656,18 @@ function showTitle() {
   UI.open('titleScrim');
 }
 $('mSetup').onclick = () => openSetup({});
-$('mQuick').onclick = quickPlay;
+/* Play asks how good the computer should be first. A first visit is pointed at Starter;
+   after that, the standard played last (here or in Set up a match) is the one picked out. */
+function showMainMenu() { $('levelMenu').hidden = true; document.querySelector('#titleScrim .menu:not(#levelMenu)').hidden = false; }
+function showLevels() {
+  const last = store.get('m.level', null), pick = AI_LEVELS.some(l => l.id === last) ? last : 'starter';
+  $('levelList').innerHTML = AI_LEVELS.map(l => `<button class="menu-item second${l.id === pick ? ' primary' : ''}" data-level="${l.id}">${l.name}${l.id === 'starter' ? '<span class="mi-tag">New to bowls</span>' : ''}<span class="mi-sub">${esc(l.blurb)}</span></button>`).join('');
+  document.querySelector('#titleScrim .menu:not(#levelMenu)').hidden = true; $('levelMenu').hidden = false;
+  $('levelList').querySelector('.primary').focus();
+}
+$('levelList').onclick = e => { const b = e.target.closest('[data-level]'); if (b) quickPlay(b.dataset.level); };
+$('levelBack').onclick = () => { showMainMenu(); $('mQuick').focus(); };
+$('mQuick').onclick = showLevels;
 $('mOnline').onclick = () => OnlineUI.open();
 $('mPractice').onclick = () => { if (Net.on) Net.leave(); UI.close('titleScrim'); if (Coach.on) Coach.stop(); game.startPractice(); if (!Settings.lessonSeen) setTimeout(() => Coach.start(), 400); else maybeTutorial(); };   // a first visit starts the guided lesson
 $('mHow').onclick = () => { UI.close('titleScrim'); openTutorial(true); };
@@ -4818,6 +4842,7 @@ window.addEventListener('keydown', e => {
       if (id === 'onlineScrim') OnlineUI.back();
       else if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
+      else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
     }
