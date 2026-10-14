@@ -4800,6 +4800,7 @@ const QM = {
   unqueued(why) {
     this.hideCard(); this.paint();
     if (why === 'timeout') UI.toast("You missed a quick match, so you've stopped looking. Find another any time from Play online.", 'warn');
+    if (why === 'full') UI.toast('Online play is full for today. Try again tomorrow, or play the computer in the meantime.', 'warn');
     if ($('onlineScrim').classList.contains('show') && OnlineUI.stage === 'queue') { OnlineUI.stage = 'choose'; OnlineUI.open(); }
   },
   // Both said yes: into the room the lobby opened.
