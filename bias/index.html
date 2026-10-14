@@ -266,6 +266,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 /* ---------- overlays & sheets ---------- */
 .scrim{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:var(--gut);background:rgba(12,18,14,.5);opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 .scrim.show{opacity:1;visibility:visible;transition:opacity .4s}
+.scrim.instant{transition:none}   /* the title is up from the first paint, so the game never shows behind it on load */
 .sheet{background:var(--panel-strong);border:1px solid var(--line);border-radius:6px;box-shadow:0 24px 60px rgba(4,8,6,.45);width:100%;max-width:620px;max-height:calc(100% - 8px);overflow:auto;padding:28px 32px 26px;transform:translateY(10px);transition:transform .45s ease}
 .scrim.show .sheet{transform:none}
 .sheet h2{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.15;margin:4px 0 6px}
@@ -639,7 +640,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   </aside>
 
   <!-- Title -->
-  <div class="scrim" id="titleScrim">
+  <div class="scrim show photo instant" id="titleScrim">
     <div class="title-photo" aria-hidden="true"></div>
     <div class="title">
       <div class="club"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club &nbsp;·&nbsp; Est. 1897</div>
@@ -647,7 +648,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <p class="sub">Flat-green lawn bowls, on a summer afternoon</p>
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
-        <button class="menu-item" id="mQuick">Play the computer</button>
+        <button class="menu-item primary" id="mQuick">Play the computer</button>
         <button class="menu-item" id="mOnline">Play a friend online</button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -828,7 +829,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="seg"><button id="sdOn" aria-pressed="true">On</button><button id="sdOff" aria-pressed="false">Off</button></div></div>
       <div class="toggle-row"><div><div class="tl">Birdsong</div><div class="td">Blackbirds, robins and a wood pigeon in the trees round the green.</div></div>
         <div class="seg"><button id="bdOn" aria-pressed="true">On</button><button id="bdOff" aria-pressed="false">Off</button></div></div>
-      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced swaps the camera's moves for a single cut to the head, and stops idle animation.<span id="mvNote" hidden> It started on Reduced because this computer asks apps for less motion.</span></div></div>
+      <div class="toggle-row"><div><div class="tl">Motion</div><div class="td">Reduced swaps the camera's moves for a single cut to the head, and stops idle animation.</div></div>
         <div class="seg"><button id="mvFull" aria-pressed="true">Full</button><button id="mvLess" aria-pressed="false">Reduced</button></div></div>
       <div class="sheet-actions"><button class="btn primary" id="settingsDone">Done</button></div>
     </div>
@@ -2859,11 +2860,11 @@ const Sound = {
 };
 
 // ======================= 12. Game state machine =======================
-const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'auto', expert: false, tutorialSeen: false, lessonSeen: false, headView: true }, store.get('settings', {}));
+const Settings = Object.assign({ arm: 'R', follow: true, trace: true, sound: true, birds: true, motion: 'full', expert: false, tutorialSeen: false, lessonSeen: false, headView: true }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', Settings);
-const mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-// 'auto' follows the computer's reduced-motion setting until the player picks Full or Reduced themselves
-const reduced = () => Settings.motion === 'less' || (Settings.motion === 'auto' && mqReduce.matches);
+// full motion unless the player picks Reduced here (the computer's own reduced-motion setting is not followed:
+// it is often off on school laptops for speed, and the game is played through the camera's follow)
+const reduced = () => Settings.motion === 'less';
 
 const DISCIPLINES = {
   singles: { id: 'singles', name: 'Singles', positions: 1, bowls: 4, roles: [''] },
@@ -4341,8 +4342,6 @@ bindPair('lvStd', 'lvExp', () => !Settings.expert, v => { Settings.expert = !v; 
 bindPair('sdOn', 'sdOff', () => Settings.sound, v => { Settings.sound = v; Sound.setMuted(!v); paintSound(); });
 bindPair('bdOn', 'bdOff', () => Settings.birds, v => { Settings.birds = v; Sound.setBirds(v); });
 bindPair('mvFull', 'mvLess', () => !reduced(), v => Settings.motion = v ? 'full' : 'less');
-const paintMotionNote = () => { $('mvNote').hidden = !(Settings.motion === 'auto' && mqReduce.matches); };
-paintMotionNote(); $('mvFull').addEventListener('click', paintMotionNote); $('mvLess').addEventListener('click', paintMotionNote);
 $('settingsDone').onclick = () => { UI.close('settingsScrim'); if (game.mode === 'title') showTitle(); };
 function paintSound() {
   $('btnSound').setAttribute('aria-pressed', String(!Settings.sound)); $('btnSound').setAttribute('aria-label', Settings.sound ? 'Mute sound' : 'Unmute sound');
@@ -5149,6 +5148,7 @@ game.showcase();
 UI.refresh();
 onResize();
 showTitle();
+requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classList.remove('instant')));
 { // a link with ?room= joins that room; a reload during an online game rejoins it
   const q = (new URLSearchParams(location.search).get('room') || '').toUpperCase(), s = Net.loadSession();
   if (s && s.code && s.token && (!q || q === s.code)) { OnlineUI.stage = 'room'; Net.open(s.code, false, s.who || { name: store.get('on.name', 'Player') || 'Player', profileId: store.get('on.prof', 'dp-pro'), colour: store.get('on.col', 'claret') }); }
