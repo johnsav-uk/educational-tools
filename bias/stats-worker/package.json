@@ -1,6 +1,0 @@
-{
-  "name": "bias-stats",
-  "private": true,
-  "type": "module",
-  "description": "Daily counters for Bias's 'Over to you, skip' puzzle. A Cloudflare Worker with a D1 database."
-}
