@@ -2,6 +2,10 @@
 
 Site conventions for anything added to this repo. Read before adding a tool.
 
+**`bias/` is not edited here.** Bias lives in its own private repo,
+johnsav-uk/bias (`H:\Claude\bias`), and its `publish.sh` overwrites this
+folder. Make Bias changes there.
+
 ## One design system
 
 Every page shares one look: a dark navy palette, Plus Jakarta Sans, flat
