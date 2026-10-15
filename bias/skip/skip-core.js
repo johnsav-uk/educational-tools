@@ -78,18 +78,20 @@
 
   // ---------- stars: how you did against the benchmark's hundred bowlers ----------
   /* `bench` is the value of each of the benchmark's deliveries (higher is better for you).
-     Matching or beating the top 10% is five stars; below that, half a star for every 9% of
-     the field you match or beat. Ties count in your favour. */
-  const EPS = 1e-6;
+     Matching or beating the tenth-best of a hundred (the top 10%) is five stars. Below that,
+     half a star for every 9% of the field you match or beat, up to four and a half. Ties count
+     in your favour, and so does a difference under 0.0001 (the stored benchmark is rounded). */
+  const EPS = 1e-4;
   function beatShare(value, bench) {
     if (!bench || !bench.length) return 0;
     let n = 0; for (const b of bench) if (b <= value + EPS) n++;
     return n / bench.length;
   }
+  const topCut = bench => bench.slice().sort((a, b) => b - a)[Math.max(0, Math.ceil(bench.length * 0.1) - 1)];
   function starsFor(value, bench) {
-    const p = beatShare(value, bench);
-    if (p >= 0.9) return 5;
-    return Math.floor(p / 0.09 + 1e-9) * 0.5;
+    if (!bench || !bench.length) return 0;
+    if (value + EPS >= topCut(bench)) return 5;
+    return Math.min(4.5, Math.floor(beatShare(value, bench) / 0.09 + 1e-9) * 0.5);
   }
   const isStars = s => typeof s === 'number' && s >= 0 && s <= 5 && Number.isInteger(s * 2);
   function starText(s) {
@@ -99,6 +101,17 @@
   const starWords = s => `${s} star${s === 1 ? '' : 's'} out of 5`;
   function shareText(issue, stars, url) {
     return `Over to you skip #${issue} ${starText(stars)}` + (url ? `\n${url}` : '');
+  }
+
+  /* A fingerprint of everything the benchmark depends on, so a puzzle edited without
+     re-running tools/benchmark.cjs is noticed (the page warns in the console, the script re-runs it). */
+  function headHash(pz) {
+    const a = pz.advised || {};
+    const s = JSON.stringify([pz.greenSpeed, pz.matRear || null, pz.you, pz.jack, pz.bowls.map(b => [b.team, b.x, b.y]), pz.match || null,
+      [a.hand, a.kind, a.target, a.extra || null, a.drive || null]]);
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(16).padStart(8, '0');
   }
 
   // ---------- local stats: kept on the player's device only ----------
@@ -287,7 +300,7 @@
   const api = {
     TZ, START, londonDate, addDays, daysBetween, isDate, issueNumber, puzzleIndex, nextLondonMidnight, countdown,
     OUTCOMES, OUTCOME_KEYS, outcomeOf, oppCount, isSaved, outcomeInfo,
-    beatShare, starsFor, isStars, starText, starWords, shareText,
+    beatShare, topCut, starsFor, isStars, starText, starWords, shareText, headHash,
     STATS_KEY, freshStats, cleanStats, loadStats, saveStats, daysSinceLastPlay, currentStreak, playedToday, recordAttempt, recordView,
     EVENTS, validateEvent, dslBucket, DSL_BUCKETS, counterFor, counterKey,
     TARGETS, todaySummary, dailyMetrics, puzzleMetrics, verdict, pct, BANDS, COUNTER_COLUMNS, toCsv

@@ -87,11 +87,15 @@
   const bench = Array.from({ length: 100 }, (_, i) => i);   // values 0..99
   test('five stars for matching or beating the top 10%', () => {
     eq(C.starsFor(99, bench), 5);
-    eq(C.starsFor(89, bench), 5, 'equal to the 10th best: beats or matches 90 of 100');
+    eq(C.starsFor(90, bench), 5, 'equal to the 10th best of 100');
+    eq(C.topCut(bench), 90);
+    eq(C.starsFor(89, bench), 4.5, 'the 11th best is not in the top 10%');
     eq(C.starsFor(1000, bench), 5);
   });
   test('half a star for each 9% of the field below that', () => {
     eq(C.starsFor(88, bench), 4.5);
+    eq(C.starsFor(80, bench), 4.5, 'beats 81%');
+    eq(C.starsFor(79, bench), 4, 'beats 80%');
     eq(C.starsFor(44, bench), 2.5, 'beats 45%');
     eq(C.starsFor(8, bench), 0.5, 'beats 9%');
     eq(C.starsFor(7, bench), 0, 'beats 8%');
