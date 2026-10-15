@@ -380,6 +380,16 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .title .menu-item.primary:hover{background:#f7f0de}
 .title .menu-item .mi-sub{display:block;font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cream-2);margin-top:3px;text-shadow:none}
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.66)}
+/* the daily puzzle's "Go up and look": a button just above the Hand box; while the skip is up at the head, the rest steps aside */
+.side-l{position:relative}
+.lookbtn{position:absolute;left:0;right:0;bottom:calc(100% + 8px);min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 8px;border-radius:10px;
+  background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);color:var(--cream);font-size:13px;font-weight:600;line-height:1.15;pointer-events:auto}
+.lookbtn[hidden]{display:none}
+.lookbtn:hover{border-color:rgba(236,229,210,.45)}
+.lookbtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linejoin:round}
+.controls.looking .dial,.controls.looking .side-r,.controls.looking #grpHand{visibility:hidden}
+.controls.looking .side-l{background:none;border-color:transparent;box-shadow:none}
+.controls.looking .lookbtn{background:var(--cream);color:var(--ink);border-color:var(--cream)}
 .title .menu-item .mi-new{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px;text-shadow:none}
 .title-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 0;margin:18px -6px 0}
 .title-links button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 6px;white-space:nowrap;border:0;border-radius:8px;background:transparent;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--cream-2)}
@@ -634,6 +644,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <footer class="controls busy" id="controls" aria-label="Delivery controls">
     <div class="side side-l">
+      <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
       <div class="ctl c-hand" id="grpHand">
         <div class="kicker" title="F / B">Hand</div>
         <div class="pair" role="group" aria-label="Delivery hand"><button id="btnFore" aria-pressed="true" title="Forehand (F)">Fore</button><button id="btnBack" aria-pressed="false" title="Backhand (B)">Back</button></div>
@@ -3997,6 +4008,7 @@ class Game {
     this.pulse = null; this.handAlpha = 0; this.lastWeights = {}; this.trackY = null;
     this.practice = { profileId: store.get('pr.profile', 'dp-pro'), colour: store.get('pr.colour', 'claret'), T: store.get('pr.T', 13), count: 0 };
     this.link = null; this.netReset();
+    this.look = false;   // the daily puzzle's "Go up and look": the camera walks up to the head
   }
   after(delay, fn) { this.timers.push({ t: this.instant ? -1 : this.clock + delay, fn }); }
   note(evt, data) { if (this.ui.coach) this.ui.coach(evt, data); }   // practice events for the guided lesson
@@ -4049,7 +4061,7 @@ class Game {
      head mirrored, so "forehand" means the same shot. When everything stops, resolvePuzzle hands
      the head to the puzzle screen, which scores it with Rules.score. */
   startPuzzle(pz) {
-    this.clearTimers(); this.mode = 'puzzle'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
+    this.clearTimers(); this.mode = 'puzzle'; this.look = false; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
     const m = Settings.arm === 'L' ? -1 : 1, them = pz.you === 'red' ? 'yellow' : 'red', a = pz.advised;
     const side = (name, team) => ({ name, profileId: 'dp-pro', colour: 'pz-' + team, score: 0, played: 0, members: [{ name, role: '', played: 0, hand: a.hand, aim: m * a.aim }] });
     this.players = [side('You', pz.you), side(them.charAt(0).toUpperCase() + them.slice(1), them)];
@@ -4126,7 +4138,7 @@ class Game {
   }
   canMoveMat() { return this.phase === 'aim' && !this.locked && this.turn && this.turn.kind === 'jack' && (this.mode === 'practice' || this.match.jackAttempt <= 1); } // leader, then the opponent on a re-delivery
   moveMat(d) { if (!this.canMoveMat()) return; this.matRear = clamp(Math.round((this.matRear + d) * 4) / 4, W.MAT_MIN, W.MAT_MAX); this.ui.refresh(); }
-  startCharge() { if (this.phase !== 'aim' || this.locked) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
+  startCharge() { if (this.phase !== 'aim' || this.locked || this.look) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
   cancelCharge(msg) { if (this.phase !== 'charge' || this.locked) return; this.phase = 'aim'; this.charge = null; this.weight = 0; if (msg) this.ui.toast(msg); this.ui.refresh(); }
   releaseCharge() {
     if (this.phase !== 'charge' || this.locked || !this.charge) return;
@@ -4940,6 +4952,10 @@ const UI = {
       // who is on the mat is on the scoreboard (the flashing dot); in a team game the readout names the player
       const mb = g.member; this.who = g.isTeams() ? `${mb.name}, ${mb.role.toLowerCase()}` : '';
       $('grpHand').hidden = isJack; $('grpMat').hidden = !isJack;
+      const canLook = g.mode === 'puzzle' && g.phase === 'aim';   // the daily puzzle: walk up and look at the head before bowling
+      if (!canLook) g.look = false;
+      $('btnLook').hidden = !canLook; $('controls').classList.toggle('looking', canLook && g.look);
+      $('btnLookT').textContent = g.look ? 'Back to the mat' : 'Go up and look'; $('btnLook').setAttribute('aria-pressed', String(!!g.look));
       $('btnFore').setAttribute('aria-pressed', String(g.hand === 'fore')); $('btnBack').setAttribute('aria-pressed', String(g.hand === 'back'));
       $('matVal').textContent = g.matRear.toFixed(2).replace(/0$/, '') + ' m';
       $('matBack').disabled = !g.canMoveMat() || g.matRear <= W.MAT_MIN; $('matFwd').disabled = !g.canMoveMat() || g.matRear >= W.MAT_MAX;
@@ -5122,7 +5138,12 @@ function updateCamera(dt, snap) {
     const tiltMax = Math.min(Math.atan((Hd / 2 - Hd * CAM.sky) / F0), bankCap(camY, z0, F0, Hd));
     const pitch0 = Math.min(tiltMax, Math.max(pitchFor(camY, z0, F0, rel.y, relY, Hd), Math.atan((Hd / 2 - Hd * 0.34) / F0)));
     tgt = { x: 0, y: camY, z: z0, F: F0, pitch: pitch0 };
-    if (game.zoom && (game.phase === 'aim' || game.phase === 'charge')) {
+    if (game.look && game.mode === 'puzzle' && game.world.jack) {
+      /* "Go up and look" (the daily puzzle): the skip walks up the green and stands a couple of metres short of the
+         jack, eyes about 1.5 m up, looking down into the head, as a skip does before the last bowl */
+      const j = game.world.jack, jy = Math.min(j.y, W.GREEN_LEN), y = Math.max(camY, jy - 2.4), z = 1.5;
+      tgt = { x: clamp(j.x * 0.6, -1.6, 1.6), y, z, F: F0 * 1.15, pitch: pitchFor(y, z, F0 * 1.15, jy + 0.15, Hd * 0.52, Hd) }; rate = 1.5;
+    } else if (game.zoom && (game.phase === 'aim' || game.phase === 'charge')) {
       const F = F0 * 2.6 * 1.28 / CAM.lens, ty = game.world.jack ? game.world.jack.y : game.matFront + 27;
       tgt = { ...tgt, F, pitch: pitchFor(camY, z0, F, ty, Hd * 0.5, Hd) };
     } else if (game.camMode === 'follow' && Settings.follow && game.trackY != null) {
@@ -5148,7 +5169,7 @@ function updateCamera(dt, snap) {
 // ---------- the hand, in screen space ----------
 function handView() {
   const g = game, cam = scene.cam, Wd = scene.W, Hd = scene.H, dpr = scene.dpr;
-  if (g.mode === 'title' || !g.turn) return null;
+  if (g.mode === 'title' || !g.turn || g.look) return null;   // no hand while the skip is up looking at the head
   const R0 = clamp(Math.min(Wd, Hd) * 0.07, 34 * dpr, 80 * dpr), s = Settings.arm === 'L' ? -1 : 1;
   const isJack = g.turn.kind === 'jack', pl = g.cur;
   const side = isJack ? 0 : biasSide(g.hand, Settings.arm);
@@ -6051,6 +6072,7 @@ dbtn.addEventListener('click', e => e.preventDefault());
 dbtn.addEventListener('contextmenu', e => e.preventDefault());
 
 $('btnFore').onclick = () => game.setHand('fore'); $('btnBack').onclick = () => game.setHand('back');
+$('btnLook').onclick = () => { if (game.mode !== 'puzzle' || game.phase !== 'aim') return; game.look = !game.look; UI.refresh(); };   // the daily puzzle: walk up to the head and back
 $('aimL').onclick = () => game.nudgeAim(-0.1); $('aimR').onclick = () => game.nudgeAim(0.1);
 $('matBack').onclick = () => game.moveMat(-0.25); $('matFwd').onclick = () => game.moveMat(0.25);
 $('prPlace').onclick = () => game.practicePlaceJack(); $('prReset').onclick = () => game.resetHead(); $('prNew').onclick = () => game.practiceNewEnd(true);
@@ -6395,7 +6417,7 @@ window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Bod
    with the game's own controls; the screen only briefs the player before and judges after. */
 const SkipHost = {
   setUp(pz) { if (Net.on) Net.leave(); if (Coach.on) Coach.stop(); UI.close('titleScrim'); game.startPuzzle(pz); game.paused = true; UI.refresh(); },
-  play() { game.paused = false; last = performance.now(); UI.refresh(); },
+  play() { game.look = false; game.paused = false; last = performance.now(); UI.refresh(); },
   world() { return game.world; },
   trace() { return game.trace; },   // the path the bowl took, as the game drew it
   menu() { game.showcase(); UI.refresh(); showTitle(); },

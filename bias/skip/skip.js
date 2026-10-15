@@ -278,7 +278,7 @@
     $('skAlt').textContent = after ? 'Full match' : 'Main menu';
     $('skAlt').setAttribute('aria-label', after ? 'Play a full match' : 'Main menu');
     $('skHelp').textContent = after ? (S.archive ? 'Play it again as often as you like: your best go is kept. Archive puzzles never change your streak.' : 'Play it again as often as you like: your best go of the day is the one that counts.')
-      : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice.';
+      : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice. Go up and look, on the green, walks you up to the head.';
   }
   function stars(n) {
     const pts = '12,1.8 14.9,8.6 22.2,9.2 16.6,14 18.3,21.2 12,17.4 5.7,21.2 7.4,14 1.8,9.2 9.1,8.6';
@@ -341,14 +341,20 @@
       if (ok) shared();
     };
     // the share sheet: with the picture where the browser can share files, the text alone where it cannot
+    /* the share sheet: on phones and tablets, with the picture where the browser can share files, the text alone where it
+       cannot, and a copy if the sheet fails. A computer's share sheet (Windows, macOS) often refuses or hides, so there
+       Share copies the result, and the Picture button beside it saves the picture. */
     const sheet = () => {
       const card = S.card && S.card.key === cardKey(t) ? S.card : null, files = card && card.canShare ? [card.file] : null;
       navigator.share(files ? { files, text } : { text }).then(shared, e => {
-        if (files && e && e.name !== 'AbortError') navigator.share({ text }).then(shared, () => {});
+        if (e && e.name === 'AbortError') return;   // the player closed the sheet
+        if (files) navigator.share({ text }).then(shared, x => { if (!x || x.name !== 'AbortError') copy(); });
+        else copy();
       });
     };
-    $('skShareBtn').onclick = navigator.share ? sheet : copy;
-    $('skShareBtn').setAttribute('aria-label', navigator.share ? 'Share your result' : 'Copy your result to share');
+    const useSheet = !!navigator.share && matchMedia('(pointer: coarse)').matches;
+    $('skShareBtn').onclick = useSheet ? sheet : copy;
+    $('skShareBtn').setAttribute('aria-label', useSheet ? 'Share your result' : 'Copy your result to share');
     $('skCopy').onclick = copy;
     $('skPic').onclick = async () => {
       const card = await makeCard(t);
@@ -409,7 +415,7 @@
     // the plan of the head
     const px = 120, py = 258, pw = W - 240, ph = 420;
     g.save(); g.translate(px, py); g.beginPath(); g.rect(0, 0, pw, ph); g.clip();
-    const v = view(pw, ph);
+    const v = view(pw, ph, best ? best.world : null);
     paintGround(g, v, P);
     paintBowls(g, v, best ? best.world : Sim.world(S.pz, S.arm), P, best ? best.world.mine : null, 6);
     g.restore();
@@ -504,16 +510,23 @@
     const cv = $('skPlan'), r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = Math.max(10, Math.round(r.width * dpr)); cv.height = Math.max(10, Math.round(r.height * dpr)); cv._dpr = dpr;
   }
-  /* The view: the head at true scale, centred on the bowls and at least 2 m across (a puzzle can set view.w). */
-  function view(w, h) {
-    const m = S.arm === 'L' ? -1 : 1, pz = S.pz;
-    const pts = [pz.jack, ...pz.bowls].map(p => ({ x: m * p.x, y: p.y }));
+  /* The view: true scale, at least 2 m across. Before the shot it is the head as it was set (a puzzle can set
+     view.w and view.dx); once a world is given (after the shot), it is where the jack finished and the live
+     bowls within 2.5 m of it, the ditch included, so a jack that was moved takes the plan with it. */
+  const AROUND = 2.5;
+  function view(w, h, world) {
+    const m = S.arm === 'L' ? -1 : 1, pz = S.pz, J = world && world.jack;
+    let pts = J ? world.bodies.filter(b => !b.dead && (b === J || (b.kind === 'bowl' && Math.hypot(b.x - J.x, b.y - J.y) < AROUND))).map(b => ({ x: b.x, y: b.y })) : null;
+    const set = !pts;
+    if (set) pts = [pz.jack, ...pz.bowls].map(p => ({ x: m * p.x, y: p.y }));
     const x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)), y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
-    const aspect = w / h, span = Math.max(pz.view && pz.view.w || (w < 500 ? 1.6 : 2.0), x1 - x0 + 0.7, (y1 - y0 + 0.8) * aspect), s = w / span;
-    const cx = (pz.view && pz.view.dx != null) ? m * (pz.jack.x + pz.view.dx) : (x0 + x1) / 2, cy = (y0 + y1) / 2 + 0.08;
+    const aspect = w / h, span = Math.max(set && pz.view && pz.view.w || (w < 500 ? 1.6 : 2.0), x1 - x0 + 0.7, (y1 - y0 + 0.8) * aspect), s = w / span;
+    const cx = set && pz.view && pz.view.dx != null ? m * (pz.jack.x + pz.view.dx) : (x0 + x1) / 2;
+    // never more than a strip of bank beyond the ditch: a jack in the ditch sits near the top of the plan
+    const far = E.W.GREEN_LEN + E.W.DITCH_W + 0.35, cy = Math.min((y0 + y1) / 2 + 0.08, far - h / 2 / s);
     return { w, h, s, cx, cy, T: (x, y) => ({ x: w / 2 + (x - cx) * s, y: h / 2 - (y - cy) * s }) };
   }
-  const palette = () => ({ wash: tok('wash'), grid: tok('grid'), bowl: tok('bowl'), red: tok('ring-red'), yellow: tok('ring-yellow'), jack: tok('chalk'), ink: tok('ink'), biro: tok('biro') });
+  const palette = () => ({ wash: tok('wash'), grid: tok('grid'), bowl: tok('bowl'), red: tok('ring-red'), yellow: tok('ring-yellow'), jack: tok('chalk'), ink: tok('ink'), biro: tok('biro'), ditch: tok('ditch'), bank: tok('bank') });
   // The green under the head: the wash and a faint grid of 25 cm squares, lined up on the jack.
   function paintGround(g, v, P) {
     const T = v.T, m = S.arm === 'L' ? -1 : 1, jx = m * S.pz.jack.x, jy = S.pz.jack.y, step = 0.25;
@@ -521,27 +534,41 @@
     g.strokeStyle = P.grid; g.lineWidth = 1;
     for (let k = Math.floor((v.cx - v.w / v.s / 2 - jx) / step); ; k++) { const x = T(jx + k * step, 0).x; if (x > v.w) break; g.beginPath(); g.moveTo(Math.round(x) + .5, 0); g.lineTo(Math.round(x) + .5, v.h); g.stroke(); }
     for (let k = Math.floor((v.cy - v.h / v.s / 2 - jy) / step); ; k++) { const y = T(0, jy + k * step).y; if (y < 0) break; g.beginPath(); g.moveTo(0, Math.round(y) + .5); g.lineTo(v.w, Math.round(y) + .5); g.stroke(); }
+    // the front ditch and the bank beyond it, when the plan reaches that far
+    const W = E.W, edge = T(0, W.GREEN_LEN).y, back = T(0, W.GREEN_LEN + W.DITCH_W).y;
+    if (edge > 0) {
+      g.fillStyle = P.bank; g.fillRect(0, 0, v.w, Math.max(0, back));
+      g.fillStyle = P.ditch; g.fillRect(0, back, v.w, edge - back);
+      g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(0, Math.round(edge) + .5); g.lineTo(v.w, Math.round(edge) + .5); g.stroke();
+      if (edge - back >= 16) { g.save(); g.fillStyle = P.ink; g.globalAlpha = .7; g.font = 'italic 13px Newsreader, Georgia, serif'; g.textBaseline = 'middle'; g.fillText('ditch', 6, (edge + back) / 2); g.restore(); }
+    }
   }
-  // Bowls: dark brown discs with a coloured ring; dead ones faded; yours (mine) outlined in blue. Then the jack.
+  /* Bowls: dark brown discs with a coloured ring; dead ones faded; a toucher carries a chalk cross, as on the
+     green; yours (mine) outlined in blue. Then the jack. Anything in the front ditch is drawn where it lies in it. */
   function paintBowls(g, v, world, P, mine, ring = 3) {
     const T = v.T, pz = S.pz;
     for (const b of world.bodies) {
-      if (b.kind !== 'bowl' || b.state === 'ditch') continue;
+      if (b.kind !== 'bowl') continue;
       const q = T(b.x, b.y), R = b.r * v.s, ring = teamOf(b, pz) === 'red' ? P.red : P.yellow;
       if (q.y < -R || q.y > v.h + R) continue;
       g.save(); g.globalAlpha = b.dead ? 0.35 : 1;
       g.fillStyle = P.bowl; g.beginPath(); g.arc(q.x, q.y, R, 0, Math.PI * 2); g.fill();
       g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1.5; g.stroke();
       g.strokeStyle = ring; g.lineWidth = R * 0.26; g.beginPath(); g.arc(q.x, q.y, R * 0.55, 0, Math.PI * 2); g.stroke();
+      if (b.toucher && !b.dead) {
+        const k = Math.max(3, R * 0.32), cx = q.x + R * 0.62, cy = q.y - R * 0.62;
+        g.strokeStyle = '#FBFAF4'; g.lineWidth = Math.max(1.6, R * 0.14); g.lineCap = 'round';
+        g.beginPath(); g.moveTo(cx - k, cy - k); g.lineTo(cx + k, cy + k); g.moveTo(cx - k, cy + k); g.lineTo(cx + k, cy - k); g.stroke();
+      }
       if (b === mine) { g.strokeStyle = P.biro; g.lineWidth = ring; g.beginPath(); g.arc(q.x, q.y, R + 1 + ring, 0, Math.PI * 2); g.stroke(); }
       g.restore();
     }
     const J = world.jack;
-    if (J && J.state !== 'ditch') { const q = T(J.x, J.y); g.fillStyle = P.jack; g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, Math.max(6, J.r * v.s), 0, Math.PI * 2); g.fill(); g.stroke(); }
+    if (J) { const q = T(J.x, J.y); g.fillStyle = P.jack; g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, Math.max(6, J.r * v.s), 0, Math.PI * 2); g.fill(); g.stroke(); }
   }
   function draw() {
     if (!S || !root || root.hidden) return;
-    const cv = $('skPlan'), g = cv.getContext('2d'), v = view(cv.width / cv._dpr, cv.height / cv._dpr), T = v.T, pz = S.pz, m = S.arm === 'L' ? -1 : 1, r = S.result, after = !!r;
+    const cv = $('skPlan'), g = cv.getContext('2d'), r = S.result, after = !!r, v = view(cv.width / cv._dpr, cv.height / cv._dpr, after ? r.world : null), T = v.T, pz = S.pz, m = S.arm === 'L' ? -1 : 1;
     const world = after ? r.world : host.world();
     g.setTransform(cv._dpr, 0, 0, cv._dpr, 0, 0);
     const P = palette();
@@ -564,15 +591,28 @@
     paintBowls(g, v, world, P, after ? r.delivered : null);
     if (!after && v.h >= 200) {
       // the handwritten notes on the plan, kept inside it; left off a plan too small to hold them (they are in the screen-reader text)
+      /* Each note starts where the puzzle puts it and moves to the nearest spot, inside the plan, that covers no bowl,
+         no jack and no other note; a note with nowhere to go is left off (it is in the screen-reader text). */
       g.fillStyle = P.biro; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = '32px "Reenie Beanie", cursive';
-      const placed = [];   // a note that would overlap one already written moves down below it
+      const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+      const placed = world.bodies.filter(b => !b.dead && (b.kind === 'bowl' || b === world.jack)).map(b => {
+        const q = T(b.x, b.y), R = (b.kind === 'jack' ? Math.max(6, b.r * v.s) : b.r * v.s) + 5;
+        return { x: q.x - R, y: q.y - R, w: 2 * R, h: 2 * R };
+      });
+      const moves = [];
+      for (const dy of [0, -36, 36, -72, 72, -108, 108, -144, 144]) for (const dx of [0, -70, 70, -140, 140, -210, 210]) moves.push([dx, dy]);
+      moves.sort((a, b) => Math.hypot(a[0], a[1] * 1.6) - Math.hypot(b[0], b[1] * 1.6));
       for (const n of pz.annotations || []) {
-        const q = T(m * (pz.jack.x + n.dx), pz.jack.y + n.dy), tw = g.measureText(n.text).width;
-        const x = Math.max(8, Math.min(v.w - tw - 10, q.x));
-        let y = Math.max(30, Math.min(v.h - 10, q.y));
-        for (const b of placed) if (x < b.x + b.w && b.x < x + tw && Math.abs(y - b.y) < 34) y = b.y + 34;
-        placed.push({ x, y, w: tw });
-        g.save(); g.translate(x, y); g.rotate((n.rot || -3) * DEG); g.fillText(n.text, 0, 0); g.restore();
+        const q = T(m * (pz.jack.x + n.dx), pz.jack.y + n.dy), tw = g.measureText(n.text).width, rot = (n.rot || -3) * DEG, lean = Math.abs(Math.sin(rot)) * tw;
+        let spot = null;
+        for (const [dx, dy] of moves) {
+          const x = q.x + dx, y = q.y + dy, box = { x: x - 2, y: y - 27 - lean, w: tw + 4, h: 34 + lean };
+          if (box.x < 4 || box.x + box.w > v.w - 4 || box.y < 2 || box.y + box.h > v.h - 2) continue;
+          if (!placed.some(b => hit(box, b))) { spot = { x, y, box }; break; }
+        }
+        if (!spot) continue;
+        placed.push(spot.box);
+        g.save(); g.translate(spot.x, spot.y); g.rotate(rot); g.fillText(n.text, 0, 0); g.restore();
       }
     } else if (after && v.h >= 140) {
       /* distances, as a measure reads them: the nearest few on a small plan, none on a tiny one (they are in the screen-reader text).
@@ -580,7 +620,7 @@
          no other label and, if it can, no bowl or the jack. Nearest first, so a label with nowhere to go is a far one, left off. */
       g.font = 'italic 600 15px Newsreader, Georgia, serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
       const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-      const discs = world.bodies.filter(b => b.state !== 'ditch' && (b.kind === 'bowl' || b === world.jack)).map(b => {
+      const discs = world.bodies.filter(b => b.kind === 'bowl' || b === world.jack).map(b => {
         const q = T(b.x, b.y), R = b.kind === 'jack' ? Math.max(6, b.r * v.s) : b.r * v.s;
         return { b, x: q.x - R, y: q.y - R, w: 2 * R, h: 2 * R };
       });

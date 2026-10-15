@@ -33,6 +33,22 @@ module.exports = function (T) {
     ok(!fs.existsSync(path.join(L.ROOT, 'skip', 'puzzles.json')), 'the old rotation file is retired');
   });
 
+  test('words: every released and queued puzzle says what its head shows', () => {
+    const all = idx.puzzles.map(e => L.readJson(L.puzzlePath(e.n))).concat(L.readQueue().map(x => x.pz));
+    for (const pz of all) eq(L.checkWords(pz), [], `${pz.id}: ${pz.situation}`);
+  });
+  test('words: the check catches a blurb that does not match the head', () => {
+    const pz = L.readJson(L.puzzlePath(2));   // red lying three, the match 17–15 to red
+    const said = situation => L.checkWords(Object.assign({}, pz, { situation }));
+    ok(said('Last end and yellow is two down. Red has three packed tight round the jack.').some(p => /two down/.test(p)), 'the old #2 text: "two down" is read as the count');
+    ok(said('Red is lying two.').some(p => /lying 3/.test(p)), 'the wrong count');
+    ok(said('Yellow holds one.').some(p => /red holds shot/.test(p)), 'the wrong side');
+    ok(said('Last end, and the match stands at 16–14 to red.').some(p => /the match is/.test(p)), 'the wrong score');
+    ok(said('Last end, and the match stands at 17–15 to yellow.').some(p => /red leads 17–15/.test(p)), 'the wrong leader');
+    eq(said('Last end, and the match stands at 17–15 to red. Red is lying three, packed tight round the jack.'), []);
+    eq(L.checkWords(Object.assign({}, pz, { annotations: [{ text: 'yellow lying two' }] })).length, 1, 'notes on the plan are checked too');
+  });
+
   // ---------- the release step, as a pure function ----------
   const q = (k, extra = {}) => ({ key: k, pz: Object.assign({ id: 'gen-' + k, title: 'Queued ' + k, greenSpeed: 13, queued: '2026-10-1' + k, bench: { physics: 'B', head: 'h' } }, extra) });
   const base = [1, 2, 3].map(n => ({ n, date: Core.dateFor(n), id: 'old-' + n, title: 'Old ' + n, theme: '', green: 13, conditions: '' }));

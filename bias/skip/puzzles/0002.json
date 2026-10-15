@@ -18,7 +18,7 @@
     { "team": "red", "x": -0.3, "y": 29.9 },
     { "team": "yellow", "x": 0.6, "y": 28.7 }
   ],
-  "situation": "Last end and yellow is two down. It has rained all afternoon and the green is heavy: every bowl needs far more weight than you'd think. Red has three packed tight round the jack and a fourth behind, and there is no way in for a draw.",
+  "situation": "Last end, and the match stands at 17–15 to red. It has rained all afternoon and the green is heavy: every bowl needs far more weight than you'd think. Red is lying three, packed tight round the jack, with a fourth behind, and there is no way in for a draw.",
   "hint": "heavy green: give it plenty",
   "annotations": [
     { "text": "three on the jack", "dx": -1, "dy": 0.62, "rot": -3 },

@@ -51,6 +51,44 @@ function checkHead(pz) {
   return { problems, lying, before: s };
 }
 
+/* Do the words match the head? The title, situation and plan notes are read for the claims they
+   make, and each is checked against the head as the game scores it:
+   - "Red is lying three", "red holds one", "yellow lying two!": the right side, the right count;
+   - a match score ("16–14", "level at 18–18", "17–15 to red") must be the puzzle's own match;
+   - "two down" / "one up" are not allowed: a bowler reads them as the count in the head, so a
+     match score is always written out in full. */
+const NUMS = { one: 1, two: 2, three: 3, four: 4 };
+function checkWords(pz) {
+  const { Sim } = load(), problems = [], s = Sim.scoreOf(Sim.world(pz));
+  const them = pz.you === 'red' ? 'yellow' : 'red', holder = s.winner == null ? null : s.winner === Sim.ME ? pz.you : them;
+  const texts = [['title', pz.title || ''], ['situation', pz.situation || ''], ...(pz.annotations || []).map(a => ['note', a.text])];
+  for (const [where, text] of texts) {
+    const ambiguous = /\b(one|two|three|four|five|six|\d+)\s+(down|up)\b/i.exec(text);
+    if (ambiguous) problems.push(`${where} says "${ambiguous[0]}": write the match score out (e.g. "the match stands at 16–14 to red") so it is not read as the count in the head`);
+    for (const m of text.matchAll(/\b(red|yellow)\b(?:[^.;:!?]*?)\b(?:is lying|lying|holds?|has)\s+(one|two|three|four)\b(?!\s+(?:of|bowls? (?:out|short|wide)))/gi)) {
+      const team = m[1].toLowerCase(), n = NUMS[m[2].toLowerCase()];
+      if (/\bhas\b/i.test(m[0]) && !/\bround the jack|\bon the jack|\bpacked|\bin the head/i.test(text.slice(m.index, m.index + m[0].length + 40))) continue;   // "has three yellows out wide" is not a count
+      if (team !== holder) problems.push(`${where} says "${m[0]}", but ${holder ? holder + ' holds shot' : 'nobody holds shot'}`);
+      else if (n !== s.shots) problems.push(`${where} says "${m[0]}", but ${holder} is lying ${s.shots}`);
+    }
+    for (const m of text.matchAll(/(\d+)\s*[–-]\s*(\d+)(\s+to\s+(red|yellow))?/g)) {
+      const a = +m[1], b = +m[2], mt = pz.match;
+      if (!mt) { problems.push(`${where} gives a score "${m[0]}" but the puzzle has no match`); continue; }
+      if (!((a === mt.you && b === mt.them) || (a === mt.them && b === mt.you))) problems.push(`${where} says "${m[0]}", but the match is ${pz.you} ${mt.you}, ${them} ${mt.them}`);
+      else if (m[4]) { const lead = mt.you > mt.them ? pz.you : mt.them > mt.you ? them : null; if (m[4].toLowerCase() !== lead || Math.max(a, b) !== a) problems.push(`${where} says "${m[0]}", but ${lead ? lead + ' leads ' + Math.max(mt.you, mt.them) + '–' + Math.min(mt.you, mt.them) : 'the match is level'}`); }
+    }
+  }
+  return problems;
+}
+// The match in words, written out in full: "the match stands at 17–15 to red" / "the match level at 18–18".
+function matchWords(pz) {
+  const m = pz.match, them = pz.you === 'red' ? 'yellow' : 'red';
+  if (!m) return '';
+  if (m.you === m.them) return `with the match level at ${m.you}–${m.them}`;
+  const [hi, lo, lead] = m.you > m.them ? [m.you, m.them, pz.you] : [m.them, m.you, them];
+  return `and the match stands at ${hi}–${lo} to ${lead}`;
+}
+
 // Brute force: lines and weights on both hands, each shot played in the game.
 function grid(pz, bench, quick) {
   const { E, Sim } = load();
@@ -158,5 +196,5 @@ function readQueue(dir = QUEUE) {
     .sort((a, b) => String(a.pz.queued || '').localeCompare(String(b.pz.queued || '')) || a.file.localeCompare(b.file));
 }
 
-module.exports = { ROOT, DIR, INDEX, QUEUE, RUNS, MIX, r5, fnv, load, checkHead, grid, plainDraws, benchmark, checkAdvice, benchFresh,
+module.exports = { ROOT, DIR, INDEX, QUEUE, RUNS, MIX, r5, fnv, load, checkHead, checkWords, matchWords, grid, plainDraws, benchmark, checkAdvice, benchFresh,
   inline, pretty, readJson, writeJson, readIndex, writeIndex, puzzlePath, indexEntry, readQueue };

@@ -18,7 +18,7 @@
     { "team": "yellow", "x": 0.42, "y": 28.86 },
     { "team": "yellow", "x": -0.6, "y": 28.55 }
   ],
-  "situation": "Last end, and the scores are level. Red is lying three round the jack, with a fourth sitting short on the backhand side, and all three yellow woods are out on the edges of the head. You are skip with one bowl left.",
+  "situation": "Last end, with the match level at 18–18. Red is lying three round the jack, with a fourth sitting short on the backhand side, and all three yellow woods are out on the edges of the head. You are skip with one bowl left.",
   "hint": "pick your weight, then play the shot",
   "annotations": [
     { "text": "red lying three!", "dx": 0.5, "dy": 0.72, "rot": -4 },

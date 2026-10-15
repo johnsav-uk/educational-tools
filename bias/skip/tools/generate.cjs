@@ -17,8 +17,8 @@
    than 1.6 m from the jack, or is a near-copy of a puzzle already released or queued. The rest are
    benchmarked exactly as benchmark.cjs does (with the quick grid) and kept only if five stars can
    be reached, a plain draw is not five stars, and the benchmark is not flat. The words (title,
-   situation, hint, notes, advice) are written from the head and the benchmark. Same seed, same
-   puzzle. Kept puzzles go to queue/, where release.cjs takes them, oldest first. */
+   situation, hint, notes, advice) are written from the head and the benchmark, and checked
+   against it (lib.checkWords). Same seed, same puzzle. Kept puzzles go to queue/, where release.cjs takes them, oldest first. */
 const fs = require('fs');
 const path = require('path');
 const Core = require('../skip-core.js');
@@ -149,7 +149,8 @@ function describe(pz, st, bench) {
 
   // situation
   const m = st.match, down = m.down;
-  const score = down === 0 ? pick(r, ['Last end, and the scores are level.', 'All square, last end.']) : `Last end, and you are ${NUM[down] || down} down.`;
+  // the match score written out in full: "two down" would be read as the count in the head
+  const score = `Last end, ${L.matchWords({ you: pz.you, match: { you: m.base - down, them: m.base } })}.`;
   const where = b => {
     const dy = b.y - J.y, dx = b.x - J.x, d = E.Rules.dist(b, J);
     if (b.state === 'ditch') return 'in the ditch, chalked';
@@ -212,6 +213,8 @@ function make(seed, known, { quick = true } = {}) {
   // the benchmark depends on the head, the match and the seed, not the advice, so only the advice's own check is redone
   Object.assign(out, { bench: pz.bench, best: pz.best, check: pz.check });
   const rep = L.checkAdvice(out);
+  const said = L.checkWords(out);   // the words must say what the plan shows
+  if (said.length) return { seed, why: 'the words do not match the head: ' + said[0] };
   out.gen = { version: VERSION, seed, levels: played.levels, quick: quick || undefined };
   out.queued = new Date().toISOString();
   return { seed, pz: out, rep };

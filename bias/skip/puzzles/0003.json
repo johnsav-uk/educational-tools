@@ -19,7 +19,7 @@
     { "team": "red", "x": -0.45, "y": 32 },
     { "team": "yellow", "x": 0.7, "y": 31.85 }
   ],
-  "situation": "Twenty all, last end, on a fast green. The jack is long and red has a toucher-close bowl just behind it. A red guard sits short on the forehand side.",
+  "situation": "Last end, with the match level at 20–20, on a fast green. The jack is long and red holds one, a bowl sitting just behind the jack. A red guard sits short on the forehand side.",
   "hint": "fast green: less weight than you think",
   "annotations": [
     { "text": "red holds one", "dx": 0.38, "dy": 0.5, "rot": -3 },

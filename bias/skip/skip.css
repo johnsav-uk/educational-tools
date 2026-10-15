@@ -34,6 +34,8 @@
   --sk-bowl: #3B2A20;
   --sk-ring-red: #C4413A;
   --sk-ring-yellow: #E3B93C;
+  --sk-ditch: #C9B98E;   /* the front ditch, and the bank behind it */
+  --sk-bank: #93A77C;
   /* type */
   --sk-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
   --sk-body: "Newsreader", Georgia, serif;

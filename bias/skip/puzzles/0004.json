@@ -18,10 +18,10 @@
     { "team": "yellow", "x": -0.55, "y": 29.15 },
     { "team": "red", "x": 0.65, "y": 28.05 }
   ],
-  "situation": "You're red this time, one down with the last bowl of the match. Yellow's shot bowl is sitting right in front of the jack, with another just behind it on the right. Your best is out on the left; your other two are further away.",
+  "situation": "You're red this time, with the last bowl of the match and yellow ahead 12–11. Yellow is lying two: the shot bowl is sitting right in front of the jack, with another just behind it on the right. Your best is out on the left; your other two are further away.",
   "hint": "a yard on: follow it through",
   "annotations": [
-    { "text": "yellow two", "dx": 0.5, "dy": 0.55, "rot": -3 },
+    { "text": "yellow lying two", "dx": 0.5, "dy": 0.55, "rot": -3 },
     { "text": "front bowl is the shot", "dx": -1.05, "dy": -0.45, "rot": -4 }
   ],
   "advised": {

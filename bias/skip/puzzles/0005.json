@@ -18,7 +18,7 @@
     { "team": "red", "x": -1.25, "y": 27.75 },
     { "team": "yellow", "x": -0.95, "y": 26.6 }
   ],
-  "situation": "A short jack, pushed out to the left of the rink. Red holds one, sitting just behind the jack; their other three are scattered round the head. One down, last end. Nothing complicated: you need a good draw.",
+  "situation": "A short jack, pushed out to the left of the rink. Red holds one, sitting just behind the jack; their other three are scattered round the head. Last end, and the match stands at 10–9 to red. Nothing complicated: you need a good draw.",
   "hint": "short jack: watch your weight",
   "annotations": [
     { "text": "just the one", "dx": 0.45, "dy": 0.6, "rot": -3 },
