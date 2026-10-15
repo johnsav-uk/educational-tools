@@ -61,8 +61,11 @@
     root = el(`
 <div id="skip" role="dialog" aria-modal="true" aria-labelledby="skTitle" hidden>
   <div class="sk-top">
-    <button class="sk-chip" id="skMenu">‹ Main menu</button>
-    <span class="sk-fresh" id="skFresh" hidden>A new puzzle is ready.<button class="sk-chip" id="skReload">Open it</button></span>
+    <button class="sk-chip" id="skMenu" aria-label="Main menu">‹ <span class="sk-long">Main </span>menu</button>
+    <div class="sk-topright" id="skTopRight">
+      <span class="sk-fresh" id="skFresh" hidden>A new puzzle is ready.<button class="sk-chip" id="skReload">Open it</button></span>
+      <p class="sk-next" id="skNext"></p>
+    </div>
   </div>
   <div class="sk-layout">
     <section class="sk-board" aria-label="Today's puzzle">
@@ -72,7 +75,6 @@
         <div class="sk-plan"><canvas id="skPlan" role="img" aria-describedby="skHeadText"></canvas></div>
         <div class="sk-sr" id="skHeadText"></div>
         <p class="sk-advice" id="skAdvice"></p>
-        <p class="sk-green" id="skGreen"></p>
         <div class="sk-actions">
           <button class="sk-enamel" id="skGo">Play the shot</button>
           <button class="sk-paperbtn" id="skAlt">Main menu</button>
@@ -83,8 +85,7 @@
     </section>
     <aside class="sk-rail">
       <div class="sk-note" id="skNote" aria-live="polite"></div>
-      <div class="sk-score" role="group" aria-label="Scoreboard"><dl id="skBoard"></dl></div>
-      <p class="sk-next" id="skNext"></p>
+      <div class="sk-score" id="skScore" role="group" aria-label="Scoreboard"><dl id="skBoard"></dl></div>
       <div class="sk-share" id="skShare" hidden></div>
     </aside>
   </div>
@@ -96,7 +97,22 @@
     $('skGo').onclick = () => (S && S.phase === 'done' ? again() : play());
     $('skAlt').onclick = () => (S && S.phase === 'done' ? fullMatch() : close());
     window.addEventListener('keydown', onKey, true);
-    new ResizeObserver(() => { if (!root.hidden && S) { sizePlan(); draw(); } }).observe(root);
+    for (const q of [PHONE, FLAT]) q.addEventListener('change', () => { place(); if (!root.hidden && S) { sizePlan(); draw(); } });
+    place();
+    new ResizeObserver(() => { if (!root.hidden && S) { sizePlan(); draw(); } }).observe($('skPlan').parentNode);
+  }
+  /* Phones get a compact card. Upright (sk-phone): one column, the note in the sheet under the
+     plan. On its side (sk-flat): two columns. Either way (sk-compact) the streak tiles go in the
+     top bar and the share line becomes a button in the row. The queries match skip.css. */
+  const PHONE = matchMedia('(max-width: 700px) and (orientation: portrait), (max-width: 520px)');
+  const FLAT = matchMedia('(max-height: 520px) and (orientation: landscape)');
+  function place() {
+    const note = $('skNote'), score = $('skScore'), share = $('skShare'), rail = root.querySelector('.sk-rail'), actions = root.querySelector('.sk-sheet .sk-actions');
+    const phone = PHONE.matches, flat = !phone && FLAT.matches;
+    root.classList.toggle('sk-phone', phone); root.classList.toggle('sk-flat', flat); root.classList.toggle('sk-compact', phone || flat);
+    if (phone) $('skAdvice').before(note); else rail.prepend(note);
+    if (phone || flat) { $('skNext').before(score); actions.append(share); }
+    else rail.append(score, share);
   }
   function show(on) { root.hidden = !on; document.body.classList.toggle('skip-open', on); if (on) root.classList.toggle('sk-still', reduced()); }
 
@@ -156,7 +172,7 @@
     S.result = Object.assign(res, { stars, saved, first: rec.first, delivered, world, trace: (host.trace ? host.trace() : []).slice(),
       beat: bench ? Math.round(C.beatShare(res.value, bench) * 100) : null });
     S.phase = 'done';
-    show(true); paint(); draw();
+    show(true); paint(); sizePlan(); draw();
     toast(''); $('skGo').focus({ preventScroll: true }); root.scrollTop = 0;
   }
 
@@ -169,15 +185,15 @@
   // ---------- painting the card ----------
   function paint() { paintStatic(); paintNote(); paintBoard(); paintShare(); tickClock(); }
   function paintStatic() {
-    const pz = S.pz, green = E.GreenSpeed.label(pz.greenSpeed).toLowerCase() + ' green', after = S.phase === 'done';
-    $('skMeta').textContent = `No. ${S.issue} · ${pz.advised.hand === 'fore' ? 'forehand' : 'backhand'} advised · ${green}` + (pz.conditions ? ` · ${pz.conditions}` : '');
+    const pz = S.pz, after = S.phase === 'done';
+    root.classList.toggle('sk-done', after);
+    $('skMeta').textContent = `No. ${S.issue} · ${pz.advised.hand === 'fore' ? 'forehand' : 'backhand'} advised · ${pz.greenSpeed} s ${E.GreenSpeed.label(pz.greenSpeed).toLowerCase()} green` + (pz.conditions ? ` · ${pz.conditions}` : '');
     $('skAdvice').innerHTML = `<b>${esc(cap(pz.advised.by || 'your third'))}:</b> “${esc(pz.advised.say)}”`;
-    $('skGreen').innerHTML = `<strong>Green:</strong> ${pz.greenSpeed} seconds, ${green}${pz.conditions ? `, ${esc(pz.conditions)}` : ''}. ` +
-      (pz.greenSpeed < 12 ? 'A heavy green: every bowl needs more weight.' : pz.greenSpeed > 14 ? 'A fast green: less weight than you think.' : 'A true, even green.');
-    $('skGo').textContent = after ? 'Play it again' : 'Play the shot';
-    $('skAlt').textContent = after ? 'Play a full match' : 'Main menu';
-    $('skHelp').innerHTML = after ? 'Play it again for practice: only your first shot of the day counts.'
-      : 'You play it on the green with the usual controls: set your line, pick forehand or backhand, then hold <b>Bowl</b> and let go at the weight you want. Your line starts on the advice.';
+    $('skGo').innerHTML = after ? 'Play<span class="sk-long"> it</span> again' : 'Play the shot';
+    $('skAlt').textContent = after ? 'Full match' : 'Main menu';
+    $('skAlt').setAttribute('aria-label', after ? 'Play a full match' : 'Main menu');
+    $('skHelp').textContent = after ? 'Play it again for practice: only your first shot of the day counts.'
+      : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice.';
   }
   function stars(n) {
     const pts = '12,1.8 14.9,8.6 22.2,9.2 16.6,14 18.3,21.2 12,17.4 5.7,21.2 7.4,14 1.8,9.2 9.1,8.6';
@@ -198,23 +214,17 @@
     }
     const info = C.outcomeInfo(r.outcome, pz.verdicts), first = S.stats.today;
     const counted = r.first ? '' : `<p class="sk-small">Practice. Today's first shot (${C.starWords(first.stars)}) is the one that counts.</p>`;
-    const beat = r.beat == null ? '' : ` You matched or beat ${r.beat} of the 100 bowlers who played this head in the benchmark.`;
-    $('skNote').innerHTML = `<p class="sk-kicker">Skip's verdict</p>${stars(r.stars)}<h2 class="sk-verdict-title">${esc(info.title)}</h2>` +
-      `<p>${esc(info.detail)}${beat}</p><p class="sk-hand">${esc(info.scribble)}</p>${counted}${headList()}`;
-  }
-  // The final head as a list: who lies where, and how far from the jack.
-  function headList() {
-    const r = S.result, pz = S.pz;
-    if (r.jackDead) return `<p class="sk-small">Dead end: ${esc(r.jackDead.replace(/\.$/, ''))}. Nobody scores.</p>`;
-    const rows = r.ranked.slice(0, 6).map((e, i) => `<li><span>${i + 1}. ${cap(teamOf(e.b, pz))}${e.b === r.delivered ? ' (your bowl)' : ''}${e.scores ? ' · scores' : ''}</span><span>${cm(e.d)}</span></li>`).join('');
-    return `<ul class="sk-heads" aria-label="The head after your bowl, nearest first">${rows}</ul>`;
+    const beat = r.beat == null ? '' : ` Better than or level with ${r.beat} of the 100 benchmark bowlers.`;
+    const dead = r.jackDead ? ` Dead end: ${esc(r.jackDead.replace(/\.$/, '').toLowerCase())}.` : '';
+    $('skNote').innerHTML = `<p class="sk-kicker">Skip's verdict</p><div class="sk-vrow">${stars(r.stars)}<h2 class="sk-verdict-title">${esc(info.title)}</h2></div>` +
+      `<p>${esc(info.detail)}${dead}${beat}</p><p class="sk-hand">${esc(info.scribble)}</p>${counted}`;
   }
   function paintBoard() {
     const st = S.stats, prev = S.shown || {};
     const tiles = (n, was) => String(n).split('').map(d => `<span class="sk-tile${was != null && was !== n ? ' flip' : ''}">${d}</span>`).join('');
     const streak = C.currentStreak(st, S.date), best = st.best;
     let h = `<div><dt>Streak</dt><dd aria-label="${streak} day${streak === 1 ? '' : 's'}">${tiles(streak, prev.streak)}</dd></div>` +
-      `<div><dt>Best streak</dt><dd aria-label="${best} day${best === 1 ? '' : 's'}">${tiles(best, prev.best)}</dd></div>`;
+      `<div><dt>Best<span class="sk-long"> streak</span></dt><dd aria-label="${best} day${best === 1 ? '' : 's'}">${tiles(best, prev.best)}</dd></div>`;
     if (S.savedPct != null) h += `<div><dt>Saved it, %</dt><dd aria-label="${S.savedPct}% of today's players saved the end">${tiles(S.savedPct, prev.saved)}</dd></div>`;
     $('skBoard').innerHTML = h;
     S.shown = { streak, best, saved: S.savedPct };
@@ -224,15 +234,15 @@
     box.hidden = !t;
     if (!t) return;
     const text = C.shareText(S.issue, t.stars, SHARE_URL);
-    box.innerHTML = `<p class="sk-kicker">Share result</p><pre aria-label="${esc(C.shareText(S.issue, t.stars).replace(/[★½☆]+/, C.starWords(t.stars)))}">${esc(text)}</pre>` +
-      `<div class="sk-actions"><button class="sk-paperbtn" id="skCopy">Copy</button>${navigator.share ? '<button class="sk-paperbtn" id="skNative">Share…</button>' : ''}</div>`;
+    box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars))}</span><span class="sk-sr">Your result to share: puzzle ${S.issue}, ${C.starWords(t.stars)}.</span></p>` +
+      `<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share"><span class="sk-long">Copy</span><span class="sk-short">Share</span></button>${navigator.share ? '<button class="sk-paperbtn sk-native" id="skNative">Share…</button>' : ''}`;
     $('skCopy').onclick = async () => {
       let ok = false;
       try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
         const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; root.appendChild(ta); ta.select();
         try { ok = document.execCommand('copy'); } catch (x) { ok = false; } ta.remove();
       }
-      $('skCopy').textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { const b = $('skCopy'); if (b) b.textContent = 'Copy'; }, 2000);
+      toast(ok ? 'Copied. Paste it wherever you like.' : 'Could not copy: select the result and copy it yourself.');
       if (ok) Metrics.send('result_shared', { puzzleId: S.pz.id });
     };
     if (navigator.share) $('skNative').onclick = () => navigator.share({ text }).then(() => Metrics.send('result_shared', { puzzleId: S.pz.id }), () => {});
@@ -240,7 +250,7 @@
   function tickClock() {
     if (!S) return;
     const now = Date.now();
-    $('skNext').textContent = `Next puzzle in ${C.countdown(now).text}`;
+    $('skNext').innerHTML = `<span class="sk-long">Next puzzle in</span><span class="sk-short">Next</span> ${C.countdown(now).text}`;
     if (C.londonDate(now) !== S.date && S.phase !== 'playing') $('skFresh').hidden = false;
   }
   let toastTimer = 0;
@@ -311,18 +321,18 @@
     // the jack: a white dot with a dark outline
     const J = world.jack;
     if (J && J.state !== 'ditch') { const q = T(J.x, J.y); g.fillStyle = P.jack; g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, Math.max(6, J.r * v.s), 0, Math.PI * 2); g.fill(); g.stroke(); }
-    if (!after) {
-      // the handwritten notes on the plan, kept inside it on a narrow screen
+    if (!after && v.h >= 200) {
+      // the handwritten notes on the plan, kept inside it; left off a plan too small to hold them (they are in the screen-reader text)
       g.fillStyle = P.biro; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = '32px "Reenie Beanie", cursive';
       for (const n of pz.annotations || []) {
         const q = T(m * (pz.jack.x + n.dx), pz.jack.y + n.dy), tw = g.measureText(n.text).width;
         const x = Math.max(8, Math.min(v.w - tw - 10, q.x)), y = Math.max(30, Math.min(v.h - 10, q.y));
         g.save(); g.translate(x, y); g.rotate((n.rot || -3) * DEG); g.fillText(n.text, 0, 0); g.restore();
       }
-    } else {
-      // distances, as a measure reads them
+    } else if (after && v.h >= 140) {
+      // distances, as a measure reads them: the nearest few on a small plan, none on a tiny one (they are in the screen-reader text)
       g.font = 'italic 600 15px Newsreader, Georgia, serif'; g.textBaseline = 'middle';
-      for (const e of r.ranked.slice(0, 6)) {
+      for (const e of r.ranked.slice(0, v.h >= 200 ? 6 : 3)) {
         const q = T(e.b.x, e.b.y), R = e.b.r * v.s, right = q.x < v.w - 70;
         g.textAlign = right ? 'left' : 'right'; const tx = q.x + (right ? R + 7 : -R - 7), tw = g.measureText(cm(e.d)).width;
         g.fillStyle = 'rgba(251,249,241,.85)'; g.fillRect(right ? tx - 2 : tx - tw - 2, q.y - 9, tw + 4, 18);
