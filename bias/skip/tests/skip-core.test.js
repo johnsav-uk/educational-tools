@@ -53,6 +53,104 @@
     eq(days, ['2026-10-24', '2026-10-25', '2026-10-25', '2026-10-26']);
     eq(days.map(d => C.issueNumber(d)), [10, 11, 11, 12]);
   });
+  // ---------- the puzzle day: 06:00 to 06:00 London (from SWITCH; midnight before it) ----------
+  test('the puzzle day changes at 06:00 London in summer time (BST)', () => {
+    eq(C.SWITCH, '2026-10-17');
+    eq(C.puzzleDay(at('2026-10-19T04:59:59Z')), '2026-10-18', '05:59:59 BST is still the day before');
+    eq(C.puzzleDay(at('2026-10-19T05:00:00Z')), '2026-10-19', '06:00 BST is 05:00 UTC');
+    eq(C.puzzleDay(at('2026-10-19T00:00:00Z')), '2026-10-18', '01:00 on the 19th is the 18th\'s puzzle');
+    eq(C.puzzleDay(at('2026-10-19T22:59:59Z')), '2026-10-19', 'up to midnight');
+    eq(C.puzzleDay(at('2026-10-19T23:00:00Z')), '2026-10-19', 'and past it, to 06:00');
+  });
+  test('the puzzle day changes at 06:00 London in winter time (GMT)', () => {
+    eq(C.puzzleDay(at('2026-12-01T05:59:00Z')), '2026-11-30');
+    eq(C.puzzleDay(at('2026-12-01T06:00:00Z')), '2026-12-01', '06:00 GMT is 06:00 UTC');
+  });
+  test('the puzzle day on the two clock-change nights', () => {
+    // autumn, Sunday 25 Oct 2026: 02:00 BST becomes 01:00 GMT, so the small hours are an hour longer
+    eq(C.puzzleDay(at('2026-10-25T00:30:00Z')), '2026-10-24', '01:30 BST');
+    eq(C.puzzleDay(at('2026-10-25T01:30:00Z')), '2026-10-24', '01:30 GMT, the second time round');
+    eq(C.puzzleDay(at('2026-10-25T05:59:59Z')), '2026-10-24', '05:59:59 GMT');
+    eq(C.puzzleDay(at('2026-10-25T06:00:00Z')), '2026-10-25', '06:00 GMT, not 05:00 or 07:00');
+    eq(C.puzzleDay(at('2026-10-25T05:00:00Z')), '2026-10-24', 'taking six hours off UTC would switch here, an hour early');
+    // spring, Sunday 28 Mar 2027: 01:00 GMT becomes 02:00 BST
+    eq(C.puzzleDay(at('2027-03-28T04:59:59Z')), '2027-03-27', '05:59:59 BST');
+    eq(C.puzzleDay(at('2027-03-28T05:00:00Z')), '2027-03-28', '06:00 BST');
+    eq(C.puzzleDay(at('2027-03-28T05:30:00Z')), '2027-03-28', 'taking six hours off UTC would still say the 27th here');
+  });
+  test('switching to 06:00: no puzzle number ever goes backwards', () => {
+    eq(C.puzzleDay(at('2026-10-16T00:30:00Z')), '2026-10-16', 'before SWITCH the day still changed at midnight (01:30 BST on the 16th)');
+    eq(C.puzzleDay(at('2026-10-17T00:30:00Z')), '2026-10-16', 'from SWITCH, the 16th\'s puzzle runs on to 06:00');
+    let prev = 0;
+    for (let t = at('2026-10-15T00:00:00Z'); t < at('2026-10-30T00:00:00Z'); t += 600000) {
+      const n = C.issueNumber(C.puzzleDay(t)); ok(n === prev || n === prev + 1 || prev === 0, `at ${new Date(t).toISOString()}: #${prev} to #${n}`); prev = n;
+    }
+  });
+  test('a streak kept by someone who plays at 01:00 every night', () => {
+    let s = C.freshStats();
+    for (const t of ['2026-10-20T00:00:00Z', '2026-10-21T00:00:00Z', '2026-10-22T00:00:00Z']) {
+      const d = C.puzzleDay(at(t)); s = C.recordAttempt(s, d, 'p' + d, res(3)).stats;
+    }
+    eq(s.streak, 3, 'three nights at 01:00 BST are three puzzle days in a row');
+    // across the autumn change, 01:00 London each night
+    let w = C.freshStats();
+    for (const t of ['2026-10-24T00:00:00Z', '2026-10-25T01:00:00Z', '2026-10-26T01:00:00Z']) { const d = C.puzzleDay(at(t)); w = C.recordAttempt(w, d, 'p' + d, res(3)).stats; }
+    eq([w.streak, w.lastPlayed], [3, '2026-10-25']);
+    eq(C.currentStreak(w, C.puzzleDay(at('2026-10-27T05:59:00Z'))), 3, 'still alive just before 06:00 two mornings on');
+  });
+
+  // ---------- the catalogue ----------
+  const cat = [1, 2, 3, 4, 5, 6].map(n => ({ n, date: C.dateFor(n), id: n <= 5 ? 'hand-' + n : C.generatedId(n), title: 'T' + n }));
+  test('number to date and back, across the clock changes', () => {
+    eq(C.dateFor(1), '2026-10-15'); eq(C.dateFor(11), '2026-10-25'); eq(C.dateFor(12), '2026-10-26'); eq(C.dateFor(165), '2027-03-28');
+    for (let n = 1; n <= 800; n++) eq(C.issueNumber(C.dateFor(n)), n, '#' + n);
+    eq(C.generatedId(6), 'skip-0006'); eq(C.puzzleFile(214), '0214.json');
+  });
+  test('the day\'s entry: never a future one, and a missed day falls back to the last released', () => {
+    eq(C.entryFor(cat, '2026-10-17').n, 3);
+    eq(C.entryFor(cat, '2026-10-14'), null, 'nothing before #1');
+    eq(C.entryFor(cat, '2026-10-22').n, 6, 'the release job missed the 21st and 22nd: #6 stays up');
+    const ahead = cat.concat([{ n: 9, date: C.dateFor(9), id: 'skip-0009' }]);
+    eq(C.entryFor(ahead, '2026-10-20').n, 6, 'released early, #9 waits for its date');
+    eq(C.entryByNumber(ahead, 9, '2026-10-20'), null, 'and cannot be opened by number either');
+    eq(C.entryByNumber(ahead, 2, '2026-10-20').id, 'hand-2');
+    eq(C.entryByNumber(ahead, 7, '2026-10-30'), null, 'a number never released');
+  });
+  test('the back-fill keeps the old rotation for #1 to #5', () => {
+    const rotation = ['red-lying-three', 'rain-on-the-green', 'the-long-jack', 'rest-on-the-shot', 'short-and-wide'];
+    for (let n = 1; n <= 5; n++) eq(rotation[C.puzzleIndex(C.dateFor(n), 5)], rotation[n - 1], '#' + n);
+  });
+  test('the puzzles screen: today, then new ones, then the archive, newest first', () => {
+    const list = [...Array(20)].map((_, i) => ({ n: i + 1, date: C.dateFor(i + 1), id: 'p' + (i + 1) }));
+    const s = C.listSections(list, C.dateFor(15), { 13: { stars: 4, tries: 1 } });
+    eq(s.today.n, 15);
+    eq(s.fresh.map(e => e.n), [14, 12, 11, 10, 9], 'the last 7 days, unplayed, newest first');
+    eq(s.archive.map(e => e.n), [13, 8, 7, 6, 5, 4, 3, 2, 1], 'played or older, newest first; nothing from the future');
+  });
+  test('deep links: ?skip and ?skip=12', () => {
+    eq([null, '', '12', '0012', '#7', ' 3 ', '0', '-2', 'abc', 'preview', '1.5'].map(C.linkNumber), [null, null, 12, 12, 7, 3, null, null, null, null, null]);
+  });
+
+  // ---------- archive results on this device ----------
+  test('archive puzzles keep their best and goes, and never touch the streak', () => {
+    const a = {};
+    let r = C.recordArchive(a, 12, 2);
+    ok(r.first); eq(r.archive, { 12: { stars: 2, tries: 1 } }); eq(a, {}, 'the input is not changed');
+    r = C.recordArchive(r.archive, 12, 4); ok(r.improved); eq(r.from, 2); eq(r.archive['12'], { stars: 4, tries: 2 });
+    r = C.recordArchive(r.archive, 12, 3); ok(!r.improved); eq(r.archive['12'], { stars: 4, tries: 3 });
+    r = C.recordArchive(r.archive, 3, 5); eq(Object.keys(r.archive).sort(), ['12', '3']);
+    ok(C.ARCHIVE_KEY !== C.STATS_KEY, 'kept apart from the daily stats, so the streak cannot see it');
+  });
+  test('stored archive results are checked; blocked storage never breaks it', () => {
+    eq(C.cleanArchive({ 12: { stars: 4, tries: 2 }, x: { stars: 1, tries: 1 }, 3: { stars: 7, tries: 1 }, 4: { stars: 2 }, 0: { stars: 1, tries: 1 } }), { 12: { stars: 4, tries: 2 } });
+    eq(C.cleanArchive([1, 2]), {});
+    const bad = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
+    eq(C.loadArchive(bad), {}); eq(C.saveArchive(bad, {}), false);
+    const mem = { v: {}, getItem(k) { return this.v[k] || null; }, setItem(k, x) { this.v[k] = x; } };
+    ok(C.saveArchive(mem, { 5: { stars: 3.5, tries: 2 } })); eq(C.loadArchive(mem), { 5: { stars: 3.5, tries: 2 } });
+    mem.v[C.ARCHIVE_KEY] = 'nope'; eq(C.loadArchive(mem), {});
+  });
+
   test('date helpers', () => {
     eq(C.addDays('2026-12-31', 1), '2027-01-01');
     eq(C.addDays('2028-03-01', -1), '2028-02-29');
@@ -116,10 +214,10 @@
     eq(C.starText(0), '☆☆☆☆☆');
     eq(C.starText(5), '★★★★★');
     eq(C.starText(0.5), '½☆☆☆☆');
-    eq(C.shareText(1, 2), 'Over to you skip #1 ★★☆☆☆');
-    eq(C.shareText(214, 4.5, 'https://x/'), 'Over to you skip #214 ★★★★½\nhttps://x/');
-    eq(C.shareText(3, 5, '', 1), 'Over to you skip #3 ★★★★★ first go');
-    eq(C.shareText(3, 5, 'https://x/', 4), 'Over to you skip #3 ★★★★★ in 4 goes\nhttps://x/');
+    eq(C.shareText(1, 2), '“Over to You, Skip!” #1 ★★☆☆☆');
+    eq(C.shareText(214, 4.5, 'https://x/'), '“Over to You, Skip!” #214 ★★★★½\nhttps://x/');
+    eq(C.shareText(3, 5, '', 1), '“Over to You, Skip!” #3 ★★★★★ first go');
+    eq(C.shareText(3, 4.5, 'https://x/?skip=3', 2), '“Over to You, Skip!” #3 ★★★★½ in 2 goes\nhttps://x/?skip=3');
   });
 
   // ---------- local stats ----------
@@ -197,6 +295,8 @@
     ok(C.validateEvent(attempt()).ok);
     for (const n of ['puzzle_replayed', 'result_shared', 'full_match_clicked']) ok(C.validateEvent(ev(n, { puzzleId: 'p1' })).ok, n);
     ok(C.validateEvent(ev('puzzle_improved', { puzzleId: 'p1', fromStars: 2, toStars: 4.5, wasSaved: false, saved: true })).ok);
+    ok(C.validateEvent(ev('archive_played', { puzzleId: 'skip-0012', isFirstGo: true })).ok);
+    ok(C.validateEvent(ev('puzzles_list_opened', {})).ok);
   });
   test('allowlist rejects anything else', () => {
     const bad = [
@@ -209,7 +309,10 @@
       attempt({ daysSinceLastPlay: 1.5 }), attempt({ daysSinceLastPlay: -1 }), attempt({ isFirstAttemptOfDay: 1 }),
       ev('puzzle_viewed', { puzzleId: 'p', returning: true }),                         // missing a field
       ev('puzzle_improved', { puzzleId: 'p', fromStars: 4, toStars: 4, wasSaved: true, saved: true }),   // not an improvement
-      ev('puzzle_improved', { puzzleId: 'p', fromStars: 5, toStars: 2, wasSaved: true, saved: false })
+      ev('puzzle_improved', { puzzleId: 'p', fromStars: 5, toStars: 2, wasSaved: true, saved: false }),
+      ev('archive_played', { puzzleId: 'p' }), ev('archive_played', { puzzleId: 'p', isFirstGo: 'yes' }), ev('archive_played', { puzzleId: 'P!', isFirstGo: true }),
+      ev('archive_played', { puzzleId: 'p', isFirstGo: true, stars: 3 }), ev('puzzles_list_opened'), ev('puzzles_list_opened', { puzzleId: 'p' }),
+      ev('puzzles_list_opened', { count: 3 })
     ];
     for (const b of bad) ok(!C.validateEvent(b).ok, JSON.stringify(b));
   });
@@ -227,6 +330,10 @@
     eq([r.event, r.stars, r.saved], ['puzzle_attempted_repeat', -1, -1], 'repeats never reach the star statistics');
     eq(C.counterKey(a), '2026-10-15|rescue-three|puzzle_attempted|7|1|-1|1|-1|-1');
     eq(Object.keys(a).sort(), ['day', 'dsl', 'event', 'from', 'puzzle', 'returning', 'saved', 'stars', 'wasSaved'], 'no streak, no ip, no agent');
+    const ap = e => C.counterFor(C.validateEvent(e).event, '2026-10-20');
+    eq(ap(ev('archive_played', { puzzleId: 'skip-0012', isFirstGo: true })), { day: '2026-10-20', puzzle: 'skip-0012', event: 'archive_played', stars: -1, saved: -1, returning: -1, dsl: '', from: -1, wasSaved: -1 });
+    eq(ap(ev('archive_played', { puzzleId: 'skip-0012', isFirstGo: false })).event, 'archive_played_repeat');
+    eq(ap(ev('puzzles_list_opened', {})), { day: '2026-10-20', puzzle: '', event: 'puzzles_list_opened', stars: -1, saved: -1, returning: -1, dsl: '', from: -1, wasSaved: -1 });
   });
 
   // ---------- reading the counters ----------

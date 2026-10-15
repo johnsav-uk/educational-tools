@@ -1,4 +1,4 @@
-/* The puzzle is played inside the game: Game.startPuzzle sets the head out on the green, the
+/* Over to You, Skip!: the puzzle is played inside the game: Game.startPuzzle sets the head out on the green, the
    delivery runs through the game's own controls path, and the head the game hands back is the
    one the stars are given for. These tests read the game straight out of bias/index.html. */
 const path = require('path');
@@ -7,7 +7,9 @@ module.exports = function (T) {
   const Core = require('../skip-core.js');
   const E = require('../tools/engine.cjs').load();
   const Sim = require('../skip-sim.js').create(E);
-  const data = require(path.join(__dirname, '..', 'puzzles.json'));
+  const L = require('../tools/lib.cjs');
+  // every released puzzle, and every one waiting in the queue
+  const data = { puzzles: L.readIndex().puzzles.map(e => L.readJson(L.puzzlePath(e.n))).concat(L.readQueue().map(q => q.pz)) };
 
   test('Game.startPuzzle lays out the head and hands the player one bowl on the advised line', () => {
     const pz = data.puzzles[0], g = new E.Game(new Proxy({}, { get: () => () => {} }), { instant: true });
@@ -44,6 +46,26 @@ module.exports = function (T) {
       const r = Sim.playInGame(pz, pz.advised);
       eq([r.outcome, Core.starsFor(r.value, pz.bench.values)], [pz.check.advice.outcome, pz.check.advice.stars], pz.id);
     }
+  });
+
+  test('a toucher in the ditch is set out in the ditch, chalked and live, in the game and in the bare world alike', () => {
+    const pz = JSON.parse(JSON.stringify(data.puzzles[0]));
+    pz.jack = { x: 0, y: 34.4 }; pz.bowls = pz.bowls.map(b => Object.assign(b, { y: b.y + 5.4 }));
+    pz.bowls[0] = { team: pz.bowls[0].team, x: 0.3, y: 36.12, ditch: true, toucher: true };
+    eq(L.checkHead(pz).problems, [], 'a ditch toucher is a legal head');
+    const g = new E.Game(new Proxy({}, { get: () => () => {} }), { instant: true });
+    g.startPuzzle(pz);
+    const b = g.world.bodies.find(x => x.kind === 'bowl' && x.y > 36);
+    eq([b.state, b.ditch, b.toucher], ['ditch', 'front', true]);
+    eq(E.Rules.afterDelivery(g.world.bodies, null, Sim.matFront(pz)).dead.length, 0, 'nothing is dead before the shot');
+    const w = Sim.world(pz), c = w.bodies.find(x => x.kind === 'bowl' && x.y > 36);
+    eq([c.state, c.ditch, c.toucher], ['ditch', 'front', true]);
+    const shot = { hand: 'fore', aim: 0.02, weight: 0.6 };
+    const a = Sim.playInGame(pz, shot), r = Sim.play(pz, shot);
+    eq([a.value, a.outcome], [r.value, r.outcome], 'the game and the bare world agree with a bowl in the ditch');
+    const bad = JSON.parse(JSON.stringify(pz)); delete bad.bowls[0].toucher;
+    ok(L.checkHead(bad).problems.some(p => /not a toucher/.test(p)), 'a non-toucher in the ditch rules the head out');
+    eq(Core.headHash(pz) !== Core.headHash(bad), true, 'the toucher mark is part of the head');
   });
 
   test('a left-hander plays the mirrored head and gets the same result', () => {

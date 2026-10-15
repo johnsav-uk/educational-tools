@@ -1,0 +1,54 @@
+{
+  "n": 5,
+  "date": "2026-10-19",
+  "id": "short-and-wide",
+  "title": "Short and wide",
+  "theme": "draw the shot",
+  "greenSpeed": 13,
+  "conditions": "",
+  "match": { "you": 9, "them": 10, "end": 12, "ends": 12 },
+  "you": "yellow",
+  "jack": { "x": -0.6, "y": 27.2 },
+  "bowls": [
+    { "team": "red", "x": -0.52, "y": 27.32 },
+    { "team": "red", "x": -1.05, "y": 26.9 },
+    { "team": "yellow", "x": -0.3, "y": 27.55 },
+    { "team": "yellow", "x": -0.8, "y": 27.6 },
+    { "team": "red", "x": -0.15, "y": 27.85 },
+    { "team": "red", "x": -1.25, "y": 27.75 },
+    { "team": "yellow", "x": -0.95, "y": 26.6 }
+  ],
+  "situation": "A short jack, pushed out to the left of the rink. Red holds one, sitting just behind the jack; their other three are scattered round the head. One down, last end. Nothing complicated: you need a good draw.",
+  "hint": "short jack: watch your weight",
+  "annotations": [
+    { "text": "just the one", "dx": 0.45, "dy": 0.6, "rot": -3 },
+    { "text": "jack's off-centre", "dx": 0.35, "dy": -0.6, "rot": -4 }
+  ],
+  "advised": {
+    "by": "your third",
+    "hand": "fore",
+    "kind": "draw",
+    "target": { "x": -0.66, "y": 27.12 },
+    "say": "Forehand draw, a touch short of the jack.",
+    "aim": 0.02746,
+    "weight": 0.40993
+  },
+  "bench": {
+    "physics": "bias-online-3",
+    "head": "9f2feca4",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 2910032427,
+    "values": [-1.01782,-1.01782,-1.01772,-1.01766,-1.01739,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.0168,-1.01667,-1.01609,-1.01593,-1.01585,-1.01584,-1.01467,-1.01454,-1.01443,-1.0144,-1.01322,-1.01321,-1.01301,-1.01258,-1.01198,-1.01169,-1.01151,-1.01145,-1.01126,-1.01015,-1.00988,-1.00951,-1.00765,-1.00707,-1.00667,-1.00276,-1.00244,-1.00216,-1.00175,0.00001,1.00236,1.00302,1.00401,1.00422,1.00466,1.00627,1.00723,1.0075,1.00938,1.01094,1.0124,1.01326,1.01488,1.01593,2.00527,2.00866,2.00886,2.01077,2.01215,2.01242,2.01266,2.01304,2.01453,2.01475,2.01512,2.01538,2.01665,3.01062,3.01074,3.01216,3.01256,3.01689,3.01776],
+    "outcomes": { "same": 66, "level": 1, "win3": 6, "win2": 13, "win1": 14 },
+    "made": "2026-10-15"
+  },
+  "best": { "hand": "back", "aim": -0.05695, "weight": 0.825, "value": 4.03334, "outcome": "win4", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "win1", "stars": 3.5 },
+    "plainDraw": [{ "hand": "fore", "outcome": "win1", "stars": 3.5 }, { "hand": "back", "outcome": "win1", "stars": 3.5 }],
+    "grid": { "tried": 34122, "starShare": [0.4847,0,0.4499,0.0358,0.0219,0.0077] },
+    "flags": []
+  },
+  "source": "hand-made"
+}

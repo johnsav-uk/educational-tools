@@ -1,0 +1,54 @@
+{
+  "n": 1,
+  "date": "2026-10-15",
+  "id": "red-lying-three",
+  "title": "Red lying three",
+  "theme": "rescue the end",
+  "greenSpeed": 13,
+  "conditions": "",
+  "match": { "you": 18, "them": 18, "end": 21, "ends": 21 },
+  "you": "yellow",
+  "jack": { "x": 0, "y": 29 },
+  "bowls": [
+    { "team": "red", "x": -0.24, "y": 29.14 },
+    { "team": "red", "x": 0.17, "y": 29.15 },
+    { "team": "red", "x": 0.12, "y": 28.82 },
+    { "team": "red", "x": -0.3, "y": 28.4 },
+    { "team": "yellow", "x": -0.22, "y": 28.7 },
+    { "team": "yellow", "x": 0.42, "y": 28.86 },
+    { "team": "yellow", "x": -0.6, "y": 28.55 }
+  ],
+  "situation": "Last end, and the scores are level. Red is lying three round the jack, with a fourth sitting short on the backhand side, and all three yellow woods are out on the edges of the head. You are skip with one bowl left.",
+  "hint": "pick your weight, then play the shot",
+  "annotations": [
+    { "text": "red lying three!", "dx": 0.5, "dy": 0.72, "rot": -4 },
+    { "text": "one wood left", "dx": 0.58, "dy": 0.48, "rot": -3 }
+  ],
+  "advised": {
+    "by": "your third",
+    "hand": "back",
+    "kind": "draw",
+    "target": { "x": -0.02, "y": 28.93 },
+    "say": "Draw it in on the backhand, skip. There's still a gap past their short one.",
+    "aim": -0.06351,
+    "weight": 0.46135
+  },
+  "bench": {
+    "physics": "bias-online-3",
+    "head": "e6789283",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 999904849,
+    "values": [-4.00885,-4.00876,-3.02099,-3.019,-3.01345,-3.01175,-3.0103,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00863,-3.0086,-3.00848,-3.0083,-3.0078,-3.00778,-3.00732,-3.00572,-3.00543,-3.00434,-2.26713,-2.06416,-2.01689,-2.01129,-2.00651,-2.00396,-2.00265,-2.0026,-2.00122,-2.00063,-1.25817,-1.01489,-1.00851,-1.00715,-1.0059,-1.0053,-1.00504,-1.00406,-1.00321,-1.00238,-1.00043,0.4,0.4,1.00019,1.00146,1.00265,1.00352,1.00369,1.0042,1.00464,1.00549,1.006,1.00641,1.0066,1.00694,1.00732,1.00741,1.01561,1.0237,1.03475,1.04281,1.05184,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,2.02632],
+    "outcomes": { "win1": 30, "same": 44, "down": 21, "level": 2, "up": 2, "win2": 1 },
+    "made": "2026-10-15"
+  },
+  "best": { "hand": "fore", "aim": 0.00614, "weight": 0.96, "value": 3.0675, "outcome": "win3", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "same", "stars": 2.5 },
+    "plainDraw": [{ "hand": "fore", "outcome": "down", "stars": 2.5 }, { "hand": "back", "outcome": "win1", "stars": 4 }],
+    "grid": { "tried": 34122, "starShare": [0.3962,0,0.5161,0.0431,0.0244,0.0202] },
+    "flags": []
+  },
+  "source": "hand-made"
+}

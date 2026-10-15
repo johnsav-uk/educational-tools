@@ -1,0 +1,54 @@
+{
+  "n": 2,
+  "date": "2026-10-16",
+  "id": "rain-on-the-green",
+  "title": "Rain on the green",
+  "theme": "wick the jack",
+  "greenSpeed": 10.5,
+  "conditions": "rain",
+  "match": { "you": 15, "them": 17, "end": 18, "ends": 18 },
+  "you": "yellow",
+  "jack": { "x": 0, "y": 29.3 },
+  "bowls": [
+    { "team": "red", "x": 0.03, "y": 29.41 },
+    { "team": "red", "x": -0.02, "y": 29.18 },
+    { "team": "red", "x": 0.16, "y": 29.2 },
+    { "team": "yellow", "x": 0.45, "y": 29.1 },
+    { "team": "yellow", "x": -0.5, "y": 29.3 },
+    { "team": "red", "x": -0.3, "y": 29.9 },
+    { "team": "yellow", "x": 0.6, "y": 28.7 }
+  ],
+  "situation": "Last end and yellow is two down. It has rained all afternoon and the green is heavy: every bowl needs far more weight than you'd think. Red has three packed tight round the jack and a fourth behind, and there is no way in for a draw.",
+  "hint": "heavy green: give it plenty",
+  "annotations": [
+    { "text": "three on the jack", "dx": -1, "dy": 0.62, "rot": -3 },
+    { "text": "green's like treacle", "dx": 0.3, "dy": -0.62, "rot": -4 }
+  ],
+  "advised": {
+    "by": "your second",
+    "hand": "fore",
+    "kind": "drive",
+    "target": { "x": 0, "y": 29.3 },
+    "say": "Fire at the jack on the forehand. Kill the end if you can't move it.",
+    "aim": 0.00517,
+    "weight": 0.96
+  },
+  "bench": {
+    "physics": "bias-online-3",
+    "head": "3bf8ce10",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 1599077863,
+    "values": [-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.05815,-3.02272,-3.02218,-3.02193,-3.02171,-3.02171,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.0204,-3.01968,-3.0189,-3.01748,-3.01717,-3.01707,-3.01462,-3.01456,-3.01453,-3.01257,-3.01255,-3.01212,-3.01195,-3.01159,-3.01059,-3.01056,-3.00957,-3.00947,-3.00934,-3.00927,-3.0092,-3.00881,-3.00874,-3.00866,-3.00848,-3.0084,-3.00832,-3.00781,-3.0076,-3.00751,-3.00605,-3.00537,-3.00525,-2.28833,-2.27608,-2.01242,-2.00871,-2.00512,-2.00474,-2.00422,-2.00409,-2.00395,-2.00376,-2.00363,-2.00207,-2.00161,-1.25647,-1.25464,-1.03706,-1.0222,-1.02086,-1.02003,-1.01865,-1.01841,-1.01506,-1.014,-1.01327,-1.01314,-1.01257,-1.01149,-1.01092,-1.00966,-1.00953,-1.0084,-1.00445,-1.00313,-1.00308,-1.00176,1.00055,1.0008,1.00185,1.00247,1.00867],
+    "outcomes": { "same": 60, "down": 35, "win1": 5 },
+    "made": "2026-10-15"
+  },
+  "best": { "hand": "fore", "aim": 0.00767, "weight": 0.995, "value": 3.00584, "outcome": "win3", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "win1", "stars": 5 },
+    "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 3 }, { "hand": "back", "outcome": "same", "stars": 2.5 }],
+    "grid": { "tried": 34122, "starShare": [0.1669,0.7937,0.008,0.013,0.0071,0.0113] },
+    "flags": []
+  },
+  "source": "hand-made"
+}

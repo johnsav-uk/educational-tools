@@ -1,0 +1,55 @@
+{
+  "n": 4,
+  "date": "2026-10-18",
+  "id": "rest-on-the-shot",
+  "title": "Rest on the shot",
+  "theme": "yard on",
+  "greenSpeed": 12,
+  "conditions": "",
+  "match": { "you": 11, "them": 12, "end": 15, "ends": 15 },
+  "you": "red",
+  "jack": { "x": 0, "y": 28.5 },
+  "bowls": [
+    { "team": "yellow", "x": 0.02, "y": 28.36 },
+    { "team": "yellow", "x": 0.2, "y": 28.62 },
+    { "team": "red", "x": -0.32, "y": 28.6 },
+    { "team": "red", "x": 0.1, "y": 28.95 },
+    { "team": "yellow", "x": 0.45, "y": 28.3 },
+    { "team": "yellow", "x": -0.55, "y": 29.15 },
+    { "team": "red", "x": 0.65, "y": 28.05 }
+  ],
+  "situation": "You're red this time, one down with the last bowl of the match. Yellow's shot bowl is sitting right in front of the jack, with another just behind it on the right. Your best is out on the left; your other two are further away.",
+  "hint": "a yard on: follow it through",
+  "annotations": [
+    { "text": "yellow two", "dx": 0.5, "dy": 0.55, "rot": -3 },
+    { "text": "front bowl is the shot", "dx": -1.05, "dy": -0.45, "rot": -4 }
+  ],
+  "advised": {
+    "by": "your third",
+    "hand": "fore",
+    "kind": "through",
+    "target": { "x": 0.02, "y": 28.36 },
+    "extra": 0.9,
+    "say": "Yard on at the front bowl, forehand. Rest on it and take shot.",
+    "aim": 0.03742,
+    "weight": 0.57207
+  },
+  "bench": {
+    "physics": "bias-online-3",
+    "head": "5b1e63eb",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 3123690520,
+    "values": [-3.28651,-3.26792,-2.26798,-2.26798,-2.26798,-2.26798,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.0675,-2.0675,-2.0675,-2.0675,-2.03384,-2.01798,-2.01597,-2.01475,-2.01183,-2.01167,-2.01127,-2.01118,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.01044,-2.00993,-2.00992,-2.0097,-2.00967,-2.00891,-2.00869,-2.00806,-2.00596,-1.30464,-1.2609,-1.2609,-1.2609,-1.25356,-1.25214,-1.25123,-1.0675,-1.03128,-1.02834,-1.0109,-1.0109,-1.0109,-1.0109,-1.00563,-1.00535,-1.00419,-1.00406,-1.00357,-1.00253,-1.00049,0.75177,0.75177,0.75177,1.0003,1.00116,1.00177,1.00177,1.00177,1.00277,1.005,1.0675,2.03144,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,3.0675],
+    "outcomes": { "same": 55, "down": 21, "win1": 11, "up": 2, "win2": 10, "win3": 1 },
+    "made": "2026-10-15"
+  },
+  "best": { "hand": "fore", "aim": 0.00111, "weight": 0.99, "value": 3.0675, "outcome": "win3", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "down", "stars": 3.5 },
+    "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 2.5 }, { "hand": "back", "outcome": "down", "stars": 3.5 }],
+    "grid": { "tried": 34122, "starShare": [0.2577,0.0261,0.6406,0.0481,0.0251,0.0025] },
+    "flags": []
+  },
+  "source": "hand-made"
+}

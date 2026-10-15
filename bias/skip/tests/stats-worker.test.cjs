@@ -39,10 +39,22 @@ module.exports = async function (T) {
     eq((await post(env, attempt())).status, 204);
     eq(rows(env), [{ day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_attempted', stars: 7, saved: 1, ret: -1, dsl: '1', frm: -1, wsaved: -1, n: 2 }]);
   });
-  test('worker: the day is the server\'s London date, not the client\'s', async () => {
+  test('worker: the day is the server\'s puzzle day (06:00 to 06:00 London), not the client\'s', async () => {
     const env = mkEnv();
-    await post(env, attempt(), at('2026-10-15T23:30:00Z'));   // 00:30 BST on the 16th
+    await post(env, attempt(), at('2026-10-15T23:30:00Z'));   // 00:30 BST on the 16th, before the switch to 06:00: midnight still turns the day
     eq(rows(env)[0].day, '2026-10-16');
+    const e2 = mkEnv();
+    await post(e2, attempt(), at('2026-10-20T04:30:00Z'));    // 05:30 BST on the 20th: still the 19th's puzzle
+    await post(e2, attempt(), at('2026-10-20T05:00:00Z'));    // 06:00 BST: the 20th's
+    eq(rows(e2).map(r => r.day).sort(), ['2026-10-19', '2026-10-20']);
+  });
+  test('worker: archive plays and the puzzles screen are counted, nothing more', async () => {
+    const env = mkEnv(), now = at('2026-10-20T12:00:00Z');
+    eq((await post(env, { name: 'archive_played', props: { puzzleId: 'skip-0012', isFirstGo: true } }, now)).status, 204);
+    eq((await post(env, { name: 'archive_played', props: { puzzleId: 'skip-0012', isFirstGo: false } }, now)).status, 204);
+    eq((await post(env, { name: 'puzzles_list_opened', props: {} }, now)).status, 204);
+    eq((await post(env, { name: 'archive_played', props: { puzzleId: 'skip-0012', isFirstGo: true, stars: 4 } }, now)).status, 400);
+    eq(rows(env).map(r => [r.day, r.puzzle, r.event, r.n]), [['2026-10-20', 'skip-0012', 'archive_played', 1], ['2026-10-20', 'skip-0012', 'archive_played_repeat', 1], ['2026-10-20', '', 'puzzles_list_opened', 1]]);
   });
   test('worker: nothing that could recognise a player is stored', async () => {
     const env = mkEnv();

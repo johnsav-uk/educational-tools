@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <title>Skip Stats</title>
 <style>
-/* Over to you, skip: the private stats dashboard. One look, the puzzle's own: paper sheets on
+/* Over to You, Skip!: the private stats dashboard. One look, the puzzle's own: paper sheets on
    a mown lawn, scoreboard tiles for the headline figures. Light only, by design. */
 @font-face { font-family: "Big Shoulders Display"; src: url("../../skip/fonts/big-shoulders-display.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "Newsreader"; src: url("../../skip/fonts/newsreader.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
@@ -95,8 +95,8 @@ tbody tr:hover { background: #F3F1E6; }
 <body>
 <div class="wrap">
   <header>
-    <h1>Over to you, skip · stats</h1>
-    <p class="sub">Private. Daily counters only: no names, accounts or addresses, so no player can be picked out. Days run on London time.</p>
+    <h1>“Over to You, Skip!” · stats</h1>
+    <p class="sub">Private. Daily counters only: no names, accounts or addresses, so no player can be picked out. Days are puzzle days: 06:00 to 06:00 London time.</p>
   </header>
 
   <section class="sheet" id="login" aria-labelledby="loginH">
@@ -171,14 +171,15 @@ tbody tr:hover { background: #F3F1E6; }
   })();
   const KEY = 'skip.admin';
   const ss = { get() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }, set(v) { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch (e) { /* tab only */ } } };
-  let key = ss.get(), titles = {};
+  let key = ss.get(), catalogue = {};
   const pct = v => v == null ? '–' : Math.round(v * 100) + '%';
   const num = v => v == null ? '–' : String(v);
   const two = v => v == null ? '–' : v.toFixed(2);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const shortDay = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
-  fetch('../../skip/puzzles.json').then(r => r.json()).then(d => { for (const p of d.puzzles) titles[p.id] = p.title; }).catch(() => {});
+  // the released puzzles, so each counter row gets its number, title and date
+  const catLoaded = fetch('../../skip/puzzles/index.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { for (const e of d.puzzles) catalogue[e.id] = e; }).catch(() => {});
 
   async function call(path) {
     const r = await fetch(STATS + path, { headers: { Authorization: 'Bearer ' + key }, cache: 'no-store' });
@@ -198,6 +199,7 @@ tbody tr:hover { background: #F3F1E6; }
       return;
     }
     $('login').hidden = true; $('dash').hidden = false;
+    await catLoaded;
     render(rows);
   }
   function showLogin(msg) { $('dash').hidden = true; $('login').hidden = false; $('loginErr').textContent = msg || ''; $('key').focus(); }
@@ -208,7 +210,7 @@ tbody tr:hover { background: #F3F1E6; }
   $('csv').onclick = async () => {
     try {
       const blob = await (await call('/admin/counters.csv')).blob(), a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `skip-counters-${C.londonDate(Date.now())}.csv`; document.body.appendChild(a); a.click(); a.remove();
+      a.href = URL.createObjectURL(blob); a.download = `skip-counters-${C.puzzleDay(Date.now())}.csv`; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     } catch (e) { $('dashErr').textContent = e.message; }
   };
@@ -217,7 +219,7 @@ tbody tr:hover { background: #F3F1E6; }
   let last = null;
   function render(rows) {
     last = rows;
-    const today = C.londonDate(Date.now()), daily = C.dailyMetrics(rows, today, 14), T = C.TARGETS;
+    const today = C.puzzleDay(Date.now()), daily = C.dailyMetrics(rows, today, 14), T = C.TARGETS;   // puzzle days: 06:00 to 06:00 London
     $('period').textContent = `The 14 days to ${shortDay(today)} · ${rows.length} counter rows in all`;
     // verdict
     $('verdict').innerHTML = C.verdict(daily).map(v => `<div class="vrow"><strong>${esc(v.label)}</strong><span class="v">${esc(v.shown)}</span><span class="t">target ${esc(v.target)}</span>` +
@@ -227,23 +229,28 @@ tbody tr:hover { background: #F3F1E6; }
     const tiles = s => String(s).split('').map(ch => `<span class="tile">${esc(ch)}</span>`).join('');
     const w = k => { let n = 0, t = 0; for (const d of daily) if (d[k] != null) { n += d[k] * d.attempts; t += d.attempts; } return t ? n / t : null; };
     const board = [['Players who viewed', sum('viewed')], ['Players who played', sum('attempts')], ['Attempt rate', vd.attemptRate.shown], ['Stars, first go', vd.avgStars.shown],
-      ['Stars, best of day', two(w('avgBest'))], ['Goes per player', w('goesPerPlayer') == null ? '–' : w('goesPerPlayer').toFixed(1)], ['Next-day return', vd.nextDayReturn.shown]];
+      ['Stars, best of day', two(w('avgBest'))], ['Goes per player', w('goesPerPlayer') == null ? '–' : w('goesPerPlayer').toFixed(1)], ['Next-day return', vd.nextDayReturn.shown],
+      ['Archive plays', sum('archivePlays')]];
     $('board').innerHTML = board.map(([k, v]) => `<div><dt>${k}</dt><dd>${tiles(v)}</dd></div>`).join('');
     // charts
     bars($('chart1'), daily);
     lines($('chart2'), daily);
     // day table
     const cols = [['Day', d => shortDay(d.day)], ['Viewed', d => num(d.viewed)], ['Played', d => num(d.attempts)], ['Attempt rate', d => pct(d.attemptRate)], ['Stars, first go', d => two(d.avgStars)],
-      ['Stars, best', d => two(d.avgBest)], ['Saved it, first go', d => pct(d.savedRate)], ['Saved it, best', d => pct(d.bestSavedRate)], ['Goes per player', d => d.goesPerPlayer == null ? '–' : d.goesPerPlayer.toFixed(1)], ['Shares per attempt', d => two(d.sharesPerAttempt)], ['Full match per attempt', d => two(d.fullPerAttempt)], ['Next-day return', d => pct(d.nextDayReturn)]];
+      ['Stars, best', d => two(d.avgBest)], ['Saved it, first go', d => pct(d.savedRate)], ['Saved it, best', d => pct(d.bestSavedRate)], ['Goes per player', d => d.goesPerPlayer == null ? '–' : d.goesPerPlayer.toFixed(1)], ['Shares per attempt', d => two(d.sharesPerAttempt)], ['Full match per attempt', d => two(d.fullPerAttempt)], ['Next-day return', d => pct(d.nextDayReturn)],
+      ['Archive plays', d => num(d.archivePlays)], ['Archive goes', d => num(d.archiveGoes)], ['Puzzles screen opened', d => num(d.listsOpened)]];
     $('days').innerHTML = `<thead><tr>${cols.map(c => `<th scope="col">${c[0]}</th>`).join('')}</tr></thead><tbody>` +
       daily.slice().reverse().map(d => `<tr>${cols.map((c, i) => { const v = c[1](d); return i ? `<td class="${v === '–' || v === '0' ? 'dim' : ''}">${v}</td>` : `<th scope="row">${v}</th>`; }).join('')}</tr>`).join('') + '</tbody>';
     // puzzle table
     $('easy').textContent = pct(T.tooEasy); $('hard').textContent = pct(T.tooHard);
-    const pz = C.puzzleMetrics(rows);
-    $('puzzles').innerHTML = `<thead><tr><th scope="col">Puzzle</th><th scope="col">Viewed</th><th scope="col">First attempts</th>${C.BANDS.map(b => `<th scope="col">${b === '5' ? '5★' : b === '0' ? '0–½★' : b + '–' + b + '½★'}</th>`).join('')}<th scope="col">Stars, first go</th><th scope="col">Five stars, first go</th><th scope="col">Saved it, first go</th><th scope="col">Stars, best</th><th scope="col">Five stars, best</th><th scope="col">Flag</th></tr></thead><tbody>` +
-      (pz.length ? pz.map(p => `<tr><th scope="row">${esc(titles[p.puzzle] || p.puzzle)}</th><td>${p.viewed}</td><td>${p.attempted}</td>${p.bands.map(n => `<td class="${n ? '' : 'dim'}">${n}</td>`).join('')}<td>${two(p.avgStars)}</td><td>${pct(p.fiveShare)}</td><td>${pct(p.savedShare)}</td><td>${two(p.avgBest)}</td><td>${pct(p.bestFiveShare)}</td>` +
+    // newest puzzle first; anything not in the catalogue (a test id) at the end
+    const pz = C.puzzleMetrics(rows).sort((a, b) => ((catalogue[b.puzzle] || {}).n || 0) - ((catalogue[a.puzzle] || {}).n || 0) || b.attempted - a.attempted);
+    const name = p => { const e = catalogue[p.puzzle]; return e ? `No. ${e.n} · ${e.title}` : p.puzzle; };
+    const released = p => { const e = catalogue[p.puzzle]; return e ? shortDay(e.date) : '–'; };
+    $('puzzles').innerHTML = `<thead><tr><th scope="col">Puzzle</th><th scope="col">Released</th><th scope="col">Viewed</th><th scope="col">First attempts</th>${C.BANDS.map(b => `<th scope="col">${b === '5' ? '5★' : b === '0' ? '0–½★' : b + '–' + b + '½★'}</th>`).join('')}<th scope="col">Stars, first go</th><th scope="col">Five stars, first go</th><th scope="col">Saved it, first go</th><th scope="col">Stars, best</th><th scope="col">Five stars, best</th><th scope="col">Archive plays</th><th scope="col">Flag</th></tr></thead><tbody>` +
+      (pz.length ? pz.map(p => `<tr><th scope="row">${esc(name(p))}</th><td>${esc(released(p))}</td><td>${p.viewed}</td><td>${p.attempted}</td>${p.bands.map(n => `<td class="${n ? '' : 'dim'}">${n}</td>`).join('')}<td>${two(p.avgStars)}</td><td>${pct(p.fiveShare)}</td><td>${pct(p.savedShare)}</td><td>${two(p.avgBest)}</td><td>${pct(p.bestFiveShare)}</td><td class="${p.archive ? '' : 'dim'}">${p.archive}</td>` +
         `<td>${p.flag ? `<span class="chip not">${esc(p.flag)}</span>` : p.attempted ? '<span class="chip met">OK</span>' : ''}</td></tr>`).join('')
-        : `<tr><td class="empty" colspan="${C.BANDS.length + 9}">No puzzles played yet. Rows appear here once players open the puzzle.</td></tr>`) + '</tbody>';
+        : `<tr><td class="empty" colspan="${C.BANDS.length + 11}">No puzzles played yet. Rows appear here once players open the puzzle.</td></tr>`) + '</tbody>';
   }
 
   // Shared chart frame: one y scale, a faint grid, day labels along the bottom, a tooltip.

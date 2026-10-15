@@ -4,7 +4,7 @@ const path = require('path');
 require('./harness.js');
 globalThis.SkipCore = require('../skip-core.js');
 const fs = require('fs');
-const files = ['skip-core.test.js', 'game-puzzle.test.cjs', 'stats-worker.test.cjs'].filter(f => fs.existsSync(path.join(__dirname, f)));
+const files = ['skip-core.test.js', 'game-puzzle.test.cjs', 'catalogue.test.cjs', 'stats-worker.test.cjs'].filter(f => fs.existsSync(path.join(__dirname, f)));
 (async () => {
   for (const f of files) {
     const mod = require(path.join(__dirname, f));

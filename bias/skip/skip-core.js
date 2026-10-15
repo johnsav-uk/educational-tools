@@ -1,4 +1,4 @@
-/* Over to you, skip: the daily puzzle's pure logic.
+/* Over to You, Skip!: the daily puzzle's pure logic.
    No page, no physics: the page (skip.js), the tests, the benchmark script and the
    stats Worker all load this one file, so the rules for dates, stars, streaks and
    events are written once.
@@ -26,12 +26,69 @@
 
   // The issue number printed on the sheet and in the share text: #1 on the start date.
   const issueNumber = (date, start = START) => daysBetween(start, date) + 1;
-  // The day's puzzle: the list in order, round and round. Before the start date it shows #1.
+  const dateFor = (n, start = START) => addDays(start, n - 1);
+  /* The rotation the first puzzles were served by: the hand-made list, round and round.
+     Kept only as the back-fill rule, so #1… keep exactly the heads players saw on their day. */
   function puzzleIndex(date, count, start = START) {
     if (!count) return -1;
     const i = Math.max(0, daysBetween(start, date));
     return i % count;
   }
+
+  /* ---------- the puzzle day: 06:00 to 06:00 London ----------
+     A new puzzle comes out at 06:00 London time, so at 01:00 on the 20th the puzzle is still
+     the 19th's. Worked out from London's own wall clock, never by taking six hours off UTC,
+     which is an hour out on the two nights the clocks change. Until SWITCH the day changed
+     at midnight: the puzzle released at midnight on the day before SWITCH runs to 06:00 on
+     SWITCH, so no number ever goes backwards. */
+  const RELEASE_HOUR = 6;
+  const SWITCH = '2026-10-17';
+  const fmtH = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+  function londonParts(ms) {
+    const p = {}; for (const x of fmtH.formatToParts(new Date(ms))) p[x.type] = x.value;
+    return { date: `${p.year}-${p.month}-${p.day}`, hour: +p.hour % 24 };
+  }
+  function puzzleDay(ms) {
+    const p = londonParts(ms);
+    return p.hour < RELEASE_HOUR && p.date >= SWITCH ? addDays(p.date, -1) : p.date;
+  }
+
+  /* ---------- the catalogue: one puzzle per puzzle day, numbered by date ----------
+     #N is released on START + (N − 1) days, so share links, stats and the archive always agree.
+     skip/puzzles/index.json lists the released puzzles ({ n, date, id, title, … }), and
+     skip/puzzles/NNNN.json holds each one in full. */
+  const pad4 = n => String(n).padStart(4, '0');
+  const puzzleFile = n => pad4(n) + '.json';
+  const generatedId = n => 'skip-' + pad4(n);
+  // Today's entry: the one dated `day`; if a day was missed, the last one released before it. Never a future one.
+  function entryFor(list, day) {
+    let best = null;
+    for (const e of list || []) if (e.date <= day && (!best || e.date > best.date)) best = e;
+    return best;
+  }
+  // An archive puzzle by number: only once its day has come.
+  function entryByNumber(list, n, day) {
+    const e = (list || []).find(x => x.n === n);
+    return e && e.date <= day ? e : null;
+  }
+  /* The puzzles screen: today's first, then the last 7 days' puzzles this device has not
+     played ("New"), newest first; everything else released is the archive, newest first. */
+  function listSections(list, day, archive, recent = 7) {
+    const today = entryFor(list, day), out = { today, fresh: [], archive: [] };
+    const released = (list || []).filter(e => e.date <= day && e !== today).sort((a, b) => b.n - a.n);
+    for (const e of released) {
+      if (daysBetween(e.date, day) < recent && !(archive && archive[String(e.n)])) out.fresh.push(e);
+      else out.archive.push(e);
+    }
+    return out;
+  }
+  // A share or deep link: ?skip opens today's puzzle, ?skip=12 opens #12.
+  function linkNumber(param) {
+    if (param == null) return null;
+    const m = /^#?0*(\d{1,5})$/.exec(String(param).trim());
+    return m && +m[1] >= 1 ? +m[1] : null;
+  }
+
   // The instant the London date next changes. The clocks change at 01:00 UTC, never at midnight,
   // so every London midnight exists exactly once (whether the day is 23, 24 or 25 hours long).
   function nextLondonMidnight(ms) {
@@ -101,15 +158,16 @@
   const starWords = s => `${s} star${s === 1 ? '' : 's'} out of 5`;
   // The day's best, and how many goes it took: five stars first go reads differently from five in ten.
   const goesText = tries => !tries || tries <= 1 ? 'first go' : `in ${tries} goes`;
+  const NAME = '“Over to You, Skip!”';   // the name in speech marks: it is what your third says, handing you the last bowl
   function shareText(issue, stars, url, tries) {
-    return `Over to you skip #${issue} ${starText(stars)}` + (tries ? ` ${goesText(tries)}` : '') + (url ? `\n${url}` : '');
+    return `${NAME} #${issue} ${starText(stars)}` + (tries ? ` ${goesText(tries)}` : '') + (url ? `\n${url}` : '');
   }
 
   /* A fingerprint of everything the benchmark depends on, so a puzzle edited without
      re-running tools/benchmark.cjs is noticed (the page warns in the console, the script re-runs it). */
   function headHash(pz) {
     const a = pz.advised || {};
-    const s = JSON.stringify([pz.greenSpeed, pz.matRear || null, pz.you, pz.jack, pz.bowls.map(b => [b.team, b.x, b.y]), pz.match || null,
+    const s = JSON.stringify([pz.greenSpeed, pz.matRear || null, pz.you, pz.jack, pz.bowls.map(b => [b.team, b.x, b.y].concat(b.ditch ? ['ditch'] : [], b.toucher ? ['toucher'] : [])), pz.match || null,
       [a.hand, a.kind, a.target, a.extra || null, a.drive || null]]);
     let h = 0x811c9dc5;
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
@@ -175,6 +233,33 @@
     n.today = { date, puzzleId, stars: result.stars, outcome: result.outcome, saved, tries: 1, firstStars: result.stars };
     return { stats: n, first: true, improved: false, from: null };
   }
+  /* Archive puzzles: this device's best stars and goes for each number, kept apart from the
+     daily stats so an archive puzzle never touches the streak. Today's puzzle is recorded here
+     too, so its result is still shown once it has moved into the archive.
+     { "12": { "stars": 4, "tries": 2 } } */
+  const ARCHIVE_KEY = 'bias.skip.archive';
+  function cleanArchive(a) {
+    const out = {};
+    if (!a || typeof a !== 'object' || Array.isArray(a)) return out;
+    for (const k of Object.keys(a)) {
+      const v = a[k];
+      if (/^[1-9]\d{0,4}$/.test(k) && v && isStars(v.stars) && Number.isInteger(v.tries) && v.tries >= 1) out[k] = { stars: v.stars, tries: v.tries };
+    }
+    return out;
+  }
+  function loadArchive(storage) {
+    try { return cleanArchive(JSON.parse(storage.getItem(ARCHIVE_KEY) || 'null')); } catch (e) { return {}; }
+  }
+  function saveArchive(storage, a) { try { storage.setItem(ARCHIVE_KEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
+  // One go at puzzle n. Returns { archive, first, improved, from }; never mutates the input.
+  function recordArchive(a, n, stars) {
+    const k = String(n), out = Object.assign({}, a), was = a[k];
+    if (!was) { out[k] = { stars, tries: 1 }; return { archive: out, first: true, improved: false, from: null }; }
+    const improved = stars > was.stars;
+    out[k] = { stars: improved ? stars : was.stars, tries: was.tries + 1 };
+    return { archive: out, first: false, improved, from: was.stars };
+  }
+
   // A view is counted once per device per day.
   function recordView(s, date) {
     if (s.viewed === date) return { stats: s, first: false };
@@ -192,7 +277,9 @@
     puzzle_replayed: { puzzleId: 'id' },
     puzzle_improved: { puzzleId: 'id', fromStars: 'stars', toStars: 'stars', wasSaved: 'bool', saved: 'bool' },
     result_shared: { puzzleId: 'id' },
-    full_match_clicked: { puzzleId: 'id' }
+    full_match_clicked: { puzzleId: 'id' },
+    archive_played: { puzzleId: 'id', isFirstGo: 'bool' },
+    puzzles_list_opened: {}
   };
   const CHECK = {
     id: v => typeof v === 'string' && PUZZLE_ID.test(v),
@@ -222,7 +309,7 @@
      puzzle_improved, from one star level to another, so the best of the day can be counted
      without ever knowing who the player is. */
   function counterFor(ev, day) {
-    const p = ev.props, c = { day, puzzle: p.puzzleId, event: ev.name, stars: -1, saved: -1, returning: -1, dsl: '', from: -1, wasSaved: -1 };
+    const p = ev.props, c = { day, puzzle: p.puzzleId || '', event: ev.name, stars: -1, saved: -1, returning: -1, dsl: '', from: -1, wasSaved: -1 };
     if (ev.name === 'puzzle_improved') { c.stars = Math.round(p.toStars * 2); c.saved = p.saved ? 1 : 0; c.from = Math.round(p.fromStars * 2); c.wasSaved = p.wasSaved ? 1 : 0; }
     if (ev.name === 'puzzle_viewed') { c.returning = p.returning ? 1 : 0; c.dsl = dslBucket(p.daysSinceLastPlay); }
     if (ev.name === 'puzzle_attempted') {
@@ -230,6 +317,7 @@
       if (p.isFirstAttemptOfDay) { c.stars = Math.round(p.stars * 2); c.saved = p.saved ? 1 : 0; }
       else c.event = 'puzzle_attempted_repeat';
     }
+    if (ev.name === 'archive_played' && !p.isFirstGo) c.event = 'archive_played_repeat';
     return c;
   }
   const counterKey = c => [c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl, c.from, c.wasSaved].join('|');
@@ -263,7 +351,7 @@
   const ratio = (a, b) => b ? a / b : null;
   function dailyMetrics(rows, endDay, days = 14) {
     const out = [], by = new Map();
-    const blank = () => ({ viewed: 0, attempts: 0, starSum: 0, saved: 0, five: 0, replays: 0, repeats: 0, shares: 0, full: 0, fromYesterday: 0, bestSum: 0, bestSaved: 0 });
+    const blank = () => ({ viewed: 0, attempts: 0, starSum: 0, saved: 0, five: 0, replays: 0, repeats: 0, shares: 0, full: 0, fromYesterday: 0, bestSum: 0, bestSaved: 0, archive: 0, archiveGoes: 0, lists: 0 });
     for (const r of rows) {
       if (!by.has(r.day)) by.set(r.day, blank());
       const d = by.get(r.day);
@@ -278,6 +366,9 @@
       else if (r.event === 'puzzle_replayed') d.replays += r.n;
       else if (r.event === 'result_shared') d.shares += r.n;
       else if (r.event === 'full_match_clicked') d.full += r.n;
+      else if (r.event === 'archive_played') { d.archive += r.n; d.archiveGoes += r.n; }
+      else if (r.event === 'archive_played_repeat') d.archiveGoes += r.n;
+      else if (r.event === 'puzzles_list_opened') d.lists += r.n;
     }
     for (let i = days - 1; i >= 0; i--) {
       const day = addDays(endDay, -i), d = by.get(day) || blank(), prev = by.get(addDays(day, -1)) || blank();
@@ -285,7 +376,7 @@
         attemptRate: ratio(d.attempts, d.viewed), avgStars: ratio(d.starSum, d.attempts), savedRate: ratio(d.saved, d.attempts),
         avgBest: ratio(d.bestSum, d.attempts), bestSavedRate: ratio(d.bestSaved, d.attempts), goesPerPlayer: d.attempts ? 1 + d.replays / d.attempts : null,
         replaysPerAttempt: ratio(d.replays, d.attempts), sharesPerAttempt: ratio(d.shares, d.attempts), fullPerAttempt: ratio(d.full, d.attempts),
-        nextDayReturn: ratio(d.fromYesterday, prev.attempts) });
+        nextDayReturn: ratio(d.fromYesterday, prev.attempts), archivePlays: d.archive, archiveGoes: d.archiveGoes, listsOpened: d.lists });
     }
     return out;
   }
@@ -294,9 +385,11 @@
   function puzzleMetrics(rows, targets = TARGETS) {
     const by = new Map();
     for (const r of rows) {
-      if (!by.has(r.puzzle)) by.set(r.puzzle, { puzzle: r.puzzle, viewed: 0, attempted: 0, bands: [0, 0, 0, 0, 0, 0], starSum: 0, five: 0, saved: 0, bestSum: 0, bestFive: 0 });
+      if (!r.puzzle) continue;   // events about no one puzzle (the puzzles screen opened)
+      if (!by.has(r.puzzle)) by.set(r.puzzle, { puzzle: r.puzzle, viewed: 0, attempted: 0, archive: 0, bands: [0, 0, 0, 0, 0, 0], starSum: 0, five: 0, saved: 0, bestSum: 0, bestFive: 0 });
       const p = by.get(r.puzzle);
       if (r.event === 'puzzle_viewed') p.viewed += r.n;
+      if (r.event === 'archive_played') p.archive += r.n;
       if (r.event === 'puzzle_attempted' && r.stars >= 0) {
         p.attempted += r.n; p.bands[Math.floor(r.stars / 2)] += r.n; p.starSum += r.n * r.stars / 2; p.bestSum += r.n * r.stars / 2;
         if (r.stars === 10) { p.five += r.n; p.bestFive += r.n; } if (r.saved === 1) p.saved += r.n;
@@ -335,10 +428,12 @@
   }
 
   const api = {
-    TZ, START, londonDate, addDays, daysBetween, isDate, issueNumber, puzzleIndex, nextLondonMidnight, countdown,
+    TZ, START, londonDate, addDays, daysBetween, isDate, issueNumber, dateFor, puzzleIndex, nextLondonMidnight, countdown,
+    RELEASE_HOUR, SWITCH, londonParts, puzzleDay, pad4, puzzleFile, generatedId, entryFor, entryByNumber, listSections, linkNumber, NAME,
     OUTCOMES, OUTCOME_KEYS, outcomeOf, oppCount, isSaved, outcomeInfo,
     beatShare, topCut, starsFor, isStars, starText, starWords, goesText, shareText, headHash,
     STATS_KEY, freshStats, cleanStats, loadStats, saveStats, daysSinceLastPlay, currentStreak, playedToday, recordAttempt, recordView,
+    ARCHIVE_KEY, cleanArchive, loadArchive, saveArchive, recordArchive,
     EVENTS, validateEvent, dslBucket, DSL_BUCKETS, counterFor, counterKey,
     TARGETS, todaySummary, dailyMetrics, puzzleMetrics, verdict, pct, BANDS, COUNTER_COLUMNS, toCsv
   };

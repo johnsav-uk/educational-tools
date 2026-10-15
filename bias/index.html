@@ -380,6 +380,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .title .menu-item.primary:hover{background:#f7f0de}
 .title .menu-item .mi-sub{display:block;font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cream-2);margin-top:3px;text-shadow:none}
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.66)}
+.title .menu-item .mi-new{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px;text-shadow:none}
 .title-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 0;margin:18px -6px 0}
 .title-links button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 6px;white-space:nowrap;border:0;border-radius:8px;background:transparent;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--cream-2)}
 .title-links button:hover{background:rgba(238,231,212,.08);color:var(--cream)}
@@ -691,7 +692,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
-        <button class="menu-item" id="mSkip" hidden>Over to you, skip (testing)<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
+        <button class="menu-item" id="mSkip" hidden>“Over to You, Skip!” <span class="mi-new">New</span><span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -4011,7 +4012,7 @@ class Game {
   isTeams() { return !!this.match && this.match.discipline.positions > 1; }
   weightKey(kind, side, mi) { return kind + side + '.' + (mi || 0); }
   liveBodies() { return this.world.bodies.filter(b => !b.dead); }
-  endLabel() { if (this.mode === 'puzzle') return 'Over to you, skip'; if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
+  endLabel() { if (this.mode === 'puzzle') return '“Over to You, Skip!”'; if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
   isExtraEnd() { return !!this.match && this.match.format.type === 'ends' && this.endNo > this.match.format.n; }
 
   // ---------- starting play ----------
@@ -4043,8 +4044,8 @@ class Game {
     this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, deadEnds: 0 };
     this.startEnd(false); this.snapCam = true;
   }
-  /* Over to you, skip (bias/skip/): a fixed head from the last end, and one bowl to play with
-     the ordinary controls. pz is a puzzle from bias/skip/puzzles.json. A left-hander gets the
+  /* Over to You, Skip! (bias/skip/): a fixed head from the last end, and one bowl to play with
+     the ordinary controls. pz is a puzzle from bias/skip/puzzles/. A left-hander gets the
      head mirrored, so "forehand" means the same shot. When everything stops, resolvePuzzle hands
      the head to the puzzle screen, which scores it with Rules.score. */
   startPuzzle(pz) {
@@ -4059,10 +4060,11 @@ class Game {
     for (const b of pz.bowls) {
       const o = b.team === pz.you ? 0 : 1, body = this.world.add(new Body('bowl', o));
       body.place(m * b.x, b.y); body.heading = m * (b.heading || 0); body.colour = colourHex('pz-' + b.team); body.num = ++count[o]; body.member = 0;
+      body.toucher = !!b.toucher; if (b.ditch) { body.state = 'ditch'; body.ditch = 'front'; }   // a chalked toucher, on the green or in the front ditch (live)
     }
     this.puzzle = { pz };
     this.beginBowl(0);
-    this.ui.banner('Over to you, skip', pz.title, 'One bowl to save the end');
+    this.ui.banner('“Over to You, Skip!”', pz.title, 'One bowl to save the end');
     this.snapCam = true;
   }
   resetEndState() {
@@ -4969,7 +4971,7 @@ const UI = {
     const g = game, sb = $('scoreboard');
     if (g.mode === 'puzzle') {
       const left = 1 - g.players[0].played, them = g.players[1];
-      setHtml(sb, `<div class="sb-cell"><div class="kicker">Over to you, skip</div><div class="sb-big">${left ? 'Last bowl' : 'Played'}</div></div>
+      setHtml(sb, `<div class="sb-cell"><div class="kicker">“Over to You, Skip!”</div><div class="sb-big">${left ? 'Last bowl' : 'Played'}</div></div>
         <div class="sb-cell sb-opt"><div class="kicker">You</div><div class="sb-meta"><span class="pip" style="--c:${colourHex(g.players[0].colour)}"></span>${left} bowl${left === 1 ? '' : 's'} to play</div></div>
         <div class="sb-cell sb-opt"><div class="kicker">Green</div><div class="sb-meta num">${g.world.T.toFixed(1)} s · ${GreenSpeed.label(g.world.T)}</div></div>`);
       return;
@@ -6381,12 +6383,13 @@ window.BiasDebug = { CAM, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI
   glCameraTest, glLoseContext(ms = 2000) { const x = scene.gl && scene.gl.r.getContext().getExtension('WEBGL_lose_context'); if (!x) return false; x.loseContext(); setTimeout(() => x.restoreContext(), ms); return true; },
   get game() { return game; }, Coach };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
-// ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
+// ---------- Over to You, Skip!: the daily puzzle (bias/skip/) ----------
 /* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
    the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
 const FEATURES = { dailySkip: true };   // false hides it from the menu; ?skip=preview still opens it, for checking
 const skipParam = new URLSearchParams(location.search).get('skip');
 const skipOn = FEATURES.dailySkip || skipParam === 'preview';
+const skipLink = p => { const m = /^#?0*(\d{1,5})$/.exec(String(p == null ? '' : p).trim()); return m && +m[1] >= 1 ? +m[1] : undefined; };   // as SkipCore.linkNumber, before it loads
 window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide, AI, Settings, Sound, reduced };
 /* What the puzzle screen may ask of the game. Every puzzle shot is played here, on the green,
    with the game's own controls; the screen only briefs the player before and judges after. */
@@ -6411,9 +6414,9 @@ const Skip = {
     }
     return this.files;
   },
-  open() {
+  open(number) {   // number: a puzzle from the archive (a share link, ?skip=12); otherwise today's
     if (game.phase === 'charge') game.cancelCharge();
-    this.load().then(() => window.SkipPage.open({ engine: window.BiasEngine, host: SkipHost }))
+    this.load().then(() => window.SkipPage.open({ engine: window.BiasEngine, host: SkipHost, number }))
       .catch(() => UI.toast('The daily puzzle could not load. Check your connection and try again.', 'warn'));
   },
   covers() { return document.body.classList.contains('skip-open'); },
@@ -6422,7 +6425,7 @@ const Skip = {
     const C = window.SkipCore; if (!C) return;
     let ls = null; try { ls = window.localStorage; } catch (e) { /* blocked */ }
     const st = C.loadStats(ls || { getItem: () => null });
-    const now = Date.now(), d = C.londonDate(now);
+    const d = C.puzzleDay(Date.now());   // a new puzzle comes out at 06:00 London
     $('mSkipSub').textContent = C.playedToday(st, d) ? `#${C.issueNumber(d)} · your best today ${C.starText(st.today.stars)} · have another go to beat it` : `#${C.issueNumber(d)} · the daily puzzle: one bowl to save the end`;
   }
 };
@@ -6447,7 +6450,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classLis
   else if (ROOM_RE.test(q)) OnlineUI.open(q);
 }
 Lobby.start(); QM.paint();
-if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open();   // ?skip opens today's puzzle (shared results link here)
+if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open(skipLink(skipParam));   // ?skip opens today's puzzle, ?skip=12 puzzle No. 12 (shared results link here)
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 if (GLFLAGS.want && /[?&]test\b/.test(location.search)) setTimeout(() => glCameraTest().then(r => UI.toast(`GL camera parity: ${r.pass ? 'pass' : 'FAIL'} (max ${r.maxPixelError} px, see console)`)), 1500);

@@ -1,6 +1,9 @@
-/* Over to you, skip: the daily puzzle's briefing and verdict.
+/* Over to You, Skip!: the daily puzzle's briefing and verdict, and the puzzles screen.
    bias/index.html loads this on demand (with skip-core.js and skip-sim.js) and calls
-   SkipPage.open(). The shot itself is always played in the game: this card sets the head
+   SkipPage.open(). Puzzles come from the catalogue: puzzles/index.json lists every released
+   puzzle (one a day, numbered by date, out at 06:00 London) and puzzles/NNNN.json holds each.
+   Today's puzzle counts for the streak; an archive puzzle keeps its own best and never touches
+   it. The shot itself is always played in the game: this card sets the head
    out on the green (host.setUp), steps aside while the player bowls with the game's own
    controls (host.play), and comes back when the game reports that everything has stopped
    (SkipPage.done). The head is then scored with the game's Rules.score and AI.value, the
@@ -9,7 +12,7 @@
   'use strict';
   const C = window.SkipCore;
   const HERE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : location.href;
-  const SHARE_URL = 'https://www.johnsav.co.uk/bias/?skip';
+  const SHARE_URL = n => 'https://www.johnsav.co.uk/bias/?skip=' + n;   // a share opens that puzzle, by number
   // The stats Worker (bias/stats-worker/). ?stats=<url> points at another one; ?stats=off sends nothing.
   const STATS_URL = (() => {
     const q = new URLSearchParams(location.search).get('stats');
@@ -45,7 +48,9 @@
     }
   };
 
-  let E, Sim, host, root, $, S = null, puzzles = null, clockTimer = 0;
+  let E, Sim, host, root, $, S = null, index = null, clockTimer = 0;
+  const cache = new Map();
+  const store = () => LS || NOSTORE;
   const el = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tokens = {};
@@ -61,7 +66,11 @@
     root = el(`
 <div id="skip" role="dialog" aria-modal="true" aria-labelledby="skTitle" hidden>
   <div class="sk-top">
-    <button class="sk-chip" id="skMenu" aria-label="Main menu">‹ <span class="sk-long">Main </span>menu</button>
+    <div class="sk-topleft">
+      <button class="sk-chip" id="skMenu" aria-label="Main menu">‹ <span class="sk-long">Main </span>menu</button>
+      <button class="sk-chip sk-allbtn" id="skAll" aria-label="All puzzles"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="sk-alltext"><span class="sk-long">All </span>puzzles</span></button>
+      <button class="sk-chip" id="skToday" hidden>Today<span class="sk-long">'s puzzle</span></button>
+    </div>
     <div class="sk-topright" id="skTopRight">
       <span class="sk-fresh" id="skFresh" hidden>A new puzzle is ready.<button class="sk-chip" id="skReload">Open it</button></span>
     </div>
@@ -70,7 +79,7 @@
     <section class="sk-board" aria-label="Today's puzzle">
       <div class="sk-clip" aria-hidden="true"></div>
       <div class="sk-sheet">
-        <header class="sk-head"><h1 id="skTitle">Over to you, skip <span class="sk-testing">(testing)</span></h1><p class="sk-meta" id="skMeta"></p></header>
+        <header class="sk-head"><h1 id="skTitle">“Over to You, Skip!”</h1><p class="sk-meta" id="skMeta"></p></header>
         <div class="sk-plan"><canvas id="skPlan" role="img" aria-describedby="skHeadText"></canvas></div>
         <div class="sk-sr" id="skHeadText"></div>
         <p class="sk-advice" id="skAdvice"></p>
@@ -89,11 +98,20 @@
       <div class="sk-share" id="skShare" hidden></div>
     </aside>
   </div>
+  <div class="sk-listwrap" id="skList" hidden>
+    <section class="sk-listsheet" aria-labelledby="skListTitle">
+      <header class="sk-head"><h1 id="skListTitle" tabindex="-1">All puzzles</h1><p class="sk-meta">“Over to You, Skip!” · a new one every morning at 6</p></header>
+      <p class="sk-toast" id="skListToast" role="status" aria-live="polite"></p>
+      <div id="skListBody"></div>
+    </section>
+  </div>
 </div>`);
     document.body.appendChild(root);
     $ = id => root.querySelector('#' + id);
     $('skMenu').onclick = close;
-    $('skReload').onclick = () => start();
+    $('skReload').onclick = () => run(start());
+    $('skAll').onclick = () => run(openList());
+    $('skToday').onclick = () => run(S && !S.archive && S.day === today() ? backToCard() : start());
     $('skGo').onclick = () => (S && S.phase === 'done' ? again() : play());
     $('skAlt').onclick = () => (S && S.phase === 'done' ? fullMatch() : close());
     window.addEventListener('keydown', onKey, true);
@@ -117,36 +135,86 @@
   function show(on) { root.hidden = !on; document.body.classList.toggle('skip-open', on); if (on) root.classList.toggle('sk-still', reduced()); }
 
   // ---------- opening, playing, closing ----------
+  // opts.number: a puzzle by number (a share link, ?skip=12); otherwise today's.
   async function open(opts) {
     E = opts.engine; host = opts.host; Sim = window.SkipSim.create(E);
     if (!root) build();
-    if (!puzzles && window.SKIP_PUZZLES) puzzles = window.SKIP_PUZZLES.puzzles;
-    if (!puzzles) { const r = await fetch(HERE + 'puzzles.json', { cache: 'no-cache' }); if (!r.ok) throw new Error('puzzles ' + r.status); puzzles = (await r.json()).puzzles; }
-    start();
+    await loadIndex();
+    const n = opts.number, e = n != null ? C.entryByNumber(index, n, today()) : null;
+    await start(e);
+    if (n != null && !e) toast(`No. ${n} is not out yet. Here is today's puzzle.`, true);
   }
-  // Today's puzzle: the head is set out on the green behind the briefing.
-  function start() {
-    // ?skipdate=YYYY-MM-DD shows another day's puzzle, on a local server only (for checking puzzles)
-    const fake = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get('skipdate');
-    const now = Date.now(), date = fake && C.isDate(fake) ? fake : C.londonDate(now), pz = puzzles[C.puzzleIndex(date, puzzles.length)];
-    if (!pz.bench || pz.bench.head !== C.headHash(pz)) console.warn(`Over to you, skip: "${pz.id}" has changed since it was benchmarked. Run node bias/skip/tools/benchmark.cjs.`);
-    let stats = C.loadStats(LS || NOSTORE);
-    const dslBefore = C.daysSinceLastPlay(stats, date), returning = !!stats.lastPlayed && stats.lastPlayed !== date;
-    const v = C.recordView(stats, date);
-    if (v.first) { stats = v.stats; C.saveStats(LS || NOSTORE, stats); Metrics.send('puzzle_viewed', { puzzleId: pz.id, returning, daysSinceLastPlay: dslBefore }); }
+  // ?skipdate=YYYY-MM-DD pretends it is another puzzle day, on a local server only (for checking puzzles)
+  const FAKE = (() => { const f = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get('skipdate'); return f && C.isDate(f) ? f : null; })();
+  const today = () => FAKE || C.puzzleDay(Date.now());
+
+  // ---------- the catalogue ----------
+  async function loadIndex(force) {
+    if (index && !force) return index;
+    const r = await fetch(HERE + 'puzzles/index.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('puzzles ' + r.status);
+    index = (await r.json()).puzzles;
+    return index;
+  }
+  function loadPuzzle(e) {
+    if (!cache.has(e.n)) cache.set(e.n, fetch(HERE + 'puzzles/' + C.puzzleFile(e.n), { cache: 'no-cache' })
+      .then(r => { if (!r.ok) throw new Error('puzzle ' + e.n + ': ' + r.status); return r.json(); })
+      .catch(x => { cache.delete(e.n); throw x; }));
+    return cache.get(e.n);
+  }
+  // Today's entry; a page left open overnight fetches the catalogue again for the new day's puzzle.
+  async function todayEntry() {
+    const day = today();
+    let e = C.entryFor(index, day);
+    if (!e || e.date !== day) { try { await loadIndex(true); e = C.entryFor(index, day); } catch (x) { /* keep the last one */ } }
+    return e;
+  }
+  /* This device's results by number. Today's puzzle is kept there too (so it still shows once it is
+     in the archive); a best from before the archive existed is copied in the first time. */
+  function loadArchive(stats) {
+    let a = C.loadArchive(store());
+    const t = stats.today, e = t && index && index.find(x => x.id === t.puzzleId && x.date <= t.date);
+    if (e && !a[String(e.n)]) { a = Object.assign({}, a, { [e.n]: { stars: t.stars, tries: t.tries } }); C.saveArchive(store(), a); }
+    return a;
+  }
+  // A step that may fetch: a failure is a message on the card, never a stuck screen.
+  function run(p) { Promise.resolve(p).catch(() => toast('That puzzle could not load. Check your connection and try again.')); }
+
+  // A puzzle on the green, the briefing in front of it: today's (entry null), or one from the archive.
+  async function start(entry) {
+    const tday = await todayEntry(), e = entry || tday;
+    if (!e) throw new Error('no puzzle released yet');
+    const pz = await loadPuzzle(e), day = today(), archive = !!tday ? e.n !== tday.n : true;
+    if (!pz.bench || pz.bench.head !== C.headHash(pz)) console.warn(`Over to You, Skip!: No. ${e.n} ("${pz.id}") has changed since it was benchmarked. Run node skip/tools/benchmark.cjs.`);
+    let stats = C.loadStats(store());
+    const arch = loadArchive(stats);
+    if (!archive) {
+      const dslBefore = C.daysSinceLastPlay(stats, day), returning = !!stats.lastPlayed && stats.lastPlayed !== day;
+      const v = C.recordView(stats, day);
+      if (v.first) { stats = v.stats; C.saveStats(store(), stats); Metrics.send('puzzle_viewed', { puzzleId: pz.id, returning, daysSinceLastPlay: dslBefore }); }
+    }
     const arm = E.Settings.arm === 'L' ? 'L' : 'R';
     host.setUp(pz);
-    S = { pz, date, issue: C.issueNumber(date), arm, stats, phase: 'brief', result: null, savedPct: S ? S.savedPct : null, best: S && S.date === date && S.pz.id === pz.id ? S.best : null,
+    S = { pz, entry: e, archive, day, date: e.date, issue: e.n, arm, stats, arch, phase: 'brief', result: null,
+      savedPct: S && !archive && !S.archive && S.day === day ? S.savedPct : null, best: S && S.issue === e.n && S.pz.id === pz.id && S.day === day ? S.best : null,
       before: Sim.scoreOf(host.world()), advicePath: advicePath(pz, arm) };
-    show(true); $('skFresh').hidden = true;
+    show(true); showList(false); $('skFresh').hidden = true;
     sizePlan(); paint(); draw();
     if (document.fonts) document.fonts.load('32px "Reenie Beanie"').then(() => document.fonts.load('italic 15px Newsreader')).then(draw, draw);
     clearInterval(clockTimer); clockTimer = setInterval(tickClock, 15000);
-    const t = C.playedToday(stats, date) ? stats.today : null;
-    toast(t ? `Your best today: ${C.starWords(t.stars)}, ${C.goesText(t.tries)}. Have another go to beat it.` : '', true);
+    const t = bestOf();
+    toast(t ? `Your best ${archive ? 'at No. ' + e.n : 'today'}: ${C.starWords(t.stars)}, ${C.goesText(t.tries)}. Have another go to beat it.` : '', true);
     $('skGo').focus({ preventScroll: true }); root.scrollTop = 0;
-    Metrics.today().then(t => { if (S && t && t.day === S.date && t.savedPct != null) { S.savedPct = t.savedPct; paintBoard(); } });
+    if (!archive) Metrics.today().then(t => { if (S && !S.archive && t && t.day === S.day && t.savedPct != null) { S.savedPct = t.savedPct; paintBoard(); } });
   }
+  // The best go that counts for this card: today's (the streak's day) or this archive puzzle's.
+  function bestOf() {
+    if (!S) return null;
+    if (S.archive) return S.arch[String(S.issue)] || null;
+    const t = S.stats.today;
+    return t && t.date === S.day && t.puzzleId === S.pz.id ? t : null;
+  }
+  function backToCard() { showList(false); sizePlan(); paint(); draw(); $('skGo').focus({ preventScroll: true }); }
   // Out to the mat: the game takes over until the bowls stop.
   function play() { if (!S) return; S.phase = 'playing'; show(false); host.play(); }
   // Another go at the same head, straight onto the green. Only the day's first shot counts.
@@ -157,7 +225,7 @@
   }
   function fullMatch() { const h = host; Metrics.send('full_match_clicked', { puzzleId: S.pz.id }); finishUp(); h.fullMatch(); }
   function close() { if (!root || root.hidden) return; const h = host; finishUp(); h.menu(); }
-  function finishUp() { clearInterval(clockTimer); show(false); S = null; }
+  function finishUp() { clearInterval(clockTimer); show(false); showList(false); S = null; }
 
   /* The game reports that the shot is over. Judge the head as the game left it: Rules.afterDelivery
      marks dead bowls, AI.value measures it exactly as the benchmark did, Rules.score counts it. */
@@ -165,25 +233,35 @@
     if (!S || S.phase !== 'playing') return;
     const pz = S.pz, res = Sim.judge(world, pz, delivered, S.before), bench = pz.bench && pz.bench.values;
     const stars = bench ? C.starsFor(res.value, bench) : FALLBACK[res.outcome];
-    const saved = C.isSaved(res.outcome), dsl = C.daysSinceLastPlay(S.stats, S.date);
-    const rec = C.recordAttempt(S.stats, S.date, pz.id, { stars, outcome: res.outcome, saved });
-    S.stats = rec.stats; C.saveStats(LS || NOSTORE, S.stats);
-    // the first go of the day is the fair measure of the puzzle; a later go that beats the best moves the player up
-    if (rec.first) Metrics.send('puzzle_attempted', { puzzleId: pz.id, stars, saved, isFirstAttemptOfDay: true, streak: S.stats.streak, daysSinceLastPlay: dsl });
-    else {
-      Metrics.send('puzzle_replayed', { puzzleId: pz.id });
-      if (rec.improved) Metrics.send('puzzle_improved', { puzzleId: pz.id, fromStars: rec.from.stars, toStars: stars, wasSaved: rec.from.saved, saved });
+    const saved = C.isSaved(res.outcome);
+    // every go is kept by number on this device, today's puzzle included
+    const ar = C.recordArchive(S.arch, S.issue, stars);
+    S.arch = ar.archive; C.saveArchive(store(), S.arch);
+    let rec;
+    if (S.archive) {   // an archive puzzle: its own best, and the streak is left alone
+      rec = { first: ar.first, improved: ar.improved, from: ar.first ? null : { stars: ar.from } };
+      Metrics.send('archive_played', { puzzleId: pz.id, isFirstGo: ar.first });
+    } else {
+      const dsl = C.daysSinceLastPlay(S.stats, S.day);
+      rec = C.recordAttempt(S.stats, S.day, pz.id, { stars, outcome: res.outcome, saved });
+      S.stats = rec.stats; C.saveStats(store(), S.stats);
+      // the first go of the day is the fair measure of the puzzle; a later go that beats the best moves the player up
+      if (rec.first) Metrics.send('puzzle_attempted', { puzzleId: pz.id, stars, saved, isFirstAttemptOfDay: true, streak: S.stats.streak, daysSinceLastPlay: dsl });
+      else {
+        Metrics.send('puzzle_replayed', { puzzleId: pz.id });
+        if (rec.improved) Metrics.send('puzzle_improved', { puzzleId: pz.id, fromStars: rec.from.stars, toStars: stars, wasSaved: rec.from.saved, saved });
+      }
     }
     S.result = Object.assign(res, { stars, saved, first: rec.first, improved: rec.improved, from: rec.from, delivered, world, trace: (host.trace ? host.trace() : []).slice(),
       beat: bench ? Math.round(C.beatShare(res.value, bench) * 100) : null });
-    if (rec.first || rec.improved) S.best = { world: snapshot(world, delivered), stars, tries: S.stats.today.tries };   // the share picture shows this head
+    if (rec.first || rec.improved) S.best = { world: snapshot(world, delivered), stars, tries: bestOf().tries };   // the share picture shows this head
     S.phase = 'done';
     show(true); paint(); sizePlan(); draw();
     toast(''); $('skGo').focus({ preventScroll: true }); root.scrollTop = 0;
   }
 
   function onKey(e) {
-    if (!root || root.hidden || !S) return;
+    if (!root || root.hidden) return;
     e.stopImmediatePropagation();   // the game underneath hears nothing while the card is up
     if (e.key === 'Escape') { e.preventDefault(); close(); }
   }
@@ -194,12 +272,12 @@
     const pz = S.pz, after = S.phase === 'done';
     root.classList.toggle('sk-done', after);
     if (after) $('skGo').before($('skShareBtn')); else $('skGo').after($('skShareBtn'));   // after a go, Share comes first
-    $('skMeta').textContent = `No. ${S.issue} · ${pz.advised.hand === 'fore' ? 'forehand' : 'backhand'} advised · ${pz.greenSpeed} s ${E.GreenSpeed.label(pz.greenSpeed).toLowerCase()} green` + (pz.conditions ? ` · ${pz.conditions}` : '');
+    $('skMeta').textContent = `No. ${S.issue}${S.archive ? ' · from the archive' : ''} · ${pz.advised.hand === 'fore' ? 'forehand' : 'backhand'} advised · ${pz.greenSpeed} s ${E.GreenSpeed.label(pz.greenSpeed).toLowerCase()} green` + (pz.conditions ? ` · ${pz.conditions}` : '');
     $('skAdvice').innerHTML = `<b>${esc(cap(pz.advised.by || 'your third'))}:</b> “${esc(pz.advised.say)}”`;
     $('skGo').innerHTML = after ? 'Play<span class="sk-long"> it</span> again' : 'Play the shot';
     $('skAlt').textContent = after ? 'Full match' : 'Main menu';
     $('skAlt').setAttribute('aria-label', after ? 'Play a full match' : 'Main menu');
-    $('skHelp').textContent = after ? 'Play it again as often as you like: your best go of the day is the one that counts.'
+    $('skHelp').textContent = after ? (S.archive ? 'Play it again as often as you like: your best go is kept. Archive puzzles never change your streak.' : 'Play it again as often as you like: your best go of the day is the one that counts.')
       : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice.';
   }
   function stars(n) {
@@ -219,10 +297,10 @@
       $('skNote').innerHTML = `<p class="sk-kicker">The situation</p><p>${esc(pz.situation)}</p><p class="sk-hand">${esc(pz.hint || 'pick your weight, then play the shot')}</p>`;
       return;
     }
-    const info = C.outcomeInfo(r.outcome, pz.verdicts), t = S.stats.today;
+    const info = C.outcomeInfo(r.outcome, pz.verdicts), t = bestOf(), when = S.archive ? '' : ' today';
     const counted = r.first ? '' : r.improved
-      ? `<p class="sk-small"><strong>New best today</strong> (was ${C.starWords(r.from.stars).replace(' out of 5', '')}), ${C.goesText(t.tries)}.</p>`
-      : `<p class="sk-small">Your best today is still ${C.starWords(t.stars).replace(' out of 5', '')} (${t.tries} goes so far).</p>`;
+      ? `<p class="sk-small"><strong>New best${when}</strong> (was ${C.starWords(r.from.stars).replace(' out of 5', '')}), ${C.goesText(t.tries)}.</p>`
+      : `<p class="sk-small">Your best${when} is still ${C.starWords(t.stars).replace(' out of 5', '')} (${t.tries} goes so far).</p>`;
     const beat = r.beat == null ? '' : ` Better than or level with ${r.beat} of the 100 benchmark bowlers.`;
     const dead = r.jackDead ? ` Dead end: ${esc(r.jackDead.replace(/\.$/, '').toLowerCase())}.` : '';
     $('skNote').innerHTML = `<p class="sk-kicker">Skip's verdict</p><div class="sk-vrow">${stars(r.stars)}<h2 class="sk-verdict-title">${esc(info.title)}</h2></div>` +
@@ -231,10 +309,10 @@
   function paintBoard() {
     const st = S.stats, prev = S.shown || {};
     const tiles = (n, was) => String(n).split('').map(d => `<span class="sk-tile${was != null && was !== n ? ' flip' : ''}">${d}</span>`).join('');
-    const streak = C.currentStreak(st, S.date), best = st.best;
+    const streak = C.currentStreak(st, S.day), best = st.best;
     let h = `<div><dt>Streak</dt><dd aria-label="${streak} day${streak === 1 ? '' : 's'}">${tiles(streak, prev.streak)}</dd></div>` +
       `<div><dt>Best<span class="sk-long"> streak</span></dt><dd aria-label="${best} day${best === 1 ? '' : 's'}">${tiles(best, prev.best)}</dd></div>`;
-    if (S.savedPct != null) h += `<div><dt>Saved it, %</dt><dd aria-label="${S.savedPct}% of today's players saved the end">${tiles(S.savedPct, prev.saved)}</dd></div>`;
+    if (S.savedPct != null && !S.archive) h += `<div><dt>Saved it, %</dt><dd aria-label="${S.savedPct}% of today's players saved the end">${tiles(S.savedPct, prev.saved)}</dd></div>`;
     $('skBoard').innerHTML = h;
     S.shown = { streak, best, saved: S.savedPct };
   }
@@ -245,11 +323,11 @@
      The picture is made as soon as the share line appears, so the share sheet can open straight
      from the tap (Safari refuses one that waits on anything). */
   function paintShare() {
-    const t = S.stats.today && S.stats.today.date === S.date ? S.stats.today : null, box = $('skShare');
+    const t = bestOf(), box = $('skShare');
     box.hidden = !t; $('skShareBtn').hidden = !t;
     if (!t) return;
-    const text = C.shareText(S.issue, t.stars, SHARE_URL, t.tries);
-    box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars, '', t.tries))}</span><span class="sk-sr">Your best today to share: puzzle ${S.issue}, ${C.starWords(t.stars)}, ${C.goesText(t.tries)}.</span></p>` +
+    const text = C.shareText(S.issue, t.stars, SHARE_URL(S.issue), t.tries);
+    box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars, '', t.tries))}</span><span class="sk-sr">Your best${S.archive ? '' : ' today'} to share: puzzle ${S.issue}, ${C.starWords(t.stars)}, ${C.goesText(t.tries)}.</span></p>` +
       '<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share">Copy</button>' +
       '<button class="sk-paperbtn sk-pic" id="skPic" aria-label="Save a picture of your result">Picture</button>';
     const shared = () => Metrics.send('result_shared', { puzzleId: S.pz.id });
@@ -324,7 +402,7 @@
     g.strokeStyle = ink; g.lineWidth = 4; g.strokeRect(sx, sy, sw, sh);
     g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = ink;
     g.font = '700 84px "Big Shoulders Display", "Arial Narrow", sans-serif';
-    g.fillText('OVER TO YOU, SKIP', W / 2, 172);
+    g.fillText('“OVER TO YOU, SKIP!”', W / 2, 172);
     const day = new Date(S.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
     g.fillStyle = muted; g.font = 'italic 34px Newsreader, Georgia, serif';
     g.fillText(`No. ${S.issue} · ${day}`, W / 2, 222);
@@ -355,13 +433,62 @@
     g.fillStyle = muted; g.font = '700 30px "Big Shoulders Display", "Arial Narrow", sans-serif';
     g.fillText('JOHNSAV.CO.UK/BIAS', W / 2, 1002);
   }
+  // A new puzzle comes out at 06:00 London: a card left open says so (no countdown, on purpose).
   function tickClock() {
-    if (!S) return;
-    const now = Date.now();
-    if (C.londonDate(now) !== S.date && S.phase !== 'playing') $('skFresh').hidden = false;
+    if (!S || FAKE) return;
+    if (C.puzzleDay(Date.now()) !== S.day && S.phase !== 'playing' && $('skList').hidden) $('skFresh').hidden = false;
   }
   let toastTimer = 0;
   function toast(msg, stay) { clearTimeout(toastTimer); $('skToast').textContent = msg; if (msg && !stay) toastTimer = setTimeout(() => { if ($('skToast')) $('skToast').textContent = ''; }, 5000); }
+
+  // ---------- the puzzles screen: today's and the new ones first, then the archive ----------
+  function showList(on) {
+    $('skList').hidden = !on; root.querySelector('.sk-layout').hidden = on; root.classList.toggle('sk-listing', on);
+    $('skAll').hidden = on; $('skToday').hidden = !on;
+    if (on) $('skFresh').hidden = true;
+  }
+  const dayText = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const monthText = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  async function openList() {
+    try { await loadIndex(true); } catch (e) { if (!index) throw e; }
+    const day = today(), stats = C.loadStats(store()), arch = loadArchive(stats), sec = C.listSections(index, day, arch);
+    const res = e => { const a = arch[String(e.n)]; return e === sec.today && C.playedToday(stats, day) && stats.today.puzzleId === e.id ? stats.today : a || null; };
+    const row = (e, badge) => {
+      const r = res(e), green = `${e.green} s ${E.GreenSpeed.label(e.green).toLowerCase()}` + (e.conditions ? ` · ${e.conditions}` : '');
+      const result = r ? `<span class="sk-rowstars" aria-hidden="true">${C.starText(r.stars)}</span><span class="sk-rowgoes">${r.tries === 1 ? '1 go' : r.tries + ' goes'}</span>` : '<span class="sk-rowgoes">Not played</span>';
+      const said = `No. ${e.n}, ${dayText(e.date)}: ${e.title}. ${r ? `Your best: ${C.starWords(r.stars)}, ${C.goesText(r.tries)}` : 'Not played'}.${badge ? ' ' + badge + '.' : ''}`;
+      return `<li><button class="sk-row${badge === 'Today' ? ' sk-row-today' : ''}" data-n="${e.n}" aria-label="${esc(said)}"><span class="sk-no">No. ${e.n}</span>` +
+        `<span class="sk-rowmain"><span class="sk-rowtitle">${esc(e.title)}${badge ? ` <span class="sk-badge${badge === 'Today' ? ' sk-badge-today' : ''}">${badge}</span>` : ''}</span><span class="sk-rowmeta">${esc(dayText(e.date))} · ${esc(green)}</span></span>` +
+        `<span class="sk-rowres">${result}</span></button></li>`;
+    };
+    let h = '<h2 class="sk-listh">New</h2>';
+    h += sec.today ? `<ul class="sk-rows">${row(sec.today, 'Today')}${sec.fresh.map(e => row(e, 'New')).join('')}</ul>` : '<p class="sk-small">The first puzzle comes out soon.</p>';
+    if (sec.archive.length) {
+      const grouped = sec.archive.length > 14;
+      h += `<div class="sk-archhead"><h2 class="sk-listh">Archive</h2>${grouped ? '<button class="sk-paperbtn sk-jump" id="skJump">Jump to No. 1</button>' : ''}</div>`;
+      if (!grouped) h += `<ul class="sk-rows">${sec.archive.map(e => row(e)).join('')}</ul>`;
+      else {
+        let month = '';
+        for (const e of sec.archive) {
+          const m = monthText(e.date);
+          if (m !== month) { h += (month ? '</ul>' : '') + `<h3 class="sk-month">${esc(m)}</h3><ul class="sk-rows">`; month = m; }
+          h += row(e);
+        }
+        h += '</ul>';
+      }
+    }
+    $('skListBody').innerHTML = h;
+    $('skListToast').textContent = '';
+    for (const b of $('skListBody').querySelectorAll('.sk-row')) b.onclick = () => {
+      const n = +b.dataset.n, e = index.find(x => x.n === n);
+      if (S && S.issue === n && S.day === day) run(backToCard());
+      else run(start(e === sec.today ? null : e).catch(x => { $('skListToast').textContent = 'That puzzle could not load. Check your connection and try again.'; throw x; }));
+    };
+    if ($('skJump')) $('skJump').onclick = () => { const last = [...$('skListBody').querySelectorAll('.sk-row')].pop(); last.scrollIntoView({ block: 'center' }); last.focus({ preventScroll: true }); };
+    showList(true); show(true);
+    $('skList').scrollTop = 0; $('skListTitle').focus({ preventScroll: true });
+    Metrics.send('puzzles_list_opened', {});
+  }
 
   // ---------- the plan of the head ----------
   /* The advice drawn into the head. A draw shows where it would stop; a yard on or a drive is
@@ -484,5 +611,5 @@
     $('skHeadText').textContent = `Plan of the head, nearest bowl first. ${bits.join(' ')}${notes} The advised line comes in on the ${pz.advised.hand}hand.`;
   }
 
-  window.SkipPage = { open, done, close };
+  window.SkipPage = { open, done, close, list: () => run(openList()) };
 })();

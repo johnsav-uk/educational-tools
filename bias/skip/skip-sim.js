@@ -1,4 +1,4 @@
-/* Over to you, skip: a puzzle on the real Bias physics.
+/* Over to You, Skip!: a puzzle on the real Bias physics.
    Sets a puzzle's head out in a PhysicsWorld, plays a delivery, and judges the result
    with the game's own rules (Rules.afterDelivery, Rules.score) and its own measure of how
    good a head is (AI.value). The page and the benchmark script both use this file, so the
@@ -26,6 +26,7 @@
       pz.bowls.forEach((b, i) => {
         const o = w.add(new E.Body('bowl', b.team === pz.you ? ME : THEM));
         o.place(m * b.x, b.y); o.heading = m * (b.heading || 0); o.team = b.team; o.num = i + 1;
+        o.toucher = !!b.toucher; if (b.ditch) { o.state = 'ditch'; o.ditch = 'front'; }   // as Game.startPuzzle sets it
       });
       return w;
     }

@@ -1,0 +1,11 @@
+{
+  "about": "Over to You, Skip!: the released puzzles, one a day from 2026-10-15 (#1). #N comes out at 06:00 London on START + (N - 1) days; the page never shows an entry before its date. Each puzzle is in NNNN.json. Written by skip/tools/release.cjs.",
+  "start": "2026-10-15",
+  "puzzles": [
+    { "n": 1, "date": "2026-10-15", "id": "red-lying-three", "title": "Red lying three", "theme": "rescue the end", "green": 13, "conditions": "" },
+    { "n": 2, "date": "2026-10-16", "id": "rain-on-the-green", "title": "Rain on the green", "theme": "wick the jack", "green": 10.5, "conditions": "rain" },
+    { "n": 3, "date": "2026-10-17", "id": "the-long-jack", "title": "The long jack", "theme": "last wood", "green": 14.5, "conditions": "" },
+    { "n": 4, "date": "2026-10-18", "id": "rest-on-the-shot", "title": "Rest on the shot", "theme": "yard on", "green": 12, "conditions": "" },
+    { "n": 5, "date": "2026-10-19", "id": "short-and-wide", "title": "Short and wide", "theme": "draw the shot", "green": 13, "conditions": "" }
+  ]
+}
