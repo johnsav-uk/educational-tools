@@ -23,7 +23,7 @@ function d1() {
 
 module.exports = async function (T) {
   const { test, eq, ok } = T;
-  const W = await import(path.join(__dirname, '..', '..', 'stats-worker', 'src', 'index.js'));
+  const W = await import(require('url').pathToFileURL(path.join(__dirname, '..', '..', 'stats-worker', 'src', 'index.js')).href);
   const ORIGIN = 'https://www.johnsav.co.uk';
   const mkEnv = (over = {}) => Object.assign({ DB: d1(), ALLOWED_ORIGINS: ORIGIN + ',http://localhost:8765', ADMIN_KEY: 'correct horse battery staple' }, over);
   const at = s => Date.parse(s);

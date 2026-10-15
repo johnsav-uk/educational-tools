@@ -135,7 +135,7 @@
     if (v.first) { stats = v.stats; C.saveStats(LS || NOSTORE, stats); Metrics.send('puzzle_viewed', { puzzleId: pz.id, returning, daysSinceLastPlay: dslBefore }); }
     const arm = E.Settings.arm === 'L' ? 'L' : 'R';
     host.setUp(pz);
-    S = { pz, date, issue: C.issueNumber(date), arm, stats, phase: 'brief', result: null, savedPct: S ? S.savedPct : null,
+    S = { pz, date, issue: C.issueNumber(date), arm, stats, phase: 'brief', result: null, savedPct: S ? S.savedPct : null, best: S && S.date === date && S.pz.id === pz.id ? S.best : null,
       before: Sim.scoreOf(host.world()), advicePath: advicePath(pz, arm) };
     show(true); $('skFresh').hidden = true;
     sizePlan(); paint(); draw();
@@ -175,6 +175,7 @@
     }
     S.result = Object.assign(res, { stars, saved, first: rec.first, improved: rec.improved, from: rec.from, delivered, world, trace: (host.trace ? host.trace() : []).slice(),
       beat: bench ? Math.round(C.beatShare(res.value, bench) * 100) : null });
+    if (rec.first || rec.improved) S.best = { world: snapshot(world, delivered), stars, tries: S.stats.today.tries };   // the share picture shows this head
     S.phase = 'done';
     show(true); paint(); sizePlan(); draw();
     toast(''); $('skGo').focus({ preventScroll: true }); root.scrollTop = 0;
@@ -235,23 +236,123 @@
     $('skBoard').innerHTML = h;
     S.shown = { streak, best, saved: S.savedPct };
   }
+  /* Sharing. The text line can be copied anywhere; the share sheet and "Picture" also carry a
+     square picture of the result (the card below), the thing that shows up well on social media.
+     The picture is made as soon as the share line appears, so the share sheet can open straight
+     from the tap (Safari refuses one that waits on anything). */
   function paintShare() {
     const t = S.stats.today && S.stats.today.date === S.date ? S.stats.today : null, box = $('skShare');
     box.hidden = !t;
     if (!t) return;
     const text = C.shareText(S.issue, t.stars, SHARE_URL, t.tries);
     box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars, '', t.tries))}</span><span class="sk-sr">Your best today to share: puzzle ${S.issue}, ${C.starWords(t.stars)}, ${C.goesText(t.tries)}.</span></p>` +
-      `<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share"><span class="sk-long">Copy</span><span class="sk-short">Share</span></button>${navigator.share ? '<button class="sk-paperbtn sk-native" id="skNative">Share…</button>' : ''}`;
-    $('skCopy').onclick = async () => {
+      `<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share"><span class="sk-long">Copy</span><span class="sk-short">Share</span></button>` +
+      (navigator.share ? '<button class="sk-paperbtn sk-native" id="skNative" aria-label="Share your result with a picture">Share…</button>' : '') +
+      '<button class="sk-paperbtn sk-pic" id="skPic" aria-label="Save a picture of your result">Picture</button>';
+    const shared = () => Metrics.send('result_shared', { puzzleId: S.pz.id });
+    const copy = async () => {
       let ok = false;
       try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
         const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; root.appendChild(ta); ta.select();
         try { ok = document.execCommand('copy'); } catch (x) { ok = false; } ta.remove();
       }
       toast(ok ? 'Copied. Paste it wherever you like.' : 'Could not copy: select the result and copy it yourself.');
-      if (ok) Metrics.send('result_shared', { puzzleId: S.pz.id });
+      if (ok) shared();
     };
-    if (navigator.share) $('skNative').onclick = () => navigator.share({ text }).then(() => Metrics.send('result_shared', { puzzleId: S.pz.id }), () => {});
+    // the share sheet: with the picture where the browser can share files, the text alone where it cannot
+    const sheet = () => {
+      const card = S.card && S.card.key === cardKey(t) ? S.card : null, files = card && card.canShare ? [card.file] : null;
+      navigator.share(files ? { files, text } : { text }).then(shared, e => {
+        if (files && e && e.name !== 'AbortError') navigator.share({ text }).then(shared, () => {});
+      });
+    };
+    // on a phone the one Share button opens the share sheet; elsewhere it copies, and Share… opens the sheet
+    const phoneSheet = () => navigator.share && root.classList.contains('sk-compact');
+    $('skCopy').onclick = () => (phoneSheet() ? sheet() : copy());
+    $('skCopy').setAttribute('aria-label', phoneSheet() ? 'Share your result' : 'Copy your result to share');
+    if (navigator.share) $('skNative').onclick = sheet;
+    $('skPic').onclick = async () => {
+      const card = await makeCard(t);
+      if (!card) { toast('Could not make the picture, sorry.'); return; }
+      const a = document.createElement('a'), url = URL.createObjectURL(card.file);
+      a.href = url; a.download = card.file.name; root.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast('Picture saved. Post it with your result.'); shared();
+    };
+    makeCard(t);
+  }
+  // The game clears and reuses its world for the next go, so the best go's head is kept as a copy.
+  function snapshot(world, delivered) {
+    const copy = b => b && { kind: b.kind, owner: b.owner, x: b.x, y: b.y, r: b.r, state: b.state, dead: b.dead };
+    const bodies = world.bodies.map(copy);
+    return { bodies, jack: copy(world.jack), mine: bodies[world.bodies.indexOf(delivered)] || null };
+  }
+  // The head the card shows: the finished head of the day's best go, if it was played since the page opened.
+  const bestHead = t => S.best && S.best.stars === t.stars && S.best.tries === t.tries ? S.best : null;
+  const cardKey = t => [S.date, S.pz.id, S.arm, t.stars, t.tries, bestHead(t) ? 'end' : 'set'].join('|');
+  /* The picture: a 1080 px square score card with the finished head of your best go (your bowl
+     ringed in biro, its path left off so it does not hand friends the line), the stars and how
+     many goes they took. A best go from an earlier visit is not kept, so then it shows the head as set. */
+  async function makeCard(t) {
+    const key = cardKey(t);
+    if (S.card && S.card.key === key) return S.card;
+    if (S.cardBusy && S.cardBusy.key === key) return S.cardBusy.p;
+    const mine = S, p = (async () => {
+      try {
+        if (document.fonts) await Promise.all(['700 80px "Big Shoulders Display"', 'italic 34px Newsreader', '600 40px Newsreader', '64px "Reenie Beanie"'].map(f => document.fonts.load(f))).catch(() => {});
+        if (S !== mine) return null;
+        const cv = document.createElement('canvas'); cv.width = cv.height = 1080;
+        drawCard(cv.getContext('2d'), t);
+        const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+        if (!blob || S !== mine) return null;
+        const file = new File([blob], `over-to-you-skip-${S.issue}.png`, { type: 'image/png' });
+        let canShare = false; try { canShare = !!(navigator.canShare && navigator.canShare({ files: [file] })); } catch (e) { /* no file sharing */ }
+        return (S.card = { key, file, canShare });
+      } catch (e) { return null; }
+    })();
+    S.cardBusy = { key, p };
+    return p;
+  }
+  function drawCard(g, t) {
+    const W = 1080, P = palette(), ink = tok('ink'), muted = tok('muted'), paper = tok('paper'), brass = tok('brass'), best = bestHead(t);
+    // the lawn, mown in stripes, and the score sheet on it
+    g.fillStyle = tok('lawn'); g.fillRect(0, 0, W, W);
+    g.fillStyle = tok('stripe'); for (let x = 0; x < W; x += 180) g.fillRect(x, 0, 90, W);
+    const sx = 56, sy = 56, sw = W - 112, sh = W - 112;
+    g.save(); g.shadowColor = 'rgba(0,0,0,.22)'; g.shadowBlur = 24; g.shadowOffsetY = 8; g.fillStyle = paper; g.fillRect(sx, sy, sw, sh); g.restore();
+    g.strokeStyle = ink; g.lineWidth = 4; g.strokeRect(sx, sy, sw, sh);
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = ink;
+    g.font = '700 84px "Big Shoulders Display", "Arial Narrow", sans-serif';
+    g.fillText('OVER TO YOU, SKIP', W / 2, 172);
+    const day = new Date(S.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    g.fillStyle = muted; g.font = 'italic 34px Newsreader, Georgia, serif';
+    g.fillText(`No. ${S.issue} · ${day}`, W / 2, 222);
+    // the plan of the head
+    const px = 120, py = 258, pw = W - 240, ph = 420;
+    g.save(); g.translate(px, py); g.beginPath(); g.rect(0, 0, pw, ph); g.clip();
+    const v = view(pw, ph);
+    paintGround(g, v, P);
+    paintBowls(g, v, best ? best.world : Sim.world(S.pz, S.arm), P, best ? best.world.mine : null, 6);
+    g.restore();
+    g.strokeStyle = ink; g.lineWidth = 3; g.strokeRect(px, py, pw, ph);
+    // the stars: brass, half a star where it is half
+    const pts = [12, 1.8, 14.9, 8.6, 22.2, 9.2, 16.6, 14, 18.3, 21.2, 12, 17.4, 5.7, 21.2, 7.4, 14, 1.8, 9.2, 9.1, 8.6], k = 4.2, gap = 22, size = 24 * k;
+    const x0 = W / 2 - (5 * size + 4 * gap) / 2, y0 = 708;
+    const star = () => { g.beginPath(); for (let j = 0; j < pts.length; j += 2) j ? g.lineTo(pts[j], pts[j + 1]) : g.moveTo(pts[j], pts[j + 1]); g.closePath(); };
+    for (let i = 0; i < 5; i++) {
+      const f = Math.max(0, Math.min(1, t.stars - i));
+      g.save(); g.translate(x0 + i * (size + gap), y0); g.scale(k, k);
+      star(); g.fillStyle = paper; g.fill();
+      if (f) { g.save(); g.beginPath(); g.rect(0, 0, 24 * f, 24); g.clip(); star(); g.fillStyle = brass; g.fill(); g.restore(); }
+      star(); g.strokeStyle = ink; g.lineWidth = 1.5; g.lineJoin = 'round'; g.stroke();
+      g.restore();
+    }
+    g.fillStyle = ink; g.font = '600 44px Newsreader, Georgia, serif';
+    g.fillText(`${cap(C.starWords(t.stars).replace(' out of 5', ''))}, ${C.goesText(t.tries)}`, W / 2, 872);
+    g.save(); g.fillStyle = P.biro; g.font = '64px "Reenie Beanie", "Comic Sans MS", cursive'; g.translate(W / 2, 946); g.rotate(-2 * DEG);
+    g.fillText('Can you save the end?', 0, 0); g.restore();
+    g.fillStyle = muted; g.font = '700 30px "Big Shoulders Display", "Arial Narrow", sans-serif';
+    g.fillText('JOHNSAV.CO.UK/BIAS', W / 2, 1002);
   }
   function tickClock() {
     if (!S) return;
@@ -276,26 +377,47 @@
     cv.width = Math.max(10, Math.round(r.width * dpr)); cv.height = Math.max(10, Math.round(r.height * dpr)); cv._dpr = dpr;
   }
   /* The view: the head at true scale, centred on the bowls and at least 2 m across (a puzzle can set view.w). */
-  function view() {
-    const cv = $('skPlan'), w = cv.width / cv._dpr, h = cv.height / cv._dpr, m = S.arm === 'L' ? -1 : 1, pz = S.pz;
+  function view(w, h) {
+    const m = S.arm === 'L' ? -1 : 1, pz = S.pz;
     const pts = [pz.jack, ...pz.bowls].map(p => ({ x: m * p.x, y: p.y }));
     const x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)), y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
     const aspect = w / h, span = Math.max(pz.view && pz.view.w || (w < 500 ? 1.6 : 2.0), x1 - x0 + 0.7, (y1 - y0 + 0.8) * aspect), s = w / span;
     const cx = (pz.view && pz.view.dx != null) ? m * (pz.jack.x + pz.view.dx) : (x0 + x1) / 2, cy = (y0 + y1) / 2 + 0.08;
     return { w, h, s, cx, cy, T: (x, y) => ({ x: w / 2 + (x - cx) * s, y: h / 2 - (y - cy) * s }) };
   }
-  function draw() {
-    if (!S || !root || root.hidden) return;
-    const cv = $('skPlan'), g = cv.getContext('2d'), v = view(), T = v.T, pz = S.pz, m = S.arm === 'L' ? -1 : 1, r = S.result, after = !!r;
-    const world = after ? r.world : host.world();
-    g.setTransform(cv._dpr, 0, 0, cv._dpr, 0, 0);
-    const P = { wash: tok('wash'), grid: tok('grid'), bowl: tok('bowl'), red: tok('ring-red'), yellow: tok('ring-yellow'), jack: tok('chalk'), ink: tok('ink'), biro: tok('biro') };
+  const palette = () => ({ wash: tok('wash'), grid: tok('grid'), bowl: tok('bowl'), red: tok('ring-red'), yellow: tok('ring-yellow'), jack: tok('chalk'), ink: tok('ink'), biro: tok('biro') });
+  // The green under the head: the wash and a faint grid of 25 cm squares, lined up on the jack.
+  function paintGround(g, v, P) {
+    const T = v.T, m = S.arm === 'L' ? -1 : 1, jx = m * S.pz.jack.x, jy = S.pz.jack.y, step = 0.25;
     g.fillStyle = P.wash; g.fillRect(0, 0, v.w, v.h);
-    // a faint grid of 25 cm squares, lined up on the jack
-    const jx = m * pz.jack.x, jy = pz.jack.y, step = 0.25;
     g.strokeStyle = P.grid; g.lineWidth = 1;
     for (let k = Math.floor((v.cx - v.w / v.s / 2 - jx) / step); ; k++) { const x = T(jx + k * step, 0).x; if (x > v.w) break; g.beginPath(); g.moveTo(Math.round(x) + .5, 0); g.lineTo(Math.round(x) + .5, v.h); g.stroke(); }
     for (let k = Math.floor((v.cy - v.h / v.s / 2 - jy) / step); ; k++) { const y = T(0, jy + k * step).y; if (y < 0) break; g.beginPath(); g.moveTo(0, Math.round(y) + .5); g.lineTo(v.w, Math.round(y) + .5); g.stroke(); }
+  }
+  // Bowls: dark brown discs with a coloured ring; dead ones faded; yours (mine) outlined in blue. Then the jack.
+  function paintBowls(g, v, world, P, mine, ring = 3) {
+    const T = v.T, pz = S.pz;
+    for (const b of world.bodies) {
+      if (b.kind !== 'bowl' || b.state === 'ditch') continue;
+      const q = T(b.x, b.y), R = b.r * v.s, ring = teamOf(b, pz) === 'red' ? P.red : P.yellow;
+      if (q.y < -R || q.y > v.h + R) continue;
+      g.save(); g.globalAlpha = b.dead ? 0.35 : 1;
+      g.fillStyle = P.bowl; g.beginPath(); g.arc(q.x, q.y, R, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1.5; g.stroke();
+      g.strokeStyle = ring; g.lineWidth = R * 0.26; g.beginPath(); g.arc(q.x, q.y, R * 0.55, 0, Math.PI * 2); g.stroke();
+      if (b === mine) { g.strokeStyle = P.biro; g.lineWidth = ring; g.beginPath(); g.arc(q.x, q.y, R + 1 + ring, 0, Math.PI * 2); g.stroke(); }
+      g.restore();
+    }
+    const J = world.jack;
+    if (J && J.state !== 'ditch') { const q = T(J.x, J.y); g.fillStyle = P.jack; g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, Math.max(6, J.r * v.s), 0, Math.PI * 2); g.fill(); g.stroke(); }
+  }
+  function draw() {
+    if (!S || !root || root.hidden) return;
+    const cv = $('skPlan'), g = cv.getContext('2d'), v = view(cv.width / cv._dpr, cv.height / cv._dpr), T = v.T, pz = S.pz, m = S.arm === 'L' ? -1 : 1, r = S.result, after = !!r;
+    const world = after ? r.world : host.world();
+    g.setTransform(cv._dpr, 0, 0, cv._dpr, 0, 0);
+    const P = palette();
+    paintGround(g, v, P);
     const path = (pts, dash, alpha, width) => {
       g.save(); g.globalAlpha = alpha; g.strokeStyle = P.biro; g.lineWidth = width; g.lineCap = 'round'; g.setLineDash(dash);
       g.beginPath(); pts.forEach((p, i) => { const q = T(p.x, p.y); i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y); }); g.stroke(); g.restore();
@@ -311,21 +433,7 @@
     if (a.state === 'rest') { const q = T(a.rest.x, a.rest.y); g.save(); g.globalAlpha = after ? 0.3 : 0.55; g.strokeStyle = P.biro; g.lineWidth = 3; g.setLineDash([5, 4]); g.beginPath(); g.arc(q.x, q.y, E.W.BOWL_R * v.s + 2, 0, Math.PI * 2); g.stroke(); g.restore(); }
     // after the shot: the path your bowl took on the green, solid
     if (after && r.trace.length > 1) path(r.trace.concat([{ x: r.delivered.x, y: r.delivered.y }]), [], 0.9, 3.5);
-    // bowls: dark brown discs with a coloured ring; dead ones faded; yours outlined in blue
-    for (const b of world.bodies) {
-      if (b.kind !== 'bowl' || b.state === 'ditch') continue;
-      const q = T(b.x, b.y), R = b.r * v.s, ring = teamOf(b, pz) === 'red' ? P.red : P.yellow;
-      if (q.y < -R || q.y > v.h + R) continue;
-      g.save(); g.globalAlpha = b.dead ? 0.35 : 1;
-      g.fillStyle = P.bowl; g.beginPath(); g.arc(q.x, q.y, R, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1.5; g.stroke();
-      g.strokeStyle = ring; g.lineWidth = R * 0.26; g.beginPath(); g.arc(q.x, q.y, R * 0.55, 0, Math.PI * 2); g.stroke();
-      if (after && b === r.delivered) { g.strokeStyle = P.biro; g.lineWidth = 3; g.beginPath(); g.arc(q.x, q.y, R + 4, 0, Math.PI * 2); g.stroke(); }
-      g.restore();
-    }
-    // the jack: a white dot with a dark outline
-    const J = world.jack;
-    if (J && J.state !== 'ditch') { const q = T(J.x, J.y); g.fillStyle = P.jack; g.strokeStyle = P.ink; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, Math.max(6, J.r * v.s), 0, Math.PI * 2); g.fill(); g.stroke(); }
+    paintBowls(g, v, world, P, after ? r.delivered : null);
     if (!after && v.h >= 200) {
       // the handwritten notes on the plan, kept inside it; left off a plan too small to hold them (they are in the screen-reader text)
       g.fillStyle = P.biro; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = '32px "Reenie Beanie", cursive';

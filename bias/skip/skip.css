@@ -192,7 +192,7 @@ body.skip-open { overflow: hidden; }
 #skip.sk-compact .sk-actions { margin-top: 8px; }
 #skip.sk-compact .sk-actions > button { flex: 1 1 0; padding-inline: 6px; font-size: 18px; white-space: nowrap; }
 #skip.sk-compact .sk-actions .sk-share:not([hidden]) { display: contents; }
-#skip.sk-compact .sk-actions .sk-share p, #skip.sk-compact .sk-actions .sk-share .sk-native { display: none; }
+#skip.sk-compact .sk-actions .sk-share p, #skip.sk-compact .sk-actions .sk-share .sk-native, #skip.sk-compact .sk-actions .sk-share .sk-pic { display: none; }
 #skip.sk-compact .sk-actions .sk-share .sk-paperbtn { flex: 1 1 0; font-size: 18px; padding: 10px 6px 8px; white-space: nowrap; }
 
 /* short phones held upright: the handwritten hint, then the advice text, give way to the plan
