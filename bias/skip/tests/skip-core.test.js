@@ -118,17 +118,31 @@
     eq(C.starText(0.5), '½☆☆☆☆');
     eq(C.shareText(1, 2), 'Over to you skip #1 ★★☆☆☆');
     eq(C.shareText(214, 4.5, 'https://x/'), 'Over to you skip #214 ★★★★½\nhttps://x/');
+    eq(C.shareText(3, 5, '', 1), 'Over to you skip #3 ★★★★★ first go');
+    eq(C.shareText(3, 5, 'https://x/', 4), 'Over to you skip #3 ★★★★★ in 4 goes\nhttps://x/');
   });
 
   // ---------- local stats ----------
   const res = (stars, outcome = 'down') => ({ stars, outcome });
-  test('first attempt of the day counts; later ones are practice', () => {
-    let s = C.freshStats(), r = C.recordAttempt(s, '2026-10-15', 'p1', res(3));
-    ok(r.first); eq(r.stats.streak, 1); eq(r.stats.best, 1); eq(r.stats.hist, { 3: 1 }); eq(r.stats.lastPlayed, '2026-10-15');
-    const again = C.recordAttempt(r.stats, '2026-10-15', 'p1', res(5));
-    ok(!again.first); eq(again.stats.hist, { 3: 1 }, 'practice does not change the star counts'); eq(again.stats.today.stars, 3, 'the first result stands');
-    eq(again.stats.today.practice, 1); eq(again.stats.streak, 1);
-    eq(s, C.freshStats(), 'the input is not changed');
+  test('every go of the day counts: the best one is the day\'s result', () => {
+    let s0 = C.freshStats(), r = C.recordAttempt(s0, '2026-10-15', 'p1', { stars: 2, outcome: 'down', saved: false });
+    ok(r.first); ok(!r.improved); eq(r.stats.streak, 1); eq(r.stats.hist, { 2: 1 });
+    eq(r.stats.today, { date: '2026-10-15', puzzleId: 'p1', stars: 2, outcome: 'down', saved: false, tries: 1, firstStars: 2 });
+    const worse = C.recordAttempt(r.stats, '2026-10-15', 'p1', { stars: 1, outcome: 'same', saved: false });
+    ok(!worse.first); ok(!worse.improved, 'a worse go changes nothing but the count of goes');
+    eq([worse.stats.today.stars, worse.stats.today.tries, worse.stats.hist], [2, 2, { 2: 1 }]);
+    const better = C.recordAttempt(worse.stats, '2026-10-15', 'p1', { stars: 5, outcome: 'win1', saved: true });
+    ok(better.improved); eq(better.from, { stars: 2, saved: false });
+    eq(better.stats.today, { date: '2026-10-15', puzzleId: 'p1', stars: 5, outcome: 'win1', saved: true, tries: 3, firstStars: 2 });
+    eq(better.stats.hist, { 5: 1 }, 'the day counts once, at its best');
+    eq([better.stats.streak, better.stats.best], [1, 1], 'more goes do not add to the streak');
+    const same = C.recordAttempt(better.stats, '2026-10-15', 'p1', { stars: 5, outcome: 'win1', saved: true });
+    ok(!same.improved, 'equalling the best is not an improvement');
+    eq(s0, C.freshStats(), 'the input is not changed');
+  });
+  test('older saved stats (practice count) still load', () => {
+    const c = C.cleanStats({ v: 1, lastPlayed: '2026-10-15', streak: 1, best: 1, hist: { 3: 1 }, today: { date: '2026-10-15', puzzleId: 'p', stars: 3, outcome: 'down', practice: 2 } });
+    eq(c.today, { date: '2026-10-15', puzzleId: 'p', stars: 3, outcome: 'down', saved: false, tries: 3, firstStars: 3 });
   });
   test('streak grows day by day, breaks after a missed day, best is kept', () => {
     let s = C.freshStats();
@@ -182,6 +196,7 @@
     ok(C.validateEvent(ev('puzzle_viewed', { puzzleId: 'rescue-three', returning: false, daysSinceLastPlay: null })).ok);
     ok(C.validateEvent(attempt()).ok);
     for (const n of ['puzzle_replayed', 'result_shared', 'full_match_clicked']) ok(C.validateEvent(ev(n, { puzzleId: 'p1' })).ok, n);
+    ok(C.validateEvent(ev('puzzle_improved', { puzzleId: 'p1', fromStars: 2, toStars: 4.5, wasSaved: false, saved: true })).ok);
   });
   test('allowlist rejects anything else', () => {
     const bad = [
@@ -192,7 +207,9 @@
       attempt({ stars: 6 }), attempt({ stars: 2.3 }), attempt({ stars: -0.5 }), attempt({ stars: '3' }),
       attempt({ saved: 'yes' }), attempt({ streak: -1 }), attempt({ streak: 1.5 }), attempt({ streak: 99999 }),
       attempt({ daysSinceLastPlay: 1.5 }), attempt({ daysSinceLastPlay: -1 }), attempt({ isFirstAttemptOfDay: 1 }),
-      ev('puzzle_viewed', { puzzleId: 'p', returning: true })                          // missing a field
+      ev('puzzle_viewed', { puzzleId: 'p', returning: true }),                         // missing a field
+      ev('puzzle_improved', { puzzleId: 'p', fromStars: 4, toStars: 4, wasSaved: true, saved: true }),   // not an improvement
+      ev('puzzle_improved', { puzzleId: 'p', fromStars: 5, toStars: 2, wasSaved: true, saved: false })
     ];
     for (const b of bad) ok(!C.validateEvent(b).ok, JSON.stringify(b));
   });
@@ -201,13 +218,15 @@
   });
   test('each event maps to one counter with only the allowed dimensions', () => {
     const v = C.counterFor(C.validateEvent(ev('puzzle_viewed', { puzzleId: 'p', returning: true, daysSinceLastPlay: 3 })).event, '2026-10-15');
-    eq(v, { day: '2026-10-15', puzzle: 'p', event: 'puzzle_viewed', stars: -1, saved: -1, returning: 1, dsl: '2-6' });
+    eq(v, { day: '2026-10-15', puzzle: 'p', event: 'puzzle_viewed', stars: -1, saved: -1, returning: 1, dsl: '2-6', from: -1, wasSaved: -1 });
     const a = C.counterFor(C.validateEvent(attempt()).event, '2026-10-15');
-    eq(a, { day: '2026-10-15', puzzle: 'rescue-three', event: 'puzzle_attempted', stars: 7, saved: 1, returning: -1, dsl: '1' });
+    eq(a, { day: '2026-10-15', puzzle: 'rescue-three', event: 'puzzle_attempted', stars: 7, saved: 1, returning: -1, dsl: '1', from: -1, wasSaved: -1 });
+    const up = C.counterFor(C.validateEvent(ev('puzzle_improved', { puzzleId: 'p', fromStars: 2, toStars: 4.5, wasSaved: false, saved: true })).event, '2026-10-15');
+    eq([up.event, up.stars, up.saved, up.from, up.wasSaved], ['puzzle_improved', 9, 1, 4, 0]);
     const r = C.counterFor(C.validateEvent(attempt({ isFirstAttemptOfDay: false })).event, '2026-10-15');
     eq([r.event, r.stars, r.saved], ['puzzle_attempted_repeat', -1, -1], 'repeats never reach the star statistics');
-    eq(C.counterKey(a), '2026-10-15|rescue-three|puzzle_attempted|7|1|-1|1');
-    eq(Object.keys(a).sort(), ['day', 'dsl', 'event', 'puzzle', 'returning', 'saved', 'stars'], 'no streak, no ip, no agent');
+    eq(C.counterKey(a), '2026-10-15|rescue-three|puzzle_attempted|7|1|-1|1|-1|-1');
+    eq(Object.keys(a).sort(), ['day', 'dsl', 'event', 'from', 'puzzle', 'returning', 'saved', 'stars', 'wasSaved'], 'no streak, no ip, no agent');
   });
 
   // ---------- reading the counters ----------
@@ -218,6 +237,19 @@
     eq(C.todaySummary(rows, '2026-10-15'), { day: '2026-10-15', attempts: 29, savedPct: null });
     rows.push(row('2026-10-15', 'puzzle_attempted', 1, { stars: 0, saved: 0 }));
     eq(C.todaySummary(rows, '2026-10-15'), { day: '2026-10-15', attempts: 30, savedPct: 67 });
+  });
+  test('best of the day: improvements move players up a band without identifying them', () => {
+    const rows = [
+      row('2026-10-15', 'puzzle_attempted', 30, { stars: 4, saved: 0 }),             // 30 players, 2 stars first go, not saved
+      row('2026-10-15', 'puzzle_attempted', 10, { stars: 10, saved: 1 }),            // 10 players, 5 stars first go
+      row('2026-10-15', 'puzzle_improved', 12, { stars: 10, saved: 1, from: 4, wasSaved: 0 }),   // 12 of the 30 got to 5 stars
+      row('2026-10-15', 'puzzle_replayed', 40)
+    ];
+    eq(C.todaySummary(rows, '2026-10-15'), { day: '2026-10-15', attempts: 40, savedPct: 55 }, '(10 + 12) of 40 saved it at their best');
+    const d = C.dailyMetrics(rows, '2026-10-15', 1)[0];
+    eq([d.avgStars, d.avgBest, d.savedRate, d.bestSavedRate, d.goesPerPlayer], [2.75, 3.65, 0.25, 0.55, 2], '(30×2 + 10×5)/40 first go; 12 of them up 3 stars at best');
+    const p = C.puzzleMetrics(rows)[0];
+    eq([p.fiveShare, p.bestFiveShare, p.avgBest, p.bands], [0.25, 0.55, 3.65, [0, 0, 30, 0, 0, 10]], 'bands and flag stay on the first go');
   });
   test('daily metrics: rates, average stars and next-day return', () => {
     const rows = [
@@ -253,6 +285,7 @@
   });
   test('CSV export', () => {
     const csv = C.toCsv([row('2026-10-15', 'puzzle_attempted', 3, { stars: 7, saved: 1, dsl: '2-6' })]);
-    eq(csv, 'day,puzzle,event,stars,saved,returning,dsl,n\n2026-10-15,p,puzzle_attempted,3.5,1,-1,2-6,3\n');
+    eq(csv, 'day,puzzle,event,stars,saved,returning,dsl,from,wasSaved,n\n2026-10-15,p,puzzle_attempted,3.5,1,-1,2-6,-1,-1,3\n');
+    eq(C.toCsv([row('2026-10-15', 'puzzle_improved', 2, { stars: 9, saved: 1, from: 4, wasSaved: 0 })]).split('\n')[1], '2026-10-15,p,puzzle_improved,4.5,1,-1,,2,0,2');
   });
 })();

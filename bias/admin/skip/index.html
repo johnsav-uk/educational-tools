@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Skip Stats</title>
+<style>
+/* Over to you, skip: the private stats dashboard. One look, the puzzle's own: paper sheets on
+   a mown lawn, scoreboard tiles for the headline figures. Light only, by design. */
+@font-face { font-family: "Big Shoulders Display"; src: url("../../skip/fonts/big-shoulders-display.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("../../skip/fonts/newsreader.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("../../skip/fonts/newsreader-italic.woff2") format("woff2"); font-weight: 200 800; font-style: italic; font-display: swap; }
+:root {
+  --lawn: #D5DEC4; --stripe: rgba(255,255,255,.3); --paper: #FBF9F1; --chalk: #F4F3EC;
+  --ink: #1D2A22; --muted: #3F4F44; --rule: #9AA796; --grid: #E3E6DA;
+  --timber: #21452F; --tile: #161D18; --crimson: #B02A2E;
+  --good-bg: #DDEBD9; --good-ink: #1E5A33; --warn-bg: #F6E7C8; --warn-ink: #6E4A07; --none-bg: #E9EAE4;
+  /* chart series, checked for colour-blind separation on the paper */
+  --s1: #2F4FA3; --s2: #B07A1F; --s3: #13926A;
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif; --body: "Newsreader", Georgia, serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background-color: var(--lawn); color: var(--ink); }
+body { background-image: repeating-linear-gradient(90deg, var(--stripe) 0 70px, transparent 70px 140px); font: 17px/1.45 var(--body); min-height: 100vh;
+  padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { margin: 0; font: 800 clamp(30px, 6vw, 46px)/0.95 var(--display); text-transform: uppercase; letter-spacing: .03em; text-wrap: balance; }
+h2 { margin: 0 0 10px; font: 700 22px/1.1 var(--display); text-transform: uppercase; letter-spacing: .05em; }
+.sub { margin: 6px 0 0; color: var(--muted); font-style: italic; max-width: 62ch; }
+.sheet { background: var(--paper); padding: 20px 22px; border-radius: 3px; box-shadow: 0 2px 7px rgba(29,42,34,.16); min-width: 0; }
+.kicker { font: 700 14px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--crimson); margin: 0 0 6px; }
+button, input { font: inherit; color: inherit; }
+.btn { min-height: 44px; font: 700 18px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; border-radius: 6px; padding: 10px 16px 8px; cursor: pointer; background: var(--paper); border: 2px solid var(--ink); }
+.btn.primary { background: var(--crimson); color: #fff; border: 0; border-bottom: 4px solid #7C1A1E; }
+:focus-visible { outline: 3px solid var(--s1); outline-offset: 2px; }
+#login form { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+#login label { display: grid; gap: 4px; font-weight: 600; flex: 1 1 260px; }
+#login input { min-height: 44px; border: 2px solid var(--ink); border-radius: 6px; padding: 8px 10px; background: #fff; }
+.err { color: var(--crimson); font-weight: 600; margin: 10px 0 0; }
+.err:empty { display: none; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; }
+.bar .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.period { margin: 0; font-style: italic; color: var(--muted); }
+
+/* the verdict box */
+.verdict { display: grid; gap: 0; }
+.vrow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 8px 14px; align-items: center; padding: 9px 0; border-bottom: 1px dashed var(--rule); }
+.vrow:last-child { border-bottom: 0; }
+.vrow .v { font: 800 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.vrow .t { color: var(--muted); font-size: 15px; }
+.chip { justify-self: start; font: 700 14px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px 5px; border-radius: 999px; white-space: nowrap; }
+.chip.met { background: var(--good-bg); color: var(--good-ink); }
+.chip.not { background: var(--warn-bg); color: var(--warn-ink); }
+.chip.none { background: var(--none-bg); color: var(--muted); }
+.note { margin: 10px 0 0; font-size: 15px; font-style: italic; color: var(--muted); }
+
+/* the headline tiles: the puzzle's scoreboard */
+.board { background-color: var(--timber); border: 6px solid var(--chalk); border-radius: 4px; padding: 14px 16px; color: var(--chalk);
+  background-image: repeating-linear-gradient(180deg, transparent 0 42px, rgba(0,0,0,.2) 42px 44px); display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 14px 18px; }
+.board dt { font: 700 14px/1.1 var(--display); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 6px; }
+.board dd { margin: 0; display: flex; gap: 4px; flex-wrap: wrap; }
+.tile { position: relative; min-width: 30px; height: 44px; padding: 0 5px; border-radius: 4px; background: var(--tile); color: #fff; display: grid; place-items: center; font: 800 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+.tile::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #000; }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 22px; }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: 240px; overflow: visible; }
+.legend { display: flex; gap: 6px 16px; flex-wrap: wrap; margin: 0 0 8px; font-size: 15px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend i.line { height: 3px; border-radius: 2px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--chalk); font-size: 14px; line-height: 1.35; padding: 7px 9px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); z-index: 2; font-variant-numeric: tabular-nums; }
+.tip[hidden] { display: none; }
+
+/* tables */
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 9px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font: 700 13px/1.15 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); vertical-align: bottom; }
+th:first-child, td:first-child { text-align: left; }
+td.dim { color: var(--rule); }
+tbody tr:hover { background: #F3F1E6; }
+.empty { text-align: center; color: var(--muted); font-style: italic; padding: 22px 8px; }
+@media (max-width: 640px) {
+  .vrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .vrow .t { grid-column: 1 / -1; }
+  .chart svg { height: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Over to you, skip · stats</h1>
+    <p class="sub">Private. Daily counters only: no names, accounts or addresses, so no player can be picked out. Days run on London time.</p>
+  </header>
+
+  <section class="sheet" id="login" aria-labelledby="loginH">
+    <h2 id="loginH">Open the dashboard</h2>
+    <form id="loginForm">
+      <label for="key">Dashboard key<input id="key" name="key" type="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Open</button>
+    </form>
+    <p class="err" id="loginErr" role="alert"></p>
+    <p class="note">The key is the ADMIN_KEY secret set on the stats Worker. It is kept in this tab only, and forgotten when the tab closes.</p>
+  </section>
+
+  <main id="dash" hidden>
+    <div class="wrap">
+      <div class="bar">
+        <p class="period" id="period"></p>
+        <div class="acts">
+          <button class="btn" id="refresh" type="button">Refresh</button>
+          <button class="btn" id="csv" type="button">Download CSV</button>
+          <button class="btn" id="forget" type="button">Forget key</button>
+        </div>
+      </div>
+      <p class="err" id="dashErr" role="alert"></p>
+
+      <section class="sheet" aria-labelledby="verdictH">
+        <p class="kicker">The last 14 days</p>
+        <h2 id="verdictH">Is it working?</h2>
+        <div class="verdict" id="verdict"></div>
+        <p class="note">The targets are rough first guesses, not research. Change them in TARGETS in bias/skip/skip-core.js.</p>
+      </section>
+
+      <dl class="board" id="board" aria-label="The last 14 days in figures"></dl>
+
+      <div class="charts">
+        <section class="sheet" aria-labelledby="c1H">
+          <h2 id="c1H">Views and first attempts</h2>
+          <div class="legend"><span><i style="background:var(--s1)"></i>Players who viewed</span><span><i style="background:var(--s2)"></i>First attempts</span></div>
+          <div class="chart" id="chart1"></div>
+        </section>
+        <section class="sheet" aria-labelledby="c2H">
+          <h2 id="c2H">Rates by day</h2>
+          <div class="legend"><span><i class="line" style="background:var(--s1)"></i>Attempt rate</span><span><i class="line" style="background:var(--s2)"></i>Next-day return</span><span><i class="line" style="background:var(--s3)"></i>Shares per attempt</span></div>
+          <div class="chart" id="chart2"></div>
+        </section>
+      </div>
+
+      <section class="sheet" aria-labelledby="dayH">
+        <h2 id="dayH">Day by day</h2>
+        <div class="scroll"><table id="days"></table></div>
+      </section>
+
+      <section class="sheet" aria-labelledby="pzH">
+        <h2 id="pzH">Puzzle by puzzle</h2>
+        <p class="note" style="margin-top:0">All time. The star bands and the flag use each player's first go, the fair measure of a puzzle; "best" is each player's best go of the day. A puzzle is flagged too easy if more than <span id="easy"></span> get five stars first go, too hard if fewer than <span id="hard"></span> do.</p>
+        <div class="scroll"><table id="puzzles"></table></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="../../skip/skip-core.js"></script>
+<script>
+(() => {
+  'use strict';
+  const C = window.SkipCore, $ = id => document.getElementById(id);
+  // The stats Worker: the same address the game sends to. ?stats=<url> points at another one.
+  const STATS = (() => {
+    const q = new URLSearchParams(location.search).get('stats');
+    if (q) return q.replace(/\/$/, '');
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'http://localhost:8788';
+    return 'https://bias-stats.bias-relay.workers.dev';
+  })();
+  const KEY = 'skip.admin';
+  const ss = { get() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }, set(v) { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch (e) { /* tab only */ } } };
+  let key = ss.get(), titles = {};
+  const pct = v => v == null ? '–' : Math.round(v * 100) + '%';
+  const num = v => v == null ? '–' : String(v);
+  const two = v => v == null ? '–' : v.toFixed(2);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const shortDay = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+  fetch('../../skip/puzzles.json').then(r => r.json()).then(d => { for (const p of d.puzzles) titles[p.id] = p.title; }).catch(() => {});
+
+  async function call(path) {
+    const r = await fetch(STATS + path, { headers: { Authorization: 'Bearer ' + key }, cache: 'no-store' });
+    if (r.status === 401) throw Object.assign(new Error('That key was not accepted. Check it and try again.'), { auth: true });
+    if (r.status === 503) throw new Error((await r.json()).error);
+    if (!r.ok) throw new Error(`The stats service answered ${r.status}. Try again in a minute.`);
+    return r;
+  }
+  async function load() {
+    $('dashErr').textContent = '';
+    let rows;
+    try { rows = (await (await call('/admin/counters')).json()).rows; }
+    catch (e) {
+      if (e.auth) { key = null; ss.set(null); showLogin(e.message); return; }
+      const msg = e instanceof TypeError ? `Could not reach the stats service at ${STATS}. Is the Worker deployed?` : e.message;
+      if ($('dash').hidden) showLogin(msg); else $('dashErr').textContent = msg;
+      return;
+    }
+    $('login').hidden = true; $('dash').hidden = false;
+    render(rows);
+  }
+  function showLogin(msg) { $('dash').hidden = true; $('login').hidden = false; $('loginErr').textContent = msg || ''; $('key').focus(); }
+
+  $('loginForm').addEventListener('submit', e => { e.preventDefault(); key = $('key').value.trim(); if (!key) return; ss.set(key); $('key').value = ''; load(); });
+  $('refresh').onclick = load;
+  $('forget').onclick = () => { key = null; ss.set(null); showLogin('Key forgotten.'); };
+  $('csv').onclick = async () => {
+    try {
+      const blob = await (await call('/admin/counters.csv')).blob(), a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `skip-counters-${C.londonDate(Date.now())}.csv`; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (e) { $('dashErr').textContent = e.message; }
+  };
+
+  // ---------- drawing it ----------
+  let last = null;
+  function render(rows) {
+    last = rows;
+    const today = C.londonDate(Date.now()), daily = C.dailyMetrics(rows, today, 14), T = C.TARGETS;
+    $('period').textContent = `The 14 days to ${shortDay(today)} · ${rows.length} counter rows in all`;
+    // verdict
+    $('verdict').innerHTML = C.verdict(daily).map(v => `<div class="vrow"><strong>${esc(v.label)}</strong><span class="v">${esc(v.shown)}</span><span class="t">target ${esc(v.target)}</span>` +
+      `<span class="chip ${v.met == null ? 'none' : v.met ? 'met' : 'not'}">${v.met == null ? 'No data yet' : v.met ? 'On target' : 'Below target'}</span></div>`).join('');
+    // tiles
+    const sum = k => daily.reduce((a, d) => a + (d[k] || 0), 0), vd = Object.fromEntries(C.verdict(daily).map(v => [v.key, v]));
+    const tiles = s => String(s).split('').map(ch => `<span class="tile">${esc(ch)}</span>`).join('');
+    const w = k => { let n = 0, t = 0; for (const d of daily) if (d[k] != null) { n += d[k] * d.attempts; t += d.attempts; } return t ? n / t : null; };
+    const board = [['Players who viewed', sum('viewed')], ['Players who played', sum('attempts')], ['Attempt rate', vd.attemptRate.shown], ['Stars, first go', vd.avgStars.shown],
+      ['Stars, best of day', two(w('avgBest'))], ['Goes per player', w('goesPerPlayer') == null ? '–' : w('goesPerPlayer').toFixed(1)], ['Next-day return', vd.nextDayReturn.shown]];
+    $('board').innerHTML = board.map(([k, v]) => `<div><dt>${k}</dt><dd>${tiles(v)}</dd></div>`).join('');
+    // charts
+    bars($('chart1'), daily);
+    lines($('chart2'), daily);
+    // day table
+    const cols = [['Day', d => shortDay(d.day)], ['Viewed', d => num(d.viewed)], ['Played', d => num(d.attempts)], ['Attempt rate', d => pct(d.attemptRate)], ['Stars, first go', d => two(d.avgStars)],
+      ['Stars, best', d => two(d.avgBest)], ['Saved it, first go', d => pct(d.savedRate)], ['Saved it, best', d => pct(d.bestSavedRate)], ['Goes per player', d => d.goesPerPlayer == null ? '–' : d.goesPerPlayer.toFixed(1)], ['Shares per attempt', d => two(d.sharesPerAttempt)], ['Full match per attempt', d => two(d.fullPerAttempt)], ['Next-day return', d => pct(d.nextDayReturn)]];
+    $('days').innerHTML = `<thead><tr>${cols.map(c => `<th scope="col">${c[0]}</th>`).join('')}</tr></thead><tbody>` +
+      daily.slice().reverse().map(d => `<tr>${cols.map((c, i) => { const v = c[1](d); return i ? `<td class="${v === '–' || v === '0' ? 'dim' : ''}">${v}</td>` : `<th scope="row">${v}</th>`; }).join('')}</tr>`).join('') + '</tbody>';
+    // puzzle table
+    $('easy').textContent = pct(T.tooEasy); $('hard').textContent = pct(T.tooHard);
+    const pz = C.puzzleMetrics(rows);
+    $('puzzles').innerHTML = `<thead><tr><th scope="col">Puzzle</th><th scope="col">Viewed</th><th scope="col">First attempts</th>${C.BANDS.map(b => `<th scope="col">${b === '5' ? '5★' : b === '0' ? '0–½★' : b + '–' + b + '½★'}</th>`).join('')}<th scope="col">Stars, first go</th><th scope="col">Five stars, first go</th><th scope="col">Saved it, first go</th><th scope="col">Stars, best</th><th scope="col">Five stars, best</th><th scope="col">Flag</th></tr></thead><tbody>` +
+      (pz.length ? pz.map(p => `<tr><th scope="row">${esc(titles[p.puzzle] || p.puzzle)}</th><td>${p.viewed}</td><td>${p.attempted}</td>${p.bands.map(n => `<td class="${n ? '' : 'dim'}">${n}</td>`).join('')}<td>${two(p.avgStars)}</td><td>${pct(p.fiveShare)}</td><td>${pct(p.savedShare)}</td><td>${two(p.avgBest)}</td><td>${pct(p.bestFiveShare)}</td>` +
+        `<td>${p.flag ? `<span class="chip not">${esc(p.flag)}</span>` : p.attempted ? '<span class="chip met">OK</span>' : ''}</td></tr>`).join('')
+        : `<tr><td class="empty" colspan="${C.BANDS.length + 9}">No puzzles played yet. Rows appear here once players open the puzzle.</td></tr>`) + '</tbody>';
+  }
+
+  // Shared chart frame: one y scale, a faint grid, day labels along the bottom, a tooltip.
+  function frame(el, daily, max, fmtY) {
+    const w = Math.max(280, el.clientWidth), h = el.clientWidth < 500 ? 200 : 240, L = 40, R = 10, Tp = 10, B = 26;
+    const x0 = L, x1 = w - R, y0 = h - B, y1 = Tp, n = daily.length, step = (x1 - x0) / n;
+    const Y = v => y0 - (v / max) * (y0 - y1), X = i => x0 + step * (i + 0.5);
+    let g = '';
+    for (let k = 0; k <= 4; k++) { const v = max * k / 4, y = Y(v); g += `<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/><text x="${x0 - 6}" y="${y + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${fmtY(v)}</text>`; }
+    g += `<line x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}" stroke="var(--rule)" stroke-width="1"/>`;
+    const every = n > 10 && w < 600 ? 3 : n > 10 ? 2 : 1;
+    daily.forEach((d, i) => { if ((n - 1 - i) % every === 0) g += `<text x="${X(i)}" y="${h - 8}" text-anchor="middle" font-size="12" fill="var(--muted)">${new Date(d.day + 'T12:00:00Z').getUTCDate()}</text>`; });
+    return { w, h, X, Y, step, y0, g };
+  }
+  function niceMax(v) { if (v <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+  function attachTip(el, svg, hits) {
+    el.innerHTML = svg + '<div class="tip" hidden></div>';
+    const tip = el.querySelector('.tip');
+    el.querySelectorAll('[data-i]').forEach(r => {
+      const show = () => { const t = hits[+r.dataset.i]; tip.innerHTML = t.html; tip.style.left = t.x + 'px'; tip.style.top = t.y + 'px'; tip.hidden = false; };
+      r.addEventListener('pointerenter', show); r.addEventListener('focus', show);
+      r.addEventListener('pointerleave', () => { tip.hidden = true; }); r.addEventListener('blur', () => { tip.hidden = true; });
+    });
+  }
+  // Views and first attempts: two thin bars a day, from one scale.
+  function bars(el, daily) {
+    const max = niceMax(Math.max(1, ...daily.map(d => Math.max(d.viewed, d.attempts)))), f = frame(el, daily, max, v => String(Math.round(v)));
+    const bw = Math.max(3, Math.min(16, f.step * 0.32)), hits = [];
+    let s = f.g;
+    daily.forEach((d, i) => {
+      for (const [k, c, off] of [['viewed', 'var(--s1)', -bw / 2 - 1], ['attempts', 'var(--s2)', bw / 2 + 1]]) {
+        const v = d[k]; if (!v) continue;
+        const x = f.X(i) + off - bw / 2, y = f.Y(v), hgt = f.y0 - y, r = Math.min(4, bw / 2, hgt);
+        s += `<path d="M${x},${f.y0} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${f.y0} Z" fill="${c}"/>`;
+      }
+      hits.push({ x: f.X(i), y: f.Y(Math.max(d.viewed, d.attempts)), html: `<strong>${esc(shortDay(d.day))}</strong><br>Viewed ${d.viewed}<br>First attempts ${d.attempts}` });
+      s += `<rect data-i="${i}" tabindex="0" x="${f.X(i) - f.step / 2}" y="0" width="${f.step}" height="${f.y0}" fill="transparent" aria-label="${esc(shortDay(d.day))}: ${d.viewed} viewed, ${d.attempts} first attempts"/>`;
+    });
+    attachTip(el, `<svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="Players who viewed and first attempts per day, last 14 days">${s}</svg>`, hits);
+  }
+  // Three rates on one 0–100% scale; gaps where a day has no data.
+  function lines(el, daily) {
+    const series = [['attemptRate', 'var(--s1)', 'Attempt rate'], ['nextDayReturn', 'var(--s2)', 'Next-day return'], ['sharesPerAttempt', 'var(--s3)', 'Shares per attempt']];
+    const top = Math.max(1, ...daily.flatMap(d => series.map(([k]) => d[k] || 0))), max = top > 1 ? Math.ceil(top * 2) / 2 : 1;
+    const f = frame(el, daily, max, v => Math.round(v * 100) + '%'), hits = [];
+    let s = f.g;
+    for (const [k, c] of series) {
+      let dPath = '', on = false;
+      daily.forEach((d, i) => { const v = d[k]; if (v == null) { on = false; return; } dPath += `${on ? 'L' : 'M'}${f.X(i)},${f.Y(v)} `; on = true; });
+      if (dPath) s += `<path d="${dPath}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      daily.forEach((d, i) => { const v = d[k]; if (v != null) s += `<circle cx="${f.X(i)}" cy="${f.Y(v)}" r="4" fill="${c}" stroke="var(--paper)" stroke-width="2"/>`; });
+    }
+    daily.forEach((d, i) => {
+      hits.push({ x: f.X(i), y: f.Y(Math.max(0, ...series.map(([k]) => d[k] || 0))), html: `<strong>${esc(shortDay(d.day))}</strong><br>` + series.map(([k, , label]) => `${label} ${pct(d[k])}`).join('<br>') });
+      s += `<rect data-i="${i}" tabindex="0" x="${f.X(i) - f.step / 2}" y="0" width="${f.step}" height="${f.y0}" fill="transparent" aria-label="${esc(shortDay(d.day))}: ${series.map(([k, , l]) => `${l} ${pct(d[k])}`).join(', ')}"/>`;
+    });
+    attachTip(el, `<svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="Attempt rate, next-day return and shares per attempt per day, last 14 days">${s}</svg>`, hits);
+  }
+  let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (last && !$('dash').hidden) render(last); }, 150); });
+
+  if (key) load(); else showLogin();
+})();
+</script>
+</body>
+</html>

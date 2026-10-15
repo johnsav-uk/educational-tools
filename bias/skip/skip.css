@@ -80,6 +80,7 @@ body.skip-open { overflow: hidden; }
 
 .sk-head { flex: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 2px 18px; flex-wrap: wrap; padding-bottom: 6px; border-bottom: 5px double var(--sk-ink); margin-bottom: 10px; }
 .sk-head h1 { margin: 0; font: 800 clamp(26px, 5.4vh, 48px)/0.95 var(--sk-display); letter-spacing: .03em; text-transform: uppercase; text-wrap: balance; }
+.sk-testing { font-size: .5em; font-weight: 700; letter-spacing: .06em; color: var(--sk-crimson); white-space: nowrap; vertical-align: middle; }
 .sk-meta { margin: 0 0 3px; font-style: italic; color: var(--sk-muted); font-size: 15px; }
 
 /* ---------- the plan: whatever height is left ---------- */

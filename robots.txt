@@ -1,0 +1,3 @@
+# The site is open to search engines, apart from private admin pages.
+User-agent: *
+Disallow: /bias/admin/
