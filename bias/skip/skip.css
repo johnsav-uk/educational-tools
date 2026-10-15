@@ -152,8 +152,8 @@ body.skip-open { overflow: hidden; }
 /* ---------- phones: one column, clipboard first; no tilts ---------- */
 @media (max-width: 860px) {
   #skip { --sk-tilt: 0; font-size: 17px; }
-  .sk-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 12px 10px 40px; }
-  .sk-top { padding: 12px 10px 0; }
+  .sk-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 12px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .sk-top { padding-block: 12px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .sk-board { padding: 22px 8px 10px; }
   .sk-sheet { padding: 20px 14px 18px; }
   .sk-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }

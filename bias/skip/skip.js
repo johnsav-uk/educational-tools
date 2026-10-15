@@ -5,10 +5,11 @@
 (function () {
   'use strict';
   const C = window.SkipCore;
-  const HERE = new URL('.', document.currentScript.src).href;
+  const HERE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : location.href;
   const SHARE_URL = 'https://www.johnsav.co.uk/bias/?skip';
   // The stats Worker (bias/stats-worker/). ?stats=<url> points at another one; ?stats=off sends nothing.
   const STATS_URL = (() => {
+    if (typeof window.SKIP_STATS_URL === 'string') return window.SKIP_STATS_URL;   // a page that embeds the puzzle can set it ('' sends nothing)
     const q = new URLSearchParams(location.search).get('stats');
     if (q) return q === 'off' ? '' : q.replace(/\/$/, '');
     if (location.protocol === 'file:') return '';
@@ -143,6 +144,7 @@
     if (!root) build();
     root.hidden = false; document.body.classList.add('skip-open');
     root.classList.toggle('sk-still', reduced());
+    if (!puzzles && window.SKIP_PUZZLES) puzzles = window.SKIP_PUZZLES.puzzles;
     if (!puzzles) {
       try { const r = await fetch(HERE + 'puzzles.json', { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status); puzzles = (await r.json()).puzzles; }
       catch (e) { root.hidden = true; document.body.classList.remove('skip-open'); throw e; }
