@@ -684,6 +684,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
+        <button class="menu-item" id="mSkip" hidden>Over to you, skip<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -1389,7 +1390,9 @@ const COLOURS = [
   { id: 'black', name: 'Black', hex: '#262829' },
   { id: 'tan', name: 'Heritage brown', hex: '#6d4527' },
   { id: 'teal', name: 'Teal', hex: '#1d5a63' },
-  { id: 'plum', name: 'Plum', hex: '#55305a' }
+  { id: 'plum', name: 'Plum', hex: '#55305a' },
+  { id: 'pz-red', name: 'Red', hex: '#a3302b', puzzle: true },        // the daily puzzle's two sides only
+  { id: 'pz-yellow', name: 'Yellow', hex: '#c9982a', puzzle: true }
 ];
 const colourHex = id => (COLOURS.find(c => c.id === id) || COLOURS[0]).hex;
 
@@ -3036,7 +3039,7 @@ class Game {
   isTeams() { return !!this.match && this.match.discipline.positions > 1; }
   weightKey(kind, side, mi) { return kind + side + '.' + (mi || 0); }
   liveBodies() { return this.world.bodies.filter(b => !b.dead); }
-  endLabel() { if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
+  endLabel() { if (this.mode === 'puzzle') return 'Over to you, skip'; if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
   isExtraEnd() { return !!this.match && this.match.format.type === 'ends' && this.endNo > this.match.format.n; }
 
   // ---------- starting play ----------
@@ -3067,6 +3070,28 @@ class Game {
     else this.ai = null;
     this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, deadEnds: 0 };
     this.startEnd(false); this.snapCam = true;
+  }
+  /* Over to you, skip (bias/skip/): a fixed head from the last end, and one bowl to play with
+     the ordinary controls. pz is a puzzle from bias/skip/puzzles.json. A left-hander gets the
+     head mirrored, so "forehand" means the same shot. When everything stops, resolvePuzzle hands
+     the head to the puzzle screen, which scores it with Rules.score. */
+  startPuzzle(pz) {
+    this.clearTimers(); this.mode = 'puzzle'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
+    const m = Settings.arm === 'L' ? -1 : 1, them = pz.you === 'red' ? 'yellow' : 'red', a = pz.advised;
+    const side = (name, team) => ({ name, profileId: 'dp-pro', colour: 'pz-' + team, score: 0, played: 0, members: [{ name, role: '', played: 0, hand: a.hand, aim: m * a.aim }] });
+    this.players = [side('You', pz.you), side(them.charAt(0).toUpperCase() + them.slice(1), them)];
+    this.resetEndState();
+    this.world.setGreenSpeed(pz.greenSpeed); this.matRear = pz.matRear != null ? pz.matRear : W.MAT_MIN;
+    const j = this.world.add(new Body('jack')); j.place(m * pz.jack.x, pz.jack.y); this.jackSpot = { x: j.x, y: j.y };
+    const count = [0, 0];
+    for (const b of pz.bowls) {
+      const o = b.team === pz.you ? 0 : 1, body = this.world.add(new Body('bowl', o));
+      body.place(m * b.x, b.y); body.heading = m * (b.heading || 0); body.colour = colourHex('pz-' + b.team); body.num = ++count[o]; body.member = 0;
+    }
+    this.puzzle = { pz };
+    this.beginBowl(0);
+    this.ui.banner('Over to you, skip', pz.title, 'One bowl to save the end');
+    this.snapCam = true;
   }
   resetEndState() {
     this.world.clear(); this.trace = []; this.traceAlpha = 0; this.effects = []; this.matRear = W.MAT_MIN;
@@ -3135,7 +3160,7 @@ class Game {
     this.deliver(this.weight);
   }
   deliveryParams(weight) {
-    const t = this.turn, pl = this.players[t.player], prof = Profiles.byId(pl.profileId);
+    const t = this.turn, pl = this.players[t.player], prof = this.mode === 'puzzle' ? PROFILE_DEFAULTS.find(p => p.id === pl.profileId) : Profiles.byId(pl.profileId);   // a puzzle uses the bowls as they leave the factory
     const hand = t.kind === 'bowl' ? this.hand : 'fore', rel = releasePoint(this.matRear, hand, Settings.arm);
     return {
       kind: t.kind, player: t.player, member: t.member || 0, aim: this.aim, weight, speed: Weight.toSpeed(weight), hand,
@@ -3340,6 +3365,7 @@ class Game {
     this.place = { t: 0, dur: 0.9, from: { x: jack.x, y: jack.y }, to, done };
   }
   resolveBowl() {
+    if (this.mode === 'puzzle') { this.resolvePuzzle(); return; }
     const w = this.world, d = this.delivered, pl = this.players[this.turn.player];
     const { dead, jackDead } = Rules.afterDelivery(w.bodies, d, this.matFront);
     pl.played++; pl.members[this.turn.member || 0].played++; if (this.mode === 'practice') this.practice.count++;
@@ -3414,6 +3440,13 @@ class Game {
     if (at) this.effects.push({ type: 'ring', x: at.x, y: at.y, t: 0, dur: 1.2, gold: true, big: level === 2 });
     if (level >= 2) Sound.chime(true);
     if (level >= 1) Sound.applause(level, typeof Art !== 'undefined' ? Art.crowdN : 2);
+  }
+  // The last bowl has stopped: the puzzle screen judges the head (and marks any dead bowls), then shows the verdict.
+  resolvePuzzle() {
+    const pl = this.players[0]; pl.played++; pl.members[0].played++;
+    this.phase = 'between'; this.ui.refresh();
+    const d = this.delivered;
+    if (this.ui.puzzleDone) this.after(this.instant ? 0 : 1.1, () => { this.phase = 'summary'; this.ui.puzzleDone(this.world, d); });
   }
   nextInOrder() { const [side, mi] = this.order[this.orderIdx]; this.beginBowl(side, mi); }
   killBowl(b, why) { b.dead = true; b.deadReason = why; if (this.instant) this.world.remove(b); }
@@ -3910,7 +3943,8 @@ const UI = {
 
   refresh() {
     const g = game, inGame = g.mode !== 'title';
-    $('hpMeasure').hidden = g.mode === 'match'; if (g.mode === 'match' && this.measuring) toggleMeasureNow();
+    const noMeasure = g.mode === 'match' || g.mode === 'puzzle';   // measured only once the end is over
+    $('hpMeasure').hidden = noMeasure; if (noMeasure && this.measuring) toggleMeasureNow();
     $('scoreboard').style.display = inGame ? '' : 'none';
     $('controls').style.display = inGame ? '' : 'none';
     $('headPanel').style.display = inGame ? '' : 'none';
@@ -3960,6 +3994,13 @@ const UI = {
   },
   renderScoreboard() {
     const g = game, sb = $('scoreboard');
+    if (g.mode === 'puzzle') {
+      const left = 1 - g.players[0].played, them = g.players[1];
+      setHtml(sb, `<div class="sb-cell"><div class="kicker">Over to you, skip</div><div class="sb-big">${left ? 'Last bowl' : 'Played'}</div></div>
+        <div class="sb-cell sb-opt"><div class="kicker">You</div><div class="sb-meta"><span class="pip" style="--c:${colourHex(g.players[0].colour)}"></span>${left} bowl${left === 1 ? '' : 's'} to play</div></div>
+        <div class="sb-cell sb-opt"><div class="kicker">Green</div><div class="sb-meta num">${g.world.T.toFixed(1)} s · ${GreenSpeed.label(g.world.T)}</div></div>`);
+      return;
+    }
     if (g.mode === 'practice') {
       const p = Profiles.byId(g.practice.profileId);
       setHtml(sb, `<div class="sb-cell"><div class="kicker">Practice</div><div class="sb-big num">${g.turn && g.turn.kind === 'jack' ? 'Jack' : 'Bowl ' + (g.practice.count + (['aim', 'charge', 'release', 'rolling', 'settle'].includes(g.phase) ? 1 : 0))}</div></div>
@@ -3998,8 +4039,11 @@ const UI = {
     headView.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, nearestId: (g.mode === 'match' || sc.ranked.length) && !closeCall(sc) ? nearest : null, approach, measure: this.measuring ? this.measure : null, incoming, jackFrom: g.jackFrom, dt, pulse: 1 - this.pulseT, focusY: Math.min(g.matFront + 27, 33) });
     // text readouts (only when they change)
     // in a match nothing is measured until the end is over: shot by eye, and the bowls still to play
-    let shot = '—', near = '—'; const match = g.mode === 'match';
-    if (match) {
+    let shot = '—', near = '—'; const match = g.mode === 'match' || g.mode === 'puzzle';
+    if (g.mode === 'puzzle') {
+      near = `You ${1 - g.players[0].played}`;
+      if (jack && sc.ranked.length) shot = closeCall(sc) ? 'Too close to call' : `${g.players[sc.winner].name} · ${sc.shots}`;
+    } else if (match) {
       const per = g.match.discipline.bowls;
       near = g.players.map(p => `${g.isTeams() ? p.name : p.name.split(' ')[0]} ${p.members.length * per - p.played}`).join(' · ');
       if (jack && sc.ranked.length) shot = closeCall(sc) ? 'Too close to call' : `${g.players[sc.winner].name} · ${sc.shots}`;
@@ -4182,7 +4226,7 @@ function fillProfileSelect(sel, value) {
   sel.value = value;
 }
 function fillSwatches(el, value, onPick, disabledId) {
-  el.innerHTML = COLOURS.map(c => `<button type="button" class="swatch" role="radio" aria-checked="${c.id === value}" aria-label="${c.name}" title="${c.name}" style="--c:${c.hex}" data-id="${c.id}" ${c.id === disabledId ? 'disabled' : ''}></button>`).join('');
+  el.innerHTML = COLOURS.filter(c => !c.puzzle).map(c => `<button type="button" class="swatch" role="radio" aria-checked="${c.id === value}" aria-label="${c.name}" title="${c.name}" style="--c:${c.hex}" data-id="${c.id}" ${c.id === disabledId ? 'disabled' : ''}></button>`).join('');
   el.onclick = e => { const b = e.target.closest('.swatch'); if (b && !b.disabled) onPick(b.dataset.id); };
 }
 const setup = {
@@ -4868,9 +4912,10 @@ function showTitle() {
   // the one primary action: back to the game when one is going, otherwise Play
   $('mResume').classList.toggle('primary', inGame); $('mQuick').classList.toggle('primary', !inGame);
   $('mResume').hidden = !inGame;
+  if (typeof Skip !== 'undefined') Skip.paint();
   $('titleScrim').classList.toggle('photo', !inGame);
   $('titleFoot').hidden = !inGame;
-  $('titleFoot').textContent = !inGame ? '' : game.link ? `An online match is in progress (room ${Net.code}). Starting something new will leave it.` : game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : 'Practice is in progress.';
+  $('titleFoot').textContent = !inGame ? '' : game.link ? `An online match is in progress (room ${Net.code}). Starting something new will leave it.` : game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : game.mode === 'puzzle' ? "Today's puzzle is in progress." : 'Practice is in progress.';
   UI.open('titleScrim');
 }
 $('mSetup').onclick = () => openSetup({});
@@ -5134,7 +5179,7 @@ function tick(dt) {
   measureHeadView();
   updateCamera(dt, false);
   if (debugCam) { Object.assign(scene.cam, debugCam); scene.cam.update(); }
-  const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo'))) scene.render(buildView(game.acc / W.DT));   // the title still hides the green
+  const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo')) && !Skip.covers()) scene.render(buildView(game.acc / W.DT));   // the title, or the daily puzzle, hides the green   // the title still hides the green
   UI.drawHead(dt);
   Net.tick(dt);
   statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); }
@@ -5359,6 +5404,57 @@ window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietU
   camera(c) { debugCam = c; },
   get game() { return game; }, Coach };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
+// ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
+/* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
+   the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
+const FEATURES = { dailySkip: false };   // false hides it from the menu; ?skip=preview still opens it, for checking
+const skipParam = new URLSearchParams(location.search).get('skip');
+const skipOn = FEATURES.dailySkip || skipParam === 'preview';
+window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide, AI, Settings, Sound, reduced };
+/* What the puzzle screen may ask of the game. Every puzzle shot is played here, on the green,
+   with the game's own controls; the screen only briefs the player before and judges after. */
+const SkipHost = {
+  setUp(pz) { if (Net.on) Net.leave(); if (Coach.on) Coach.stop(); UI.close('titleScrim'); game.startPuzzle(pz); game.paused = true; UI.refresh(); },
+  play() { game.paused = false; last = performance.now(); UI.refresh(); },
+  world() { return game.world; },
+  trace() { return game.trace; },   // the path the bowl took, as the game drew it
+  menu() { game.showcase(); UI.refresh(); showTitle(); },
+  fullMatch() { game.showcase(); UI.refresh(); showTitle(); showLevels(); }
+};
+UI.puzzleDone = (world, delivered) => { if (window.SkipPage) window.SkipPage.done(world, delivered); };
+const Skip = {
+  files: null,
+  script(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); },
+  core() { return window.SkipCore ? Promise.resolve() : this.script('skip/skip-core.js'); },
+  load() {
+    if (!this.files) {
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'skip/skip.css'; document.head.appendChild(css);
+      this.files = this.core().then(() => this.script('skip/skip-sim.js')).then(() => this.script('skip/skip.js'));
+      this.files.catch(() => { this.files = null; });
+    }
+    return this.files;
+  },
+  open() {
+    if (game.phase === 'charge') game.cancelCharge();
+    this.load().then(() => window.SkipPage.open({ engine: window.BiasEngine, host: SkipHost }))
+      .catch(() => UI.toast('The daily puzzle could not load. Check your connection and try again.', 'warn'));
+  },
+  covers() { return document.body.classList.contains('skip-open'); },
+  // the menu line under the entry: today's result once played, or what it is
+  paint() {
+    const C = window.SkipCore; if (!C) return;
+    let ls = null; try { ls = window.localStorage; } catch (e) { /* blocked */ }
+    const st = C.loadStats(ls || { getItem: () => null });
+    const now = Date.now(), d = C.londonDate(now);
+    $('mSkipSub').textContent = C.playedToday(st, d) ? `#${C.issueNumber(d)} played: ${C.starText(st.today.stars)} · next in ${C.countdown(now).text}` : `#${C.issueNumber(d)} · the daily puzzle: one bowl to save the end`;
+  }
+};
+if (skipOn) {
+  $('mSkip').hidden = !FEATURES.dailySkip && skipParam !== 'preview';
+  $('mSkip').onclick = () => { if (Net.on) { UI.toast('Leave the online room before trying the puzzle.', 'warn'); return; } UI.close('titleScrim'); Skip.open(); };
+  setTimeout(() => Skip.core().then(() => Skip.paint(), () => {}), 1200);
+}
+
 // ======================= boot =======================
 Profiles.init();
 Sound.muted = !Settings.sound; paintSound();
@@ -5374,6 +5470,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classLis
   else if (ROOM_RE.test(q)) OnlineUI.open(q);
 }
 Lobby.start(); QM.paint();
+if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open();   // ?skip opens today's puzzle (shared results link here)
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 })();

@@ -1,0 +1,252 @@
+{
+  "about": "Over to you, skip: the daily puzzles. Positions are the game's own end-space metres: x across the rink (+ is the bowler's right, 0 the centre line), y up the green from the rear ditch (the mat's back edge is at matRear, 2 m by default; the front ditch is at 36 m). Bowl centres, not edges. After any change run: node bias/skip/tools/benchmark.cjs",
+  "start": "2026-10-15",
+  "puzzles": [
+    {
+      "id": "red-lying-three",
+      "title": "Red lying three",
+      "theme": "rescue the end",
+      "greenSpeed": 13,
+      "conditions": "",
+      "match": { "you": 18, "them": 18, "end": 21, "ends": 21 },
+      "you": "yellow",
+      "jack": { "x": 0, "y": 29 },
+      "bowls": [
+        { "team": "red", "x": -0.24, "y": 29.14 },
+        { "team": "red", "x": 0.17, "y": 29.15 },
+        { "team": "red", "x": 0.12, "y": 28.82 },
+        { "team": "yellow", "x": -0.22, "y": 28.7 },
+        { "team": "yellow", "x": 0.42, "y": 28.86 }
+      ],
+      "situation": "Last end, and the scores are level. Red is lying three round the jack, and both yellow woods are out on the edges of the head. You are skip with one bowl left.",
+      "hint": "pick your weight, then play the shot",
+      "annotations": [
+        { "text": "red lying three!", "dx": 0.5, "dy": 0.62, "rot": -4 },
+        { "text": "one wood left", "dx": 0.55, "dy": 0.47, "rot": -3 }
+      ],
+      "advised": {
+        "by": "your third",
+        "hand": "back",
+        "kind": "draw",
+        "target": { "x": -0.02, "y": 28.93 },
+        "say": "Draw it in on the backhand, skip. There's a gap on the left.",
+        "aim": -0.06351,
+        "weight": 0.46135
+      },
+      "bench": {
+        "physics": "bias-online-3",
+        "head": "6d1a337f",
+        "runs": 100,
+        "mix": ["club", "league", "county"],
+        "seed": 999904849,
+        "values": [-3.01345,-3.01175,-3.0103,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00876,-3.00871,-3.0083,-3.00812,-3.00798,-3.00778,-3.00748,-3.00628,-3.00572,-3.00434,-2.01273,-2.01129,-2.00876,-2.00876,-2.00673,-2.00651,-2.00479,-2.0034,-2.0032,-2.00318,-2.00265,-2.0016,-2.00106,-1.25817,-1.01489,-1.00715,-1.0059,-1.0053,-1.00504,-1.00321,-1.00195,-1.0012,-1.00057,-1.00039,-1.00023,0.4,0.4,0.8175,1.00019,1.00055,1.00132,1.00146,1.00265,1.00308,1.00369,1.0042,1.00438,1.00464,1.00535,1.00549,1.00575,1.00647,1.00672,1.0069,1.00732,1.00741,1.01561,1.02181,1.03475,1.05184,1.0675,1.0675,1.0675,1.0675,1.0675,1.0675,2.02632],
+        "outcomes": { "win1": 29, "down": 25, "same": 43, "win2": 1, "level": 2 },
+        "made": "2026-10-15"
+      },
+      "best": { "hand": "fore", "aim": 0.00464, "weight": 1, "value": 3.0675, "outcome": "win3", "stars": 5 },
+      "check": {
+        "advice": { "outcome": "down", "stars": 3 },
+        "plainDraw": [{ "hand": "fore", "outcome": "down", "stars": 2.5 }, { "hand": "back", "outcome": "win1", "stars": 4.5 }],
+        "grid": { "tried": 34122, "starShare": [0.4203,0.4634,0.0459,0.0342,0.0183,0.018] },
+        "flags": []
+      }
+    },
+    {
+      "id": "rain-on-the-green",
+      "title": "Rain on the green",
+      "theme": "wick the jack",
+      "greenSpeed": 10.5,
+      "conditions": "rain",
+      "match": { "you": 15, "them": 17, "end": 18, "ends": 18 },
+      "you": "yellow",
+      "jack": { "x": 0, "y": 29.3 },
+      "bowls": [
+        { "team": "red", "x": 0.03, "y": 29.41 },
+        { "team": "red", "x": -0.02, "y": 29.18 },
+        { "team": "red", "x": 0.16, "y": 29.2 },
+        { "team": "yellow", "x": 0.45, "y": 29.1 },
+        { "team": "yellow", "x": -0.5, "y": 29.3 }
+      ],
+      "situation": "Last end and yellow is two down. It has rained all afternoon and the green is heavy: every bowl needs far more weight than you'd think. Red has three packed tight round the jack, and there is no way in for a draw.",
+      "hint": "heavy green: give it plenty",
+      "annotations": [
+        { "text": "three on the jack", "dx": -1, "dy": 0.62, "rot": -3 },
+        { "text": "green's like treacle", "dx": 0.3, "dy": -0.62, "rot": -4 }
+      ],
+      "advised": {
+        "by": "your second",
+        "hand": "fore",
+        "kind": "drive",
+        "target": { "x": 0, "y": 29.3 },
+        "say": "Fire at the jack on the forehand. Kill the end if you can't move it.",
+        "aim": 0.00517,
+        "weight": 0.96
+      },
+      "bench": {
+        "physics": "bias-online-3",
+        "head": "76df40be",
+        "runs": 100,
+        "mix": ["club", "league", "county"],
+        "seed": 1599077863,
+        "values": [-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.27129,-3.0675,-3.0675,-3.02218,-3.02171,-3.02171,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.02129,-3.0204,-3.0189,-3.01748,-3.01717,-3.01462,-3.01456,-3.01453,-3.01257,-3.01255,-3.01195,-3.01159,-3.01059,-3.01056,-3.00957,-3.00947,-3.00927,-3.0092,-3.00881,-3.00874,-3.00866,-3.00848,-3.0084,-3.00832,-3.0076,-3.00751,-3.00605,-3.00537,-3.00525,-2.04163,-2.01242,-2.00512,-2.00422,-2.00409,-2.00395,-2.00376,-2.00363,-2.00207,-2.00161,-1.26921,-1.26135,-1.25918,-1.25905,-1.03706,-1.0222,-1.02086,-1.01865,-1.01858,-1.01841,-1.01638,-1.01506,-1.014,-1.01327,-1.01314,-1.01257,-1.01149,-1.00966,-1.00953,-1.0084,-1.00445,-1.00313,-1.00308,-1.00176,0.75089,0.75127,1.00055,1.0008,1.0008,1.00185,1.00247,1.00316,1.00867],
+        "outcomes": { "same": 57, "win1": 9, "down": 34 },
+        "made": "2026-10-15"
+      },
+      "best": { "hand": "fore", "aim": 0.00767, "weight": 0.995, "value": 3.0079, "outcome": "win3", "stars": 5 },
+      "check": {
+        "advice": { "outcome": "win1", "stars": 5 },
+        "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 3 }, { "hand": "back", "outcome": "same", "stars": 2.5 }],
+        "grid": { "tried": 34122, "starShare": [0.1816,0.7857,0.0061,0.012,0.0089,0.0057] },
+        "flags": []
+      }
+    },
+    {
+      "id": "the-long-jack",
+      "title": "The long jack",
+      "theme": "last wood",
+      "greenSpeed": 14.5,
+      "conditions": "",
+      "matRear": 2,
+      "match": { "you": 20, "them": 20, "end": 21, "ends": 21 },
+      "you": "yellow",
+      "jack": { "x": 0.05, "y": 31.4 },
+      "bowls": [
+        { "team": "red", "x": 0.09, "y": 31.53 },
+        { "team": "red", "x": -0.06, "y": 30.8 },
+        { "team": "red", "x": 0.42, "y": 30.6 },
+        { "team": "yellow", "x": 0.3, "y": 31.2 },
+        { "team": "yellow", "x": -0.27, "y": 31.55 }
+      ],
+      "situation": "Twenty all, last end, on a fast green. The jack is long and red has a toucher-close bowl just behind it. A red guard sits short on the forehand side.",
+      "hint": "fast green: less weight than you think",
+      "annotations": [
+        { "text": "red holds one", "dx": 0.38, "dy": 0.5, "rot": -3 },
+        { "text": "watch the guard", "dx": 0.5, "dy": -0.58, "rot": -4 }
+      ],
+      "advised": {
+        "by": "your third",
+        "hand": "back",
+        "kind": "draw",
+        "target": { "x": -0.02, "y": 31.32 },
+        "say": "Backhand's open. Just draw to the front of the jack.",
+        "aim": -0.0777,
+        "weight": 0.40131
+      },
+      "bench": {
+        "physics": "bias-online-3",
+        "head": "b9547f93",
+        "runs": 100,
+        "mix": ["club", "league", "county"],
+        "seed": 726898275,
+        "values": [-2.01393,-2.01118,-2.01082,-2.01036,-2.01026,-1.01272,-1.01123,-1.01069,-1.01052,-1.01041,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01036,-1.01002,-1.01001,-1.00999,-1.00929,-1.00842,-1.00749,-1.00724,-1.00664,-1.00582,-1.00572,-1.0049,-1.00458,-1.00418,-1.00275,-1.00272,-1.00188,-1.00181,-1.0013,1.00056,1.00137,1.00149,1.00684,1.00945,1.01293,1.01308,2.01153,2.01467,2.0183,2.02189],
+        "outcomes": { "same": 84, "up": 5, "win2": 4, "win1": 7 },
+        "made": "2026-10-15"
+      },
+      "best": { "hand": "fore", "aim": 0.00935, "weight": 0.94, "value": 3.0675, "outcome": "win3", "stars": 5 },
+      "check": {
+        "advice": { "outcome": "win1", "stars": 5 },
+        "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 3.5 }, { "hand": "back", "outcome": "same", "stars": 3.5 }],
+        "grid": { "tried": 34122, "starShare": [0.6321,0,0,0.3028,0.033,0.0321] },
+        "flags": []
+      }
+    },
+    {
+      "id": "rest-on-the-shot",
+      "title": "Rest on the shot",
+      "theme": "yard on",
+      "greenSpeed": 12,
+      "conditions": "",
+      "match": { "you": 11, "them": 12, "end": 15, "ends": 15 },
+      "you": "red",
+      "jack": { "x": 0, "y": 28.5 },
+      "bowls": [
+        { "team": "yellow", "x": 0.02, "y": 28.36 },
+        { "team": "yellow", "x": 0.2, "y": 28.62 },
+        { "team": "red", "x": -0.32, "y": 28.6 },
+        { "team": "red", "x": 0.1, "y": 28.95 },
+        { "team": "yellow", "x": 0.45, "y": 28.3 }
+      ],
+      "situation": "You're red this time, one down with the last bowl of the match. Yellow's shot bowl is sitting right in front of the jack, with another just behind it on the right. Your best is out on the left.",
+      "hint": "a yard on: follow it through",
+      "annotations": [
+        { "text": "yellow two", "dx": 0.5, "dy": 0.55, "rot": -3 },
+        { "text": "front bowl is the shot", "dx": -1.05, "dy": -0.45, "rot": -4 }
+      ],
+      "advised": {
+        "by": "your third",
+        "hand": "fore",
+        "kind": "through",
+        "target": { "x": 0.02, "y": 28.36 },
+        "extra": 0.9,
+        "say": "Yard on at the front bowl, forehand. Rest on it and take shot.",
+        "aim": 0.03742,
+        "weight": 0.57207
+      },
+      "bench": {
+        "physics": "bias-online-3",
+        "head": "de88015c",
+        "runs": 100,
+        "mix": ["club", "league", "county"],
+        "seed": 3123690520,
+        "values": [-3.3175,-2.26798,-2.26798,-2.26798,-2.26798,-2.26798,-2.26773,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.2609,-2.01597,-2.01475,-2.01183,-2.01167,-2.01127,-2.01118,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.0109,-2.01044,-2.00993,-2.00992,-2.0097,-2.00967,-2.00891,-2.00869,-2.00806,-2.00596,-1.2609,-1.2609,-1.2609,-1.25356,-1.0675,-1.0675,-1.0675,-1.0675,-1.0675,-1.03384,-1.0109,-1.0109,-1.0109,-1.0109,-1.00563,-1.00419,-1.00406,-1.00357,-1.00253,-1.00049,0.75072,0.75177,0.75177,0.75177,0.78336,0.80545,0.80863,1.0003,1.00116,1.00177,1.00177,1.00177,1.00277,1.005,1.02601,1.0343,1.0675,2.03144,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,2.0675,3.0675],
+        "outcomes": { "same": 51, "win1": 17, "down": 20, "win2": 10, "win3": 1, "up": 1 },
+        "made": "2026-10-15"
+      },
+      "best": { "hand": "fore", "aim": 0.00111, "weight": 0.99, "value": 3.0675, "outcome": "win3", "stars": 5 },
+      "check": {
+        "advice": { "outcome": "down", "stars": 3.5 },
+        "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 2 }, { "hand": "back", "outcome": "down", "stars": 3.5 }],
+        "grid": { "tried": 34122, "starShare": [0.2939,0.0036,0.6335,0.0519,0.0143,0.0029] },
+        "flags": []
+      }
+    },
+    {
+      "id": "short-and-wide",
+      "title": "Short and wide",
+      "theme": "draw the shot",
+      "greenSpeed": 13,
+      "conditions": "",
+      "match": { "you": 9, "them": 10, "end": 12, "ends": 12 },
+      "you": "yellow",
+      "jack": { "x": -0.6, "y": 27.2 },
+      "bowls": [
+        { "team": "red", "x": -0.52, "y": 27.32 },
+        { "team": "red", "x": -1.05, "y": 26.9 },
+        { "team": "yellow", "x": -0.3, "y": 27.55 },
+        { "team": "yellow", "x": -0.8, "y": 27.6 }
+      ],
+      "situation": "A short jack, pushed out to the left of the rink. Red holds one, sitting just behind the jack. One down, last end. Nothing complicated: you need a good draw.",
+      "hint": "short jack: watch your weight",
+      "annotations": [
+        { "text": "just the one", "dx": 0.45, "dy": 0.6, "rot": -3 },
+        { "text": "jack's off-centre", "dx": 0.35, "dy": -0.6, "rot": -4 }
+      ],
+      "advised": {
+        "by": "your third",
+        "hand": "fore",
+        "kind": "draw",
+        "target": { "x": -0.66, "y": 27.12 },
+        "say": "Forehand draw, a touch short of the jack.",
+        "aim": 0.02746,
+        "weight": 0.40993
+      },
+      "bench": {
+        "physics": "bias-online-3",
+        "head": "360a6316",
+        "runs": 100,
+        "mix": ["club", "league", "county"],
+        "seed": 2910032427,
+        "values": [-1.01782,-1.01782,-1.01782,-1.01772,-1.01766,-1.01739,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.01704,-1.0168,-1.01667,-1.01609,-1.01585,-1.01584,-1.01467,-1.01454,-1.01443,-1.0144,-1.01426,-1.0139,-1.01322,-1.01321,-1.01301,-1.01258,-1.01198,-1.01169,-1.01151,-1.01145,-1.01126,-1.01015,-1.00951,-1.00844,-1.00707,-1.00667,-1.00276,-1.00244,-1.00216,-1.00175,0.00001,1.00236,1.00399,1.00401,1.00422,1.00466,1.00627,1.00723,1.00938,1.01094,1.0124,1.01593,2.00527,2.00866,2.01215,2.01242,2.01304,2.01403,2.01453,2.01475,2.01538,2.01665,2.02473,3.01062,3.01074,3.01256,3.01347,3.01689,3.01776,3.01793,3.0185,3.02303,3.02882],
+        "outcomes": { "same": 67, "level": 1, "win3": 10, "win2": 11, "win1": 11 },
+        "made": "2026-10-15"
+      },
+      "best": { "hand": "fore", "aim": -0.02401, "weight": 0.99, "value": 3.0675, "outcome": "win3", "stars": 5 },
+      "check": {
+        "advice": { "outcome": "win1", "stars": 3.5 },
+        "plainDraw": [{ "hand": "fore", "outcome": "win1", "stars": 3.5 }, { "hand": "back", "outcome": "win1", "stars": 3.5 }],
+        "grid": { "tried": 34122, "starShare": [0.5093,0,0.4403,0.023,0.0195,0.0078] },
+        "flags": []
+      }
+    }
+  ]
+}

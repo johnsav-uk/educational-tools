@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Over to you, skip · tests</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;margin:24px;background:#fbf9f1;color:#1d2a22}pre{white-space:pre-wrap}.ok{color:#21452f}.bad{color:#b02a2e}</style>
+</head>
+<body>
+<h1>Over to you, skip: tests</h1>
+<p>The date, star, stats and event tests, run in this browser. (The stats Worker's tests need Node: <code>node bias/skip/tests/run.cjs</code>.)</p>
+<pre id="out">Running…</pre>
+<script src="harness.js"></script>
+<script src="../skip-core.js"></script>
+<script src="skip-core.test.js"></script>
+<script>
+  const lines = [];
+  T.run(l => lines.push(l)).then(r => {
+    const out = document.getElementById('out');
+    out.textContent = lines.join('\n');
+    out.className = r.fails.length ? 'bad' : 'ok';
+  });
+</script>
+</body>
+</html>
