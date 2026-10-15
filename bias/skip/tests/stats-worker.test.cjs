@@ -37,7 +37,7 @@ module.exports = async function (T) {
     const env = mkEnv();
     eq((await post(env, attempt())).status, 204);
     eq((await post(env, attempt())).status, 204);
-    eq(rows(env), [{ day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_attempted', stars: 7, saved: 1, ret: -1, dsl: '1', n: 2 }]);
+    eq(rows(env), [{ day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_attempted', stars: 7, saved: 1, ret: -1, dsl: '1', frm: -1, wsaved: -1, n: 2 }]);
   });
   test('worker: the day is the server\'s London date, not the client\'s', async () => {
     const env = mkEnv();
@@ -48,7 +48,7 @@ module.exports = async function (T) {
     const env = mkEnv();
     await post(env, attempt()); await post(env, { name: 'puzzle_viewed', props: { puzzleId: 'p', returning: true, daysSinceLastPlay: 3 } });
     const cols = env.DB.raw.prepare('PRAGMA table_info(counters)').all().map(c => c.name);
-    eq(cols, ['day', 'puzzle', 'event', 'stars', 'saved', 'ret', 'dsl', 'n']);
+    eq(cols, ['day', 'puzzle', 'event', 'stars', 'saved', 'ret', 'dsl', 'frm', 'wsaved', 'n']);
     const dump = JSON.stringify(env.DB.raw.prepare('SELECT * FROM counters').all());
     ok(!dump.includes('203.0.113.9') && !dump.includes('Mozilla'), 'no address or browser in the table');
     ok(!dump.includes('"streak"'), 'the streak is checked but not kept');
@@ -65,6 +65,14 @@ module.exports = async function (T) {
     const env = mkEnv();
     await post(env, attempt({ isFirstAttemptOfDay: false }));
     eq(rows(env).map(r => [r.event, r.stars, r.saved]), [['puzzle_attempted_repeat', -1, -1]]);
+  });
+  test('worker: a better go moves the player\'s best, and /today counts it', async () => {
+    const env = mkEnv();
+    for (let i = 0; i < 30; i++) await post(env, attempt({ saved: false, stars: 1 }));
+    const up = { name: 'puzzle_improved', props: { puzzleId: 'red-lying-three', fromStars: 1, toStars: 4, wasSaved: false, saved: true } };
+    for (let i = 0; i < 9; i++) eq((await post(env, up)).status, 204);
+    eq(rows(env).find(r => r.event === 'puzzle_improved'), { day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_improved', stars: 8, saved: 1, ret: -1, dsl: '', frm: 2, wsaved: 0, n: 9 });
+    eq(await (await get(env, '/today')).json(), { day: '2026-10-15', attempts: 30, savedPct: 30 }, '9 of 30 saved it at their best');
   });
   test('worker: over the rate limit, events are dropped', async () => {
     const env = mkEnv({ LIMITER: { limit: async () => ({ success: false }) } });
@@ -92,14 +100,14 @@ module.exports = async function (T) {
     eq((await get(env, '/admin/counters?key=correct%20horse%20battery%20staple')).status, 401, 'a key in the query string is ignored');
     const r = await get(env, '/admin/counters', { Authorization: 'Bearer correct horse battery staple' });
     eq(r.status, 200);
-    eq((await r.json()).rows, [{ day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_attempted', stars: 7, saved: 1, returning: -1, dsl: '1', n: 1 }]);
+    eq((await r.json()).rows, [{ day: '2026-10-15', puzzle: 'red-lying-three', event: 'puzzle_attempted', stars: 7, saved: 1, returning: -1, dsl: '1', from: -1, wasSaved: -1, n: 1 }]);
     eq((await get(mkEnv({ ADMIN_KEY: '' }), '/admin/counters', { Authorization: 'Bearer x' })).status, 503, 'no key set: the dashboard is closed');
   });
   test('worker: CSV export of the counters', async () => {
     const env = mkEnv(); await post(env, attempt());
     const r = await get(env, '/admin/counters.csv', { Authorization: 'Bearer correct horse battery staple' });
     eq(r.headers.get('Content-Type'), 'text/csv; charset=utf-8');
-    eq(await r.text(), 'day,puzzle,event,stars,saved,returning,dsl,n\n2026-10-15,red-lying-three,puzzle_attempted,3.5,1,-1,1,1\n');
+    eq(await r.text(), 'day,puzzle,event,stars,saved,returning,dsl,from,wasSaved,n\n2026-10-15,red-lying-three,puzzle_attempted,3.5,1,-1,1,-1,-1,1\n');
   });
   test('worker: only the site\'s own pages get CORS access', async () => {
     const env = mkEnv();

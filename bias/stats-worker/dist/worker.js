@@ -123,8 +123,9 @@ var require_skip_core = __commonJS({
       }
       __name(starText, "starText");
       const starWords = /* @__PURE__ */ __name((s) => `${s} star${s === 1 ? "" : "s"} out of 5`, "starWords");
-      function shareText(issue, stars, url) {
-        return `Over to you skip #${issue} ${starText(stars)}` + (url ? `
+      const goesText = /* @__PURE__ */ __name((tries) => !tries || tries <= 1 ? "first go" : `in ${tries} goes`, "goesText");
+      function shareText(issue, stars, url, tries) {
+        return `Over to you skip #${issue} ${starText(stars)}` + (tries ? ` ${goesText(tries)}` : "") + (url ? `
 ${url}` : "");
       }
       __name(shareText, "shareText");
@@ -161,7 +162,10 @@ ${url}` : "");
         if (s.hist && typeof s.hist === "object") {
           for (const k of Object.keys(s.hist)) if (isStars(+k) && Number.isInteger(s.hist[k]) && s.hist[k] > 0) f.hist[String(+k)] = s.hist[k];
         }
-        if (s.today && isDate(s.today.date) && typeof s.today.puzzleId === "string" && isStars(s.today.stars)) f.today = s.today;
+        if (s.today && isDate(s.today.date) && typeof s.today.puzzleId === "string" && isStars(s.today.stars)) {
+          const t = s.today, tries = Number.isInteger(t.tries) && t.tries >= 1 ? t.tries : 1 + (Number.isInteger(t.practice) ? t.practice : 0);
+          f.today = { date: t.date, puzzleId: t.puzzleId, stars: t.stars, outcome: t.outcome, saved: !!t.saved, tries, firstStars: isStars(t.firstStars) ? t.firstStars : t.stars };
+        }
         if (isDate(s.viewed)) f.viewed = s.viewed;
         return f;
       }
@@ -192,10 +196,19 @@ ${url}` : "");
       __name(currentStreak, "currentStreak");
       const playedToday = /* @__PURE__ */ __name((s, date) => !!(s.today && s.today.date === date), "playedToday");
       function recordAttempt(s, date, puzzleId, result) {
-        const n = JSON.parse(JSON.stringify(s));
+        const n = JSON.parse(JSON.stringify(s)), saved = !!result.saved;
         if (playedToday(n, date)) {
-          n.today.practice = (n.today.practice || 0) + 1;
-          return { stats: n, first: false };
+          const t = n.today, from = { stars: t.stars, saved: !!t.saved };
+          t.tries = (t.tries || 1) + 1;
+          const improved = result.stars > t.stars;
+          if (improved) {
+            const old = String(t.stars), k2 = String(result.stars);
+            if (n.hist[old] > 1) n.hist[old]--;
+            else delete n.hist[old];
+            n.hist[k2] = (n.hist[k2] || 0) + 1;
+            Object.assign(t, { stars: result.stars, outcome: result.outcome, saved });
+          }
+          return { stats: n, first: false, improved, from };
         }
         const gap = daysSinceLastPlay(n, date);
         n.streak = gap === 1 ? n.streak + 1 : 1;
@@ -203,8 +216,8 @@ ${url}` : "");
         n.lastPlayed = date;
         const k = String(result.stars);
         n.hist[k] = (n.hist[k] || 0) + 1;
-        n.today = { date, puzzleId, stars: result.stars, outcome: result.outcome, practice: 0 };
-        return { stats: n, first: true };
+        n.today = { date, puzzleId, stars: result.stars, outcome: result.outcome, saved, tries: 1, firstStars: result.stars };
+        return { stats: n, first: true, improved: false, from: null };
       }
       __name(recordAttempt, "recordAttempt");
       function recordView(s, date) {
@@ -218,6 +231,7 @@ ${url}` : "");
         puzzle_viewed: { puzzleId: "id", returning: "bool", daysSinceLastPlay: "dsl" },
         puzzle_attempted: { puzzleId: "id", stars: "stars", saved: "bool", isFirstAttemptOfDay: "bool", streak: "streak", daysSinceLastPlay: "dsl" },
         puzzle_replayed: { puzzleId: "id" },
+        puzzle_improved: { puzzleId: "id", fromStars: "stars", toStars: "stars", wasSaved: "bool", saved: "bool" },
         result_shared: { puzzleId: "id" },
         full_match_clicked: { puzzleId: "id" }
       };
@@ -237,6 +251,7 @@ ${url}` : "");
         for (const k of Object.keys(e)) if (k !== "name" && k !== "props") return { ok: false, why: "extra field " + k };
         for (const k of Object.keys(props)) if (!(k in spec)) return { ok: false, why: "extra prop " + k };
         for (const [k, type] of Object.entries(spec)) if (!(k in props) || !CHECK[type](props[k])) return { ok: false, why: "bad " + k };
+        if (e.name === "puzzle_improved" && !(props.toStars > props.fromStars)) return { ok: false, why: "not an improvement" };
         return { ok: true, event: { name: e.name, props: Object.assign({}, props) } };
       }
       __name(validateEvent, "validateEvent");
@@ -246,7 +261,13 @@ ${url}` : "");
       __name(dslBucket, "dslBucket");
       const DSL_BUCKETS = ["new", "0", "1", "2-6", "7+"];
       function counterFor(ev, day) {
-        const p = ev.props, c = { day, puzzle: p.puzzleId, event: ev.name, stars: -1, saved: -1, returning: -1, dsl: "" };
+        const p = ev.props, c = { day, puzzle: p.puzzleId, event: ev.name, stars: -1, saved: -1, returning: -1, dsl: "", from: -1, wasSaved: -1 };
+        if (ev.name === "puzzle_improved") {
+          c.stars = Math.round(p.toStars * 2);
+          c.saved = p.saved ? 1 : 0;
+          c.from = Math.round(p.fromStars * 2);
+          c.wasSaved = p.wasSaved ? 1 : 0;
+        }
         if (ev.name === "puzzle_viewed") {
           c.returning = p.returning ? 1 : 0;
           c.dsl = dslBucket(p.daysSinceLastPlay);
@@ -261,7 +282,7 @@ ${url}` : "");
         return c;
       }
       __name(counterFor, "counterFor");
-      const counterKey = /* @__PURE__ */ __name((c) => [c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl].join("|"), "counterKey");
+      const counterKey = /* @__PURE__ */ __name((c) => [c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl, c.from, c.wasSaved].join("|"), "counterKey");
       const TARGETS = {
         // rough first guesses, to be edited once real numbers come in
         attemptRate: 0.5,
@@ -273,17 +294,22 @@ ${url}` : "");
         avgStars: [2, 3.7],
         // average stars (0–5), between
         tooEasy: 0.7,
-        // a puzzle where more than this share get 5 stars
+        // a puzzle where more than this share get 5 stars first go
         tooHard: 0.1,
-        // a puzzle where fewer than this share get 5 stars
+        // a puzzle where fewer than this share get 5 stars first go
         savedTileMin: 30
         // attempts today before the "Saved it, %" tile appears
       };
+      const isFirst = /* @__PURE__ */ __name((r) => r.event === "puzzle_attempted" && r.stars >= 0, "isFirst");
+      const isBetter = /* @__PURE__ */ __name((r) => r.event === "puzzle_improved" && r.stars >= 0 && r.from >= 0, "isBetter");
       function todaySummary(rows, day, min = TARGETS.savedTileMin) {
         let attempts = 0, saved = 0;
-        for (const r of rows) if (r.day === day && r.event === "puzzle_attempted" && r.stars >= 0) {
-          attempts += r.n;
-          if (r.saved === 1) saved += r.n;
+        for (const r of rows) {
+          if (r.day !== day) continue;
+          if (isFirst(r)) {
+            attempts += r.n;
+            if (r.saved === 1) saved += r.n;
+          } else if (isBetter(r)) saved += r.n * ((r.saved === 1) - (r.wasSaved === 1));
         }
         return { day, attempts, savedPct: attempts >= min ? Math.round(100 * saved / attempts) : null };
       }
@@ -291,7 +317,7 @@ ${url}` : "");
       const ratio = /* @__PURE__ */ __name((a, b) => b ? a / b : null, "ratio");
       function dailyMetrics(rows, endDay, days = 14) {
         const out = [], by = /* @__PURE__ */ new Map();
-        const blank = /* @__PURE__ */ __name(() => ({ viewed: 0, attempts: 0, starSum: 0, saved: 0, five: 0, replays: 0, repeats: 0, shares: 0, full: 0, fromYesterday: 0 }), "blank");
+        const blank = /* @__PURE__ */ __name(() => ({ viewed: 0, attempts: 0, starSum: 0, saved: 0, five: 0, replays: 0, repeats: 0, shares: 0, full: 0, fromYesterday: 0, bestSum: 0, bestSaved: 0 }), "blank");
         for (const r of rows) {
           if (!by.has(r.day)) by.set(r.day, blank());
           const d = by.get(r.day);
@@ -299,9 +325,16 @@ ${url}` : "");
           else if (r.event === "puzzle_attempted" && r.stars >= 0) {
             d.attempts += r.n;
             d.starSum += r.n * r.stars / 2;
-            if (r.saved === 1) d.saved += r.n;
+            d.bestSum += r.n * r.stars / 2;
+            if (r.saved === 1) {
+              d.saved += r.n;
+              d.bestSaved += r.n;
+            }
             if (r.stars === 10) d.five += r.n;
             if (r.dsl === "1") d.fromYesterday += r.n;
+          } else if (isBetter(r)) {
+            d.bestSum += r.n * (r.stars - r.from) / 2;
+            d.bestSaved += r.n * ((r.saved === 1) - (r.wasSaved === 1));
           } else if (r.event === "puzzle_attempted_repeat") d.repeats += r.n;
           else if (r.event === "puzzle_replayed") d.replays += r.n;
           else if (r.event === "result_shared") d.shares += r.n;
@@ -316,6 +349,9 @@ ${url}` : "");
             attemptRate: ratio(d.attempts, d.viewed),
             avgStars: ratio(d.starSum, d.attempts),
             savedRate: ratio(d.saved, d.attempts),
+            avgBest: ratio(d.bestSum, d.attempts),
+            bestSavedRate: ratio(d.bestSaved, d.attempts),
+            goesPerPlayer: d.attempts ? 1 + d.replays / d.attempts : null,
             replaysPerAttempt: ratio(d.replays, d.attempts),
             sharesPerAttempt: ratio(d.shares, d.attempts),
             fullPerAttempt: ratio(d.full, d.attempts),
@@ -329,15 +365,23 @@ ${url}` : "");
       function puzzleMetrics(rows, targets = TARGETS) {
         const by = /* @__PURE__ */ new Map();
         for (const r of rows) {
-          if (!by.has(r.puzzle)) by.set(r.puzzle, { puzzle: r.puzzle, viewed: 0, attempted: 0, bands: [0, 0, 0, 0, 0, 0], starSum: 0, five: 0, saved: 0 });
+          if (!by.has(r.puzzle)) by.set(r.puzzle, { puzzle: r.puzzle, viewed: 0, attempted: 0, bands: [0, 0, 0, 0, 0, 0], starSum: 0, five: 0, saved: 0, bestSum: 0, bestFive: 0 });
           const p = by.get(r.puzzle);
           if (r.event === "puzzle_viewed") p.viewed += r.n;
           if (r.event === "puzzle_attempted" && r.stars >= 0) {
             p.attempted += r.n;
             p.bands[Math.floor(r.stars / 2)] += r.n;
             p.starSum += r.n * r.stars / 2;
-            if (r.stars === 10) p.five += r.n;
+            p.bestSum += r.n * r.stars / 2;
+            if (r.stars === 10) {
+              p.five += r.n;
+              p.bestFive += r.n;
+            }
             if (r.saved === 1) p.saved += r.n;
+          }
+          if (isBetter(r)) {
+            p.bestSum += r.n * (r.stars - r.from) / 2;
+            p.bestFive += r.n * ((r.stars === 10) - (r.from === 10));
           }
         }
         return [...by.values()].map((p) => {
@@ -346,6 +390,8 @@ ${url}` : "");
             avgStars: ratio(p.starSum, p.attempted),
             fiveShare,
             savedShare: ratio(p.saved, p.attempted),
+            avgBest: ratio(p.bestSum, p.attempted),
+            bestFiveShare: ratio(p.bestFive, p.attempted),
             flag: fiveShare == null ? "" : fiveShare > targets.tooEasy ? "too easy" : fiveShare < targets.tooHard ? "too hard" : ""
           });
         }).sort((a, b) => b.attempted - a.attempted || (a.puzzle < b.puzzle ? -1 : 1));
@@ -371,7 +417,7 @@ ${url}` : "");
           { key: "attemptRate", label: "Attempt rate", value: ratio(attempts, viewed), target: `at least ${pct(targets.attemptRate)}`, ok: /* @__PURE__ */ __name((v) => v >= targets.attemptRate, "ok"), fmt: pct },
           { key: "nextDayReturn", label: "Next-day return", value: ratio(ret, prev), target: `at least ${pct(targets.nextDayReturn)}`, ok: /* @__PURE__ */ __name((v) => v >= targets.nextDayReturn, "ok"), fmt: pct },
           { key: "shareRate", label: "Share rate", value: w("sharesPerAttempt"), target: `at least ${pct(targets.shareRate)}`, ok: /* @__PURE__ */ __name((v) => v >= targets.shareRate, "ok"), fmt: pct },
-          { key: "avgStars", label: "Average stars", value: w("avgStars"), target: `${targets.avgStars[0]}\u2013${targets.avgStars[1]}`, ok: /* @__PURE__ */ __name((v) => v >= targets.avgStars[0] && v <= targets.avgStars[1], "ok"), fmt: /* @__PURE__ */ __name((v) => v.toFixed(2), "fmt") }
+          { key: "avgStars", label: "Average stars, first go", value: w("avgStars"), target: `${targets.avgStars[0]}\u2013${targets.avgStars[1]}`, ok: /* @__PURE__ */ __name((v) => v >= targets.avgStars[0] && v <= targets.avgStars[1], "ok"), fmt: /* @__PURE__ */ __name((v) => v.toFixed(2), "fmt") }
         ];
         return rows.map((r) => ({ key: r.key, label: r.label, target: r.target, value: r.value, shown: r.value == null ? "\u2013" : r.fmt(r.value), met: r.value == null ? null : r.ok(r.value) }));
       }
@@ -380,13 +426,14 @@ ${url}` : "");
         return v == null ? "\u2013" : Math.round(v * 100) + "%";
       }
       __name(pct, "pct");
-      const COUNTER_COLUMNS = ["day", "puzzle", "event", "stars", "saved", "returning", "dsl", "n"];
+      const COUNTER_COLUMNS = ["day", "puzzle", "event", "stars", "saved", "returning", "dsl", "from", "wasSaved", "n"];
       function toCsv(rows) {
         const q = /* @__PURE__ */ __name((v) => {
           const s = String(v == null ? "" : v);
           return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
         }, "q");
-        return [COUNTER_COLUMNS.join(","), ...rows.map((r) => COUNTER_COLUMNS.map((c) => q(c === "stars" && r.stars >= 0 ? r.stars / 2 : r[c])).join(","))].join("\n") + "\n";
+        const cell = /* @__PURE__ */ __name((r, c) => (c === "stars" || c === "from") && r[c] >= 0 ? r[c] / 2 : r[c] == null ? -1 : r[c], "cell");
+        return [COUNTER_COLUMNS.join(","), ...rows.map((r) => COUNTER_COLUMNS.map((c) => q(cell(r, c))).join(","))].join("\n") + "\n";
       }
       __name(toCsv, "toCsv");
       const api = {
@@ -412,6 +459,7 @@ ${url}` : "");
         isStars,
         starText,
         starWords,
+        goesText,
         shareText,
         headHash,
         STATS_KEY,
@@ -481,15 +529,15 @@ async function event(req, env, now) {
   if (!v.ok) return reply(req, env, 400, { error: v.why });
   const c = import_skip_core.default.counterFor(v.event, import_skip_core.default.londonDate(now));
   await env.DB.prepare(
-    `INSERT INTO counters (day, puzzle, event, stars, saved, ret, dsl, n) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1)
-     ON CONFLICT (day, puzzle, event, stars, saved, ret, dsl) DO UPDATE SET n = n + 1`
-  ).bind(c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl).run();
+    `INSERT INTO counters (day, puzzle, event, stars, saved, ret, dsl, frm, wsaved, n) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 1)
+     ON CONFLICT (day, puzzle, event, stars, saved, ret, dsl, frm, wsaved) DO UPDATE SET n = n + 1`
+  ).bind(c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl, c.from, c.wasSaved).run();
   return reply(req, env, 204, null);
 }
 __name(event, "event");
 async function today(req, env, now) {
   const day = import_skip_core.default.londonDate(now);
-  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day = ?1 AND event = 'puzzle_attempted'`).bind(day).all();
+  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day = ?1 AND event IN ('puzzle_attempted', 'puzzle_improved')`).bind(day).all();
   return reply(req, env, 200, import_skip_core.default.todaySummary(results.map(row), day), { "Cache-Control": "public, max-age=60" });
 }
 __name(today, "today");
@@ -498,14 +546,14 @@ async function admin(req, env, path, url) {
   const given = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!await allowed(env, "admin:" + ip(req)) || !given || !await sameSecret(given, env.ADMIN_KEY)) return reply(req, env, 401, { error: "That key was not accepted." });
   const from = import_skip_core.default.isDate(url.searchParams.get("from")) ? url.searchParams.get("from") : "2000-01-01";
-  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day >= ?1 ORDER BY day, puzzle, event, stars, saved, ret, dsl`).bind(from).all();
+  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day >= ?1 ORDER BY day, puzzle, event, stars, saved, ret, dsl, frm, wsaved`).bind(from).all();
   const rows = results.map(row);
   if (path === "/admin/counters.csv") return reply(req, env, 200, import_skip_core.default.toCsv(rows), { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="skip-counters.csv"', "Cache-Control": "no-store" });
   if (path === "/admin/counters") return reply(req, env, 200, { rows }, { "Cache-Control": "no-store" });
   return reply(req, env, 404, { error: "Not found." });
 }
 __name(admin, "admin");
-var row = /* @__PURE__ */ __name((r) => ({ day: r.day, puzzle: r.puzzle, event: r.event, stars: r.stars, saved: r.saved, returning: r.ret, dsl: r.dsl, n: r.n }), "row");
+var row = /* @__PURE__ */ __name((r) => ({ day: r.day, puzzle: r.puzzle, event: r.event, stars: r.stars, saved: r.saved, returning: r.ret, dsl: r.dsl, from: r.frm, wasSaved: r.wsaved, n: r.n }), "row");
 var ip = /* @__PURE__ */ __name((req) => req.headers.get("CF-Connecting-IP") || "unknown", "ip");
 async function allowed(env, key) {
   if (!env.LIMITER) return true;

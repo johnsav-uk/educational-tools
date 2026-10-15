@@ -2,8 +2,8 @@
    Three jobs, and nothing kept that could recognise a player:
      POST /e              one event from the game; checked against the allowlist in
                           skip-core.js and added to a daily counter (London date)
-     GET  /today          today's first attempts and the share who saved the end
-                          (null below 30 attempts), for the scoreboard tile
+     GET  /today          today's players (first attempts) and the share whose best go
+                          saved the end (null below 30 players), for the scoreboard tile
      GET  /admin/counters      every counter row, for the dashboard   } need
      GET  /admin/counters.csv  the same as a spreadsheet              } Authorization: Bearer ADMIN_KEY
    No raw events, IP addresses or browser details are stored. The rate limiter is
@@ -38,16 +38,16 @@ async function event(req, env, now) {
   if (!v.ok) return reply(req, env, 400, { error: v.why });
   const c = Core.counterFor(v.event, Core.londonDate(now));
   await env.DB.prepare(
-    `INSERT INTO counters (day, puzzle, event, stars, saved, ret, dsl, n) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1)
-     ON CONFLICT (day, puzzle, event, stars, saved, ret, dsl) DO UPDATE SET n = n + 1`
-  ).bind(c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl).run();
+    `INSERT INTO counters (day, puzzle, event, stars, saved, ret, dsl, frm, wsaved, n) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 1)
+     ON CONFLICT (day, puzzle, event, stars, saved, ret, dsl, frm, wsaved) DO UPDATE SET n = n + 1`
+  ).bind(c.day, c.puzzle, c.event, c.stars, c.saved, c.returning, c.dsl, c.from, c.wasSaved).run();
   return reply(req, env, 204, null);
 }
 
 // ---------- the scoreboard tile ----------
 async function today(req, env, now) {
   const day = Core.londonDate(now);
-  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day = ?1 AND event = 'puzzle_attempted'`).bind(day).all();
+  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day = ?1 AND event IN ('puzzle_attempted', 'puzzle_improved')`).bind(day).all();
   return reply(req, env, 200, Core.todaySummary(results.map(row), day), { 'Cache-Control': 'public, max-age=60' });
 }
 
@@ -57,7 +57,7 @@ async function admin(req, env, path, url) {
   const given = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
   if (!(await allowed(env, 'admin:' + ip(req))) || !given || !(await sameSecret(given, env.ADMIN_KEY))) return reply(req, env, 401, { error: 'That key was not accepted.' });
   const from = Core.isDate(url.searchParams.get('from')) ? url.searchParams.get('from') : '2000-01-01';
-  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day >= ?1 ORDER BY day, puzzle, event, stars, saved, ret, dsl`).bind(from).all();
+  const { results } = await env.DB.prepare(`SELECT * FROM counters WHERE day >= ?1 ORDER BY day, puzzle, event, stars, saved, ret, dsl, frm, wsaved`).bind(from).all();
   const rows = results.map(row);
   if (path === '/admin/counters.csv') return reply(req, env, 200, Core.toCsv(rows), { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="skip-counters.csv"', 'Cache-Control': 'no-store' });
   if (path === '/admin/counters') return reply(req, env, 200, { rows }, { 'Cache-Control': 'no-store' });
@@ -65,7 +65,7 @@ async function admin(req, env, path, url) {
 }
 
 // ---------- helpers ----------
-const row = r => ({ day: r.day, puzzle: r.puzzle, event: r.event, stars: r.stars, saved: r.saved, returning: r.ret, dsl: r.dsl, n: r.n });
+const row = r => ({ day: r.day, puzzle: r.puzzle, event: r.event, stars: r.stars, saved: r.saved, returning: r.ret, dsl: r.dsl, from: r.frm, wasSaved: r.wsaved, n: r.n });
 const ip = req => req.headers.get('CF-Connecting-IP') || 'unknown';
 async function allowed(env, key) {
   if (!env.LIMITER) return true;

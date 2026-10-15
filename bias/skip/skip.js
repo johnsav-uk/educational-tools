@@ -64,14 +64,13 @@
     <button class="sk-chip" id="skMenu" aria-label="Main menu">‹ <span class="sk-long">Main </span>menu</button>
     <div class="sk-topright" id="skTopRight">
       <span class="sk-fresh" id="skFresh" hidden>A new puzzle is ready.<button class="sk-chip" id="skReload">Open it</button></span>
-      <p class="sk-next" id="skNext"></p>
     </div>
   </div>
   <div class="sk-layout">
     <section class="sk-board" aria-label="Today's puzzle">
       <div class="sk-clip" aria-hidden="true"></div>
       <div class="sk-sheet">
-        <header class="sk-head"><h1 id="skTitle">Over to you, skip</h1><p class="sk-meta" id="skMeta"></p></header>
+        <header class="sk-head"><h1 id="skTitle">Over to you, skip <span class="sk-testing">(testing)</span></h1><p class="sk-meta" id="skMeta"></p></header>
         <div class="sk-plan"><canvas id="skPlan" role="img" aria-describedby="skHeadText"></canvas></div>
         <div class="sk-sr" id="skHeadText"></div>
         <p class="sk-advice" id="skAdvice"></p>
@@ -111,7 +110,7 @@
     const phone = PHONE.matches, flat = !phone && FLAT.matches;
     root.classList.toggle('sk-phone', phone); root.classList.toggle('sk-flat', flat); root.classList.toggle('sk-compact', phone || flat);
     if (phone) $('skAdvice').before(note); else rail.prepend(note);
-    if (phone || flat) { $('skNext').before(score); actions.append(share); }
+    if (phone || flat) { $('skTopRight').append(score); actions.append(share); }
     else rail.append(score, share);
   }
   function show(on) { root.hidden = !on; document.body.classList.toggle('skip-open', on); if (on) root.classList.toggle('sk-still', reduced()); }
@@ -142,7 +141,8 @@
     sizePlan(); paint(); draw();
     if (document.fonts) document.fonts.load('32px "Reenie Beanie"').then(() => document.fonts.load('italic 15px Newsreader')).then(draw, draw);
     clearInterval(clockTimer); clockTimer = setInterval(tickClock, 15000);
-    toast(C.playedToday(stats, date) ? `You've played today's puzzle (${C.starWords(stats.today.stars)}). Shots now are practice and don't change your stats.` : '', true);
+    const t = C.playedToday(stats, date) ? stats.today : null;
+    toast(t ? `Your best today: ${C.starWords(t.stars)}, ${C.goesText(t.tries)}. Have another go to beat it.` : '', true);
     $('skGo').focus({ preventScroll: true }); root.scrollTop = 0;
     Metrics.today().then(t => { if (S && t && t.day === S.date && t.savedPct != null) { S.savedPct = t.savedPct; paintBoard(); } });
   }
@@ -165,11 +165,15 @@
     const pz = S.pz, res = Sim.judge(world, pz, delivered, S.before), bench = pz.bench && pz.bench.values;
     const stars = bench ? C.starsFor(res.value, bench) : FALLBACK[res.outcome];
     const saved = C.isSaved(res.outcome), dsl = C.daysSinceLastPlay(S.stats, S.date);
-    const rec = C.recordAttempt(S.stats, S.date, pz.id, { stars, outcome: res.outcome });
+    const rec = C.recordAttempt(S.stats, S.date, pz.id, { stars, outcome: res.outcome, saved });
     S.stats = rec.stats; C.saveStats(LS || NOSTORE, S.stats);
+    // the first go of the day is the fair measure of the puzzle; a later go that beats the best moves the player up
     if (rec.first) Metrics.send('puzzle_attempted', { puzzleId: pz.id, stars, saved, isFirstAttemptOfDay: true, streak: S.stats.streak, daysSinceLastPlay: dsl });
-    else Metrics.send('puzzle_replayed', { puzzleId: pz.id });
-    S.result = Object.assign(res, { stars, saved, first: rec.first, delivered, world, trace: (host.trace ? host.trace() : []).slice(),
+    else {
+      Metrics.send('puzzle_replayed', { puzzleId: pz.id });
+      if (rec.improved) Metrics.send('puzzle_improved', { puzzleId: pz.id, fromStars: rec.from.stars, toStars: stars, wasSaved: rec.from.saved, saved });
+    }
+    S.result = Object.assign(res, { stars, saved, first: rec.first, improved: rec.improved, from: rec.from, delivered, world, trace: (host.trace ? host.trace() : []).slice(),
       beat: bench ? Math.round(C.beatShare(res.value, bench) * 100) : null });
     S.phase = 'done';
     show(true); paint(); sizePlan(); draw();
@@ -192,7 +196,7 @@
     $('skGo').innerHTML = after ? 'Play<span class="sk-long"> it</span> again' : 'Play the shot';
     $('skAlt').textContent = after ? 'Full match' : 'Main menu';
     $('skAlt').setAttribute('aria-label', after ? 'Play a full match' : 'Main menu');
-    $('skHelp').textContent = after ? 'Play it again for practice: only your first shot of the day counts.'
+    $('skHelp').textContent = after ? 'Play it again as often as you like: your best go of the day is the one that counts.'
       : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice.';
   }
   function stars(n) {
@@ -212,8 +216,10 @@
       $('skNote').innerHTML = `<p class="sk-kicker">The situation</p><p>${esc(pz.situation)}</p><p class="sk-hand">${esc(pz.hint || 'pick your weight, then play the shot')}</p>`;
       return;
     }
-    const info = C.outcomeInfo(r.outcome, pz.verdicts), first = S.stats.today;
-    const counted = r.first ? '' : `<p class="sk-small">Practice. Today's first shot (${C.starWords(first.stars)}) is the one that counts.</p>`;
+    const info = C.outcomeInfo(r.outcome, pz.verdicts), t = S.stats.today;
+    const counted = r.first ? '' : r.improved
+      ? `<p class="sk-small"><strong>New best today</strong> (was ${C.starWords(r.from.stars).replace(' out of 5', '')}), ${C.goesText(t.tries)}.</p>`
+      : `<p class="sk-small">Your best today is still ${C.starWords(t.stars).replace(' out of 5', '')} (${t.tries} goes so far).</p>`;
     const beat = r.beat == null ? '' : ` Better than or level with ${r.beat} of the 100 benchmark bowlers.`;
     const dead = r.jackDead ? ` Dead end: ${esc(r.jackDead.replace(/\.$/, '').toLowerCase())}.` : '';
     $('skNote').innerHTML = `<p class="sk-kicker">Skip's verdict</p><div class="sk-vrow">${stars(r.stars)}<h2 class="sk-verdict-title">${esc(info.title)}</h2></div>` +
@@ -233,8 +239,8 @@
     const t = S.stats.today && S.stats.today.date === S.date ? S.stats.today : null, box = $('skShare');
     box.hidden = !t;
     if (!t) return;
-    const text = C.shareText(S.issue, t.stars, SHARE_URL);
-    box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars))}</span><span class="sk-sr">Your result to share: puzzle ${S.issue}, ${C.starWords(t.stars)}.</span></p>` +
+    const text = C.shareText(S.issue, t.stars, SHARE_URL, t.tries);
+    box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars, '', t.tries))}</span><span class="sk-sr">Your best today to share: puzzle ${S.issue}, ${C.starWords(t.stars)}, ${C.goesText(t.tries)}.</span></p>` +
       `<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share"><span class="sk-long">Copy</span><span class="sk-short">Share</span></button>${navigator.share ? '<button class="sk-paperbtn sk-native" id="skNative">Share…</button>' : ''}`;
     $('skCopy').onclick = async () => {
       let ok = false;
@@ -250,7 +256,6 @@
   function tickClock() {
     if (!S) return;
     const now = Date.now();
-    $('skNext').innerHTML = `<span class="sk-long">Next puzzle in</span><span class="sk-short">Next</span> ${C.countdown(now).text}`;
     if (C.londonDate(now) !== S.date && S.phase !== 'playing') $('skFresh').hidden = false;
   }
   let toastTimer = 0;
@@ -324,9 +329,13 @@
     if (!after && v.h >= 200) {
       // the handwritten notes on the plan, kept inside it; left off a plan too small to hold them (they are in the screen-reader text)
       g.fillStyle = P.biro; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.font = '32px "Reenie Beanie", cursive';
+      const placed = [];   // a note that would overlap one already written moves down below it
       for (const n of pz.annotations || []) {
         const q = T(m * (pz.jack.x + n.dx), pz.jack.y + n.dy), tw = g.measureText(n.text).width;
-        const x = Math.max(8, Math.min(v.w - tw - 10, q.x)), y = Math.max(30, Math.min(v.h - 10, q.y));
+        const x = Math.max(8, Math.min(v.w - tw - 10, q.x));
+        let y = Math.max(30, Math.min(v.h - 10, q.y));
+        for (const b of placed) if (x < b.x + b.w && b.x < x + tw && Math.abs(y - b.y) < 34) y = b.y + 34;
+        placed.push({ x, y, w: tw });
         g.save(); g.translate(x, y); g.rotate((n.rot || -3) * DEG); g.fillText(n.text, 0, 0); g.restore();
       }
     } else if (after && v.h >= 140) {

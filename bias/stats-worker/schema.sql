@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS counters (
   saved   INTEGER NOT NULL DEFAULT -1,   -- 1 / 0 on a first attempt; -1 otherwise
   ret     INTEGER NOT NULL DEFAULT -1,   -- returning player on a view: 1 / 0; -1 otherwise
   dsl     TEXT    NOT NULL DEFAULT '',   -- days since last play: new, 0, 1, 2-6, 7+
+  frm     INTEGER NOT NULL DEFAULT -1,   -- puzzle_improved: the best before, in half-stars; -1 otherwise
+  wsaved  INTEGER NOT NULL DEFAULT -1,   -- puzzle_improved: whether that best saved the end; -1 otherwise
   n       INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (day, puzzle, event, stars, saved, ret, dsl)
+  PRIMARY KEY (day, puzzle, event, stars, saved, ret, dsl, frm, wsaved)
 );

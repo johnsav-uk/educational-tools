@@ -150,7 +150,7 @@ tbody tr:hover { background: #F3F1E6; }
 
       <section class="sheet" aria-labelledby="pzH">
         <h2 id="pzH">Puzzle by puzzle</h2>
-        <p class="note" style="margin-top:0">First attempts only, all time. A puzzle is flagged too easy if more than <span id="easy"></span> get five stars, too hard if fewer than <span id="hard"></span> do.</p>
+        <p class="note" style="margin-top:0">All time. The star bands and the flag use each player's first go, the fair measure of a puzzle; "best" is each player's best go of the day. A puzzle is flagged too easy if more than <span id="easy"></span> get five stars first go, too hard if fewer than <span id="hard"></span> do.</p>
         <div class="scroll"><table id="puzzles"></table></div>
       </section>
     </div>
@@ -225,23 +225,25 @@ tbody tr:hover { background: #F3F1E6; }
     // tiles
     const sum = k => daily.reduce((a, d) => a + (d[k] || 0), 0), vd = Object.fromEntries(C.verdict(daily).map(v => [v.key, v]));
     const tiles = s => String(s).split('').map(ch => `<span class="tile">${esc(ch)}</span>`).join('');
-    const board = [['Players who viewed', sum('viewed')], ['First attempts', sum('attempts')], ['Attempt rate', vd.attemptRate.shown], ['Average stars', vd.avgStars.shown], ['Next-day return', vd.nextDayReturn.shown]];
+    const w = k => { let n = 0, t = 0; for (const d of daily) if (d[k] != null) { n += d[k] * d.attempts; t += d.attempts; } return t ? n / t : null; };
+    const board = [['Players who viewed', sum('viewed')], ['Players who played', sum('attempts')], ['Attempt rate', vd.attemptRate.shown], ['Stars, first go', vd.avgStars.shown],
+      ['Stars, best of day', two(w('avgBest'))], ['Goes per player', w('goesPerPlayer') == null ? '–' : w('goesPerPlayer').toFixed(1)], ['Next-day return', vd.nextDayReturn.shown]];
     $('board').innerHTML = board.map(([k, v]) => `<div><dt>${k}</dt><dd>${tiles(v)}</dd></div>`).join('');
     // charts
     bars($('chart1'), daily);
     lines($('chart2'), daily);
     // day table
-    const cols = [['Day', d => shortDay(d.day)], ['Viewed', d => num(d.viewed)], ['First attempts', d => num(d.attempts)], ['Attempt rate', d => pct(d.attemptRate)], ['Average stars', d => two(d.avgStars)],
-      ['Saved it', d => pct(d.savedRate)], ['Replays per attempt', d => two(d.replaysPerAttempt)], ['Shares per attempt', d => two(d.sharesPerAttempt)], ['Full match per attempt', d => two(d.fullPerAttempt)], ['Next-day return', d => pct(d.nextDayReturn)]];
+    const cols = [['Day', d => shortDay(d.day)], ['Viewed', d => num(d.viewed)], ['Played', d => num(d.attempts)], ['Attempt rate', d => pct(d.attemptRate)], ['Stars, first go', d => two(d.avgStars)],
+      ['Stars, best', d => two(d.avgBest)], ['Saved it, first go', d => pct(d.savedRate)], ['Saved it, best', d => pct(d.bestSavedRate)], ['Goes per player', d => d.goesPerPlayer == null ? '–' : d.goesPerPlayer.toFixed(1)], ['Shares per attempt', d => two(d.sharesPerAttempt)], ['Full match per attempt', d => two(d.fullPerAttempt)], ['Next-day return', d => pct(d.nextDayReturn)]];
     $('days').innerHTML = `<thead><tr>${cols.map(c => `<th scope="col">${c[0]}</th>`).join('')}</tr></thead><tbody>` +
       daily.slice().reverse().map(d => `<tr>${cols.map((c, i) => { const v = c[1](d); return i ? `<td class="${v === '–' || v === '0' ? 'dim' : ''}">${v}</td>` : `<th scope="row">${v}</th>`; }).join('')}</tr>`).join('') + '</tbody>';
     // puzzle table
     $('easy').textContent = pct(T.tooEasy); $('hard').textContent = pct(T.tooHard);
     const pz = C.puzzleMetrics(rows);
-    $('puzzles').innerHTML = `<thead><tr><th scope="col">Puzzle</th><th scope="col">Viewed</th><th scope="col">First attempts</th>${C.BANDS.map(b => `<th scope="col">${b === '5' ? '5★' : b === '0' ? '0–½★' : b + '–' + b + '½★'}</th>`).join('')}<th scope="col">Average stars</th><th scope="col">Five stars</th><th scope="col">Saved it</th><th scope="col">Flag</th></tr></thead><tbody>` +
-      (pz.length ? pz.map(p => `<tr><th scope="row">${esc(titles[p.puzzle] || p.puzzle)}</th><td>${p.viewed}</td><td>${p.attempted}</td>${p.bands.map(n => `<td class="${n ? '' : 'dim'}">${n}</td>`).join('')}<td>${two(p.avgStars)}</td><td>${pct(p.fiveShare)}</td><td>${pct(p.savedShare)}</td>` +
+    $('puzzles').innerHTML = `<thead><tr><th scope="col">Puzzle</th><th scope="col">Viewed</th><th scope="col">First attempts</th>${C.BANDS.map(b => `<th scope="col">${b === '5' ? '5★' : b === '0' ? '0–½★' : b + '–' + b + '½★'}</th>`).join('')}<th scope="col">Stars, first go</th><th scope="col">Five stars, first go</th><th scope="col">Saved it, first go</th><th scope="col">Stars, best</th><th scope="col">Five stars, best</th><th scope="col">Flag</th></tr></thead><tbody>` +
+      (pz.length ? pz.map(p => `<tr><th scope="row">${esc(titles[p.puzzle] || p.puzzle)}</th><td>${p.viewed}</td><td>${p.attempted}</td>${p.bands.map(n => `<td class="${n ? '' : 'dim'}">${n}</td>`).join('')}<td>${two(p.avgStars)}</td><td>${pct(p.fiveShare)}</td><td>${pct(p.savedShare)}</td><td>${two(p.avgBest)}</td><td>${pct(p.bestFiveShare)}</td>` +
         `<td>${p.flag ? `<span class="chip not">${esc(p.flag)}</span>` : p.attempted ? '<span class="chip met">OK</span>' : ''}</td></tr>`).join('')
-        : `<tr><td class="empty" colspan="${C.BANDS.length + 7}">No puzzles played yet. Rows appear here once players open the puzzle.</td></tr>`) + '</tbody>';
+        : `<tr><td class="empty" colspan="${C.BANDS.length + 9}">No puzzles played yet. Rows appear here once players open the puzzle.</td></tr>`) + '</tbody>';
   }
 
   // Shared chart frame: one y scale, a faint grid, day labels along the bottom, a tooltip.

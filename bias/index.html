@@ -685,7 +685,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
-        <button class="menu-item" id="mSkip" hidden>Over to you, skip<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
+        <button class="menu-item" id="mSkip" hidden>Over to you, skip (testing)<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -6112,7 +6112,7 @@ window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietU
 // ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
 /* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
    the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
-const FEATURES = { dailySkip: false };   // false hides it from the menu; ?skip=preview still opens it, for checking
+const FEATURES = { dailySkip: true };   // false hides it from the menu; ?skip=preview still opens it, for checking
 const skipParam = new URLSearchParams(location.search).get('skip');
 const skipOn = FEATURES.dailySkip || skipParam === 'preview';
 window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide, AI, Settings, Sound, reduced };
@@ -6151,7 +6151,7 @@ const Skip = {
     let ls = null; try { ls = window.localStorage; } catch (e) { /* blocked */ }
     const st = C.loadStats(ls || { getItem: () => null });
     const now = Date.now(), d = C.londonDate(now);
-    $('mSkipSub').textContent = C.playedToday(st, d) ? `#${C.issueNumber(d)} played: ${C.starText(st.today.stars)} · next in ${C.countdown(now).text}` : `#${C.issueNumber(d)} · the daily puzzle: one bowl to save the end`;
+    $('mSkipSub').textContent = C.playedToday(st, d) ? `#${C.issueNumber(d)} · your best today ${C.starText(st.today.stars)} · have another go to beat it` : `#${C.issueNumber(d)} · the daily puzzle: one bowl to save the end`;
   }
 };
 if (skipOn) {
