@@ -20,6 +20,13 @@ module.exports = function (T) {
     eq([sc.winner, sc.shots], [1, 3], 'red lying three, as the situation says');
   });
 
+  test('every head is the last bowl of a singles end: four of theirs, three of yours', () => {
+    for (const pz of data.puzzles) {
+      const mine = pz.bowls.filter(b => b.team === pz.you).length;
+      eq([pz.bowls.length - mine, mine], [E.DISCIPLINES.singles.bowls, E.DISCIPLINES.singles.bowls - 1], pz.id);
+    }
+  });
+
   test('every benchmarked puzzle is unchanged since its benchmark, on the same physics', () => {
     for (const pz of data.puzzles) { ok(pz.bench, pz.id + ' has a benchmark'); eq(pz.bench.head, Core.headHash(pz), pz.id); eq(pz.bench.physics, E.BUILD, pz.id); }
   });
