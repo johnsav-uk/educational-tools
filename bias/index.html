@@ -5407,7 +5407,7 @@ window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietU
 // ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
 /* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
    the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
-const FEATURES = { dailySkip: true };   // false hides it from the menu; ?skip=preview still opens it, for checking
+const FEATURES = { dailySkip: false };   // false hides it from the menu; ?skip=preview still opens it, for checking
 const skipParam = new URLSearchParams(location.search).get('skip');
 const skipOn = FEATURES.dailySkip || skipParam === 'preview';
 window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide, AI, Settings, Sound, reduced };
