@@ -684,6 +684,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
+        <button class="menu-item" id="mSkip" hidden>Over to you, skip<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -4868,6 +4869,7 @@ function showTitle() {
   // the one primary action: back to the game when one is going, otherwise Play
   $('mResume').classList.toggle('primary', inGame); $('mQuick').classList.toggle('primary', !inGame);
   $('mResume').hidden = !inGame;
+  if (typeof Skip !== 'undefined') Skip.paint();
   $('titleScrim').classList.toggle('photo', !inGame);
   $('titleFoot').hidden = !inGame;
   $('titleFoot').textContent = !inGame ? '' : game.link ? `An online match is in progress (room ${Net.code}). Starting something new will leave it.` : game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : 'Practice is in progress.';
@@ -5134,7 +5136,7 @@ function tick(dt) {
   measureHeadView();
   updateCamera(dt, false);
   if (debugCam) { Object.assign(scene.cam, debugCam); scene.cam.update(); }
-  const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo'))) scene.render(buildView(game.acc / W.DT));   // the title still hides the green
+  const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo')) && !Skip.covers()) scene.render(buildView(game.acc / W.DT));   // the title, or the daily puzzle, hides the green   // the title still hides the green
   UI.drawHead(dt);
   Net.tick(dt);
   statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); }
@@ -5359,6 +5361,48 @@ window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietU
   camera(c) { debugCam = c; },
   get game() { return game; }, Coach };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
+// ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
+/* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
+   the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
+const FEATURES = { dailySkip: true };   // false hides it from the menu; ?skip=preview still opens it, for checking
+const skipParam = new URLSearchParams(location.search).get('skip');
+const skipOn = FEATURES.dailySkip || skipParam === 'preview';
+window.BiasEngine = { W, GreenSpeed, Weight, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide, AI, meterFor, SWING_T, Settings, Sound, reduced };
+const Skip = {
+  files: null, wasPaused: false,
+  script(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); },
+  core() { return window.SkipCore ? Promise.resolve() : this.script('skip/skip-core.js'); },
+  load() {
+    if (!this.files) {
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'skip/skip.css'; document.head.appendChild(css);
+      this.files = this.core().then(() => this.script('skip/skip-sim.js')).then(() => this.script('skip/skip.js'));
+      this.files.catch(() => { this.files = null; });
+    }
+    return this.files;
+  },
+  open() {
+    if (game.phase === 'charge') game.cancelCharge();
+    UI.close('titleScrim'); this.wasPaused = game.paused; game.paused = true;
+    this.load().then(() => window.SkipPage.open({ engine: window.BiasEngine, close: () => this.closed(), fullMatch: () => { showTitle(); showLevels(); } }))
+      .catch(() => { this.closed(); UI.toast('The daily puzzle could not load. Check your connection and try again.', 'warn'); });
+  },
+  closed() { game.paused = this.wasPaused; showTitle(); },
+  covers() { return document.body.classList.contains('skip-open'); },
+  // the menu line under the entry: today's result once played, or what it is
+  paint() {
+    const C = window.SkipCore; if (!C) return;
+    let ls = null; try { ls = window.localStorage; } catch (e) { /* blocked */ }
+    const st = C.loadStats(ls || { getItem: () => null });
+    const now = Date.now(), d = C.londonDate(now);
+    $('mSkipSub').textContent = C.playedToday(st, d) ? `#${C.issueNumber(d)} played: ${C.starText(st.today.stars)} · next in ${C.countdown(now).text}` : `#${C.issueNumber(d)} · the daily puzzle: one bowl to save the end`;
+  }
+};
+if (skipOn) {
+  $('mSkip').hidden = !FEATURES.dailySkip && skipParam !== 'preview';
+  $('mSkip').onclick = () => { if (Net.on) { UI.toast('Leave the online room before trying the puzzle.', 'warn'); return; } Skip.open(); };
+  setTimeout(() => Skip.core().then(() => Skip.paint(), () => {}), 1200);
+}
+
 // ======================= boot =======================
 Profiles.init();
 Sound.muted = !Settings.sound; paintSound();
@@ -5374,6 +5418,7 @@ requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classLis
   else if (ROOM_RE.test(q)) OnlineUI.open(q);
 }
 Lobby.start(); QM.paint();
+if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open();   // ?skip opens today's puzzle (shared results link here)
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 })();
