@@ -62,6 +62,7 @@ button{cursor:pointer}
 #app{position:fixed;inset:0;overflow:hidden;user-select:none;-webkit-user-select:none}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #scene.aimable{cursor:crosshair}
+#sceneGL{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
 .kicker{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.2;white-space:nowrap}
 .num{font-variant-numeric:tabular-nums lining-nums}
@@ -2585,6 +2586,709 @@ class SceneRenderer {
   }
 }
 
+// ======================= 9b. WebGL scene (optional: ?renderer=gl) =======================
+/* The default scene, drawn with Three.js (?renderer=canvas keeps the canvas SceneRenderer above). Three.js is vendored next to this
+   file as three.module.min.js and loaded with a dynamic import, so the canvas game starts exactly as before
+   and keeps running if the module or WebGL is missing). Nothing here touches the physics: the WebGL scene
+   reads the same view (buildView) and the same Camera, which stays the single source of truth for framing,
+   tap-to-place (cam.ground), the debug camera and baseF()/tall(). Its PerspectiveCamera is rebuilt from that
+   Camera every frame (see GLScene.syncCamera and BiasDebug.glCameraTest).
+   The world goes on a WebGL canvas under the original one; the original canvas is cleared and kept on top
+   as an overlay for what is drawn in screen space: the trace, the aim line, ditch markers, effects and the
+   hand. If WebGL is lost or fails, the canvas renderer takes over the whole frame again. */
+const GLFLAGS = (() => { const q = new URLSearchParams(location.search); return { want: q.get('renderer') !== 'canvas', fps: q.has('fps') }; })();
+
+// The flecks set into each colourway's resin (sRGB): main fleck and a lighter one. Unknown colours derive theirs.
+const BOWL_FLECKS = {
+  claret: ['#c8352a', '#f06a48'], navy: ['#3a78c4', '#7fb0e2'], black: ['#7c8389', '#c9c6bc'],
+  tan: ['#c08438', '#e2b464'], teal: ['#36a49c', '#3a7cc8'], plum: ['#9c52a8', '#d08cc6']
+};
+function bowlPalette(hex) {
+  const c = COLOURS.find(k => k.hex.toLowerCase() === String(hex).toLowerCase());
+  const base = hexRgb(hex || '#7c2434');
+  if (c && BOWL_FLECKS[c.id]) return { base, fleck: hexRgb(BOWL_FLECKS[c.id][0]), fleck2: hexRgb(BOWL_FLECKS[c.id][1]) };
+  return { base, fleck: shadeRgb(base.map(v => Math.min(255, v * 1.6)), .25), fleck2: shadeRgb(base, .6) };
+}
+
+/* The bowl, turned on a lathe. Unit radius (scaled to W.BOWL_R); the axle is local +y and the bias face is at +y.
+   Proportions from the reference photographs, in plan (127 mm = 2 units): the running surface is full and only
+   slowly turns away from the crown; a shoulder carries the scalloped grip band; the face is a broad, very
+   slightly domed disc with two shallow concentric grooves. Seen along the running surface the outline is
+   nearly elliptical (about 0.8 R high where the grip band sits). The two sides differ as on a real bowl: the
+   plain side is fuller, an ellipse into a wider face (edge at 0.76 R); the bias side rounds off sooner (a
+   flatter-than-elliptic curve) into a smaller face (0.68 R), and the crown sits a little toward the plain side. Overall width stays
+   W.BOWL_WIDTH, as in the head view and the canvas renderer: the faces are domed about 3.5 mm, so the face edge
+   sits well inside that width and the outline stays round. */
+const BowlShape = {
+  A: W.BOWL_WIDTH, CROWN: -0.03, DOME: 0.055, LIP: 0.058,
+  side: {
+    bias: { s: 1, edge: 0.68, n: 1.8, grooves: [0.49, 0.555], band: [0.71, 0.83], beads: 34 },
+    plain: { s: -1, edge: 0.76, n: 2.0, grooves: [0.555, 0.625], band: [0.79, 0.91], beads: 38 }
+  },
+  GROOVE_D: 0.0055, GROOVE_W: 0.0042, BEAD_H: 0.013,
+  // one side's meridian, crown first: [rho, a, shoulder?]
+  half(k, fine) {
+    const P = this.side[k], s = P.s, aEdge = this.A - this.LIP, d = aEdge - s * this.CROWN;
+    const ext = d / Math.pow(1 - Math.pow(P.edge, P.n), 1 / P.n);
+    const pts = [];
+    // shoulder: superellipse ((a - crown)/ext)^n + rho^n = 1, from the crown (rho 1) to the face edge
+    const thE = Math.acos(Math.pow(P.edge, P.n / 2)), M = fine ? 56 : 22;
+    for (let i = 0; i <= M; i++) {
+      const th = thE * i / M, rho = Math.pow(Math.cos(th), 2 / P.n), a = ext * Math.pow(Math.sin(th), 2 / P.n);
+      pts.push([rho, this.CROWN + s * a, 1]);
+    }
+    // face: a shallow dome with two grooves, edge to centre
+    const faceA = rho => aEdge + this.DOME * (1 - (rho / P.edge) ** 2) - (fine ? this.GROOVE_D : 0) * P.grooves.reduce((m, g) => m + Math.exp(-(((rho - g) / this.GROOVE_W) ** 2)), 0);
+    const rs = []; const NF = fine ? 30 : 12;
+    for (let i = 1; i <= NF; i++) rs.push(P.edge * (1 - i / NF));
+    if (fine) for (const g of P.grooves) for (let j = -4; j <= 4; j++) rs.push(g + j * this.GROOVE_W * 0.55);
+    rs.sort((p, q) => q - p);
+    for (const rho of rs) pts.push([rho, s * faceA(rho), 0]);
+    // round the corner where the shoulder meets the face: cut it with a quadratic curve
+    const R0 = P.edge + 0.06, R1 = P.edge - 0.07;
+    const iA = pts.findIndex(p => p[2] && p[0] < R0), iB = pts.findIndex(p => !p[2] && p[0] < R1);
+    if (iA > 0 && iB > iA) {
+      const p0 = pts[iA - 1], p2 = pts[iB], c = [P.edge, s * aEdge], fil = [];
+      for (let i = 1; i < 10; i++) { const t = i / 10, u = 1 - t; fil.push([u * u * p0[0] + 2 * u * t * c[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p2[1], 1]); }
+      pts.splice(iA, iB - iA, ...fil);
+    }
+    if (fine) { // the grip band needs close rows to carry its bumps
+      const out = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        const p = pts[i - 1], q = pts[i], inBand = q[2] && q[0] < P.band[1] + 0.02 && q[0] > P.band[0] - 0.02;
+        const n = inBand ? Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 0.006) : 1;
+        for (let j = 1; j <= n; j++) out.push([lerp(p[0], q[0], j / n), lerp(p[1], q[1], j / n), q[2]]);
+      }
+      return out;
+    }
+    return pts;
+  },
+  // the whole meridian, bias pole → crown → plain pole, with the grip band's bump weight per row
+  meridian(fine) {
+    const b = this.half('bias', fine), p = this.half('plain', fine);
+    const rows = b.slice().reverse().concat(p.slice(1)).map(q => ({ rho: q[0], a: q[1], sh: q[2] }));
+    rows.push({ rho: 0, a: -this.A + this.LIP - this.DOME, sh: 0 }); rows.unshift({ rho: 0, a: this.A - this.LIP + this.DOME, sh: 0 });
+    for (const r of rows) {
+      const P = r.a > 0 ? this.side.bias : this.side.plain, t = (r.rho - P.band[0]) / (P.band[1] - P.band[0]);
+      r.band = r.sh && t > 0 && t < 1 ? Math.sqrt(1 - (2 * t - 1) ** 2) : 0;
+    }
+    // outward normal of the meridian at each row
+    for (let i = 0; i < rows.length; i++) {
+      const p = rows[Math.max(0, i - 1)], q = rows[Math.min(rows.length - 1, i + 1)];
+      let nr = q.a - p.a, na = -(q.rho - p.rho); if (nr * rows[i].rho + na * rows[i].a < 0) { nr = -nr; na = -na; }
+      const l = Math.hypot(nr, na) || 1; rows[i].nr = nr / l; rows[i].na = na / l;
+    }
+    return rows;
+  },
+  geometry(T, seg, beads) {
+    const rows = this.meridian(beads), pos = [], idx = [], start = [];
+    for (const r of rows) {
+      start.push(pos.length / 3);
+      if (r.rho < 1e-6) { pos.push(0, r.a, 0); continue; }
+      const N = r.a > 0 ? this.side.bias.beads : this.side.plain.beads;
+      for (let j = 0; j < seg; j++) {
+        const ph = j / seg * TAU;
+        let rho = r.rho, a = r.a;
+        if (beads && r.band) {   // scalloped grip: a ring of rounded beads, raised along the surface normal
+          const f = (ph / TAU * N) % 1, h = this.BEAD_H * r.band * Math.sqrt(Math.max(0, 1 - (2 * f - 1) ** 2));
+          rho += r.nr * h; a += r.na * h;
+        }
+        pos.push(rho * Math.cos(ph), a, rho * Math.sin(ph));
+      }
+    }
+    for (let i = 0; i < rows.length - 1; i++) {
+      const A = start[i], B = start[i + 1], pa = rows[i].rho < 1e-6, pb = rows[i + 1].rho < 1e-6;
+      for (let j = 0; j < seg; j++) {
+        const j1 = (j + 1) % seg;
+        const a = pa ? A : A + j, b = pa ? A : A + j1, c = pb ? B : B + j, d = pb ? B : B + j1;
+        if (!pa) idx.push(a, b, c);
+        if (!pb) idx.push(b, d, c);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    g.computeBoundingSphere(); return g;
+  }
+};
+
+class GLScene {
+  constructor(THREE, host) {
+    const T = this.T = THREE; this.host = host;
+    const cv = this.cv = document.createElement('canvas'); cv.id = 'sceneGL'; cv.setAttribute('aria-hidden', 'true');
+    host.cv.parentNode.insertBefore(cv, host.cv);
+    let r;
+    try { r = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' }); }
+    catch (e) { cv.remove(); throw e; }
+    this.r = r; r.setPixelRatio(1); r.autoClear = false;   // the host's W, H are already device pixels, capped at a pixel ratio of 2
+    r.outputColorSpace = T.SRGBColorSpace; r.toneMapping = T.NeutralToneMapping; r.toneMappingExposure = 1.0;
+    this.aniso = r.capabilities.getMaxAnisotropy();
+    this.lost = false; this.built = false; this.dir = -1; this.sceneryRef = null;
+    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); this.lost = true; host.bgKey = ''; console.warn('WebGL context lost: drawing with the canvas renderer until it is restored'); }, false);
+    cv.addEventListener('webglcontextrestored', () => { this.lost = false; this.restore(); }, false);
+    this.cam3 = new T.PerspectiveCamera(40, 1, 0.1, 12000);
+    this.resize();
+  }
+  ok() { return !this.lost; }
+  resize() { const h = this.host; this.r.setSize(h.W, h.H, false); }
+  dispose() { try { this.r.dispose(); } catch (e) { /* already gone */ } this.cv.remove(); }
+  restore() {   // a restored context has lost every GPU resource: three re-uploads textures and buffers; the environment is re-rendered
+    if (!this.built) return;
+    this.env = null; this.buildEnv(); this.dir = -1;
+  }
+  lin(rgb, k = 1) { return new this.T.Color().setRGB(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k, this.T.SRGBColorSpace); }
+  canvasTex(c, o = {}) {
+    const T = this.T, t = new T.CanvasTexture(c);
+    t.colorSpace = o.data ? T.NoColorSpace : T.SRGBColorSpace; t.anisotropy = this.aniso;
+    if (o.repeat) t.wrapS = t.wrapT = T.RepeatWrapping;
+    if (o.flipY === false) t.flipY = false;
+    return t;
+  }
+
+  // ---------- one-off construction (needs Art.build) ----------
+  build() {
+    const T = this.T;
+    this.world = new T.Scene(); this.hand = new T.Scene(); this.post = new T.Scene();
+    this.world.fog = new T.Fog(this.lin(PAL.haze), 25, 450);
+    this.sun = new T.DirectionalLight(this.lin([255, 241, 218]), 2.6); this.world.add(this.sun, this.sun.target);
+    this.handSun = new T.DirectionalLight(this.lin([255, 241, 218]), 2.6); this.hand.add(this.handSun, this.handSun.target);
+    this.buildEnv();
+    this.buildSky();
+    this.buildGround();
+    this.buildBanks();
+    this.buildMat();
+    this.buildBowlKit();
+    this.buildPost();
+    this.scenery = new T.Group(); this.world.add(this.scenery);
+    this.pool = { bowl: [], jack: [] }; this.shadowPool = [];
+    this.built = true;
+  }
+  /* Procedural surroundings for reflections: sky with fair-weather cloud, the tree line round the club, the
+     green below, and a warm glow toward the sun. Built once for the absolute frame; the far end turns it 180°.
+     To try an HDRI instead, load it as an equirectangular texture and call useHDRI(texture). */
+  buildEnv() {
+    const T = this.T, es = new T.Scene(), s = SUN_ABS;
+    const C = (rgb, k = 1) => { const c = this.lin(rgb, 1); return new T.Vector3(c.r * k, c.g * k, c.b * k); };
+    const mat = new T.ShaderMaterial({
+      side: T.BackSide, depthWrite: false,
+      uniforms: { sun: { value: new T.Vector3(s.x, s.y, s.z) }, top: { value: C(PAL.skyTop, 1.1) }, mid: { value: C(PAL.skyMid, 1.3) }, haze: { value: C(PAL.haze, 1.4) },
+        trees: { value: C([34, 52, 30], .9) }, turf: { value: C(PAL.green, .7) }, warm: { value: C([255, 236, 200], 1) } },
+      vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform vec3 sun, top, mid, haze, trees, turf, warm; varying vec3 vD;
+        float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+        void main(){
+          vec3 d = normalize(vD); float el = asin(clamp(d.z, -1., 1.)), az = atan(d.y, d.x);
+          vec3 c = el < .34 ? mix(haze, mid, smoothstep(0., .34, el)) : mix(mid, top, smoothstep(.34, .9, el));
+          float cl = n2(vec2(az * 3., el * 9.)) * .6 + n2(vec2(az * 7., el * 20.)) * .4;           // cumulus
+          c = mix(c, vec3(1.7), smoothstep(.55, .75, cl) * smoothstep(.02, .12, el) * (1. - smoothstep(.5, .9, el)));
+          float tl = .045 + .03 * n2(vec2(az * 9., 1.)) + .015 * n2(vec2(az * 31., 5.));          // tree line and hedges
+          if (el < tl) c = trees * (.8 + .4 * n2(vec2(az * 40., el * 60.)));
+          if (el < 0.) c = turf * (.75 + .25 * smoothstep(-1., -.05, el));
+          c += warm * pow(max(dot(d, normalize(sun)), 0.), 24.) * 1.6;
+          gl_FragColor = vec4(c, 1.);
+        }`
+    });
+    es.add(new T.Mesh(new T.SphereGeometry(50, 64, 32), mat));
+    const pm = new T.PMREMGenerator(this.r);
+    if (this.env) this.env.dispose();
+    this.env = pm.fromScene(es, 0.01).texture;
+    pm.dispose(); mat.dispose();
+    this.world.environment = this.env; this.hand.environment = this.env;
+  }
+  useHDRI(tex) {   // tex: an equirectangular (e.g. RGBE) texture, oriented in the absolute frame
+    const pm = new this.T.PMREMGenerator(this.r); if (this.env) this.env.dispose();
+    tex.mapping = this.T.EquirectangularReflectionMapping;
+    this.env = pm.fromEquirectangular(tex).texture; pm.dispose();
+    this.world.environment = this.env; this.hand.environment = this.env;
+  }
+  buildSky() {
+    const T = this.T, C = rgb => this.lin(rgb);
+    this.skyMat = new T.ShaderMaterial({
+      side: T.BackSide, depthWrite: false, fog: false, toneMapped: false,
+      uniforms: { top: { value: C(PAL.skyTop) }, mid: { value: C(PAL.skyMid) }, haze: { value: C(PAL.haze) }, ground: { value: C(mixRgb(PAL.lawn, PAL.haze, .45)) },
+        sun: { value: new T.Vector3() }, glow: { value: C([255, 244, 214]) } },
+      vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform vec3 top, mid, haze, ground, sun, glow; varying vec3 vD;
+        void main(){ vec3 d = normalize(vD); float el = asin(clamp(d.z, -1., 1.));
+          vec3 c = el < 0. ? ground : el < .342 ? mix(haze, mid, el / .342) : mix(mid, top, min(1., (el - .342) / .558));
+          c = mix(c, glow, .55 * smoothstep(.55, 1., dot(d, sun)) * step(0., el));
+          gl_FragColor = vec4(c, 1.);
+          #include <colorspace_fragment>
+        }`
+    });
+    this.sky = new T.Mesh(new T.SphereGeometry(9000, 48, 24), this.skyMat); this.sky.renderOrder = -10; this.sky.frustumCulled = false;
+    this.world.add(this.sky);
+    // the distant tree line (a band 15 m high, 170 m out, as the canvas draws it) and the clouds above it
+    this.bandTex = Art.band.map(c => { const t = this.canvasTex(c); t.wrapS = T.RepeatWrapping; return t; });
+    this.band = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false, toneMapped: false }));
+    this.band.rotation.x = Math.PI / 2; this.band.renderOrder = -9; this.band.frustumCulled = false; this.world.add(this.band);
+    this.cloudTex = Art.clouds.map(c => this.canvasTex(c));
+    this.cloud = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ transparent: true, opacity: .9, depthWrite: false, fog: false, toneMapped: false }));
+    this.cloud.rotation.x = Math.PI / 2; this.cloud.renderOrder = -9; this.cloud.frustumCulled = false; this.world.add(this.cloud);
+  }
+  /* The ground is Art.buildGround's canvas itself (and its 180°-rotated copy for the other end), 5 cm a texel,
+     on one plane, with GPU mipmaps and anisotropic filtering. The ditch is cut out of it, so bowls can drop in. */
+  buildGround() {
+    const T = this.T, S = TEX.S, w = TEX.X1 - TEX.X0, h = TEX.Y1 - TEX.Y0;
+    this.groundTex = [0, 1].map(d => this.canvasTex(Art.ground[d][0], { flipY: false }));
+    const hole = makeCanvas(w / S, h / S), hg = hole.getContext('2d'), X = x => (x - TEX.X0) / S, Y = y => (y - TEX.Y0) / S;
+    hg.fillStyle = '#fff'; hg.fillRect(0, 0, hole.width, hole.height);
+    const xb = W.GREEN_HALF + W.DITCH_W, yb = W.GREEN_LEN + W.DITCH_W;
+    hg.fillStyle = '#000'; hg.fillRect(X(-xb), Y(-W.DITCH_W), X(xb) - X(-xb), Y(yb) - Y(-W.DITCH_W));
+    hg.fillStyle = '#fff'; hg.fillRect(X(-W.GREEN_HALF), Y(0), X(W.GREEN_HALF) - X(-W.GREEN_HALF), Y(W.GREEN_LEN) - Y(0));
+    const holeTex = this.canvasTex(hole, { flipY: false, data: true });
+    const blades = this.canvasTex(Art.blades, { repeat: true }), mottle = this.canvasTex(Art.mottle, { repeat: true });
+    const m = this.groundMat = new T.MeshBasicMaterial({ map: this.groundTex[0], alphaMap: holeTex, alphaTest: 0.5, toneMapped: false });
+    // near the camera, the canvas renderer's grass detail (blades, then mottle) fades in by on-screen scale, as there
+    m.onBeforeCompile = sh => {
+      sh.uniforms.uBlades = { value: blades }; sh.uniforms.uMottle = { value: mottle };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vWXY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWXY = (modelMatrix * vec4(position, 1.0)).xy;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uBlades, uMottle; varying vec2 vWXY;').replace('#include <map_fragment>', `#include <map_fragment>
+        { float ppm = 1.0 / max(length(dFdx(vWXY)), 1e-6);
+          float a = ppm * 0.0034; if (a > .55) { vec4 b = texture2D(uBlades, vWXY / (256. * .0034)); diffuseColor.rgb = mix(diffuseColor.rgb, b.rgb, b.a * clamp((a - .55) / 1.2, 0., 1.) * .9); }
+          float am = ppm * 0.013; if (am > .45) { vec4 o = texture2D(uMottle, vWXY / (256. * .013)); diffuseColor.rgb = mix(diffuseColor.rgb, o.rgb, o.a * clamp((am - .45) / .8, 0., 1.)); } }`);
+    };
+    const g = new T.Mesh(new T.PlaneGeometry(w, h), m); g.position.set((TEX.X0 + TEX.X1) / 2, (TEX.Y0 + TEX.Y1) / 2, 0); this.world.add(g);
+    // beyond the texture: plain country, hazed by the fog
+    const sh = new T.Shape([new T.Vector2(-6000, -6000), new T.Vector2(6000, -6000), new T.Vector2(6000, 6000), new T.Vector2(-6000, 6000)]);
+    sh.holes.push(new T.Path([new T.Vector2(TEX.X0, TEX.Y0), new T.Vector2(TEX.X0, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y0)]));
+    this.world.add(new T.Mesh(new T.ShapeGeometry(sh), new T.MeshBasicMaterial({ color: this.lin(mixRgb(PAL.lawn, PAL.haze, .3)), toneMapped: false })));
+  }
+  quad(p, uv, mat) {   // p: four corners, counter-clockwise seen from the front
+    const T = this.T, g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(p.flat(), 3));
+    g.setAttribute('uv', new T.Float32BufferAttribute(uv ? [0, 0, uv[0], 0, uv[0], uv[1], 0, uv[1]] : [0, 0, 1, 0, 1, 1, 0, 1], 2));
+    g.setIndex([0, 1, 2, 0, 2, 3]); g.computeVertexNormals();
+    return new T.Mesh(g, mat);
+  }
+  // A box from quads, each face lit by the sun as the canvas lights its hedges and banks.
+  box(x0, x1, y0, y1, z0, z1, face, uvScale) {
+    const out = [], P = (a, b, c) => [a, b, c];
+    const F = [
+      { n: [0, -1, 0], p: [P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1)], uv: [x1 - x0, z1 - z0] },
+      { n: [0, 1, 0], p: [P(x1, y1, z0), P(x0, y1, z0), P(x0, y1, z1), P(x1, y1, z1)], uv: [x1 - x0, z1 - z0] },
+      { n: [-1, 0, 0], p: [P(x0, y1, z0), P(x0, y0, z0), P(x0, y0, z1), P(x0, y1, z1)], uv: [y1 - y0, z1 - z0] },
+      { n: [1, 0, 0], p: [P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)], uv: [y1 - y0, z1 - z0] },
+      { n: [0, 0, 1], p: [P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)], uv: [x1 - x0, y1 - y0] }
+    ];
+    for (const f of F) { const m = face(f.n); if (m) out.push(this.quad(f.p, uvScale ? f.uv.map(v => v / uvScale) : null, m)); }
+    return out;
+  }
+  buildBanks() {
+    const T = this.T, G = new T.Group(); this.banks = G; this.world.add(G);
+    const xb = W.GREEN_HALF + W.DITCH_W, yb = W.GREEN_LEN + W.DITCH_W, zb = -W.DITCH_D, zt = W.BANK_H, cap = 0.35;
+    const flat = rgb => new T.MeshBasicMaterial({ color: this.lin(rgb), toneMapped: false });
+    // ditch floor and the green's cut edge
+    G.add(this.quad([[-xb, -W.DITCH_W, zb], [xb, -W.DITCH_W, zb], [xb, yb, zb], [-xb, yb, zb]], null, flat([70, 62, 48])));
+    const edge = flat([52, 46, 36]), gh = W.GREEN_HALF, gl = W.GREEN_LEN;
+    G.add(this.quad([[gh, 0, zb], [gh, gl, zb], [gh, gl, 0], [gh, 0, 0]], null, edge), this.quad([[-gh, gl, zb], [-gh, 0, zb], [-gh, 0, 0], [-gh, gl, 0]], null, edge));
+    G.add(this.quad([[-gh, 0, zb], [gh, 0, zb], [gh, 0, 0], [-gh, 0, 0]], null, edge), this.quad([[gh, gl, zb], [-gh, gl, zb], [-gh, gl, 0], [gh, gl, 0]], null, edge));
+    // timber banks: their faces get their light per end in setDir
+    this.bankFaces = [];
+    const timber = n => { const m = flat(PAL.timber); this.bankFaces.push({ m, n }); return m; }, capM = flat(shadeRgb(PAL.cap, .08));
+    const add = arr => arr.forEach(o => G.add(o));
+    add(this.box(-xb - cap, -xb, -W.DITCH_W - cap, yb + cap, zb, zt, n => n[2] ? capM : n[0] > 0 ? timber(n) : null));
+    add(this.box(xb, xb + cap, -W.DITCH_W - cap, yb + cap, zb, zt, n => n[2] ? capM : n[0] < 0 ? timber(n) : null));
+    add(this.box(-xb, xb, yb, yb + cap, zb, zt, n => n[2] ? capM : n[1] < 0 ? timber(n) : null));
+    add(this.box(-xb, xb, -W.DITCH_W - cap, -W.DITCH_W, zb, zt, n => n[2] ? capM : n[1] > 0 ? timber(n) : null));
+    // boundary pegs on both banks, and the rink plates on the front one (numbered per end)
+    const peg = flat([242, 238, 226]);
+    for (const bx of [-12.5, -7.5, -2.5, 2.5, 7.5, 12.5]) for (const y of [yb + .1, -W.DITCH_W - .1]) add(this.box(bx - .012, bx + .012, y - .012, y + .012, zt, zt + .16, n => peg));
+    this.plateTex = [0, 1].map(d => RINKS.map((rx, i) => {
+      const c = makeCanvas(64, 64), g = c.getContext('2d'); g.fillStyle = '#efeadc'; g.fillRect(0, 0, 64, 64);
+      g.fillStyle = '#26322b'; g.font = '48px Georgia,serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(d ? 5 - i : i + 1), 32, 35);
+      return this.canvasTex(c);
+    }));
+    this.plates = RINKS.map(rx => { const m = new T.MeshBasicMaterial({ toneMapped: false }), s = .065, z = zt * .55;
+      G.add(this.quad([[rx - s, yb - .004, z - s], [rx + s, yb - .004, z - s], [rx + s, yb - .004, z + s], [rx - s, yb - .004, z + s]], null, m)); return m; });
+    // rink boundary threads, faint
+    const thread = new T.LineBasicMaterial({ color: this.lin([240, 240, 225]), transparent: true, opacity: .2, toneMapped: false });
+    for (const bx of [-7.5, -2.5, 2.5, 7.5]) G.add(new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(bx, .2, .003), new T.Vector3(bx, W.GREEN_LEN, .003)]), thread));
+  }
+  buildMat() {
+    const T = this.T, c = makeCanvas(144, 240), g = c.getContext('2d'), k = 400;   // px per metre
+    const mg = g.createLinearGradient(0, 0, 0, 240); mg.addColorStop(0, '#2d322f'); mg.addColorStop(1, '#202422'); g.fillStyle = mg; g.fillRect(0, 0, 144, 240);
+    g.strokeStyle = 'rgba(230,226,212,.42)'; g.lineWidth = 2.4; g.strokeRect(.025 * k, .025 * k, 144 - .05 * k, 240 - .05 * k);
+    g.strokeStyle = 'rgba(230,226,212,.5)'; g.beginPath(); g.moveTo(72, 0); g.lineTo(72, .06 * k); g.stroke();
+    const hw = W.MAT_W / 2;
+    this.mat = this.quad([[-hw, 0, 0], [hw, 0, 0], [hw, W.MAT_LEN, 0], [-hw, W.MAT_LEN, 0]], null, new T.MeshBasicMaterial({ map: this.canvasTex(c), toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    this.mat.position.z = .006; this.world.add(this.mat);
+  }
+  // ---------- bowls and jack ----------
+  /* The resin: a 64³ volume of thresholded noise, sampled in the bowl's own coordinates so the flecks wrap
+     the shape with no seams or stretching. r: irregular splashes (fbm), g: fine dots, b: slow variation that
+     picks between a colourway's two fleck colours. Each channel is equalised, so a threshold is a coverage. */
+  buildSpeckle() {
+    const T = this.T, N = 64, rnd = mulberry32(5150), vox = N * N * N;
+    const noise = P => {   // periodic value noise with lattice period P over the volume
+      const L = new Float32Array(P * P * P); for (let i = 0; i < L.length; i++) L[i] = rnd();
+      const out = new Float32Array(vox), k = P / N, sm = t => t * t * (3 - 2 * t);
+      for (let z = 0, o = 0; z < N; z++) for (let y = 0; y < N; y++) for (let x = 0; x < N; x++, o++) {
+        const fx = x * k, fy = y * k, fz = z * k, x0 = fx | 0, y0 = fy | 0, z0 = fz | 0, tx = sm(fx - x0), ty = sm(fy - y0), tz = sm(fz - z0);
+        const x1 = (x0 + 1) % P, y1 = (y0 + 1) % P, z1 = (z0 + 1) % P, I = (a, b, c) => L[(c * P + b) * P + a];
+        const a = lerp(lerp(I(x0, y0, z0), I(x1, y0, z0), tx), lerp(I(x0, y1, z0), I(x1, y1, z0), tx), ty);
+        const b = lerp(lerp(I(x0, y0, z1), I(x1, y0, z1), tx), lerp(I(x0, y1, z1), I(x1, y1, z1), tx), ty);
+        out[o] = lerp(a, b, tz);
+      }
+      return out;
+    };
+    const mix = (parts) => { const out = new Float32Array(vox); for (const [arr, w] of parts) for (let i = 0; i < vox; i++) out[i] += arr[i] * w; return out; };
+    const equalise = a => { const s = Float32Array.from(a).sort(), out = new Uint8Array(vox); for (let i = 0; i < vox; i++) { let lo = 0, hi = vox - 1; const v = a[i]; while (lo < hi) { const m = (lo + hi) >> 1; if (s[m] < v) lo = m + 1; else hi = m; } out[i] = Math.min(255, (lo / vox * 256) | 0); } return out; };
+    const n16 = noise(16), n32 = noise(32), n64 = noise(64), m32 = noise(32), m64 = noise(64), n4 = noise(4);
+    const R = equalise(mix([[n16, .58], [n32, .27], [n64, .15]])), G = equalise(mix([[m32, .55], [m64, .45]])), B = equalise(n4);
+    const data = new Uint8Array(vox * 4); for (let i = 0; i < vox; i++) { data[i * 4] = R[i]; data[i * 4 + 1] = G[i]; data[i * 4 + 2] = B[i]; data[i * 4 + 3] = 255; }
+    const t = new T.Data3DTexture(data, N, N, N); t.format = T.RGBAFormat; t.type = T.UnsignedByteType;
+    t.minFilter = t.magFilter = T.LinearFilter; t.wrapS = t.wrapT = t.wrapR = T.RepeatWrapping; t.unpackAlignment = 1; t.needsUpdate = true;
+    return t;
+  }
+  /* Both faces in one texture: left half the bias face, right half the plain face, each spanning the bowl's
+     diameter. The engraved rings are the canvas renderer's (small rings mark the bias side), with the club's
+     emblem from the title screen (three rings and a solid core, in brass) at the centre. */
+  buildFaceDecal() {
+    const S = 1024, c = makeCanvas(S * 2, S), g = c.getContext('2d'), px = r => r * S / 2, fr = 0.597;   // fr: the face radius the canvas renderer uses
+    const face = (cx, rings, em) => {
+      const cy = S / 2;
+      for (const rr of rings) {
+        g.lineWidth = px(.011);
+        g.strokeStyle = 'rgba(0,0,0,.38)'; g.beginPath(); g.arc(cx + px(.004), cy + px(.005), px(rr * fr), 0, TAU); g.stroke();
+        g.strokeStyle = 'rgba(246,240,224,.82)'; g.beginPath(); g.arc(cx, cy, px(rr * fr), 0, TAU); g.stroke();
+      }
+      const k = px(em) / 14.5;
+      g.strokeStyle = '#c9a862'; g.lineWidth = 1.1 * k;
+      for (const r of [14.5, 10.5, 7.5]) { g.beginPath(); g.arc(cx, cy, r * k, 0, TAU); g.stroke(); }
+      g.fillStyle = '#c9a862'; g.beginPath(); g.arc(cx, cy, 3.6 * k, 0, TAU); g.fill();
+    };
+    face(S / 2, [.34, .48], .165);
+    face(S * 1.5, [.62, .82], .30);
+    const t = this.canvasTex(c); t.generateMipmaps = true; return t;
+  }
+  buildBowlKit() {
+    const T = this.T;
+    this.speckle = this.buildSpeckle(); this.faceDecal = this.buildFaceDecal();
+    this.bowlGeo = { hi: BowlShape.geometry(T, 288, true), mid: BowlShape.geometry(T, 96, false), lo: BowlShape.geometry(T, 28, false) };
+    this.jackGeo = { hi: new T.SphereGeometry(1, 64, 40), lo: new T.SphereGeometry(1, 18, 12) };
+    // contact shadow (tight, soft) and a cast shadow stretched away from the low sun
+    const blob = (w, h, stops) => { const c = makeCanvas(w, h), g = c.getContext('2d'), gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      for (const [o, a] of stops) gr.addColorStop(o, `rgba(8,18,6,${a})`); g.fillStyle = gr; g.fillRect(0, 0, w, h); return this.canvasTex(c); };
+    this.contactTex = blob(128, 128, [[0, .78], [.45, .5], [.75, .14], [1, 0]]);
+    const c = makeCanvas(256, 128), g = c.getContext('2d');
+    for (let i = 0; i <= 4; i++) { const t = i / 4, x = 64 + t * 128, gr = g.createRadialGradient(x, 64, 0, x, 64, 60); gr.addColorStop(0, `rgba(14,26,10,${.2 * (1 - t * .55)})`); gr.addColorStop(.6, `rgba(14,26,10,${.14 * (1 - t * .55)})`); gr.addColorStop(1, 'rgba(14,26,10,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128); }
+    this.castTex = this.canvasTex(c);
+    this.planeGeo = new T.PlaneGeometry(1, 1);
+  }
+  bowlMaterial() {
+    const T = this.T, m = new T.MeshPhysicalMaterial({ roughness: .34, metalness: 0, clearcoat: 1, clearcoatRoughness: .045, specularIntensity: .6, ior: 1.5, envMapIntensity: 1.0, transparent: true });
+    m.userData.u = { uSpeck: { value: this.speckle }, uDecal: { value: this.faceDecal }, uBase: { value: new T.Color() }, uFleck: { value: new T.Color() }, uFleck2: { value: new T.Color() }, uToucher: { value: 0 } };
+    m.onBeforeCompile = function (sh) {
+      Object.assign(sh.uniforms, this.userData.u);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObj;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvObj = position;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+        uniform highp sampler3D uSpeck; uniform sampler2D uDecal; uniform vec3 uBase, uFleck, uFleck2; uniform float uToucher; varying vec3 vObj;
+        float cut(float v, float t){ float w = max(fwidth(v), 1e-3) * .9; return smoothstep(t - w, t + w, v); }`).replace('#include <map_fragment>', `{
+        vec3 p = vObj;
+        // flecks: splashes from two differently scaled and turned samples, fine dots from a third
+        float s1 = texture(uSpeck, p * 1.55).r, s2 = texture(uSpeck, p.zxy * 1.21 + vec3(.31, .17, .71)).r;
+        float dots = texture(uSpeck, p.yzx * 2.9 + vec3(.5, .2, .9)).g, hue = texture(uSpeck, p * .23).b;
+        // far off, a fleck is smaller than a pixel: blend toward the average speckle instead of letting it glitter
+        float fp = length(fwidth(p)), far = smoothstep(.012, .05, fp);
+        float f = max(max(cut(s1, .905), cut(s2, .915)), cut(dots, .955) * .85 * (1. - far));
+        f = mix(f, .16, far);
+        vec3 fleck = mix(uFleck, uFleck2, smoothstep(.3, .8, hue));
+        vec3 col = mix(uBase * (.9 + .2 * hue), fleck, f);
+        // the scalloped grip band reads a little lighter than the body
+        float rho = length(p.xz), e = p.y > 0. ? .68 : .76;
+        float band = smoothstep(e + .015, e + .04, rho) * (1. - smoothstep(e + .14, e + .165, rho));
+        col = mix(col, col * 1.3 + .012, band * .85);
+        // engraved rings and the club emblem on the faces
+        vec4 d = texture2D(uDecal, vec2(p.y > 0. ? .25 - p.x * .25 : .75 + p.x * .25, .5 + p.z * .5));
+        col = mix(col, d.rgb, d.a);
+        // a toucher carries a chalk cross on its running surface (four of them round it, so one is always in view)
+        if (uToucher > .5 && abs(p.y) < .25) {
+          float ph = atan(p.z, p.x), u = (mod(ph + .3927, 1.5708) - .7854), v = p.y;
+          float x = min(abs(u - v * .9), abs(u + v * .9));
+          col = mix(col, vec3(.93, .93, .9), (1. - smoothstep(.022, .034, x)) * step(abs(u), .2) * step(abs(v), .2));
+        }
+        diffuseColor.rgb = col;
+      }`);
+    };
+    m.customProgramCacheKey = () => 'bias-bowl-1';
+    return m;
+  }
+  bowlMesh() {
+    const T = this.T, m = new T.Mesh(this.bowlGeo.lo, this.bowlMaterial()); m.renderOrder = 3; m.userData.hex = null; return m;
+  }
+  jackMesh() {
+    const T = this.T, m = new T.Mesh(this.jackGeo.lo, new T.MeshPhysicalMaterial({ color: this.lin([244, 239, 226]), roughness: .28, clearcoat: .9, clearcoatRoughness: .07, transparent: true }));
+    m.renderOrder = 3; return m;
+  }
+  setPaint(m, hex, toucher) {
+    if (m.userData.hex !== hex) {
+      const p = bowlPalette(hex), u = m.material.userData.u;
+      u.uBase.value.copy(this.lin(p.base, .82)); u.uFleck.value.copy(this.lin(p.fleck)); u.uFleck2.value.copy(this.lin(p.fleck2));
+      m.userData.hex = hex;
+    }
+    m.material.userData.u.uToucher.value = toucher ? 1 : 0;
+  }
+  /* Orientation from the view alone: the bias face points across the line of travel (heading), to the right
+     when side is +1; the bowl turns about its axle by roll (distance run ÷ radius). At roll 0 local z is up. */
+  pose(o, heading, side, roll) {
+    const T = this.T, ch = Math.cos(heading), sh = Math.sin(heading), s = side < 0 ? -1 : 1;
+    const ay = new T.Vector3(ch * s, -sh * s, 0), az = new T.Vector3(0, 0, 1), ax = new T.Vector3().crossVectors(ay, az);
+    const q = new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(ax, ay, az));
+    const qr = new T.Quaternion().setFromAxisAngle(new T.Vector3(-ch, sh, 0), roll || 0);
+    o.quaternion.copy(qr.multiply(q));
+  }
+  lod(m, kind, Rpx) {
+    if (kind === 'jack') m.geometry = Rpx > 10 ? this.jackGeo.hi : this.jackGeo.lo;
+    else m.geometry = Rpx > 28 ? this.bowlGeo.hi : Rpx > 7 ? this.bowlGeo.mid : this.bowlGeo.lo;
+  }
+  shadowPair(i) {
+    if (!this.shadowPool[i]) {
+      const T = this.T, mk = (tex, ro) => { const m = new T.Mesh(this.planeGeo, new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); m.renderOrder = ro; this.world.add(m); return m; };
+      this.shadowPool[i] = { cast: mk(this.castTex, 1), contact: mk(this.contactTex, 2) };
+    }
+    return this.shadowPool[i];
+  }
+
+  // ---------- per end ----------
+  setDir(dir) {
+    const T = this.T, sun = sunEnd(dir);
+    this.dir = dir;
+    this.groundMat.map = this.groundTex[dir]; this.groundMat.needsUpdate = true;
+    this.sunV = new T.Vector3(sun.x, sun.y, sun.z);
+    this.sun.position.copy(this.sunV); this.handSun.position.copy(this.sunV);
+    this.skyMat.uniforms.sun.value.copy(this.sunV).normalize();
+    this.world.environmentRotation.set(0, 0, dir ? Math.PI : 0); this.hand.environmentRotation.copy(this.world.environmentRotation);
+    this.band.material.map = this.bandTex[dir]; this.band.material.needsUpdate = true;
+    this.cloud.material.map = this.cloudTex[dir]; this.cloud.material.needsUpdate = true;
+    for (const f of this.bankFaces) { const li = 0.45 + 0.55 * Math.max(0, f.n[0] * sun.x + f.n[1] * sun.y); f.m.color.copy(this.lin(mixRgb(shadeRgb(PAL.timber, -.35), PAL.timberLit, li))); }
+    this.plates.forEach((m, i) => { m.map = this.plateTex[dir][i]; m.needsUpdate = true; });
+    this.sceneryRef = null;
+  }
+  // The scenery as the canvas lays it out: sprites face the camera, hedges are boxes; all in this end's frame.
+  buildScenery() {
+    const T = this.T, G = this.scenery, dir = this.dir, sun = sunEnd(dir);
+    for (const o of G.children.slice()) { G.remove(o); if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }
+    this.spriteMats = this.spriteMats || new Map(); this.sprTex = this.sprTex || new Map();
+    const tex = c => { let t = this.sprTex.get(c); if (!t) { t = this.canvasTex(c); this.sprTex.set(c, t); } return t; };
+    const hedgeTex = [tex(Art.hedgeTile), tex(Art.hedgeTileF)]; for (const t of hedgeTex) t.wrapS = t.wrapT = T.RepeatWrapping;
+    for (const it of Art.scenery) {
+      if (it.kind === 'sprite') {
+        const spr = it.spr, flip = (it.flip ? 1 : 0) ^ (dir === 1 && !it.fixed ? 1 : 0);
+        let byImg = this.spriteMats.get(spr.img); if (!byImg) this.spriteMats.set(spr.img, byImg = {});
+        const key = (it.far ? 'far' : 'near') + flip;
+        let m = byImg[key];
+        if (!m) {
+          let img = spr.img;
+          if (it.far) { img = makeCanvas(spr.w, spr.h); const g = img.getContext('2d'); g.drawImage(spr.img, 0, 0); g.globalAlpha = .82; g.drawImage(spr.haze, 0, 0); }
+          let map = tex(img);
+          if (flip) { map = map.clone(); map.repeat.x = -1; map.offset.x = 1; map.needsUpdate = true; }
+          m = byImg[key] = new T.SpriteMaterial({ map, transparent: true, depthWrite: false, fog: !it.far, toneMapped: false });
+        }
+        const p = toEnd(dir, it.x, it.y), s = new T.Sprite(m);
+        s.center.set(.5, 0); s.position.set(p.x, p.y, 0); s.scale.set(it.h * spr.w / spr.h, it.h, 1);
+        G.add(s);
+      } else {
+        const a = toEnd(dir, it.x0, it.y0), b = toEnd(dir, it.x1, it.y1);
+        const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+        const face = n => {
+          const li = 0.42 + 0.58 * Math.max(0, n[0] * sun.x + n[1] * sun.y + n[2] * sun.z), k = li > .7 ? 1 + (li - .7) * .45 : 1 - (.7 - li) * .9;
+          const t = hedgeTex[it.flowers ? 1 : 0];
+          return new T.MeshBasicMaterial({ map: t, color: new T.Color(k * (n[2] ? 1.08 : 1), k * (n[2] ? 1.1 : 1), k * (n[2] ? 1.0 : 1)), toneMapped: false });
+        };
+        for (const q of this.box(x0, x1, y0, y1, 0, it.h, face, 1.2)) G.add(q);
+      }
+    }
+    this.sceneryRef = Art.scenery;
+  }
+  buildPost() {   // vignette, as the canvas renderer draws over its background
+    const T = this.T;
+    this.postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    this.vig = new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, toneMapped: false, uniforms: { res: { value: new T.Vector2(1, 1) }, col: { value: this.lin([10, 16, 10]) } },
+      vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0., 1.); }',
+      fragmentShader: `uniform vec2 res; uniform vec3 col; void main(){ vec2 q = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y);
+        float r0 = min(res.x, res.y) * .45, r1 = length(res) * .62, d = distance(q, vec2(res.x * .5, res.y * .45));
+        gl_FragColor = vec4(col, .30 * clamp((d - r0) / (r1 - r0), 0., 1.));
+        #include <colorspace_fragment>
+      }` });
+    const m = new T.Mesh(new T.PlaneGeometry(2, 2), this.vig); m.frustumCulled = false; this.post.add(m);
+  }
+
+  // ---------- per frame ----------
+  /* Camera parity: the game's Camera is a pitch-only pinhole at (x, y, z) looking along +y, focal length F in
+     device pixels, principal point at the screen centre. The same camera in three: vertical fov from F and the
+     height, and a basis of right (1,0,0), up (0, sin p, cos p) and back (0, −cos p, sin p). */
+  syncCamera(c = this.host.cam, cam3 = this.cam3) {
+    const T = this.T, cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
+    cam3.fov = 2 * Math.atan(c.H / 2 / c.F) * 180 / Math.PI; cam3.aspect = c.W / c.H;
+    cam3.position.set(c.x, c.y, c.z);
+    cam3.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(new T.Vector3(1, 0, 0), new T.Vector3(0, sp, cp), new T.Vector3(0, -cp, sp)));
+    cam3.updateProjectionMatrix(); cam3.updateMatrixWorld(true);
+    return cam3;
+  }
+  render(v) {
+    if (!Art.ready) return false;
+    if (!this.built) this.build();
+    const T = this.T, host = this.host, cam = host.cam, Wd = host.W, Hd = host.H;
+    if (v.dir !== this.dir) this.setDir(v.dir);
+    if (this.sceneryRef !== Art.scenery) this.buildScenery();
+    const c3 = this.syncCamera();
+    // sky, distant band and clouds travel with the camera, as in the canvas renderer
+    this.sky.position.copy(c3.position);
+    const bd = 170, bw = 800, tw = Art.band[0].width / Art.band[0].height * 15, bt = this.band.material.map;
+    this.band.position.set(cam.x, cam.y + bd, 7.5); this.band.scale.set(bw, 15, 1); bt.repeat.set(bw / tw, 1); bt.offset.set((cam.x - bw / 2) / tw, 0);
+    const cl = Art.clouds[v.dir], D = 3000, cs = cam.F / 1100, xL = ((-cam.x * 3 + (v.dir ? 600 : 0)) % 600) - 300 * cs;
+    const cw = cl.width / 1100 * D, chh = cl.height / 1100 * D, x0 = cam.x + (xL - Wd / 2) / cam.F * D;
+    this.cloud.position.set(x0 + cw / 2, cam.y + D, cam.z + .15 * cl.height / 1100 * D + chh / 2); this.cloud.scale.set(cw, chh, 1);
+    this.mat.position.y = v.matRear;
+    // bodies: position and turn from the view only
+    const used = { bowl: 0, jack: 0 }; let si = 0;
+    const ux = -this.sunV.x, uy = -this.sunV.y, un = Math.hypot(ux, uy), sx = ux / un, sy = uy / un;
+    for (const b of v.bodies) {
+      const kind = b.kind === 'jack' ? 'jack' : 'bowl', pool = this.pool[kind];
+      if (b.fade <= 0.01) continue;
+      let m = pool[used[kind]]; if (!m) { m = kind === 'jack' ? this.jackMesh() : this.bowlMesh(); pool.push(m); this.world.add(m); }
+      used[kind]++;
+      const inDitch = b.state === 'ditch', z = (b.z != null ? b.z : inDitch ? -W.DITCH_D + b.r : b.r) + (b.lift ? b.lift * b.r * 1.4 : 0);
+      m.visible = true; m.position.set(b.rx, b.ry, z); m.scale.setScalar(b.r);
+      const P = cam.project(b.rx, b.ry, z); this.lod(m, kind, P ? P.s * b.r : 0);
+      m.material.opacity = b.fade;
+      if (kind === 'bowl') { this.pose(m, b.heading || 0, b.side, b.roll); this.setPaint(m, b.colour, b.toucher); }
+      if (!inDitch) {
+        const sp = this.shadowPair(si++), a = b.fade * (b.lift ? 1 - b.lift : 1);
+        sp.contact.visible = sp.cast.visible = true;
+        sp.contact.position.set(b.rx, b.ry, .002); sp.contact.scale.setScalar(b.r * 2.3); sp.contact.material.opacity = a;
+        sp.cast.position.set(b.rx + sx * b.r * .7, b.ry + sy * b.r * .7, .0015); sp.cast.scale.set(b.r * 4.2, b.r * 2.1, 1); sp.cast.rotation.z = Math.atan2(sy, sx); sp.cast.material.opacity = a;
+      }
+    }
+    for (const k of ['bowl', 'jack']) for (let i = used[k]; i < this.pool[k].length; i++) this.pool[k][i].visible = false;
+    for (let i = si; i < this.shadowPool.length; i++) this.shadowPool[i].contact.visible = this.shadowPool[i].cast.visible = false;
+    // draw: the world, the vignette over it, then whatever is held in the hand
+    const r = this.r;
+    r.setRenderTarget(null); r.clear(true, true, true);
+    r.render(this.world, c3);
+    this.vig.uniforms.res.value.set(Wd, Hd); r.render(this.post, this.postCam);
+    const h = v.hand; let held = null;
+    if (h && h.bowl && h.alpha > 0.01) held = this.placeHeld(h, c3);
+    if (held) { r.clearDepth(); r.render(this.hand, c3); }
+    // the overlay: screen-space marks, the bowls cut out of them (they sit on top in the canvas renderer too), then the hand
+    const g = host.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, Wd, Hd);
+    if (v.trace && v.trace.length) host.drawTrace(g, v.trace, v.traceAlpha);
+    if (v.aim) host.drawAim(g, v.aim, v);
+    host.drawDitchMarkers(g, v);
+    g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+    for (const b of v.bodies) {
+      if (b.fade <= 0.01) continue;
+      const z = b.z != null ? b.z : b.state === 'ditch' ? -W.DITCH_D + b.r : b.r, P = cam.project(b.rx, b.ry, z); if (!P) continue;
+      const R = b.r * P.s, rx = b.kind === 'jack' ? R : R * Math.min(1, W.BOWL_WIDTH * Math.abs(Math.cos(b.heading || 0)) + Math.abs(Math.sin(b.heading || 0)));
+      g.globalAlpha = b.fade; g.beginPath(); g.ellipse(P.x, P.y, rx * .97, R * .97, 0, 0, TAU); g.fill();
+    }
+    if (held) { g.globalAlpha = h.alpha; g.beginPath(); g.ellipse(h.x, h.y, held.rx * .97, held.R * .97, 0, 0, TAU); g.fill(); }
+    g.restore();
+    for (const fx of v.effects) host.drawEffect(g, fx);
+    if (h) this.drawHand(g, h);
+    return true;
+  }
+  /* The bowl (or jack) in the bowler's hand is a real object in the world, put on the ray through its screen
+     position at the distance that gives it its screen radius, and drawn after the world with a fresh depth
+     buffer so the green never cuts into it. Its pose is the hand's (handView): a little turn and a little roll. */
+  placeHeld(h, c3) {
+    const T = this.T, cam = this.host.cam;
+    if (!this.held) {
+      this.held = { bowl: this.bowlMesh(), jack: this.jackMesh() };
+      this.held.bowl.geometry = this.bowlGeo.hi; this.held.jack.geometry = this.jackGeo.hi; this.hand.add(this.held.bowl, this.held.jack);
+    }
+    const jack = !!h.jack, m = jack ? this.held.jack : this.held.bowl, other = jack ? this.held.bowl : this.held.jack;
+    other.visible = false; m.visible = true;
+    const r = jack ? W.JACK_R : W.BOWL_R, Rpx = jack ? h.R * .5 : h.R, d = cam.F * r / Rpx;
+    const p = new T.Vector3((h.x - cam.cx) / cam.F * d, (cam.cy - h.y) / cam.F * d, -d).applyMatrix4(c3.matrixWorld);
+    m.position.copy(p); m.scale.setScalar(r); m.material.opacity = h.alpha;
+    if (!jack) { this.pose(m, h.head || 0, h.bias || 1, 0.6); this.setPaint(m, h.colour, false); }
+    const c = Math.abs(Math.cos(h.head || 0)), s = Math.abs(Math.sin(h.head || 0));
+    return { R: Rpx, rx: jack ? Rpx : Rpx * Math.min(1, W.BOWL_WIDTH * c + s) };
+  }
+  // As SceneRenderer.drawHandLayer, without the bowl (WebGL has drawn it underneath).
+  drawHand(g, h) {
+    if (h.alpha <= 0.01) return;
+    const paint = c => {
+      const o = { alpha: 1, arm: h.arm, jack: h.jack }, hy = h.jack ? h.y - 0.46 * h.R : h.y;
+      if (HAND_STYLE === 'full') { handBehind(c, h.x, hy, h.R, o); handFront(c, h.x, hy, h.R, o); }
+      else if (HAND_STYLE === 'ghost') handGhost(c, h.x, hy, h.R, o);
+    };
+    if (h.alpha >= 0.985) { paint(g); return; }
+    const host = this.host, buf = host.handBuf || (host.handBuf = makeCanvas(1, 1));
+    if (buf.width !== host.W || buf.height !== host.H) { buf.width = host.W; buf.height = host.H; }
+    const c = buf.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, buf.width, buf.height);
+    paint(c);
+    g.save(); g.globalAlpha = h.alpha; g.drawImage(buf, 0, 0); g.restore();
+  }
+}
+
+/* Frames per second, behind ?fps, with the renderer in use. */
+class FpsMeter {
+  constructor() {
+    const d = this.el = document.createElement('div');
+    d.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:200;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#f2ede0;background:rgba(10,16,12,.7);padding:3px 6px;border-radius:4px;pointer-events:none';
+    document.body.appendChild(d); this.n = 0; this.t0 = performance.now(); this.label = '';
+  }
+  tick(label) {
+    this.n++; const t = performance.now();
+    if (t - this.t0 >= 500 || label !== this.label) { this.el.textContent = `${(this.n * 1000 / Math.max(1, t - this.t0)).toFixed(0)} fps · ${label}`; this.n = 0; this.t0 = t; this.label = label; }
+  }
+}
+
+/* SceneRenderer with an optional WebGL world underneath. The same object, the same Camera and the same canvas
+   the game already uses (input, BiasDebug), so nothing outside needs to know which renderer is drawing. */
+class SceneHost extends SceneRenderer {
+  constructor(canvas) {
+    super(canvas);
+    this.gl = null; this.glState = GLFLAGS.want ? 'loading' : 'off';
+    this.fps = GLFLAGS.fps ? new FpsMeter() : null;
+    if (GLFLAGS.want) import('./three.module.min.js').then(THREE => {
+      try { this.gl = new GLScene(THREE, this); this.glState = 'on'; }
+      catch (e) { this.glState = 'unavailable'; console.warn('WebGL unavailable: using the canvas renderer.', e); }
+    }, e => { this.glState = 'unavailable'; console.warn('three.module.min.js did not load: using the canvas renderer.', e); });
+  }
+  resize() { super.resize(); if (this.gl) this.gl.resize(); }
+  render(v) {
+    if (this.gl && this.gl.ok()) {
+      try { if (this.gl.render(v)) { if (this.fps) this.fps.tick('WebGL'); return; } }
+      catch (e) { console.error('WebGL renderer failed: using the canvas renderer.', e); this.gl.dispose(); this.gl = null; this.glState = 'failed'; this.bgKey = ''; }
+    }
+    super.render(v);
+    if (this.fps) this.fps.tick(`Canvas 2D${this.glState === 'off' ? '' : ' (WebGL ' + (this.gl && !this.gl.ok() ? 'context lost' : this.glState) + ')'}`);
+  }
+}
+
+/* Camera parity test (BiasDebug.glCameraTest(), and with ?test): for random cameras and
+   random points, the game's Camera.project and three's projection through GLScene.syncCamera must land on the
+   same pixel, and cam.ground must agree with a three ray cast onto the plane z = h. */
+async function glCameraTest(n = 400) {
+  const THREE = await import('./three.module.min.js'), rnd = mulberry32(42), R = (a, b) => a + (b - a) * rnd();
+  const sync = (c, c3) => GLScene.prototype.syncCamera.call({ T: THREE, host: { cam: c } }, c, c3);
+  const c3 = new THREE.PerspectiveCamera(40, 1, 0.05, 12000), ray = new THREE.Raycaster(), v = new THREE.Vector3();
+  let maxPx = 0, maxGround = 0, cams = 0, pts = 0, rays = 0;
+  const cases = [scene.cam].concat(Array.from({ length: 24 }, () => { const c = new Camera(); Object.assign(c, { x: R(-2, 2), y: R(-1, 30), z: R(.6, 2.4), pitch: R(.02, .45), F: R(500, 6000), W: Math.round(R(360, 3000)), H: Math.round(R(360, 3000)) }); c.update(); return c; }));
+  for (const c of cases) {
+    sync(c, c3); cams++;
+    for (let i = 0; i < n; i++) {
+      const x = c.x + R(-12, 12), y = c.y + R(0.3, 60), z = R(-0.2, 6), P = c.project(x, y, z); if (!P) continue;
+      v.set(x, y, z).project(c3); pts++;
+      const sx = (v.x + 1) / 2 * c.W, sy = (1 - v.y) / 2 * c.H; maxPx = Math.max(maxPx, Math.hypot(sx - P.x, sy - P.y));
+      const h = R(-0.1, 0.3), gx = R(0, c.W), gy = R(c.horizon() + 2, c.H), G = c.ground(gx, gy, h);
+      if (G) {
+        ray.setFromCamera(new THREE.Vector2(gx / c.W * 2 - 1, 1 - gy / c.H * 2), c3);
+        const hit = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), -h), new THREE.Vector3());
+        if (hit) { maxGround = Math.max(maxGround, Math.hypot(hit.x - G.x, hit.y - G.y) / Math.max(1, G.t)); rays++; }
+      }
+    }
+  }
+  const pass = maxPx < 0.01 && maxGround < 1e-5;
+  const out = { pass, cameras: cams, points: pts, rays, maxPixelError: +maxPx.toExponential(2), maxGroundErrorPerMetre: +maxGround.toExponential(2),
+    tall: scene.tall() === SceneRenderer.prototype.tall.call(scene), baseF: scene.baseF() === SceneRenderer.prototype.baseF.call(scene) };
+  console.log('GL camera parity:', out); return out;
+}
+
 // ======================= 10. Head view (top-down) =======================
 /* Draws end-space directly: +y (toward the front ditch) is up the panel,
    +x is right. Scale is fixed per zoom level and labelled with a bar. */
@@ -3648,7 +4352,7 @@ class Game {
 
 // ======================= 13. Interface, input & accessibility =======================
 const $ = id => document.getElementById(id);
-const scene = new SceneRenderer($('scene'));
+const scene = GLFLAGS.want || GLFLAGS.fps ? new SceneHost($('scene')) : new SceneRenderer($('scene'));   // WebGL world unless ?renderer=canvas
 const headView = new HeadView($('headCanvas'));
 const layout = { ctrlTop: 0, hvBottom: 0 };
 
@@ -5402,6 +6106,7 @@ window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietU
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
+  glCameraTest, glLoseContext(ms = 2000) { const x = scene.gl && scene.gl.r.getContext().getExtension('WEBGL_lose_context'); if (!x) return false; x.loseContext(); setTimeout(() => x.restoreContext(), ms); return true; },
   get game() { return game; }, Coach };   // fix the camera (x, y, z, pitch, F) for inspecting the scene; camera(null) releases it
 
 // ---------- Over to you, skip: the daily puzzle (bias/skip/) ----------
@@ -5473,6 +6178,7 @@ Lobby.start(); QM.paint();
 if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open();   // ?skip opens today's puzzle (shared results link here)
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
+if (GLFLAGS.want && /[?&]test\b/.test(location.search)) setTimeout(() => glCameraTest().then(r => UI.toast(`GL camera parity: ${r.pass ? 'pass' : 'FAIL'} (max ${r.maxPixelError} px, see console)`)), 1500);
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
