@@ -4,7 +4,8 @@
      node bias/skip/tools/benchmark.cjs red-lying-three one puzzle
      node bias/skip/tools/benchmark.cjs --quick         a coarser shot grid, for drafting
 
-   For each puzzle it
+   Every shot here is played inside the game engine (Game.startPuzzle and the game's own
+   delivery), read out of bias/index.html by engine.cjs. For each puzzle it
      1. checks the head: bowls on the rink and not overlapping, the jack a legal length,
         and who is lying how many (compare that with the situation text);
      2. works out the advice as line and weight (advised.aim / advised.weight);
@@ -12,7 +13,7 @@
         (Club, League and County in turn, each choosing its own shot on either hand and
         delivering with its own scatter), and stores the 100 results the stars are measured
         against (bench);
-     4. brute-forces a grid of lines and weights on both hands through the real physics,
+     4. brute-forces a grid of lines and weights on both hands, each shot played in the game,
         and reports the best result found (saved as best, for a later "best line" replay),
         the share of tried shots at each star level, and anything that looks wrong:
         five stars out of reach, a plain draw already worth five stars, a flat benchmark.
@@ -60,7 +61,7 @@ function grid(pz, bench) {
     const centre = E.AI.solveDraw(Sim.prof(), pz.greenSpeed, E.biasSide(hand, 'R'), rel, pz.jack).aim;
     for (let aim = centre - span; aim <= centre + span + 1e-9; aim += step) {
       for (let weight = 0.3; weight <= 1 + 1e-9; weight += wstep) {
-        const r = Sim.play(pz, { hand, aim, weight }), stars = Core.starsFor(r.value, bench);
+        const r = Sim.playInGame(pz, { hand, aim, weight }), stars = Core.starsFor(r.value, bench);
         bands[Math.floor(stars)]++; tried.n++;
         if (!best || r.value > best.value + 1e-9) best = { hand, aim: r5(aim), weight: r5(weight), value: r5(r.value), outcome: r.outcome, stars };
       }
@@ -73,7 +74,7 @@ function plainDraws(pz, bench) {
   return ['fore', 'back'].map(hand => {
     const rel = E.releasePoint(Sim.matRear(pz), hand, 'R');
     const s = E.AI.solveDraw(Sim.prof(), pz.greenSpeed, E.biasSide(hand, 'R'), rel, { x: pz.jack.x, y: pz.jack.y - 0.07 });
-    const r = Sim.play(pz, { hand, aim: s.aim, weight: E.meterFor(s.speed) });
+    const r = Sim.playInGame(pz, { hand, aim: s.aim, weight: E.meterFor(s.speed) });
     return { hand, outcome: r.outcome, stars: Core.starsFor(r.value, bench) };
   });
 }
@@ -94,7 +95,7 @@ function run() {
 
     const seed = fnv(pz.id), b = Sim.benchmark(pz, { runs: RUNS, mix: MIX, seed });
     const values = b.values.map(r5);
-    const advRes = Sim.play(pz, adv), advStars = Core.starsFor(advRes.value, values);
+    const advRes = Sim.playInGame(pz, adv), advStars = Core.starsFor(advRes.value, values);
     const g = grid(pz, values), draws = plainDraws(pz, values);
     const top = Core.topCut(values), median = values[Math.floor(values.length / 2)];
 

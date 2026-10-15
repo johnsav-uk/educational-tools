@@ -57,6 +57,19 @@
       w.runUntilRest();
       return Object.assign(judge(w, pz, b, before), { world: w, delivered: b });
     }
+    /* The shot played in the game itself: Game.startPuzzle sets the head out, the delivery goes
+       through the game's own deliver → physics → resolve path, and the head is judged when the game
+       hands it over, exactly as in the browser. The benchmark and the validator play every shot this way. */
+    function playInGame(pz, shot) {
+      let out = null;
+      const ui = new Proxy({ puzzleDone: (w, d) => { out = { w, d }; } }, { get: (t, k) => k in t ? t[k] : () => {} });
+      const g = new E.Game(ui, { instant: true });
+      g.startPuzzle(pz);
+      const before = scoreOf(g.world);
+      g.testDeliver(shot.aim, shot.weight, shot.hand);
+      if (!out) throw new Error('the game did not hand back the puzzle shot');
+      return Object.assign(judge(out.w, pz, out.d, before), { world: out.w, delivered: out.d });
+    }
     // A bowl's path on an empty green: the line of the advice, drawn into the head.
     function lonePath(pz, shot, arm = 'R', every = 0.04) {
       const w = new E.PhysicsWorld(pz.greenSpeed), s = shotFor(shot, arm), rel = E.releasePoint(matRear(pz), s.hand, arm);
@@ -95,14 +108,14 @@
         g.matRear = matRear(pz); g.world = world(pz); g.turn = { kind: 'bowl', player: ME, member: 0 };
         g.ai = { side: ME, level, est: { T: pz.greenSpeed, biasF: 1 } };
         const it = g.aiPlan(); let r; do { r = it.next(); } while (!r.done);
-        const shot = g.aiApplyScatter(r.value), res = play(pz, shot);
+        const shot = g.aiApplyScatter(r.value), res = playInGame(pz, shot);
         values.push(res.value); outcomes[res.outcome] = (outcomes[res.outcome] || 0) + 1;
         shots.push({ level: level.id, type: r.value.type, hand: shot.hand, outcome: res.outcome, value: res.value });
       }
       return { values: values.slice().sort((a, b) => a - b), outcomes, shots };
     }
 
-    return { ME, THEM, PROFILE_ID, prof, world, scoreOf, launch, judge, play, lonePath, solveAdvice, benchmark, matRear, matFront, shotFor, mirror: mx };
+    return { ME, THEM, PROFILE_ID, prof, world, scoreOf, launch, judge, play, playInGame, lonePath, solveAdvice, benchmark, matRear, matFront, shotFor, mirror: mx };
   }
 
   const api = { create };
