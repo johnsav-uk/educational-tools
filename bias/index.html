@@ -63,6 +63,7 @@ button{cursor:pointer}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #scene.aimable{cursor:crosshair}
 #sceneGL{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#rainFx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
 .kicker{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.2;white-space:nowrap}
 .num{font-variant-numeric:tabular-nums lining-nums}
@@ -1391,6 +1392,61 @@ const PAL = {
   leafShadow: [30, 46, 28], leafMid: [62, 90, 42], leafLit: [132, 148, 74], leafHi: [188, 182, 104],
   timber: [112, 99, 80], timberLit: [150, 136, 110]
 };
+
+/* Weather: the day's look, read from the green speed. A heavy green is a wet, drizzly day; a very fast one is
+   bright sun. Visual only: it reads the speed the match is played at and never feeds back into the physics, and
+   it is derived from that speed, never rolled, so both players online see the same sky. A match whose speed is
+   kept secret still shows its weather (never the number): reading the conditions is part of the skill. Each stage of it has its
+   own switch in WX; ?weather=off turns them all off, and ?wxT=12 shows the look of a 12 s green without changing
+   the speed played (for screenshots). */
+const WX = (() => {
+  const q = new URLSearchParams(location.search), off = q.get('weather') === 'off', t = parseFloat(q.get('wxT'));
+  return { mood: !off, rain: !off && q.get('rain') !== 'off', preview: isFinite(t) ? clamp(t, 11, 16) : null };   // mood: sky colour, light and the grade on the ground; rain: the rain layer (?rain=off)
+})();
+/* Four looks, centred in their bands of speed and blended smoothly between (so 12.9 s and 13.0 s look nearly
+   the same). Colours are sRGB. gain multiplies the lit scene (the ground, scenery and banks); veil then mixes it
+   toward a flat colour by veilA (overcast flatness, or the paleness of a baked green); mist fades the distant
+   tree line into the sky; glow, cloud and warm scale the sun's bloom, the clouds and the late-afternoon warmth;
+   sun scales the WebGL sun on the bowls; fogNear/fogFar are the WebGL fog; rain is how hard it rains. The medium look is the game as it
+   has always been drawn. */
+const WEATHER_LOOKS = [
+  { T: 11.5, // heavy: drizzle, dark grey sky, a damp, darker green
+    skyTop: [92, 100, 110], skyMid: [134, 140, 147], haze: [168, 173, 175], glow: 0, cloud: .25, cloudGrey: .6,
+    gain: [172, 186, 182], veil: [150, 158, 158], veilA: .05, mist: .4, warm: 0, sun: .84, fogNear: 12, fogFar: 300, rain: 1 },
+  { T: 12.5, // slowish: overcast, soft flat light, the green slightly damp
+    skyTop: [124, 138, 154], skyMid: [170, 179, 188], haze: [198, 203, 203], glow: .12, cloud: .55, cloudGrey: .4,
+    gain: [218, 226, 223], veil: [190, 196, 194], veilA: .05, mist: .18, warm: .2, sun: .92, fogNear: 18, fogFar: 380, rain: 0 },
+  { T: 13.75, // medium to quick: bright cloud, the usual green
+    skyTop: PAL.skyTop, skyMid: PAL.skyMid, haze: PAL.haze, glow: 1, cloud: 1, cloudGrey: 0,
+    gain: [255, 255, 255], veil: [255, 255, 255], veilA: 0, mist: 0, warm: 1, sun: 1, fogNear: 25, fogFar: 450, rain: 0 },
+  { T: 15.25, // very fast: full sun, a warmer, paler green
+    skyTop: [50, 116, 208], skyMid: [128, 182, 236], haze: [224, 226, 214], glow: 1.35, cloud: .55, cloudGrey: 0,
+    gain: [255, 251, 234], veil: [240, 232, 192], veilA: .07, mist: 0, warm: 1.45, sun: 1.06, fogNear: 30, fogFar: 520, rain: 0 }
+];
+const Weather = {
+  at(T) {
+    const S = WEATHER_LOOKS; T = clamp(T, S[0].T, S[S.length - 1].T);
+    let i = 0; while (i < S.length - 2 && T > S[i + 1].T) i++;
+    const a = S[i], b = S[i + 1], u = clamp((T - a.T) / (b.T - a.T), 0, 1), k = u * u * (3 - 2 * u), o = {};
+    for (const p in a) o[p] = Array.isArray(a[p]) ? mixRgb(a[p], b[p], k) : lerp(a[p], b[p], k);
+    o.T = T; o.key = T.toFixed(2);
+    o.wind = (Math.sin(T * 7.7) < 0 ? -1 : 1) * (0.1 + 0.12 * Math.abs(Math.sin(T * 2.9 + 1)));   // across the green (+x at the near end), as the slant of the rain; from the speed, so the same for everyone
+    return o;
+  },
+  // a colour of the lit scene under this weather (sRGB in, sRGB out)
+  grade(wx, c) { const g = wx.gain, v = wx.veil, a = wx.veilA; return [0, 1, 2].map(i => lerp(c[i] * g[i] / 255, v[i], a)); },
+  plain: null,
+  // what the scene shows now: null is the plain look, as drawn before there was weather
+  now() {
+    if (!WX.mood) return null;
+    const T = WX.preview != null ? WX.preview : game.mode === 'title' ? null : game.world.T;
+    if (T == null) return null;
+    const q = Math.round(T * 20) / 20;   // in steps of 0.05 s, so the cached scene only redraws for a real change
+    if (!this._c || this._c.q !== q) { this._c = this.at(q); this._c.q = q; }
+    return this._c;
+  }
+};
+Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
 const COLOURS = [
   { id: 'claret', name: 'Claret', hex: '#7c2434' },
   { id: 'navy', name: 'Midnight blue', hex: '#2a416c' },
@@ -1427,7 +1483,7 @@ const Art = {
     this.shrubs = [0, 1, 2].map(i => this.withHaze(this.buildShrub(i)));
     this.planter = this.withHaze(this.buildPlanter());
     this.people = { stand: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(i => this.withHaze(this.buildPerson(i, false))), sit: [0, 1, 2, 3, 4, 5].map(i => this.withHaze(this.buildPerson(i, true))) };
-    this.crowdN = 0;
+    this.crowdN = 0; this.crowdWet = false;
     this.band = [this.buildBand(11), this.buildBand(23)];
     this.clouds = [this.buildClouds(3), this.buildClouds(9)];
     this.scenery = this.layoutScenery();
@@ -1738,17 +1794,28 @@ const Art = {
     c.wm = wm; c.hm = hm; return c;
   },
   /* Spectators: simple figures in summer clothes, standing or seated (seen from the front), lit from the
-     upper left like the rest of the club. Built once; the match decides how many are placed. */
-  buildPerson(seed, seated) {
+     upper left like the rest of the club. Built once; the match decides how many are placed. wet: the same
+     person dressed for heavy rain (a waterproof, a hood or rain hat, or an umbrella), built when first needed. */
+  buildPerson(seed, seated, wet) {
     vrand = mulberry32(900 + seed * 37 + (seated ? 5 : 0));
-    const PX = 80, wm = 0.8, hm = seated ? 1.4 : 1.86, c = makeCanvas(wm * PX, hm * PX), g = c.getContext('2d');
+    const brolly = wet && (seed * 5 + (seated ? 2 : 0)) % 8 < 5;   // most of them under umbrellas, chosen by seed so it never changes
+    const PX = 80, wm = brolly ? 1.16 : 0.8, hm = (seated ? 1.4 : 1.86) + (brolly ? 0.36 : wet ? 0.04 : 0), c = makeCanvas(wm * PX, hm * PX), g = c.getContext('2d');
     const X = m => c.width / 2 + m * PX, Y = m => c.height - m * PX, pick = a => a[Math.floor(vrand() * a.length)];
     const skin = pick([[238, 204, 176], [226, 184, 148], [204, 160, 122], [160, 112, 80], [116, 80, 56]]);
     const top = pick([[244, 242, 234], [244, 242, 234], [244, 242, 234], [240, 236, 222], [236, 228, 208], [176, 202, 226], [230, 190, 196], [238, 226, 160], [196, 184, 220], [176, 196, 168], [206, 186, 150], [34, 50, 82], [33, 76, 52]]);
-    const dress = !seated && vrand() < .3, low = dress ? top : pick([[240, 238, 230], [240, 238, 230], [240, 238, 230], [168, 166, 160], [56, 64, 82], [200, 184, 146]]);
-    const pose = seated ? 'lap' : pick(['down', 'down', 'behind', 'folded']);
+    const dress0 = !seated && vrand() < .3; let low = dress0 ? top : pick([[240, 238, 230], [240, 238, 230], [240, 238, 230], [168, 166, 160], [56, 64, 82], [200, 184, 146]]);
+    let pose = seated ? 'lap' : pick(['down', 'down', 'behind', 'folded']);
+    const dress = dress0 && !wet;
     const hair = pick([[226, 222, 214], [196, 192, 186], [120, 92, 64], [64, 48, 36], [40, 34, 30]]);
-    const hat = pick(['none', 'none', 'sun', 'panama', 'cap']);
+    let hat = pick(['none', 'none', 'sun', 'panama', 'cap']);
+    // in the rain: a waterproof over everything (the summer picks above still run, so each person keeps their face)
+    let coat = null, boots = null;
+    if (wet) {
+      coat = pick([[34, 52, 86], [30, 66, 50], [196, 160, 40], [150, 40, 40], [112, 110, 84], [70, 76, 82], [228, 196, 52], [38, 40, 44]]);
+      low = pick([[48, 52, 60], [60, 58, 52], [40, 44, 54], [86, 80, 66]]); boots = vrand() < .45 ? [40, 70, 46] : null;
+      hat = brolly ? (vrand() < .3 ? 'cap' : 'none') : vrand() < .55 ? 'hood' : 'rain';
+      if (pose === 'folded' && brolly) pose = 'down';
+    }
     const sh = (col, f) => rgba(shadeRgb(col, f));
     const body = (x0, y0, x1, y1, col, r = .05) => {   // a rounded block, lit on its left, shaded on its right
       const gr = g.createLinearGradient(X(x0), 0, X(x1), 0); gr.addColorStop(0, sh(col, .12)); gr.addColorStop(.55, rgba(col)); gr.addColorStop(1, sh(col, -.32));
@@ -1759,26 +1826,37 @@ const Art = {
       g.fillStyle = gr; g.beginPath(); g.moveTo(X(b0), Y(yb)); g.lineTo(X(t0), Y(yt - r)); g.quadraticCurveTo(X(t0), Y(yt), X(t0 + r), Y(yt));
       g.lineTo(X(t1 - r), Y(yt)); g.quadraticCurveTo(X(t1), Y(yt), X(t1), Y(yt - r)); g.lineTo(X(b1), Y(yb)); g.closePath(); g.fill();
     };
+    const wear = coat || top, hand = [.1, seated ? .66 : 1.17];   // hand: where an umbrella is held
     let neck;
     if (seated) {
       body(-.17, 0, -.03, .46, low, .03); body(.03, 0, .17, .46, low, .03);          // lower legs
+      if (boots) { body(-.175, 0, -.025, .28, boots, .03); body(.025, 0, .175, .28, boots, .03); }
       g.fillStyle = 'rgba(30,26,22,.9)'; g.fillRect(X(-.18), Y(.05), .16 * PX, .05 * PX); g.fillRect(X(.02), Y(.05), .16 * PX, .05 * PX);   // shoes
-      body(-.2, .42, .2, .56, low, .05);                                              // knees and thighs, toward us
-      body(-.21, .52, .21, 1.06, top, .07);                                           // body
-      body(-.27, .62, -.17, 1.02, top, .04); body(.17, .62, .27, 1.02, top, .04);    // arms
-      g.fillStyle = sh(skin, -.05); g.beginPath(); g.ellipse(X(-.08), Y(.6), .06 * PX, .04 * PX, 0, 0, TAU); g.ellipse(X(.09), Y(.6), .06 * PX, .04 * PX, 0, 0, TAU); g.fill();   // hands in the lap
+      body(-.2, .42, .2, .56, coat || low, .05);                                      // knees and thighs, toward us (or the skirt of a coat)
+      body(-.21, .52, .21, 1.06, wear, .07);                                          // body
+      body(-.27, .62, -.17, 1.02, wear, .04); body(.17, .62, .27, 1.02, wear, .04);  // arms
+      if (brolly) taper(.06, .14, .04, .13, .62, .74, wear, .03);                     // the forearm that holds the umbrella
+      g.fillStyle = sh(skin, -.05); g.beginPath(); g.ellipse(X(-.08), Y(.6), .06 * PX, .04 * PX, 0, 0, TAU); g.ellipse(X(.09), Y(brolly ? hand[1] : .6), .06 * PX, .04 * PX, 0, 0, TAU); g.fill();   // hands in the lap
       neck = 1.06;
     } else {
       if (dress) { taper(-.08, -.02, -.08, -.03, 0, .36, skin, .01); taper(.02, .08, .03, .08, 0, .36, skin, .01); taper(-.17, .17, -.25, .25, .3, .98, top, .03); }
       else { taper(-.14, -.01, -.11, -.03, 0, .94, low, .02); taper(.01, .14, .03, .11, 0, .94, low, .02); }
+      if (boots) { taper(-.13, -.02, -.12, -.03, 0, .34, boots, .02); taper(.02, .13, .03, .12, 0, .34, boots, .02); }   // wellingtons
       g.fillStyle = 'rgba(30,26,22,.9)'; g.beginPath(); g.ellipse(X(-.07), Y(.025), .06 * PX, .03 * PX, 0, 0, TAU); g.ellipse(X(.07), Y(.025), .06 * PX, .03 * PX, 0, 0, TAU); g.fill();
-      taper(-.21, .21, -.16, .16, .88, 1.44, top, .09);
+      if (coat) taper(-.2, .2, -.25, .25, .52, 1.0, coat, .03);                       // a waterproof down to the knee
+      taper(-.21, .21, -.16, .16, .88, 1.44, wear, .09);
+      const holder = () => {   // the right arm raised to hold the umbrella
+        taper(.17, .27, .06, .15, 1.15, 1.4, wear, .045);
+        g.fillStyle = rgba(skin); g.beginPath(); g.ellipse(X(hand[0]), Y(hand[1]), .045 * PX, .045 * PX, 0, 0, TAU); g.fill();
+      };
       if (pose === 'down') {                                                         // arms at the sides
-        taper(-.27, -.17, -.25, -.18, .9, 1.4, top, .045); taper(.17, .27, .18, .25, .9, 1.4, top, .045);
-        g.fillStyle = rgba(skin); g.beginPath(); g.ellipse(X(-.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); g.ellipse(X(.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); g.fill();
+        taper(-.27, -.17, -.25, -.18, .9, 1.4, wear, .045); if (!brolly) taper(.17, .27, .18, .25, .9, 1.4, wear, .045);
+        g.fillStyle = rgba(skin); g.beginPath(); g.ellipse(X(-.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); if (!brolly) g.ellipse(X(.215), Y(.87), .042 * PX, .05 * PX, 0, 0, TAU); g.fill();
+        if (brolly) holder();
       } else if (pose === 'folded') {                                                // arms folded across the chest
-        body(-.27, 1.04, -.18, 1.42, top, .04); body(.18, 1.04, .27, 1.42, top, .04); body(-.25, 1.04, .25, 1.16, shadeRgb(top, -.06), .05);
-      } else { body(-.25, 1.1, -.18, 1.42, top, .04); body(.18, 1.1, .25, 1.42, top, .04); }   // hands behind the back
+        body(-.27, 1.04, -.18, 1.42, wear, .04); body(.18, 1.04, .27, 1.42, wear, .04); body(-.25, 1.04, .25, 1.16, shadeRgb(wear, -.06), .05);
+      } else { body(-.25, 1.1, -.18, 1.42, wear, .04); if (brolly) holder(); else body(.18, 1.1, .25, 1.42, wear, .04); }   // hands behind the back
+      if (coat) { g.fillStyle = sh(coat, -.3); g.fillRect(X(-.006), Y(1.4), .012 * PX, .88 * PX); }   // the coat's front fastening
       neck = 1.44;
     }
     // neck and head
@@ -1787,6 +1865,15 @@ const Art = {
     hg.addColorStop(0, sh(skin, .1)); hg.addColorStop(1, sh(skin, -.25));
     g.fillStyle = hg; g.beginPath(); g.ellipse(X(0), Y(hy), .095 * PX, .115 * PX, 0, 0, TAU); g.fill();
     g.fillStyle = rgba(hair); g.beginPath(); g.ellipse(X(0), Y(hy + .05), .1 * PX, .075 * PX, 0, Math.PI, TAU); g.fill();
+    if (hat === 'hood') {   // the waterproof's hood, up: round the face and over the hair
+      g.fillStyle = sh(coat, -.08); g.beginPath(); g.ellipse(X(0), Y(hy + .01), .125 * PX, .14 * PX, 0, 0, TAU); g.fill();
+      g.fillStyle = hg; g.beginPath(); g.ellipse(X(0), Y(hy - .015), .075 * PX, .09 * PX, 0, 0, TAU); g.fill();
+      g.fillStyle = sh(coat, .1); g.beginPath(); g.ellipse(X(0), Y(hy + .07), .11 * PX, .07 * PX, 0, Math.PI, TAU); g.fill();
+    } else if (hat === 'rain') {   // a rain hat with a wide, sloping brim
+      const col = pick([[196, 160, 40], [112, 110, 84], [34, 52, 86], [228, 196, 52]]);
+      g.fillStyle = rgba(col); g.beginPath(); g.ellipse(X(0), Y(hy + .085), .1 * PX, .07 * PX, 0, Math.PI, TAU); g.fill();
+      g.fillStyle = sh(col, -.18); g.beginPath(); g.moveTo(X(-.17), Y(hy + .02)); g.quadraticCurveTo(X(0), Y(hy + .1), X(.17), Y(hy + .02)); g.quadraticCurveTo(X(0), Y(hy + .065), X(-.17), Y(hy + .02)); g.fill();
+    }
     if (hat === 'sun' || hat === 'panama') {
       const col = hat === 'sun' ? [232, 214, 170] : [238, 230, 206];
       g.fillStyle = sh(col, -.1); g.beginPath(); g.ellipse(X(0), Y(hy + .07), (hat === 'sun' ? .2 : .16) * PX, .035 * PX, 0, 0, TAU); g.fill();
@@ -1796,6 +1883,22 @@ const Art = {
       const col = pick([[34, 50, 82], [33, 76, 52], [236, 232, 220]]);
       g.fillStyle = rgba(col); g.beginPath(); g.ellipse(X(0), Y(hy + .06), .1 * PX, .07 * PX, 0, Math.PI, TAU); g.fill();
       g.fillStyle = sh(col, -.2); g.beginPath(); g.ellipse(X(.02), Y(hy + .05), .11 * PX, .025 * PX, 0, 0, TAU); g.fill();
+    }
+    if (brolly) {   // an umbrella over the head: the shaft from the hand, a domed canopy in panels, a scalloped rim
+      const scheme = pick([[[30, 32, 36]], [[30, 32, 36]], [[34, 52, 86]], [[30, 66, 50]], [[120, 30, 40]], [[30, 66, 50], [236, 234, 224]], [[34, 52, 86], [236, 234, 224]], [[176, 40, 40], [226, 190, 52]]]);
+      const cx = hand[0] * .4, rimY = hy + .3, apex = rimY + .26, R = .5, ink = 'rgba(40,36,32,.95)';
+      g.fillStyle = ink; g.fillRect(X(hand[0]) - 1, Y(apex + .04), 2.4, (apex + .04 - hand[1] + .06) * PX);   // shaft
+      g.strokeStyle = ink; g.lineWidth = 2.4; g.beginPath(); g.arc(X(hand[0]) - .03 * PX, Y(hand[1] - .06), .03 * PX, 0, Math.PI); g.stroke();   // the crook
+      const N = 8, rim = []; for (let i = 0; i <= N; i++) { const a = Math.PI * i / N; rim.push([cx - Math.cos(a) * R, rimY - Math.sin(a) * .045]); }
+      for (let i = 0; i < N; i++) {
+        const col = scheme[i % scheme.length], l = i / (N - 1), [x0, y0] = rim[i], [x1, y1] = rim[i + 1], mx = (x0 + x1) / 2;
+        g.fillStyle = sh(col, .12 - .4 * l);
+        g.beginPath(); g.moveTo(X(cx), Y(apex)); g.quadraticCurveTo(X(cx + (x0 - cx) * .78), Y(apex - .02), X(x0), Y(y0));
+        g.quadraticCurveTo(X(mx), Y((y0 + y1) / 2 + .045), X(x1), Y(y1)); g.quadraticCurveTo(X(cx + (x1 - cx) * .78), Y(apex - .02), X(cx), Y(apex)); g.fill();
+      }
+      g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.ellipse(X(cx - .18), Y(apex - .07), .14 * PX, .05 * PX, -.4, 0, TAU); g.fill();   // the sheen of wet fabric
+      g.fillStyle = ink; g.fillRect(X(cx) - 1, Y(apex + .05), 2.4, .05 * PX);   // the tip
+      g.fillStyle = 'rgba(0,0,0,.14)'; g.beginPath(); g.ellipse(X(0), Y(hy), .095 * PX, .115 * PX, 0, 0, TAU); g.fill();   // its shade on the face
     }
     c.wm = wm; c.hm = hm; return c;
   },
@@ -1885,6 +1988,11 @@ const Art = {
     }
     return c;
   },
+  wetPeople() {
+    const keep = vrand;   // building them reseeds the art's random numbers: put them back after
+    this.peopleWet = this.peopleWet || { stand: this.people.stand.map((_, i) => this.withHaze(this.buildPerson(i, false, true))), sit: this.people.sit.map((_, i) => this.withHaze(this.buildPerson(i, true, true))) };
+    vrand = keep; return this.peopleWet;
+  },
   layoutScenery() {
     const items = [];
     for (const t of this.treeSpots()) { const set = this.trees[t.type]; items.push({ kind: 'sprite', x: t.x, y: t.y, h: t.h, spr: set[t.v % set.length], flip: t.flip }); }
@@ -1897,7 +2005,7 @@ const Art = {
     for (const [x, y, v] of [[-0.2, 44.2, 0], [15.1, 44.6, 1], [-12.5, 40.4, 2], [-21.5, 40.5, 0], [23.5, 40.4, 1], [6.2, 46.4, 1]]) items.push({ kind: 'sprite', x, y, h: this.shrubs[v].img.hm, spr: this.shrubs[v], fixed: true });
     for (const x of [1.4, 13.2, -5.2]) items.push({ kind: 'sprite', x, y: 39.6, h: this.planter.img.hm, spr: this.planter, fixed: true });
     // spectators: seats on the benches first, then standing places, most visible first; the far end gets fewer
-    const P = this.people, crowd = (n, seats, stands) => {
+    const P = this.crowdWet ? this.wetPeople() : this.people, crowd = (n, seats, stands) => {
       let k = 0;
       for (const [x, y] of seats) { if (k >= n) return; const s = P.sit[k % P.sit.length]; items.push({ kind: 'sprite', x, y, h: s.img.hm, spr: s, fixed: true }); k++; }
       for (const [x, y] of stands) { if (k >= n) return; const s = P.stand[(k * 7 + 3) % P.stand.length]; items.push({ kind: 'sprite', x, y, h: s.img.hm * (0.92 + ((k * 37) % 13) / 100), spr: s, fixed: true, flip: k % 2 === 1 }); k++; }
@@ -2213,27 +2321,33 @@ class SceneRenderer {
 
   // ---------- static layer: sky, scenery, ground, banks ----------
   renderBackground(dir) {
-    const cam = this.cam, key = cam.key() + '|' + dir;
+    const cam = this.cam, wx = Weather.now(), key = cam.key() + '|' + dir + (wx ? '|' + wx.key : '');
     if (key === this.bgKey) return;
     this.bgKey = key;
     const g = this.bg.getContext('2d'), Wd = this.W, Hd = this.H, hz = cam.horizon();
     g.setTransform(1, 0, 0, 1, 0, 0);
-    // sky
+    // sky. Under weather the whole frame is graded below, so its colours are set to come out as the weather's sky
+    const pre = c => { if (!wx) return c; const v = wx.veil, a = wx.veilA; return [0, 1, 2].map(i => clamp((c[i] - v[i] * a) / (1 - a) / Math.max(.05, wx.gain[i] / 255), 0, 255)); };
     const sky = g.createLinearGradient(0, hz - cam.F * 0.9, 0, hz);
-    sky.addColorStop(0, rgba(PAL.skyTop)); sky.addColorStop(.62, rgba(PAL.skyMid)); sky.addColorStop(1, rgba(PAL.haze));
+    sky.addColorStop(0, rgba(pre(wx ? wx.skyTop : PAL.skyTop))); sky.addColorStop(.62, rgba(pre(wx ? wx.skyMid : PAL.skyMid))); sky.addColorStop(1, rgba(pre(wx ? wx.haze : PAL.haze)));
     g.fillStyle = sky; g.fillRect(0, 0, Wd, Math.max(0, hz + 2));
-    if (dir === 1) { // looking toward the sun's side: a warm bloom high on the right
-      const sg = g.createRadialGradient(Wd * 1.05, hz - cam.F * .55, 0, Wd * 1.05, hz - cam.F * .55, cam.F * 1.1);
-      sg.addColorStop(0, 'rgba(255,244,214,.55)'); sg.addColorStop(1, 'rgba(255,244,214,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
-    } else {
-      const sg = g.createLinearGradient(0, 0, Wd, 0); sg.addColorStop(0, 'rgba(255,240,210,.16)'); sg.addColorStop(.5, 'rgba(255,240,210,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+    const glow = wx ? wx.glow : 1;
+    if (glow > .005) {
+      if (dir === 1) { // looking toward the sun's side: a warm bloom high on the right
+        const sg = g.createRadialGradient(Wd * 1.05, hz - cam.F * .55, 0, Wd * 1.05, hz - cam.F * .55, cam.F * 1.1);
+        sg.addColorStop(0, `rgba(255,244,214,${Math.min(1, .55 * glow)})`); sg.addColorStop(1, 'rgba(255,244,214,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+      } else {
+        const sg = g.createLinearGradient(0, 0, Wd, 0); sg.addColorStop(0, `rgba(255,240,210,${Math.min(1, .16 * glow)})`); sg.addColorStop(.5, 'rgba(255,240,210,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+      }
     }
-    const cl = Art.clouds[dir], cs = cam.F / 1100;
-    g.globalAlpha = .9; g.drawImage(cl, ((-cam.x * 3 + (dir ? 600 : 0)) % 600) - 300 * cs, hz - cl.height * cs * 1.15, cl.width * cs, cl.height * cs); g.globalAlpha = 1;
-    // distant tree line
+    const cl = wx ? this.cloudsFor(dir, wx) : Art.clouds[dir], cs = cam.F / 1100;
+    g.globalAlpha = .9 * (wx ? wx.cloud : 1); g.drawImage(cl, ((-cam.x * 3 + (dir ? 600 : 0)) % 600) - 300 * cs, hz - cl.height * cs * 1.15, cl.width * cs, cl.height * cs); g.globalAlpha = 1;
+    // distant tree line (in rain, partly lost in the murk)
     const band = Art.band[dir], bd = 170, bh = cam.F * 15 / bd, bb = hz + cam.F * cam.z / bd;
     const bw = band.width * (bh / band.height);
+    if (wx) g.globalAlpha = 1 - wx.mist;
     for (let x0 = -((cam.x * cam.F / bd) % bw) - bw; x0 < Wd; x0 += bw) g.drawImage(band, x0, bb - bh, bw, bh);
+    g.globalAlpha = 1;
     // ground
     this.renderGround(g, dir);
     // sheen: turf seen at a grazing angle catches the sky
@@ -2248,12 +2362,32 @@ class SceneRenderer {
     this.renderScenery(g, dir);
     // banks, markers, rink lines
     this.renderBanks(g, dir);
+    // the weather's light: a colour grade over what is already drawn, cached with the rest of this layer
+    if (wx) {
+      g.save();
+      if (wx.gain.some(c => c < 254.5)) { g.globalCompositeOperation = 'multiply'; g.fillStyle = rgba(wx.gain); g.fillRect(0, 0, Wd, Hd); }
+      if (wx.veilA > .002) { g.globalCompositeOperation = 'source-over'; g.fillStyle = rgba(wx.veil, wx.veilA); g.fillRect(0, 0, Wd, Hd); }
+      g.restore();
+    }
     // late-afternoon grade: warm light from the sun's side
-    g.save(); g.globalCompositeOperation = 'soft-light'; g.fillStyle = 'rgba(255,176,90,.14)'; g.fillRect(0, Math.max(0, hz), Wd, Hd); g.restore();
+    const warm = wx ? wx.warm : 1;
+    if (warm > .005) { g.save(); g.globalCompositeOperation = 'soft-light'; g.fillStyle = `rgba(255,176,90,${.14 * warm})`; g.fillRect(0, Math.max(0, hz), Wd, Hd); g.restore(); }
     // vignette
     const vg = g.createRadialGradient(Wd / 2, Hd * .45, Math.min(Wd, Hd) * .45, Wd / 2, Hd * .45, Math.hypot(Wd, Hd) * .62);
     vg.addColorStop(0, 'rgba(10,16,10,0)'); vg.addColorStop(1, 'rgba(10,16,10,.30)');
     g.fillStyle = vg; g.fillRect(0, 0, Wd, Hd);
+  }
+  // the clouds greyed for the weather; made once per change of weather, not per frame
+  cloudsFor(dir, wx) {
+    const src = Art.clouds[dir]; if (wx.cloudGrey < .01) return src;
+    const k = dir + '|' + wx.key, c = this._wxClouds || (this._wxClouds = {});
+    if (c.k !== k) {
+      const cv = c.cv && c.cv.width === src.width && c.cv.height === src.height ? c.cv : makeCanvas(src.width, src.height), cg = cv.getContext('2d');
+      cg.globalCompositeOperation = 'copy'; cg.drawImage(src, 0, 0);
+      cg.globalCompositeOperation = 'source-atop'; cg.fillStyle = `rgba(150,156,162,${wx.cloudGrey})`; cg.fillRect(0, 0, cv.width, cv.height);
+      c.cv = cv; c.k = k;
+    }
+    return c.cv;
   }
   renderGround(g, dir) {
     const cam = this.cam, Wd = this.W, Hd = this.H, mips = Art.ground[dir], hz = cam.horizon();
@@ -2749,6 +2883,25 @@ class GLScene {
     if (o.flipY === false) t.flipY = false;
     return t;
   }
+  // a plain-coloured material that takes the weather's grade (applyWeather sets its colour from rgb)
+  flat(rgb) { const m = new this.T.MeshBasicMaterial({ color: this.lin(rgb), toneMapped: false }); this.wxFlat.push(m.userData.wx = { m, rgb }); return m; }
+  /* The weather's sky and light, as uniforms and material colours: nothing is redrawn per frame for it. Runs when
+     the weather changes and after setDir and buildScenery, which reset the colours it tints. */
+  applyWeather(wx) {
+    const T = this.T, lin = c => this.lin(c), gainL = lin(wx.gain), veilL = lin(wx.veil), u = this.skyMat.uniforms;
+    u.top.value.copy(lin(wx.skyTop)); u.mid.value.copy(lin(wx.skyMid)); u.haze.value.copy(lin(wx.haze)); u.gk.value = wx.glow;
+    u.ground.value.copy(lin(Weather.grade(wx, mixRgb(PAL.lawn, PAL.haze, .45))));
+    this.world.fog.color.copy(lin(Weather.grade(wx, wx.haze))); this.world.fog.near = wx.fogNear; this.world.fog.far = wx.fogFar;
+    this.groundWx.uGain.value.set(gainL.r, gainL.g, gainL.b); this.groundWx.uVeil.value.set(veilL.r, veilL.g, veilL.b, wx.veilA);
+    for (const f of this.wxFlat) f.m.color.copy(lin(Weather.grade(wx, f.rgb)));
+    this.cloud.material.opacity = .9 * wx.cloud; this.cloud.material.color.copy(lin(mixRgb([255, 255, 255], [150, 156, 162], wx.cloudGrey).map((c, i) => c * wx.gain[i] / 255)));
+    this.band.material.opacity = 1 - wx.mist; this.band.material.color.copy(gainL);
+    for (const o of this.scenery.children) {
+      const m = o.material; if (!m) continue;
+      if (m.userData.base) m.color.copy(m.userData.base).multiply(gainL); else if (o.isSprite) m.color.copy(gainL);
+    }
+    this.sun.intensity = this.handSun.intensity = 2.6 * wx.sun;
+  }
 
   // ---------- one-off construction (needs Art.build) ----------
   build() {
@@ -2757,6 +2910,7 @@ class GLScene {
     this.world.fog = new T.Fog(this.lin(PAL.haze), 25, 450);
     this.sun = new T.DirectionalLight(this.lin([255, 241, 218]), 2.6); this.world.add(this.sun, this.sun.target);
     this.handSun = new T.DirectionalLight(this.lin([255, 241, 218]), 2.6); this.hand.add(this.handSun, this.handSun.target);
+    this.wxFlat = []; this.wxKey = null;
     this.buildEnv();
     this.buildSky();
     this.buildGround();
@@ -2812,12 +2966,12 @@ class GLScene {
     this.skyMat = new T.ShaderMaterial({
       side: T.BackSide, depthWrite: false, fog: false, toneMapped: false,
       uniforms: { top: { value: C(PAL.skyTop) }, mid: { value: C(PAL.skyMid) }, haze: { value: C(PAL.haze) }, ground: { value: C(mixRgb(PAL.lawn, PAL.haze, .45)) },
-        sun: { value: new T.Vector3() }, glow: { value: C([255, 244, 214]) } },
+        sun: { value: new T.Vector3() }, glow: { value: C([255, 244, 214]) }, gk: { value: 1 } },
       vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-      fragmentShader: `uniform vec3 top, mid, haze, ground, sun, glow; varying vec3 vD;
+      fragmentShader: `uniform vec3 top, mid, haze, ground, sun, glow; uniform float gk; varying vec3 vD;
         void main(){ vec3 d = normalize(vD); float el = asin(clamp(d.z, -1., 1.));
           vec3 c = el < 0. ? ground : el < .342 ? mix(haze, mid, el / .342) : mix(mid, top, min(1., (el - .342) / .558));
-          c = mix(c, glow, .55 * smoothstep(.55, 1., dot(d, sun)) * step(0., el));
+          c = mix(c, glow, min(1., .55 * gk) * smoothstep(.55, 1., dot(d, sun)) * step(0., el));
           gl_FragColor = vec4(c, 1.);
           #include <colorspace_fragment>
         }`
@@ -2845,20 +2999,22 @@ class GLScene {
     const holeTex = this.canvasTex(hole, { flipY: false, data: true });
     const blades = this.canvasTex(Art.blades, { repeat: true }), mottle = this.canvasTex(Art.mottle, { repeat: true });
     const m = this.groundMat = new T.MeshBasicMaterial({ map: this.groundTex[0], alphaMap: holeTex, alphaTest: 0.5, toneMapped: false });
+    this.groundWx = { uGain: { value: new T.Vector3(1, 1, 1) }, uVeil: { value: new T.Vector4(1, 1, 1, 0) } };   // the weather's grade (linear)
     // near the camera, the canvas renderer's grass detail (blades, then mottle) fades in by on-screen scale, as there
     m.onBeforeCompile = sh => {
-      sh.uniforms.uBlades = { value: blades }; sh.uniforms.uMottle = { value: mottle };
+      sh.uniforms.uBlades = { value: blades }; sh.uniforms.uMottle = { value: mottle }; Object.assign(sh.uniforms, this.groundWx);
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vWXY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWXY = (modelMatrix * vec4(position, 1.0)).xy;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uBlades, uMottle; varying vec2 vWXY;').replace('#include <map_fragment>', `#include <map_fragment>
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uBlades, uMottle; uniform vec3 uGain; uniform vec4 uVeil; varying vec2 vWXY;').replace('#include <map_fragment>', `#include <map_fragment>
         { float ppm = 1.0 / max(length(dFdx(vWXY)), 1e-6);
           float a = ppm * 0.0034; if (a > .55) { vec4 b = texture2D(uBlades, vWXY / (256. * .0034)); diffuseColor.rgb = mix(diffuseColor.rgb, b.rgb, b.a * clamp((a - .55) / 1.2, 0., 1.) * .9); }
-          float am = ppm * 0.013; if (am > .45) { vec4 o = texture2D(uMottle, vWXY / (256. * .013)); diffuseColor.rgb = mix(diffuseColor.rgb, o.rgb, o.a * clamp((am - .45) / .8, 0., 1.)); } }`);
+          float am = ppm * 0.013; if (am > .45) { vec4 o = texture2D(uMottle, vWXY / (256. * .013)); diffuseColor.rgb = mix(diffuseColor.rgb, o.rgb, o.a * clamp((am - .45) / .8, 0., 1.)); }
+          diffuseColor.rgb = mix(diffuseColor.rgb * uGain, uVeil.rgb, uVeil.a); }`);
     };
     const g = new T.Mesh(new T.PlaneGeometry(w, h), m); g.position.set((TEX.X0 + TEX.X1) / 2, (TEX.Y0 + TEX.Y1) / 2, 0); this.world.add(g);
     // beyond the texture: plain country, hazed by the fog
     const sh = new T.Shape([new T.Vector2(-6000, -6000), new T.Vector2(6000, -6000), new T.Vector2(6000, 6000), new T.Vector2(-6000, 6000)]);
     sh.holes.push(new T.Path([new T.Vector2(TEX.X0, TEX.Y0), new T.Vector2(TEX.X0, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y0)]));
-    this.world.add(new T.Mesh(new T.ShapeGeometry(sh), new T.MeshBasicMaterial({ color: this.lin(mixRgb(PAL.lawn, PAL.haze, .3)), toneMapped: false })));
+    this.world.add(new T.Mesh(new T.ShapeGeometry(sh), this.flat(mixRgb(PAL.lawn, PAL.haze, .3))));
   }
   quad(p, uv, mat) {   // p: four corners, counter-clockwise seen from the front
     const T = this.T, g = new T.BufferGeometry();
@@ -2883,7 +3039,7 @@ class GLScene {
   buildBanks() {
     const T = this.T, G = new T.Group(); this.banks = G; this.world.add(G);
     const xb = W.GREEN_HALF + W.DITCH_W, yb = W.GREEN_LEN + W.DITCH_W, zb = -W.DITCH_D, zt = W.BANK_H, cap = 0.35;
-    const flat = rgb => new T.MeshBasicMaterial({ color: this.lin(rgb), toneMapped: false });
+    const flat = rgb => this.flat(rgb);
     // ditch floor and the green's cut edge
     G.add(this.quad([[-xb, -W.DITCH_W, zb], [xb, -W.DITCH_W, zb], [xb, yb, zb], [-xb, yb, zb]], null, flat([70, 62, 48])));
     const edge = flat([52, 46, 36]), gh = W.GREEN_HALF, gl = W.GREEN_LEN;
@@ -2891,7 +3047,7 @@ class GLScene {
     G.add(this.quad([[-gh, 0, zb], [gh, 0, zb], [gh, 0, 0], [-gh, 0, 0]], null, edge), this.quad([[gh, gl, zb], [-gh, gl, zb], [-gh, gl, 0], [gh, gl, 0]], null, edge));
     // timber banks: their faces get their light per end in setDir
     this.bankFaces = [];
-    const timber = n => { const m = flat(PAL.timber); this.bankFaces.push({ m, n }); return m; }, capM = flat(shadeRgb(PAL.cap, .08));
+    const timber = n => { const m = flat(PAL.timber); this.bankFaces.push({ m: m.userData.wx, n }); return m; }, capM = flat(shadeRgb(PAL.cap, .08));
     const add = arr => arr.forEach(o => G.add(o));
     add(this.box(-xb - cap, -xb, -W.DITCH_W - cap, yb + cap, zb, zt, n => n[2] ? capM : n[0] > 0 ? timber(n) : null));
     add(this.box(xb, xb + cap, -W.DITCH_W - cap, yb + cap, zb, zt, n => n[2] ? capM : n[0] < 0 ? timber(n) : null));
@@ -2905,10 +3061,10 @@ class GLScene {
       g.fillStyle = '#26322b'; g.font = '48px Georgia,serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(d ? 5 - i : i + 1), 32, 35);
       return this.canvasTex(c);
     }));
-    this.plates = RINKS.map(rx => { const m = new T.MeshBasicMaterial({ toneMapped: false }), s = .065, z = zt * .55;
+    this.plates = RINKS.map(rx => { const m = new T.MeshBasicMaterial({ toneMapped: false }), s = .065, z = zt * .55; this.wxFlat.push(m.userData.wx = { m, rgb: [255, 255, 255] });
       G.add(this.quad([[rx - s, yb - .004, z - s], [rx + s, yb - .004, z - s], [rx + s, yb - .004, z + s], [rx - s, yb - .004, z + s]], null, m)); return m; });
     // rink boundary threads, faint
-    const thread = new T.LineBasicMaterial({ color: this.lin([240, 240, 225]), transparent: true, opacity: .2, toneMapped: false });
+    const thread = new T.LineBasicMaterial({ color: this.lin([240, 240, 225]), transparent: true, opacity: .2, toneMapped: false }); this.wxFlat.push(thread.userData.wx = { m: thread, rgb: [240, 240, 225] });
     for (const bx of [-7.5, -2.5, 2.5, 7.5]) G.add(new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(bx, .2, .003), new T.Vector3(bx, W.GREEN_LEN, .003)]), thread));
   }
   buildMat() {
@@ -3067,9 +3223,9 @@ class GLScene {
     this.world.environmentRotation.set(0, 0, dir ? Math.PI : 0); this.hand.environmentRotation.copy(this.world.environmentRotation);
     this.band.material.map = this.bandTex[dir]; this.band.material.needsUpdate = true;
     this.cloud.material.map = this.cloudTex[dir]; this.cloud.material.needsUpdate = true;
-    for (const f of this.bankFaces) { const li = 0.45 + 0.55 * Math.max(0, f.n[0] * sun.x + f.n[1] * sun.y); f.m.color.copy(this.lin(mixRgb(shadeRgb(PAL.timber, -.35), PAL.timberLit, li))); }
+    for (const f of this.bankFaces) { const li = 0.45 + 0.55 * Math.max(0, f.n[0] * sun.x + f.n[1] * sun.y); f.m.rgb = mixRgb(shadeRgb(PAL.timber, -.35), PAL.timberLit, li); }
     this.plates.forEach((m, i) => { m.map = this.plateTex[dir][i]; m.needsUpdate = true; });
-    this.sceneryRef = null;
+    this.sceneryRef = null; this.wxKey = null;
   }
   // The scenery as the canvas lays it out: sprites face the camera, hedges are boxes; all in this end's frame.
   buildScenery() {
@@ -3100,12 +3256,13 @@ class GLScene {
         const face = n => {
           const li = 0.42 + 0.58 * Math.max(0, n[0] * sun.x + n[1] * sun.y + n[2] * sun.z), k = li > .7 ? 1 + (li - .7) * .45 : 1 - (.7 - li) * .9;
           const t = hedgeTex[it.flowers ? 1 : 0];
-          return new T.MeshBasicMaterial({ map: t, color: new T.Color(k * (n[2] ? 1.08 : 1), k * (n[2] ? 1.1 : 1), k * (n[2] ? 1.0 : 1)), toneMapped: false });
+          const m = new T.MeshBasicMaterial({ map: t, color: new T.Color(k * (n[2] ? 1.08 : 1), k * (n[2] ? 1.1 : 1), k * (n[2] ? 1.0 : 1)), toneMapped: false });
+          m.userData.base = m.color.clone(); return m;
         };
         for (const q of this.box(x0, x1, y0, y1, 0, it.h, face, 1.2)) G.add(q);
       }
     }
-    this.sceneryRef = Art.scenery;
+    this.sceneryRef = Art.scenery; this.wxKey = null;
   }
   buildPost() {   // vignette, as the canvas renderer draws over its background
     const T = this.T;
@@ -3138,6 +3295,8 @@ class GLScene {
     const T = this.T, host = this.host, cam = host.cam, Wd = host.W, Hd = host.H;
     if (v.dir !== this.dir) this.setDir(v.dir);
     if (this.sceneryRef !== Art.scenery) this.buildScenery();
+    const wx = Weather.now() || Weather.plain;
+    if (this.wxKey !== wx.key + '|' + !!WX.mood) { this.wxKey = wx.key + '|' + !!WX.mood; this.applyWeather(wx); }
     const c3 = this.syncCamera();
     // sky, distant band and clouds travel with the camera, as in the canvas renderer
     this.sky.position.copy(c3.position);
@@ -3295,6 +3454,108 @@ async function glCameraTest(n = 400) {
   console.log('GL camera parity:', out); return out;
 }
 
+// ======================= 9c. Rain (weather, stage 2) =======================
+/* Rain on its own transparent canvas above the scene and below the interface, so nothing about the scene's own
+   canvases changes. Three depths of drop: near ones longer, faster, fewer and brighter, far ones short, slow and
+   faint (the difference in speed is what reads as rain). Splashes on the green, flattened by perspective, and a
+   faint curtain of distant rain over the trees. Every shape is a fill a whole number of device pixels wide (no
+   hairline strokes), and there are no filters. A fixed pool: nothing is made or thrown away during play. Fewer
+   drops on a phone, and fewer again if the frame rate drops. It eases off while a bowl is running, and with
+   Motion set to Reduced it stops, leaving only the still curtain. Its random numbers are its own, so it can never
+   move the physics or the computer's choices. */
+const Rain = {
+  MAX: 600, RIPPLES: 36,
+  //           far    mid    near: length and width (CSS px), speed (CSS px a second), alpha
+  LEN: [7, 13, 24], WID: [1, 1, 2], SPD: [620, 1050, 1750], ALPHA: [.15, .22, .32], COL: [214, 222, 230],
+  init() {
+    const cv = this.cv = document.createElement('canvas'); cv.id = 'rainFx'; cv.setAttribute('aria-hidden', 'true');
+    const sc = $('scene'); sc.parentNode.insertBefore(cv, sc.nextSibling);
+    this.g = cv.getContext('2d'); this.rnd = mulberry32(2718); this.drawn = false; this.t = 0; this.light = 1; this.stillKey = '';
+    const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 700;
+    this.top = this.cap = phone ? 200 : 520; this.ema = 1 / 60; this.slowFor = 0; this.goodFor = 0;
+    // the layer of drop i is fixed by i, so any number of drops in use keeps the same mix of depths (12% near, 28% mid)
+    this.drops = Array.from({ length: this.MAX }, (_, i) => { const k = i % 25; return { l: k < 3 ? 2 : k < 10 ? 1 : 0, x: 0, y: 0, e: 0 }; });
+    for (const d of this.drops) this.respawn(d, true);
+    this.rip = Array.from({ length: this.RIPPLES }, () => ({ x: 0, y: 0, k: 1, dur: 1 }));
+  },
+  respawn(d, anywhere) { const r = this.rnd; d.x = r() * 1.4 - 0.2; d.y = anywhere ? r() : -r() * 0.15; d.e = r(); },
+  clear() { if (this.drawn) { this.g.setTransform(1, 0, 0, 1, 0, 0); this.g.clearRect(0, 0, this.cv.width, this.cv.height); this.drawn = false; } this.stillKey = ''; },
+  // the frame rate: below about 45 fps for a second, drop a fifth of the drops; back above 57 for three seconds, add some back
+  pace(dt) {
+    if (!(dt > 0)) return;
+    this.ema += (dt - this.ema) * 0.1;
+    if (this.ema > 1 / 45) { this.goodFor = 0; if ((this.slowFor += dt) > 1) { this.slowFor = 0; this.cap = Math.max(40, Math.round(this.cap * 0.8)); } }
+    else if (this.ema < 1 / 57) { this.slowFor = 0; if ((this.goodFor += dt) > 3 && this.cap < this.top) { this.goodFor = 0; this.cap = Math.min(this.top, Math.round(this.cap * 1.1) + 1); } }
+    else this.slowFor = this.goodFor = 0;
+  },
+  frame(dt, shown) {
+    if (!this.cv) return;
+    const wx = WX.rain && shown ? Weather.now() : null;
+    if (!wx || wx.rain < 0.01) { this.clear(); return; }
+    const host = scene, cv = this.cv, Wd = host.W, Hd = host.H;
+    if (cv.width !== Wd || cv.height !== Hd) { cv.width = Wd; cv.height = Hd; this.drawn = false; this.stillKey = ''; }
+    const g = this.g, cam = host.cam, dpr = host.dpr, hz = cam.horizon(), slant = wx.wind * (game.dir ? -1 : 1);
+    if (reduced()) {   // no movement: the still curtain only, redrawn when the camera or the weather changes
+      const k = cam.key() + '|' + wx.key + '|' + game.dir; if (k === this.stillKey) return;
+      this.stillKey = k; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, Wd, Hd); this.curtain(g, wx, cam, Wd, hz, 0, slant); this.drawn = true; return;
+    }
+    this.stillKey = '';
+    this.pace(dt); this.t += dt;
+    // a bowl running, or the jack: the rain thins so it never hides them
+    this.light += ((game.phase === 'rolling' ? 0.4 : 1) - this.light) * Math.min(1, dt * 4);
+    const amt = wx.rain * this.light, n = Math.round(this.cap * amt);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, Wd, Hd); this.drawn = true;
+    this.curtain(g, wx, cam, Wd, hz, this.t, slant);
+    this.ripples(g, cam, dt, amt, Wd, Hd, hz);
+    // drops: one path per depth, each a slanted parallelogram on whole device pixels
+    const hzf = clamp(hz / Hd, 0, 1);
+    for (let L = 0; L < 3; L++) {
+      const len = Math.max(2, Math.round(this.LEN[L] * dpr)), w = Math.max(1, Math.round(this.WID[L] * dpr)), sl = Math.round(slant * len);
+      const vy = this.SPD[L] * dpr * dt / Hd, vx = this.SPD[L] * dpr * slant * dt / Wd;
+      g.beginPath();
+      for (let i = 0; i < n; i++) {
+        const d = this.drops[i]; if (d.l !== L) continue;
+        d.y += vy; d.x += vx;
+        // far rain ends on the far ground, mid rain part way down, near rain falls past the bottom of the screen
+        const end = L === 0 ? hzf + d.e * 0.12 : L === 1 ? hzf + (1 - hzf) * (0.25 + 0.7 * d.e) : 1.05;
+        if (d.y > end || d.x < -0.25 || d.x > 1.25) { this.respawn(d, false); continue; }
+        const x = Math.round(d.x * Wd), y = Math.round(d.y * Hd);
+        g.moveTo(x, y); g.lineTo(x + w, y); g.lineTo(x + w + sl, y + len); g.lineTo(x + sl, y + len); g.closePath();
+      }
+      g.fillStyle = rgba(this.COL, this.ALPHA[L] * (0.55 + 0.45 * this.light)); g.fill();
+    }
+  },
+  // a faint, slowly drifting veil of distant rain over the trees and hills: plain tinted fills, no blur
+  curtain(g, wx, cam, Wd, hz, t, slant) {
+    const top = hz - cam.F * 0.24, bot = hz + cam.F * 0.015; if (bot < 0) return;
+    const c = Weather.grade(wx, [176, 184, 190]), a = 0.16 * wx.rain;
+    for (let i = 0; i < 4; i++) {
+      const u = ((i * 0.31 + t * 0.006 * Math.sign(slant || 1) + 10) % 1.5) - 0.25, xc = u * Wd, hw = Wd * (0.16 + 0.05 * i);
+      const gr = g.createLinearGradient(xc - hw, 0, xc + hw, 0);
+      gr.addColorStop(0, rgba(c, 0)); gr.addColorStop(.5, rgba(c, a * (0.6 + 0.15 * i))); gr.addColorStop(1, rgba(c, 0));
+      g.fillStyle = gr; g.fillRect(Math.floor(xc - hw), Math.floor(top), Math.ceil(hw * 2), Math.ceil(bot - top));
+    }
+  },
+  // splashes where drops land on the green: soft filled ellipses that spread and fade, flatter toward the horizon
+  ripples(g, cam, dt, amt, Wd, Hd, hz) {
+    const r = this.rnd, born = amt * 30 * dt;
+    let want = Math.floor(born) + (r() < born % 1 ? 1 : 0);
+    for (const p of this.rip) {
+      if (p.k >= 1 && want > 0) {
+        const G = cam.ground(r() * Wd, hz + 6 + r() * Math.max(1, Hd - hz - 6), 0);
+        if (G && Math.abs(G.x) < W.GREEN_HALF && G.y > 0 && G.y < W.GREEN_LEN) { p.x = G.x; p.y = G.y; p.k = 0; p.dur = 0.45 + r() * 0.35; }
+        want--;
+      }
+      if (p.k >= 1) continue;
+      p.k += dt / p.dur; if (p.k >= 1) continue;
+      const P = cam.project(p.x, p.y, 0); if (!P) continue;
+      const rx = (0.012 + 0.06 * p.k) * P.s, ry = rx * clamp(cam.z / P.d * 1.4, 0.12, 1); if (ry < 1) continue;
+      g.fillStyle = rgba(this.COL, 0.22 * (1 - p.k) * (1 - p.k));
+      g.beginPath(); g.ellipse(Math.round(P.x), Math.round(P.y), rx, ry, 0, 0, TAU); g.fill();
+    }
+  }
+};
+
 // ======================= 10. Head view (top-down) =======================
 /* Draws end-space directly: +y (toward the front ditch) is up the panel,
    +x is right. Scale is fixed per zoom level and labelled with a bar. */
@@ -3337,11 +3598,12 @@ class HeadView {
     this.fitSpan(jk, o.bodies, o.dt == null ? 1 : o.dt);
     const f = this.view = this.frame(centerY), T = (x, y) => this.toScreen(f, x, y);
     // turf
-    g.fillStyle = '#2f5a33'; g.fillRect(0, 0, w, h);
+    const wx = Weather.now(), hc = wx ? wx.head || (wx.head = [[47, 90, 51], [91, 82, 65], [125, 112, 90]].map(c => rgba(Weather.grade(wx, c)))) : ['#2f5a33', '#5b5241', '#7d705a'];   // the same light as the main view
+    g.fillStyle = hc[0]; g.fillRect(0, 0, w, h);
     for (let x = -12.5, i = 0; x < 12.5; x += 1.25, i++) { const a = T(x, 0), b = T(x + 1.25, 0); if (b.x < 0 || a.x > w) continue; g.fillStyle = i % 2 ? 'rgba(236,246,196,.035)' : 'rgba(0,20,0,.05)'; g.fillRect(a.x, 0, b.x - a.x, h); }
     // ditch & bank
     const d0 = T(0, W.GREEN_LEN), d1 = T(0, W.GREEN_LEN + W.DITCH_W);
-    if (d0.y > 0) { g.fillStyle = '#5b5241'; g.fillRect(0, d1.y, w, d0.y - d1.y); g.fillStyle = '#7d705a'; g.fillRect(0, 0, w, Math.max(0, d1.y)); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, d0.y - 1, w, 1); }
+    if (d0.y > 0) { g.fillStyle = hc[1]; g.fillRect(0, d1.y, w, d0.y - d1.y); g.fillStyle = hc[2]; g.fillRect(0, 0, w, Math.max(0, d1.y)); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, d0.y - 1, w, 1); }
     // ditch markers on the bank, in line with a live jack or toucher in the front ditch
     if (d0.y > 0) for (const m of [...o.bodies.filter(b => b.kind === 'bowl' && b.toucher && !b.dead), ...(o.jack ? [{ ...o.jack, kind: 'jack' }] : [])]) {
       if (m.state !== 'ditch' || m.ditch !== 'front') continue;
@@ -4359,6 +4621,7 @@ class Game {
 // ======================= 13. Interface, input & accessibility =======================
 const $ = id => document.getElementById(id);
 const scene = GLFLAGS.want || GLFLAGS.fps ? new SceneHost($('scene')) : new SceneRenderer($('scene'));   // WebGL world unless ?renderer=canvas
+Rain.init();   // the rain layer, above the scene and below the interface
 const headView = new HeadView($('headCanvas'));
 const layout = { ctrlTop: 0, hvBottom: 0 };
 
@@ -5882,14 +6145,17 @@ function crowdFor(g) {
   return n + (g.isTeams() ? 2 : 0);
 }
 function tick(dt) {
-  { const n = crowdFor(game); if (n !== Art.crowdN) { Art.crowdN = n; Art.scenery = Art.layoutScenery(); scene.bgKey = null; } }
+  { const n = crowdFor(game), wx = Weather.now(), wet = !!(wx && wx.rain >= 0.5);   // in heavy rain the crowd comes in waterproofs
+    if (n !== Art.crowdN || wet !== Art.crowdWet) { Art.crowdN = n; Art.crowdWet = wet; Art.scenery = Art.layoutScenery(); scene.bgKey = null; } }
   game.update(dt);
   if (game.phase === 'charge' || game.phase === 'release' || game.phase === 'rolling') UI.refreshWeight();
   const ct = $('controls').getBoundingClientRect().top * scene.dpr; if (ct > 0 && game.mode !== 'title' && !$('controls').classList.contains('stowed')) layout.ctrlTop = ct;
   measureHeadView();
   updateCamera(dt, false);
   if (debugCam) { Object.assign(scene.cam, debugCam); scene.cam.update(); }
-  const ts = $('titleScrim').classList; if (!(ts.contains('show') && ts.contains('photo')) && !Skip.covers()) scene.render(buildView(game.acc / W.DT));   // the title, or the daily puzzle, hides the green   // the title still hides the green
+  const ts = $('titleScrim').classList, greenShown = !(ts.contains('show') && ts.contains('photo')) && !Skip.covers();
+  if (greenShown) scene.render(buildView(game.acc / W.DT));   // the title, or the daily puzzle, hides the green   // the title still hides the green
+  Rain.frame(dt, greenShown);
   UI.drawHead(dt);
   Net.tick(dt);
   statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); }
@@ -6108,7 +6374,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { CAM, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
