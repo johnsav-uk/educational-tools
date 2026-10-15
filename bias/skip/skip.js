@@ -448,13 +448,26 @@
         g.save(); g.translate(x, y); g.rotate((n.rot || -3) * DEG); g.fillText(n.text, 0, 0); g.restore();
       }
     } else if (after && v.h >= 140) {
-      // distances, as a measure reads them: the nearest few on a small plan, none on a tiny one (they are in the screen-reader text)
-      g.font = 'italic 600 15px Newsreader, Georgia, serif'; g.textBaseline = 'middle';
+      /* distances, as a measure reads them: the nearest few on a small plan, none on a tiny one (they are in the screen-reader text).
+         Each label tries beside its bowl (right, left), then above and below; it takes the first spot inside the plan that covers
+         no other label and, if it can, no bowl or the jack. Nearest first, so a label with nowhere to go is a far one, left off. */
+      g.font = 'italic 600 15px Newsreader, Georgia, serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+      const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+      const discs = world.bodies.filter(b => b.state !== 'ditch' && (b.kind === 'bowl' || b === world.jack)).map(b => {
+        const q = T(b.x, b.y), R = b.kind === 'jack' ? Math.max(6, b.r * v.s) : b.r * v.s;
+        return { b, x: q.x - R, y: q.y - R, w: 2 * R, h: 2 * R };
+      });
+      const placed = [];
       for (const e of r.ranked.slice(0, v.h >= 200 ? 6 : 3)) {
-        const q = T(e.b.x, e.b.y), R = e.b.r * v.s, right = q.x < v.w - 70;
-        g.textAlign = right ? 'left' : 'right'; const tx = q.x + (right ? R + 7 : -R - 7), tw = g.measureText(cm(e.d)).width;
-        g.fillStyle = 'rgba(251,249,241,.85)'; g.fillRect(right ? tx - 2 : tx - tw - 2, q.y - 9, tw + 4, 18);
-        g.fillStyle = P.ink; g.fillText(cm(e.d), tx, q.y);
+        const q = T(e.b.x, e.b.y), R = e.b.r * v.s, text = cm(e.d), w = g.measureText(text).width + 4, h = 18;
+        const spots = [[q.x + R + 5, q.y - h / 2], [q.x - R - 5 - w, q.y - h / 2], [q.x - w / 2, q.y - R - 3 - h], [q.x - w / 2, q.y + R + 3]]
+          .map(([x, y]) => ({ x, y, w, h })).filter(a => a.x >= 2 && a.x + a.w <= v.w - 2 && a.y >= 2 && a.y + a.h <= v.h - 2)
+          .filter(a => !placed.some(b => hit(a, b)));
+        const spot = spots.find(a => !discs.some(d => d.b !== e.b && hit(a, d))) || spots[0];
+        if (!spot) continue;
+        placed.push(spot);
+        g.fillStyle = 'rgba(251,249,241,.85)'; g.fillRect(spot.x, spot.y, spot.w, spot.h);
+        g.fillStyle = P.ink; g.fillText(text, spot.x + 2, spot.y + h / 2);
       }
     }
     describeHead(world);
