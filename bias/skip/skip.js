@@ -76,6 +76,7 @@
         <p class="sk-advice" id="skAdvice"></p>
         <div class="sk-actions">
           <button class="sk-enamel" id="skGo">Play the shot</button>
+          <button class="sk-brass" id="skShareBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 7.5 12 3.5l4 4"/><path d="M6 11v8.5h12V11"/></svg>Share<span class="sk-long"> your result</span></button>
           <button class="sk-paperbtn" id="skAlt">Main menu</button>
         </div>
         <p class="sk-toast" id="skToast" role="status" aria-live="polite"></p>
@@ -106,11 +107,11 @@
   const PHONE = matchMedia('(max-width: 700px) and (orientation: portrait), (max-width: 520px)');
   const FLAT = matchMedia('(max-height: 520px) and (orientation: landscape)');
   function place() {
-    const note = $('skNote'), score = $('skScore'), share = $('skShare'), rail = root.querySelector('.sk-rail'), actions = root.querySelector('.sk-sheet .sk-actions');
+    const note = $('skNote'), score = $('skScore'), share = $('skShare'), rail = root.querySelector('.sk-rail');
     const phone = PHONE.matches, flat = !phone && FLAT.matches;
     root.classList.toggle('sk-phone', phone); root.classList.toggle('sk-flat', flat); root.classList.toggle('sk-compact', phone || flat);
     if (phone) $('skAdvice').before(note); else rail.prepend(note);
-    if (phone || flat) { $('skTopRight').append(score); actions.append(share); }
+    if (phone || flat) $('skTopRight').append(score);
     else rail.append(score, share);
   }
   function show(on) { root.hidden = !on; document.body.classList.toggle('skip-open', on); if (on) root.classList.toggle('sk-still', reduced()); }
@@ -192,6 +193,7 @@
   function paintStatic() {
     const pz = S.pz, after = S.phase === 'done';
     root.classList.toggle('sk-done', after);
+    if (after) $('skGo').before($('skShareBtn')); else $('skGo').after($('skShareBtn'));   // after a go, Share comes first
     $('skMeta').textContent = `No. ${S.issue} · ${pz.advised.hand === 'fore' ? 'forehand' : 'backhand'} advised · ${pz.greenSpeed} s ${E.GreenSpeed.label(pz.greenSpeed).toLowerCase()} green` + (pz.conditions ? ` · ${pz.conditions}` : '');
     $('skAdvice').innerHTML = `<b>${esc(cap(pz.advised.by || 'your third'))}:</b> “${esc(pz.advised.say)}”`;
     $('skGo').innerHTML = after ? 'Play<span class="sk-long"> it</span> again' : 'Play the shot';
@@ -236,18 +238,19 @@
     $('skBoard').innerHTML = h;
     S.shown = { streak, best, saved: S.savedPct };
   }
-  /* Sharing. The text line can be copied anywhere; the share sheet and "Picture" also carry a
-     square picture of the result (the card below), the thing that shows up well on social media.
+  /* Sharing. The brass Share button on the card is the main way: it opens the share sheet with a
+     square picture of the result (the card below), the thing that shows up well on social media,
+     or copies the text where there is no share sheet. Beside the card (wide screens only) the
+     text line, Copy and Picture (saves the picture) are there for anyone who wants them.
      The picture is made as soon as the share line appears, so the share sheet can open straight
      from the tap (Safari refuses one that waits on anything). */
   function paintShare() {
     const t = S.stats.today && S.stats.today.date === S.date ? S.stats.today : null, box = $('skShare');
-    box.hidden = !t;
+    box.hidden = !t; $('skShareBtn').hidden = !t;
     if (!t) return;
     const text = C.shareText(S.issue, t.stars, SHARE_URL, t.tries);
     box.innerHTML = `<p><span aria-hidden="true">${esc(C.shareText(S.issue, t.stars, '', t.tries))}</span><span class="sk-sr">Your best today to share: puzzle ${S.issue}, ${C.starWords(t.stars)}, ${C.goesText(t.tries)}.</span></p>` +
-      `<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share"><span class="sk-long">Copy</span><span class="sk-short">Share</span></button>` +
-      (navigator.share ? '<button class="sk-paperbtn sk-native" id="skNative" aria-label="Share your result with a picture">Share…</button>' : '') +
+      '<button class="sk-paperbtn" id="skCopy" aria-label="Copy your result to share">Copy</button>' +
       '<button class="sk-paperbtn sk-pic" id="skPic" aria-label="Save a picture of your result">Picture</button>';
     const shared = () => Metrics.send('result_shared', { puzzleId: S.pz.id });
     const copy = async () => {
@@ -266,11 +269,9 @@
         if (files && e && e.name !== 'AbortError') navigator.share({ text }).then(shared, () => {});
       });
     };
-    // on a phone the one Share button opens the share sheet; elsewhere it copies, and Share… opens the sheet
-    const phoneSheet = () => navigator.share && root.classList.contains('sk-compact');
-    $('skCopy').onclick = () => (phoneSheet() ? sheet() : copy());
-    $('skCopy').setAttribute('aria-label', phoneSheet() ? 'Share your result' : 'Copy your result to share');
-    if (navigator.share) $('skNative').onclick = sheet;
+    $('skShareBtn').onclick = navigator.share ? sheet : copy;
+    $('skShareBtn').setAttribute('aria-label', navigator.share ? 'Share your result' : 'Copy your result to share');
+    $('skCopy').onclick = copy;
     $('skPic').onclick = async () => {
       const card = await makeCard(t);
       if (!card) { toast('Could not make the picture, sorry.'); return; }

@@ -25,6 +25,7 @@
   --sk-crimson: #B02A2E;
   --sk-crimson-edge: #7C1A1E;
   --sk-brass: #C9A24A;
+  --sk-brass-edge: #8F7130;
   /* scoreboard */
   --sk-tile: #161D18;
   /* the plan */
@@ -96,6 +97,12 @@ body.skip-open { overflow: hidden; }
 .sk-enamel:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
 .sk-enamel:disabled, .sk-paperbtn:disabled { opacity: .45; cursor: default; }
 .sk-paperbtn { background: var(--sk-paper); border: 2px solid var(--sk-ink); }
+/* Share: brass, so it stands out from Play (crimson) without fighting it */
+.sk-brass { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 700 20px/1 var(--sk-display); letter-spacing: .05em; text-transform: uppercase;
+  border-radius: 6px; padding: 10px 18px 8px; background: var(--sk-brass); color: var(--sk-ink); border: 0; border-bottom: 4px solid var(--sk-brass-edge); }
+.sk-brass[hidden] { display: none; }
+.sk-brass:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
+.sk-brass svg { width: 20px; height: 20px; flex: none; margin-top: -3px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .sk-help { flex: none; margin: 6px 0 0; font-size: 15px; font-style: italic; color: var(--sk-muted); }
 .sk-toast { flex: none; margin: 6px 0 0; font-size: 15px; color: var(--sk-crimson); font-weight: 600; }
 .sk-toast:empty { display: none; }
@@ -191,9 +198,8 @@ body.skip-open { overflow: hidden; }
 #skip.sk-compact .sk-vrow .sk-stars, #skip.sk-compact .sk-vrow .sk-verdict-title { margin: 0; }
 #skip.sk-compact .sk-actions { margin-top: 8px; }
 #skip.sk-compact .sk-actions > button { flex: 1 1 0; padding-inline: 6px; font-size: 18px; white-space: nowrap; }
-#skip.sk-compact .sk-actions .sk-share:not([hidden]) { display: contents; }
-#skip.sk-compact .sk-actions .sk-share p, #skip.sk-compact .sk-actions .sk-share .sk-native, #skip.sk-compact .sk-actions .sk-share .sk-pic { display: none; }
-#skip.sk-compact .sk-actions .sk-share .sk-paperbtn { flex: 1 1 0; font-size: 18px; padding: 10px 6px 8px; white-space: nowrap; }
+#skip.sk-compact .sk-share { display: none; }
+#skip.sk-compact .sk-actions > .sk-brass svg { width: 18px; height: 18px; }
 
 /* short phones held upright: the handwritten hint, then the advice text, give way to the plan
    (both stay in the screen-reader text, and the advice is drawn on the plan) */
