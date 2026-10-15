@@ -6,7 +6,8 @@
 
    Every shot here is played inside the game engine (Game.startPuzzle and the game's own
    delivery), read out of bias/index.html by engine.cjs. For each puzzle it
-     1. checks the head: bowls on the rink and not overlapping, the jack a legal length,
+     1. checks the head: four of theirs and three of yours (singles, the last bowl of the end),
+        bowls on the rink and not overlapping, the jack a legal length,
         and who is lying how many (compare that with the situation text);
      2. works out the advice as line and weight (advised.aim / advised.weight);
      3. plays the benchmark: the game's computer bowler takes the last bowl 100 times
@@ -35,7 +36,9 @@ const pct = v => (v * 100).toFixed(0) + '%';
 function checkHead(pz) {
   const problems = [], W = E.W, w = Sim.world(pz), jack = w.jack, mf = Sim.matFront(pz);
   if (!['red', 'yellow'].includes(pz.you)) problems.push(`you must be "red" or "yellow"`);
-  if (!pz.bowls.some(b => b.team !== pz.you)) problems.push('there are no opposing bowls');
+  // singles, last bowl of the end: all four of theirs have been played, and three of yours
+  const mine = pz.bowls.filter(b => b.team === pz.you).length, theirs = pz.bowls.length - mine, per = E.DISCIPLINES.singles.bowls;
+  if (theirs !== per || mine !== per - 1) problems.push(`the head has ${theirs} of theirs and ${mine} of yours; the last bowl of a singles end needs ${per} and ${per - 1}`);
   const len = jack.y - mf;
   if (len < W.JACK_MIN) problems.push(`jack is ${len.toFixed(1)} m from the mat front; the minimum is ${W.JACK_MIN} m`);
   if (jack.y > W.GREEN_LEN - W.JACK_DITCH_MIN) problems.push('jack is nearer than 2 m to the ditch');
