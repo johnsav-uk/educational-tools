@@ -168,10 +168,6 @@ body.skip-open { overflow: hidden; }
 .sk-badge-today { background: var(--sk-crimson); color: #fff; }
 #skip.sk-compact .sk-listwrap { padding-block: 8px 12px; }
 #skip.sk-compact .sk-listsheet { padding: 10px 10px 12px; }
-@media (max-width: 400px) {   /* narrow phones: the puzzles button is just its icon, so the top bar stays one line */
-  #skip.sk-compact .sk-allbtn { width: 44px; padding: 0; justify-content: center; }
-  #skip.sk-compact .sk-alltext { display: none; }
-}
 @media (max-width: 420px) {
   .sk-row { grid-template-columns: 3.4em minmax(0, 1fr) auto; gap: 2px 8px; padding: 8px 4px; }
   .sk-no { font-size: 19px; }
@@ -227,7 +223,8 @@ body.skip-open { overflow: hidden; }
 /* ---------- phones, either way up (sk-compact): streak tiles in the top bar, share as a button ---------- */
 #skip.sk-compact .sk-top { flex-wrap: nowrap; padding-block: 6px 0; }
 #skip.sk-compact .sk-topright { flex-wrap: nowrap; }
-#skip.sk-compact .sk-topleft { flex-wrap: nowrap; gap: 6px; }
+#skip.sk-compact .sk-topleft { flex-wrap: nowrap; flex: none; gap: 6px; }
+#skip.sk-compact .sk-top .sk-chip { white-space: nowrap; }
 #skip.sk-compact .sk-topleft .sk-chip { padding-inline: 10px; }
 #skip.sk-compact.sk-listing .sk-top .sk-score { display: none; }   /* the streak belongs to the card */
 #skip.sk-compact .sk-next { font-size: 14px; }
@@ -239,6 +236,11 @@ body.skip-open { overflow: hidden; }
 #skip.sk-compact .sk-top .sk-score div { display: flex; align-items: center; gap: 5px; }
 #skip.sk-compact .sk-top .sk-score dt { margin: 0; font-size: 14px; }
 #skip.sk-compact .sk-top .sk-score .sk-tile { width: 24px; height: 32px; font-size: 24px; border-radius: 3px; }
+/* a top bar that does not fit on one line (skip.js fitTop): the puzzles button is just its icon, then the streak tiles take a line of their own */
+#skip.sk-tight .sk-allbtn { width: 44px; padding: 0; justify-content: center; }
+#skip.sk-tight .sk-alltext { display: none; }
+#skip.sk-compact.sk-stack .sk-top { flex-wrap: wrap; row-gap: 6px; }
+#skip.sk-compact.sk-stack .sk-topright { flex: 1 1 100%; justify-content: center; }
 #skip.sk-compact .sk-vrow { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
 #skip.sk-compact .sk-vrow .sk-stars, #skip.sk-compact .sk-vrow .sk-verdict-title { margin: 0; }
 #skip.sk-compact .sk-actions { margin-top: 8px; }

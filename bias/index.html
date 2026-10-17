@@ -274,6 +274,15 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .notice.auto.show::after{opacity:.8;animation:noticeRun 2.8s linear forwards}
 @keyframes noticeRun{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .notice .nd{font-size:12.5px;color:var(--cream-2);margin-top:2px;max-width:420px}
+/* online: the opponent has dropped out, with the time they have left to come back */
+.away{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:7;width:min(380px,calc(100% - 2*var(--gut)));padding:16px 18px 14px;text-align:center;border-color:rgba(216,145,108,.55)}
+.away[hidden]{display:none}
+.away .kicker{color:var(--alert)}
+.away .aw-t{font-family:var(--serif);font-size:18px;line-height:1.2;margin-top:6px}
+.away .aw-n{font-family:var(--serif);font-size:40px;line-height:1.05;margin-top:4px}
+.away .aw-d{font-size:12.5px;color:var(--cream-2);margin-top:4px}
+.away .aw-bar{height:3px;margin-top:12px;background:var(--line);border-radius:2px;overflow:hidden}
+.away .aw-bar i{display:block;height:100%;background:var(--alert);transform-origin:left}
 
 /* ---------- buttons ---------- */
 .btn{background:transparent;border:1px solid var(--line-2);color:var(--cream);padding:10px 18px;border-radius:4px;min-height:44px;font-size:14px;white-space:nowrap}
@@ -380,13 +389,14 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .title .menu-item.primary:hover{background:#f7f0de}
 .title .menu-item .mi-sub{display:block;font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cream-2);margin-top:3px;text-shadow:none}
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.66)}
-/* the daily puzzle's "Go up and look": a button just above the Hand box; while the skip is up at the head, the rest steps aside */
+/* "Go up and look" (once an end): a button just above the Hand box, styled like the Head button; while the skip is up at the head, the rest steps aside */
 .side-l{position:relative}
-.lookbtn{position:absolute;left:0;right:0;bottom:calc(100% + 8px);min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 8px;border-radius:10px;
-  background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow);color:var(--cream);font-size:13px;font-weight:600;line-height:1.15;pointer-events:auto}
+.lookbtn{position:absolute;left:0;bottom:calc(100% + 8px);min-width:100%;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
+  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;pointer-events:auto}
 .lookbtn[hidden]{display:none}
-.lookbtn:hover{border-color:rgba(236,229,210,.45)}
-.lookbtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linejoin:round}
+.lookbtn:hover{border-color:var(--line-2)}
+.lookbtn:disabled{opacity:.45;cursor:default;border-color:var(--line)}
+.lookbtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .controls.looking .dial,.controls.looking .side-r,.controls.looking #grpHand{visibility:hidden}
 .controls.looking .side-l{background:none;border-color:transparent;box-shadow:none}
 .controls.looking .lookbtn{background:var(--cream);color:var(--ink);border-color:var(--cream)}
@@ -632,6 +642,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <div class="banner" id="banner" aria-hidden="true"><div class="kicker" id="bnK"></div><div class="bn" id="bnT"></div><div class="bs" id="bnS"></div></div>
   <div class="toast panel" id="toast" role="status" aria-live="polite"></div>
+  <div class="away panel" id="awayBox" role="alert" hidden><div class="kicker">Opponent disconnected</div><div class="aw-t" id="awayT"></div><div class="aw-n num" id="awayN"></div><div class="aw-d" id="awayD"></div><div class="aw-bar"><i id="awayBar"></i></div></div>
   <div class="notice panel" id="notice" role="dialog" aria-live="polite">
     <div><div class="nt" id="noticeT"></div><div class="nd" id="noticeD"></div></div>
     <button class="btn primary" id="noticeBtn">Continue</button>
@@ -4008,7 +4019,8 @@ class Game {
     this.pulse = null; this.handAlpha = 0; this.lastWeights = {}; this.trackY = null;
     this.practice = { profileId: store.get('pr.profile', 'dp-pro'), colour: store.get('pr.colour', 'claret'), T: store.get('pr.T', 13), count: 0 };
     this.link = null; this.netReset();
-    this.look = false;   // the daily puzzle's "Go up and look": the camera walks up to the head
+    this.look = false;          // "Go up and look": the camera walks up to stand over the head
+    this.looked = new Set();    // who has been up to look this end (side.member): once an end each
   }
   after(delay, fn) { this.timers.push({ t: this.instant ? -1 : this.clock + delay, fn }); }
   note(evt, data) { if (this.ui.coach) this.ui.coach(evt, data); }   // practice events for the guided lesson
@@ -4022,6 +4034,15 @@ class Game {
   get cur() { return this.players[this.turn ? this.turn.player : 0]; }                     // the side (player or team) on turn
   get member() { const side = this.cur; return side.members[this.turn && this.turn.member != null ? this.turn.member : 0]; } // the bowler
   isTeams() { return !!this.match && this.match.discipline.positions > 1; }
+  // "Go up and look": before any bowl of your own once the jack is out, once an end for each bowler
+  canLook() { return this.phase === 'aim' && !this.locked && !!this.turn && this.turn.kind === 'bowl' && !!this.world.jack; }
+  lookKey() { return this.turn.player + '.' + (this.turn.member || 0); }
+  toggleLook() {
+    if (!this.canLook()) return;
+    if (this.look) this.look = false;
+    else if (!this.looked.has(this.lookKey())) { this.looked.add(this.lookKey()); this.look = true; }
+    this.ui.refresh();
+  }
   weightKey(kind, side, mi) { return kind + side + '.' + (mi || 0); }
   liveBodies() { return this.world.bodies.filter(b => !b.dead); }
   endLabel() { if (this.mode === 'puzzle') return '“Over to You, Skip!”'; if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
@@ -4061,7 +4082,7 @@ class Game {
      head mirrored, so "forehand" means the same shot. When everything stops, resolvePuzzle hands
      the head to the puzzle screen, which scores it with Rules.score. */
   startPuzzle(pz) {
-    this.clearTimers(); this.mode = 'puzzle'; this.look = false; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
+    this.clearTimers(); this.mode = 'puzzle'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
     const m = Settings.arm === 'L' ? -1 : 1, them = pz.you === 'red' ? 'yellow' : 'red', a = pz.advised;
     const side = (name, team) => ({ name, profileId: 'dp-pro', colour: 'pz-' + team, score: 0, played: 0, members: [{ name, role: '', played: 0, hand: a.hand, aim: m * a.aim }] });
     this.players = [side('You', pz.you), side(them.charAt(0).toUpperCase() + them.slice(1), them)];
@@ -4082,6 +4103,7 @@ class Game {
   resetEndState() {
     this.world.clear(); this.trace = []; this.traceAlpha = 0; this.effects = []; this.matRear = W.MAT_MIN;
     this.shot = null; this.jackSpot = null; this.place = null; this.anim = null; this.delivered = null; this.seq = [];
+    this.look = false; this.looked.clear();
     this.players.forEach(p => { p.played = 0; p.members.forEach(m => m.played = 0); }); this.practice.count = 0;
     this.order = []; this.orderIdx = 0;
     if (this.link) this.world.nextId = 1;   // online, both computers number the end's bodies alike
@@ -4530,6 +4552,7 @@ class Game {
     else if (m.t === 'settle') this.netSettles.set(m.n, m.bodies);
     else if (m.t === 'continue') { this.netContinues.add(m.id); if (this.openPrompt && this.openPrompt.id === m.id) this.answerPrompt(m.id, false); }
     else if (m.t === 'aim') this.netAim(m);
+    else if (m.t === 'resign') { this.forfeit(m.seat === 0 || m.seat === 1 ? m.seat : m.from, m.why); return; }
     this.netPump();
   }
   netPump() {
@@ -4583,7 +4606,17 @@ class Game {
         this.netPump(); this.flush();
         if (`${this.netQ.length}.${this.deliveryNo}.${this.promptNo}.${this.timers.length}` === before) break;
       }
+      const r = entries.find(e => e.t === 'resign'); if (r) this.netIn(r);
     } finally { this.instant = inst; }
+  }
+  /* Online, a player who left the match, or dropped out and was not back within AWAY_S seconds
+     (see Away), forfeits it: the match ends there, won by the other side whatever the score. */
+  forfeit(seat, why) {
+    if (this.mode !== 'match' || !this.match || this.phase === 'over') return;
+    this.clearTimers(); this.look = false; this.charge = null;
+    if (this.openPrompt) { this.openPrompt = null; if (this.ui.dismissPrompt) this.ui.dismissPrompt(); }
+    this.match.over = true; this.match.forfeit = { seat, why: why === 'left' ? 'left' : 'away' };
+    this.phase = 'over'; this.ui.refresh(); this.ui.matchOver();
   }
 
   // ---------- per-frame update ----------
@@ -4952,10 +4985,11 @@ const UI = {
       // who is on the mat is on the scoreboard (the flashing dot); in a team game the readout names the player
       const mb = g.member; this.who = g.isTeams() ? `${mb.name}, ${mb.role.toLowerCase()}` : '';
       $('grpHand').hidden = isJack; $('grpMat').hidden = !isJack;
-      const canLook = g.mode === 'puzzle' && g.phase === 'aim';   // the daily puzzle: walk up and look at the head before bowling
+      const canLook = g.canLook();   // walk up and look at the head before bowling, once an end
       if (!canLook) g.look = false;
-      $('btnLook').hidden = !canLook; $('controls').classList.toggle('looking', canLook && g.look);
-      $('btnLookT').textContent = g.look ? 'Back to the mat' : 'Go up and look'; $('btnLook').setAttribute('aria-pressed', String(!!g.look));
+      const spent = canLook && !g.look && g.looked.has(g.lookKey());
+      $('btnLook').hidden = !canLook; $('btnLook').disabled = spent; $('controls').classList.toggle('looking', canLook && g.look);
+      $('btnLookT').textContent = g.look ? 'Back to the mat' : spent ? 'Looked this end' : 'Go up and look'; $('btnLook').setAttribute('aria-pressed', String(!!g.look));
       $('btnFore').setAttribute('aria-pressed', String(g.hand === 'fore')); $('btnBack').setAttribute('aria-pressed', String(g.hand === 'back'));
       $('matVal').textContent = g.matRear.toFixed(2).replace(/0$/, '') + ' m';
       $('matBack').disabled = !g.canMoveMat() || g.matRear <= W.MAT_MIN; $('matFwd').disabled = !g.canMoveMat() || g.matRear >= W.MAT_MAX;
@@ -5085,10 +5119,12 @@ const UI = {
     hv.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, highlight: hl, numbers: nums, labels: true });
   },
   matchOver() {
-    const g = game, P = g.players, m = g.match, w = P[0].score > P[1].score ? 0 : 1;
-    $('overH').textContent = `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
+    const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.seat : P[0].score > P[1].score ? 0 : 1;
+    $('overH').textContent = ff ? `${P[w].name} wins by forfeit` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
-    $('overP').textContent = `${m.discipline.name}, ${m.ends.length} end${m.ends.length > 1 ? 's' : ''} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.deadEnds ? `, with ${m.deadEnds} dead end${m.deadEnds > 1 ? 's' : ''} replayed` : ''}.` + teamsLine;
+    const gone = ff && (g.link && ff.seat === g.link.seat ? 'You' : P[ff.seat].name);
+    const ffLine = ff ? `${gone} ${ff.why === 'left' ? 'left the match' : `lost the connection and ${gone === 'You' ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === (g.link && g.link.seat) ? 'you' : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
+    $('overP').textContent = ffLine + `${m.discipline.name}, ${m.ends.length} end${m.ends.length === 1 ? '' : 's'} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.deadEnds ? `, with ${m.deadEnds} dead end${m.deadEnds > 1 ? 's' : ''} replayed` : ''}.` + teamsLine;
     const head = `<tr><th>${g.isTeams() ? 'Team' : 'Player'}</th>${m.ends.map((e, i) => `<th>${e.extra ? 'X' : i + 1}</th>`).join('')}<th>Total</th></tr>`;
     const row = i => `<tr><td><span class="pip" style="--c:${colourHex(P[i].colour)}"></span>${esc(P[i].name)}</td>${m.ends.map(e => `<td>${e.winner === i ? e.shots : (e.winner == null ? '–' : '')}</td>`).join('')}<td><b>${P[i].score}</b></td></tr>`;
     $('overTable').innerHTML = head + row(0) + row(1);
@@ -5138,8 +5174,8 @@ function updateCamera(dt, snap) {
     const tiltMax = Math.min(Math.atan((Hd / 2 - Hd * CAM.sky) / F0), bankCap(camY, z0, F0, Hd));
     const pitch0 = Math.min(tiltMax, Math.max(pitchFor(camY, z0, F0, rel.y, relY, Hd), Math.atan((Hd / 2 - Hd * 0.34) / F0)));
     tgt = { x: 0, y: camY, z: z0, F: F0, pitch: pitch0 };
-    if (game.look && game.mode === 'puzzle' && game.world.jack) {
-      /* "Go up and look" (the daily puzzle): the skip walks up the green and stands a couple of metres short of the
+    if (game.look && game.world.jack) {
+      /* "Go up and look": the skip walks up the green and stands a couple of metres short of the
          jack, eyes about 1.5 m up, looking down into the head, as a skip does before the last bowl */
       const j = game.world.jack, jy = Math.min(j.y, W.GREEN_LEN), y = Math.max(camY, jy - 2.4), z = 1.5;
       tgt = { x: clamp(j.x * 0.6, -1.6, 1.6), y, z, F: F0 * 1.15, pitch: pitchFor(y, z, F0 * 1.15, jy + 0.15, Hd * 0.52, Hd) }; rate = 1.5;
@@ -5697,7 +5733,7 @@ const OnlineUI = {
       else { t = `Online · ${Net.code}`; warn = false; }
       $('netTxt').textContent = t; chip.title = t; chip.classList.toggle('warn', warn);
     }
-    Lobby.sync(); this.quickStart();
+    Lobby.sync(); this.quickStart(); Away.check();
     if ($('onlineScrim').classList.contains('show')) this.render();
   },
   peer(m, old) {
@@ -5705,9 +5741,7 @@ const OnlineUI = {
     const lv = m.who && m.who.level, was = old && old.who && old.who.level;
     if (lv && was && lv !== was && game.link && game.mode === 'match') { UI.toast(`${name} is now playing at ${levelName(lv)}.`); UI.renderScoreboard(); }
     if (game.link && game.mode === 'match') {
-      if (m.left) UI.toast(`${name} has left the game.`, 'warn');
-      else if (!m.online) UI.toast(`${name} has lost their connection. Play waits for them.`, 'warn');
-      else if (old && !old.online) UI.toast(`${name} is back.`, 'good');
+      if (m.online && old && !old.online && game.phase !== 'over') UI.toast(`${name} is back.`, 'good');   // dropping out or leaving: see Away
     }
     this.status();
   },
@@ -5720,6 +5754,39 @@ const OnlineUI = {
     this.status();
   }
 };
+/* An opponent who drops out of an online match gets AWAY_S seconds to come back: this screen shows a
+   warning with the time left, and when it runs out they forfeit the match. One who leaves on purpose
+   (their seat is gone) forfeits at once. The forfeit goes into the relay's log as 'resign', so their
+   screen shows it too if they come back. The clock runs only while this screen is connected, and on
+   the wall clock, so it keeps time in a background tab. */
+const AWAY_S = 60;
+const Away = {
+  until: 0, timer: 0,
+  check() {
+    const g = game, peer = Net.peer();
+    const live = !!g.link && g.mode === 'match' && g.phase !== 'over' && Net.inMatch && Net.state === 'open';
+    if (live && !peer) { this.forfeit('left'); return; }
+    if (!(live && !peer.online)) { this.stop(); return; }
+    if (!this.until) { this.until = Date.now() + AWAY_S * 1000; this.timer = setInterval(() => this.tick(), 250); }
+    this.paint(peer);
+  },
+  tick() { this.check(); if (this.until && Date.now() >= this.until) this.forfeit('away'); },
+  stop() { clearInterval(this.timer); this.timer = 0; this.until = 0; $('awayBox').hidden = true; },
+  paint(peer) {
+    const left = Math.max(0, this.until - Date.now()), name = peer.who.name;
+    $('awayT').textContent = `${name} has lost the connection`;
+    const sec = Math.ceil(left / 1000); $('awayN').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    $('awayD').textContent = `If ${name} is not back in time, they forfeit and the match is yours.`;
+    $('awayBar').style.transform = `scaleX(${left / (AWAY_S * 1000)})`;
+    $('awayBox').hidden = false;
+  },
+  forfeit(why) {
+    this.stop();
+    const seat = 1 - Net.seat;
+    game.forfeit(seat, why); Net.send({ t: 'resign', seat, why }, true);
+  }
+};
+
 /* The lobby (bias-relay's Lobby): every open copy of the game keeps one quiet connection to it,
    for the count of who's about, and to wait in the queue for a quick match. The relay pairs two
    waiting players and offers each the other; when both accept it opens a room and sends the code. */
@@ -5950,7 +6017,7 @@ const TUT = [
   { k: 'Aim', fig: 'aim', t: 'Choose your line', p: 'Drag across the green, or use the arrow keys, to set the line the bowl leaves your hand on. The dashed line shows only that starting direction; the bowl will not follow it.', keys: '← → aim · Shift for larger steps · Z to look closer at the head' },
   { k: 'Hand', fig: 'hand', t: 'Forehand or backhand', p: 'Every bowl is biased and curves as it slows. A right-hander\'s forehand starts out to the right and draws in from the right; the backhand mirrors it. The small gold hook at the end of the aim line shows which way this hand will draw.', keys: 'F forehand · B backhand' },
   { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold the round Hold button (or Space). The ring round it fills and falls back, like a swing meter; let go at the weight you want. The red fifth at the end is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
-  { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The head view, top right, shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls.', keys: 'H shows or hides the head view · M measure · the gold mark on the ring is your last weight' },
+  { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The head view, top right, shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls. Once an end, Go up and look (above Hand) walks you up the green to stand over the head before you bowl.', keys: 'H shows or hides the head view · M measure · the gold mark on the ring is your last weight' },
   { k: 'The rules in brief', fig: 'rules', t: 'Jack, touchers, dead bowls', p: 'The jack must stop at least 23 m from the mat. Bowls that touch the jack are chalked as touchers and stay live even in the ditch; other bowls in the ditch are dead. The nearest bowl scores, plus each of that player\'s bowls inside the opponent\'s best.', keys: 'Full rules are in the menu.' }
 ];
 let tutStep = 0;
@@ -6072,7 +6139,7 @@ dbtn.addEventListener('click', e => e.preventDefault());
 dbtn.addEventListener('contextmenu', e => e.preventDefault());
 
 $('btnFore').onclick = () => game.setHand('fore'); $('btnBack').onclick = () => game.setHand('back');
-$('btnLook').onclick = () => { if (game.mode !== 'puzzle' || game.phase !== 'aim') return; game.look = !game.look; UI.refresh(); };   // the daily puzzle: walk up to the head and back
+$('btnLook').onclick = () => game.toggleLook();   // walk up to the head and back, once an end
 $('aimL').onclick = () => game.nudgeAim(-0.1); $('aimR').onclick = () => game.nudgeAim(0.1);
 $('matBack').onclick = () => game.moveMat(-0.25); $('matFwd').onclick = () => game.moveMat(0.25);
 $('prPlace').onclick = () => game.practicePlaceJack(); $('prReset').onclick = () => game.resetHead(); $('prNew').onclick = () => game.practiceNewEnd(true);
@@ -6391,6 +6458,22 @@ window.BiasTests = {
       const mid = R.deliveryNo;
       for (const e of log.slice(cut)) { R.netIn(e); R.flush(); }
       ok('Online: a player who reloads mid-match rebuilds it from the log', mid > 0 && R.phase === 'over' && sig(R) === sig(G[1]), `rebuilt to delivery ${mid}, then followed live`); }
+    // 15b. online: a player who drops out and does not come back forfeits; the forfeit is in the log, so a reload shows it too
+    { const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
+      const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });
+      const log = [], G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })];
+      const link = seat => ({ seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
+      G.forEach((g, i) => g.startMatch(cfg(link(i))));
+      G[0].forfeit(1, 'away'); log.push({ t: 'resign', seat: 1, why: 'away', from: 0, seq: log.length + 1 });
+      G[1].netIn(log[log.length - 1]);
+      const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, send() {} }), log);
+      ok('Online: a forfeit ends the match on both screens, and after a reload', G.every(g => g.phase === 'over' && g.match.forfeit && g.match.forfeit.seat === 1) && R.phase === 'over' && R.match.forfeit.why === 'away'); }
+    // 15c. Go up and look: once an end for each bowler, never on the jack or on the other side's turn
+    { const G = new Game(StubUI, { instant: true }); G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0 });
+      const onJack = G.canLook(); G.testDeliver(0, 0.6);
+      const first = G.canLook(); G.toggleLook(); const up = G.look; G.toggleLook(); G.toggleLook();
+      ok('Look: not on the jack; once an end, then spent', !onJack && first && up && !G.look && G.looked.size === 1);
+      G.resetEndState(); ok('Look: a new end gives everyone their look back', G.looked.size === 0); }
     const passed = out.filter(r => r.pass).length;
     console.table(out); console.log(`Bias self-tests: ${passed}/${out.length} passed`);
     return { passed, total: out.length, results: out };

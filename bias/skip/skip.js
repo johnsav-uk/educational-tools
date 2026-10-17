@@ -118,6 +118,20 @@
     for (const q of [PHONE, FLAT]) q.addEventListener('change', () => { place(); if (!root.hidden && S) { sizePlan(); draw(); } });
     place();
     new ResizeObserver(() => { if (!root.hidden && S) { sizePlan(); draw(); } }).observe($('skPlan').parentNode);
+    const fit = new ResizeObserver(fitTop); for (const n of root.querySelectorAll('.sk-top, .sk-topleft, .sk-score, .sk-fresh')) fit.observe(n);
+  }
+  /* The top bar on a phone is one line: Menu and Puzzles on the left, the streak tiles on the right.
+     When they do not fit (a narrow phone, or the third tile, Saved it, %), Puzzles goes down to its
+     icon (sk-tight), and if that is still not enough the tiles take a line of their own (sk-stack). */
+  function fitTop() {
+    if (!root || root.hidden) return;
+    const top = root.querySelector('.sk-top'), l = root.querySelector('.sk-topleft'), r = $('skTopRight');
+    root.classList.remove('sk-tight', 'sk-stack');
+    if (!root.classList.contains('sk-compact')) return;
+    const cs = getComputedStyle(top), room = top.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const over = () => l.scrollWidth + r.scrollWidth + parseFloat(cs.columnGap || 0) > room;
+    if (over()) root.classList.add('sk-tight');
+    if (over()) root.classList.add('sk-stack');
   }
   /* Phones get a compact card. Upright (sk-phone): one column, the note in the sheet under the
      plan. On its side (sk-flat): two columns. Either way (sk-compact) the streak tiles go in the
@@ -278,7 +292,7 @@
     $('skAlt').textContent = after ? 'Full match' : 'Main menu';
     $('skAlt').setAttribute('aria-label', after ? 'Play a full match' : 'Main menu');
     $('skHelp').textContent = after ? (S.archive ? 'Play it again as often as you like: your best go is kept. Archive puzzles never change your streak.' : 'Play it again as often as you like: your best go of the day is the one that counts.')
-      : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice. Go up and look, on the green, walks you up to the head.';
+      : 'You play it on the green with the usual controls: line, hand, then hold Bowl. Your line starts on the advice. Go up and look, on the green, walks you up to the head, once a go.';
   }
   function stars(n) {
     const pts = '12,1.8 14.9,8.6 22.2,9.2 16.6,14 18.3,21.2 12,17.4 5.7,21.2 7.4,14 1.8,9.2 9.1,8.6';
