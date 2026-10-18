@@ -274,6 +274,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .notice.auto.show::after{opacity:.8;animation:noticeRun 2.8s linear forwards}
 @keyframes noticeRun{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .notice .nd{font-size:12.5px;color:var(--cream-2);margin-top:2px;max-width:420px}
+/* looking at the head: down on the bottom edge (the controls are stowed), clear of the bowls round the jack */
+.notice.look{bottom:calc(var(--gut) + env(safe-area-inset-bottom))}
 /* online: the opponent has dropped out, with the time they have left to come back */
 .away{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:7;width:min(380px,calc(100% - 2*var(--gut)));padding:16px 18px 14px;text-align:center;border-color:rgba(216,145,108,.55)}
 .away[hidden]{display:none}
@@ -4948,7 +4950,7 @@ const UI = {
     $('noticeT').textContent = title; $('noticeD').textContent = desc; $('noticeBtn').textContent = label || 'Continue';
     this.noticeCb = cb; $('notice').classList.add('show'); this.announce(`${title}. ${desc}`);
     // a routine notice carries on by itself; the thin line along its foot shows the moment running out
-    const n = $('notice'); n.classList.remove('auto'); clearTimeout(this.noticeTimer);
+    const n = $('notice'); n.classList.remove('auto', 'look'); clearTimeout(this.noticeTimer);
     if (auto) {
       void n.offsetWidth; n.classList.add('auto');
       const go = () => { if (this.noticeCb !== cb) return; if (this.anyOpen()) { this.noticeTimer = setTimeout(go, 600); return; } this.noticeGo(); };
@@ -6015,7 +6017,7 @@ $('btnHelp').onclick = () => openTutorial(true);
 
 // End summary & match over
 $('sumNext').onclick = () => { UI.close('sumScrim'); const cb = UI.sumCb; UI.sumCb = null; if (cb) cb(); };
-$('sumLook').onclick = () => { UI.close('sumScrim'); UI.notice(`End ${game.endNo} complete`, 'Take a look at the head before moving on.', 'Show the result', () => UI.open('sumScrim')); };
+$('sumLook').onclick = () => { UI.close('sumScrim'); UI.notice(`End ${game.endNo} complete`, 'Take a look at the head before moving on.', 'Show the result', () => UI.open('sumScrim')); $('notice').classList.add('look'); };
 $('overAgain').onclick = () => { UI.close('overScrim'); if (game.link && Net.on) OnlineUI.open(); else openSetup(); };   // online: the host sets up a rematch in the same room
 $('overMenu').onclick = () => { UI.close('overScrim'); if (Net.on) Net.leave(); game.showcase(); UI.refresh(); OnlineUI.status(); showTitle(); };
 $('noticeBtn').onclick = () => UI.noticeGo();
