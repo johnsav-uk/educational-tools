@@ -257,7 +257,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .def{color:var(--cream-2);font-weight:600}
 
 /* ---------- notices, toasts, banners ---------- */
-.toast{position:absolute;left:50%;top:calc(var(--gut) + 74px);transform:translate(-50%,-6px);padding:9px 16px;font-size:13.5px;z-index:6;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;max-width:min(520px,calc(100% - 2*var(--gut)));text-align:center}
+.toast{position:absolute;left:50%;top:calc(var(--gut) + 74px);transform:translate(-50%,-6px);padding:9px 16px;font-size:13.5px;z-index:6;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;max-width:min(520px,calc(100% - 2*var(--gut) - 580px));   /* clear of Go up and look and the head view */text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.warn{border-color:rgba(216,145,108,.55)}
 .toast.warn::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--alert);margin-right:9px;vertical-align:1px}
@@ -389,17 +389,19 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .title .menu-item.primary:hover{background:#f7f0de}
 .title .menu-item .mi-sub{display:block;font-family:var(--sans);font-weight:400;font-size:13px;color:var(--cream-2);margin-top:3px;text-shadow:none}
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.66)}
-/* "Go up and look" (once an end): a button just above the Hand box, styled like the Head button; while the skip is up at the head, the rest steps aside */
-.side-l{position:relative}
-.lookbtn{position:absolute;left:0;bottom:calc(100% + 8px);min-width:100%;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
-  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;pointer-events:auto}
+/* "Go up and look" (once an end): beside the sound button, under the scoreboard, styled like the Head button and clear of
+   everything else; while the skip is up at the head, the delivery controls step aside */
+.hud-row{display:flex;align-items:center;gap:6px;max-width:calc(100vw - 2*var(--gut) - 282px)}   /* never under the head view */
+#app.nohead .hud-row{max-width:calc(100vw - 2*var(--gut))}
+.lookbtn{min-width:0;height:32px;display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
+  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .lookbtn[hidden]{display:none}
+.lookbtn span{overflow:hidden;text-overflow:ellipsis}
 .lookbtn:hover{border-color:var(--line-2)}
 .lookbtn:disabled{opacity:.45;cursor:default;border-color:var(--line)}
-.lookbtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.controls.looking .dial,.controls.looking .side-r,.controls.looking #grpHand{visibility:hidden}
-.controls.looking .side-l{background:none;border-color:transparent;box-shadow:none}
-.controls.looking .lookbtn{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.lookbtn[aria-pressed=true]{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.lookbtn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.controls.looking .dial,.controls.looking .side{visibility:hidden}
 .title .menu-item .mi-new{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px;text-shadow:none}
 .title-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 0;margin:18px -6px 0}
 .title-links button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 6px;white-space:nowrap;border:0;border-radius:8px;background:transparent;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--cream-2)}
@@ -484,6 +486,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .sb-big{font-size:18px}
   .sb-opt{display:none}
   /* the head view: a small plan in the sky, top right, clear of the far end of the rink */
+  .hud-row{max-width:calc(100vw - 2*var(--gut) - 158px)}
   .headpanel{top:calc(var(--gut) + 68px);width:148px;border-radius:6px;background:rgba(19,27,23,.9)}
   .hp-head{position:absolute;top:4px;right:4px;padding:0;border:0;z-index:1}
   .hp-head h2{display:none}
@@ -517,6 +520,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .co-fig svg{height:72px;width:auto;max-width:100%}
   .coach.rolling .co-steps,.coach.rolling .co-body,.coach.rolling .co-actions{display:none}   /* folded while a bowl runs, so the head stays in view */
   #app.coaching .toast{top:calc(var(--gut) + 112px + var(--coach-h, 0px))}
+  /* and below the practice tools, which sit where the messages would */
+  #app:has(#practiceBar:not([hidden])) .toast{top:calc(var(--gut) + 112px + var(--pr-h, 0px))}
+  #app.coaching:has(#practiceBar:not([hidden])) .toast{top:calc(var(--gut) + 112px + max(var(--coach-h, 0px), var(--pr-h, 0px)))}
   .grid2{grid-template-columns:1fr;gap:10px}
   .sum{grid-template-columns:1fr}
   #sumCanvas{width:100%;height:220px}
@@ -605,9 +611,12 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   <header class="hud-top">
     <div class="hud-left">
       <div class="scoreboard panel" id="scoreboard" aria-live="off"></div>
-      <button class="icon-btn sm" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
-        <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
-      </button>
+      <div class="hud-row">
+        <button class="icon-btn sm" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
+          <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+        </button>
+        <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
+      </div>
     </div>
     <div class="top-actions">
       <button class="netchip panel qmchip" id="qmChip" hidden title="Looking for a quick match"><span class="dot"></span><span class="ntx" id="qmTxt">Looking for a game</span></button>
@@ -655,7 +664,6 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <footer class="controls busy" id="controls" aria-label="Delivery controls">
     <div class="side side-l">
-      <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
       <div class="ctl c-hand" id="grpHand">
         <div class="kicker" title="F / B">Hand</div>
         <div class="pair" role="group" aria-label="Delivery hand"><button id="btnFore" aria-pressed="true" title="Forehand (F)">Fore</button><button id="btnBack" aria-pressed="false" title="Backhand (B)">Back</button></div>
@@ -4873,6 +4881,7 @@ $('coEnd').onclick = () => Coach.stop();
 $('coMin').onclick = () => { Coach.min = !Coach.min; Coach.render(); };
 $('traceKey').innerHTML = LessonFig.traceKey();
 if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--coach-h', $('coach').offsetHeight + 'px')).observe($('coach'));
+if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--pr-h', $('practiceBar').offsetHeight + 'px')).observe($('practiceBar'));
 
 // only touch the DOM when the markup really changed (a rewrite restarts animations, such as the flashing dot)
 const setHtml = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
