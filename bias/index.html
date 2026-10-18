@@ -277,13 +277,13 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 /* looking at the head: down on the bottom edge (the controls are stowed), clear of the bowls round the jack */
 .notice.look{bottom:calc(var(--gut) + env(safe-area-inset-bottom))}
 /* online: the opponent has dropped out, with the time they have left to come back */
-.away{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:7;width:min(380px,calc(100% - 2*var(--gut)));padding:16px 18px 14px;text-align:center;border-color:rgba(216,145,108,.55)}
+.away{width:300px;padding:9px 12px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;border-color:rgba(216,145,108,.55)}   /* top left under the sound button, off the green: you may be lining up a shot */
 .away[hidden]{display:none}
-.away .kicker{color:var(--alert)}
-.away .aw-t{font-family:var(--serif);font-size:18px;line-height:1.2;margin-top:6px}
-.away .aw-n{font-family:var(--serif);font-size:40px;line-height:1.05;margin-top:4px}
-.away .aw-d{font-size:12.5px;color:var(--cream-2);margin-top:4px}
-.away .aw-bar{height:3px;margin-top:12px;background:var(--line);border-radius:2px;overflow:hidden}
+.away .kicker{grid-column:1/-1;color:var(--alert)}
+.away .aw-t{font-family:var(--serif);font-size:14px;line-height:1.2;margin-top:2px;min-width:0}
+.away .aw-n{grid-column:2;font-family:var(--serif);font-size:26px;line-height:1}
+.away .aw-d{grid-column:1/-1;font-size:11.5px;color:var(--cream-2);margin-top:4px}
+.away .aw-bar{grid-column:1/-1;height:3px;margin-top:8px;background:var(--line);border-radius:2px;overflow:hidden}
 .away .aw-bar i{display:block;height:100%;background:var(--alert);transform-origin:left}
 
 /* ---------- buttons ---------- */
@@ -393,8 +393,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .title .menu-item.primary .mi-sub{color:rgba(22,32,27,.66)}
 /* "Go up and look" (once an end): beside the sound button, under the scoreboard, styled like the Head button and clear of
    everything else; while the skip is up at the head, the delivery controls step aside */
-.hud-row{display:flex;align-items:center;gap:6px;max-width:calc(100vw - 2*var(--gut) - 282px)}   /* never under the head view */
-#app.nohead .hud-row{max-width:calc(100vw - 2*var(--gut))}
+.hud-row{display:flex;align-items:center;gap:6px}
+.hud-row,.away{max-width:calc(100vw - 2*var(--gut) - 282px)}   /* never under the head view */
+#app.nohead :is(.hud-row,.away){max-width:calc(100vw - 2*var(--gut))}
 .lookbtn{min-width:0;height:32px;display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
   background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .lookbtn[hidden]{display:none}
@@ -488,7 +489,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .sb-big{font-size:18px}
   .sb-opt{display:none}
   /* the head view: a small plan in the sky, top right, clear of the far end of the rink */
-  .hud-row{max-width:calc(100vw - 2*var(--gut) - 158px)}
+  :is(.hud-row,.away){max-width:calc(100vw - 2*var(--gut) - 158px)}
   .headpanel{top:calc(var(--gut) + 68px);width:148px;border-radius:6px;background:rgba(19,27,23,.9)}
   .hp-head{position:absolute;top:4px;right:4px;padding:0;border:0;z-index:1}
   .hp-head h2{display:none}
@@ -525,6 +526,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   /* and below the practice tools, which sit where the messages would */
   #app:has(#practiceBar:not([hidden])) .toast{top:calc(var(--gut) + 112px + var(--pr-h, 0px))}
   #app.coaching:has(#practiceBar:not([hidden])) .toast{top:calc(var(--gut) + 112px + max(var(--coach-h, 0px), var(--pr-h, 0px)))}
+  #app:has(#awayBox:not([hidden])) .toast{top:calc(var(--gut) + 112px + var(--aw-h, 0px))}
   .grid2{grid-template-columns:1fr;gap:10px}
   .sum{grid-template-columns:1fr}
   #sumCanvas{width:100%;height:220px}
@@ -619,6 +621,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         </button>
         <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
       </div>
+      <div class="away panel" id="awayBox" role="alert" hidden><div class="kicker">Opponent disconnected</div><div class="aw-t" id="awayT"></div><div class="aw-n num" id="awayN"></div><div class="aw-d" id="awayD"></div><div class="aw-bar"><i id="awayBar"></i></div></div>
     </div>
     <div class="top-actions">
       <button class="netchip panel qmchip" id="qmChip" hidden title="Looking for a quick match"><span class="dot"></span><span class="ntx" id="qmTxt">Looking for a game</span></button>
@@ -653,7 +656,6 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <div class="banner" id="banner" aria-hidden="true"><div class="kicker" id="bnK"></div><div class="bn" id="bnT"></div><div class="bs" id="bnS"></div></div>
   <div class="toast panel" id="toast" role="status" aria-live="polite"></div>
-  <div class="away panel" id="awayBox" role="alert" hidden><div class="kicker">Opponent disconnected</div><div class="aw-t" id="awayT"></div><div class="aw-n num" id="awayN"></div><div class="aw-d" id="awayD"></div><div class="aw-bar"><i id="awayBar"></i></div></div>
   <div class="notice panel" id="notice" role="dialog" aria-live="polite">
     <div><div class="nt" id="noticeT"></div><div class="nd" id="noticeD"></div></div>
     <button class="btn primary" id="noticeBtn">Continue</button>
@@ -4884,6 +4886,7 @@ $('coMin').onclick = () => { Coach.min = !Coach.min; Coach.render(); };
 $('traceKey').innerHTML = LessonFig.traceKey();
 if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--coach-h', $('coach').offsetHeight + 'px')).observe($('coach'));
 if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--pr-h', $('practiceBar').offsetHeight + 'px')).observe($('practiceBar'));
+if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('--aw-h', $('awayBox').offsetHeight + 'px')).observe($('awayBox'));
 
 // only touch the DOM when the markup really changed (a rewrite restarts animations, such as the flashing dot)
 const setHtml = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
