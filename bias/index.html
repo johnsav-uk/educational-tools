@@ -1067,6 +1067,10 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('bias.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('bias.' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
 };
+/* A game variant: an unlisted page loads its script ahead of this one, and it plays on this green with
+   these bowls and controls. It may paint the green, take over the turns (Game mode 'variant'), the
+   scoreboard, the head view and the menu; see the hooks marked Variant. Null on this page. */
+const Variant = typeof window === 'object' && window.BiasVariant || null;
 
 // ======================= 2. World geometry =======================
 const W = {
@@ -1588,6 +1592,7 @@ const Art = {
     const edge = (x0, y0, x1, y1, gx, gy, gx2, gy2) => { const gr = g.createLinearGradient(X(gx), Y(gy), X(gx2), Y(gy2)); gr.addColorStop(0, 'rgba(10,30,10,.18)'); gr.addColorStop(1, 'rgba(10,30,10,0)'); g.fillStyle = gr; g.fillRect(X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0)); };
     edge(-12.5, 0, 12.5, 0.6, 0, 0, 0, 0.6); edge(-12.5, 35.4, 12.5, 36, 0, 36, 0, 35.4);
     edge(-12.5, 0, -11.9, 36, -12.5, 0, -11.9, 0); edge(11.9, 0, 12.5, 36, 12.5, 0, 11.9, 0);
+    if (Variant && Variant.paintGround) Variant.paintGround(g, X, Y, S);   // markings on the green (absolute frame)
     g.restore();
     // shadows cast by the surrounding trees and hedges (sun from the south-west)
     this.paintShadows(g, X, Y, S);
@@ -3050,6 +3055,14 @@ class GLScene {
           diffuseColor.rgb = mix(diffuseColor.rgb * uGain, uVeil.rgb, uVeil.a); }`);
     };
     const g = new T.Mesh(new T.PlaneGeometry(w, h), m); g.position.set((TEX.X0 + TEX.X1) / 2, (TEX.Y0 + TEX.Y1) / 2, 0); this.world.add(g);
+    // a variant's markings, sharper than the ground texture can hold: a decal just above the grass, under the shadows
+    const dc = Variant && Variant.decal && Variant.decal();
+    if (dc) {
+      const dm = new T.MeshBasicMaterial({ map: this.canvasTex(dc.canvas, { flipY: false }), transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      dm.onBeforeCompile = sh => { Object.assign(sh.uniforms, this.groundWx);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uGain; uniform vec4 uVeil;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb * uGain, uVeil.rgb, uVeil.a);'); };
+      const d = new T.Mesh(new T.PlaneGeometry(dc.w, dc.h), dm); d.position.set(dc.x, dc.y, 0.001); d.renderOrder = 0.5; this.world.add(d);
+    }
     // beyond the texture: plain country, hazed by the fog
     const sh = new T.Shape([new T.Vector2(-6000, -6000), new T.Vector2(6000, -6000), new T.Vector2(6000, 6000), new T.Vector2(-6000, 6000)]);
     sh.holes.push(new T.Path([new T.Vector2(TEX.X0, TEX.Y0), new T.Vector2(TEX.X0, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y1), new T.Vector2(TEX.X1, TEX.Y0)]));
@@ -3620,8 +3633,8 @@ class HeadView {
     this.span = this.span == null || reduced() ? want : this.span + (want - this.span) * Math.min(1, dt * 2.5);
     return this.span;
   }
-  frame(centerY) {
-    const span = this.zoom === 'head' ? (this.span || 3.4) : 6.4, s = this.w / span;
+  frame(centerY, fitD) {   // fitD: a variant's area, this many metres across, kept wholly in view
+    const span = fitD ? fitD * Math.max(1, this.w / this.h) : this.zoom === 'head' ? (this.span || 3.4) : 6.4, s = this.w / span;
     const halfH = this.h / 2 / s;
     const cy = clamp(centerY, 10, W.GREEN_LEN + W.DITCH_W + 0.25 - halfH * 0.8);
     return { s, cx: 0, cy, halfH };
@@ -3633,9 +3646,9 @@ class HeadView {
   draw(o) {
     const g = this.g, w = this.w, h = this.h;
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    const jk = o.jack, centerY = jk ? jk.y + 0.25 : (o.focusY || 31);
+    const jk = o.jack, centerY = o.fit ? o.fit.y : jk ? jk.y + 0.25 : (o.focusY || 31);
     this.fitSpan(jk, o.bodies, o.dt == null ? 1 : o.dt);
-    const f = this.view = this.frame(centerY), T = (x, y) => this.toScreen(f, x, y);
+    const f = this.view = this.frame(centerY, o.fit && o.fit.d), T = (x, y) => this.toScreen(f, x, y);
     // turf
     const wx = Weather.now(), hc = wx ? wx.head || (wx.head = [[47, 90, 51], [91, 82, 65], [125, 112, 90]].map(c => rgba(Weather.grade(wx, c)))) : ['#2f5a33', '#5b5241', '#7d705a'];   // the same light as the main view
     g.fillStyle = hc[0]; g.fillRect(0, 0, w, h);
@@ -3657,6 +3670,8 @@ class HeadView {
     const c0 = T(0, 0); g.strokeStyle = 'rgba(240,236,220,.07)'; g.beginPath(); g.moveTo(c0.x, Math.max(0, d0.y)); g.lineTo(c0.x, h); g.stroke();
     // 2 m mark
     const m2 = T(0, W.GREEN_LEN - 2); if (m2.y > 0 && m2.y < h) { g.strokeStyle = 'rgba(240,236,220,.25)'; g.beginPath(); g.moveTo(m2.x - 6, m2.y); g.lineTo(m2.x + 6, m2.y); g.stroke(); }
+    // a variant's markings: drawn in metres, +y up the panel
+    if (o.underlay) { g.save(); g.translate(T(0, 0).x, T(0, 0).y); g.scale(f.s, -f.s); o.underlay(g, f.s); g.restore(); }
     // jack distance rings
     if (jk) {
       const J = T(jk.x, jk.y);
@@ -3685,6 +3700,7 @@ class HeadView {
       if (b.kind !== 'bowl') continue;
       const A = T(b.x, b.y), r = Math.max(3, b.r * f.s), alpha = b.fade;
       if (A.y < -r || A.y > h + r || A.x < -r || A.x > w + r) continue;
+      if (o.drawBody) { g.globalAlpha = alpha; o.drawBody(g, A, b, r); g.globalAlpha = 1; continue; }   // a variant draws its own marker
       g.globalAlpha = alpha;
       const base = hexRgb(b.colour), hw = r * W.BOWL_WIDTH;
       g.save(); g.translate(A.x, A.y); g.rotate(b.heading || 0);
@@ -4032,7 +4048,7 @@ class Game {
     this.trace = []; this.traceAlpha = 0; this.traceAcc = 0; this.effects = [];
     this.anim = null; this.place = null; this.zoom = false; this.camMode = 'mat';
     this.endNo = 1; this.shot = null; this.jackSpot = null; this.delivered = null; this.seq = [];
-    this.pulse = null; this.handAlpha = 0; this.lastWeights = {}; this.trackY = null;
+    this.pulse = null; this.handAlpha = 0; this.lastWeights = {}; this.trackY = null; this.trackX = 0;
     this.practice = { profileId: store.get('pr.profile', 'dp-pro'), colour: store.get('pr.colour', 'claret'), T: store.get('pr.T', 13), count: 0 };
     this.link = null; this.netReset();
     this.look = false;          // "Go up and look": the camera walks up to stand over the head
@@ -4042,7 +4058,7 @@ class Game {
   note(evt, data) { if (this.ui.coach) this.ui.coach(evt, data); }   // practice events for the guided lesson
   flush() { let n = 0; while (this.timers.length && n++ < 1000) this.timers.shift().fn(); }
   clearTimers() { this.timers.length = 0; this.place = null; this.anim = null; this.aiJob = null; this.aiExec = null; this.aiTurn = false; }
-  isAI(side) { return !!this.ai && this.mode === 'match' && side === this.ai.side; }
+  isAI(side) { return !!this.ai && (this.mode === 'match' || this.mode === 'variant') && side === this.ai.side; }
   // Online, the other seat's turns are played from its messages; local inputs are locked as for the computer.
   get remoteTurn() { return !!this.link && this.mode === 'match' && !!this.turn && this.turn.player !== this.link.seat; }
   get locked() { return !!this.aiTurn || this.remoteTurn; }
@@ -4061,7 +4077,7 @@ class Game {
   }
   weightKey(kind, side, mi) { return kind + side + '.' + (mi || 0); }
   liveBodies() { return this.world.bodies.filter(b => !b.dead); }
-  endLabel() { if (this.mode === 'puzzle') return '“Over to You, Skip!”'; if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
+  endLabel() { if (this.mode === 'puzzle') return '“Over to You, Skip!”'; if (this.mode === 'variant') return this.variant.label(); if (this.mode !== 'match') return 'Practice'; return (this.isExtraEnd() ? 'Extra end' : 'End ' + this.endNo) + (this.match.replay ? ' · replayed' : ''); }
   isExtraEnd() { return !!this.match && this.match.format.type === 'ends' && this.endNo > this.match.format.n; }
 
   // ---------- starting play ----------
@@ -4116,6 +4132,19 @@ class Game {
     this.ui.banner('“Over to You, Skip!”', pz.title, 'One bowl to save the end');
     this.snapCam = true;
   }
+  /* A variant (see Variant): no jack, and the variant's own turns. cfg: players [{ name, profileId, colour }],
+     T (green speed), ai (a level id: the computer plays the second side), v (the variant's game, which
+     gets begin, banner, resolveBowl, aiPlan and label calls). It starts play with v.begin(). */
+  startVariant(cfg) {
+    this.clearTimers(); this.mode = 'variant'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.link = null; this.netReset();
+    this.variant = cfg.v;
+    this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, score: 0, played: 0, members: [{ name: p.name, role: '', played: 0, hand: 'fore', aim: 0 }] }));
+    this.world.setGreenSpeed(cfg.T);
+    if (cfg.ai) { const L = aiLevel(cfg.ai); this.ai = { side: 1, level: L, est: { T: clamp(cfg.T + aiGauss() * L.greenSD, 10, 17), biasF: 1 + aiGauss() * L.biasSD } }; }
+    else this.ai = null;
+    this.resetEndState(); this.snapCam = true;
+    this.variant.begin();
+  }
   resetEndState() {
     this.world.clear(); this.trace = []; this.traceAlpha = 0; this.effects = []; this.matRear = W.MAT_MIN;
     this.shot = null; this.jackSpot = null; this.place = null; this.anim = null; this.delivered = null; this.seq = [];
@@ -4150,7 +4179,8 @@ class Game {
     this.turn = { kind: 'bowl', player: p, member: mi }; this.hand = mb.hand; this.aim = mb.aim; this.weight = 0; this.charge = null;
     this.phase = 'aim'; this.camMode = 'mat'; this.pulse = 0;
     this.ui.refresh();
-    if (this.mode === 'match') {
+    if (this.mode === 'variant') { this.variant.banner(p, mi); if (this.isAI(p)) this.aiStart(); }
+    else if (this.mode === 'match') {
       const left = this.match.discipline.bowls - mb.played, tail = `${left} bowl${left === 1 ? '' : 's'} to play`;
       if (this.isTeams()) this.ui.banner(this.endLabel(), mb.name, `${pl.name} ${mb.role.toLowerCase()} · ${tail}`);
       else this.ui.banner(this.endLabel(), pl.name, tail);
@@ -4215,7 +4245,7 @@ class Game {
     this.world.add(b);
     this.world.launch(b, p.x, p.y, p.aim, p.speed, p.side, p.prof);
     this.delivered = b; this.trace = [{ x: p.x, y: p.y }]; this.traceAlpha = 1; this.traceAcc = 0; this.traceHold = 0;
-    this.phase = 'rolling'; this.acc = 0; this.camMode = 'follow'; this.trackY = p.y;
+    this.phase = 'rolling'; this.acc = 0; this.camMode = 'follow'; this.trackY = p.y; this.trackX = p.x;
     Sound.release();
     this.ui.refresh();
     if (this.instant && this.link) { this.world.runUntilRest(); this.handleEvents(); this.onRest(); }
@@ -4299,6 +4329,7 @@ class Game {
   }
   *aiPlan() {
     const L = this.ai.level, t = this.turn, me = t.player, T = this.ai.est.T, arm = Settings.arm;
+    if (this.mode === 'variant') return yield* this.variant.aiPlan(L, T, arm);
     if (t.kind === 'jack') {
       const rel = releasePoint(this.matRear, 'fore', arm), len = (L.tactics ? 25 : 24.4) + aiRand() * 6;
       const s = this.AIjack = AI.solveDraw(null, T, 0, rel, { x: 0, y: Math.min(this.matFront + len, W.GREEN_LEN - 2.4) }); yield;
@@ -4390,6 +4421,7 @@ class Game {
   }
   resolveBowl() {
     if (this.mode === 'puzzle') { this.resolvePuzzle(); return; }
+    if (this.mode === 'variant') { this.variant.resolveBowl(); return; }
     const w = this.world, d = this.delivered, pl = this.players[this.turn.player];
     const { dead, jackDead } = Rules.afterDelivery(w.bodies, d, this.matFront);
     pl.played++; pl.members[this.turn.member || 0].played++; if (this.mode === 'practice') this.practice.count++;
@@ -4662,7 +4694,7 @@ class Game {
       this.handleEvents();
       let fastest = null, fv = 0;
       for (const b of this.world.bodies) if (b.state === 'moving') { const v = b.speed(); if (b === this.delivered) { fastest = b; break; } if (v > fv) { fv = v; fastest = b; } }
-      if (fastest) this.trackY = fastest.y;
+      if (fastest) { this.trackY = fastest.y; this.trackX = fastest.x; }
       const dv = this.delivered && this.delivered.state === 'moving' ? this.delivered.speed() : 0;
       Sound.roll(dv / 5);
       if (!this.world.anyMoving()) this.onRest();
@@ -4981,7 +5013,7 @@ const UI = {
 
   refresh() {
     const g = game, inGame = g.mode !== 'title';
-    const noMeasure = g.mode === 'match' || g.mode === 'puzzle';   // measured only once the end is over
+    const noMeasure = g.mode === 'match' || g.mode === 'puzzle' || g.mode === 'variant';   // measured only once the end is over (a variant has no jack)
     $('hpMeasure').hidden = noMeasure; if (noMeasure && this.measuring) toggleMeasureNow();
     $('scoreboard').style.display = inGame ? '' : 'none';
     $('controls').style.display = inGame ? '' : 'none';
@@ -5037,6 +5069,7 @@ const UI = {
   },
   renderScoreboard() {
     const g = game, sb = $('scoreboard');
+    if (g.mode === 'variant') { setHtml(sb, g.variant.scoreboard()); return; }
     if (g.mode === 'puzzle') {
       const left = 1 - g.players[0].played, them = g.players[1];
       setHtml(sb, `<div class="sb-cell"><div class="kicker">“Over to You, Skip!”</div><div class="sb-big">${left ? 'Last bowl' : 'Played'}</div></div>
@@ -5079,6 +5112,13 @@ const UI = {
     if (moving && headView.view) { const f = headView.view; if (moving.y < f.cy - f.halfH) incoming = { x: moving.x }; }
     this.measure = this.measure.filter(id => g.world.bodies.some(b => b.id === id && !b.dead));
     const approach = g.turn && g.turn.kind === 'bowl' && (g.phase === 'aim' || g.phase === 'charge') ? { side: biasSide(g.hand, Settings.arm), hand: g.hand } : null;
+    if (g.mode === 'variant') {   // the variant frames the panel on its markings and writes the readouts
+      const v = g.variant, hv = v.head(headView.zoom);
+      headView.draw({ bodies, jack: null, fit: hv.fit, underlay: hv.underlay, drawBody: hv.drawBody, incoming, dt });
+      const key = hv.k1 + hv.v1 + hv.k2 + hv.v2 + hv.note;
+      if (key !== this.lastStats) { this.lastStats = key; $('hpShot').previousElementSibling.textContent = hv.k1; $('hpShot').textContent = hv.v1; $('hpNearK').textContent = hv.k2; $('hpNear').textContent = hv.v2; $('hpNote').textContent = hv.note; }
+      return;
+    }
     headView.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, nearestId: (g.mode === 'match' || sc.ranked.length) && !closeCall(sc) ? nearest : null, approach, measure: this.measuring ? this.measure : null, incoming, jackFrom: g.jackFrom, dt, pulse: 1 - this.pulseT, focusY: Math.min(g.matFront + 27, 33) });
     // text readouts (only when they change)
     // in a match nothing is measured until the end is over: shot by eye, and the bowls still to play
@@ -5183,7 +5223,8 @@ function updateCamera(dt, snap) {
   } else {
     // an upright phone stands a little closer behind the mat (with a longer lens, see baseF), so the mat sits
     // down under the Hold button, as it does on a wide screen, rather than halfway up the green
-    const tall = scene.tall(), z0 = CAM.z, camY = game.matFront - (tall ? CAM.backTall : CAM.back);
+    const eye = Variant && Variant.eye;   // a variant may stand the bowler's view higher, to see its markings
+    const tall = scene.tall(), z0 = eye ? eye.z : CAM.z, camY = game.matFront - (eye ? eye.back : tall ? CAM.backTall : CAM.back);
     const rel = releasePoint(game.matRear, game.hand, Settings.arm);
     const relY = tall ? layout.ctrlTop + Hd * 0.02 : Math.min(Hd * 0.80, layout.ctrlTop - Hd * 0.05);
     // keep the release point clear of the controls, the horizon no lower than a third of the way down,
@@ -5208,7 +5249,8 @@ function updateCamera(dt, snap) {
       const maxY = jy == null ? camY : Math.max(camY, Math.min(jy - 6.2, W.GREEN_LEN - 7.6));
       const y = rm ? (jy != null && game.trackY > (game.matFront + jy) / 2 ? maxY : camY) : clamp(game.trackY - 6.6, camY, maxY), k = clamp((y - camY) / Math.max(1, maxY - camY), 0, 1);
       const z = lerp(z0, 1.9, k), lookY = lerp(rel.y, jy ?? rel.y, k), sy = lerp(relY, Hd * 0.6, k);
-      tgt = { x: 0, y, z, F: F0, pitch: Math.min(tiltMax, bankCap(y, z, F0, Hd), pitchFor(y, z, F0, lookY, sy, Hd)) }; rate = 2.2;
+      const x = eye && eye.followX ? clamp(game.trackX * k, -eye.followX, eye.followX) : 0;   // a variant's wide markings: the camera slides across with the bowl as it climbs
+      tgt = { x, y, z, F: F0, pitch: Math.min(tiltMax, bankCap(y, z, F0, Hd), pitchFor(y, z, F0, lookY, sy, Hd)) }; rate = 2.2;
     }
   }
   if (game.snapCam) { snap = true; game.snapCam = false; }
@@ -5988,6 +6030,7 @@ $('onFmt').innerHTML = $('fmt').innerHTML; $('onGreen').innerHTML = $('greenMode
 
 // Title & in-game menu
 function showTitle() {
+  if (Variant) { Variant.menu(); return; }   // a variant has its own menu
   const inGame = game.mode !== 'title';
   showMainMenu();
   // the one primary action: back to the game when one is going, otherwise Play
@@ -6565,6 +6608,13 @@ Art.build();
 game.showcase();
 UI.refresh();
 onResize();
+if (Variant) {   // a variant's page: its own menu, and none of the main game's links, lobby or puzzle
+  UI.close('titleScrim');
+  Variant.install({ game, UI, W, Rules, AI, Body, GreenSpeed, Weight, Profiles, PROFILE_DEFAULTS, releasePoint, biasSide, meterFor, aiGauss, aiRand: () => aiRand(),
+    AI_LEVELS, Settings, Sound, store, esc, colourHex, COLOURS, fmtDist, reduced, clamp, DEG, $ });
+  requestAnimationFrame(t => { last = t; frame(t); });
+  return;
+}
 showTitle();
 requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classList.remove('instant')));
 { // a link with ?room= joins that room; a reload during an online game rejoins it
