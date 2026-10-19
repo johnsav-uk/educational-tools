@@ -6,6 +6,7 @@
     { "n": 2, "date": "2026-10-16", "id": "rain-on-the-green", "title": "Rain on the green", "theme": "wick the jack", "green": 10.5, "conditions": "rain" },
     { "n": 3, "date": "2026-10-17", "id": "the-long-jack", "title": "The long jack", "theme": "last wood", "green": 14.5, "conditions": "" },
     { "n": 4, "date": "2026-10-18", "id": "rest-on-the-shot", "title": "Rest on the shot", "theme": "yard on", "green": 12, "conditions": "" },
-    { "n": 5, "date": "2026-10-19", "id": "short-and-wide", "title": "Short and wide", "theme": "draw the shot", "green": 13, "conditions": "" }
+    { "n": 5, "date": "2026-10-19", "id": "short-and-wide", "title": "Short and wide", "theme": "draw the shot", "green": 13, "conditions": "" },
+    { "n": 6, "date": "2026-10-20", "id": "skip-0006", "title": "Red lying one, fast green", "theme": "draw the shot", "green": 15, "conditions": "sunshine" }
   ]
 }
