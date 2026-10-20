@@ -988,7 +988,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <li><b>Improper jack.</b> If the jack is not delivered properly, the opponent may move the mat and then re-delivers the jack, but the original player still bowls first. If the second attempt also fails, the jack is placed on the centre line 2 m from the front ditch, with the mat left where it is.</li>
         <li><b>Touchers.</b> A bowl that touches the jack during its original course (including after hitting another bowl) is a toucher and is chalked. Touchers that reach the front ditch stay live and are measured where they lie.</li>
         <li><b>Dead bowls.</b> A bowl is dead and removed if it enters the ditch without being a toucher, comes to rest wholly outside the rink boundary, leaves the green, or (when delivered) finishes less than 14 m from the front of the mat.</li>
-        <li><b>The jack in play.</b> A jack knocked into the front ditch within the rink stays live. If it is driven out of the rink, over the side boundary, or rebounds to within 20 m of the mat, the end is dead and is replayed in the same direction by the same leader. No shots are scored.</li>
+        <li><b>The jack in play.</b> A jack knocked into the front ditch within the rink stays live. If it is driven out of the rink, over the side boundary, or rebounds to within 20 m of the mat, it is re-spotted on the T (the centre line, 2 m from the front ditch; just in front of a bowl lying there, touching it) and the end carries on. There are no dead ends.</li>
+        <li><b>Firing.</b> Until a bowler has played two woods in the end, the weight meter turns back at draw weight: enough to run a yard past the front ditch on that green, never enough to fire. After that it runs on into the red firing band, speeding up as it goes, and bounces off full weight.</li>
         <li><b>Scoring.</b> When all eight bowls are played, the player with the nearest live bowl scores one shot for each of their bowls nearer the jack than the opponent's nearest. Distances are measured edge to edge in world space. If the two nearest opposing bowls are within 0.5 mm, the end is drawn and no shots are scored.</li>
         <li><b>Green speed.</b> A match is played at one green speed, from 11 s (heavy) to 16 s (very fast). It can be chosen, drawn at random for each match, or drawn at random and kept secret until the match ends.</li>
         <li><b>Next end.</b> The winner of an end leads the next; after a drawn end the same player leads again. Each end is played in the opposite direction, from a fresh mat.</li>
@@ -1367,15 +1368,17 @@ const Rules = {
     if (jack.y > limit) return { ok: true, moved: true, y: limit };
     return { ok: true, moved: false, y: jack.y };
   },
-  // Evaluated once everything is at rest after a delivery.
+  /* Evaluated once everything is at rest after a delivery. A jack knocked out of play (out of the rink,
+     over the side boundary, or back to within 20 m of the mat) does not kill the end: jackOut says why,
+     and the caller re-spots it (respot) before the head is counted. */
   afterDelivery(bodies, delivered, matFront) {
-    const dead = []; let jackDead = null;
+    const dead = []; let jackOut = null;
     for (const b of bodies) {
       if (b.dead) continue;
       if (b.kind === 'jack') {
-        if (b.state === 'ditch') { if (b.ditch !== 'front' || !this.insideRink(b)) jackDead = 'The jack was driven out of the rink.'; }
-        else if (!this.insideRink(b)) jackDead = 'The jack was knocked over the side boundary.';
-        else if (this.fromMat(b, matFront) < W.JACK_REBOUND_MIN) jackDead = 'The jack rebounded to within 20 m of the mat.';
+        if (b.state === 'ditch') { if (b.ditch !== 'front' || !this.insideRink(b)) jackOut = 'The jack was driven out of the rink.'; }
+        else if (!this.insideRink(b)) jackOut = 'The jack was knocked over the side boundary.';
+        else if (this.fromMat(b, matFront) < W.JACK_REBOUND_MIN) jackOut = 'The jack rebounded to within 20 m of the mat.';
         continue;
       }
       let why = null;
@@ -1387,8 +1390,20 @@ const Rules = {
       else if (b === delivered && this.fromMat(b, matFront) < W.BOWL_MIN) why = 'It did not travel the minimum 14 m.';
       if (why) dead.push({ b, why });
     }
-    return { dead, jackDead };
+    return { dead, jackOut };
   },
+  /* Where a jack knocked out of play is re-spotted: the T, on the centre line 2 m from the front ditch.
+     If a bowl lies there, the jack goes just in front of it (on the mat side), touching it. */
+  respotSpot(bodies) {
+    let y = W.GREEN_LEN - W.JACK_DITCH_MIN;
+    for (let k = 0; k < 12; k++) {
+      const hit = bodies.filter(b => b.kind === 'bowl' && !b.dead && b.state !== 'ditch' && Math.hypot(b.x, b.y - y) < b.r + W.JACK_R);
+      if (!hit.length) break;
+      y = Math.min(...hit.map(b => b.y - Math.sqrt(Math.max(0, (b.r + W.JACK_R) ** 2 - b.x * b.x)))) - 1e-4;
+    }
+    return { x: 0, y };
+  },
+  respot(jack, bodies) { const to = this.respotSpot(bodies); jack.state = 'rest'; jack.ditch = null; jack.place(to.x, to.y); return to; },
   score(bodies, jack) {
     const ranked = bodies.filter(b => b.kind === 'bowl' && !b.dead)
       .map(b => ({ b, d: jack ? this.dist(b, jack) : Infinity, scores: false }))
@@ -4012,7 +4027,46 @@ const aiLevel = id => AI_LEVELS.find(l => l.id === id) || AI_LEVELS[1];
 let aiRand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
 const aiGauss = () => { let u = 0; while (u === 0) u = aiRand(); const v = aiRand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
 const DEG = Math.PI / 180;
-const SWING_T = 1.9;   // seconds for the swing meter to run from nothing to full weight
+const SWING_T = 1.9;   // seconds for the swing meter to run from nothing to full weight (at its draw speed)
+/* The swing meter's motion, as a function of how long the button has been held. rule: { cap, fire }.
+   cap is the most weight a draw may take: enough to run a yard past the front ditch on this green.
+   Until a bowler has played two woods (Game.meterRule) the meter turns back at the cap, so nobody can
+   fire at a bare jack. Once firing is open the meter runs on past the cap and speeds up the further it
+   goes (to K + 1 times its draw speed at full weight), then bounces off the top a few times before it
+   falls away, so full weight is a split-second target. Time is measured along the way up: up(t) is the
+   weight after t seconds of rising, and time(w) its inverse, so every leg of the swing is closed form. */
+const Meter = {
+  K: 8, BOUNCES: [0.10, 0.05, 0.025],
+  rate(w, rule) { if (!rule.fire || w <= rule.cap) return 1; const s = (w - rule.cap) / (1 - rule.cap); return 1 + this.K * s * s; },   // speed ÷ draw speed
+  time(w, rule) {
+    const v0 = 1 / SWING_T, c = rule.cap;
+    if (!rule.fire || w <= c) return w / v0;
+    const rk = Math.sqrt(this.K); return c / v0 + (1 - c) / (v0 * rk) * Math.atan(rk * (w - c) / (1 - c));
+  },
+  up(t, rule) {
+    const v0 = 1 / SWING_T, c = rule.cap;
+    if (t <= c / v0) return t * v0;
+    if (!rule.fire) return c;
+    const rk = Math.sqrt(this.K), a = Math.min(Math.atan(rk), (t - c / v0) * v0 * rk / (1 - c));
+    return c + (1 - c) * Math.tan(a) / rk;
+  },
+  legs(rule) {
+    if (!rule.fire) return [[0, rule.cap], [rule.cap, 0]];
+    const k = Math.min(1, (1 - rule.cap) / 0.2), out = [[0, 1]];
+    for (const a of this.BOUNCES) out.push([1, 1 - a * k], [1 - a * k, 1]);
+    out.push([1, 0]); return out;
+  },
+  at(t, rule) {
+    const legs = this.legs(rule), span = legs.map(([a, b]) => Math.abs(this.time(b, rule) - this.time(a, rule))), cycle = span.reduce((x, y) => x + y, 0);
+    t %= cycle;
+    for (let i = 0; i < legs.length; i++) {
+      if (t > span[i] && i < legs.length - 1) { t -= span[i]; continue; }
+      const [a, b] = legs[i], ta = this.time(a, rule);
+      return clamp(this.up(b > a ? ta + t : ta - t, rule), 0, 1);
+    }
+    return 0;
+  }
+};
 function meterFor(speed) {
   if (speed >= Weight.toSpeed(1)) return 1;
   let lo = 0, hi = 1; for (let i = 0; i < 34; i++) { const m = (lo + hi) / 2; if (Weight.toSpeed(m) < speed) lo = m; else hi = m; }
@@ -4059,9 +4113,9 @@ const AI = {
   },
   // how good the head is for side `me` after the shot; `posW` weighs position (who is nearer) against shots
   value(w, delivered, matFront, me, holdingBefore, posW = 1) {
-    const { dead, jackDead } = Rules.afterDelivery(w.bodies, delivered, matFront);
+    const { dead, jackOut } = Rules.afterDelivery(w.bodies, delivered, matFront);
     for (const e of dead) e.b.dead = true;
-    if (jackDead) return holdingBefore ? -2.5 : 0.4;            // a dead end is replayed: good only when losing
+    if (jackOut) Rules.respot(w.jack, w.bodies);                 // the end goes on with the jack on the T
     const sc = Rules.score(w.bodies.filter(b => !b.dead), w.jack);
     let v = sc.winner === me ? sc.shots : sc.winner == null ? 0 : -sc.shots;
     const own = sc.ranked.find(e => e.b.owner === me), opp = sc.ranked.find(e => e.b.owner !== me);
@@ -4204,7 +4258,7 @@ class Game {
     // the computer's reading of the green starts out wrong by an amount that depends on its standard
     if (cfg.ai) { const L = aiLevel(cfg.ai); this.ai = { side: 1, level: L, est: { T: clamp(cfg.T + aiGauss() * L.greenSD, 10, 17), biasF: 1 + aiGauss() * L.biasSD } }; }
     else this.ai = null;
-    this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, deadEnds: 0,
+    this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, respots: 0,
       // for Your record (see Record): what kind of match it counts as (none: two people on one screen), and its id
       kind: cfg.league ? 'league' : cfg.link ? 'online' : cfg.ai ? 'computer' : null, id: cfg.matchId || Record.newId() };
     this.startEnd(false); this.snapCam = true;
@@ -4306,6 +4360,21 @@ class Game {
   }
   canMoveMat() { return this.phase === 'aim' && !this.locked && this.turn && this.turn.kind === 'jack' && (this.mode === 'practice' || this.match.jackAttempt <= 1); } // leader, then the opponent on a re-delivery
   moveMat(d) { if (!this.canMoveMat()) return; this.matRear = clamp(Math.round((this.matRear + d) * 4) / 4, W.MAT_MIN, W.MAT_MAX); this.ui.refresh(); }
+  /* The meter's rule for this delivery (see Meter), or null for a variant, which keeps the plain swing.
+     Firing opens once the bowler on the mat has played two woods this end; in practice and in the daily
+     puzzle (the last bowl of an end) it is always open. A jack is never fired. */
+  meterRule() {
+    if (this.mode === 'variant' || !this.turn) return null;
+    const rel = releasePoint(this.matRear, 'fore', Settings.arm), gp = GreenSpeed.params(this.world.T);
+    const cap = Math.min(1, meterFor(GreenSpeed.speedFor(W.GREEN_LEN + 1 - rel.y, gp)));
+    return { cap, fire: cap < 0.99 && this.canFire() };
+  }
+  canFire() {
+    const t = this.turn; if (!t || t.kind !== 'bowl') return false;
+    if (this.mode !== 'match') return true;
+    return this.players[t.player].members[t.member || 0].played >= 2;
+  }
+  meterAt(t) { const rule = this.meterRule(); if (rule) return Meter.at(t, rule); const u = (t / SWING_T) % 2; return u <= 1 ? u : 2 - u; }
   startCharge() { if (this.phase !== 'aim' || this.locked || this.look) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
   cancelCharge(msg) { if (this.phase !== 'charge' || this.locked) return; this.phase = 'aim'; this.charge = null; this.weight = 0; if (msg) this.ui.toast(msg); this.ui.refresh(); }
   releaseCharge() {
@@ -4323,6 +4392,7 @@ class Game {
     };
   }
   deliver(weight) {
+    const rule = this.meterRule(); if (rule && !rule.fire) weight = Math.min(weight, rule.cap);   // no firing before two woods, whatever the input
     const p = this.deliveryParams(weight); p.matRear = this.matRear;
     if (this.link && this.mode === 'match') { const n = ++this.deliveryNo; this.link.send({ t: 'deliver', n, p }, true); }
     this.startDelivery(p);
@@ -4403,7 +4473,9 @@ class Game {
   }
   aiApplyScatter(plan) {
     const L = this.ai.level;
-    return { hand: plan.hand, aim: clamp(plan.aim + aiGauss() * L.aimSD * DEG, -0.45, 0.45), weight: clamp(plan.weight + aiGauss() * L.wSD, 0, 1) };
+    // the weight scatter grows where the meter runs faster (Meter.rate): the computer times its release no better there than anyone
+    const rule = this.meterRule(), top = rule && !rule.fire ? rule.cap : 1, k = rule ? Meter.rate(plan.weight, rule) : 1;
+    return { hand: plan.hand, aim: clamp(plan.aim + aiGauss() * L.aimSD * DEG, -0.45, 0.45), weight: clamp(plan.weight + aiGauss() * L.wSD * k, 0, top) };
   }
   aiPlaySync() { // tests: the same plan and scatter, without animation
     let r; do { r = this.aiJob.next(); } while (!r.done);
@@ -4423,7 +4495,7 @@ class Game {
       this.aim = lerp(x.from, x.to, easeInOut(x.t / x.dur)); this.ui.refreshAim();
       if (x.t >= x.dur) { this.aim = x.to; x.stage = 'charge'; x.t = 0; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.pulse = reduced() ? null : 0; this.ui.refresh(); }
     } else if (x.stage === 'charge') {
-      this.weight = Math.min(x.weight, x.t / SWING_T);
+      const rule = this.meterRule(); this.weight = Math.min(x.weight, rule ? Meter.up(x.t, rule) : x.t / SWING_T);
       if (this.weight >= x.weight) { this.aiExec = null; this.aiTurn = false; this.deliver(x.weight); }
     }
   }
@@ -4438,11 +4510,11 @@ class Game {
     const base = Profiles.byId(this.players[me].profileId), prof = { G: base.G * this.ai.est.biasF, late: base.late };
     const jack = this.world.jack, sc0 = Rules.score(this.liveBodies(), jack), holding = sc0.winner === me;
     const jt = jack.state === 'ditch' ? { x: clamp(jack.x, -2.2, 2.2), y: W.GREEN_LEN - 0.35 } : { x: jack.x, y: jack.y - 0.07 };
-    const gp = GreenSpeed.params(T), cands = [], sit = this.aiSituation(me);
+    const gp = GreenSpeed.params(T), cands = [], sit = this.aiSituation(me), rule = this.meterRule(), top = rule.fire ? 1 : rule.cap;
     const hands = L.tactics === 0 ? [aiRand() < 0.65 ? 'fore' : 'back'] : ['fore', 'back'];
     for (const hand of hands) {
       const rel = releasePoint(this.matRear, hand, arm), sd = biasSide(hand, arm);
-      const add = (type, plan) => cands.push({ type, hand, aim: plan.aim, weight: meterFor(plan.speed) });
+      const add = (type, plan) => cands.push({ type, hand, aim: plan.aim, weight: Math.min(top, meterFor(plan.speed)) });
       const past = (pt, extra) => GreenSpeed.speedFor(Math.hypot(pt.x - rel.x, pt.y - rel.y) + extra, gp);
       add('draw', AI.solveDraw(prof, T, sd, rel, jt)); yield;
       if (L.tactics >= 3) for (const dx of [-0.16, 0.16]) { add('draw', AI.solveDraw(prof, T, sd, rel, { x: jt.x + dx, y: jt.y + 0.04 })); yield; }
@@ -4457,7 +4529,7 @@ class Game {
           add('back', AI.solveDraw(prof, T, sd, rel, { x: jt.x, y: Math.min(jt.y + 0.8, W.GREEN_LEN - 0.4) })); yield;
         }
       }
-      if ((L.tactics >= 3 || (L.tactics >= 2 && sit.risk > 0)) && sc0.winner != null && !holding && sc0.shots >= 2) { add('drive', AI.solveThrough(prof, T, sd, rel, jack, Weight.toSpeed(0.96))); yield; }
+      if (rule.fire && (L.tactics >= 3 || (L.tactics >= 2 && sit.risk > 0)) && sc0.winner != null && !holding && sc0.shots >= 2) { add('drive', AI.solveThrough(prof, T, sd, rel, jack, Weight.toSpeed(0.96))); yield; }
     }
     if (L.samples === 0 || cands.length === 1) return cands[0];
     let best = null;
@@ -4465,7 +4537,7 @@ class Game {
       const rel = releasePoint(this.matRear, c.hand, arm), noisy = L.samples > 1 ? 1 : 0, vals = [];
       for (let k = 0; k < L.samples; k++) {
         const w = AI.clone(this.world, T), b = w.add(new Body('bowl', me));
-        const aim = c.aim + noisy * aiGauss() * L.aimSD * DEG, wgt = clamp(c.weight + noisy * aiGauss() * L.wSD, 0, 1);
+        const aim = c.aim + noisy * aiGauss() * L.aimSD * DEG, wgt = clamp(c.weight + noisy * aiGauss() * L.wSD * Meter.rate(c.weight, rule), 0, top);
         w.launch(b, rel.x, rel.y, aim, Weight.toSpeed(wgt), biasSide(c.hand, arm), prof); w.runUntilRest();
         vals.push(AI.value(w, b, this.matFront, me, holding, sit.posW)); yield;
       }
@@ -4523,7 +4595,7 @@ class Game {
     if (this.mode === 'puzzle') { this.resolvePuzzle(); return; }
     if (this.mode === 'variant') { this.variant.resolveBowl(); return; }
     const w = this.world, d = this.delivered, pl = this.players[this.turn.player];
-    const { dead, jackDead } = Rules.afterDelivery(w.bodies, d, this.matFront);
+    const { dead, jackOut } = Rules.afterDelivery(w.bodies, d, this.matFront);
     pl.played++; pl.members[this.turn.member || 0].played++; if (this.mode === 'practice') this.practice.count++;
     this.seq.push(this.turn.player); if (this.mode === 'match') this.orderIdx++;
     for (const e of dead) this.killBowl(e.b, e.why);
@@ -4532,7 +4604,22 @@ class Game {
     else if (dead.length) this.ui.toast(`${dead.length} bowl${dead.length > 1 ? 's' : ''} knocked out of play.`, 'warn');
     else if (d && d.toucher) this.ui.toast(d.state === 'ditch' ? 'Toucher in the ditch: chalked and still live.' : 'Toucher: the bowl is chalked.', 'good');
     this.phase = 'between';
-    if (jackDead) { this.after(1.0, () => this.jackDeadFlow(jackDead)); return; }
+    if (jackOut) { this.after(this.instant ? 0 : 1.0, () => this.respotJack(jackOut, () => this.afterBowl(dead, selfDead, true))); return; }
+    this.afterBowl(dead, selfDead, false);
+  }
+  /* A jack knocked out of play is re-spotted on the T (Rules.respot) and the end goes on: no dead ends,
+     so driving the jack out never wipes the head. It slides there the way a placed jack does. */
+  respotJack(reason, done) {
+    const w = this.world, jack = w.jack, to = Rules.respotSpot(w.bodies);
+    if (this.match) this.match.respots++; this.drops.delete(jack); jack.state = 'rest'; jack.ditch = null;
+    this.ui.toast(reason.replace(/\.$/, '') + ': re-spotted on the T.', 'warn');
+    this.phase = 'placing';
+    if (this.instant || reduced()) { jack.place(to.x, to.y); done(); return; }
+    this.place = { t: 0, dur: 0.9, from: { x: jack.x, y: jack.y }, to, done };
+  }
+  afterBowl(dead, selfDead, respotted) {
+    const w = this.world, d = this.delivered, pl = this.players[this.turn.player];
+    this.phase = 'between';
     const sc = Rules.score(this.liveBodies(), w.jack);
     if (this.mode === 'match' && sc.winner != null && sc.winner !== this.shot) {
       this.ui.pulseHead();
@@ -4544,7 +4631,7 @@ class Game {
     const shotChanged = this.mode === 'match' && sc.winner != null && sc.winner !== this.shot;
     const who = this.mode === 'match' ? (this.isTeams() ? pl.members[this.turn.member || 0].name : pl.name) + ': ' : '';
     const jk = w.jack, live = d && !selfDead && jk && jk.state === 'rest', close = live && d.state === 'rest' ? Rules.dist(d, jk) : Infinity;
-    const jackMoved = jk && this.jackFrom ? Math.hypot(jk.x - this.jackFrom.x, jk.y - this.jackFrom.y) : 0;
+    const jackMoved = jk && this.jackFrom && !respotted ? Math.hypot(jk.x - this.jackFrom.x, jk.y - this.jackFrom.y) : 0;
     const nearMiss = this.deliveredWeight > Weight.DRIVE_AT && !this.deliveredHit && this.missBy < 0.12;
     if (nearMiss) { this.reward(0); Sound.gasp(typeof Art !== 'undefined' ? Art.crowdN : 2); }
     if (live && d.toucher) this.reward(2, d);
@@ -4606,13 +4693,6 @@ class Game {
   }
   nextInOrder() { const [side, mi] = this.order[this.orderIdx]; this.beginBowl(side, mi); }
   killBowl(b, why) { b.dead = true; b.deadReason = why; if (this.instant) this.world.remove(b); }
-  jackDeadFlow(reason) {
-    if (this.mode === 'practice') { this.promptNotice('Dead jack', reason + ' The head will be cleared.', 'New end', () => this.practiceNewEnd(false)); return; }
-    this.match.deadEnds++;
-    const L = this.isTeams() ? `${this.players[this.match.leader].name}'s lead` : this.players[this.match.leader].name;
-    Sound.chime(false);
-    this.promptNotice('Dead end', `${reason} No shots are scored. The end is replayed in the same direction, and ${L} delivers the jack again.`, 'Replay the end', () => this.startEnd(true));
-  }
   completeEnd() {
     const m = this.match, sc = Rules.score(this.liveBodies(), this.world.jack);
     const rec = { no: this.endNo, extra: this.isExtraEnd(), winner: sc.winner, shots: sc.shots, tie: sc.tie, none: !!sc.none, leader: m.leader, dir: this.dir,
@@ -4782,7 +4862,7 @@ class Game {
     if (this.timers.length) { const due = this.timers.filter(t => t.t <= this.clock); if (due.length) { this.timers = this.timers.filter(t => t.t > this.clock); due.forEach(t => t.fn()); } }
     if (this.ai) this.aiUpdate(dt);
     if (this.link) this.netPump();
-    if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; const u = (this.charge.t / SWING_T) % 2; this.weight = u <= 1 ? u : 2 - u; }
+    if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; this.weight = this.meterAt(this.charge.t); }
     if (this.pulse != null) { this.pulse += dt / 1.1; if (this.pulse >= 1) this.pulse = this.phase === 'charge' && !reduced() ? 0 : null; }
     if (this.anim) {
       this.anim.t += dt;
@@ -5035,11 +5115,12 @@ if (window.ResizeObserver) new ResizeObserver(() => $('app').style.setProperty('
 // only touch the DOM when the markup really changed (a rewrite restarts animations, such as the flashing dot)
 const setHtml = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
 /* The weight ring round the deliver button, a swing meter: 20 segments over 270°, open at the foot,
-   filling clockwise from green to gold; the last fifth (the drive band) is red. A gold tick marks the last weight. */
+   filling clockwise from green to gold; beyond the draw limit for this green (Meter's cap) is the firing
+   band, red, or barely there while firing is still locked. A gold tick marks the last weight. */
 const Ring = {
   N: 20, R: 62, SW: 9, A0: 135, SPAN: 270, w: -1, ghost: undefined, segs: null,
-  colour(f) {
-    const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t)), d = Weight.DRIVE_AT;
+  colour(f, d = Weight.DRIVE_AT) {
+    const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
     const g = [134, 180, 110], y = [226, 209, 132], gold = [201, 168, 98], o = [216, 145, 108], r = [196, 86, 64];
     return `rgb(${f < 0.5 ? mix(g, y, f / 0.5) : f < d ? mix(y, gold, (f - 0.5) / (d - 0.5)) : mix(o, r, (f - d) / (1 - d))})`;
   },
@@ -5054,12 +5135,14 @@ const Ring = {
     s += `<text x="${lx - 4}" y="${ly + 14}" fill="rgba(236,229,210,.7)" ${tx}>0</text><text x="${rx + 4}" y="${ry + 14}" fill="rgba(216,145,108,.9)" ${tx}>MAX</text>`;
     svg.innerHTML = s; this.segs = [...svg.querySelectorAll('path')].slice(1); this.gl = svg.querySelector('.rg-ghost');
   },
-  set(w, ghost) {
+  set(w, ghost, rule) {
     if (!this.segs) this.build();
-    const lit = Math.round(w * this.N * 4) / 4;   // redraw only when a segment changes
+    const d = rule ? rule.cap : Weight.DRIVE_AT, locked = !!rule && !rule.fire;
+    const lit = `${Math.round(w * this.N * 4) / 4}|${locked}|${d}`;   // redraw only when a segment (or the band) changes
     if (lit !== this.w) {
       this.w = lit;
-      this.segs.forEach((p, i) => p.setAttribute('stroke', i / this.N < w - 1e-6 ? this.colour((i + 0.5) / this.N) : (i + 1) / this.N > Weight.DRIVE_AT + 1e-6 ? 'rgba(216,145,108,.42)' : 'rgba(236,229,210,.24)'));
+      this.segs.forEach((p, i) => p.setAttribute('stroke', i / this.N < w - 1e-6 ? this.colour((i + 0.5) / this.N, d)
+        : (i + 1) / this.N > d + 1e-6 ? (locked ? 'rgba(236,229,210,.07)' : 'rgba(216,145,108,.42)') : 'rgba(236,229,210,.24)'));
     }
     if (ghost !== this.ghost) {
       this.ghost = ghost; this.gl.style.display = ghost == null ? 'none' : '';
@@ -5194,8 +5277,11 @@ const UI = {
     const charging = g.phase === 'charge' || g.phase === 'release';
     $('controls').classList.toggle('charging', g.phase === 'charge');
     if (g.phase === 'charge') $('dlT').textContent = 'Release';
-    Ring.set(w, ghost);
-    const html = charging ? `${Math.round(w * 100)}% <span>· ${Weight.toSpeed(w).toFixed(2)} m/s${w > Weight.DRIVE_AT ? ' · drive' : ''}</span>`
+    const rule = g.meterRule();
+    Ring.set(w, ghost, rule);
+    const band = !rule ? (w > Weight.DRIVE_AT ? ' · drive' : '') : w > rule.cap + 1e-6 ? ' · fire'
+      : !rule.fire && t && t.kind === 'bowl' && w > rule.cap - 0.02 ? ' · firing opens after two woods' : '';
+    const html = charging ? `${Math.round(w * 100)}% <span>· ${Weight.toSpeed(w).toFixed(2)} m/s${band}</span>`
       : [this.who ? esc(this.who) : t && t.kind === 'jack' ? 'Jack' : '', ghost != null ? `<span>Last</span> ${Math.round(ghost * 100)}%` : ''].filter(Boolean).join(' <span>·</span> ');
     if (html !== this.wreadHtml) { this.wreadHtml = html; $('weightVal').innerHTML = html; }
   },
@@ -5316,7 +5402,7 @@ const UI = {
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
     const gone = ff && (g.link && ff.seat === g.link.seat ? 'You' : P[ff.seat].name);
     const ffLine = ff ? `${gone} ${ff.why === 'conceded' ? 'conceded' : ff.why === 'left' ? 'left the match' : `lost the connection and ${gone === 'You' ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === (g.link && g.link.seat) ? 'you' : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
-    $('overP').textContent = ffLine + `${m.discipline.name}, ${m.ends.length} end${m.ends.length === 1 ? '' : 's'} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.deadEnds ? `, with ${m.deadEnds} dead end${m.deadEnds > 1 ? 's' : ''} replayed` : ''}.` + teamsLine;
+    $('overP').textContent = ffLine + `${m.discipline.name}, ${m.ends.length} end${m.ends.length === 1 ? '' : 's'} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.respots ? `, with the jack re-spotted ${m.respots === 1 ? 'once' : m.respots === 2 ? 'twice' : m.respots + ' times'}` : ''}.` + teamsLine;
     const head = `<tr><th>${g.isTeams() ? 'Team' : 'Player'}</th>${m.ends.map((e, i) => `<th>${e.extra ? 'X' : i + 1}</th>`).join('')}<th>Total</th></tr>`;
     const row = i => `<tr><td><span class="pip" style="--c:${colourHex(P[i].colour)}"></span>${esc(P[i].name)}</td>${m.ends.map(e => `<td>${e.winner === i ? e.shots : (e.winner == null ? '–' : '')}</td>`).join('')}<td><b>${P[i].score}</b></td></tr>`;
     $('overTable').innerHTML = head + row(0) + row(1);
@@ -5670,7 +5756,7 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-3';   // bump whenever the physics changes: both players must simulate identically
+const BUILD = 'bias-online-4';   // bump whenever the physics changes: both players must simulate identically
 const RELAY = (() => {
   const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
   return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
@@ -6229,7 +6315,7 @@ const TUT = [
   { k: 'Bias', fig: 'bias', t: 'What is bias?', p: 'Bias is the curve a bowl takes as it slows down. One side of every bowl is shaped differently from the other, so it runs nearly straight while it is quick, then curls in as it slows. So you never aim straight at the jack: choose a wider line, and let the bias bring the bowl to the jack.', keys: 'For a step-by-step lesson on the green, choose Practice, then Guided lesson.' },
   { k: 'Aim', fig: 'aim', t: 'Choose your line', p: 'Drag across the green, or use the arrow keys, to set the line the bowl leaves your hand on. The dashed line shows only that starting direction; the bowl will not follow it.', keys: '← → aim · Shift for larger steps · Z to look closer at the head' },
   { k: 'Hand', fig: 'hand', t: 'Forehand or backhand', p: 'Every bowl is biased and curves as it slows. A right-hander\'s forehand starts out to the right and draws in from the right; the backhand mirrors it. The small gold hook at the end of the aim line shows which way this hand will draw.', keys: 'F forehand · B backhand' },
-  { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold the round Hold button (or Space). The ring round it fills and falls back, like a swing meter; let go at the weight you want. The red fifth at the end is the drive band for firing shots. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
+  { k: 'Weight', fig: 'weight', t: 'Hold, then let go', p: 'Press and hold the round Hold button (or Space). The ring round it fills and falls back, like a swing meter; let go at the weight you want. Past draw weight is the red firing band: it opens once you have played two woods in the end, and the meter races through it. Faster greens make the same weight run further and draw wider.', keys: 'Hold Space · Esc cancels' },
   { k: 'The head', fig: 'head', t: 'Read it from above', p: 'The head view, top right, shows the head from directly overhead, from the same simulation as the main view. The nearest bowl is ringed in gold, with its distance; Measure lets you compare two bowls. Once an end, Go up and look (above Hand) walks you up the green to stand over the head before you bowl.', keys: 'H shows or hides the head view · M measure · the gold mark on the ring is your last weight' },
   { k: 'The rules in brief', fig: 'rules', t: 'Jack, touchers, dead bowls', p: 'The jack must stop at least 23 m from the mat. Bowls that touch the jack are chalked as touchers and stay live even in the ditch; other bowls in the ditch are dead. The nearest bowl scores, plus each of that player\'s bowls inside the opponent\'s best.', keys: 'Full rules are in the menu.' }
 ];
@@ -6534,7 +6620,7 @@ window.BiasTests = {
       w.launch(b, 0, 30, 0, 3.6, 0, null); w.runUntilRest();
       const r = Rules.afterDelivery(w.bodies, b, 2.6);
       ok('A bowl that strikes the jack is a toucher', b.toucher);
-      ok('Jack driven into the front ditch stays live', j.state === 'ditch' && j.ditch === 'front' && !r.jackDead);
+      ok('Jack driven into the front ditch stays live', j.state === 'ditch' && j.ditch === 'front' && !r.jackOut);
       ok('A toucher in the ditch stays live', b.state !== 'ditch' || !r.dead.some(e => e.b === b), `bowl ${b.state}`); }
     { const w = new PhysicsWorld(13), j = w.add(new Body('jack')); j.place(1.0, 28); const b = w.add(new Body('bowl', 0));
       w.launch(b, 0, 30, 0, 3.6, 0, null); w.runUntilRest(); const r = Rules.afterDelivery(w.bodies, b, 2.6);
@@ -6548,7 +6634,22 @@ window.BiasTests = {
       j.place(0, 35); const r = Rules.checkJack(j, 2.6); ok('Jack within 2 m of the ditch moves to the 2 m mark', r.ok && r.moved && r.y === W.GREEN_LEN - 2);
       j.place(2.6, 30); ok('Jack outside the rink rejected', !Rules.checkJack(j, 2.6).ok);
       j.state = 'ditch'; ok('Jack in the ditch rejected', !Rules.checkJack(j, 2.6).ok);
-      const w = new PhysicsWorld(13), jk = w.add(new Body('jack')); jk.place(0, 21); ok('Jack rebounding inside 20 m kills the end', !!Rules.afterDelivery(w.bodies, null, 2.6).jackDead); }
+      const w = new PhysicsWorld(13), jk = w.add(new Body('jack')); jk.place(0, 21); ok('Jack rebounding inside 20 m is knocked out of play', !!Rules.afterDelivery(w.bodies, null, 2.6).jackOut);
+      const T = W.GREEN_LEN - W.JACK_DITCH_MIN, to = Rules.respot(jk, w.bodies);
+      ok('A jack out of play is re-spotted on the T', jk.x === 0 && jk.y === T && jk.state === 'rest' && to.y === T, `(${jk.x}, ${jk.y.toFixed(3)})`);
+      const b = w.add(new Body('bowl', 0)); b.place(0.03, T + 0.02); Rules.respot(jk, w.bodies);
+      const gap = Math.hypot(b.x - jk.x, b.y - jk.y) - b.r - jk.r;
+      ok('A bowl on the T: the jack goes just in front of it, touching', jk.x === 0 && jk.y < b.y && gap >= 0 && gap < 0.001, `gap ${(gap * 1000).toFixed(2)} mm`); }
+    // 12b. the swing meter: a draw-only meter turns back at the cap; a firing meter speeds up, bounces off full weight, and is continuous
+    { const lock = { cap: 0.7, fire: false }, fire = { cap: 0.7, fire: true };
+      let hi = 0, jump = 0, prev = 0, top = 0, turns = 0, dir = 1;
+      for (let t = 0; t < 12; t += 0.002) hi = Math.max(hi, Meter.at(t, lock));
+      for (let t = 0; t < 6; t += 0.0005) { const w = Meter.at(t, fire); jump = Math.max(jump, Math.abs(w - prev)); top = Math.max(top, w); const d = Math.sign(w - prev); if (d && d !== dir) { if (prev > 0.85) turns++; dir = d; } prev = w; }
+      ok('Draw-only meter never passes the draw limit', Math.abs(hi - 0.7) < 1e-3, `max ${hi.toFixed(4)}`);
+      ok('Firing meter reaches full weight and bounces off it', top > 0.999 && turns >= 6, `top ${top.toFixed(4)}, ${turns} turns near the top`);
+      ok('Firing meter moves smoothly (no jumps)', jump < 0.0005 * Meter.rate(1, fire) / SWING_T + 1e-4, `largest step ${jump.toFixed(5)}`);
+      ok('Firing meter runs nine times draw speed at full weight', Math.abs(Meter.rate(1, fire) - 9) < 1e-9 && Meter.rate(0.5, fire) === 1);
+      ok('Meter time and weight are inverse', [0.1, 0.69, 0.75, 0.9, 0.99].every(w => Math.abs(Meter.up(Meter.time(w, fire), fire) - w) < 1e-9)); }
     // 12. scoring from world-space distances
     { const mk = (o, x, y) => { const b = new Body('bowl', o); b.place(x, y); return b; }, j = new Body('jack'); j.place(0, 30);
       let bs = [mk(0, 0, 30.2), mk(0, 0.25, 30), mk(1, 0, 30.5), mk(0, 0, 31), mk(1, -1, 30)]; bs.forEach((b, i) => b.id = i + 1);
@@ -6579,17 +6680,27 @@ window.BiasTests = {
       for (let i = 0; i < 8; i++) G.testDeliver(G.turn.player === 0 ? 0.1 : -0.1, 0.66, G.turn.player === 0 ? 'fore' : 'back');
       StubUI.cb && StubUI.cb();
       ok('Match finishes or plays an extra end when level', G.phase === 'over' ? StubUI.log.includes('over') : G.isExtraEnd(), `phase ${G.phase}, ${G.players[0].score}–${G.players[1].score}`);
-      // dead end: drive the jack obliquely out of the rink; the end is replayed by the same leader
-      let killed = null;
+      // firing is locked for the first two woods: a full-weight input is held to the draw limit
+      { const G3 = new Game(StubUI, { instant: true });
+        G3.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 16, format: { type: 'ends', n: 4 }, leader: 0 });
+        G3.testDeliver(0, 0.3); const r0 = G3.meterRule();
+        ok('First wood: firing locked, the draw limit runs a yard past the ditch', !r0.fire && r0.cap < 0.6 && !G3.canFire(), `cap ${r0.cap.toFixed(3)} on a 16 s green`);
+        G3.testDeliver(0.1, 1.0, 'fore');
+        ok('A full-weight first wood is delivered at draw weight', Math.abs(G3.lastWeights[G3.weightKey('bowl', 0, 0)] - r0.cap) < 1e-9);
+        for (let i = 0; i < 3; i++) G3.testDeliver(G3.turn.player === 0 ? 0.1 : -0.1, 0.2, G3.turn.player === 0 ? 'fore' : 'back');
+        ok('Third wood: firing open', G3.turn.kind === 'bowl' && G3.turn.player === 0 && G3.canFire() && G3.meterRule().fire, `${G3.seq.join('')}`); }
+      // a jack driven out of the rink is re-spotted on the T and the end goes on (no dead end)
+      let spotted = null;
       for (let off = 0.40; off > 0.0; off -= 0.01) { // a drive still bends a little, so search for an oblique hit
         const G2 = new Game(StubUI, { instant: true });
         G2.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 4 }, leader: 1 });
         G2.testDeliver(0, 0.55);
+        for (let i = 0; i < 4; i++) G2.testDeliver(G2.turn.player === 0 ? 0.25 : -0.25, 0.3, G2.turn.player === 0 ? 'fore' : 'back');   // short and wide, out of the way
         const j = G2.world.jack, rel = releasePoint(G2.matRear, 'fore', 'R');
         G2.testDeliver(Math.atan2(j.x + off - rel.x, j.y - rel.y), 1.0, 'fore');
-        if (G2.match.deadEnds > 0) { killed = G2.endNo === 1 && G2.match.replay && G2.turn.kind === 'jack' && G2.turn.player === 1 && G2.world.bodies.length === 0; break; }
+        if (G2.match.respots > 0) { const J = G2.world.jack; spotted = G2.endNo === 1 && J.x === 0 && Math.abs(J.y - (W.GREEN_LEN - W.JACK_DITCH_MIN)) < 0.2 && G2.turn.kind === 'bowl' && G2.turn.player === 0 && G2.seq.length === 5; break; }
       }
-      ok('Jack driven out of the rink → dead end, replayed by the same leader', killed === true, killed === null ? 'no drive killed the jack' : 'replayed');
+      ok('Jack driven out of the rink → re-spotted on the T, the end goes on', spotted === true, spotted === null ? 'no drive knocked the jack out' : 'checked');
       Settings.arm = arm; }
     // 13b. pairs and triples: order of play, bowls per player, team scoring
     for (const key of ['pairs', 'triples']) {

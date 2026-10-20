@@ -316,7 +316,7 @@
       ? `<p class="sk-small"><strong>New best${when}</strong> (was ${C.starWords(r.from.stars).replace(' out of 5', '')}), ${C.goesText(t.tries)}.</p>`
       : `<p class="sk-small">Your best${when} is still ${C.starWords(t.stars).replace(' out of 5', '')} (${t.tries} goes so far).</p>`;
     const beat = r.beat == null ? '' : ` Better than or level with ${r.beat} of the 100 benchmark bowlers.`;
-    const dead = r.jackDead ? ` Dead end: ${esc(r.jackDead.replace(/\.$/, '').toLowerCase())}.` : '';
+    const dead = r.jackOut ? ` ${esc(r.jackOut.replace(/\.$/, ''))}, so it was re-spotted on the T.` : '';
     $('skNote').innerHTML = `<p class="sk-kicker">Skip's verdict</p><div class="sk-vrow">${stars(r.stars)}<h2 class="sk-verdict-title">${esc(info.title)}</h2></div>` +
       `<p>${esc(info.detail)}${dead}${beat}</p><p class="sk-hand">${esc(info.scribble)}</p>${counted}`;
   }

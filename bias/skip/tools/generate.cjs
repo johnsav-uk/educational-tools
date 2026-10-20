@@ -176,7 +176,7 @@ function describe(pz, st, bench) {
   const [type, hand] = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0].split('|');
   const H = hand === 'fore' ? 'forehand' : 'backhand';
   let advised;
-  if (type === 'drive') advised = { kind: 'drive', target: { x: J.x, y: J.y }, say: pick(r, [`Fire at the jack on the ${H}. Kill the end if you can't move it.`, `Drive it, skip. ${cap(H)}, and clear the lot.`, `Put the ${H} drive in. Nothing to lose now.`]) };
+  if (type === 'drive') advised = { kind: 'drive', target: { x: J.x, y: J.y }, say: pick(r, [`Fire at the jack on the ${H}. Knock it out and it goes back on the T.`, `Drive it, skip. ${cap(H)}, and clear the lot.`, `Put the ${H} drive in. Nothing to lose now.`]) };
   else if (type === 'wrest') advised = { kind: 'through', target: { x: r3(shotB.x), y: r3(shotB.y) }, extra: 0.8, say: pick(r, [`Yard on at their shot bowl, ${H}. Take it out and stay.`, `${cap(H)}, with a yard of weight on their shot wood.`, `Follow through on the ${H}: shift their shot bowl and sit in its place.`]) };
   else if (type === 'trail') advised = { kind: 'through', target: { x: r3(J.x), y: r3(J.y) }, extra: 1.1, say: pick(r, [`Trail the jack on the ${H}. Take it back a yard.`, `${cap(H)}, with weight: move the jack through to the back.`, `Hit the jack on the ${H} and carry it on.`]) };
   else advised = { kind: 'draw', target: { x: r3(J.x), y: r3(J.y - 0.07) }, say: pick(r, [`Draw it in on the ${H}, skip.`, `${cap(H)} draw, just short of the jack.`, `There's a way in on the ${H}. Draw the shot.`, `Take the ${H} and draw to the jack. Nothing fancy.`]) };

@@ -44,13 +44,13 @@
     // Once everything has stopped: what is dead, who scores, the outcome class and the value.
     function judge(w, pz, delivered, before) {
       const mf = matFront(pz);
-      const { dead, jackDead } = E.Rules.afterDelivery(w.bodies, delivered, mf);
+      const { dead, jackOut } = E.Rules.afterDelivery(w.bodies, delivered, mf);
       // posW 0.15: nobody has a bowl left to answer with, so shots count and position only breaks ties
-      const value = E.AI.value(w, delivered, mf, ME, before.winner === ME, 0.15);   // also marks the dead bowls
+      const value = E.AI.value(w, delivered, mf, ME, before.winner === ME, 0.15);   // also marks the dead bowls, and re-spots a jack knocked out of play
       const sc = E.Rules.score(w.bodies.filter(b => !b.dead), w.jack);
-      const after = { winner: jackDead ? null : sc.winner, shots: jackDead ? 0 : sc.shots, tie: !!sc.tie, dead: !!jackDead };
-      return { value, before, after, outcome: Core.outcomeOf(before, after, ME), jackDead: jackDead || null,
-        dead: dead.map(d => ({ id: d.b.id, why: d.why })), ranked: jackDead ? [] : sc.ranked };
+      const after = { winner: sc.winner, shots: sc.shots, tie: !!sc.tie, dead: false };
+      return { value, before, after, outcome: Core.outcomeOf(before, after, ME), jackOut: jackOut || null,
+        dead: dead.map(d => ({ id: d.b.id, why: d.why })), ranked: sc.ranked };
     }
     // The whole shot at once (the benchmark, the validator and the tests).
     function play(pz, shot, arm = 'R') {
@@ -104,7 +104,7 @@
         const mk = (name, score) => ({ name, profileId: PROFILE_ID, colour: 'claret', score, played: 0, members: [{ name, role: '', played: 3, hand: 'fore', aim: 0 }] });
         const ends = pz.match && pz.match.ends || 21;
         g.mode = 'match'; g.players = [mk('You', sides[0]), mk('Them', sides[1])];
-        g.match = { format: { type: 'ends', n: ends }, discipline: E.DISCIPLINES.singles, leader: THEM, ends: [], jackAttempt: 0, T: pz.greenSpeed, secret: false, over: false, replay: false, deadEnds: 0 };
+        g.match = { format: { type: 'ends', n: ends }, discipline: E.DISCIPLINES.singles, leader: THEM, ends: [], jackAttempt: 0, T: pz.greenSpeed, secret: false, over: false, replay: false, respots: 0 };
         g.endNo = pz.match && pz.match.end || ends; g.order = [[THEM, 0], [ME, 0]]; g.orderIdx = 1;   // the last bowl of the end
         g.matRear = matRear(pz); g.world = world(pz); g.turn = { kind: 'bowl', player: ME, member: 0 };
         g.ai = { side: ME, level, est: { T: pz.greenSpeed, biasF: 1 } };
