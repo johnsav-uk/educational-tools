@@ -178,6 +178,7 @@ Carried in `assets/sst/sst.css` and on the homepage pills, by oklch hue:
 | Chemistry | `--sst-chem` teal (hue 185) |
 | Physics | `--sst-phys` violet (hue 295) |
 | Biology | `--sst-bio` green (hue 145) |
+| Geography | `--sst-geog` terracotta (hue 45) |
 | Mixed | amber (hue 75) |
 | Languages | coral (hue 25) |
 

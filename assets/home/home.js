@@ -8,16 +8,16 @@
   var CFG = window.SST_HOME || {};
   var TOOLS = CFG.tools || window.SST_TOOLS || [];
   var ROOT = CFG.root || '';
-  var SCIENCES = ["Chemistry", "Physics", "Biology"];
+  var SCIENCES = ["Chemistry", "Physics", "Biology", "Geography"];
   // Topic shelves (science only for now). With none, the catalogue is the flat grid alone.
   var TOPICS = (CFG.topics || (CFG.tools ? [] : window.SST_TOPICS) || []).slice();
 
   // Pill hue per subject label (oklch H). Pills render as oklch(0.3 0.06 H) on oklch(0.86 0.1 H).
-  var HUE = CFG.hue || { Chemistry: 185, Physics: 295, Biology: 145, Mixed: 75 };
+  var HUE = CFG.hue || { Chemistry: 185, Physics: 295, Biology: 145, Geography: 45, Mixed: 75 };
 
   var TYPES = [["all", "All"], ["explore", "Explore"], ["play", "Play"]];
   var SUBJECTS = CFG.subjects || [["all", "All subjects"], ["Chemistry", "Chemistry"], ["Physics", "Physics"],
-                  ["Biology", "Biology"], ["Mixed", "Mixed"]];
+                  ["Biology", "Biology"], ["Geography", "Geography"], ["Mixed", "Mixed"]];
   var LEVELS = [["all", "All levels"], ["KS3", "KS3"], ["GCSE", "GCSE"], ["A-Level", "A-Level"], ["Multi", "Multi"]];
 
   function scienceOf(t) {
