@@ -32,6 +32,7 @@
   --sst-chem: oklch(0.8 0.11 185);
   --sst-phys: oklch(0.8 0.11 295);
   --sst-bio: oklch(0.8 0.12 145);
+  --sst-geog: oklch(0.8 0.11 45);   /* Geography: terracotta, the colour of earth */
   /* Behind a canvas, scene or diagram (hex: three.js reads it), and the
      tinted backgrounds of right / caution / wrong feedback. */
   --sst-stage: #091321;
@@ -97,6 +98,7 @@
   --sst-chem: oklch(0.5 0.09 185);
   --sst-phys: oklch(0.5 0.15 295);
   --sst-bio: oklch(0.5 0.12 145);
+  --sst-geog: oklch(0.52 0.13 45);
   --sst-stage: #f8fafd;
   --sst-good-bg: oklch(0.95 0.04 155);
   --sst-warn-bg: oklch(0.95 0.045 80);

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plate Tectonics: Pangaea, Continental Drift &amp; Sea-Floor Spreading (beta)</title>
+<meta name="description" content="Edexcel B GCSE Geography Topic 1, Hazardous Earth: an animated cross-section of the Earth and its convection currents, the break-up of Pangaea, Wegener's evidence for continental drift, a sea-floor spreading simulation with magnetic stripes, exam diagrams, exam practice with model answers, a presenter mode with annotation, and a printable worksheet and mark scheme.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<!-- Inline icon sprite (in place of an icon font, so nothing loads from a CDN) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 3.5v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-flip" viewBox="0 0 24 24"><path d="M8 20V5M4.5 8.5L8 5l3.5 3.5M16 4v15M12.5 15.5L16 19l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-ship" viewBox="0 0 24 24"><path d="M3 15h18l-3 5H6zM7 15V9h9l2 6M10 9V5h3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><path d="M3 4.5h18v12H3zM8.5 20.5h7M12 16.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-4.5L16 4.5l3.5 3.5-11 11zM14 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8.5V3.5h10v5M7 17H4.5V9h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="grow">
+    <h1>Plate Tectonics: Pangaea, Continental Drift &amp; Sea-Floor Spreading <span class="chip beta">beta</span></h1>
+    <div class="meta">
+      <span class="chip geog">Geography</span><span class="chip gcse">GCSE</span>
+      <span class="chip">Edexcel B (1GB0) Topic 1 · Hazardous Earth</span>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn" type="button" id="presentBtn" title="Presenter mode: fills the screen for the board (P)"><svg><use href="#i-screen"/></svg>Presenter mode</button>
+    <button class="btn" type="button" id="drawBtn" title="Annotate over the page (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+    <button class="btn primary" type="button" id="printBtn"><svg><use href="#i-print"/></svg>Print worksheet</button>
+  </div>
+</header>
+
+<nav class="tabs main-tabs sst-teacher" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-st" aria-controls="view-st" aria-selected="true"><span class="num">1</span>Structure &amp; convection</button>
+  <button role="tab" id="tab-pg" aria-controls="view-pg" aria-selected="false" tabindex="-1"><span class="num">2</span>Pangaea</button>
+  <button role="tab" id="tab-wg" aria-controls="view-wg" aria-selected="false" tabindex="-1"><span class="num">3</span>Wegener's evidence</button>
+  <button role="tab" id="tab-sf" aria-controls="view-sf" aria-selected="false" tabindex="-1"><span class="num">4</span>Sea-floor spreading</button>
+  <button role="tab" id="tab-dg" aria-controls="view-dg" aria-selected="false" tabindex="-1"><span class="num">5</span>Exam diagrams</button>
+  <button role="tab" id="tab-ex" class="no-present" aria-controls="view-ex" aria-selected="false" tabindex="-1"><span class="num">6</span>Exam practice</button>
+  <span class="grow"></span>
+  <button class="btn present-only" type="button" id="drawBtn2" title="Annotate (D)"><svg><use href="#i-pen"/></svg>Annotate</button>
+  <button class="btn present-only" type="button" data-sst-theme-toggle><i class="sst-theme-icon"></i><span class="sst-theme-label"></span></button>
+  <button class="btn icon present-only" type="button" id="fullBtn" title="Full screen"><svg><use href="#i-full"/></svg></button>
+  <button class="btn present-only" type="button" id="exitBtn" title="Leave presenter mode (Esc)"><svg><use href="#i-close"/></svg>Exit</button>
+</nav>
+
+<main>
+<!-- ═════════════════════════ 1. STRUCTURE & CONVECTION ═════════════════════════ -->
+<section class="view layout" id="view-st" role="tabpanel" aria-labelledby="tab-st">
+  <div class="viewport">
+    <figure class="stage st-stage">
+      <canvas id="stCv" aria-label="Cross-section of the Earth, showing the crust, mantle, outer core and inner core, with convection currents moving in the mantle"></canvas>
+      <figcaption class="legend" id="stLegend">
+        <span><i class="sw sw-hot"></i>hot rock, rising</span>
+        <span><i class="sw sw-cool"></i>cooler rock, sinking</span>
+      </figcaption>
+    </figure>
+    <div class="sst-deck sst-deck--strip" id="stDeck" aria-label="Structure and convection slides">
+      <section class="sst-slide" data-mode="layers"><h3>The structure of the Earth</h3><p>Four layers: the <b>crust</b>, the <b>mantle</b>, the <b>outer core</b> and the <b>inner core</b>. It gets hotter and denser towards the centre.</p></section>
+      <section class="sst-slide" data-mode="layers" data-hl="crust"><h3>The crust</h3><p>A thin, solid, rocky shell, broken into <b>tectonic plates</b>. Oceanic crust is thin, dense basalt; continental crust is thicker, lighter granite.</p></section>
+      <section class="sst-slide" data-mode="layers" data-hl="mantle"><h3>The mantle</h3><p>About 2,900 km thick, mostly solid. Its upper part, the <b>asthenosphere</b>, is semi-molten, so it can flow very slowly.</p></section>
+      <section class="sst-slide" data-mode="layers" data-hl="outer"><h3>The outer core</h3><p><b>Liquid</b> iron and nickel at 4,000–5,000°C. Its movement creates <b>Earth's magnetic field</b>.</p></section>
+      <section class="sst-slide" data-mode="layers" data-hl="inner"><h3>The inner core</h3><p><b>Solid</b> iron and nickel at about 5,500°C. It stays solid because the pressure is so great.</p></section>
+      <section class="sst-slide" data-mode="layers" data-hl="heat"><h3>Where the heat comes from</h3><p>Heat left over from Earth's formation, plus <b>radioactive decay</b> of elements such as uranium in the core and mantle.</p></section>
+      <section class="sst-slide" data-mode="close" data-hl="rise"><h3>Convection currents: rising</h3><p>Mantle rock near the core is heated, becomes <b>less dense</b> and <b>rises</b> slowly towards the crust.</p></section>
+      <section class="sst-slide" data-mode="close" data-hl="spread"><h3>Convection currents: spreading</h3><p>Under the plates it spreads out sideways. <b>Friction</b> drags the plates above along, a few centimetres a year.</p></section>
+      <section class="sst-slide" data-mode="close" data-hl="sink"><h3>Convection currents: sinking</h3><p>The rock cools, becomes <b>denser</b> and <b>sinks</b> back towards the core, where it is heated again. The loop repeats.</p></section>
+      <section class="sst-slide" data-mode="close" data-hl="forces"><h3>Slab pull and ridge push</h3><p><b>Slab pull</b>: a cold, dense plate sinking at a trench drags the rest behind it. <b>Ridge push</b>: new crust slides down and away from a raised ridge.</p></section>
+    </div>
+  </div>
+
+  <aside class="panel sst-teacher" aria-label="Structure controls">
+    <h2>Inside the Earth</h2>
+    <p class="sub">Pick a layer to read its facts, or zoom in on the mantle to watch the convection currents that move the plates.</p>
+    <div class="field"><span class="lbl">View</span>
+      <div class="seg" id="stMode">
+        <button type="button" data-mode="layers" aria-pressed="true">Earth's layers</button>
+        <button type="button" data-mode="close">Convection close-up</button>
+      </div>
+    </div>
+    <div id="stLayersBox">
+      <div class="layer-list" id="layerList"></div>
+      <div class="card" id="layerCard"></div>
+    </div>
+    <div id="stCloseBox" hidden>
+      <label class="check"><input type="checkbox" id="stForces"> Show slab pull and ridge push</label>
+      <label class="check"><input type="checkbox" id="stTemp" checked> Colour the rock by temperature</label>
+    </div>
+    <div class="transport" style="margin-top:14px">
+      <button class="btn primary" type="button" id="stPlay"><svg><use href="#i-pause"/></svg><span>Pause</span></button>
+    </div>
+    <label class="field"><span class="lbl">Speed <output id="stSpeedOut">×1</output></span>
+      <input type="range" id="stSpeed" min="1" max="5" step="1" value="2">
+    </label>
+    <label class="check"><input type="checkbox" id="stLabels" checked> Labels</label>
+    <div class="card note">
+      <h4>Common mistake</h4>
+      <p>The mantle is <b>not</b> a sea of liquid magma. It is solid rock that is so hot it flows like very thick putty, a few centimetres a year.</p>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ 2. PANGAEA ═════════════════════════ -->
+<section class="view layout" id="view-pg" role="tabpanel" aria-labelledby="tab-pg" hidden>
+  <div class="viewport">
+    <figure class="stage map-stage">
+      <canvas id="pgCv" aria-label="World map showing the continents moving from Pangaea to today"></canvas>
+    </figure>
+    <div class="timeline sst-teacher">
+      <button class="btn primary icon" type="button" id="pgPlay" title="Play the break-up"><svg><use href="#i-play"/></svg></button>
+      <div class="tl-main">
+        <div class="tl-track"><input type="range" id="pgTime" min="0" max="300" step="1" value="300" aria-label="Millions of years ago"></div>
+        <div class="tl-ticks" id="pgTicks"></div>
+      </div>
+      <div class="tl-read"><b id="pgRead">300</b><span>million years ago</span></div>
+    </div>
+    <div class="sst-deck sst-deck--strip" id="pgDeck" aria-label="Pangaea slides"></div>
+  </div>
+
+  <aside class="panel sst-teacher" aria-label="Pangaea controls">
+    <h2>The break-up of Pangaea</h2>
+    <p class="sub">Drag the timeline, or press play, to watch the supercontinent split into today's continents.</p>
+    <div class="field"><span class="lbl">Playback speed</span>
+      <div class="seg" id="pgSpeed">
+        <button type="button" data-v="10">Slow</button>
+        <button type="button" data-v="22" aria-pressed="true">Medium</button>
+        <button type="button" data-v="50">Fast</button>
+      </div>
+    </div>
+    <div class="row2">
+      <button class="btn" type="button" id="pgStart">Back to Pangaea</button>
+      <button class="btn" type="button" id="pgNow">Jump to today</button>
+    </div>
+    <label class="check"><input type="checkbox" id="pgLabels" checked> Continent names</label>
+    <label class="check"><input type="checkbox" id="pgSuper" checked> Pangaea, Laurasia and Gondwana</label>
+    <label class="check"><input type="checkbox" id="pgGhost"> Today's outlines (ghost)</label>
+    <label class="check"><input type="checkbox" id="pgEq" checked> The equator</label>
+    <div class="card note" id="pgCard"></div>
+    <div class="card note">
+      <h4>Memory hook</h4>
+      <p><b>P</b>angaea <b>L</b>ost <b>G</b>round: <b>P</b>angaea split into <b>L</b>aurasia in the north and <b>G</b>ondwana in the south.</p>
+      <p class="muted">The map is a simplified reconstruction: shapes and positions are approximate.</p>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ 3. WEGENER ═════════════════════════ -->
+<section class="view layout" id="view-wg" role="tabpanel" aria-labelledby="tab-wg" hidden>
+  <div class="viewport">
+    <figure class="stage map-stage">
+      <canvas id="wgCv" aria-label="Map of the continents with Wegener's fossil, rock and climate evidence plotted on them"></canvas>
+    </figure>
+    <div class="timeline sst-teacher">
+      <button class="btn primary" type="button" id="wgClose">Close the oceans</button>
+      <div class="tl-main">
+        <div class="tl-track"><input type="range" id="wgTime" min="0" max="300" step="1" value="0" aria-label="Millions of years ago"></div>
+        <div class="tl-ticks"><button type="button" style="left:0%" data-t="300">Pangaea</button><button type="button" style="left:100%" data-t="0">Today</button></div>
+      </div>
+      <div class="tl-read"><b id="wgRead">0</b><span>million years ago</span></div>
+    </div>
+    <div class="sst-deck sst-deck--strip" id="wgDeck" aria-label="Wegener slides">
+      <section class="sst-slide" data-ev=""><h3>Alfred Wegener, 1912</h3><p>A German <b>meteorologist</b> proposed that the continents were once joined in one supercontinent, <b>Pangaea</b>, and have <b>drifted</b> apart.</p></section>
+      <section class="sst-slide" data-ev="fit"><h3>The jigsaw fit</h3><p>The coasts of <b>South America and Africa</b> fit together like jigsaw pieces. They fit even better at the edge of the continental shelf.</p></section>
+      <section class="sst-slide" data-ev="meso"><h3>Fossil evidence: Mesosaurus</h3><p>A small <b>freshwater</b> reptile found only in South America and southern Africa. It could not have swum across a salty ocean.</p></section>
+      <section class="sst-slide" data-ev="glosso"><h3>Fossil evidence: Glossopteris</h3><p>A seed fern found across South America, Africa, India, Antarctica and Australia. Its seeds were too heavy to blow across oceans.</p></section>
+      <section class="sst-slide" data-ev="rock"><h3>Geological evidence</h3><p>The <b>Appalachians</b> match the <b>Scottish Highlands</b> and Scandinavia in rock type, age and structure. Close the Atlantic and they join up.</p></section>
+      <section class="sst-slide" data-ev="ice"><h3>Climatic evidence: glacial deposits</h3><p>Rocks scratched by ice about 300 million years ago lie in places that are <b>tropical</b> today, such as India and Africa.</p></section>
+      <section class="sst-slide" data-ev="coal"><h3>Climatic evidence: coal in Antarctica</h3><p>Coal forms from <b>swamp forests</b>. Antarctica must once have been somewhere far warmer than the South Pole.</p></section>
+      <section class="sst-slide" data-ev="all"><h3>Why was he rejected?</h3><p>He had <b>no mechanism</b>: no force strong enough to move continents. Most geologists dismissed the theory until the 1960s.</p></section>
+    </div>
+  </div>
+
+  <aside class="panel sst-teacher" aria-label="Wegener controls">
+    <h2>Wegener's evidence</h2>
+    <p class="sub">Switch on a piece of evidence, then close the oceans and watch it line up.</p>
+    <div class="ev-list" id="evList"></div>
+    <div class="card note">
+      <h4>Why the theory was rejected</h4>
+      <ul>
+        <li><b>No mechanism.</b> His suggested forces (Earth's spin and tides) were millions of times too weak. This was the main reason.</li>
+        <li>He said continents <b>ploughed through</b> the ocean floor, which geologists knew was too strong.</li>
+        <li>He was a <b>meteorologist</b>, an outsider to geology.</li>
+        <li>"<b>Land bridges</b>" that had since sunk were used to explain the matching fossils.</li>
+      </ul>
+      <p class="muted">Wegener died in Greenland in 1930, about 30 years before sea-floor spreading supplied the missing mechanism.</p>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ 4. SEA-FLOOR SPREADING ═════════════════════════ -->
+<section class="view layout" id="view-sf" role="tabpanel" aria-labelledby="tab-sf" hidden>
+  <div class="viewport">
+    <figure class="stage sf-stage">
+      <canvas id="sfCv" aria-label="Cross-section of a mid-ocean ridge. New crust forms at the ridge, records the magnetic field, and moves away on both sides, building up symmetrical magnetic stripes. Click the sea floor to drill a core."></canvas>
+    </figure>
+    <div class="readouts" aria-live="off">
+      <div class="ro"><span>Time since rifting</span><b id="sfTime">0.0 Myr</b></div>
+      <div class="ro"><span>Ocean width</span><b id="sfWidth">0 km</b></div>
+      <div class="ro"><span>Magnetic field now</span><b id="sfField" class="n">Normal</b></div>
+      <div class="ro"><span>Reversals so far</span><b id="sfRev">0</b></div>
+    </div>
+    <div class="sst-deck sst-deck--strip" id="sfDeck" aria-label="Sea-floor spreading slides">
+      <section class="sst-slide" data-step="0"><h3>The missing mechanism</h3><p>After the Second World War, <b>sonar</b> mapping found a mountain ridge down the middle of the Atlantic. In 1962 Harry Hess explained it: <b>sea-floor spreading</b>.</p></section>
+      <section class="sst-slide" data-step="1"><h3>Step 1: magma rises at the ridge</h3><p>At a <b>constructive plate boundary</b> the plates move apart. Basalt magma rises from the mantle into the gap.</p></section>
+      <section class="sst-slide" data-step="2"><h3>Step 2: iron minerals line up</h3><p>While the lava is hot, iron-rich minerals such as <b>magnetite</b> act like tiny compass needles and point along <b>Earth's magnetic field</b>.</p></section>
+      <section class="sst-slide" data-step="3"><h3>Step 3: the rock hardens</h3><p>As the lava cools and sets, the minerals are <b>locked in place</b>. The rock keeps a permanent record of the field's direction.</p></section>
+      <section class="sst-slide" data-step="4"><h3>Step 4: the field reverses</h3><p>Every so often Earth's magnetic field <b>flips</b>: magnetic north becomes south. New rock then records <b>reversed</b> polarity.</p></section>
+      <section class="sst-slide" data-step="5"><h3>Step 5: the crust moves apart</h3><p>New rock is split and carried away <b>on both sides</b> of the ridge, and fresh magma fills the gap behind it.</p></section>
+      <section class="sst-slide" data-step="6"><h3>Step 6: symmetrical stripes</h3><p>Bands of normal and reversed rock run parallel to the ridge. Each side is a <b>mirror image</b> of the other. Only spreading explains that.</p></section>
+      <section class="sst-slide" data-step="7"><h3>Dating the crust</h3><p>Rock is <b>youngest at the ridge</b> and older, under thicker sediment, further away. No ocean floor is older than about 180 million years.</p></section>
+    </div>
+  </div>
+
+  <aside class="panel sst-teacher" aria-label="Sea-floor spreading controls">
+    <h2>Sea-floor spreading</h2>
+    <p class="sub">Start the rift, flip the magnetic field, then sail a survey ship over the stripes. Click the sea floor to drill a core.</p>
+    <div class="transport">
+      <button class="btn primary" type="button" id="sfPlay"><svg><use href="#i-play"/></svg><span>Start</span></button>
+      <button class="btn" type="button" id="sfFlip" title="Reverse Earth's magnetic field now"><svg><use href="#i-flip"/></svg>Flip the field</button>
+      <button class="btn icon" type="button" id="sfReset" title="Start a new rift"><svg><use href="#i-reset"/></svg></button>
+    </div>
+    <label class="field"><span class="lbl">Spreading rate <output id="sfRateOut">2.5 cm/year</output></span>
+      <input type="range" id="sfRate" min="1" max="15" step="0.5" value="2.5">
+    </label>
+    <label class="field"><span class="lbl">Speed <output id="sfSpeedOut">1 million years in 1 s</output></span>
+      <input type="range" id="sfSpeed" min="1" max="5" step="1" value="3">
+    </label>
+    <label class="check"><input type="checkbox" id="sfAuto" checked> The field reverses on its own, at random</label>
+    <div class="row2">
+      <button class="btn" type="button" id="sfShip"><svg><use href="#i-ship"/></svg>Sail a magnetometer survey</button>
+    </div>
+    <label class="check"><input type="checkbox" id="sfPlan" checked> Plan view (looking down)</label>
+    <label class="check"><input type="checkbox" id="sfAges" checked> Rock ages</label>
+    <label class="check"><input type="checkbox" id="sfSed" checked> Sediment</label>
+    <label class="check"><input type="checkbox" id="sfNeedles" checked> Mineral "compass needles"</label>
+    <div class="card note">
+      <h4>Who found it</h4>
+      <ul class="history">
+        <li><b>1912</b> Wegener proposes continental drift</li>
+        <li><b>1929</b> Arthur Holmes suggests mantle convection</li>
+        <li><b>1950s</b> Marie Tharp and Bruce Heezen map the Mid-Atlantic Ridge and its rift valley from sonar</li>
+        <li><b>1962</b> Harry Hess proposes sea-floor spreading</li>
+        <li><b>1963</b> Vine and Matthews explain the magnetic stripes</li>
+        <li><b>1968</b> The <i>Glomar Challenger</i> drills the sea floor: rock gets older away from the ridge</li>
+      </ul>
+    </div>
+  </aside>
+</section>
+
+<!-- ═════════════════════════ 5. EXAM DIAGRAMS ═════════════════════════ -->
+<section class="view" id="view-dg" role="tabpanel" aria-labelledby="tab-dg" hidden>
+  <div class="diagrams" id="diagrams">
+    <div class="dg-bar">
+      <h2>Two diagrams to draw in the exam</h2>
+      <div class="seg present-only sst-teacher" id="dgPick"><button type="button" data-d="0" aria-pressed="true">Diagram 1</button><button type="button" data-d="1">Diagram 2</button></div>
+      <button class="btn sst-teacher" type="button" id="dgQuiz" aria-pressed="false"><svg><use href="#i-eye"/></svg>Test yourself: hide the labels</button>
+    </div>
+    <div class="dg-grid">
+      <figure class="dg on">
+        <h3>1. Sea-floor spreading and magnetic stripes</h3>
+        <div id="dgSpread"></div>
+        <ol class="how">
+          <li>Draw the ocean floor rising to a <b>ridge</b> in the middle, with a rift valley at the crest.</li>
+          <li>Draw <b>magma</b> rising from the mantle under the ridge.</li>
+          <li>Shade the crust in bands of <b>normal</b> and <b>reversed</b> polarity, the left side a <b>mirror image</b> of the right.</li>
+          <li>Add arrows showing the plates moving <b>away</b> from the ridge on both sides.</li>
+          <li>Label: magma rises; minerals align as lava cools; field reverses; symmetrical stripes; rock older away from the ridge.</li>
+        </ol>
+      </figure>
+      <figure class="dg">
+        <h3>2. Convection currents pulling plates apart</h3>
+        <div id="dgConv"></div>
+        <ol class="how">
+          <li>Draw the <b>core</b> at the bottom and two <b>plates</b> at the top with a gap between them.</li>
+          <li>Draw two <b>loops of arrows</b> in the mantle, side by side, both rising in the middle.</li>
+          <li>Show the arrows moving <b>apart</b> under the plates, <b>sinking</b> at the edges and returning along the bottom.</li>
+          <li>Label: heat from the core; hot rock rises; spreads sideways and drags plates; cools and sinks; magma fills the gap.</li>
+        </ol>
+      </figure>
+    </div>
+    <div class="card dg-tip"><h4>Exam tip</h4><p>A labelled diagram only earns credit when the labels <b>explain</b>. "Magma" is a label; "magma rises and cools to form new crust" is an explanation. Use arrows to show direction of movement.</p></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 6. EXAM PRACTICE ═════════════════════════ -->
+<section class="view" id="view-ex" role="tabpanel" aria-labelledby="tab-ex" hidden>
+  <div class="exam" id="exam">
+    <h2>Edexcel B exam practice</h2>
+    <p class="sub">Write your answer, then open the mark scheme and tick off what you included. The model answers are colour-coded with PEEL.</p>
+    <div id="exList"></div>
+  </div>
+</section>
+</main>
+
+<!-- ═════════════════════════ PRINT DIALOG ═════════════════════════ -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptCard" checked><span><b>Revision summary</b><br>One page: the layers, the evidence for drift, the six steps of palaeomagnetism and both diagrams.</span></label>
+  <label><input type="checkbox" id="pOptWs" checked><span><b>Student worksheet</b><br>Edexcel B style questions, with marks per part and lines to write on.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>Marking points, levels, "do not accept" notes and PEEL model answers. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn primary" type="button" id="pGo"><svg><use href="#i-print"/></svg>Print</button>
+  </div>
+</dialog>
+
+<!-- ═════════════════════════ PRINTABLES ═════════════════════════ -->
+<div class="print-only pd" id="printDoc">
+  <section id="pCard">
+    <div class="phead"><h1>Plate tectonics: revision summary</h1><div class="sub">Edexcel B GCSE Geography · Topic 1 Hazardous Earth</div></div>
+    <div id="pCardBody"></div>
+  </section>
+  <section id="pWs">
+    <div class="phead"><h1>Plate tectonics: exam practice</h1><div class="sub">Edexcel B GCSE Geography · <span id="wsTotal"></span> marks</div></div>
+    <div class="fill"><span>Name</span><span>Class</span><span>Date</span></div>
+    <div id="pQList"></div>
+  </section>
+  <section id="pMs">
+    <div class="phead"><h1>Plate tectonics: mark scheme</h1><div class="sub">For teachers · <span id="msTotal"></span> marks</div></div>
+    <div id="pMsList" class="ms"></div>
+  </section>
+</div>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="app.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

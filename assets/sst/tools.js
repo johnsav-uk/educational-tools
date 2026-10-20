@@ -191,6 +191,13 @@ window.SST_TOOLS = [
     image: "mass-weight.png",
     keywords: "mass weight difference w = m x g w=mg weight equals mass times gravitational field strength g n/kg newtons per kilogram 9.8 10 n/kg kilograms kg newtons n force of gravity gravity gravitational pull solar system planets sun mercury venus earth moon mars jupiter saturn uranus neptune pluto dwarf planet surface gravity weigh on other planets weightless weightlessness astronaut space newtonmeter newton meter spring balance forcemeter bathroom scales jump height moon jump dropping hammer feather apollo calculator worked examples rearrange quiz presenter mode whiteboard ks3 physics forces year 7 year 8 year 9" },
 
+  { title: "Plate Tectonics: Pangaea, Drift & Sea-Floor Spreading (beta)", url: "visualisations/plate-tectonics/",
+    topic: "geography",
+    blurb: "Watch Pangaea break apart, line up Wegener's fossils across the oceans, then flip Earth's magnetic field and grow the stripes either side of a ridge.",
+    kind: "Interactive", levels: ["GCSE"], tags: ["Edexcel B Geography", "Geography", "Interactive"],
+    image: "plate-tectonics.png",
+    keywords: "plate tectonics tectonic plates hazardous earth topic 1 edexcel b 1gb0 geography structure of the earth layers crust mantle outer core inner core lithosphere asthenosphere oceanic continental crust basalt granite convection currents convection cells mantle convection radioactive decay heat slab pull ridge push pangea pangaea supercontinent panthalassa tethys laurasia gondwana gondwanaland continental drift alfred wegener 1912 1915 origin of continents and oceans jigsaw fit evidence fossils mesosaurus glossopteris lystrosaurus cynognathus appalachians scottish highlands caledonian mountains matching rocks glacial deposits tillite striations coal in antarctica why was wegener rejected mechanism land bridges sea floor spreading seafloor spreading sea-floor harry hess marie tharp bruce heezen sonar echo sounding mid-atlantic ridge mid ocean ridge constructive plate boundary divergent boundary rift valley palaeomagnetism paleomagnetism magnetic striping magnetic stripes magnetic reversals polarity normal reversed magnetite curie point vine matthews magnetometer survey glomar challenger deep sea drilling age of ocean floor sediment thickness atlantic widening 2.5 cm himalayas india collides with asia peel model answers assess 8 mark 4 mark spag exam questions mark scheme printable worksheet presenter mode annotate gcse geography" },
+
   { title: "Who Wants to Be a Science Millionaire? (beta)", url: "games/science/millionaire/",
     topic: "games",
     blurb: "Climb a fifteen-question prize ladder with 50:50, Ask the Audience and Phone a Friend, using only the topics your class has been taught.",
