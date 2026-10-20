@@ -405,8 +405,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .lookbtn[aria-pressed=true]{background:var(--cream);color:var(--ink);border-color:var(--cream)}
 .lookbtn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .controls.looking .dial,.controls.looking .side{visibility:hidden}
-.title .menu-item .mi-new{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:2px;text-shadow:none}
-.title-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 0;margin:18px -6px 0}
+.title-links{display:grid;grid-template-columns:repeat(3,auto);justify-content:space-between;justify-items:start;gap:2px 0;margin:18px -6px 0}
 .title-links button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 6px;white-space:nowrap;border:0;border-radius:8px;background:transparent;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--cream-2)}
 .title-links button:hover{background:rgba(238,231,212,.08);color:var(--cream)}
 .title-links button:focus-visible{outline:2px solid var(--gold);outline-offset:0}
@@ -416,7 +415,24 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .level-head{font-family:var(--sans);font-weight:650;font-size:22px;letter-spacing:-.015em;color:var(--cream);margin:2px 0 6px}
 .level-head span{display:block;font-size:13px;font-weight:400;letter-spacing:0;color:var(--cream-2);margin-top:3px}
 #titleScrim.picking .club,#titleScrim.picking .sub{display:none}
-#levelMenu{width:340px;max-width:100%}
+#levelMenu,#recordMenu{width:340px;max-width:100%}
+.record table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:14px;color:var(--cream);font-variant-numeric:tabular-nums}
+.record th,.record td{padding:6px 5px;text-align:right;border-bottom:1px solid rgba(238,231,212,.14);font-weight:500}
+.record th:first-child,.record td:first-child{text-align:left;padding-left:0}
+.record thead th{font-size:12px;color:var(--cream-2)}
+.record tfoot td,.record tfoot th{font-weight:650;border-bottom:0}
+.record p{font-family:var(--sans);font-size:13px;line-height:1.45;color:var(--cream-2);margin:10px 0 0}
+.record-reset{align-self:flex-start;margin-top:8px}
+/* Your record stands out among the links under the menu */
+.title-links #mRecord{background:var(--gold);color:var(--ink);font-weight:650;padding:8px 12px;margin-left:6px;text-shadow:none}
+.title-links #mRecord:hover{background:#e2c584;color:var(--ink)}
+.title-links #mRecord:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
+.record-kofi{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(201,168,98,.45);background:rgba(24,44,32,.55)}
+.record-kofi[hidden]{display:none}
+.record-kofi p{margin:0;font-family:var(--sans);font-size:13.5px;line-height:1.45;color:var(--cream)}
+.record-kofi a{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:999px;background:var(--gold);color:var(--ink);font-family:var(--sans);font-size:14.5px;font-weight:650;text-decoration:none}
+.record-kofi a:hover{background:#e2c584}
+.record-kofi a:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
 #titleScrim.picking .title h1{font-size:44px;margin:0 0 14px}
 .level-list{display:flex;flex-direction:column;gap:6px;width:100%}
 .title .level-list .menu-item{min-height:0;padding:8px 16px;font-size:17px}
@@ -730,7 +746,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
         <button class="menu-item primary" id="mQuick">Play the computer</button>
-        <button class="menu-item" id="mSkip" hidden>“Over to You, Skip!” <span class="mi-new">New</span><span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
+        <button class="menu-item" id="mSkip" hidden>“Over to You, Skip!”<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
@@ -738,6 +754,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
           <button id="mHow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.6"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>How to play</button>
           <button id="mRules"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10.5L19 8v11.5H5z"/><path d="M8.5 11h7M8.5 14.5h7"/></svg>Rules</button>
           <button id="mSettings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>Settings</button>
+          <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
           <button id="mShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 7.5 12 3.5l4 4"/><path d="M6 11v8.5h12V11"/></svg>Share</button>
         </nav>
       </div>
@@ -745,6 +762,13 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="level-back" id="levelBack">‹ Back</button>
         <div class="level-head">Choose your opponent<span>Four ends of singles</span></div>
         <div id="levelList" class="level-list"></div>
+      </div>
+      <div class="menu" id="recordMenu" hidden>
+        <button class="level-back" id="recordBack">‹ Back</button>
+        <div class="level-head">Your record<span>Matches finished in this browser</span></div>
+        <div id="recordBody" class="record"></div>
+        <button type="button" class="btn ghost record-reset" id="recordReset">Reset my record</button>
+        <div class="record-kofi" id="recordKofi"><p>Every match on this record was free, with no ads. If Bias has given you a good game, a coffee helps keep it that way.</p><a href="https://ko-fi.com/johnsav" target="_blank" rel="noopener">Buy me a coffee on Ko-fi</a></div>
       </div>
       <div class="foot" id="titleFoot" hidden></div>
       <a class="community" href="https://www.facebook.com/groups/1116437361143315" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M15.6 14.2c2.6-.3 4.6 1.3 4.9 4.3"/></svg>Join the Bias Clubhouse on Facebook</a>
@@ -4033,6 +4057,61 @@ const AI = {
 const closeCall = sc => { if (!sc.ranked.length) return false; const a = sc.ranked[0], o = sc.ranked.find(e => e.b.owner !== a.b.owner); return !!sc.tie || (!!o && o.d - a.d < 0.02); };
 const bodyKey = b => b.kind === 'jack' ? 'J' : `${b.owner}.${b.member || 0}.${b.num}`;
 
+/* Your record: the matches finished in this browser, kept with store under 'stats'. Nothing leaves the
+   browser. A match counts once, when it reaches the over screen, if it has a kind (startMatch): against
+   the computer (by standard), online, or in a league. Practice, the daily puzzle, a variant, two people
+   on one screen and abandoned matches don't count. Online, each screen counts the match for its own
+   seat; a forfeit is a win for the side that stayed and a loss for the side that left.
+   seen keeps the ids of the last matches counted, so a reload on the over screen counts nothing twice.
+   v is the format, and browser a random id for this browser, so that carrying the record over to an
+   account later adds it in once only. The st and now arguments are for the self-tests. */
+const Record = {
+  V: 1, KEEP: 40,
+  newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+  tally() { return { played: 0, won: 0, drawn: 0, lost: 0, shotsFor: 0, shotsAgainst: 0 }; },
+  blank() { return { v: this.V, browser: this.newId(), first: null, last: null, computer: {}, online: this.tally(), league: this.tally(), seen: [] }; },
+  day(t) { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; },
+  valid(s) { return !!s && s.v === this.V && !!s.computer && !!s.online && !!s.league && Array.isArray(s.seen); },
+  load(st = store) { const s = st.get('stats', null); return this.valid(s) ? s : null; },
+  // how a finished match went for the player on this screen, or null if it doesn't count
+  result(g) {
+    const m = g.match;
+    if (g.mode !== 'match' || !m || !m.over || g.phase !== 'over' || !m.kind) return null;
+    const me = g.link ? g.link.seat : g.ai ? 1 - g.ai.side : 0, a = g.players[me].score, b = g.players[1 - me].score;
+    const res = m.forfeit ? (m.forfeit.seat === me ? 'lost' : 'won') : a > b ? 'won' : a < b ? 'lost' : 'drawn';
+    return { id: m.id, kind: m.kind, level: m.kind === 'computer' ? g.ai.level.id : null, res, shotsFor: a, shotsAgainst: b };
+  },
+  count(g, st = store, now = Date.now()) {
+    const r = this.result(g); if (!r) return false;
+    const old = st.get('stats', null);
+    if (old && typeof old.v === 'number' && old.v > this.V) return false;   // written by a later page: leave it alone
+    const s = this.valid(old) ? old : this.blank();
+    if (s.seen.includes(r.id)) return false;
+    const t = r.kind === 'computer' ? (s.computer[r.level] = s.computer[r.level] || this.tally()) : s[r.kind];
+    t.played++; t[r.res]++; t.shotsFor += r.shotsFor; t.shotsAgainst += r.shotsAgainst;
+    const d = this.day(now); s.first = s.first || d; s.last = d;
+    s.seen = [...s.seen, r.id].slice(-this.KEEP);
+    st.set('stats', s);
+    return true;
+  },
+  // a fresh record (and a fresh browser id), still knowing which matches were counted
+  reset(st = store) { const old = this.load(st), s = this.blank(); if (old) s.seen = old.seen; st.set('stats', s); },
+  rows(s) {
+    return [...AI_LEVELS.map(L => [`${L.name} computer`, s.computer[L.id]]), ['Online', s.online], ['League', s.league]].filter(([, t]) => t && t.played);
+  },
+  paint() {
+    const s = this.load(), rows = s ? this.rows(s) : [];
+    if (!rows.length) { $('recordBody').innerHTML = '<p>No matches yet. Finish a match against the computer, or online, and it’s counted here.</p>'; $('recordReset').hidden = $('recordKofi').hidden = true; return; }
+    const sum = this.tally(); for (const [, t] of rows) for (const k in sum) sum[k] += t[k] || 0;
+    const tr = (label, t, tag) => `<tr><${tag} scope="row">${esc(label)}</${tag}><td>${t.played}</td><td>${t.won}</td><td>${t.drawn}</td><td>${t.lost}</td><td>${t.shotsFor}–${t.shotsAgainst}</td></tr>`;
+    const date = d => { const [y, m, dd] = d.split('-').map(Number); return new Date(y, m - 1, dd).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+    $('recordBody').innerHTML = `<table><thead><tr><th></th><th scope="col" title="Played">P</th><th scope="col" title="Won">W</th><th scope="col" title="Drawn">D</th><th scope="col" title="Lost">L</th><th scope="col">Shots</th></tr></thead>`
+      + `<tbody>${rows.map(([l, t]) => tr(l, t, 'th')).join('')}</tbody>` + (rows.length > 1 ? `<tfoot>${tr('All matches', sum, 'th')}</tfoot>` : '') + '</table>'
+      + `<p>${s.first === s.last ? `All on ${date(s.first)}.` : `Since ${date(s.first)}; last match ${date(s.last)}.`} Kept in this browser only: practice, the daily puzzle and abandoned matches don’t count.</p>`;
+    $('recordReset').hidden = $('recordKofi').hidden = false;
+  }
+};
+
 /* Phases: idle → aim ⇄ charge → release → rolling → settle → (placing | between | summary | over) → aim …
    Every transition goes through the methods below; timers run on game time, so
    opening a menu pauses everything. With `instant` (used by the self-tests)
@@ -4106,7 +4185,9 @@ class Game {
     // the computer's reading of the green starts out wrong by an amount that depends on its standard
     if (cfg.ai) { const L = aiLevel(cfg.ai); this.ai = { side: 1, level: L, est: { T: clamp(cfg.T + aiGauss() * L.greenSD, 10, 17), biasF: 1 + aiGauss() * L.biasSD } }; }
     else this.ai = null;
-    this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, deadEnds: 0 };
+    this.match = { format: cfg.format, discipline: disc, leader: cfg.leader, ends: [], jackAttempt: 0, T: cfg.T, secret: !!cfg.secret, over: false, replay: false, deadEnds: 0,
+      // for Your record (see Record): what kind of match it counts as (none: two people on one screen), and its id
+      kind: cfg.league ? 'league' : cfg.link ? 'online' : cfg.ai ? 'computer' : null, id: cfg.matchId || Record.newId() };
     this.startEnd(false); this.snapCam = true;
   }
   /* Over to You, Skip! (bias/skip/): a fixed head from the last end, and one bowl to play with
@@ -5177,6 +5258,7 @@ const UI = {
     hv.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, highlight: hl, numbers: nums, labels: true });
   },
   matchOver() {
+    Record.count(game);
     const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.seat : P[0].score > P[1].score ? 0 : 1;
     $('overH').textContent = ff ? `${P[w].name} wins by forfeit` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
@@ -5653,7 +5735,7 @@ function startOnlineMatch(s, rest) {
   UI.noticeCb = null; $('notice').classList.remove('show');
   const players = s.players.map(p => ({ name: String(p.name || 'Player').slice(0, 16), profileId: String(p.profileId), colour: String(p.colour) }));
   const cfg = { players, T: clamp(+s.T || 13, 11, 16), format: s.format, discipline: DISCIPLINES.singles, leader: s.leader ? 1 : 0, secret: !!s.secret, ai: null,
-    link: { seat: Net.seat, send: (m, logged) => Net.send(m, logged) } };
+    link: { seat: Net.seat, send: (m, logged) => Net.send(m, logged) }, matchId: `on.${Net.code}.${s.matchNo}.${s.seq}` };
   if (!rest.length) {
     game.startMatch(cfg);
     const msgs = [];
@@ -6045,16 +6127,30 @@ function showTitle() {
 $('mSetup').onclick = () => openSetup({});
 /* Play asks how good the computer should be first. A first visit is pointed at Starter;
    after that, the standard played last (here or in Set up a match) is the one picked out. */
-function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; document.querySelector('#titleScrim .menu:not(#levelMenu)').hidden = false; }
+function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('mainMenu').hidden = false; }
 function showLevels() {
   const last = store.get('m.level', null), pick = AI_LEVELS.some(l => l.id === last) ? last : 'starter';
   $('levelList').innerHTML = AI_LEVELS.map(l => `<button class="menu-item second${l.id === pick ? ' primary' : ''}" data-level="${l.id}">${l.name}${l.id === 'starter' ? '<span class="mi-tag">New to bowls</span>' : ''}<span class="mi-sub">${esc(l.short)}</span></button>`).join('');
-  document.querySelector('#titleScrim .menu:not(#levelMenu)').hidden = true; $('levelMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
+  $('mainMenu').hidden = true; $('levelMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
   $('levelList').querySelector('.primary').focus();
 }
 $('levelList').onclick = e => { const b = e.target.closest('[data-level]'); if (b) quickPlay(b.dataset.level); };
 $('levelBack').onclick = () => { showMainMenu(); $('mQuick').focus(); };
 $('mQuick').onclick = showLevels;
+function showRecord() {
+  Record.paint(); resetArmed = false; $('recordReset').textContent = 'Reset my record';
+  $('mainMenu').hidden = true; $('recordMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
+  $('recordBack').focus();
+}
+$('mRecord').onclick = showRecord;
+$('recordBack').onclick = () => { showMainMenu(); $('mRecord').focus(); };
+// Reset asks twice: the first press only arms it, for a few seconds
+let resetArmed = false, resetTimer = 0;
+$('recordReset').onclick = () => {
+  clearTimeout(resetTimer);
+  if (!resetArmed) { resetArmed = true; $('recordReset').textContent = 'Press again to wipe it'; resetTimer = setTimeout(() => { resetArmed = false; $('recordReset').textContent = 'Reset my record'; }, 4000); return; }
+  resetArmed = false; Record.reset(); Record.paint(); $('recordReset').textContent = 'Reset my record'; $('recordBack').focus();
+};
 $('mOnline').onclick = () => OnlineUI.open();
 $('mPractice').onclick = () => { if (Net.on) Net.leave(); UI.close('titleScrim'); if (Coach.on) Coach.stop(); game.startPractice(); if (!Settings.lessonSeen) setTimeout(() => Coach.start(), 400); else maybeTutorial(); };   // a first visit starts the guided lesson
 $('mHow').onclick = () => { UI.close('titleScrim'); openTutorial(true); };
@@ -6232,6 +6328,7 @@ window.addEventListener('keydown', e => {
       else if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
+      else if (id === 'titleScrim' && !$('recordMenu').hidden) { showMainMenu(); $('mRecord').focus(); }
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
     }
@@ -6535,6 +6632,46 @@ window.BiasTests = {
       const first = G.canLook(); G.toggleLook(); const up = G.look; G.toggleLook(); G.toggleLook();
       ok('Look: not on the jack; once an end, then spent', !onJack && first && up && !G.look && G.looked.size === 1);
       G.resetEndState(); ok('Look: a new end gives everyone their look back', G.looked.size === 0); }
+    // 15d. Your record: what counts, from whose side, and only once (each test keeps its own store in memory)
+    { const mem = () => { const d = {}; return { get(k, v) { return k in d ? JSON.parse(d[k]) : v; }, set(k, v) { d[k] = JSON.stringify(v); } }; };
+      const two = () => [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }];
+      const answers = { ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } };
+      // a real match, brought to the over screen with the given score after its last end
+      const finish = (cfg, a, b) => { const G = new Game(answers, { instant: true }); G.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 1 }, leader: 0, ...cfg });
+        G.players[0].score = a; G.players[1].score = b; G.match.over = true; G.nextEnd(); return G; };
+      const st = mem(), day = Date.UTC(2026, 9, 18, 12);
+      const won = finish({ ai: 'club' }, 5, 2), lost = finish({ ai: 'club' }, 1, 4), county = finish({ ai: 'county' }, 0, 3);
+      const counted = [won, lost, county].map((G, i) => Record.count(G, st, day + i * 864e5));
+      let s = st.get('stats');
+      ok('Record: a win and a loss against the computer count, by standard', counted.every(Boolean) && s.v === Record.V && s.computer.club.played === 2 && s.computer.club.won === 1 && s.computer.club.lost === 1 && s.computer.county.lost === 1,
+        JSON.stringify(s.computer));
+      ok('Record: shots for and against, and the first and last dates', s.computer.club.shotsFor === 6 && s.computer.club.shotsAgainst === 6 && s.first === Record.day(day) && s.last === Record.day(day + 2 * 864e5), `${s.first} to ${s.last}`);
+      ok('Record: a match counts once, even if the over screen shows again (a reload)', !Record.count(won, st, day) && st.get('stats').computer.club.played === 2);
+      // a league match level after the last end is a draw (the league allows it); counted from this screen's seat
+      const draw = finish({ league: true, matchId: 'lg.test', link: { seat: 1, send() {} } }, 2, 2);
+      Record.count(draw, st, day); s = st.get('stats');
+      ok('Record: a level league match counts as drawn', s.league.played === 1 && s.league.drawn === 1 && s.online.played === 0);
+      // abandoned: a match left part-way through, then practice; and two people sharing one screen
+      { const G = new Game(answers, { instant: true }); G.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, ai: 'club' }); G.testDeliver(0, 0.62);
+        const mid = Record.count(G, st, day); G.startPractice(); const prac = Record.count(G, st, day);
+        const local = Record.count(finish({}, 3, 1), st, day);
+        ok('Record: abandoned matches, practice and two on one screen do not count', !mid && !prac && !local && JSON.stringify(st.get('stats')) === JSON.stringify(s)); }
+      // online: both screens count the same match, each for its own seat; a reload rebuilds it to the over screen with the same id
+      { const log = [], q = [], st0 = mem(), st1 = mem(), cfg = link => ({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, link, matchId: 'on.TEST.1.1' });
+        const link = seat => ({ seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
+        const G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })]; G.forEach((g, i) => g.startMatch(cfg(link(i))));
+        G[0].players[0].score = 4; G[0].players[1].score = 1; G[1].players[0].score = 4; G[1].players[1].score = 1;
+        G[1].forfeit(1, 'left'); log.push({ t: 'resign', seat: 1, why: 'left', from: 1, seq: log.length + 1 }); G[0].netIn(log[log.length - 1]);
+        Record.count(G[0], st0, day); Record.count(G[1], st1, day);
+        const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, send() {} }), log);
+        const again = Record.count(R, st1, day), a = st0.get('stats').online, b = st1.get('stats').online;
+        ok('Record: online, each screen counts its own side; leaving forfeits', a.won === 1 && a.shotsFor === 4 && b.lost === 1 && b.shotsFor === 1 && R.phase === 'over' && !again, `${JSON.stringify(a)} / ${JSON.stringify(b)}`); }
+      // a fresh record keeps the matches it has seen; a record from a later format is left alone
+      { Record.reset(st); const r = st.get('stats');
+        ok('Record: reset empties it, and a reload on the over screen still counts nothing', r.computer.club === undefined && r.first === null && !Record.count(won, st, day) && st.get('stats').first === null);
+        const later = mem(); later.set('stats', { v: Record.V + 1, keep: 'me' });
+        ok('Record: a record in a later format is left untouched', !Record.count(won, later, day) && later.get('stats').keep === 'me'); }
+    }
     const passed = out.filter(r => r.pass).length;
     console.table(out); console.log(`Bias self-tests: ${passed}/${out.length} passed`);
     return { passed, total: out.length, results: out };
@@ -6542,7 +6679,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { CAM, Record, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
