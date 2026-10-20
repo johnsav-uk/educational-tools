@@ -399,6 +399,13 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .lookbtn{min-width:0;height:32px;display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
   background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .lookbtn[hidden]{display:none}
+/* online: concede, beside the sound button. Faint (but live) while the match can still be won, solid red once it can't */
+.concede{opacity:.35;transition:opacity .3s,background-color .3s,border-color .3s}
+.concede:hover,.concede:focus-visible{opacity:1}
+.concede.hopeless{opacity:1;background:#b8402f;border-color:#b8402f;color:#fff}
+.concede.hopeless:hover{background:#c94c3a;border-color:#c94c3a}
+.concede[hidden]{display:none}
+.btn.danger{background:#b8402f;color:#fff;border-color:#b8402f}
 .lookbtn span{overflow:hidden;text-overflow:ellipsis}
 .lookbtn:hover{border-color:var(--line-2)}
 .lookbtn:disabled{opacity:.45;cursor:default;border-color:var(--line)}
@@ -638,6 +645,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="hud-row">
         <button class="icon-btn sm" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
           <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+        </button>
+        <button class="icon-btn sm concede" id="btnConcede" hidden aria-label="Concede the match" title="Concede the match">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V3.5"/><path d="M6 4.5h11.5l-2.8 4.25 2.8 4.25H6"/></svg>
         </button>
         <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
       </div>
@@ -1007,6 +1017,15 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   </div>
 
   <!-- Match over -->
+  <div class="scrim" id="concedeScrim">
+    <div class="sheet" role="dialog" aria-labelledby="concedeH" style="max-width:440px">
+      <div class="kicker">Online match</div>
+      <h2 id="concedeH">Concede the match?</h2>
+      <p id="concedeP"></p>
+      <div class="sheet-actions"><button type="button" class="btn danger" id="concedeYes">Yes, concede</button><span class="spacer"></span><button type="button" class="btn primary" id="concedeNo">Keep playing</button></div>
+    </div>
+  </div>
+
   <div class="scrim" id="overScrim">
     <div class="sheet card" role="dialog" aria-labelledby="overH" style="max-width:600px">
       <div class="kicker"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club · Match complete</div>
@@ -4613,6 +4632,14 @@ class Game {
     if (f.type === 'shots') return s0 >= f.n || s1 >= f.n;
     return this.endNo >= f.n && s0 !== s1;
   }
+  /* Online concede: true when side `me` can no longer win, even taking every shot of every end still to be
+     scored (the end in play counts in full). Level after the last end plays an extra end, so only a side
+     strictly behind is out of it. A game to a number of shots can always still be won. */
+  cannotWin(me) {
+    const m = this.match; if (!m || m.over || m.format.type !== 'ends') return false;
+    const d = m.discipline || DISCIPLINES.singles, most = d.positions * d.bowls, left = Math.max(0, m.format.n - m.ends.length);
+    return this.players[me].score + left * most < this.players[1 - me].score;
+  }
   nextEnd() {
     if (this.match.over) { this.phase = 'over'; this.ui.matchOver(); return; }
     this.endNo++; this.dir ^= 1; this.startEnd(false);
@@ -4738,13 +4765,13 @@ class Game {
       const r = entries.find(e => e.t === 'resign'); if (r) this.netIn(r);
     } finally { this.instant = inst; }
   }
-  /* Online, a player who left the match, or dropped out and was not back within AWAY_S seconds
-     (see Away), forfeits it: the match ends there, won by the other side whatever the score. */
+  /* Online, a player who conceded (see Concede), left the match, or dropped out and was not back within
+     AWAY_S seconds (see Away), forfeits it: the match ends there, won by the other side whatever the score. */
   forfeit(seat, why) {
     if (this.mode !== 'match' || !this.match || this.phase === 'over') return;
     this.clearTimers(); this.look = false; this.charge = null;
     if (this.openPrompt) { this.openPrompt = null; if (this.ui.dismissPrompt) this.ui.dismissPrompt(); }
-    this.match.over = true; this.match.forfeit = { seat, why: why === 'left' ? 'left' : 'away' };
+    this.match.over = true; this.match.forfeit = { seat, why: why === 'left' || why === 'conceded' ? why : 'away' };
     this.phase = 'over'; this.ui.refresh(); this.ui.matchOver();
   }
 
@@ -5041,6 +5068,24 @@ const Ring = {
   }
 };
 
+/* Online, either player may concede, from the flag beside the sound button, always after an "are you
+   sure". The match goes to the other side at once, as a forfeit: the relay logs it as 'resign', so the
+   other screen ends too, and a reload shows it. The flag turns red once the match can't be won. */
+const Concede = {
+  live() { const g = game; return !!g.link && g.mode === 'match' && !!g.match && !g.match.over && g.phase !== 'over' && Net.inMatch; },
+  ask() {
+    if (!this.live()) return;
+    const g = game, me = g.link.seat, P = g.players, them = P[1 - me].name, a = P[me].score, b = P[1 - me].score;
+    $('concedeP').textContent = (g.cannotWin(me) ? `${them} leads ${b}–${a}, and there aren't enough ends left for you to catch up.` : `The score is ${a}–${b}${a > b ? ' to you' : a < b ? ` to ${them}` : ''}.`)
+      + ` If you concede, the match goes to ${them} and counts as a loss in Your record.`;
+    UI.open('concedeScrim');
+  },
+  go() {
+    UI.close('concedeScrim'); if (!this.live()) return;
+    const seat = game.link.seat;
+    game.forfeit(seat, 'conceded'); Net.send({ t: 'resign', seat, why: 'conceded' }, true);
+  }
+};
 const UI = {
   toastTimer: 0, bannerTimer: 0, noticeCb: null, measure: [], measuring: false, pulseT: 0, lastStats: '',
   open(id) {
@@ -5092,6 +5137,11 @@ const UI = {
   announce(text) { const a = $('announcer'); a.textContent = ''; setTimeout(() => a.textContent = text, 30); },
   pulseHead() { this.pulseT = 1; },
 
+  paintConcede() {
+    const b = $('btnConcede'), live = Concede.live(), out = live && game.cannotWin(game.link.seat);
+    b.hidden = !live; b.classList.toggle('hopeless', out);
+    b.title = out ? 'You can no longer win: concede the match' : 'Concede the match';
+  },
   refresh() {
     const g = game, inGame = g.mode !== 'title';
     const noMeasure = g.mode === 'match' || g.mode === 'puzzle' || g.mode === 'variant';   // measured only once the end is over (a variant has no jack)
@@ -5102,6 +5152,7 @@ const UI = {
     $('app').classList.toggle('nohead', !Settings.headView); $('btnHeadView').setAttribute('aria-pressed', String(!!Settings.headView));
     $('practiceBar').hidden = g.mode !== 'practice' || Coach.on;   // the lesson card takes its place
     Coach.sync();
+    this.paintConcede();
     if (!inGame) return;
     this.renderScoreboard();
     const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.locked;
@@ -5260,10 +5311,11 @@ const UI = {
   matchOver() {
     Record.count(game);
     const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.seat : P[0].score > P[1].score ? 0 : 1;
-    $('overH').textContent = ff ? `${P[w].name} wins by forfeit` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
+    if ($('concedeScrim').classList.contains('show')) UI.close('concedeScrim');
+    $('overH').textContent = ff ? `${P[w].name} wins by ${ff.why === 'conceded' ? 'concession' : 'forfeit'}` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
     const gone = ff && (g.link && ff.seat === g.link.seat ? 'You' : P[ff.seat].name);
-    const ffLine = ff ? `${gone} ${ff.why === 'left' ? 'left the match' : `lost the connection and ${gone === 'You' ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === (g.link && g.link.seat) ? 'you' : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
+    const ffLine = ff ? `${gone} ${ff.why === 'conceded' ? 'conceded' : ff.why === 'left' ? 'left the match' : `lost the connection and ${gone === 'You' ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === (g.link && g.link.seat) ? 'you' : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
     $('overP').textContent = ffLine + `${m.discipline.name}, ${m.ends.length} end${m.ends.length === 1 ? '' : 's'} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.deadEnds ? `, with ${m.deadEnds} dead end${m.deadEnds > 1 ? 's' : ''} replayed` : ''}.` + teamsLine;
     const head = `<tr><th>${g.isTeams() ? 'Team' : 'Player'}</th>${m.ends.map((e, i) => `<th>${e.extra ? 'X' : i + 1}</th>`).join('')}<th>Total</th></tr>`;
     const row = i => `<tr><td><span class="pip" style="--c:${colourHex(P[i].colour)}"></span>${esc(P[i].name)}</td>${m.ends.map(e => `<td>${e.winner === i ? e.shots : (e.winner == null ? '–' : '')}</td>`).join('')}<td><b>${P[i].score}</b></td></tr>`;
@@ -5929,6 +5981,10 @@ const Away = {
   }
 };
 
+$('btnConcede').onclick = () => Concede.ask();
+$('concedeYes').onclick = () => Concede.go();
+$('concedeNo').onclick = () => UI.close('concedeScrim');
+
 /* The lobby (bias-relay's Lobby): every open copy of the game keeps one quiet connection to it,
    for the count of who's about, and to wait in the queue for a quick match. The relay pairs two
    waiting players and offers each the other; when both accept it opens a room and sends the code. */
@@ -6325,6 +6381,7 @@ window.addEventListener('keydown', e => {
     if (open) {
       const id = open.id;
       if (id === 'onlineScrim') OnlineUI.menu();
+      else if (id === 'concedeScrim') UI.close(id);
       else if (['rulesScrim', 'settingsScrim', 'bowlsScrim'].includes(id)) { UI.close(id); if (game.mode === 'title') showTitle(); }
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
@@ -6407,7 +6464,7 @@ function tick(dt) {
   Rain.frame(dt, greenShown);
   UI.drawHead(dt);
   Net.tick(dt);
-  statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); }
+  statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); UI.paintConcede(); }
 }
 
 // ======================= 15. Self-tests =======================
@@ -6666,6 +6723,17 @@ window.BiasTests = {
         const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, send() {} }), log);
         const again = Record.count(R, st1, day), a = st0.get('stats').online, b = st1.get('stats').online;
         ok('Record: online, each screen counts its own side; leaving forfeits', a.won === 1 && a.shotsFor === 4 && b.lost === 1 && b.shotsFor === 1 && R.phase === 'over' && !again, `${JSON.stringify(a)} / ${JSON.stringify(b)}`); }
+      // online: the concede flag goes red only when the match can't be won, and conceding ends it on both screens as a loss for the side that gave up
+      { const log = [], cfg = link => ({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, link, matchId: 'on.TEST.2.1' });
+        const link = seat => ({ seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
+        const G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })]; G.forEach((g, i) => g.startMatch(cfg(link(i))));
+        const set = (a, b, ended) => G.forEach(g => { g.players[0].score = a; g.players[1].score = b; g.match.ends.length = 0; for (let i = 0; i < ended; i++) g.match.ends.push({}); });
+        set(0, 4, 1); const close = G[0].cannotWin(0); set(0, 5, 1); const out = G[0].cannotWin(0) && !G[0].cannotWin(1); set(0, 0, 2); const level = G[0].cannotWin(0);
+        set(1, 6, 1); const st0 = mem(), st1 = mem();
+        G[0].forfeit(0, 'conceded'); G[0].link.send({ t: 'resign', seat: 0, why: 'conceded' }); G[1].netIn(log[log.length - 1]);
+        Record.count(G[0], st0, day); Record.count(G[1], st1, day);
+        ok('Online: concede goes red only when the match is lost, and ends it on both screens',
+          !close && out && !level && G.every(g => g.phase === 'over' && g.match.forfeit.seat === 0 && g.match.forfeit.why === 'conceded') && st0.get('stats').online.lost === 1 && st1.get('stats').online.won === 1); }
       // a fresh record keeps the matches it has seen; a record from a later format is left alone
       { Record.reset(st); const r = st.get('stats');
         ok('Record: reset empties it, and a reload on the over screen still counts nothing', r.computer.club === undefined && r.first === null && !Record.count(won, st, day) && st.get('stats').first === null);
