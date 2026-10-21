@@ -45,10 +45,16 @@
 .acct-rating .down{color:var(--alert)}
 .acct-rating .acct-tick{margin:0;min-height:36px;font-size:13.5px}
 .acct-rating .acct-dev{font-size:12.5px;color:var(--cream-2)}
+.acct-rating .acct-dev:empty{display:none}
+.acct-carry{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--cream)}
 .acct-r-row{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
 .acct .acct-link{align-self:auto;min-height:36px;padding:0;border:0;background:none;font-family:var(--sans);font-size:13px;color:var(--gold);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .acct-table{margin:4px 0 0;padding:0 0 0 22px;font-size:14px;font-variant-numeric:tabular-nums}
 .acct-table li{padding:4px 0;border-bottom:1px solid var(--line)}
-.acct-table li span{display:inline-block;min-width:60%}
+.acct-table li{display:flex;align-items:center;gap:6px}
+.acct-table li span{flex:1;min-width:0;overflow-wrap:anywhere}
+.acct .acct-flag{align-self:auto;min-width:32px;min-height:32px;padding:0;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}
+.acct .acct-flag:hover,.acct .acct-flag:focus-visible{color:var(--alert)}
+.acct .acct-flag:disabled{opacity:.4;cursor:default}
 .acct-table li.me{color:var(--gold);font-weight:650}
 .acct-table i{font-style:normal;margin-left:3px;color:var(--muted)}

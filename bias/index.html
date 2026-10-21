@@ -7012,7 +7012,7 @@ const Members = {
   load() {
     if (!this.files) {
       const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'members/members.css'; document.head.appendChild(css);
-      this.files = Skip.script('members/members.js');
+      this.files = Skip.script('members/sync.js').then(() => Skip.script('members/members.js'));   // sync.js: carry-over rules
       this.files.catch(() => { this.files = null; });
     }
     return this.files;
@@ -7060,6 +7060,8 @@ requestAnimationFrame(() => requestAnimationFrame(() => $('titleScrim').classLis
 }
 Lobby.start(); QM.paint();
 if (skipOn && skipParam !== null && skipParam !== '0' && !Net.on) Skip.open(skipLink(skipParam));   // ?skip opens today's puzzle, ?skip=12 puzzle No. 12 (shared results link here)
+// an emailed "set a new password" link (#reset=<token>): the Members panel's form, and the token out of the address bar
+if (membersOn) { const m = location.hash.match(/^#reset=([0-9a-f]{64})$/); if (m) { history.replaceState(null, '', location.pathname + location.search); Members.open({ reset: m[1] }); } }
 requestAnimationFrame(t => { last = t; frame(t); });
 if (/[?&]test\b/.test(location.search)) setTimeout(() => { const r = window.BiasTests.run(); UI.toast(`Self-tests: ${r.passed}/${r.total} passed (see console)`); }, 300);
 if (GLFLAGS.want && /[?&]test\b/.test(location.search)) setTimeout(() => glCameraTest().then(r => UI.toast(`GL camera parity: ${r.pass ? 'pass' : 'FAIL'} (max ${r.maxPixelError} px, see console)`)), 1500);

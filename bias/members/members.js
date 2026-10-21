@@ -16,6 +16,7 @@
     : local ? 'http://127.0.0.1:8790' : 'https://bias-league.bias-relay.workers.dev';
 
   let H = null, view = 'signin', page = 'home';   // page: which signed-in page is showing
+  let resetToken = null;                          // from an emailed link (#reset=<token>): view 'reset'
   const $ = id => document.getElementById(id);
   const token = () => H.store.get('league.token', null);
   const signedOut = () => { H.store.set('league.token', null); H.store.set('member.name', null); H.paint(null, 0); };
@@ -35,28 +36,94 @@
   function signedIn(r) {
     H.store.set('league.token', r.token); H.store.set('member.name', r.user.username);
     H.paint(r.user.username, 0);
-    home();
+    if (linked(r.user.id) || declined(r.user.id)) home(); else carry(r.user.id);
   }
 
-  // ---------- signed out: sign in, join, forgot ----------
+  /* ---------- this browser and the account (the rules are in sync.js) ----------
+     The first time an account signs in here, carry() shows what would move each way and does
+     nothing until the player agrees. After that, syncNow() keeps the two in step whenever the
+     Members panel looks in: store 'member.sync' is the account this browser is joined to (minus
+     it for "Not now"). */
+  const S = () => window.BiasSync;
+  const linked = uid => H.store.get('member.sync', null) === uid;
+  const declined = uid => H.store.get('member.sync', null) === -uid;
+  function browserId() {
+    let b = H.store.get('member.browser', null);
+    if (!/^[a-z0-9]{6,24}$/.test(b || '')) { b = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); H.store.set('member.browser', b); }
+    return b;
+  }
+  const writeAll = w => { for (const k in w) H.store.set(k, w[k]); };
+  async function syncNow(uid) {
+    if (!linked(uid) || !S()) return null;
+    const d = await call('/api/data'); if (d.error) return null;
+    const b = browserId(), acct = d.rows.find(r => r.kind === 'profile');
+    const { writes, send } = S().step(S().snapshot(H.store), d.rows, b, H.store.get('member.syncedProfile', null), H.store.get('member.syncedAt', 0));
+    writeAll(writes);
+    if (acct && S().PROFILE_KEYS.some(k => k in writes)) { H.store.set('member.syncedProfile', acct.json); H.store.set('member.syncedAt', acct.updatedAt); }
+    // sent only when it differs from what was last sent (a short hash of it, in 'member.sent')
+    let h = 0x811c9dc5; const sig = uid + JSON.stringify(send);
+    for (let i = 0; i < sig.length; i++) { h ^= sig.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    if (send.profile || H.store.get('member.sent', null) !== h) {
+      const r = await call('/api/data', send);
+      if (!r.error) H.store.set('member.sent', h);
+      if (!r.error && send.profile) { H.store.set('member.syncedProfile', send.profile); H.store.set('member.syncedAt', r.at); }
+    }
+    return { rows: d.rows, local: S().snapshot(H.store), browser: b };
+  }
+  async function carry(uid) {
+    page = 'carry';
+    H.head('This browser and your account', 'Nothing moves until you say so'); if (H.top) H.top();
+    H.body().innerHTML = '<p class="acct-note">Loading…</p>';
+    const d = await call('/api/data');
+    if (page !== 'carry') return;
+    if (d.error || !S()) { H.body().innerHTML = `<p class="acct-err">${H.esc(d.error || 'This could not load.')}</p><button class="btn ghost" type="button" id="acBackHome">‹ Back to Members</button>`; $('acBackHome').onclick = home; return; }
+    const b = browserId(), p = S().plan(S().snapshot(H.store), d.rows, b), acct = d.rows.find(r => r.kind === 'profile');
+    const join = async () => {
+      writeAll(p.writes); H.store.set('member.sync', uid);
+      H.store.set('member.syncedProfile', acct ? acct.json : null); H.store.set('member.syncedAt', acct ? acct.updatedAt : 0);
+      await syncNow(uid);
+    };
+    if (!p.up.length && !p.down.length) { await join(); home(); return; }   // nothing either way: just join
+    const list = items => `<ul class="acct-carry">${items.map(t => `<li>${H.esc(t)}</li>`).join('')}</ul>`;
+    H.body().innerHTML = `
+      ${p.up.length ? `<h3>From this browser to your account</h3>${list(p.up)}` : ''}
+      ${p.down.length ? `<h3>From your account to this browser</h3>${list(p.down)}` : ''}
+      <p class="acct-note">After this, while you’re signed in here, this browser keeps your account up to date: your record, streak and stars. Only you can see it, and it goes if you delete your account.</p>
+      <div class="acct-confirm-btns"><button class="btn primary" type="button" id="acCarryYes">Carry it over</button><button class="btn" type="button" id="acCarryNo">Not now</button></div>`;
+    $('acCarryNo').onclick = () => { H.store.set('member.sync', -uid); home(); };
+    $('acCarryYes').onclick = async () => {
+      $('acCarryYes').disabled = true;
+      await join();
+      if (!Object.keys(p.writes).length) { home(); return; }
+      H.head('Carried over', 'This browser is joined to your account');
+      H.body().innerHTML = `<p>Done. What came from your account shows when the game next opens.</p>
+        <div class="acct-confirm-btns"><button class="btn primary" type="button" id="acReload">Open the game again now</button><button class="btn ghost" type="button" id="acBackHome">‹ Back to Members</button></div>`;
+      $('acReload').onclick = () => location.reload(); $('acBackHome').onclick = home;
+    };
+  }
+
+  // ---------- signed out: sign in, join, forgot, and a new password from an emailed link ----------
   const TABS = [['signin', 'Sign in'], ['join', 'Join'], ['forgot', 'Forgot password']];
   function form() {
-    H.head(view === 'join' ? 'Join Bias' : view === 'forgot' ? 'Forgot your password?' : 'Sign in', view === 'join' ? 'Free. For leagues against other members' : 'Members play in leagues');
+    H.head(view === 'join' ? 'Join Bias' : view === 'forgot' ? 'Forgot your password?' : view === 'reset' ? 'Choose a new password' : 'Sign in',
+      view === 'join' ? 'Free. For leagues against other members' : view === 'reset' ? 'From the link in your email' : 'Members play in leagues');
     const has = (...v) => v.includes(view), esc = H.esc;
     H.body().innerHTML = `
-      <div class="acct-tabs" role="group">${TABS.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${v === view}">${l}</button>`).join('')}</div>
+      ${view === 'reset' ? '' : `<div class="acct-tabs" role="group">${TABS.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${v === view}">${l}</button>`).join('')}</div>`}
       <form id="acF" autocomplete="on" novalidate>
         ${has('signin', 'join') ? '<div class="field"><label for="acU">Username</label><input class="input" id="acU" name="username" autocomplete="username" maxlength="16" autocapitalize="off" spellcheck="false" required></div>' : ''}
         ${has('join', 'forgot') ? '<div class="field"><label for="acE">Email</label><input class="input" id="acE" type="email" name="email" autocomplete="email" maxlength="254" spellcheck="false" required></div>' : ''}
         ${has('signin', 'join') ? `<div class="field"><label for="acP">${view === 'join' ? 'Choose a password (8 or more)' : 'Password'}</label><input class="input" id="acP" type="password" name="password" autocomplete="${view === 'join' ? 'new-password' : 'current-password'}" required></div>` : ''}
+        ${has('reset') ? '<div class="field"><label for="acP">New password (8 or more)</label><input class="input" id="acP" type="password" name="password" autocomplete="new-password" required></div>' : ''}
         ${has('join') ? '<label class="acct-tick"><input id="acAge" type="checkbox"> I’m 13 or over</label>' : ''}
         <p class="acct-note">${{
           signin: '',
           join: `Your username is your name in league tables: 3 to 16 letters, numbers or _, and not your real name. Your email is only for getting back in if you forget your password: we keep a scrambled form of it, never the address, and never email you anything else. <a href="${esc(API)}/join.html#privacy" target="_blank" rel="noopener">Privacy, in plain words</a>`,
-          forgot: 'Type the email you joined with. We’ll send your username and a link to choose a new password. It’s the only email Bias ever sends.'
+          forgot: 'Type the email you joined with. We’ll send your username and a link to choose a new password. It’s the only email Bias ever sends.',
+          reset: 'You’ll be signed in here, and signed out everywhere else.'
         }[view]}</p>
         <p class="acct-err" id="acErr" role="alert"></p>
-        <button class="btn primary" type="submit">${view === 'join' ? 'Join' : view === 'forgot' ? 'Email me a link' : 'Sign in'}</button>
+        <button class="btn primary" type="submit">${view === 'join' ? 'Join' : view === 'forgot' ? 'Email me a link' : view === 'reset' ? 'Set my new password' : 'Sign in'}</button>
       </form>`;
     H.body().querySelectorAll('[data-v]').forEach(b => b.onclick = () => { view = b.dataset.v; form(); });
     $('acF').onsubmit = async e => {
@@ -65,10 +132,16 @@
       btn.disabled = true;
       let r;
       if (view === 'forgot') r = await call('/api/forgot', { email: val('acE') });
+      else if (view === 'reset') r = await call('/api/reset-link', { token: resetToken, password: $('acP').value, bearer: true });
       else if (view === 'join') r = await call('/api/signup', { username: val('acU'), email: val('acE'), password: $('acP').value, ageOk: $('acAge').checked, bearer: true });
       else r = await call('/api/login', { username: val('acU'), password: $('acP').value, bearer: true });
       btn.disabled = false;
-      if (r.error) { $('acErr').textContent = r.error; return; }
+      if (r.error) {
+        $('acErr').textContent = r.error;
+        if (view === 'reset' && /used or has run out/.test(r.error)) { view = 'forgot'; resetToken = null; form(); $('acErr').textContent = r.error; }
+        return;
+      }
+      if (view === 'reset') { resetToken = null; view = 'signin'; }
       if (view === 'forgot') { H.body().innerHTML = `<p>${H.esc(r.message)}</p><button class="btn" type="button" id="acBackIn">Back to sign in</button>`; $('acBackIn').onclick = () => { view = 'signin'; form(); }; return; }
       signedIn(r);
     };
@@ -93,6 +166,7 @@
 
   /* Your Elo rating: only you see it, unless you choose to be on the ratings table. It comes from
      confirmed league results, so it starts at 1200 and moves after each one. */
+  const recLine = t => `${plural(t.played, 'match', 'matches')} · ${t.won} won · ${t.drawn} drawn · ${t.lost} lost`;
   // with this browser's own record of finished matches underneath, when there is one. Only the
   // number shows until the arrow is pressed; the box remembers being open (store 'member.ratingOpen').
   function ratingBlock(r, rec) {
@@ -105,19 +179,25 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <div class="acct-r-more" id="acRMore"${open ? '' : ' hidden'}>
         <p>${r.games ? `${plural(r.games, 'league game', 'league games')}${week}${r.best > r.rating && r.best > 1200 ? ` · best ${r.best}` : ''}.${r.provisional ? ' Settles after 10 games.' : ''}` : 'Starts at 1200 and moves with each confirmed league result.'} Only you see it unless you tick below.</p>
-        ${rec.played ? `<p class="acct-dev">On this device: ${plural(rec.played, 'match', 'matches')} · ${rec.won} won · ${rec.drawn} drawn · ${rec.lost} lost</p>` : ''}
+        <p class="acct-dev" id="acDev">${rec.played ? `On this device: ${recLine(rec)}` : ''}</p>
         <div class="acct-r-row"><label class="acct-tick"><input id="acPub" type="checkbox"${r.public ? ' checked' : ''}> Show me on the ratings table</label>
           <button class="acct-link" type="button" id="acTable" aria-expanded="false" aria-controls="acTableBody">See the ratings table</button></div>
         <div id="acTableBody"></div>
         </div>
       </div>`;
   }
+  const flag = r => `<button class="acct-flag" type="button" data-flag="${Number(r.id)}" aria-label="Report the name ${H.esc(r.name)}" title="Report this name">⚑</button>`;
   async function showTable() {
     const box = $('acTableBody'); box.innerHTML = '<p class="acct-note">Loading…</p>';
     const t = await call('/api/ratings');
     if (t.error) { box.innerHTML = `<p class="acct-err">${H.esc(t.error)}</p>`; return; }
-    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b></li>`).join('')}</ol>`
+    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b>${r.me ? '' : flag(r)}</li>`).join('')}</ol>
+      <p class="acct-note">⚑ reports a rude or unkind name to the organiser, who can change it. They won’t be told it was you.</p><p class="acct-note" id="acFlagMsg" role="status"></p>`
       : '<p class="acct-note">Nobody has chosen to be on the table yet.</p>';
+    box.querySelectorAll('[data-flag]').forEach(b => b.onclick = async () => {
+      const r = await call('/api/report-name', { userId: Number(b.dataset.flag) });
+      $('acFlagMsg').textContent = r.error || r.message; if (!r.error) b.disabled = true;
+    });
   }
 
   async function home() {
@@ -139,6 +219,7 @@
       <p class="acct-note">${s.leagues.length ? 'Arrange games on the noticeboard. Bias never emails you about them, so look in here for what’s waiting.'
         : s.openToJoin ? 'You’re not in a league yet.' : 'You’re not in a league, and none are taking sign-ups just now.'}</p>
       <h3>Your account</h3>
+      ${linked(s.user.id) ? '' : `<button class="${declined(s.user.id) ? 'acct-link' : 'btn primary'}" type="button" id="acCarry">Bring this browser’s name, record and puzzle streak into your account</button>`}
       ${s.hasEmail ? '' : '<p class="acct-note"><b>No email on your account.</b> Add one so you can get back in if you forget your password.</p>'}
       <details class="acct-more"${s.hasEmail ? '' : ' open'}><summary>${s.hasEmail ? 'Change my email' : 'Add my email'}</summary>
         <form id="acEm" novalidate>
@@ -161,6 +242,13 @@
       <div class="acct-foot"><button class="btn ghost" type="button" id="acOut">Sign out</button><a href="${esc(API)}/join.html#privacy" target="_blank" rel="noopener">Privacy</a></div>`;
     H.body().querySelectorAll('[data-board]').forEach(b => b.onclick = () => openBoard(b.dataset.board));
     if ($('acFind')) $('acFind').onclick = openLeagues;
+    if ($('acCarry')) $('acCarry').onclick = () => carry(s.user.id);
+    // joined: keep in step, and show the record of all this account's browsers
+    if (linked(s.user.id)) syncNow(s.user.id).then(x => {
+      if (!x || page !== 'home' || !$('acDev')) return;
+      const t = S().statsTotal(x.local.stats, x.rows, x.browser);
+      if (t.played && t.browsers > 1) $('acDev').textContent = `All your browsers: ${recLine(t)}`;
+    });
     if ($('acPub')) $('acPub').onchange = async e => { const r = await call('/api/account/ratings-public', { public: e.target.checked }); if (r.error) e.target.checked = !e.target.checked; else if ($('acTableBody').innerHTML) showTable(); };
     if ($('acRTog')) $('acRTog').onclick = () => {
       const open = $('acRMore').hidden;
@@ -241,22 +329,25 @@
 
   window.BiasMembers = {
     API,
-    open(host, want) {   // want 'join' (the title's Open To New Members): a visitor lands on Join
+    // want 'join' (the title's Open To New Members): a visitor lands on Join. want { reset: token }
+    // (an emailed link): the new-password form, signed in or not.
+    open(host, want) {
       H = host; page = 'home';
-      if (token()) { H.body().innerHTML = '<p>Loading…</p>'; home(); }
+      if (want && want.reset) { resetToken = want.reset; view = 'reset'; form(); }
+      else if (token()) { H.body().innerHTML = '<p>Loading…</p>'; home(); }
       else { view = want === 'join' ? 'join' : 'signin'; form(); }
     },
-    // the panel's Back: from a page inside Members (Open leagues) to the Members page. False on the
+    // the panel's Back: from a page inside Members (Open leagues, carrying over) to the Members page. False on the
     // Members page itself, where Back leaves for the main menu.
     back() {
-      if (page !== 'open') return false;
+      if (page === 'home') return false;
       home(); return true;
     },
     // just the menu button's name and count, after the page loads, for someone signed in
     async refresh(host) {
       H = host; if (!token()) return;
       const s = await call('/api/summary');
-      if (s.user) H.paint(s.user.username, waitingOf(s));
+      if (s.user) { H.paint(s.user.username, waitingOf(s)); syncNow(s.user.id); }
     }
   };
 })();
