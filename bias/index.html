@@ -610,6 +610,20 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 @keyframes obShine{0%,75%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 @media (prefers-reduced-motion:reduce){.open-badge .ob-dot,.open-badge::after{animation:none}}
 #titleScrim.picking .open-badge{display:none}
+/* a league taking sign-ups that a signed-in member could join: a notice above Play online, so it's seen by anyone
+   heading straight for a quick game. It opens Members on Open leagues, and goes once they've signed up */
+.title .league-note{display:flex;align-items:center;gap:10px;width:100%;padding:8px 11px 8px 12px;border-radius:10px;text-align:left;cursor:pointer;
+  border:1px solid rgba(201,168,98,.75);border-left:3px solid var(--gold);background:linear-gradient(180deg,rgba(36,66,47,.94),rgba(22,42,30,.94));
+  box-shadow:0 2px 12px rgba(0,0,0,.28);font-family:var(--sans);color:var(--cream);transition:border-color .15s,background .15s}
+.title .league-note[hidden]{display:none}
+.title .league-note:hover{border-color:var(--gold);background:linear-gradient(180deg,rgba(42,76,54,.96),rgba(26,48,34,.96))}
+.title .league-note:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.league-note .ob-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--gold);animation:obPulse 2.4s ease-out infinite}
+.league-note .ln-text{flex:1;min-width:0}
+.league-note b{display:block;font-size:14px;font-weight:700;letter-spacing:-.005em;color:var(--gold)}
+.league-note .ln-sub{display:block;font-size:12.5px;color:var(--cream-2);margin-top:1px}
+.league-note svg{flex:none;width:15px;height:15px;fill:none;stroke:var(--gold);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:reduce){.league-note .ob-dot{animation:none}}
 @media (max-width: 520px){.title h1 .logo{width:auto;height:1.75em}}
 .menu-item{font-weight:550;font-size:20px;letter-spacing:-.015em}
 .menu-item.minor{font-weight:450;letter-spacing:0}
@@ -796,6 +810,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <p class="sub">Flat-green lawn bowls, on a summer afternoon</p>
       <div class="menu" id="mainMenu">
         <button class="menu-item" id="mResume" hidden>Return to the game</button>
+        <button class="league-note" id="mLeagueNote" type="button" hidden><span class="ob-dot" aria-hidden="true"></span><span class="ln-text"><b id="mLeagueNoteHead">A new league is taking sign-ups</b><span class="ln-sub">Sign up in Members before it starts</span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <button class="menu-item primary" id="mOnline">Play online<span class="mi-sub" id="mOnlineSub" hidden></span></button>
         <button class="menu-item" id="mSkip" hidden>“Over to You, Skip!”<span class="mi-sub" id="mSkipSub">The daily puzzle: one bowl to save the end</span></button>
         <button class="menu-item" id="mQuick">Play the computer</button>
@@ -6995,11 +7010,14 @@ const MemberHost = {
   },
   // the menu button: your name once signed in, and how many things are waiting for you. Open To
   // New Members is for visitors, so it goes once someone signs in or joins, and is back if they leave.
-  paint(name, waiting) {
+  // open: how many leagues taking sign-ups they could join, for the notice above Play online.
+  paint(name, waiting, open) {
     $('mMemberName').textContent = name || 'Members';
     $('openBadge').hidden = !!name;
     $('mMemberBadge').hidden = !waiting; $('mMemberBadge').textContent = waiting > 9 ? '9+' : String(waiting || '');
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
+    $('mLeagueNote').hidden = !(name && open > 0);
+    $('mLeagueNoteHead').textContent = open > 1 ? `${open} leagues are taking sign-ups` : 'A new league is taking sign-ups';
   },
   head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
   body() { return $('memberBody'); },
@@ -7017,7 +7035,7 @@ const Members = {
     }
     return this.files;
   },
-  open(want) {   // want 'join': start a signed-out visitor on the Join form
+  open(want) {   // want 'join': start a signed-out visitor on the Join form; 'leagues': a member on Open leagues
     $('mainMenu').hidden = true; $('memberMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
     $('memberBack').focus();
     this.load().then(() => window.BiasMembers.open(MemberHost, want))
@@ -7029,6 +7047,7 @@ if (membersOn) {
   $('mMorePop').prepend($('mRecord'));   // until the record moves into the Members area
   $('mMember').onclick = () => Members.open();
   $('openBadge').hidden = !!store.get('league.token', null); $('openBadge').onclick = () => Members.open('join');
+  $('mLeagueNote').onclick = () => Members.open('leagues');
   $('memberBack').onclick = () => MemberHost.back();
   const name = store.get('member.name', null);
   if (store.get('league.token', null)) {   // signed in on this browser: show what's waiting

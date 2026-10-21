@@ -218,7 +218,7 @@
     if (s.loggedOut || !s.user) { view = 'signin'; form(); if (s.loggedOut) $('acErr').textContent = 'You’ve been signed out. Please sign in again.'; return; }
     if (s.error) { H.body().innerHTML = `<p>${H.esc(s.error)}</p>`; return; }
     H.store.set('member.name', s.user.username);
-    H.paint(s.user.username, waitingOf(s));
+    H.paint(s.user.username, waitingOf(s), s.openToJoin);
     H.head(s.user.username, 'Signed in'); if (H.top) H.top();
     const rec = H.record(), esc = H.esc;
     H.body().innerHTML = `
@@ -342,11 +342,13 @@
 
   window.BiasMembers = {
     API,
-    // want 'join' (the title's Open To New Members): a visitor lands on Join. want { reset: token }
+    // want 'join' (the title's Open To New Members): a visitor lands on Join. want 'leagues' (the notice
+    // above Play online): a member lands on Open leagues, Back taking them to the Members page. want { reset: token }
     // (an emailed link): the new-password form, signed in or not.
     open(host, want) {
       H = host; page = 'home';
       if (want && want.reset) { resetToken = want.reset; view = 'reset'; form(); }
+      else if (token() && want === 'leagues') openLeagues();
       else if (token()) { H.body().innerHTML = '<p>Loading…</p>'; home(); }
       else { view = want === 'join' ? 'join' : 'signin'; form(); }
     },
@@ -360,7 +362,7 @@
     async refresh(host) {
       H = host; if (!token()) return;
       const s = await call('/api/summary');
-      if (s.user) { H.paint(s.user.username, waitingOf(s)); syncNow(s.user.id); }
+      if (s.user) { H.paint(s.user.username, waitingOf(s), s.openToJoin); syncNow(s.user.id); }
     }
   };
 })();
