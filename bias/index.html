@@ -422,7 +422,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .level-head{font-family:var(--sans);font-weight:650;font-size:22px;letter-spacing:-.015em;color:var(--cream);margin:2px 0 6px}
 .level-head span{display:block;font-size:13px;font-weight:400;letter-spacing:0;color:var(--cream-2);margin-top:3px}
 #titleScrim.picking .club,#titleScrim.picking .sub{display:none}
-#levelMenu,#recordMenu{width:340px;max-width:100%}
+#levelMenu,#recordMenu,#memberMenu{width:340px;max-width:100%}
 .record table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:14px;color:var(--cream);font-variant-numeric:tabular-nums}
 .record th,.record td{padding:6px 5px;text-align:right;border-bottom:1px solid rgba(238,231,212,.14);font-weight:500}
 .record th:first-child,.record td:first-child{text-align:left;padding-left:0}
@@ -431,6 +431,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .record p{font-family:var(--sans);font-size:13px;line-height:1.45;color:var(--cream-2);margin:10px 0 0}
 .record-reset{align-self:flex-start;margin-top:8px}
 /* Your record stands out among the links under the menu */
+.title-links button[hidden]{display:none}
+.title-links #mMember .mm-badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:11.5px;font-weight:700;line-height:18px;text-align:center}
+.title-links #mMember .mm-badge[hidden]{display:none}
 .title-links #mRecord{background:var(--gold);color:var(--ink);font-weight:650;padding:8px 12px;margin-left:6px;text-shadow:none}
 .title-links #mRecord:hover{background:#e2c584;color:var(--ink)}
 .title-links #mRecord:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
@@ -766,6 +769,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
           <button id="mSettings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>Settings</button>
           <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
           <button id="mShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 7.5 12 3.5l4 4"/><path d="M6 11v8.5h12V11"/></svg>Share</button>
+          <button id="mMember" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Members</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
         </nav>
       </div>
       <div class="menu" id="levelMenu" hidden>
@@ -779,6 +783,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div id="recordBody" class="record"></div>
         <button type="button" class="btn ghost record-reset" id="recordReset">Reset my record</button>
         <div class="record-kofi" id="recordKofi"><p>Every match on this record was free, with no ads. If Bias has given you a good game, a coffee helps keep it that way.</p><a href="https://ko-fi.com/johnsav" target="_blank" rel="noopener">Buy me a coffee on Ko-fi</a></div>
+      </div>
+      <div class="menu" id="memberMenu" hidden>
+        <button class="level-back" id="memberBack">‹ Back</button>
+        <div class="level-head" id="memberHead">Members<span>Leagues and your account</span></div>
+        <div id="memberBody" class="acct"><p>Loading…</p></div>
       </div>
       <div class="foot" id="titleFoot" hidden></div>
       <a class="community" href="https://www.facebook.com/groups/1116437361143315" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.4-3.2 2.6-5 5.5-5s5.1 1.8 5.5 5"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M15.6 14.2c2.6-.3 4.6 1.3 4.9 4.3"/></svg>Join the Bias Clubhouse on Facebook</a>
@@ -6269,7 +6278,7 @@ function showTitle() {
 $('mSetup').onclick = () => openSetup({});
 /* Play asks how good the computer should be first. A first visit is pointed at Starter;
    after that, the standard played last (here or in Set up a match) is the one picked out. */
-function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('mainMenu').hidden = false; }
+function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('memberMenu').hidden = true; $('mainMenu').hidden = false; }
 function showLevels() {
   const last = store.get('m.level', null), pick = AI_LEVELS.some(l => l.id === last) ? last : 'starter';
   $('levelList').innerHTML = AI_LEVELS.map(l => `<button class="menu-item second${l.id === pick ? ' primary' : ''}" data-level="${l.id}">${l.name}${l.id === 'starter' ? '<span class="mi-tag">New to bowls</span>' : ''}<span class="mi-sub">${esc(l.short)}</span></button>`).join('');
@@ -6472,6 +6481,7 @@ window.addEventListener('keydown', e => {
       else if (id === 'tutScrim') closeTut();
       else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
       else if (id === 'titleScrim' && !$('recordMenu').hidden) { showMainMenu(); $('mRecord').focus(); }
+      else if (id === 'titleScrim' && !$('memberMenu').hidden) { showMainMenu(); $('mMember').focus(); }
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
     }
@@ -6868,7 +6878,7 @@ window.BiasDebug = { CAM, Record, Weather, WX, Rain, Sound, Art, onResize, Net, 
 // ---------- Over to You, Skip!: the daily puzzle (bias/skip/) ----------
 /* A one-shot daily puzzle on its own screen. Its files load only when it is opened; it borrows
    the physics, rules and sound below through window.BiasEngine and leaves the game as it was. */
-const FEATURES = { dailySkip: true };   // false hides it from the menu; ?skip=preview still opens it, for checking
+const FEATURES = { dailySkip: true, accounts: false };   // false hides it from the menu; ?skip=preview (or ?members=preview) still opens it, for checking
 const skipParam = new URLSearchParams(location.search).get('skip');
 const skipOn = FEATURES.dailySkip || skipParam === 'preview';
 const skipLink = p => { const m = /^#?0*(\d{1,5})$/.exec(String(p == null ? '' : p).trim()); return m && +m[1] >= 1 ? +m[1] : undefined; };   // as SkipCore.linkNumber, before it loads
@@ -6915,6 +6925,58 @@ if (skipOn) {
   $('mSkip').hidden = !FEATURES.dailySkip && skipParam !== 'preview';
   $('mSkip').onclick = () => { if (Net.on) { UI.toast('Leave the online room before trying the puzzle.', 'warn'); return; } UI.close('titleScrim'); Skip.open(); };
   setTimeout(() => Skip.core().then(() => Skip.paint(), () => {}), 1200);
+}
+
+// ---------- Members: accounts and leagues (bias/members/) ----------
+/* Behind FEATURES.accounts. Its files load only when the Members panel is opened, or a moment after
+   the page loads for someone already signed in on this browser (to show what's waiting for them).
+   Someone who has never signed in loads and fetches nothing. The account service is the
+   bias-league Worker; the sign-in is a bearer token kept under store 'league.token'. */
+const membersOn = FEATURES.accounts || new URLSearchParams(location.search).get('members') === 'preview';
+const MemberHost = {
+  store,
+  esc,
+  record() {   // the totals of Your record, from this browser
+    const s = Record.load(), sum = Record.tally();
+    if (s) for (const [, t] of Record.rows(s)) for (const k in sum) sum[k] += t[k] || 0;
+    return sum;
+  },
+  // the menu button: your name once signed in, and how many things are waiting for you
+  paint(name, waiting) {
+    $('mMemberName').textContent = name || 'Members';
+    $('mMemberBadge').hidden = !waiting; $('mMemberBadge').textContent = waiting > 9 ? '9+' : String(waiting || '');
+    $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
+  },
+  head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
+  body() { return $('memberBody'); },
+  back() { showMainMenu(); $('mMember').focus(); }
+};
+const Members = {
+  files: null,
+  load() {
+    if (!this.files) {
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'members/members.css'; document.head.appendChild(css);
+      this.files = Skip.script('members/members.js');
+      this.files.catch(() => { this.files = null; });
+    }
+    return this.files;
+  },
+  open() {
+    $('mainMenu').hidden = true; $('memberMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
+    $('memberBack').focus();
+    this.load().then(() => window.BiasMembers.open(MemberHost))
+      .catch(() => { $('memberBody').innerHTML = '<p>This could not load. Check your connection and try again.</p>'; });
+  }
+};
+if (membersOn) {
+  $('mMember').hidden = false;
+  $('mMember').onclick = () => Members.open();
+  $('memberBack').onclick = () => MemberHost.back();
+  const name = store.get('member.name', null);
+  if (store.get('league.token', null)) {   // signed in on this browser: show what's waiting
+    MemberHost.paint(name, 0);
+    setTimeout(() => Members.load().then(() => window.BiasMembers.refresh(MemberHost), () => {}), 1500);
+  }
 }
 
 // ======================= boot =======================

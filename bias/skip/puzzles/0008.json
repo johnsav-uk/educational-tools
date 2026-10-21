@@ -1,0 +1,55 @@
+{
+  "n": 8,
+  "date": "2026-10-22",
+  "id": "skip-0008",
+  "title": "Yellow lying four",
+  "theme": "drive",
+  "greenSpeed": 12.5,
+  "conditions": "overcast",
+  "match": { "you": 16, "them": 16, "end": 21, "ends": 21 },
+  "you": "red",
+  "matRear": 2.5,
+  "jack": { "x": 0.0061, "y": 33.6653 },
+  "bowls": [
+    { "team": "yellow", "x": 0.2525, "y": 33.5738, "heading": 0.547 },
+    { "team": "yellow", "x": 0.1648, "y": 33.4812, "heading": 0.544 },
+    { "team": "yellow", "x": 0.0268, "y": 33.5723, "heading": 1.341 },
+    { "team": "yellow", "x": -0.3335, "y": 33.5665, "heading": 0.528 },
+    { "team": "red", "x": 0.2933, "y": 33.0217, "heading": 0.232 },
+    { "team": "red", "x": 0.1295, "y": 32.8034, "heading": 0.003 },
+    { "team": "red", "x": -0.5725, "y": 33.7712, "heading": -0.019 }
+  ],
+  "situation": "Last end, with the match level at 16–16. Yellow is lying four, the shot bowl touching the jack. Your nearest is 49 cm from the jack. The green is medium-heavy, 12.5 s. You are skip, with the last bowl of the end.",
+  "hint": "a slowish green: don't be short",
+  "annotations": [
+    { "text": "yellow lying four!", "dx": 0.45, "dy": 0.426, "rot": -4 },
+    { "text": "one wood left", "dx": 0.4, "dy": -1.162, "rot": -3 }
+  ],
+  "advised": {
+    "by": "your lead",
+    "hand": "back",
+    "kind": "drive",
+    "target": { "x": 0.0061, "y": 33.6653 },
+    "say": "Fire at the jack on the backhand. Knock it out and it goes back on the T.",
+    "aim": -0.01425,
+    "weight": 0.96
+  },
+  "bench": {
+    "physics": "bias-online-4",
+    "head": "6c0647b3",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 5017,
+    "values": [-4.27773,-4.03428,-4.03428,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02773,-4.02772,-4.02746,-4.02732,-4.0267,-4.02526,-4.02441,-4.02335,-4.02324,-4.02309,-4.0224,-4.02072,-4.02034,-4.01997,-4.01972,-4.01893,-4.01839,-4.01704,-4.01674,-4.01614,-4.01466,-4.01107,-3.3175,-3.28428,-3.28428,-3.27137,-3.02096,-3.02067,-3.01809,-3.0164,-3.01446,-3.0144,-3.01438,-3.01391,-3.0132,-3.01292,-3.01278,-3.01171,-2.00865,-2.00848,-2.00777,-1.0675,-1.0675,-1.0212,-1.0166,-1.01489,-1.01391,-1.01223,-1.01127,-1.01115,-1.01114,-1.00995,-1.00963,-1.00862,-1.00843,-1.00802,-1.00757,-1.00752,-1.0072,-1.00676,-1.0061,-1.00553,-1.00517,-1.00474,-1.0043,-1.00232,-1.00197,-1.00174,-1.00134,-1.00105,1.0001,1.00014,1.00333,1.00422,1.0063],
+    "outcomes": { "down": 48, "same": 47, "win1": 5 },
+    "made": "2026-10-20"
+  },
+  "best": { "hand": "fore", "aim": 0.01098, "weight": 0.975, "value": 4.0675, "outcome": "win4", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "win1", "stars": 5 },
+    "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 1.5 }, { "hand": "back", "outcome": "down", "stars": 4.5 }],
+    "grid": { "tried": 34122, "starShare": [0.3795,0.5555,0.0328,0.0193,0.005,0.0078] },
+    "flags": []
+  },
+  "gen": { "version": 1, "seed": 5017, "levels": { "you": "league", "them": "county" }, "quick": true }
+}

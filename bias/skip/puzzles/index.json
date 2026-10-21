@@ -8,6 +8,7 @@
     { "n": 4, "date": "2026-10-18", "id": "rest-on-the-shot", "title": "Rest on the shot", "theme": "yard on", "green": 12, "conditions": "" },
     { "n": 5, "date": "2026-10-19", "id": "short-and-wide", "title": "Short and wide", "theme": "draw the shot", "green": 13, "conditions": "" },
     { "n": 6, "date": "2026-10-20", "id": "skip-0006", "title": "Red lying one, fast green", "theme": "draw the shot", "green": 15, "conditions": "sunshine" },
-    { "n": 7, "date": "2026-10-21", "id": "skip-0007", "title": "Red lying one", "theme": "draw the shot", "green": 12.5, "conditions": "overcast" }
+    { "n": 7, "date": "2026-10-21", "id": "skip-0007", "title": "Red lying one", "theme": "draw the shot", "green": 12.5, "conditions": "overcast" },
+    { "n": 8, "date": "2026-10-22", "id": "skip-0008", "title": "Yellow lying four", "theme": "drive", "green": 12.5, "conditions": "overcast" }
   ]
 }
