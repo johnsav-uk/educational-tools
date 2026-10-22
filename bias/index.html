@@ -4196,6 +4196,8 @@ const AI = {
 // The two sides' nearest bowls within about 2 cm: by eye, nobody can say who holds shot.
 const closeCall = sc => { if (!sc.ranked.length) return false; const a = sc.ranked[0], o = sc.ranked.find(e => e.b.owner !== a.b.owner); return !!sc.tie || (!!o && o.d - a.d < 0.02); };
 const bodyKey = b => b.kind === 'jack' ? 'J' : `${b.owner}.${b.member || 0}.${b.num}`;
+// Online, how far the other computer may move a body this one has at rest (see applySettle).
+const NET_TOL = 0.02;
 
 /* Your record: the matches finished in this browser, kept with store under 'stats'. Nothing leaves the
    browser. A match counts once, when it reaches the over screen, if it has a kind (startMatch): against
@@ -4528,6 +4530,7 @@ class Game {
       const e = this.ai.est, L = this.ai.level; e.T += (this.world.T - e.T) * L.learn; e.biasF += (1 - e.biasF) * L.learn;
     }
     if (this.turn.kind === 'jack') this.resolveJack(); else this.resolveBowl();
+    if (this.netDisputed) { this.netDisputed = false; this.ui.toast("The other computer's result for that delivery didn't match this one's. This computer's result stands.", 'warn'); }
   }
 
   // ---------- the computer's turn ----------
@@ -4841,14 +4844,15 @@ class Game {
   }
 
   // ---------- online play ----------
-  /* Each delivery is played on both computers from the bowler's own parameters (aim, weight, hand,
-     bias, release point, mat). When everything stops, the bowler's computer sends where every body
-     lies and the other snaps to it before the rules run: browsers can differ in the last bits of
-     Math.exp and friends, and this keeps the two in step whatever happens. Messages that arrive
-     early wait in netQ until this computer reaches the same turn. */
+  /* Each delivery is played on both computers from the bowler's own choices (aim, weight, hand, arm,
+     bias tuning, mat), rebuilt and checked here (netParams). When everything stops, the bowler's computer
+     sends where every body lies and the other snaps to it before the rules run: browsers can differ in
+     the last bits of Math.exp and friends. That correction is only taken when it agrees with this
+     computer's own run (applySettle), so a changed copy of the game can't chalk a bowl or move the head.
+     Messages that arrive early wait in netQ until this computer reaches the same turn. */
   netReset() {
     this.promptNo = 0; this.openPrompt = null; this.deliveryNo = 0; this.netQ = []; this.netSettles = new Map();
-    this.netContinues = new Set(); this.awaitSettle = null; this.netGap = 0;
+    this.netContinues = new Set(); this.awaitSettle = null; this.netGap = 0; this.netDisputed = false; this.netDisputes = 0;
   }
   netIn(m) {
     if (m.t === 'deliver') this.netQ.push(m);
@@ -4865,14 +4869,31 @@ class Game {
       if (!(this.mode === 'match' && (this.phase === 'aim' || this.phase === 'charge') && t && m.n === this.deliveryNo + 1
         && t.kind === p.kind && t.player === p.player && (t.member || 0) === p.member)) break;
       this.netQ.shift();
-      this.matRear = p.matRear; this.aim = p.aim;
-      if (p.kind === 'bowl') { this.hand = p.hand; this.member.hand = p.hand; this.member.aim = p.aim; }
-      this.deliveryNo = m.n; this.startDelivery(p);
+      const q = this.netParams(p); this.aim = q.aim;
+      if (q.kind === 'bowl') { this.hand = q.hand; this.member.hand = q.hand; this.member.aim = q.aim; }
+      this.deliveryNo = m.n; this.startDelivery(q);
     }
     if (this.awaitSettle != null && this.netSettles.has(this.awaitSettle)) {
       const n = this.awaitSettle; this.awaitSettle = null;
       this.applySettle(this.netSettles.get(n)); this.after(0.3, () => this.resolveDelivery());
     }
+  }
+  /* The other computer's delivery, rebuilt from what a player can choose: the line, hand and weight, which
+     arm they bowl with, their bowls' tuning within the settings' limits, and the mat when it is theirs to
+     move. The meter's rule holds as it does on the mat (no firing before two woods), and the speed and
+     release point follow from those choices exactly as on the bowler's computer, never as sent. */
+  netParams(p) {
+    const t = this.turn, bowl = t.kind === 'bowl', hand = bowl && p.hand === 'back' ? 'back' : 'fore';
+    const arm = bowl ? (p.side === biasSide(hand, 'L') ? 'L' : 'R') : (+p.x < 0 ? 'L' : 'R');
+    if (!bowl && this.match.jackAttempt <= 1) this.matRear = clamp(+p.matRear || W.MAT_MIN, W.MAT_MIN, W.MAT_MAX);
+    const rule = this.meterRule(); let weight = clamp(+p.weight || 0, 0, 1);
+    if (rule && !rule.fire) weight = Math.min(weight, rule.cap);
+    const rel = releasePoint(this.matRear, hand, arm), pr = p.prof || {};
+    return {
+      kind: t.kind, player: t.player, member: t.member || 0, aim: clamp(+p.aim || 0, -0.45, 0.45), weight, speed: Weight.toSpeed(weight), hand,
+      side: bowl ? biasSide(hand, arm) : 0,
+      prof: bowl ? { G: clamp(+pr.G || 0, 0.02, 0.08), late: clamp(+pr.late || 0, 0, 1) } : null, x: rel.x, y: rel.y, matRear: this.matRear
+    };
   }
   // The other player lining up: shown live, never used for the delivery itself.
   netAim(m) {
@@ -4887,13 +4908,28 @@ class Game {
   snapshot() {
     return this.world.bodies.filter(b => !b.dead).map(b => ({ k: bodyKey(b), x: b.x, y: b.y, state: b.state, ditch: b.ditch, toucher: b.toucher }));
   }
+  /* The bowler's word on where things lie, checked against this computer's own run of the same delivery: every
+     body must be there, in the same state (on the green or in the ditch), chalked or not the same, and within
+     NET_TOL of where it lies here. Then only the positions are taken. If anything disagrees, nothing is taken:
+     this computer's result stands, and resolveBowl says so. */
   applySettle(list) {
-    const at = new Map(list.map(s => [s.k, s])); let gap = 0;
-    for (const b of this.world.bodies) {
-      if (b.dead) continue; const s = at.get(bodyKey(b)); if (!s) continue;
-      gap = Math.max(gap, Math.hypot(b.x - s.x, b.y - s.y));
-      b.place(s.x, s.y); b.state = s.state; b.ditch = s.ditch; b.toucher = !!s.toucher;
+    const at = new Map((Array.isArray(list) ? list : []).map(s => [s && s.k, s])), live = this.world.bodies.filter(b => !b.dead);
+    let gap = 0, why = null;
+    for (const b of live) {
+      const s = at.get(bodyKey(b)), k = bodyKey(b);
+      if (!s) { why = why || `${k} missing`; continue; }
+      const d = Math.hypot(b.x - s.x, b.y - s.y);
+      if (!(d <= NET_TOL)) why = why || `${k} ${(d * 100).toFixed(1)} cm away`;
+      else if (s.state !== b.state || (s.ditch || null) !== (b.ditch || null)) why = why || `${k} ${s.state}${s.ditch ? ' ' + s.ditch : ''}, here ${b.state}${b.ditch ? ' ' + b.ditch : ''}`;
+      else if (!!s.toucher !== !!b.toucher) why = why || `${k} ${s.toucher ? 'chalked' : 'not chalked'}, here ${b.toucher ? 'chalked' : 'not chalked'}`;
+      else gap = Math.max(gap, d);
     }
+    if (why) {
+      this.netDisputed = true; this.netDisputes++;
+      console.warn(`Bias online: the other computer's result for delivery ${this.deliveryNo} disagreed with this one (${why}); this computer's result stands`);
+      return;
+    }
+    for (const b of live) { const s = at.get(bodyKey(b)); b.place(s.x, s.y); }
     this.netGap = Math.max(this.netGap, gap);
     if (gap > 1e-6) console.info(`Bias online: resting positions corrected by up to ${(gap * 1000).toFixed(2)} mm`);
   }
@@ -5823,7 +5859,7 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-4';   // bump whenever the physics changes: both players must simulate identically
+const BUILD = 'bias-online-5';   // bump whenever the physics changes: both players must simulate identically
 const RELAY = (() => {
   const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
   return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
@@ -6861,6 +6897,41 @@ window.BiasTests = {
       const mid = R.deliveryNo;
       for (const e of log.slice(cut)) { R.netIn(e); R.flush(); }
       ok('Online: a player who reloads mid-match rebuilds it from the log', mid > 0 && R.phase === 'over' && sig(R) === sig(G[1]), `rebuilt to delivery ${mid}, then followed live`); }
+    // 15a. online: a changed copy of the game can't fire early or chalk a bowl on the other screen
+    { const answers = () => ({ ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } });
+      const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
+      const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 2 }, leader: 0, link });
+      // the host's messages pass through tamper on the way out; its own game plays on honestly
+      const play = tamper => {
+        const q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
+        const link = seat => ({ seat, send: m => q.push({ ...(seat === 0 ? tamper(m) : m), from: seat }) });
+        G.forEach((g, i) => g.startMatch(cfg(link(i))));
+        const pump = () => { while (q.length) { const e = q.shift(); G[1 - e.from].netIn(e); G[0].flush(); G[1].flush(); } };
+        const rnd = mulberry32(31); let guard = 0;
+        while (G[1].phase !== 'over' && guard++ < 300) {
+          pump(); const g = G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (!g) break;
+          g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
+          g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump();
+        }
+        return G;
+      };
+      const sig = g => JSON.stringify({ s: g.players.map(p => p.score), e: g.match.ends.map(e => [e.winner, e.shots]), b: g.snapshot() });
+      const honest = play(m => m);
+      ok('Online: an honest match raises no disputes', honest.every(g => g.phase === 'over' && g.netDisputes === 0) && sig(honest[0]) === sig(honest[1]));
+      const chalked = play(m => m.t === 'settle' ? { ...m, bodies: m.bodies.map(b => b.k === 'J' ? b : { ...b, toucher: true }) } : m);
+      ok('Online: bowls the other computer chalks without touching the jack stay unchalked here', chalked[1].phase === 'over' && chalked[1].netDisputes > 0 && sig(chalked[1]) === sig(honest[1]),
+        `${chalked[1].netDisputes} disputed deliveries`);
+      const moved = play(m => m.t === 'settle' ? { ...m, bodies: m.bodies.map(b => b.k === 'J' ? { ...b, y: b.y - 0.5 } : b) } : m);
+      ok('Online: a head the other computer moves stays where it lies here', moved[1].netDisputes > 0 && sig(moved[1]) === sig(honest[1]));
+      { const q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
+        G.forEach((g, i) => g.startMatch(cfg({ seat: i, send: m => q.push({ ...m, from: i }) })));
+        G[0].deliver(0.6); G[0].flush(); while (q.length) { G[1].netIn(q.shift()); G[1].flush(); }
+        const rule = G[1].meterRule(), raw = { ...G[0].deliveryParams(1), speed: 99, prof: { G: 0.5, late: 3 }, x: 0.5, y: 9, matRear: 1 };
+        const p = G[1].netParams(raw), rel = releasePoint(G[1].matRear, raw.hand, Settings.arm);
+        ok("Online: a delivery is rebuilt from the bowler's choices: no firing before two woods, the speed from the weight",
+          G[1].turn.kind === 'bowl' && !rule.fire && rule.cap < 1 && p.weight === rule.cap && p.speed === Weight.toSpeed(rule.cap)
+          && p.prof.G === 0.08 && p.prof.late === 1 && p.x === rel.x && p.y === rel.y && p.matRear === G[1].matRear,
+          `weight ${p.weight.toFixed(3)}, speed ${p.speed.toFixed(2)} m/s`); } }
     // 15b. online: a player who drops out and does not come back forfeits; the forfeit is in the log, so a reload shows it too
     { const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
       const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });

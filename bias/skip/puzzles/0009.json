@@ -1,0 +1,55 @@
+{
+  "n": 9,
+  "date": "2026-10-23",
+  "id": "skip-0009",
+  "title": "Red lying two, behind the guard",
+  "theme": "drive",
+  "greenSpeed": 12.5,
+  "conditions": "overcast",
+  "match": { "you": 7, "them": 9, "end": 21, "ends": 21 },
+  "you": "yellow",
+  "matRear": 2.5,
+  "jack": { "x": 0.0762, "y": 29.5495 },
+  "bowls": [
+    { "team": "red", "x": -0.2293, "y": 30.1493, "heading": 0.524 },
+    { "team": "red", "x": -0.3109, "y": 28.553, "heading": -0.438 },
+    { "team": "red", "x": 0.2597, "y": 29.5927, "heading": 0.115 },
+    { "team": "red", "x": 0.0448, "y": 29.4589, "heading": 0.497, "toucher": true },
+    { "team": "yellow", "x": -0.4089, "y": 29.3039, "heading": -0.452 },
+    { "team": "yellow", "x": 0.3608, "y": 29.7777, "heading": 0.066 },
+    { "team": "yellow", "x": 0.2331, "y": 29.3933, "heading": -0.715 }
+  ],
+  "situation": "Last end, and the match stands at 9–7 to red. Red is lying two, the shot bowl touching the jack (a chalked toucher). A red guard sits short on the backhand side. Your nearest is 13 cm from the jack. The green is medium-heavy, 12.5 s. You are skip, with the last bowl of the end.",
+  "hint": "a slowish green: don't be short",
+  "annotations": [
+    { "text": "red lying two!", "dx": 0.45, "dy": 0.92, "rot": -4 },
+    { "text": "watch the guard", "dx": 0.4, "dy": -1.296, "rot": -3 }
+  ],
+  "advised": {
+    "by": "your third",
+    "hand": "back",
+    "kind": "drive",
+    "target": { "x": 0.0762, "y": 29.5495 },
+    "say": "Put the backhand drive in. Nothing to lose now.",
+    "aim": -0.00965,
+    "weight": 0.96
+  },
+  "bench": {
+    "physics": "bias-online-5",
+    "head": "988d93df",
+    "runs": 100,
+    "mix": ["club", "league", "county"],
+    "seed": 5022,
+    "values": [-4.3175,-2.25706,-2.25706,-2.25706,-2.0675,-2.0675,-2.00915,-2.00879,-2.00759,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00706,-2.00596,-2.00589,-2.00431,-2.00412,-2.00086,-1.31623,-1.2576,-1.0675,-1.0675,-1.0675,-1.0675,-1.0675,-1.05601,-1.04328,-1.02519,-1.02519,-1.02519,-1.00909,-1.0084,-1.00782,-1.00646,-1.00644,-1.00494,-1.00416,-1.00261,-1.00229,-1.0019,-1.00187,-1.00114,-1.00101,-1.00046,-1.00006,0,1.00003,1.00163,1.00247,1.00503,1.00983,1.01079,1.01288,1.01707,1.01858,1.04657,1.05743,1.0675,1.0675,1.0675,1.0675,1.0675,2.00556,2.03136],
+    "outcomes": { "down": 27, "same": 53, "level": 1, "win1": 16, "up": 1, "win2": 2 },
+    "made": "2026-10-21"
+  },
+  "best": { "hand": "fore", "aim": 0.00712, "weight": 0.99, "value": 3.0675, "outcome": "win3", "stars": 5 },
+  "check": {
+    "advice": { "outcome": "down", "stars": 3 },
+    "plainDraw": [{ "hand": "fore", "outcome": "same", "stars": 2.5 }, { "hand": "back", "outcome": "same", "stars": 0 }],
+    "grid": { "tried": 34122, "starShare": [0.3752,0,0.5558,0.0303,0.0293,0.0094] },
+    "flags": []
+  },
+  "gen": { "version": 1, "seed": 5022, "levels": { "you": "league", "them": "league" }, "quick": true }
+}
