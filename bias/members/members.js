@@ -156,7 +156,7 @@
   function leagueItem(l) {
     const esc = H.esc;
     const when = l.status === 'open' ? `Starts ${day(l.startAt)}` : l.status === 'running' ? `Play all fixtures by ${day(l.deadlineAt)}` : 'Finished';
-    const place = l.state === 'reserve' ? 'Reserve list' : l.state === 'signed_up' ? 'Signed up' : l.removed ? 'Removed at the deadline' : '';
+    const place = l.status === 'open' ? 'Signed up' : l.state === 'reserve' ? 'No place this time' : l.removed ? 'Removed at the deadline' : '';   // before the draw everyone is just signed up
     // gold for what needs your answer, plain for what's still to play
     const chips = [[l.waiting, plural(l.waiting, 'proposal for you', 'proposals for you'), true], [l.confirm, plural(l.confirm, 'result to confirm', 'results to confirm'), true], [l.owed, plural(l.owed, 'fixture to play', 'fixtures to play'), false]].filter(c => c[0]);
     return `<li><div class="acct-lg"><b>${esc(l.name)}</b><span>${esc([when, place].filter(Boolean).join(' · '))}</span></div>
@@ -301,7 +301,8 @@
   }
 
   /* Open leagues: a page of its own inside the panel. Each league taking sign-ups that you haven't
-     joined has its own Sign up (or reserve list, when it's full); signing up says so in its place.
+     joined has its own Sign up; signing up says so in its place. Places are drawn when the window
+     closes (the league Worker's drawLeague), so there is no reserve list to join.
      Back, at the top or the foot, returns to the Members page (BiasMembers.back). Withdrawing is
      on the league pages. */
   async function openLeagues() {
@@ -317,17 +318,18 @@
     const ls = (r.leagues || []).filter(l => l.status === 'open' && (!l.mine || l.mine === 'withdrawn'));
     if (!ls.length) { box.innerHTML = '<p class="acct-note">No leagues are taking sign-ups just now.</p>'; return; }
     box.innerHTML = `<ul class="acct-list">${ls.map(l => {
-      const full = l.taken >= l.maxPlayers, st = l.settings || {};
-      return `<li><div class="acct-lg"><b>${esc(l.name)}</b><span>${esc(`${day(l.startAt)} to ${day(l.deadlineAt)} · ${l.taken} of ${l.maxPlayers} places taken`)}</span>
+      const st = l.settings || {};
+      const when = 'Open for sign-ups';   // no count: how many have signed up isn't shown to players
+      return `<li><div class="acct-lg"><b>${esc(l.name)}</b><span>${esc(when)}</span>
         <span>${esc([st.ends && plural(st.ends, 'end', 'ends'), st.bowls && `${st.bowls} bowls each`].filter(Boolean).join(' · '))}</span></div>
-        <div data-slot="${l.id}"><button class="btn primary" type="button" data-join="${l.id}">${full ? 'Join the reserve list' : 'Sign up'}</button></div>
+        <div data-slot="${l.id}"><button class="btn primary" type="button" data-join="${l.id}">Sign up</button></div>
         <p class="acct-err" role="alert"></p></li>`;
     }).join('')}</ul>`;
     box.querySelectorAll('[data-join]').forEach(b => b.onclick = async () => {
       const li = b.closest('li'); b.disabled = true; li.querySelector('.acct-err').textContent = '';
       const x = await call(`/api/leagues/${Number(b.dataset.join)}/join`, {});
       if (x.error) { b.disabled = false; li.querySelector('.acct-err').textContent = x.error; return; }
-      li.querySelector('[data-slot]').innerHTML = `<p class="acct-done">${x.state === 'reserve' ? 'You’re on the reserve list: you’ll get a place if one comes free.' : 'You’re signed up. The organiser confirms places before the league starts.'}</p>`;
+      li.querySelector('[data-slot]').innerHTML = `<p class="acct-done">You’re signed up. When sign-ups close, places go first to players in the fewest leagues already under way, at random among equals; if enough sign up, there will be more than one league.</p>`;
     });
   }
 

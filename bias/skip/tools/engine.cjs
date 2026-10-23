@@ -23,6 +23,7 @@ function load() {
   const body = `'use strict';
     const Sound = new Proxy({}, { get: () => () => {} });
     const QuietUI = new Proxy({}, { get: () => () => {} });
+    const Venue = new Proxy({}, { get: () => () => {} });   // the club round the green: looks only
     ${core}
     ${colours}
     ${game}
