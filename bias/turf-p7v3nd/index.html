@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Bias · Greens (beta)</title>
 <style>html,body{margin:0;height:100%;background:#16201b;color:#e9e4d4;font:15px system-ui,sans-serif}p{padding:24px;margin:0}</style>
-<script src="patch.js"></script>
+<script src="patch.js?v=3"></script>
 </head>
 <body>
 <p id="msg">Walking out to the green…</p>
@@ -17,6 +17,7 @@
    The game file is never changed. Open with ?tester once to show the contour overlay. */
 (function () {
   'use strict';
+  var V = '3';   // bump with any change to this folder, so testers never get yesterday's files from their cache
   var dir = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
   var msg = document.getElementById('msg');
   fetch('../index.html', { cache: 'no-cache' })
@@ -24,7 +25,8 @@
     .then(function (html) {
       try { html = window.BiasGreensPatch.patchGame(html); }
       catch (e) { msg.textContent = 'The greens beta needs updating for today’s game. ' + e.message; return; }
-      var head = '<base href="../"><meta name="robots" content="noindex, nofollow"><script src="' + dir + '/greens.js"><\/script>';
+      // the game's own background from the first paint, so there's no white flash while it loads
+      var head = '<style>html,body{background:#16201b}</style><base href="../"><meta name="robots" content="noindex, nofollow"><script src="' + dir + '/greens.js?v=' + V + '"><\/script>';
       html = html.replace(/<head>/i, '<head>' + head)
         .replace(/<title>[\s\S]*?<\/title>/i, '<title>Bias · Greens (beta)</title>')
         .replace(/<link rel="canonical"[^>]*>/i, '');

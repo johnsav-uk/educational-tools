@@ -196,7 +196,7 @@
   else if (typeof window === 'object') {
     window.BiasGreens = Greens;
     // the page runs under <base href="../">, so greens.json is found beside this script, not the page
-    if (typeof fetch === 'function') Greens.ready = fetch(new URL('greens.json', document.currentScript ? document.currentScript.src : location.href)).then(r => { if (!r.ok) throw new Error('greens.json ' + r.status); return r.json(); }).then(list => Greens.load(list));
+    if (typeof fetch === 'function') Greens.ready = fetch(new URL('greens.json', document.currentScript ? document.currentScript.src : location.href), { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('greens.json ' + r.status); return r.json(); }).then(list => Greens.load(list));
     if (typeof document === 'object') document.addEventListener('DOMContentLoaded', () => { title(); panel(Greens); });
   }
 
