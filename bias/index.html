@@ -816,6 +816,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item" id="mQuick">Play the computer</button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
+        <button class="menu-item" id="mBeta" hidden>Beta games<span class="mi-sub">For members: darts and round the clock</span></button>
         <div class="title-pair">
           <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
           <button id="mMember" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Members</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
@@ -846,6 +847,14 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="level-back" id="memberBack">‹ Back</button>
         <div class="level-head" id="memberHead">Members<span>Leagues and your account</span></div>
         <div id="memberBody" class="acct"><p>Loading…</p></div>
+      </div>
+      <div class="menu" id="betaMenu" hidden>
+        <button class="level-back" id="betaBack">‹ Back</button>
+        <div class="level-head">Beta games<span>For members · each opens in a new tab</span></div>
+        <div id="betaList" class="level-list">
+          <button class="menu-item second" data-game="members/beta/darts/">Darts<span class="mi-sub">501, finish on a double · against the computer</span></button>
+          <button class="menu-item second" data-game="members/beta/round-the-clock/">Round the clock<span class="mi-sub">1 to 20, then the bull · against the computer</span></button>
+        </div>
       </div>
       <div class="foot" id="titleFoot" hidden></div>
       <a class="community" href="https://www.facebook.com/groups/1116437361143315" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21z"/></svg>Join the Bias Clubhouse</a>
@@ -6621,7 +6630,7 @@ function showTitle() {
 $('mSetup').onclick = () => openSetup({});
 /* Play asks how good the computer should be first. A first visit is pointed at Starter;
    after that, the standard played last (here or in Set up a match) is the one picked out. */
-function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('memberMenu').hidden = true; $('mainMenu').hidden = false; }
+function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('memberMenu').hidden = true; $('betaMenu').hidden = true; $('mainMenu').hidden = false; }
 function showLevels() {
   const last = store.get('m.level', null), pick = AI_LEVELS.some(l => l.id === last) ? last : 'starter';
   $('levelList').innerHTML = AI_LEVELS.map(l => `<button class="menu-item second${l.id === pick ? ' primary' : ''}" data-level="${l.id}">${l.name}${l.id === 'starter' ? '<span class="mi-tag">New to bowls</span>' : ''}<span class="mi-sub">${esc(l.short)}</span></button>`).join('');
@@ -6638,6 +6647,11 @@ function showRecord() {
 }
 $('mRecord').onclick = showRecord;
 $('recordBack').onclick = () => { showMainMenu(); $('mRecord').focus(); };
+// Beta games: members only (the button shows once signed in), each game opens in a new tab
+function showBeta() { $('mainMenu').hidden = true; $('betaMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0; $('betaList').querySelector('button').focus(); }
+$('mBeta').onclick = showBeta;
+$('betaBack').onclick = () => { showMainMenu(); $('mBeta').focus(); };
+$('betaList').onclick = e => { const b = e.target.closest('[data-game]'); if (b) window.open(b.dataset.game, '_blank', 'noopener'); };
 // Reset asks twice: the first press only arms it, for a few seconds
 let resetArmed = false, resetTimer = 0;
 $('recordReset').onclick = () => {
@@ -6834,6 +6848,7 @@ window.addEventListener('keydown', e => {
       else if (id === 'titleScrim' && !$('levelMenu').hidden) { showMainMenu(); $('mQuick').focus(); }
       else if (id === 'titleScrim' && !$('recordMenu').hidden) { showMainMenu(); $('mRecord').focus(); }
       else if (id === 'titleScrim' && !$('memberMenu').hidden) { showMainMenu(); $('mMember').focus(); }
+      else if (id === 'titleScrim' && !$('betaMenu').hidden) { showMainMenu(); $('mBeta').focus(); }
       else if (id === 'titleScrim' && game.mode !== 'title') UI.close(id);
       return;
     }
@@ -7347,6 +7362,7 @@ const MemberHost = {
     $('mMemberBadge').hidden = !waiting; $('mMemberBadge').textContent = waiting > 9 ? '9+' : String(waiting || '');
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
     $('mLeagueNote').hidden = !(name && open > 0);
+    $('mBeta').hidden = !name;   // beta games are for signed-in members
     $('mLeagueNoteHead').textContent = open > 1 ? `${open} leagues are taking sign-ups` : 'A new league is taking sign-ups';
   },
   head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
@@ -7374,6 +7390,7 @@ const Members = {
 };
 if (membersOn) {
   $('mMember').hidden = false;
+  $('mBeta').hidden = !store.get('league.token', null);
   $('mMorePop').prepend($('mRecord'));   // until the record moves into the Members area
   $('mMember').onclick = () => Members.open();
   $('openBadge').hidden = !!store.get('league.token', null); $('openBadge').onclick = () => Members.open('join');
