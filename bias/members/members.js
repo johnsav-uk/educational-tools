@@ -230,6 +230,12 @@
       ${s.openToJoin ? `<button class="btn primary" type="button" id="acFind">Open leagues · ${s.openToJoin}</button>` : ''}
       <p class="acct-note">${s.leagues.length ? 'Arrange games on the noticeboard. Bias never emails you about them, so look in here for what’s waiting.'
         : s.openToJoin ? 'You’re not in a league yet.' : 'You’re not in a league, and none are taking sign-ups just now.'}</p>
+      <h3>Beta games</h3>
+      <ul class="acct-list">
+        <li><div class="acct-lg"><b>Darts</b><span>501, finish on a double · against the computer</span></div><a class="btn ghost" href="members/beta/darts/" target="_blank" rel="noopener">Play darts</a></li>
+        <li><div class="acct-lg"><b>Round the clock</b><span>1 to 20, then the bull · against the computer</span></div><a class="btn ghost" href="members/beta/round-the-clock/" target="_blank" rel="noopener">Play round the clock</a></li>
+      </ul>
+      <p class="acct-note">Beta games open in a new tab, so a game you have on here carries on.</p>
       <h3>Your account</h3>
       ${linked(s.user.id) ? '' : `<button class="${declined(s.user.id) ? 'acct-link' : 'btn primary'}" type="button" id="acCarry">Bring this browser’s name, record and puzzle streak into your account</button>`}
       ${s.hasEmail ? '' : '<p class="acct-note"><b>No email on your account.</b> Add one so you can get back in if you forget your password.</p>'}
