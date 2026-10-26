@@ -1,0 +1,38 @@
+[
+  {
+    "id": "gentle",
+    "name": "Gentle",
+    "blurb": "A soft fall toward the front, two shallow humps and a gentle hollow. Reads well and runs true.",
+    "slope": { "x": 0.00018, "y": -0.00012 },
+    "bumps": [
+      { "x": -6, "y": 12, "h": 0.008, "w": 3.0 },
+      { "x": 5, "y": 24, "h": -0.010, "w": 3.5 },
+      { "x": 1, "y": 30, "h": 0.006, "w": 2.5 }
+    ],
+    "noise": { "seed": 11, "amp": 0.002, "cell": 1.5 }
+  },
+  {
+    "id": "tricky-hollow",
+    "name": "Tricky hollow",
+    "blurb": "A hollow just short of the jack's usual length, with a hump to its right. Almost flat elsewhere.",
+    "slope": { "x": 0.00005, "y": 0.0002 },
+    "bumps": [
+      { "x": -3, "y": 27, "h": -0.020, "w": 1.6 },
+      { "x": 4, "y": 20, "h": 0.012, "w": 2.2 },
+      { "x": -7, "y": 14, "h": -0.008, "w": 2.5 }
+    ],
+    "noise": { "seed": 23, "amp": 0.004, "cell": 1.2 }
+  },
+  {
+    "id": "strong-fall",
+    "name": "Strong fall",
+    "blurb": "A clear fall across the green, with a hump to hold a bowl up and a hollow that pulls it off line.",
+    "slope": { "x": 0.0003, "y": 0.0004 },
+    "bumps": [
+      { "x": -5, "y": 22, "h": 0.015, "w": 2.8 },
+      { "x": 6, "y": 10, "h": -0.012, "w": 2.0 },
+      { "x": 0, "y": 32, "h": 0.010, "w": 4.0 }
+    ],
+    "noise": { "seed": 37, "amp": 0.003, "cell": 1.8 }
+  }
+]
