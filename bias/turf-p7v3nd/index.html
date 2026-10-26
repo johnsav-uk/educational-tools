@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Bias · Greens (beta)</title>
 <style>html,body{margin:0;height:100%;background:#16201b;color:#e9e4d4;font:15px system-ui,sans-serif}p{padding:24px;margin:0}</style>
-<script src="patch.js?v=3"></script>
+<script src="patch.js?v=4"></script>
 </head>
 <body>
 <p id="msg">Walking out to the green…</p>
@@ -17,7 +17,7 @@
    The game file is never changed. Open with ?tester once to show the contour overlay. */
 (function () {
   'use strict';
-  var V = '3';   // bump with any change to this folder, so testers never get yesterday's files from their cache
+  var V = '4';   // bump with any change to this folder, so testers never get yesterday's files from their cache
   var dir = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
   var msg = document.getElementById('msg');
   fetch('../index.html', { cache: 'no-cache' })

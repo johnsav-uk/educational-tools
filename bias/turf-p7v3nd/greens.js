@@ -26,13 +26,13 @@
   // Default layer shape (gain 1). Chosen so a bowl on a typical outdoor green drifts by a few tens of
   // centimetres over a full run, a hollow by the jack is clearly felt, and roughness is only felt slow.
   const LAYER = {
-    tiltDrop: 0.012, tiltMin: 0.3,               // tilt: at most 1.2 cm across the 25 m width (0.3–1 of that)
-    bumpMin: 3, bumpMax: 5,                      // humps and hollows per random green
-    bumpH: [0.005, 0.012], bumpW: [2.0, 4.0],    // height 0.5–1.2 cm, width (1σ) 2–4 m
-    noiseAmp: [0.003, 0.004], noiseCell: 1.5     // roughness ±3–4 mm, cells 1.5 m
+    tiltDrop: 0.035, tiltMin: 0.5,               // tilt: up to 3.5 cm across the 25 m width (half to all of that)
+    bumpMin: 4, bumpMax: 6,                      // humps and hollows per random green
+    bumpH: [0.015, 0.035], bumpW: [1.5, 3.5],    // height 1.5–3.5 cm, width (1σ) 1.5–3.5 m
+    noiseAmp: [0.005, 0.007], noiseCell: 1.5     // roughness ±5–7 mm, cells 1.5 m
   };
   const SUN = { x: -0.72, y: -0.69 };            // the sun's ground direction (the game's south-west), absolute frame
-  const SHADE = { k: 6, max: 0.10, step: 0.1, contour: 0.005 };   // light/shade gain, its cap, sample spacing, contour interval (m)
+  const SHADE = { k: 35, max: 0.28, step: 0.1, contour: 0.005 };   // light/shade gain, its cap, sample spacing, contour interval (m)
   const DEFAULT_GAINS = { tilt: 1, bumps: 1, noise: 1 };
 
   // e^z for z ≤ 0, from + − × ÷ only: a short Taylor series on z/2¹⁶, squared back up 16 times.
@@ -234,7 +234,7 @@
         <option value="random">A new random green each game</option><option value="seed">This seed every game</option></select>
         <input id="gr-seed" inputmode="numeric" placeholder="seed" style="width:9em;display:none"></div></div>
       ${[['tilt', 'Tilt'], ['bumps', 'Bumps and hollows'], ['noise', 'Roughness']].map(([k, l]) => `
-      <div class="field"><label for="gr-${k}">${l}</label><div class="range-row"><input type="range" id="gr-${k}" min="0" max="200" step="10" value="${Math.round(G.gains[k] * 100)}"><output id="gr-${k}-out" class="num">${Math.round(G.gains[k] * 100)}%</output></div></div>`).join('')}
+      <div class="field"><label for="gr-${k}">${l}</label><div class="range-row"><input type="range" id="gr-${k}" min="0" max="300" step="10" value="${Math.round(G.gains[k] * 100)}"><output id="gr-${k}-out" class="num">${Math.round(G.gains[k] * 100)}%</output></div></div>`).join('')}
       <div class="toggle-row" id="gr-contour-row" style="${tester ? '' : 'display:none'}"><div><div class="tl">Contours (testers)</div><div class="td">A line every 5 mm of height, drawn on the green.</div></div>
         <div class="seg"><button type="button" id="gr-c-on" aria-pressed="false">On</button><button type="button" id="gr-c-off" aria-pressed="true">Off</button></div></div>`;
     h2.after(box);
