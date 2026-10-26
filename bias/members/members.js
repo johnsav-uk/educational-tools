@@ -168,14 +168,9 @@
      confirmed league results, so it starts at 1200 and moves after each one. */
   /* What's new: a note for members until they press Got it (store 'member.news'). Change NEWS_ID
      when it changes. The league noticeboard (league/site/board/board.js) has its own copy. */
-  const NEWS_ID = '2026-10-21', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
+  const NEWS_ID = '2026-10-26', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
   const NEWS_HTML = `<div class="acct-news" id="acNews"><h3>What’s new</h3><ul>
-      <li><b>Open leagues</b> are here: sign up from this panel.</li>
-      <li><b>Please add an email</b> under Your account if you haven’t. It’s only for a forgotten password.</li>
-      <li><b>Bring your record with you.</b> The first time you sign in on a device, you’re asked whether to add that browser’s name, record and puzzle streak to your account. Nothing moves unless you say yes.</li>
-      <li><b>Ratings:</b> only you see yours, unless you tick “Show me on the ratings table”.</li>
-      <li><b>Results</b> only one screen sent now wait for the other player’s yes (or the organiser’s).</li>
-      <li><b>A rude name?</b> The ⚑ on the ratings table reports it. Nobody is told who reported it.</li>
+      <li><b>Beta games are here.</b> Darts and round the clock, against the computer. Find them below, or under Beta games on the title menu.</li>
     </ul><button class="acct-link" type="button" id="acNewsOk">Got it</button></div>`;
   const recLine = t => `${plural(t.played, 'match', 'matches')} · ${t.won} won · ${t.drawn} drawn · ${t.lost} lost`;
   // with this browser's own record of finished matches underneath, when there is one. Only the
@@ -231,9 +226,9 @@
       <p class="acct-note">${s.leagues.length ? 'Arrange games on the noticeboard. Bias never emails you about them, so look in here for what’s waiting.'
         : s.openToJoin ? 'You’re not in a league yet.' : 'You’re not in a league, and none are taking sign-ups just now.'}</p>
       <h3>Beta games</h3>
-      <ul class="acct-list">
-        <li><div class="acct-lg"><b>Darts</b><span>501, finish on a double · against the computer</span></div><a class="btn ghost" href="members/beta/darts/" target="_blank" rel="noopener">Play darts</a></li>
-        <li><div class="acct-lg"><b>Round the clock</b><span>1 to 20, then the bull · against the computer</span></div><a class="btn ghost" href="members/beta/round-the-clock/" target="_blank" rel="noopener">Play round the clock</a></li>
+      <ul class="acct-list acct-beta">
+        <li><div class="acct-lg"><b>Darts</b><span>501 · against the computer</span></div><a class="btn ghost" href="members/beta/darts/" target="_blank" rel="noopener">Play</a></li>
+        <li><div class="acct-lg"><b>Round the clock</b><span>1 to 20, then the bull · against the computer</span></div><a class="btn ghost" href="members/beta/round-the-clock/" target="_blank" rel="noopener">Play</a></li>
       </ul>
       <p class="acct-note">Beta games open in a new tab, so a game you have on here carries on.</p>
       <h3>Your account</h3>

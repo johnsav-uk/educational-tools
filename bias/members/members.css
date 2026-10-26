@@ -15,6 +15,11 @@
 .acct .acct-err{min-height:1.3em;font-size:13.5px;font-weight:600;color:var(--alert)}
 .acct-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .acct-list li{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-2);background:rgba(24,44,32,.35)}
+/* Beta games: slim gold-edged rows, the game's name with a Beta tag */
+.acct-beta li{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border-color:rgba(201,168,98,.75);background:rgba(201,168,98,.12)}
+.acct-beta .acct-lg b::after{content:"Beta";margin-left:8px;padding:1px 7px;border:1px solid rgba(201,168,98,.75);border-radius:999px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
+.acct-beta .acct-lg span{font-size:11.5px}
+.acct-beta .btn{min-height:0;padding:5px 11px;font-size:13px}
 .acct-lg b{display:block;font-size:15px}
 .acct-lg span{display:block;font-size:12.5px;color:var(--cream-2)}
 .acct .acct-done{font-size:13.5px;font-weight:600;color:#9fcb86}
