@@ -197,7 +197,22 @@
     window.BiasGreens = Greens;
     // the page runs under <base href="../">, so greens.json is found beside this script, not the page
     if (typeof fetch === 'function') Greens.ready = fetch(new URL('greens.json', document.currentScript ? document.currentScript.src : location.href)).then(r => { if (!r.ok) throw new Error('greens.json ' + r.status); return r.json(); }).then(list => Greens.load(list));
-    if (typeof document === 'object') document.addEventListener('DOMContentLoaded', () => panel(Greens));
+    if (typeof document === 'object') document.addEventListener('DOMContentLoaded', () => { title(); panel(Greens); });
+  }
+
+  /* The title screen says this is the greens beta, and offers only games played on an uneven green:
+     online play and the daily puzzle (flat), and the members' beta games, are hidden. CSS rather than
+     the hidden attribute, which the game sets itself (on signing in, for example). */
+  function title() {
+    const css = document.createElement('style');
+    css.textContent = '#mOnline,#mSkip,#mBeta,#mLeagueNote{display:none!important}' +
+      '.greens-beta{margin:10px 0 0;padding:10px 12px;border:1px solid rgba(201,168,98,.75);border-radius:10px;background:rgba(201,168,98,.12);font-size:13.5px;line-height:1.45;max-width:272px;box-sizing:border-box}' +
+      '.greens-beta b{display:block;font-size:15px;margin-bottom:2px}';
+    document.head.appendChild(css);
+    const sub = document.querySelector('#titleScrim .sub');
+    if (!sub) return;
+    sub.textContent = 'Uneven greens: a closed beta';
+    sub.insertAdjacentHTML('afterend', '<div class="greens-beta"><b>Uneven greens (beta)</b>Play the computer, Practice and Custom match are played on an uneven green: a tilt, bumps and hollows, and some roughness. Choose the green, or a named one, in Help &amp; settings.</div>');
   }
 
   /* The Settings block: which green, three layer sliders, and for testers a contour toggle. The green and
