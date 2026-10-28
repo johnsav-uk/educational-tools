@@ -820,7 +820,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item" id="mQuick">Play the computer</button>
         <button class="menu-item" id="mPractice">Practice</button>
         <button class="menu-item" id="mSetup">Custom match</button>
-        <button class="menu-item" id="mBeta" hidden>Beta games<span class="mi-sub">For members: darts and round the clock</span></button>
+        <button class="menu-item" id="mBeta" hidden>Beta games<span class="mi-sub">For members: darts, round the clock and two new clubs</span></button>
         <div class="title-pair">
           <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
           <button id="mMember" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Members</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
@@ -858,6 +858,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div id="betaList" class="level-list">
           <button class="menu-item second beta-tile" data-game="members/beta/darts/">Darts<span class="mi-tag">Beta</span><span class="mi-sub">501 · against the computer</span></button>
           <button class="menu-item second beta-tile" data-game="members/beta/round-the-clock/">Round the clock<span class="mi-tag">Beta</span><span class="mi-sub">1 to 20, then the bull · against the computer</span></button>
+          <button class="menu-item second beta-tile" data-game="members/beta/pitfold/">Pitfold Park<span class="mi-tag">Beta</span><span class="mi-sub">A tired park green: heavy and uneven</span></button>
+          <button class="menu-item second beta-tile" data-game="members/beta/fernley/">Fernley Indoor<span class="mi-tag">Beta</span><span class="mi-sub">A blue carpet at 17 s, no weather</span></button>
         </div>
       </div>
       <div class="foot" id="titleFoot" hidden></div>
@@ -1623,6 +1625,7 @@ const Weather = {
   plain: null,
   // what the scene shows now: null is the plain look, as drawn before there was weather
   now() {
+    if (Venue.current.indoor) return this._in || (this._in = { ...this.plain, glow: 0, cloud: 0, warm: 0, rain: 0, mist: 0, fogNear: 80, fogFar: 900, key: 'indoor' });   // a hall has no weather
     if (!WX.mood) return null;
     const T = WX.preview != null ? WX.preview : game.mode === 'title' ? null : game.world.T;
     if (T == null) return null;
@@ -1684,7 +1687,7 @@ const Venue = {
   },
   palette(v) {   // PAL from Ashcombe's, with the venue's own colours over it, keeping each array (the weather looks share them)
     for (const k in PAL_BASE) { const c = (v.pal && v.pal[k]) || PAL_BASE[k]; PAL[k].splice(0, c.length, ...c); }
-    Weather._c = null; Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
+    Weather._c = Weather._in = null; Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
   },
   forGame() {
     const v = this.pick(); this.set(v); this.lastGame = v.id;
@@ -1699,15 +1702,21 @@ const Art = {
     const V = Venue.current; Venue.palette(V); this._spots = null;
     vrand = mulberry32(1897);
     this.ground = this.buildGround();
-    this.blades = this.buildBlades();
-    this.mottle = this.buildMottle();
+    this.blades = V.blades ? V.blades() : this.buildBlades();   // near-field texture: grass, or a hall's carpet
+    this.mottle = V.mottle ? V.mottle() : this.buildMottle();
     this.hedgeTile = this.buildHedgeTile();
     this.hedgeTileF = this.buildHedgeTile(true);
     this.trees = {};
     for (const type in V.trees) this.trees[type] = Array.from({ length: V.trees[type] }, (_, i) => this.buildTree(type, i));
-    this.pavilion = this.withHaze(V.pavilion ? V.pavilion() : this.buildPavilion());
+    /* An indoor hall (V.indoor) builds its walls, roof beams and ceiling instead of the club outside:
+       { panels: [{ x0, y0, x1, y1, z0, z1, img, both }], ceiling: canvas over TEX at TEX.S * 2 a texel }.
+       A panel is an upright picture from (x0, y0) to (x1, y1), its left end first as seen from the side it
+       faces; both: seen from either side (a beam across the hall). The roof is the ceiling at V.indoor.h. */
+    this.hall = V.indoor ? V.indoor.build() : null;
+    if (this.hall) this.hall.ceil = this.mipPair(this.hall.ceiling);
+    this.pavilion = this.withHaze(V.pavilion ? V.pavilion() : this.hall ? makeCanvas(2, 2) : this.buildPavilion());
     this.shelter = this.withHaze(this.buildShelter());
-    this.bench = this.withHaze(this.buildBench());
+    this.bench = this.withHaze(V.bench ? V.bench() : this.buildBench());
     this.spire = !V.far ? this.withHaze(this.buildSpire()) : V.far.build ? this.withHaze(V.far.build()) : null;
     this.flag = this.withHaze(this.buildFlag());
     this.shrubs = [0, 1, 2].map(i => this.withHaze(this.buildShrub(i)));
@@ -1736,26 +1745,32 @@ const Art = {
     const c = makeCanvas(w, h), g = c.getContext('2d');
     const X = x => (x - TEX.X0) / S, Y = y => (y - TEX.Y0) / S;
     const rect = (x0, y0, x1, y1, col) => { g.fillStyle = col; g.fillRect(X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0)); };
+    const V = Venue.current, inside = !!V.indoor;   // an indoor hall: carpet all round, no mowing, no sun
     // surrounding lawn
     rect(TEX.X0, TEX.Y0, TEX.X1, TEX.Y1, rgba(PAL.lawn));
-    this.overlayNoise(g, 0, 0, w, h, 90, 0.55);
-    this.overlayNoise(g, 0, 0, w, h, 24, 0.35);
-    // lawn mowing stripes (wider, casual)
-    for (let x = TEX.X0, i = 0; x < TEX.X1; x += 2.2, i++) { g.fillStyle = i % 2 ? 'rgba(255,250,210,.06)' : 'rgba(0,20,0,.06)'; g.fillRect(X(x), 0, 2.2 / S, h); }
-    // flower bed in front of the pavilion, and a gravel apron
-    rect(5.6, 39.2, 9.4, 47.5, 'rgb(158,150,128)');
-    rect(2.0, 39.6, 5.0, 40.9, 'rgb(74,60,44)'); rect(10.0, 39.6, 13.0, 40.9, 'rgb(74,60,44)');
-    for (let i = 0; i < 900; i++) {
-      const bx = vrand() < .5 ? vr(2.1, 4.9) : vr(10.1, 12.9), by = vr(39.65, 40.85);
-      const cols = ['rgba(196,96,104,.85)', 'rgba(230,222,206,.9)', 'rgba(150,104,160,.8)', 'rgba(98,128,64,.9)', 'rgba(70,104,52,.9)'];
-      g.fillStyle = cols[(vrand() * cols.length) | 0]; g.beginPath(); g.arc(X(bx), Y(by), vr(1.2, 2.6), 0, TAU); g.fill();
+    this.overlayNoise(g, 0, 0, w, h, 90, inside ? 0.2 : 0.55);
+    this.overlayNoise(g, 0, 0, w, h, 24, inside ? 0.2 : 0.35);
+    if (!inside) {
+      // lawn mowing stripes (wider, casual)
+      for (let x = TEX.X0, i = 0; x < TEX.X1; x += 2.2, i++) { g.fillStyle = i % 2 ? 'rgba(255,250,210,.06)' : 'rgba(0,20,0,.06)'; g.fillRect(X(x), 0, 2.2 / S, h); }
+      // flower bed in front of the pavilion, and a gravel apron
+      rect(5.6, 39.2, 9.4, 47.5, 'rgb(158,150,128)');
+      rect(2.0, 39.6, 5.0, 40.9, 'rgb(74,60,44)'); rect(10.0, 39.6, 13.0, 40.9, 'rgb(74,60,44)');
+      for (let i = 0; i < 900; i++) {
+        const bx = vrand() < .5 ? vr(2.1, 4.9) : vr(10.1, 12.9), by = vr(39.65, 40.85);
+        const cols = ['rgba(196,96,104,.85)', 'rgba(230,222,206,.9)', 'rgba(150,104,160,.8)', 'rgba(98,128,64,.9)', 'rgba(70,104,52,.9)'];
+        g.fillStyle = cols[(vrand() * cols.length) | 0]; g.beginPath(); g.arc(X(bx), Y(by), vr(1.2, 2.6), 0, TAU); g.fill();
+      }
     }
-    // path around the green, slabs
+    // path around the green, slabs (indoors, the carpet surround)
     rect(-15.2, -2.6, 15.2, 38.6, rgba(PAL.path));
-    this.overlayNoise(g, X(-15.2), Y(-2.6), 30.4 / S, 41.2 / S, 6, 0.35);
-    g.strokeStyle = 'rgba(60,52,40,.16)'; g.lineWidth = 1;
-    for (let x = -15.2; x <= 15.2; x += 0.9) { g.beginPath(); g.moveTo(X(x), Y(-2.6)); g.lineTo(X(x), Y(38.6)); g.stroke(); }
-    for (let y = -2.6; y <= 38.6; y += 0.6) { g.beginPath(); g.moveTo(X(-15.2), Y(y)); g.lineTo(X(15.2), Y(y)); g.stroke(); }
+    this.overlayNoise(g, X(-15.2), Y(-2.6), 30.4 / S, 41.2 / S, 6, inside ? 0.12 : 0.35);
+    if (!inside) {
+      g.strokeStyle = 'rgba(60,52,40,.16)'; g.lineWidth = 1;
+      for (let x = -15.2; x <= 15.2; x += 0.9) { g.beginPath(); g.moveTo(X(x), Y(-2.6)); g.lineTo(X(x), Y(38.6)); g.stroke(); }
+      for (let y = -2.6; y <= 38.6; y += 0.6) { g.beginPath(); g.moveTo(X(-15.2), Y(y)); g.lineTo(X(15.2), Y(y)); g.stroke(); }
+    }
+    if (V.paintPath) V.paintPath(g, X, Y, S);   // the club's own marks on the path: cracks, weeds
     // bank cap, ditch
     rect(-13.15, -0.65, 13.15, 36.65, rgba(PAL.cap));
     rect(-12.8, -0.3, 12.8, 36.3, rgba(PAL.ditch));
@@ -1763,31 +1778,36 @@ const Art = {
     const gx0 = X(-12.5), gy0 = Y(0), gw = 25 / S, gh = 36 / S;
     g.save(); g.beginPath(); g.rect(gx0, gy0, gw, gh); g.clip();
     g.fillStyle = rgba(PAL.green); g.fillRect(gx0, gy0, gw, gh);
-    this.overlayNoise(g, gx0, gy0, gw, gh, 120, 0.42);
-    this.overlayNoise(g, gx0, gy0, gw, gh, 36, 0.30);
-    this.overlayNoise(g, gx0, gy0, gw, gh, 9, 0.18);
-    // mowing: lengthwise bands with a faint cross-cut
-    for (let x = -12.5, i = 0; x < 12.5; x += 1.25, i++) { g.fillStyle = i % 2 ? 'rgba(236,246,196,.085)' : 'rgba(0,26,6,.085)'; g.fillRect(X(x), gy0, 1.25 / S, gh); }
-    for (let y = 0, i = 0; y < 36; y += 1.25, i++) { g.fillStyle = i % 2 ? 'rgba(236,246,196,.024)' : 'rgba(0,26,6,.024)'; g.fillRect(gx0, Y(y), gw, 1.25 / S); }
-    // wear where the mats sit, at both ends of every rink
-    for (const rx of RINKS) for (const my of [3.1, 32.9]) {
-      const gr = g.createRadialGradient(X(rx), Y(my), 0, X(rx), Y(my), 1.4 / S);
-      gr.addColorStop(0, 'rgba(176,170,108,.16)'); gr.addColorStop(1, 'rgba(176,170,108,0)');
-      g.fillStyle = gr; g.fillRect(X(rx - 1.5), Y(my - 1.5), 3 / S, 3 / S);
+    this.overlayNoise(g, gx0, gy0, gw, gh, 120, inside ? 0.12 : 0.42);
+    this.overlayNoise(g, gx0, gy0, gw, gh, 36, inside ? 0.08 : 0.30);
+    this.overlayNoise(g, gx0, gy0, gw, gh, 9, inside ? 0.10 : 0.18);
+    if (!inside) {
+      // mowing: lengthwise bands with a faint cross-cut
+      for (let x = -12.5, i = 0; x < 12.5; x += 1.25, i++) { g.fillStyle = i % 2 ? 'rgba(236,246,196,.085)' : 'rgba(0,26,6,.085)'; g.fillRect(X(x), gy0, 1.25 / S, gh); }
+      for (let y = 0, i = 0; y < 36; y += 1.25, i++) { g.fillStyle = i % 2 ? 'rgba(236,246,196,.024)' : 'rgba(0,26,6,.024)'; g.fillRect(gx0, Y(y), gw, 1.25 / S); }
+      // wear where the mats sit, at both ends of every rink
+      for (const rx of RINKS) for (const my of [3.1, 32.9]) {
+        const gr = g.createRadialGradient(X(rx), Y(my), 0, X(rx), Y(my), 1.4 / S);
+        gr.addColorStop(0, 'rgba(176,170,108,.16)'); gr.addColorStop(1, 'rgba(176,170,108,0)');
+        g.fillStyle = gr; g.fillRect(X(rx - 1.5), Y(my - 1.5), 3 / S, 3 / S);
+      }
+      // slightly lusher, darker turf along the ditches
+      const edge = (x0, y0, x1, y1, gx, gy, gx2, gy2) => { const gr = g.createLinearGradient(X(gx), Y(gy), X(gx2), Y(gy2)); gr.addColorStop(0, 'rgba(10,30,10,.18)'); gr.addColorStop(1, 'rgba(10,30,10,0)'); g.fillStyle = gr; g.fillRect(X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0)); };
+      edge(-12.5, 0, 12.5, 0.6, 0, 0, 0, 0.6); edge(-12.5, 35.4, 12.5, 36, 0, 36, 0, 35.4);
+      edge(-12.5, 0, -11.9, 36, -12.5, 0, -11.9, 0); edge(11.9, 0, 12.5, 36, 12.5, 0, 11.9, 0);
     }
-    // slightly lusher, darker turf along the ditches
-    const edge = (x0, y0, x1, y1, gx, gy, gx2, gy2) => { const gr = g.createLinearGradient(X(gx), Y(gy), X(gx2), Y(gy2)); gr.addColorStop(0, 'rgba(10,30,10,.18)'); gr.addColorStop(1, 'rgba(10,30,10,0)'); g.fillStyle = gr; g.fillRect(X(x0), Y(y0), X(x1) - X(x0), Y(y1) - Y(y0)); };
-    edge(-12.5, 0, 12.5, 0.6, 0, 0, 0, 0.6); edge(-12.5, 35.4, 12.5, 36, 0, 36, 0, 35.4);
-    edge(-12.5, 0, -11.9, 36, -12.5, 0, -11.9, 0); edge(11.9, 0, 12.5, 36, 12.5, 0, 11.9, 0);
+    if (V.paintGreen) V.paintGreen(g, X, Y, S);   // the club's own marks on the green: worn patches, the hall's lights
     if (Variant && Variant.paintGround) Variant.paintGround(g, X, Y, S);   // markings on the green (absolute frame)
     g.restore();
     // shadows cast by the surrounding trees and hedges (sun from the south-west)
-    this.paintShadows(g, X, Y, S);
+    if (!inside) this.paintShadows(g, X, Y, S);
     // per-texel grain
     const id = g.getImageData(0, 0, w, h), d = id.data;
     for (let i = 0; i < d.length; i += 4) { const n = (vrand() - 0.5) * 9; d[i] += n; d[i + 1] += n * 1.1; d[i + 2] += n * 0.7; }
     g.putImageData(id, 0, 0);
-    // mip chain + a copy rotated 180° for even ends
+    return this.mipPair(c);
+  },
+  mipPair(c) {   // mip chain + a copy rotated 180° for even ends
     const mips = [c]; for (let i = 0; i < 4; i++) mips.push(this.halve(mips[mips.length - 1]));
     const rot = mips.map(m => { const r = makeCanvas(m.width, m.height), rg = r.getContext('2d'); rg.translate(m.width, m.height); rg.rotate(Math.PI); rg.drawImage(m, 0, 0); return r; });
     return [mips, rot];
@@ -2282,16 +2302,32 @@ const Art = {
   layoutScenery() {
     const items = [];
     for (const t of this.treeSpots()) { const set = this.trees[t.type]; items.push({ kind: 'sprite', x: t.x, y: t.y, h: t.h, spr: set[t.v % set.length], flip: t.flip }); }
-    const V = Venue.current;
-    items.push({ kind: 'sprite', x: 7.5, y: 51, h: V.pavH || 7.2, spr: this.pavilion, fixed: true });
-    items.push({ kind: 'sprite', x: -9.5, y: -3.6, h: this.shelter.img.hm, spr: this.shelter, fixed: true });
+    const V = Venue.current, H = this.hall;
+    if (H) for (const p of H.panels) items.push({ kind: 'panel', ...p });
+    if (!H) items.push({ kind: 'sprite', x: 7.5, y: 51, h: V.pavH || 7.2, spr: this.pavilion, fixed: true });
+    if (!H) items.push({ kind: 'sprite', x: -9.5, y: -3.6, h: this.shelter.img.hm, spr: this.shelter, fixed: true });
     for (const bx of [-4, 3.2, 11.8]) items.push({ kind: 'sprite', x: bx, y: 39.4, h: this.bench.img.hm, spr: this.bench, fixed: true, facing: 1 });
     for (const bx of [-3, 4]) items.push({ kind: 'sprite', x: bx, y: -3.2, h: this.bench.img.hm, spr: this.bench, fixed: true, facing: -1 });
+    if (!H) this.outdoors(items, V);
+    // spectators: seats on the benches first, then standing places, most visible first; the far end gets fewer
+    this.spectators(items);
+    // hedges: footprint rectangles
+    const hedge = (x0, y0, x1, y1, h, flowers) => items.push({ kind: 'hedge', x0, y0, x1, y1, h, flowers });
+    if (!H) {
+      hedge(-31, -6.2, 31, -5.0, 1.8);
+      hedge(-31, 41.2, 1.5, 42.1, 1.5, !!V.roses); hedge(13.5, 41.2, 31, 42.1, 1.5, !!V.roses);   // roses along the pavilion side, where the club grows them
+      hedge(-18, -5, -17.1, 41.2, 1.25); hedge(17.1, -5, 18, 41.2, 1.25);
+    }
+    return items;
+  },
+  outdoors(items, V) {   // the far landmark, the flag, the shrubs and the planters: everything a hall has no room for
     if (this.spire) { const f = V.far || { x: 18, y: -240, h: 40 }; items.push({ kind: 'sprite', x: f.x, y: f.y, h: f.h, spr: this.spire, fixed: true, far: true }); }
     items.push({ kind: 'sprite', x: -4.6, y: 47.5, h: this.flag.img.hm, spr: this.flag, fixed: true });   // left of the pavilion, against the sky
+    if (V.tidy === false) return;   // a club that has let its garden go: no flowering shrubs, no planters
     for (const [x, y, v] of [[-0.2, 44.2, 0], [15.1, 44.6, 1], [-12.5, 40.4, 2], [-21.5, 40.5, 0], [23.5, 40.4, 1], [6.2, 46.4, 1]]) items.push({ kind: 'sprite', x, y, h: this.shrubs[v].img.hm, spr: this.shrubs[v], fixed: true });
     for (const x of [1.4, 13.2, -5.2]) items.push({ kind: 'sprite', x, y: 39.6, h: this.planter.img.hm, spr: this.planter, fixed: true });
-    // spectators: seats on the benches first, then standing places, most visible first; the far end gets fewer
+  },
+  spectators(items) {
     const P = this.crowdWet ? this.wetPeople() : this.people, crowd = (n, seats, stands) => {
       let k = 0;
       for (const [x, y] of seats) { if (k >= n) return; const s = P.sit[k % P.sit.length]; items.push({ kind: 'sprite', x, y, h: s.img.hm, spr: s, fixed: true }); k++; }
@@ -2305,12 +2341,6 @@ const Art = {
       crowd(Math.round(this.crowdN * 0.6), [[-3.45, -3.15], [4.45, -3.15], [-2.55, -3.15], [3.55, -3.15]],
         [[0.6, -3.7], [1.2, -3.9], [-6.6, -3.5], [-7.2, -3.8], [7.4, -3.6], [8.0, -3.4], [-12.4, -3.9], [10.6, -4.0], [1.9, -4.6], [-1.4, -4.5]]);
     }
-    // hedges: footprint rectangles
-    const hedge = (x0, y0, x1, y1, h, flowers) => items.push({ kind: 'hedge', x0, y0, x1, y1, h, flowers });
-    hedge(-31, -6.2, 31, -5.0, 1.8);
-    hedge(-31, 41.2, 1.5, 42.1, 1.5, !!V.roses); hedge(13.5, 41.2, 31, 42.1, 1.5, !!V.roses);   // roses along the pavilion side, where the club grows them
-    hedge(-18, -5, -17.1, 41.2, 1.25); hedge(17.1, -5, 18, 41.2, 1.25);
-    return items;
   }
 };
 
@@ -2440,8 +2470,8 @@ function drawShadow(g, cam, x, y, r, sun, alpha, lift = 0) {
   const P = cam.project(x, y, 0); if (!P) return;
   const fore = Math.max(0.04, (cam.z - lift) / P.d);
   g.save(); g.globalAlpha = alpha;
-  // cast shadow: soft, stretched away from the sun
-  const L = 1.4, dx = -sun.x, dy = -sun.y, hn = Math.hypot(dx, dy), ux = dx / hn, uy = dy / hn;
+  // cast shadow: soft, stretched away from the sun (under a hall's lights, short and almost straight down)
+  const L = Art.hall ? 0.3 : 1.4, dx = -sun.x, dy = -sun.y, hn = Math.hypot(dx, dy), ux = dx / hn, uy = dy / hn;
   for (let i = 1; i <= 4; i++) {
     const t = i / 4, Q = cam.project(x + ux * r * L * t, y + uy * r * L * t, 0); if (!Q) continue;
     g.fillStyle = `rgba(14,26,10,${0.16 * (1 - t * .55)})`;
@@ -2616,28 +2646,31 @@ class SceneRenderer {
     this.bgKey = key;
     const g = this.bg.getContext('2d'), Wd = this.W, Hd = this.H, hz = cam.horizon();
     g.setTransform(1, 0, 0, 1, 0, 0);
-    // sky. Under weather the whole frame is graded below, so its colours are set to come out as the weather's sky
-    const pre = c => { if (!wx) return c; const v = wx.veil, a = wx.veilA; return [0, 1, 2].map(i => clamp((c[i] - v[i] * a) / (1 - a) / Math.max(.05, wx.gain[i] / 255), 0, 255)); };
-    const sky = g.createLinearGradient(0, hz - cam.F * 0.9, 0, hz);
-    sky.addColorStop(0, rgba(pre(wx ? wx.skyTop : PAL.skyTop))); sky.addColorStop(.62, rgba(pre(wx ? wx.skyMid : PAL.skyMid))); sky.addColorStop(1, rgba(pre(wx ? wx.haze : PAL.haze)));
-    g.fillStyle = sky; g.fillRect(0, 0, Wd, Math.max(0, hz + 2));
-    const glow = wx ? wx.glow : 1;
-    if (glow > .005) {
-      if (dir === 1) { // looking toward the sun's side: a warm bloom high on the right
-        const sg = g.createRadialGradient(Wd * 1.05, hz - cam.F * .55, 0, Wd * 1.05, hz - cam.F * .55, cam.F * 1.1);
-        sg.addColorStop(0, `rgba(255,244,214,${Math.min(1, .55 * glow)})`); sg.addColorStop(1, 'rgba(255,244,214,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
-      } else {
-        const sg = g.createLinearGradient(0, 0, Wd, 0); sg.addColorStop(0, `rgba(255,240,210,${Math.min(1, .16 * glow)})`); sg.addColorStop(.5, 'rgba(255,240,210,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+    if (Art.hall) this.renderCeiling(g, dir);   // indoors: the roof where the sky would be
+    else {
+      // sky. Under weather the whole frame is graded below, so its colours are set to come out as the weather's sky
+      const pre = c => { if (!wx) return c; const v = wx.veil, a = wx.veilA; return [0, 1, 2].map(i => clamp((c[i] - v[i] * a) / (1 - a) / Math.max(.05, wx.gain[i] / 255), 0, 255)); };
+      const sky = g.createLinearGradient(0, hz - cam.F * 0.9, 0, hz);
+      sky.addColorStop(0, rgba(pre(wx ? wx.skyTop : PAL.skyTop))); sky.addColorStop(.62, rgba(pre(wx ? wx.skyMid : PAL.skyMid))); sky.addColorStop(1, rgba(pre(wx ? wx.haze : PAL.haze)));
+      g.fillStyle = sky; g.fillRect(0, 0, Wd, Math.max(0, hz + 2));
+      const glow = wx ? wx.glow : 1;
+      if (glow > .005) {
+        if (dir === 1) { // looking toward the sun's side: a warm bloom high on the right
+          const sg = g.createRadialGradient(Wd * 1.05, hz - cam.F * .55, 0, Wd * 1.05, hz - cam.F * .55, cam.F * 1.1);
+          sg.addColorStop(0, `rgba(255,244,214,${Math.min(1, .55 * glow)})`); sg.addColorStop(1, 'rgba(255,244,214,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+        } else {
+          const sg = g.createLinearGradient(0, 0, Wd, 0); sg.addColorStop(0, `rgba(255,240,210,${Math.min(1, .16 * glow)})`); sg.addColorStop(.5, 'rgba(255,240,210,0)'); g.fillStyle = sg; g.fillRect(0, 0, Wd, hz);
+        }
       }
+      const cl = wx ? this.cloudsFor(dir, wx) : Art.clouds[dir], cs = cam.F / 1100;
+      g.globalAlpha = .9 * (wx ? wx.cloud : 1); g.drawImage(cl, ((-cam.x * 3 + (dir ? 600 : 0)) % 600) - 300 * cs, hz - cl.height * cs * 1.15, cl.width * cs, cl.height * cs); g.globalAlpha = 1;
+      // distant tree line (in rain, partly lost in the murk)
+      const band = Art.band[dir], bd = 170, bh = cam.F * 15 / bd, bb = hz + cam.F * cam.z / bd;
+      const bw = band.width * (bh / band.height);
+      if (wx) g.globalAlpha = 1 - wx.mist;
+      for (let x0 = -((cam.x * cam.F / bd) % bw) - bw; x0 < Wd; x0 += bw) g.drawImage(band, x0, bb - bh, bw, bh);
+      g.globalAlpha = 1;
     }
-    const cl = wx ? this.cloudsFor(dir, wx) : Art.clouds[dir], cs = cam.F / 1100;
-    g.globalAlpha = .9 * (wx ? wx.cloud : 1); g.drawImage(cl, ((-cam.x * 3 + (dir ? 600 : 0)) % 600) - 300 * cs, hz - cl.height * cs * 1.15, cl.width * cs, cl.height * cs); g.globalAlpha = 1;
-    // distant tree line (in rain, partly lost in the murk)
-    const band = Art.band[dir], bd = 170, bh = cam.F * 15 / bd, bb = hz + cam.F * cam.z / bd;
-    const bw = band.width * (bh / band.height);
-    if (wx) g.globalAlpha = 1 - wx.mist;
-    for (let x0 = -((cam.x * cam.F / bd) % bw) - bw; x0 < Wd; x0 += bw) g.drawImage(band, x0, bb - bh, bw, bh);
-    g.globalAlpha = 1;
     // ground
     this.renderGround(g, dir);
     // sheen: turf seen at a grazing angle catches the sky
@@ -2683,7 +2716,7 @@ class SceneRenderer {
     const cam = this.cam, Wd = this.W, Hd = this.H, mips = Art.ground[dir], hz = cam.horizon();
     const row = this.dpr >= 1.75 ? 2 : 1, top = Math.max(0, Math.floor(hz) + 1);
     g.fillStyle = rgba(mixRgb(PAL.lawn, PAL.haze, .45)); g.fillRect(0, Math.max(0, hz), Wd, Hd);
-    this.renderFarFields(g, dir);
+    if (!Art.hall) this.renderFarFields(g, dir);
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'medium';
     // the grain tiles, repeated side by side into strips wide enough to span the screen at the smallest scale drawn
     const strip = (img, minA, key) => { const n = Math.ceil(Wd / minA / img.width) + 2;
@@ -2723,6 +2756,28 @@ class SceneRenderer {
       }
     }
   }
+  /* A hall's ceiling (Art.hall.ceil, at Venue.current.indoor.h), drawn as the ground is: each screen row above
+     the horizon is one row of the texture, at the mip level that suits its spacing. */
+  renderCeiling(g, dir) {
+    const cam = this.cam, Wd = this.W, mips = Art.hall.ceil[dir], zc = Venue.current.indoor.h, S2 = TEX.S * 2, hz = cam.horizon();
+    const row = this.dpr >= 1.75 ? 2 : 1, bottom = Math.min(this.H, Math.ceil(hz) + 2);
+    g.fillStyle = rgba(PAL.skyMid); g.fillRect(0, 0, Wd, Math.max(0, bottom));
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'medium';
+    let prevY = null;
+    for (let sy = 0; sy < bottom; sy += row) {
+      const v = (cam.cy - (sy + row * .5)) / cam.F, dz = v * cam.cp - cam.sp; if (dz <= 1e-6) continue;
+      const t = (zc - cam.z) / dz, wy = cam.y + t * (v * cam.sp + cam.cp);
+      const dyRow = prevY == null ? 0.05 : Math.abs(prevY - wy); prevY = wy;
+      if (wy > TEX.Y1 - 0.1 || wy < TEX.Y0) continue;
+      let lvl = 0; const rate = dyRow / S2; while (lvl < 4 && rate > (1 << (lvl + 1)) * 0.9) lvl++;
+      const tex = mips[lvl], s = S2 * (1 << lvl);
+      const xL = cam.x - t * cam.cx / cam.F, xR = cam.x + t * (Wd - cam.cx) / cam.F;
+      const uL = (xL - TEX.X0) / s, uR = (xR - TEX.X0) / s, tw = tex.width, k = Wd / (uR - uL);
+      const u0 = Math.max(0, uL), u1 = Math.min(tw, uR), d0 = (u0 - uL) * k, d1 = (u1 - uL) * k;
+      const vrow = Math.min(tex.height - 1, Math.max(0, Math.floor((wy - TEX.Y0) / s)));
+      if (u1 > u0 && d1 > d0) g.drawImage(tex, u0, vrow, u1 - u0, 1, d0, sy, d1 - d0, row);
+    }
+  }
   /* The country beyond the club hedges, between the textured ground and the distant band: fields
      and hedgerows laid out in perspective, so a camera that rises to follow a bowl looks over the
      hedge onto farmland rather than bare colour. Drawn in this end's coordinates. */
@@ -2759,6 +2814,20 @@ class SceneRenderer {
       if (it.kind === 'sprite') {
         const p = toEnd(dir, it.x, it.y); const d = p.y - cam.y; if (d < 2) continue;
         items.push({ it, d, p });
+      } else if (it.kind === 'panel') {
+        /* cut into upright strips, narrow enough near the camera that each can be drawn flat (affine) without
+           the perspective showing, and clipped to just in front of the camera */
+        const a = toEnd(dir, it.x0, it.y0), b = toEnd(dir, it.x1, it.y1), dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy);
+        if (!it.both && (cam.x - a.x) * dy - (cam.y - a.y) * dx <= 0) continue;   // facing away
+        const near = cam.y + 0.6;
+        for (let u = 0; u < 1 - 1e-6;) {
+          const x = a.x + dx * u, y = a.y + dy * u, du = clamp(0.04 * Math.max(1, y - cam.y), 0.25, 3) / L, u1 = Math.min(1, u + du);
+          let ua = u, ub = u1; const ya = y, yb = a.y + dy * u1;
+          if (Math.max(ya, yb) <= near) { u = u1; continue; }
+          if (ya < near) ua = u + (u1 - u) * (near - ya) / (yb - ya); else if (yb < near) ub = u + (u1 - u) * (near - ya) / (yb - ya);
+          items.push({ panel: { it, a, dx, dy, ua, ub }, d: (Math.max(near, ya) + Math.max(near, yb)) / 2 - cam.y + (it.both ? -0.05 : 0.05) });
+          u = u1;
+        }
       } else {
         const a = toEnd(dir, it.x0, it.y0), b = toEnd(dir, it.x1, it.y1);
         const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
@@ -2773,6 +2842,7 @@ class SceneRenderer {
     const sun = sunEnd(dir);
     for (const e of items) {
       if (e.hedge) { this.drawHedge(g, e.hedge, sun); continue; }
+      if (e.panel) { this.drawPanel(g, e.panel); continue; }
       const it = e.it, spr = it.spr, P = cam.project(e.p.x, e.p.y, 0); if (!P) continue;
       const hpx = it.h * P.s, wpx = hpx * spr.w / spr.h;
       if (P.x + wpx / 2 < 0 || P.x - wpx / 2 > this.W || P.y < 0) continue;
@@ -2783,6 +2853,16 @@ class SceneRenderer {
       if (haze > 0.01) { g.globalAlpha = haze; g.drawImage(spr.haze, -wpx / 2, -hpx, wpx, hpx); }
       g.restore();
     }
+  }
+  drawPanel(g, p) {   // one strip of a panel, ua..ub of its length: the picture laid flat between three corners
+    const cam = this.cam, it = p.it, img = it.img, at = u => ({ x: p.a.x + p.dx * u, y: p.a.y + p.dy * u });
+    const A = at(p.ua), B = at(p.ub), A1 = cam.project(A.x, A.y, it.z1), B1 = cam.project(B.x, B.y, it.z1), A0 = cam.project(A.x, A.y, it.z0);
+    if (!A1 || !B1 || !A0) return;
+    const sx = p.ua * img.width, sw = Math.max(0.5, (p.ub - p.ua) * img.width), h = img.height, pad = 1 / Math.max(1, Math.abs(B1.x - A1.x));   // a hair wider, so strips meet without a seam
+    g.save();
+    g.setTransform((B1.x - A1.x) / sw, (B1.y - A1.y) / sw, (A0.x - A1.x) / h, (A0.y - A1.y) / h, A1.x, A1.y);
+    g.drawImage(img, sx, 0, Math.min(img.width - sx, sw * (1 + pad)), h, 0, 0, sw * (1 + pad), h);
+    g.restore();
   }
   /* Hedge tops are neatly clipped but not ruler-straight: a smooth, slow rise and fall with a
      soft leafy edge. u is measured in green coordinates (not this end's), so each hedge
@@ -3275,6 +3355,15 @@ class GLScene {
     this.cloudTex = Art.clouds.map(c => this.canvasTex(c));
     this.cloud = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ transparent: true, opacity: .9, depthWrite: false, fog: false, toneMapped: false }));
     this.cloud.rotation.x = Math.PI / 2; this.cloud.renderOrder = -9; this.cloud.frustumCulled = false; this.world.add(this.cloud);
+    // indoors, the hall's ceiling instead of the band and clouds: one plane facing down over the texture's footprint,
+    // turned 180° about the green's centre at the far end (setDir)
+    this.ceil = null;
+    if (Art.hall) {
+      this.band.visible = this.cloud.visible = false;
+      this.ceil = new T.Mesh(new T.PlaneGeometry(TEX.X1 - TEX.X0, TEX.Y1 - TEX.Y0), new T.MeshBasicMaterial({ map: this.canvasTex(Art.hall.ceiling), toneMapped: false }));
+      this.ceil.rotation.order = 'ZYX'; this.ceil.rotation.x = Math.PI;
+      this.ceil.position.set((TEX.X0 + TEX.X1) / 2, (TEX.Y0 + TEX.Y1) / 2, Venue.current.indoor.h); this.world.add(this.ceil);
+    }
   }
   /* The ground is Art.buildGround's canvas itself (and its 180°-rotated copy for the other end), 5 cm a texel,
      on one plane, with GPU mipmaps and anisotropic filtering. The ditch is cut out of it, so bowls can drop in. */
@@ -3521,6 +3610,7 @@ class GLScene {
     this.world.environmentRotation.set(0, 0, dir ? Math.PI : 0); this.hand.environmentRotation.copy(this.world.environmentRotation);
     this.band.material.map = this.bandTex[dir]; this.band.material.needsUpdate = true;
     this.cloud.material.map = this.cloudTex[dir]; this.cloud.material.needsUpdate = true;
+    if (this.ceil) { const c = toEnd(dir, (TEX.X0 + TEX.X1) / 2, (TEX.Y0 + TEX.Y1) / 2); this.ceil.position.x = c.x; this.ceil.position.y = c.y; this.ceil.rotation.z = dir ? Math.PI : 0; }
     for (const f of this.bankFaces) { const li = 0.45 + 0.55 * Math.max(0, f.n[0] * sun.x + f.n[1] * sun.y); f.m.rgb = mixRgb(shadeRgb(PAL.timber, -.35), PAL.timberLit, li); }
     this.plates.forEach((m, i) => { m.map = this.plateTex[dir][i]; m.needsUpdate = true; });
     this.sceneryRef = null; this.wxKey = null;
@@ -3548,6 +3638,14 @@ class GLScene {
         const p = toEnd(dir, it.x, it.y), s = new T.Sprite(m);
         s.center.set(.5, 0); s.position.set(p.x, p.y, 0); s.scale.set(it.h * spr.w / spr.h, it.h, 1);
         G.add(s);
+      } else if (it.kind === 'panel') {   // an upright picture: a plane stood up, its picture's left end at (x0, y0)
+        const a = toEnd(dir, it.x0, it.y0), b = toEnd(dir, it.x1, it.y1);
+        const m = new T.MeshBasicMaterial({ map: tex(it.img), alphaTest: .5, side: it.both ? T.DoubleSide : T.FrontSide, toneMapped: false });
+        m.userData.base = m.color.clone();
+        const q = new T.Mesh(new T.PlaneGeometry(Math.hypot(b.x - a.x, b.y - a.y), it.z1 - it.z0), m);
+        q.rotation.order = 'ZYX'; q.rotation.x = Math.PI / 2; q.rotation.z = Math.atan2(b.y - a.y, b.x - a.x);
+        q.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, (it.z0 + it.z1) / 2);
+        G.add(q);
       } else {
         const a = toEnd(dir, it.x0, it.y0), b = toEnd(dir, it.x1, it.y1);
         const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
@@ -3621,7 +3719,8 @@ class GLScene {
         const sp = this.shadowPair(si++), a = b.fade * (b.lift ? 1 - b.lift : 1);
         sp.contact.visible = sp.cast.visible = true;
         sp.contact.position.set(b.rx, b.ry, .002); sp.contact.scale.setScalar(b.r * 2.3); sp.contact.material.opacity = a;
-        sp.cast.position.set(b.rx + sx * b.r * .7, b.ry + sy * b.r * .7, .0015); sp.cast.scale.set(b.r * 4.2, b.r * 2.1, 1); sp.cast.rotation.z = Math.atan2(sy, sx); sp.cast.material.opacity = a;
+        const k = Art.hall ? .15 : .7;   // under a hall's lights the shadow falls almost straight down
+        sp.cast.position.set(b.rx + sx * b.r * k, b.ry + sy * b.r * k, .0015); sp.cast.scale.set(b.r * (Art.hall ? 2.8 : 4.2), b.r * (Art.hall ? 2.4 : 2.1), 1); sp.cast.rotation.z = Math.atan2(sy, sx); sp.cast.material.opacity = a;
       }
     }
     for (const k of ['bowl', 'jack']) for (let i = used[k]; i < this.pool[k].length; i++) this.pool[k][i].visible = false;
@@ -4098,6 +4197,7 @@ const Sound = {
     this.birdTimer = setTimeout(() => {
       if (this.ctx && !this.muted && Settings.birds && !document.hidden && this.ctx.state === 'running') {
         const pan = Math.random() * 1.6 - 0.8, vol = 0.55 + Math.random() * 0.45, list = Venue.current.birds || BIRDS_ASHCOMBE;
+        if (!list.length) { this.nextBird(5); return; }
         let r = Math.random() * list.reduce((a, b) => a + b[1], 0), call = list[0][0];
         for (const [name, w] of list) { if ((r -= w) < 0) { call = name; break; } }
         const dur = this[call](pan, vol);
@@ -4106,7 +4206,8 @@ const Sound = {
     }, delay * 1000);
   },
   /* The club's bed of sound, from Venue.ambience: cicadas (a buzz in waves), the sea (slow swells of
-     low noise) or wind (a soft, wandering rush). Faded across when the venue changes. */
+     low noise), wind (a soft, wandering rush), traffic (a town's distant road) or a hall (the low hum of
+     its air handling). Faded across when the venue changes. */
   ambience() {
     if (!this.ctx) return;
     const c = this.ctx;
@@ -4131,6 +4232,14 @@ const Sound = {
         const bp = filt('bandpass', 420, .6); lfo(.031, 160, bp.frequency);
         level.gain.value = .022; lfo(.047, .016, level.gain);
         chain(noise(), bp, level, out);
+      } else if (k === 'traffic') {   // the ring road beyond the terraces: a low rush, rising and falling as cars pass
+        const lp = filt('lowpass', 380, .7); lfo(.023, 120, lp.frequency);
+        level.gain.value = .03; lfo(.13, .012, level.gain);
+        chain(noise(), lp, level, out);
+      } else if (k === 'hall') {   // a big room's air: a low, steady hum and a breath of fans
+        const hum = c.createOscillator(), hg = c.createGain(); hum.frequency.value = 100; hg.gain.value = .006; hum.connect(hg); hg.connect(out); hum.start(); nodes.push(hum);
+        level.gain.value = .014;
+        chain(noise(), filt('lowpass', 240, .5), level, out);
       }
     }
     this.bed = { out, stop: () => { for (const n of nodes) try { n.stop(); } catch (e) { /* stopped */ } out.disconnect(); } };
@@ -4163,6 +4272,44 @@ const Sound = {
   woodpigeon(pan, v) {  // the five-note coo, low and soft: coo-COO-coo, coo-coo
     let t = this.ctx.currentTime + .05; const f = 400 + Math.random() * 60;
     for (const [k, d, a, gap] of [[1, .32, .7, .08], [1.14, .55, 1, .1], [1, .3, .7, .32], [1, .3, .65, .08], [1, .3, .6, 0]]) { this.note(t, f * k, f * k * .9, d, .05 * a * v, pan * .6, .006); t += d + gap; }
+    return t - this.ctx.currentTime;
+  },
+  // ---- what else a club hears in place of birds ----
+  burst(t, f, q, dur, vol, pan) {   // a short burst of filtered noise, dying away: a clap, a knock
+    const c = this.ctx;
+    if (!this.noiseBuf) { const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.noiseBuf = b; }
+    const s = c.createBufferSource(), bp = c.createBiquadFilter(), gn = c.createGain(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    s.buffer = this.noiseBuf; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+    gn.gain.setValueAtTime(vol, t); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(bp); bp.connect(gn); if (p) { p.pan.value = pan; gn.connect(p); p.connect(this.birdBus); } else gn.connect(this.birdBus);
+    s.start(t, Math.random()); s.stop(t + dur + .02);
+  },
+  knock(pan, v) {       // bowls meeting on another rink across the hall: a hollow clack, sometimes a second
+    let t = this.ctx.currentTime + .05; const n = Math.random() < .35 ? 2 : 1;
+    for (let i = 0; i < n; i++) { this.burst(t, 900 + Math.random() * 300, 6, .09, .05 * v, pan); this.note(t, 620 + Math.random() * 80, 560, .07, .012 * v, pan); t += .25 + Math.random() * .4; }
+    return t - this.ctx.currentTime;
+  },
+  clap(pan, v) {        // a ripple of polite applause for a good bowl on another rink
+    const t0 = this.ctx.currentTime + .05, hands = 3 + Math.floor(Math.random() * 4), len = 1 + Math.random() * 1.2;
+    for (let h = 0; h < hands; h++) { const p = pan + (Math.random() - .5) * .5, gap = .14 + Math.random() * .08; for (let t = t0 + Math.random() * .2; t < t0 + len; t += gap) this.burst(t, 1300 + Math.random() * 900, 1.2, .05, .02 * v, p); }
+    return len + .1;
+  },
+  crow(pan, v) {        // a carrion crow: two to four harsh caws
+    let t = this.ctx.currentTime + .05; const n = 2 + Math.floor(Math.random() * 3), c = this.ctx;
+    for (let i = 0; i < n; i++) {
+      const o = c.createOscillator(), bp = c.createBiquadFilter(), gn = c.createGain(), p = c.createStereoPanner ? c.createStereoPanner() : null, d = .26 + Math.random() * .1;
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(560, t); o.frequency.linearRampToValueAtTime(430, t + d);
+      bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.6;
+      gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(.022 * v, t + .03); gn.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(bp); bp.connect(gn); if (p) { p.pan.value = pan; gn.connect(p); p.connect(this.birdBus); } else gn.connect(this.birdBus);
+      o.start(t); o.stop(t + d + .02); t += d + .22 + Math.random() * .15;
+    }
+    return t - this.ctx.currentTime;
+  },
+  gull(pan, v) {        // a herring gull overhead: a long call, then a run of shorter ones
+    let t = this.ctx.currentTime + .05; const f = 900 + Math.random() * 150;
+    this.note(t, f, f * 1.5, .32, .03 * v, pan, .03); t += .4;
+    for (let i = 0; i < 3 + Math.floor(Math.random() * 4); i++) { this.note(t, f * 1.3, f * .95, .14, .022 * v, pan, .03); t += .19; }
     return t - this.ctx.currentTime;
   },
   // ---- birds of the other clubs ----

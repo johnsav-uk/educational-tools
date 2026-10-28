@@ -168,8 +168,9 @@
      confirmed league results, so it starts at 1200 and moves after each one. */
   /* What's new: a note for members until they press Got it (store 'member.news'). Change NEWS_ID
      when it changes. The league noticeboard (league/site/board/board.js) has its own copy. */
-  const NEWS_ID = '2026-10-26', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
+  const NEWS_ID = '2026-10-28', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
   const NEWS_HTML = `<div class="acct-news" id="acNews"><h3>What’s new</h3><ul>
+      <li><b>Two new clubs to try.</b> Pitfold Park, a tired park green that is heavy and uneven, and Fernley Indoor, a flat blue carpet at 17 s. Find them under Beta games below, or on the title menu.</li>
       <li><b>Beta games are here.</b> Darts and round the clock, against the computer. Find them below, or under Beta games on the title menu.</li>
     </ul><button class="acct-link" type="button" id="acNewsOk">Got it</button></div>`;
   const recLine = t => `${plural(t.played, 'match', 'matches')} · ${t.won} won · ${t.drawn} drawn · ${t.lost} lost`;
@@ -229,6 +230,8 @@
       <ul class="acct-list acct-beta">
         <li><div class="acct-lg"><b>Darts</b><span>501 · against the computer</span></div><a class="btn ghost" href="members/beta/darts/" target="_blank" rel="noopener">Play</a></li>
         <li><div class="acct-lg"><b>Round the clock</b><span>1 to 20, then the bull · against the computer</span></div><a class="btn ghost" href="members/beta/round-the-clock/" target="_blank" rel="noopener">Play</a></li>
+        <li><div class="acct-lg"><b>Pitfold Park</b><span>a tired park green · heavy (12 s) and uneven</span></div><a class="btn ghost" href="members/beta/pitfold/" target="_blank" rel="noopener">Play</a></li>
+        <li><div class="acct-lg"><b>Fernley Indoor</b><span>a blue carpet · 17 s, no weather</span></div><a class="btn ghost" href="members/beta/fernley/" target="_blank" rel="noopener">Play</a></li>
       </ul>
       <p class="acct-note">Beta games open in a new tab, so a game you have on here carries on.</p>
       <h3>Your account</h3>
