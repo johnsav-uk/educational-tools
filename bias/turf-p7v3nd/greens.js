@@ -34,6 +34,7 @@
   const SUN = { x: -0.72, y: -0.69 };            // the sun's ground direction (the game's south-west), absolute frame
   const SHADE = { k: 35, max: 0.28, step: 0.1, contour: 0.005 };   // light/shade gain, its cap, sample spacing, contour interval (m)
   const DEFAULT_GAINS = { tilt: 1, bumps: 1, noise: 1 };
+  const STORE = 'bias.greens';   // the Settings choices, kept between visits (Greens.remember / restore)
 
   // e^z for z ≤ 0, from + − × ÷ only: a short Taylor series on z/2¹⁶, squared back up 16 times.
   function detExp(z) {
@@ -186,6 +187,19 @@
       return { seed: a[0] & 0x7fffffff, gains };
     },
     playing(terrain) { this.current = terrain; if (this.onPlaying) this.onPlaying(terrain); },
+    /* The Settings choices are kept in this browser (localStorage 'bias.greens'), so a tester's green, seed, sliders and
+       contours are as they left them next time. Anything unreadable falls back to the defaults. */
+    remember() {
+      try { localStorage.setItem(STORE, JSON.stringify({ choice: this.choice, fixedSeed: this.fixedSeed, gains: this.gains, contours: this.contours })); } catch (e) { /* storage unavailable */ }
+    },
+    restore() {
+      let o = null; try { o = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { return; }
+      if (!o || typeof o !== 'object') return;
+      if (typeof o.choice === 'string') this.choice = o.choice;
+      if (Number.isInteger(o.fixedSeed) && o.fixedSeed >= 0) this.fixedSeed = o.fixedSeed % 2147483648;
+      for (const k in DEFAULT_GAINS) { const v = o.gains && o.gains[k]; if (typeof v === 'number' && v >= 0 && v <= 3) this.gains[k] = v; }
+      this.contours = o.contours === true;
+    },
     label(terrain) {
       if (terrain.name) { const n = (this.named || []).find(g => g.id === terrain.name); return n ? n.name : terrain.name; }
       return 'Random green ' + (terrain.seed >>> 0).toString(16).toUpperCase().padStart(8, '0');
@@ -195,6 +209,7 @@
   if (typeof module === 'object' && module.exports) module.exports = Greens;
   else if (typeof window === 'object') {
     window.BiasGreens = Greens;
+    Greens.restore();
     // the page runs under <base href="../">, so greens.json is found beside this script, not the page
     if (typeof fetch === 'function') Greens.ready = fetch(new URL('greens.json', document.currentScript ? document.currentScript.src : location.href), { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('greens.json ' + r.status); return r.json(); }).then(list => Greens.load(list));
     if (typeof document === 'object') document.addEventListener('DOMContentLoaded', () => { title(); panel(Greens); });
@@ -241,25 +256,33 @@
     const choice = document.getElementById('gr-choice'), seed = document.getElementById('gr-seed'), now = document.getElementById('gr-now');
     const showNow = t => { now.textContent = t ? 'This game: ' + G.label(t) + (t.seed != null ? ' (seed ' + t.seed + ')' : '') + '.' : ''; };
     G.onPlaying = showNow; showNow(G.current);
-    Promise.resolve(G.ready).then(() => { for (const g of G.named || []) choice.insertAdjacentHTML('beforeend', `<option value="${g.id}">${g.name}: ${g.blurb}</option>`); }).catch(() => {});
+    // the remembered choice: shown at once, or once the named greens are in the list
+    const showChoice = () => { if ([...choice.options].some(o => o.value === G.choice)) choice.value = G.choice; seed.style.display = choice.value === 'seed' ? '' : 'none'; };
+    if (G.fixedSeed != null) seed.value = G.fixedSeed;
+    showChoice();
+    Promise.resolve(G.ready).then(() => { for (const g of G.named || []) choice.insertAdjacentHTML('beforeend', `<option value="${g.id}">${g.name}: ${g.blurb}</option>`); showChoice(); }).catch(() => {});
     const syncSeed = () => {
       seed.style.display = choice.value === 'seed' ? '' : 'none';
       const n = Number(seed.value);
       G.choice = choice.value; G.fixedSeed = seed.value.trim() !== '' && Number.isInteger(n) && n >= 0 ? n % 2147483648 : null;
+      G.remember();
     };
     choice.addEventListener('change', () => { if (choice.value === 'seed' && seed.value === '' && G.current && G.current.seed != null) seed.value = G.current.seed; syncSeed(); });
     seed.addEventListener('input', syncSeed);
     for (const k of ['tilt', 'bumps', 'noise']) {
       const input = document.getElementById('gr-' + k), out = document.getElementById('gr-' + k + '-out');
-      input.addEventListener('input', () => { G.gains[k] = input.value / 100; out.textContent = input.value + '%'; });
+      input.addEventListener('input', () => { G.gains[k] = input.value / 100; out.textContent = input.value + '%'; G.remember(); });
     }
     const setContours = on => {
-      G.contours = on;
+      G.contours = on; G.remember();
       document.getElementById('gr-c-on').setAttribute('aria-pressed', String(on));
       document.getElementById('gr-c-off').setAttribute('aria-pressed', String(!on));
       window.dispatchEvent(new Event('bias-greens'));
     };
     document.getElementById('gr-c-on').onclick = () => setContours(true);
     document.getElementById('gr-c-off').onclick = () => setContours(false);
+    if (!tester) G.contours = false;   // contours only for testers, whatever was remembered
+    document.getElementById('gr-c-on').setAttribute('aria-pressed', String(G.contours));
+    document.getElementById('gr-c-off').setAttribute('aria-pressed', String(!G.contours));
   }
 })(typeof window === 'object' ? window : globalThis);

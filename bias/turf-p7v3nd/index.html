@@ -17,7 +17,7 @@
    The game file is never changed. Open with ?tester once to show the contour overlay. */
 (function () {
   'use strict';
-  var V = '4';   // bump with any change to this folder, so testers never get yesterday's files from their cache
+  var V = '5';   // bump with any change to this folder, so testers never get yesterday's files from their cache
   var dir = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
   var msg = document.getElementById('msg');
   fetch('../index.html', { cache: 'no-cache' })
