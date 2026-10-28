@@ -118,7 +118,7 @@
         ${has('join') ? '<label class="acct-tick"><input id="acAge" type="checkbox"> I’m 13 or over</label>' : ''}
         <p class="acct-note">${{
           signin: '',
-          join: `Your username is your name in league tables: 3 to 16 letters, numbers or _, and not your real name. Your email is only for getting back in if you forget your password: we keep a scrambled form of it, never the address, and never email you anything else. <a href="${esc(API)}/join.html#privacy" target="_blank" rel="noopener">Privacy, in plain words</a>`,
+          join: `Your username is your name in league tables: 3 to 16 letters, numbers or _, and not your real name. Your email is only for getting back in if you forget your password: we keep a scrambled form of it, never the address, and never email you anything else. <a href="privacy/" target="_blank" rel="noopener">Privacy, in plain words</a>`,
           forgot: 'Type the email you joined with. We’ll send your username and a link to choose a new password. It’s the only email Bias ever sends.',
           reset: 'You’ll be signed in here, and signed out everywhere else.'
         }[view]}</p>
@@ -255,7 +255,7 @@
             <div class="acct-confirm-btns"><button class="btn acct-warn" type="button" id="acDelYes">Yes, delete it</button><button class="btn" type="button" id="acDelNo">Keep my account</button></div>
           </div>
         </form></details>
-      <div class="acct-foot"><button class="btn ghost" type="button" id="acOut">Sign out</button><a href="${esc(API)}/join.html#privacy" target="_blank" rel="noopener">Privacy</a></div>`;
+      <div class="acct-foot"><button class="btn ghost" type="button" id="acOut">Sign out</button><a href="privacy/" target="_blank" rel="noopener">Privacy</a></div>`;
     H.body().querySelectorAll('[data-board]').forEach(b => b.onclick = () => openBoard(b.dataset.board));
     if ($('acFind')) $('acFind').onclick = openLeagues;
     if ($('acNewsOk')) $('acNewsOk').onclick = () => { H.store.set('member.news', NEWS_ID); $('acNews').remove(); };

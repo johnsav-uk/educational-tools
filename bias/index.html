@@ -20,7 +20,11 @@
 <meta name="twitter:title" content="Bias · Lawn Bowls">
 <meta name="twitter:description" content="Lawn bowls in your browser. Play the computer, or a friend online. Free, no download.">
 <meta name="twitter:image" content="https://www.johnsav.co.uk/bias/preview.jpg">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231f3a2a'/%3E%3Ccircle cx='16' cy='16' r='11.5' fill='none' stroke='%23c9a862' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='8.4' fill='none' stroke='%23c9a862' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='4.2' fill='%23c9a862'/%3E%3C/svg%3E">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Bias">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 /* Plus Jakarta Sans — Copyright 2020 The Plus Jakarta Sans Project Authors
    (github.com/tokotype/PlusJakartaSans), SIL Open Font License 1.1.
@@ -89,6 +93,7 @@ button{cursor:pointer}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:inset -1.5px -1.5px 2px rgba(0,0,0,.5),inset 1px 1px 1px rgba(255,255,255,.28)}
 .dot.spent{background:transparent;box-shadow:inset 0 0 0 1px rgba(236,229,210,.28)}
 .sb-meta{font-size:12px;color:var(--cream-2);white-space:nowrap}
+.sb-of{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:0;color:var(--cream-2);margin-left:5px}
 .top-actions{display:flex;gap:6px;margin-left:auto}
 /* the scoreboard, with a small sound toggle tucked under the end number */
 .hud-left{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
@@ -271,7 +276,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .notice.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .notice .nt{font-family:var(--serif);font-size:16px}
 .notice::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;opacity:0}
-.notice.auto.show::after{opacity:.8;animation:noticeRun 2.8s linear forwards}
+.notice.auto.show::after{opacity:.8;animation:noticeRun 4s linear forwards}   /* with noticeTimer in UI.notice */
 @keyframes noticeRun{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .notice .nd{font-size:12.5px;color:var(--cream-2);margin-top:2px;max-width:420px}
 /* looking at the head: down on the bottom edge (the controls are stowed), clear of the bowls round the jack */
@@ -307,6 +312,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .sheet .lede{font-size:15px}
 .sheet-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
 .sheet-actions .spacer{flex:1}
+.tut-again{margin:18px 0 0}
+.tut-actions{flex-wrap:nowrap;margin-top:12px}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .field label,.field .lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .input,.select{background:rgba(236,229,210,.05);border:1px solid var(--line-2);border-radius:4px;padding:9px 11px;min-height:42px;color:var(--cream);width:100%}
@@ -549,7 +556,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 }
 @media (max-width: 520px){
   .sb-cell.sb-endcell .kicker{display:none}
-  .sb-name{max-width:64px}
+  .sb-name{max-width:72px}
+  .sb-endcell .sb-of{display:none}   /* with its label: the room goes to the names */
+  #app:has(.scrim.show) :is(.headpanel,.toast){opacity:0;transition:opacity .3s}   /* behind a dialog they only peek out round its edge */
   .top-actions .icon-btn{width:40px;height:40px}
   .top-actions .hv-btn{width:auto}
   .top-actions:has(.netchip:not([hidden])) .hv-btn{width:40px}
@@ -634,15 +643,16 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .menu-item.minor{font-weight:450;letter-spacing:0}
 .kicker,.club,.field label,.field .lbl,.hp-stats dt{font-weight:600}
 /* under the ways to play: Your record (Members, once accounts are on) and Help & settings as an even pair, then the
-   Facebook group in its own blue and the Ko-fi box last, all the width of the menu column */
+   Facebook group in its own blue and the Ko-fi box (they grow the fan base and keep Bias going, so they stand out),
+   and About · Privacy last, all the width of the menu column */
 .title-pair{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
 .title-pair button[hidden]{display:none}
 .title-pair>button,#mMore{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-width:0;min-height:40px;padding:6px 8px;border-radius:10px;
   font-family:var(--sans);font-size:13.5px;font-weight:650;white-space:nowrap;text-shadow:none}
 .title-pair>button{border:0;background:var(--gold);color:var(--ink)}
 .title-pair>button:hover{background:#e2c584}
-#mMore{border:1px solid rgba(238,231,212,.16);background:rgba(12,22,16,.46);color:var(--cream);font-weight:600}
-#mMore:hover,#mMore[aria-expanded=true]{background:rgba(24,44,32,.7);border-color:rgba(238,231,212,.32)}
+#mMore,.title-pair>#mMember.guest{border:1px solid rgba(238,231,212,.16);background:rgba(12,22,16,.46);color:var(--cream);font-weight:600}
+#mMore:hover,#mMore[aria-expanded=true],.title-pair>#mMember.guest:hover{background:rgba(24,44,32,.7);border-color:rgba(238,231,212,.32)}
 .title-pair button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .title-pair>button:focus-visible{outline-color:var(--cream)}
 .title-pair svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -672,6 +682,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .title .support a:hover{background:#ff7471}
 .title .support a:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
 .title .support a svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.title .legal{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;width:min(272px,100%);margin:12px 0 0;padding:0 2px;
+  font-family:var(--sans);font-size:12px;color:rgba(206,199,179,.72);text-shadow:none}
+.title .legal a{color:var(--cream-2);text-decoration:none}
+.title .legal a:hover{color:var(--cream);text-decoration:underline;text-underline-offset:3px}
+.title .legal span{margin-left:auto}
 /* laptop-height windows (a 1366x768 screen leaves about 640px): less air above and below, so all of it fits without scrolling */
 @media (min-height: 501px) and (max-height: 860px){
   .title{padding-top:3vh;padding-bottom:3vh}
@@ -823,7 +838,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item" id="mBeta" hidden>Beta games<span class="mi-sub">For members: darts, round the clock and two new clubs</span></button>
         <div class="title-pair">
           <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
-          <button id="mMember" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Members</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
+          <button id="mMember" class="guest" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Sign in</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
           <div class="more-wrap">
             <button id="mMore" aria-expanded="false" aria-controls="mMorePop"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>Help &amp; settings</button>
             <nav class="more-pop" id="mMorePop" aria-label="Help and settings" hidden>
@@ -865,6 +880,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <div class="foot" id="titleFoot" hidden></div>
       <a class="community" href="https://www.facebook.com/groups/1116437361143315" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21z"/></svg>Join the Bias Clubhouse</a>
       <div class="support"><p><b>Free, no ads.</b> Enjoying it? A coffee keeps Bias going.</p><a href="https://ko-fi.com/johnsav" target="_blank" rel="noopener" aria-label="Support Bias on Ko-fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13v5.5A5.5 5.5 0 0 1 11.5 19h-2A5.5 5.5 0 0 1 4 13.5z"/><path d="M17 9.5h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M10.5 11.2c-.9-1-2.6-.4-2.6.9 0 1.3 2.6 2.9 2.6 2.9s2.6-1.6 2.6-2.9c0-1.3-1.7-1.9-2.6-.9z" fill="currentColor" stroke="none"/></svg>Ko-fi</a></div>
+      <nav class="legal" aria-label="About Bias"><a href="about/">About</a><a href="privacy/">Privacy</a><span>© 2026 Bias</span></nav>
     </div>
   </div>
 
@@ -1055,8 +1071,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <canvas class="tut-fig" id="tutFig" aria-hidden="true"></canvas><div class="tut-fig tut-svg" id="tutSvg" aria-hidden="true" hidden></div>
       <p class="lede" id="tutP"></p>
       <p class="fine" id="tutKeys"></p>
-      <div class="sheet-actions"><span class="fine" style="margin-right:auto">Open this again any time from the ? button.</span>
-        <button class="btn ghost" id="tutSkip">Skip</button><button class="btn" id="tutPrev">Back</button><button class="btn primary" id="tutNext">Next</button></div>
+      <p class="fine tut-again">Open this again any time from the ? button.</p>
+      <div class="sheet-actions tut-actions"><button class="btn ghost" id="tutSkip">Skip</button><span class="spacer"></span>
+        <button class="btn" id="tutPrev">Back</button><button class="btn primary" id="tutNext">Next</button></div>
     </div>
   </div>
 
@@ -5005,7 +5022,7 @@ class Game {
     const jack = this.world.jack, res = Rules.checkJack(jack, this.matFront);
     if (this.mode === 'practice') {
       if (!res.ok) { this.phase = 'between'; this.ui.toast(`${res.title}. ${res.reason}`, 'warn'); this.note('jackFail', res); this.after(1.6, () => { this.world.remove(jack); this.trace = []; this.beginJack(0); }); return; }
-      this.centreJack(res, () => { this.ui.toast('Jack set: ' + this.jackText(res), 'good'); this.note('jackSet', res); this.after(0.9, () => this.beginBowl(0)); });
+      this.centreJack(res, () => { this.ui.toast('Jack set: ' + this.jackText(res), 'good', 4000); this.note('jackSet', res); this.after(0.9, () => this.beginBowl(0)); });
       return;
     }
     const m = this.match, leader = m.leader, other = 1 - leader, L = this.players[leader].name, s1 = this.isTeams() ? '' : 's';
@@ -5655,9 +5672,9 @@ const UI = {
     if (!this.anyOpen()) { game.paused = false; last = performance.now(); }
   },
   anyOpen() { return !!document.querySelector('.scrim.show'); },
-  toast(text, kind = '') {
+  toast(text, kind = '', ms = 3200) {
     const t = $('toast'); t.textContent = text; t.className = 'toast panel show ' + kind;
-    clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+    clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.classList.remove('show'), ms);
     this.announce(text);
   },
   banner(k, title, sub) {
@@ -5675,7 +5692,7 @@ const UI = {
     if (auto) {
       void n.offsetWidth; n.classList.add('auto');
       const go = () => { if (this.noticeCb !== cb) return; if (this.anyOpen()) { this.noticeTimer = setTimeout(go, 600); return; } this.noticeGo(); };
-      this.noticeTimer = setTimeout(go, 2800);
+      this.noticeTimer = setTimeout(go, 4000);   // long enough to read the jack's length
     }
     setTimeout(() => { if (!this.anyOpen()) $('noticeBtn').focus({ preventScroll: true }); }, 80);
     this.refresh();
@@ -5784,10 +5801,11 @@ const UI = {
     // online, each side's challenge level is shown to both players
     const lvl = i => { if (!g.link) return ''; const x = onlineLevel(i) === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
+    // End 1 of 4 (or to 21 shots): the label above, the number with its format beside it
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
-    const green = m.secret && !m.over ? 'green ?' : `<span class="num">${g.world.T.toFixed(1)} s</span>`;
-    setHtml(sb, `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra' : 'End'} <span style="text-transform:none;letter-spacing:0">${g.isExtraEnd() ? '' : fmt}</span></div><div class="sb-big num">${g.endNo}</div></div>${pc(0)}${pc(1)}
-      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''} · Bowls · Green</div><div class="sb-meta">${pr.model} · ${green}</div></div>`);
+    const green = m.secret && !m.over ? 'green speed hidden' : `<span class="num">${g.world.T.toFixed(1)} s</span> green`;
+    setHtml(sb, `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra end' : 'End'}</div><div class="sb-big num">${g.endNo}${g.isExtraEnd() ? '' : `<span class="sb-of">${fmt}</span>`}</div></div>${pc(0)}${pc(1)}
+      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''}</div><div class="sb-meta">${pr.model} bowls · ${green}</div></div>`);
   },
   // head panel: drawn every frame from the same bodies the scene uses
   drawHead(dt) {
@@ -7508,7 +7526,8 @@ const MemberHost = {
   // New Members is for visitors, so it goes once someone signs in or joins, and is back if they leave.
   // open: how many leagues taking sign-ups they could join, for the notice above Play online.
   paint(name, waiting, open) {
-    $('mMemberName').textContent = name || 'Members';
+    $('mMemberName').textContent = name || 'Sign in';   // visitors join from the badge; this button is for coming back
+    $('mMember').classList.toggle('guest', !name);
     $('openBadge').hidden = !!name;
     $('mMemberBadge').hidden = !waiting; $('mMemberBadge').textContent = waiting > 9 ? '9+' : String(waiting || '');
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');

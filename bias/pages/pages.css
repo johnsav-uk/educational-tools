@@ -1,0 +1,49 @@
+/* Bias's About and Privacy pages: the game's colours, type and logo on a plain reading page.
+   Plus Jakarta Sans (Latin), SIL Open Font License 1.1, the same font the game embeds. */
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url(plus-jakarta-sans.woff2) format('woff2')}
+:root{--ink:#16201b;--panel:#1c2a22;--line:rgba(238,231,212,.14);--cream:#eee7d4;--cream-2:#cec7b3;--muted:#9a9584;--gold:#c9a862;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+html{background:var(--ink);color:var(--cream);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:#e3c886}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:2px}
+
+.top{border-bottom:1px solid var(--line)}
+.top-in,.wrap,.foot-in{width:min(720px,100%);margin:0 auto;padding:0 20px}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px}
+.top .logo{display:block;width:118px;height:auto}
+.play{display:inline-flex;align-items:center;min-height:40px;padding:0 18px;border-radius:10px;background:var(--cream);color:var(--ink);
+  font-weight:650;font-size:14.5px;text-decoration:none;white-space:nowrap}
+.play:hover{background:#fff8e6;color:var(--ink)}
+
+.wrap{flex:1;padding-top:48px;padding-bottom:64px}
+.kicker{margin:0 0 8px;font-size:12px;font-weight:650;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+h1{margin:0 0 12px;font-size:clamp(32px,6vw,44px);line-height:1.1;font-weight:700;letter-spacing:-.03em}
+.lede{margin:0 0 36px;font-size:18.5px;line-height:1.55;color:var(--cream-2)}
+h2{margin:44px 0 10px;font-size:21px;line-height:1.3;font-weight:650;letter-spacing:-.015em}
+h3{margin:28px 0 6px;font-size:16.5px;font-weight:650}
+p,li{color:var(--cream-2)}
+p{margin:0 0 14px}
+ul{margin:0 0 14px;padding-left:1.2em}
+li{margin:0 0 6px}
+li::marker{color:var(--gold)}
+strong{color:var(--cream);font-weight:650}
+.summary{margin:0 0 8px;padding:20px 22px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;background:var(--panel)}
+.summary ul{margin:0}
+.summary li:last-child{margin-bottom:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 8px}
+.facts div{padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.facts b{display:block;font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--cream);font-variant-numeric:tabular-nums}
+.facts span{display:block;margin-top:4px;font-size:13.5px;line-height:1.45;color:var(--cream-2)}
+.updated{margin-top:44px;font-size:13.5px;color:var(--muted)}
+
+.foot{border-top:1px solid var(--line)}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;min-height:64px;padding-top:14px;padding-bottom:14px;font-size:13.5px;color:var(--muted)}
+.foot a{color:var(--cream-2);text-decoration:none}
+.foot a:hover,.foot a[aria-current]{color:var(--cream)}
+.foot a[aria-current]{text-decoration:underline}
+.foot .c{margin-left:auto}
+@media (max-width:480px){.foot .c{margin-left:0;width:100%}.top .logo{width:100px}}
