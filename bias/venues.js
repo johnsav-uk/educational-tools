@@ -614,6 +614,16 @@
       gr.addColorStop(0, 'rgba(210,232,255,0)'); gr.addColorStop(.5, 'rgba(210,232,255,.10)'); gr.addColorStop(1, 'rgba(210,232,255,0)');
       g.fillStyle = gr; g.fillRect(X(lx - 1.2), Y(0), X(lx + 1.2) - X(lx - 1.2), Y(36) - Y(0));
     }
+    /* The white T at each end of every rink, on the centre line 2 m from the ditch: the jack's maximum length, and
+       the spot a jack knocked out of play goes back to. Where the club beta plays side re-spots (window.BiasClub),
+       a spot 1.5 m either side of it on the same line. */
+    const sides = window.BiasClub && window.BiasClub.sideSpots;
+    g.fillStyle = 'rgba(250,250,246,.95)';
+    for (const rx of [-10, -5, 0, 5, 10]) for (const [ty, k] of [[34, -1], [2, 1]]) {
+      g.fillRect(X(rx - .3), Y(ty - .04), X(rx + .3) - X(rx - .3), Y(ty + .04) - Y(ty - .04));        // the bar, across
+      g.fillRect(X(rx - .04), Y(Math.min(ty, ty + k * .45)), X(rx + .04) - X(rx - .04), Y(.45) - Y(0));   // the stem, toward the middle of the green
+      if (sides) for (const d of [-1.5, 1.5]) { g.beginPath(); g.arc(X(rx + d), Y(ty), .08 * (X(1) - X(0)), 0, TAU); g.fill(); }
+    }
   };
   // a row of three blue chairs, in place of a bench (the bench frame: 1.8 m by 0.95 m)
   const hallBench = () => {

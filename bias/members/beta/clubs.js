@@ -16,8 +16,8 @@
   const CLUBS = {
     pitfold: { venue: 'pitfold', T: 12, greens: true, title: 'Bias · Pitfold Park (beta)',
       head: 'Pitfold Park (beta)', blurb: 'A tired park green in Lancashire: heavy (12 s), uneven and patchy. Play the computer, Practice and Custom match are all played here. Choose the green in Help &amp; settings.' },
-    fernley: { venue: 'fernley', T: 17, greens: false, title: 'Bias · Fernley Indoor (beta)',
-      head: 'Fernley Indoor (beta)', blurb: 'An indoor hall in Leicestershire: a flat blue carpet at 17 s, faster than any green outdoors, and no weather. Play the computer, Practice and Custom match are all played here.' }
+    fernley: { venue: 'fernley', T: 17, greens: false, sideSpots: true, title: 'Bias · Fernley Indoor (beta)',
+      head: 'Fernley Indoor (beta)', blurb: 'An indoor hall in Leicestershire: a flat blue carpet at 17 s, faster than any green outdoors, and no weather. Indoor rules: a jack knocked over a side boundary goes to the side spot on that side. Play the computer, Practice and Custom match are all played here.' }
   };
 
   // anchor: 'after' (default) adds the text after it, 'replace' puts it in place of the anchor
@@ -26,8 +26,31 @@
     ['the other clubs, loaded at once', `paintVenue(); setTimeout(() => Venue.load().catch(() => {}), 800);`, `paintVenue(); Venue.load().catch(() => {});`, 'replace'],
     // the club's own green speed (the self-tests' own games keep theirs)
     ['practice', `    const pr = this.practice;\n`, `    if (this === window.BiasGame) pr.T = window.BiasClub.T;\n`],
-    ['a match', `  startMatch(cfg) {\n`, `    if (this === window.BiasGame) cfg = { ...cfg, T: window.BiasClub.T, secret: false };\n`]
+    ['a match', `  startMatch(cfg) {\n`, `    if (this === window.BiasGame) cfg = { ...cfg, T: window.BiasClub.T, secret: false };\n`],
+    // a club with sideSpots re-spots a jack knocked over a side boundary on that side's spot (sideSpot below)
+    ['the re-spot', `  respotSpot(bodies) {\n`, `    const side = window.BiasClub.sideSpot && window.BiasClub.sideSpot(arguments[1], bodies, W); if (side) return side;\n`],
+    ['the re-spot, for the computer', `respot(jack, bodies) { const to = this.respotSpot(bodies);`, `respot(jack, bodies) { const to = this.respotSpot(bodies, jack);`, 'replace'],
+    ['the re-spot, in play', `to = Rules.respotSpot(w.bodies);\n`, `to = Rules.respotSpot(w.bodies, jack);\n`, 'replace'],
+    ['the re-spot toast', `': re-spotted on the T.'`, `': re-spotted ' + (to.where || 'on the T') + '.'`, 'replace']
   ];
+  /* Side re-spots, as in English indoor rules (Bowls England's county and league indoor rules): a jack knocked out
+     over a side boundary is placed on the T line, 2 m from the front ditch, 1.5 m to the side of the centre line it
+     left by. If a bowl covers that spot, the jack goes as near to it as it can without touching, between the spot and
+     the centre line. A jack out over the front, or rebounding to within 20 m, still goes to the central T. Rink frame:
+     x across (0 is the centre line, + to the bowler's right), y from the mat end. Null: not a side exit. */
+  const SIDE = { off: 1.5, gap: 0.002 };
+  function sideSpot(jack, bodies, W) {
+    if (!jack || Math.abs(jack.x) <= W.RINK_HALF + jack.r) return null;
+    const s = Math.sign(jack.x), y = W.GREEN_LEN - W.JACK_DITCH_MIN;
+    let u = SIDE.off;   // the distance from the centre line, on side s
+    for (let k = 0; k < 12; k++) {
+      const hit = bodies.filter(b => b.kind === 'bowl' && !b.dead && b.state !== 'ditch' && Math.hypot(b.x - s * u, b.y - y) < b.r + W.JACK_R + SIDE.gap);
+      if (!hit.length) break;
+      u = Math.min(...hit.map(b => s * b.x - Math.sqrt(Math.max(0, (b.r + W.JACK_R + SIDE.gap) ** 2 - (b.y - y) ** 2)))) - 1e-4;
+    }
+    if (u < 0) return null;   // no room between the bowls and the centre line: the central T's own rule takes over
+    return { x: s * u, y, where: `on the ${s > 0 ? 'right' : 'left'} side spot` };
+  }
   function patchGame(html) {
     for (const [name, anchor, text, how = 'after'] of PATCHES) {
       const i = html.indexOf(anchor);
@@ -37,19 +60,23 @@
     }
     return html;
   }
-  if (typeof module === 'object' && module.exports) { module.exports = { CLUBS, PATCHES, patchGame }; return; }
+  if (typeof module === 'object' && module.exports) { module.exports = { CLUBS, PATCHES, patchGame, sideSpot }; return; }
 
   const me = document.currentScript;
 
   // ---- in the game: the club, and menus without what this beta doesn't offer ----
   if (me.dataset.run) {
-    const club = root.BiasClub = CLUBS[me.dataset.run];
+    const club = root.BiasClub = Object.assign({}, CLUBS[me.dataset.run]);
+    if (club.sideSpots) club.sideSpot = (jack, bodies, W) => club.paused ? null : sideSpot(jack, bodies, W);
     document.addEventListener('DOMContentLoaded', () => {
       const css = document.createElement('style');
       css.textContent = '#mOnline,#mSkip,#mBeta,#mLeagueNote,.venue-row,#bowlsSpeedField{display:none!important}' +
         '.club-beta{margin:10px 0 0;padding:10px 12px;border:1px solid rgba(201,168,98,.75);border-radius:10px;background:rgba(201,168,98,.12);font-size:13.5px;line-height:1.45;max-width:272px;box-sizing:border-box}' +
         '.club-beta b{display:block;font-size:15px;margin-bottom:2px}';
       document.head.appendChild(css);
+      // the self-tests are written for the game's own rules: run them with the club's set aside
+      const t = root.BiasTests, run = t && t.run;
+      if (run) t.run = function () { club.paused = true; try { return run.apply(this, arguments); } finally { club.paused = false; } };
       const gm = document.getElementById('greenMode'); if (gm && gm.closest('.field')) gm.closest('.field').style.display = 'none';
       // runs after greens.js (loaded first), so its beta note is replaced by the club's
       const old = document.querySelector('.greens-beta'); if (old) old.remove();
