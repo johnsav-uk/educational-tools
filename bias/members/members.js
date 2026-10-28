@@ -168,10 +168,10 @@
      confirmed league results, so it starts at 1200 and moves after each one. */
   /* What's new: a note for members until they press Got it (store 'member.news'). Change NEWS_ID
      when it changes. The league noticeboard (league/site/board/board.js) has its own copy. */
-  const NEWS_ID = '2026-10-28b', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
+  const NEWS_ID = '2026-10-28c', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
   const NEWS_HTML = `<div class="acct-news" id="acNews"><h3>What’s new</h3><ul>
-      <li><b>New leagues, one for each night.</b> From next week, leagues are arranged by the evening you can play. The Monday night league takes sign-ups on Monday from 6 to 10pm (UK time), and its fixtures are played the following Monday. Tuesday’s league works the same way, and so on through the week.</li>
-      <li><b>An Aussie league.</b> For players in Australia, an Aussie league will take sign-ups at the same times of day, in Australian Central time.</li>
+      <li><b>New leagues, one for each night.</b> From Monday 2 November, leagues are arranged by the evening you can play. The Monday night league takes sign-ups on Monday from 6 to 10pm (UK time), and its fixtures are played the following Monday. Tuesday’s league works the same way, and so on through the week.</li>
+      <li><b>An Aussie league.</b> For players in Australia, an Aussie league will take sign-ups at the same times of day, in Adelaide time.</li>
       <li><b>Two new clubs to try.</b> Pitfold Park, a tired park green that is heavy and uneven, and Fernley Indoor, a flat blue carpet at 17 s. Find them under Beta games below, or on the title menu.</li>
       <li><b>Beta games are here.</b> Darts and round the clock, against the computer. Find them below, or under Beta games on the title menu.</li>
     </ul><button class="acct-link" type="button" id="acNewsOk">Got it</button></div>`;
