@@ -651,8 +651,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   font-family:var(--sans);font-size:13.5px;font-weight:650;white-space:nowrap;text-shadow:none}
 .title-pair>button{border:0;background:var(--gold);color:var(--ink)}
 .title-pair>button:hover{background:#e2c584}
-#mMore,.title-pair>#mMember.guest{border:1px solid rgba(238,231,212,.16);background:rgba(12,22,16,.46);color:var(--cream);font-weight:600}
-#mMore:hover,#mMore[aria-expanded=true],.title-pair>#mMember.guest:hover{background:rgba(24,44,32,.7);border-color:rgba(238,231,212,.32)}
+#mMore{border:1px solid rgba(238,231,212,.16);background:rgba(12,22,16,.46);color:var(--cream);font-weight:600}
+#mMore:hover,#mMore[aria-expanded=true]{background:rgba(24,44,32,.7);border-color:rgba(238,231,212,.32)}
 .title-pair button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .title-pair>button:focus-visible{outline-color:var(--cream)}
 .title-pair svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -838,7 +838,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="menu-item" id="mBeta" hidden>Beta games<span class="mi-sub">For members: darts, round the clock and two new clubs</span></button>
         <div class="title-pair">
           <button id="mRecord"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V7M15 20v-5M20 20V4"/></svg>Your record</button>
-          <button id="mMember" class="guest" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Sign in</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
+          <button id="mMember" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg><span id="mMemberName">Members</span><span class="mm-badge" id="mMemberBadge" hidden></span></button>
           <div class="more-wrap">
             <button id="mMore" aria-expanded="false" aria-controls="mMorePop"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>Help &amp; settings</button>
             <nav class="more-pop" id="mMorePop" aria-label="Help and settings" hidden>
@@ -7526,8 +7526,7 @@ const MemberHost = {
   // New Members is for visitors, so it goes once someone signs in or joins, and is back if they leave.
   // open: how many leagues taking sign-ups they could join, for the notice above Play online.
   paint(name, waiting, open) {
-    $('mMemberName').textContent = name || 'Sign in';   // visitors join from the badge; this button is for coming back
-    $('mMember').classList.toggle('guest', !name);
+    $('mMemberName').textContent = name || 'Members';
     $('openBadge').hidden = !!name;
     $('mMemberBadge').hidden = !waiting; $('mMemberBadge').textContent = waiting > 9 ? '9+' : String(waiting || '');
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
