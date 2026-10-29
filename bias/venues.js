@@ -5,7 +5,7 @@
    Ashcombe's uses, ground at the bottom), band(seed) (the country beyond, 2400 x 140), far (a distant landmark,
    or {} for none), flag (the national flag on the pole by the pavilion), dress (what the
    crowd wears), birds and ambience (the club's sounds) and roses (flowers in the pavilion-side hedges). Optional: paintGreen and paintPath
-   (marks on the green and the path, in Art's ground frame), tidy (false: no shrubs or planters), bench (drawn on the bench frame), blades and mottle (the near-field
+   (marks on the green and the path, in Art's ground frame), marks (lines and dots drawn sharp on the green), tidy (false: no shrubs or planters), bench (drawn on the bench frame), blades and mottle (the near-field
    texture tiles), and indoor ({ h, build }: a hall, with walls and a ceiling in place of the club outside; see Art.build).
    Looks only: nothing here touches the play. */
 (() => {
@@ -614,16 +614,18 @@
       gr.addColorStop(0, 'rgba(210,232,255,0)'); gr.addColorStop(.5, 'rgba(210,232,255,.10)'); gr.addColorStop(1, 'rgba(210,232,255,0)');
       g.fillStyle = gr; g.fillRect(X(lx - 1.2), Y(0), X(lx + 1.2) - X(lx - 1.2), Y(36) - Y(0));
     }
-    /* The white T at each end of every rink, on the centre line 2 m from the ditch: the jack's maximum length, and
-       the spot a jack knocked out of play goes back to. Where the club beta plays side re-spots (window.BiasClub),
-       a spot 1.5 m either side of it on the same line. */
-    const sides = window.BiasClub && window.BiasClub.sideSpots;
-    g.fillStyle = 'rgba(250,250,246,.95)';
+  };
+  /* The white T at each end of every rink, on the centre line 2 m from the ditch: the jack's maximum length, and the
+     spot a jack knocked out of play goes back to; tape 25 mm wide, the bar across, the stem toward the middle of the
+     green. Where the club beta plays side re-spots (window.BiasClub), a small spot 1.5 m either side of it on the same
+     line. Art.marks: drawn sharp by the renderers, in the rink's frame (the same from either end). */
+  const hallMarks = () => {
+    const lines = [], dots = [], tape = .025, sides = window.BiasClub && window.BiasClub.sideSpots;
     for (const rx of [-10, -5, 0, 5, 10]) for (const [ty, k] of [[34, -1], [2, 1]]) {
-      g.fillRect(X(rx - .3), Y(ty - .04), X(rx + .3) - X(rx - .3), Y(ty + .04) - Y(ty - .04));        // the bar, across
-      g.fillRect(X(rx - .04), Y(Math.min(ty, ty + k * .45)), X(rx + .04) - X(rx - .04), Y(.45) - Y(0));   // the stem, toward the middle of the green
-      if (sides) for (const d of [-1.5, 1.5]) { g.beginPath(); g.arc(X(rx + d), Y(ty), .08 * (X(1) - X(0)), 0, TAU); g.fill(); }
+      lines.push([rx - .15, ty, rx + .15, ty, tape], [rx, ty, rx, ty + k * .2, tape]);
+      if (sides) for (const d of [-1.5, 1.5]) dots.push([rx + d, ty, .025]);
     }
+    return { lines, dots };
   };
   // a row of three blue chairs, in place of a bench (the bench frame: 1.8 m by 0.95 m)
   const hallBench = () => {
@@ -899,7 +901,7 @@
         green: [30, 108, 198], greenHi: [44, 124, 212], timber: [92, 38, 34], timberLit: [134, 62, 52] },
       indoor: { h: HALL.h, build: hallBuild },
       trees: {}, spots() {},
-      blades: () => carpetTile(3000, .07), mottle: () => carpetTile(1200, .05), paintGreen: hallSheen, bench: hallBench,
+      blades: () => carpetTile(3000, .07), mottle: () => carpetTile(1200, .05), paintGreen: hallSheen, marks: hallMarks, bench: hallBench,
       // club whites and greys, a few club shirts; nobody wears a hat indoors
       dress: { tops: [[246, 245, 240], [246, 245, 240], [246, 245, 240], [236, 236, 232], [40, 58, 104], [120, 36, 48], [150, 152, 158]],
         lows: [[240, 239, 234], [240, 239, 234], [130, 132, 138], [52, 56, 66]], hats: ['none'], shorts: 0, shades: 0, patterns: { stripes: .03 } },

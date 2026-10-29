@@ -1729,6 +1729,7 @@ const Art = {
        { panels: [{ x0, y0, x1, y1, z0, z1, img, both }], ceiling: canvas over TEX at TEX.S * 2 a texel }.
        A panel is an upright picture from (x0, y0) to (x1, y1), its left end first as seen from the side it
        faces; both: seen from either side (a beam across the hall). The roof is the ceiling at V.indoor.h. */
+    this.marks = V.marks ? V.marks() : null;   // { lines: [[x0, y0, x1, y1, width]], dots: [[x, y, r]] }: see SceneRenderer.drawMarks
     this.hall = V.indoor ? V.indoor.build() : null;
     if (this.hall) this.hall.ceil = this.mipPair(this.hall.ceiling);
     this.pavilion = this.withHaze(V.pavilion ? V.pavilion() : this.hall ? makeCanvas(2, 2) : this.buildPavilion());
@@ -2980,6 +2981,29 @@ class SceneRenderer {
       const gr = g.createLinearGradient(a.x, a.y, b.x, b.y); gr.addColorStop(0, 'rgba(240,240,225,.30)'); gr.addColorStop(1, 'rgba(240,240,225,.10)');
       g.strokeStyle = gr; g.lineWidth = Math.max(.6, this.dpr * .8); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
     }
+    this.drawMarks(g);
+  }
+
+  /* The club's own marks on the green (Art.marks): lines [x0, y0, x1, y1, width] and dots [x, y, r] in metres, in the
+     rink's frame (they must read the same from either end). Drawn as shapes, so they stay sharp at any distance, with a
+     hairline edge so the far ones don't fade out below a pixel. The WebGL renderer draws them on its overlay. */
+  drawMarks(g, from = -Infinity) {   // from: only the marks beyond this y
+    const M = Art.marks; if (!M) return;
+    const cam = this.cam, P = (x, y) => cam.project(x, y, 0), near = Math.max(cam.y + 0.6, from);
+    g.save(); g.fillStyle = g.strokeStyle = 'rgba(250,250,246,.9)'; g.lineWidth = .6; g.lineJoin = 'round';
+    for (const [x0, y0, x1, y1, wd] of M.lines || []) {
+      if (Math.min(y0, y1) < from || Math.max(y0, y1) < near) continue;
+      const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L * wd / 2, ny = dx / L * wd / 2;
+      const q = [[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]].map(([x, y]) => P(x, Math.max(near, y)));
+      if (q.some(p => !p)) continue;
+      g.beginPath(); q.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath(); g.fill(); g.stroke();
+    }
+    for (const [x, y, r] of M.dots || []) {
+      if (y - r < near) continue;
+      const c = P(x, y), a = P(x, y - r), b = P(x, y + r); if (!c || !a || !b) continue;
+      g.beginPath(); g.ellipse(c.x, c.y, Math.max(.7, r * c.s), Math.max(.5, Math.abs(a.y - b.y) / 2), 0, 0, TAU); g.fill();
+    }
+    g.restore();
   }
 
   // ---------- dynamic layer ----------
@@ -3113,6 +3137,7 @@ class SceneRenderer {
   }
 }
 
+const MARKS_GL_NEAR = 18;   // the WebGL scene lays Art.marks short of this y as geometry, and draws the rest on its overlay
 // ======================= 9b. WebGL scene (optional: ?renderer=gl) =======================
 /* The default scene, drawn with Three.js (?renderer=canvas keeps the canvas SceneRenderer above). Three.js is vendored next to this
    file as three.module.min.js and loaded with a dynamic import, so the canvas game starts exactly as before
@@ -3470,6 +3495,17 @@ class GLScene {
     // rink boundary threads, faint
     const thread = new T.LineBasicMaterial({ color: this.lin([240, 240, 225]), transparent: true, opacity: .2, toneMapped: false }); this.wxFlat.push(thread.userData.wx = { m: thread, rgb: [240, 240, 225] });
     for (const bx of [-7.5, -2.5, 2.5, 7.5]) G.add(new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(bx, .2, .003), new T.Vector3(bx, W.GREEN_LEN, .003)]), thread));
+    // the club's marks at the near end (Art.marks), laid just above the ground: the far ones go on the overlay (render)
+    const M = Art.marks;
+    if (M) {
+      const mm = this.flat([250, 250, 246]); mm.polygonOffset = true; mm.polygonOffsetFactor = mm.polygonOffsetUnits = -3;
+      for (const [x0, y0, x1, y1, wd] of M.lines || []) {
+        if (Math.min(y0, y1) >= MARKS_GL_NEAR) continue;
+        const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L * wd / 2, ny = dx / L * wd / 2;
+        G.add(this.quad([[x0 - nx, y0 - ny, .004], [x1 - nx, y1 - ny, .004], [x1 + nx, y1 + ny, .004], [x0 + nx, y0 + ny, .004]], null, mm));
+      }
+      for (const [x, y, r] of M.dots || []) if (y < MARKS_GL_NEAR) { const d = new T.Mesh(new T.CircleGeometry(r, 20), mm); d.position.set(x, y, .004); G.add(d); }
+    }
   }
   buildMat() {
     const T = this.T, c = makeCanvas(144, 240), g = c.getContext('2d'), k = 400;   // px per metre
@@ -3752,6 +3788,7 @@ class GLScene {
     if (held) { r.clearDepth(); r.render(this.hand, c3); }
     // the overlay: screen-space marks, the bowls cut out of them (they sit on top in the canvas renderer too), then the hand
     const g = host.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, Wd, Hd);
+    host.drawMarks(g, MARKS_GL_NEAR);   // the far marks, sharp at any size (the near ones are geometry, under the mat), under the trace and aim
     if (v.trace && v.trace.length) host.drawTrace(g, v.trace, v.traceAlpha);
     if (v.aim) host.drawAim(g, v.aim, v);
     host.drawDitchMarkers(g, v);
