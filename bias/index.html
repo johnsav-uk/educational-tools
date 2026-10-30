@@ -1026,8 +1026,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <canvas id="biasPreview" aria-label="Comparison of draw lines for all six profiles"></canvas>
       <div class="fine" id="biasCaption" style="margin-top:6px"></div>
       <div class="prof-detail">
-        <div class="field"><label for="edG">Bias strength</label><div class="range-row"><input type="range" id="edG" min="0.025" max="0.075" step="0.001"><output id="edGOut" class="num"></output></div></div>
-        <div class="field"><label for="edLate">Late swing</label><div class="range-row"><input type="range" id="edLate" min="0" max="1" step="0.01"><output id="edLateOut" class="num"></output></div></div>
+        <div class="field"><label for="edG">Bias strength</label><div class="range-row"><input type="range" id="edG" min="0.015" max="0.075" step="0.001"><output id="edGOut" class="num"></output></div></div>
+        <div class="field"><label for="edLate">Late swing</label><div class="range-row"><input type="range" id="edLate" min="-2" max="1" step="0.01"><output id="edLateOut" class="num"></output></div></div>
       </div>
       <div class="field" id="bowlsSpeedField"><label for="bowlsSpeed">Green speed</label>
         <div class="range-row"><input type="range" id="bowlsSpeed" min="11" max="16" step="0.5" value="13"><output id="bowlsSpeedOut" class="num"></output><button class="chip" type="button" id="bowlsRandom">Random</button></div></div>
@@ -1290,7 +1290,10 @@ const Weight = {
      a_lat = G · ((VREF + C)/(v + C))^late · v²/(v² + VLOW²)
    With late = 0 this is the classic gyroscopic result (constant lateral
    acceleration ⇒ curvature G/v² grows as the bowl slows). "late" shifts more
-   of the turn into the slow final metres; the last factor fades the turn out
+   of the turn into the slow final metres, and a negative "late" moves it
+   earlier (Aero's midpoint bowls, late −2: near-even curvature along the run,
+   widest about halfway up, and a straighter line than the others on a fast
+   green, as Aero design them for); the last factor fades the turn out
    smoothly as the bowl stops so it never spins on the spot. */
 const BIAS = { VREF: 1.5, C: 0.5, VLOW: 0.12 };
 const PROFILE_DEFAULTS = [
@@ -1300,15 +1303,15 @@ const PROFILE_DEFAULTS = [
   { id: 'hs-classic', maker: 'Henselite', model: 'Classic', G: 0.058, late: 0.38, blurb: 'Traditional, wide-swinging bias.' },
   { id: 'tb-vector', maker: 'Taylor Bowls', model: 'Vector VS', G: 0.034, late: 0.14, blurb: 'Tight, gentle draw.' },
   { id: 'tb-ace', maker: 'Taylor Bowls', model: 'Ace', G: 0.047, late: 0.32, blurb: 'Versatile medium bias.' },
-  { id: 'ae-dynamic', maker: 'Aero', model: 'Dynamic', G: 0.040, late: 0.20, blurb: 'Narrow-to-medium draw, turning evenly along its line.' },
-  { id: 'ae-evolve', maker: 'Aero', model: 'Evolve', G: 0.044, late: 0.24, blurb: 'Medium bias with a smooth, even arc.' },
-  { id: 'ae-optima', maker: 'Aero', model: 'Optima', G: 0.049, late: 0.28, blurb: 'Wider, rounder arc that holds its shape into the head.' }
+  { id: 'ae-dynamic', maker: 'Aero', model: 'Dynamic', G: 0.018, late: -2, blurb: 'Narrow-to-medium midpoint bowl, made for fast greens: widest halfway up, and straighter than most as the green quickens.' },
+  { id: 'ae-evolve', maker: 'Aero', model: 'Evolve', G: 0.020, late: -2, blurb: 'Medium midpoint bowl, made for fast greens: an even arc, widest halfway up, holding a straighter line on a quick green.' },
+  { id: 'ae-optima', maker: 'Aero', model: 'Optima', G: 0.022, late: -2, blurb: 'Wider midpoint bowl, made for fast greens: a full, even arc, widest halfway up, still straighter than a traditional bowl on a quick green.' }
 ];
 const Profiles = {
   list: PROFILE_DEFAULTS.map(p => ({ ...p })),
   init() {
     const saved = store.get('profiles', null);
-    if (saved) for (const p of this.list) { const s = saved[p.id]; if (s && isFinite(s.G) && isFinite(s.late)) { p.G = clamp(s.G, 0.02, 0.08); p.late = clamp(s.late, 0, 1); } }
+    if (saved) for (const p of this.list) { const s = saved[p.id]; if (s && isFinite(s.G) && isFinite(s.late)) { p.G = clamp(s.G, 0.015, 0.08); p.late = clamp(s.late, -2, 1); } }
   },
   save() { const o = {}; for (const p of this.list) o[p.id] = { G: p.G, late: p.late }; store.set('profiles', o); },
   byId(id) { return this.list.find(p => p.id === id) || this.list[0]; },
@@ -5319,7 +5322,7 @@ class Game {
     return {
       kind: t.kind, player: t.player, member: t.member || 0, aim: clamp(+p.aim || 0, -0.45, 0.45), weight, speed: Weight.toSpeed(weight), hand,
       side: bowl ? biasSide(hand, arm) : 0,
-      prof: bowl ? { G: clamp(+pr.G || 0, 0.02, 0.08), late: clamp(+pr.late || 0, 0, 1) } : null, x: rel.x, y: rel.y, matRear: this.matRear
+      prof: bowl ? { G: clamp(+pr.G || 0, 0.015, 0.08), late: clamp(+pr.late || 0, -2, 1) } : null, x: rel.x, y: rel.y, matRear: this.matRear
     };
   }
   // The other player lining up: shown live, never used for the delivery itself.
