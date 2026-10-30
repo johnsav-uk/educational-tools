@@ -1,7 +1,9 @@
 /* Over to You, Skip!: the daily puzzle screen and the puzzles screen. Everything is scoped to #skip, so the game
    underneath keeps its own look. The design tokens are the custom properties below; the plan
-   canvas reads its colours from them too. */
-@font-face { font-family: "Big Shoulders Display"; src: url("fonts/big-shoulders-display.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+   canvas reads its colours from them too.
+   It is the Modern Bowls Club's feature page: the club's green, ivory and gold, Manrope for labels and DM Serif Display
+   for headlines (both declared by the game, index.html), with the skip's clipboard, a newspaper's Newsreader for the
+   situation and a biro hand for the notes. */
 @font-face { font-family: "Newsreader"; src: url("fonts/newsreader.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
 @font-face { font-family: "Newsreader"; src: url("fonts/newsreader-italic.woff2") format("woff2"); font-weight: 200 800; font-style: italic; font-display: swap; }
 @font-face { font-family: "Reenie Beanie"; src: url("fonts/reenie-beanie.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -10,24 +12,26 @@
   /* ground and surfaces */
   --sk-lawn: #D5DEC4;
   --sk-stripe: rgba(255, 255, 255, .30);
-  --sk-timber: #21452F;
-  --sk-timber-edge: #183425;
+  --sk-timber: #294B37;          /* Bowling Green */
+  --sk-timber-edge: #14271F;     /* Clubhouse Green */
   --sk-plank: rgba(0, 0, 0, .20);
-  --sk-paper: #FBF9F1;
-  --sk-chalk: #F4F3EC;
+  --sk-paper: #F8F3E7;
+  --sk-chalk: #F1EBDC;
   --sk-wood: #8B6A44;
   /* ink */
-  --sk-ink: #1D2A22;
-  --sk-muted: #3F4F44;
+  --sk-ink: #202923;             /* Deep Charcoal */
+  --sk-muted: #46524A;
   --sk-rule: #9AA796;
   --sk-biro: #2F4FA3;
   /* enamel and brass */
-  --sk-crimson: #B02A2E;
-  --sk-crimson-edge: #7C1A1E;
-  --sk-brass: #C9A24A;
-  --sk-brass-edge: #8F7130;
+  --sk-crimson: #14271F;         /* the main button and today's badge: clubhouse green (the name is kept for skip.js) */
+  --sk-crimson-edge: #0B1812;
+  --sk-accent: #7A6026;          /* section labels: gold dark enough to read on paper */
+  --sk-alert: #9C2F22;
+  --sk-brass: #C5A45C;           /* Muted Gold */
+  --sk-brass-edge: #8E7535;
   /* scoreboard */
-  --sk-tile: #161D18;
+  --sk-tile: #0E1D16;
   /* the plan */
   --sk-wash: #CFDDBB;
   --sk-grid: #A3B88C;
@@ -37,7 +41,8 @@
   --sk-ditch: #C9B98E;   /* the front ditch, and the bank behind it */
   --sk-bank: #93A77C;
   /* type */
-  --sk-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --sk-display: Manrope, system-ui, sans-serif;   /* labels and figures */
+  --sk-head: "DM Serif Display", Georgia, serif;   /* headlines */
   --sk-body: "Newsreader", Georgia, serif;
   --sk-hand: "Reenie Beanie", "Comic Sans MS", cursive;
   --sk-tilt: 1;   /* 0 removes every tilt (phones, reduced motion) */
@@ -67,7 +72,7 @@ body.skip-open { overflow: hidden; }
 .sk-allbtn { display: inline-flex; align-items: center; gap: 6px; }
 .sk-allbtn svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
 .sk-topright { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; justify-content: flex-end; }
-.sk-chip { min-height: 44px; background: var(--sk-paper); border: 2px solid var(--sk-ink); border-radius: 6px; padding: 4px 14px; font: 700 17px/1.4 var(--sk-display); letter-spacing: .05em; text-transform: uppercase; }
+.sk-chip { min-height: 44px; background: var(--sk-paper); border: 1.5px solid var(--sk-ink); border-radius: 3px; padding: 4px 14px; font: 800 13.5px/1.4 var(--sk-display); letter-spacing: .1em; text-transform: uppercase; }
 .sk-chip:hover { background: #fff; }
 .sk-fresh { font-style: italic; color: var(--sk-ink); }
 .sk-fresh button { margin-left: 8px; }
@@ -85,30 +90,30 @@ body.skip-open { overflow: hidden; }
 .sk-sheet { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; background: var(--sk-paper); padding: 16px 20px 14px; border-radius: 2px; position: relative; }
 
 .sk-head { flex: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 2px 18px; flex-wrap: wrap; padding-bottom: 6px; border-bottom: 5px double var(--sk-ink); margin-bottom: 10px; }
-.sk-head h1 { margin: 0; font: 800 clamp(26px, 5.4vh, 48px)/0.95 var(--sk-display); letter-spacing: .03em; text-transform: uppercase; text-wrap: balance; }
+.sk-head h1 { margin: 0; font: 400 clamp(28px, 5.6vh, 50px)/1 var(--sk-head); letter-spacing: -.005em; text-wrap: balance; }
 .sk-meta { margin: 0 0 3px; font-style: italic; color: var(--sk-muted); font-size: 15px; }
 
 /* ---------- the plan: whatever height is left ---------- */
 .sk-plan { flex: 1 1 0; min-height: 130px; position: relative; border: 2px solid var(--sk-ink); background: var(--sk-wash); }
 .sk-plan canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
 .sk-advice { flex: none; margin: 8px 0 0; font-size: 16px; color: var(--sk-ink); }
-.sk-advice b { font: 700 15px/1 var(--sk-display); letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
+.sk-advice b { font: 800 12.5px/1 var(--sk-display); letter-spacing: .1em; text-transform: uppercase; margin-right: 4px; }
 
 /* ---------- buttons ---------- */
 .sk-actions { flex: none; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-.sk-enamel, .sk-paperbtn { min-height: 44px; font: 700 20px/1 var(--sk-display); letter-spacing: .05em; text-transform: uppercase; border-radius: 6px; padding: 10px 18px 8px; }
-.sk-enamel { background: var(--sk-crimson); color: #fff; border: 0; border-bottom: 4px solid var(--sk-crimson-edge); }
+.sk-enamel, .sk-paperbtn { min-height: 48px; font: 800 15px/1 var(--sk-display); letter-spacing: .12em; text-transform: uppercase; border-radius: 3px; padding: 10px 18px 9px; }
+.sk-enamel { background: var(--sk-crimson); color: #EDE5D2; border: 0; border-bottom: 4px solid var(--sk-crimson-edge); box-shadow: inset 0 0 0 1px rgba(197,164,92,.55); }
 .sk-enamel:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
 .sk-enamel:disabled, .sk-paperbtn:disabled { opacity: .45; cursor: default; }
 .sk-paperbtn { background: var(--sk-paper); border: 2px solid var(--sk-ink); }
 /* Share: brass, so it stands out from Play (crimson) without fighting it */
-.sk-brass { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 700 20px/1 var(--sk-display); letter-spacing: .05em; text-transform: uppercase;
-  border-radius: 6px; padding: 10px 18px 8px; background: var(--sk-brass); color: var(--sk-ink); border: 0; border-bottom: 4px solid var(--sk-brass-edge); }
+.sk-brass { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 800 15px/1 var(--sk-display); letter-spacing: .12em; text-transform: uppercase;
+  border-radius: 3px; padding: 10px 18px 9px; background: var(--sk-brass); color: var(--sk-ink); border: 0; border-bottom: 4px solid var(--sk-brass-edge); }
 .sk-brass[hidden] { display: none; }
 .sk-brass:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
 .sk-brass svg { width: 20px; height: 20px; flex: none; margin-top: -3px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .sk-help { flex: none; margin: 6px 0 0; font-size: 15px; font-style: italic; color: var(--sk-muted); }
-.sk-toast { flex: none; margin: 6px 0 0; font-size: 15px; color: var(--sk-crimson); font-weight: 600; }
+.sk-toast { flex: none; margin: 6px 0 0; font-size: 15px; color: var(--sk-alert); font-weight: 600; }
 .sk-toast:empty { display: none; }
 
 /* ---------- the rail: pinned note, scoreboard, share ---------- */
@@ -116,22 +121,22 @@ body.skip-open { overflow: hidden; }
 .sk-note { flex: none; position: relative; background: var(--sk-paper); padding: 22px 20px 14px; box-shadow: 0 2px 7px rgba(29,42,34,.20);
   transform: rotate(calc(.6deg * var(--sk-tilt))); }
 .sk-note::before { content: ""; position: absolute; top: -10px; right: 22%; width: 84px; height: 22px; background: rgba(201,162,74,.55); transform: rotate(calc(2.5deg * var(--sk-tilt))); }
-.sk-kicker { margin: 0 0 4px; font: 700 15px/1 var(--sk-display); letter-spacing: .08em; text-transform: uppercase; color: var(--sk-crimson); }
+.sk-kicker { margin: 0 0 6px; font: 800 12px/1 var(--sk-display); letter-spacing: .16em; text-transform: uppercase; color: var(--sk-accent); }
 .sk-note p { margin: 0 0 6px; }
 .sk-hand { font: 400 30px/1 var(--sk-hand); color: var(--sk-biro); transform: rotate(calc(-3deg * var(--sk-tilt))); transform-origin: left center; margin: 6px 0 2px; }
 .sk-vrow { display: flex; flex-direction: column; }
 .sk-stars { display: flex; gap: 5px; margin: 2px 0 6px; }
 .sk-stars svg { width: 34px; height: 34px; }
-.sk-verdict-title { margin: 0 0 6px; font: 800 clamp(28px, 4.6vh, 38px)/0.95 var(--sk-display); letter-spacing: .03em; text-transform: uppercase; }
+.sk-verdict-title { margin: 0 0 6px; font: 400 clamp(28px, 4.8vh, 40px)/1 var(--sk-head); letter-spacing: -.005em; }
 .sk-small { font-size: 15px; color: var(--sk-muted); }
 
 .sk-score { flex: none; background-color: var(--sk-timber); border: 6px solid var(--sk-chalk); border-radius: 4px; padding: 12px 14px; color: var(--sk-chalk);
   background-image: repeating-linear-gradient(180deg, transparent 0 42px, var(--sk-plank) 42px 44px); box-shadow: inset 0 -4px 0 var(--sk-timber-edge); }
 .sk-score dl { margin: 0; display: flex; flex-wrap: wrap; gap: 10px 18px; }
-.sk-score dt { font: 700 14px/1 var(--sk-display); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 6px; }
+.sk-score dt { font: 800 11.5px/1 var(--sk-display); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; }
 .sk-score dd { margin: 0; display: flex; gap: 5px; }
 .sk-tile { position: relative; width: 44px; height: 62px; border-radius: 5px; background: var(--sk-tile); color: #fff; display: grid; place-items: center;
-  font: 800 42px/1 var(--sk-display); font-variant-numeric: tabular-nums; }
+  font: 800 36px/1 var(--sk-display); font-variant-numeric: tabular-nums; }
 .sk-tile::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #000; }
 .sk-tile.flip { animation: sk-flip .32s ease-out; }
 @keyframes sk-flip { 0% { transform: perspective(200px) rotateX(-80deg); } 100% { transform: none; } }
@@ -145,27 +150,27 @@ body.skip-open { overflow: hidden; }
   padding-block: 14px 24px; padding-left: var(--sk-gutter-l); padding-right: var(--sk-gutter-r); }
 .sk-listsheet { background: var(--sk-paper); padding: 16px 20px 18px; border-radius: 3px; box-shadow: 0 2px 7px rgba(29,42,34,.18); }
 .sk-listsheet h1:focus { outline: none; }
-.sk-listh { margin: 14px 0 6px; font: 700 20px/1 var(--sk-display); letter-spacing: .07em; text-transform: uppercase; color: var(--sk-crimson); }
+.sk-listh { margin: 16px 0 8px; font: 400 26px/1.1 var(--sk-head); letter-spacing: 0; color: var(--sk-ink); }
 .sk-archhead { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; margin-top: 18px; }
 .sk-archhead .sk-listh { margin: 0; }
 .sk-jump { font-size: 16px; padding: 8px 12px 6px; }
-.sk-month { margin: 14px 0 4px; font: 700 16px/1 var(--sk-display); letter-spacing: .07em; text-transform: uppercase; color: var(--sk-muted); }
+.sk-month { margin: 14px 0 4px; font: 800 12px/1 var(--sk-display); letter-spacing: .16em; text-transform: uppercase; color: var(--sk-muted); }
 .sk-rows { list-style: none; margin: 0; padding: 0; }
 .sk-rows li + li { border-top: 1px dashed var(--sk-rule); }
 .sk-row { width: 100%; min-height: 56px; display: grid; grid-template-columns: 4.6em minmax(0, 1fr) auto; align-items: center; gap: 4px 12px;
   padding: 8px 8px; background: none; border: 0; border-radius: 4px; text-align: left; font: 16px/1.3 var(--sk-body); }
 .sk-row:hover { background: rgba(207,221,187,.45); }
-.sk-row-today { background: rgba(201,162,74,.16); box-shadow: inset 4px 0 0 var(--sk-brass); }
-.sk-no { font: 800 22px/1 var(--sk-display); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.sk-row-today { background: rgba(197,164,92,.18); box-shadow: inset 4px 0 0 var(--sk-brass); }
+.sk-no { font: 800 20px/1 var(--sk-display); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .sk-rowmain { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .sk-rowtitle { font-weight: 600; }
 .sk-rowmeta { font-size: 14px; font-style: italic; color: var(--sk-muted); }
 .sk-rowres { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
 .sk-rowstars { color: #8F7130; font-size: 18px; letter-spacing: 1px; }
 .sk-rowgoes { font-size: 14px; color: var(--sk-muted); }
-.sk-badge { display: inline-block; margin-left: 4px; padding: 3px 7px 2px; border-radius: 999px; border: 2px solid var(--sk-crimson); color: var(--sk-crimson);
-  font: 700 14px/1 var(--sk-display); letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
-.sk-badge-today { background: var(--sk-crimson); color: #fff; }
+.sk-badge { display: inline-block; margin-left: 4px; padding: 3px 7px 2px; border-radius: 2px; border: 1.5px solid var(--sk-crimson); color: var(--sk-crimson);
+  font: 800 10.5px/1.1 var(--sk-display); letter-spacing: .14em; text-transform: uppercase; vertical-align: 2px; }
+.sk-badge-today { background: var(--sk-crimson); color: #EDE5D2; }
 #skip.sk-compact .sk-listwrap { padding-block: 8px 12px; }
 #skip.sk-compact .sk-listsheet { padding: 10px 10px 12px; }
 @media (max-width: 420px) {
@@ -176,7 +181,7 @@ body.skip-open { overflow: hidden; }
 
 /* ---------- shorter screens: tighten everything ---------- */
 @media (max-height: 760px) {
-  .sk-tile { width: 36px; height: 50px; font-size: 34px; }
+  .sk-tile { width: 36px; height: 50px; font-size: 29px; }
   .sk-note { padding: 18px 16px 10px; }
 }
 
@@ -235,7 +240,7 @@ body.skip-open { overflow: hidden; }
 #skip.sk-compact .sk-top .sk-score dl { flex-wrap: nowrap; gap: 10px; }
 #skip.sk-compact .sk-top .sk-score div { display: flex; align-items: center; gap: 5px; }
 #skip.sk-compact .sk-top .sk-score dt { margin: 0; font-size: 14px; }
-#skip.sk-compact .sk-top .sk-score .sk-tile { width: 24px; height: 32px; font-size: 24px; border-radius: 3px; }
+#skip.sk-compact .sk-top .sk-score .sk-tile { width: 24px; height: 32px; font-size: 19px; border-radius: 3px; }
 /* a top bar that does not fit on one line (skip.js fitTop): the puzzles button is just its icon, then the streak tiles take a line of their own */
 #skip.sk-tight .sk-allbtn { width: 44px; padding: 0; justify-content: center; }
 #skip.sk-tight .sk-alltext { display: none; }

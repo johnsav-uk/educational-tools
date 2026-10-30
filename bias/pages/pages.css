@@ -1,49 +1,100 @@
-/* Bias's About and Privacy pages: the game's colours, type and logo on a plain reading page.
-   Plus Jakarta Sans (Latin), SIL Open Font License 1.1, the same font the game embeds. */
-@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:200 800;font-display:swap;
-  src:url(plus-jakarta-sans.woff2) format('woff2')}
-:root{--ink:#16201b;--panel:#1c2a22;--line:rgba(238,231,212,.14);--cream:#eee7d4;--cream-2:#cec7b3;--muted:#9a9584;--gold:#c9a862;
-  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+/* Bias's About and Privacy pages: the Modern Bowls Club on a reading page. The clubhouse green frames them (the bar
+   and the foot); the reading happens on warm ivory, in Manrope, with DM Serif Display for the headings.
+   Fonts are in ../fonts (SIL Open Font License 1.1); the colours are the game's six. */
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(../fonts/manrope-latin.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(../fonts/manrope-latin-ext.woff2) format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'DM Serif Display';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/dm-serif-display.woff2) format('woff2')}
+@font-face{font-family:'DM Serif Display';font-style:italic;font-weight:400;font-display:swap;src:url(../fonts/dm-serif-display-italic.woff2) format('woff2')}
+:root{
+  --club:#14271f;--green:#294b37;--ivory:#ede5d2;--gold:#c5a45c;--sage:#747d72;--charcoal:#202923;
+  --paper:#f5f0e4;            /* the reading column: a touch lighter than the ivory round it */
+  --rule:rgba(32,41,35,.16);
+  --sage-dk:#566055;--gold-dk:#7a6026;--cream-2:#d2cbb8;--sage-lt:#aab1a3;
+  --sans:Manrope,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --display:'DM Serif Display',Georgia,'Times New Roman',serif;
+  --pad:max(20px,calc((100% - 720px) / 2));
+  /* art direction: the About page's photograph */
+  --about-pos-mobile:58% 66%;
+  --about-pos-desktop:50% 60%;
+}
 *{box-sizing:border-box}
-html{background:var(--ink);color:var(--cream);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;display:flex;flex-direction:column}
-a{color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1px}
-a:hover{color:#e3c886}
-:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:2px}
+html{background:var(--club);color:var(--charcoal);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--ivory)}
+a{color:var(--club);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:4px}
+a:hover{color:var(--green);text-decoration-color:var(--club)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
 
-.top{border-bottom:1px solid var(--line)}
-.top-in,.wrap,.foot-in{width:min(720px,100%);margin:0 auto;padding:0 20px}
-.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px}
-.top .logo{display:block;width:118px;height:auto}
-.play{display:inline-flex;align-items:center;min-height:40px;padding:0 18px;border-radius:10px;background:var(--cream);color:var(--ink);
-  font-weight:650;font-size:14.5px;text-decoration:none;white-space:nowrap}
-.play:hover{background:#fff8e6;color:var(--ink)}
+/* the bar */
+.top{background:var(--club);border-bottom:1px solid rgba(197,164,92,.5);padding-top:env(safe-area-inset-top)}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;padding:0 var(--pad)}
+.top a{line-height:0}
+.top .logo{display:block;width:auto;height:36px}
+.play{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 18px;border-radius:3px;background:var(--ivory);color:var(--club);
+  font-weight:750;font-size:15px;line-height:1;text-decoration:none;white-space:nowrap;transition:background-color .15s}
+.play::after{content:"";width:7px;height:7px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(45deg);transition:transform .2s}
+.play:hover{background:#f6f0e2;color:var(--club)}
+.play:hover::after{transform:translateX(2px) rotate(45deg)}
+.top .play:focus-visible{outline-color:var(--ivory)}
 
-.wrap{flex:1;padding-top:48px;padding-bottom:64px}
-.kicker{margin:0 0 8px;font-size:12px;font-weight:650;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-h1{margin:0 0 12px;font-size:clamp(32px,6vw,44px);line-height:1.1;font-weight:700;letter-spacing:-.03em}
-.lede{margin:0 0 36px;font-size:18.5px;line-height:1.55;color:var(--cream-2)}
-h2{margin:44px 0 10px;font-size:21px;line-height:1.3;font-weight:650;letter-spacing:-.015em}
-h3{margin:28px 0 6px;font-size:16.5px;font-weight:650}
-p,li{color:var(--cream-2)}
-p{margin:0 0 14px}
-ul{margin:0 0 14px;padding-left:1.2em}
-li{margin:0 0 6px}
-li::marker{color:var(--gold)}
-strong{color:var(--cream);font-weight:650}
-.summary{margin:0 0 8px;padding:20px 22px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;background:var(--panel)}
+/* the opening: on the clubhouse green, the page's title in the editorial face */
+.intro{background:var(--club);color:var(--ivory);padding:40px var(--pad) 36px}
+.kicker{margin:0 0 12px;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.kicker::before{content:"";display:inline-block;width:22px;height:1px;margin-right:10px;vertical-align:.32em;background:var(--gold)}
+h1{margin:0 0 14px;font:400 clamp(38px,8.5vw,60px)/1.02 var(--display);letter-spacing:-.005em;text-wrap:balance}
+.lede{margin:0;max-width:40ch;font-size:19px;line-height:1.55;color:var(--cream-2)}
+/* About: the club, art-directed; its crop is set by the custom properties above */
+.photo{margin:0;background:var(--green);line-height:0}
+.photo img{display:block;width:100%;height:clamp(200px,52vw,420px);object-fit:cover;object-position:var(--about-pos-mobile)}
+.photo figcaption{padding:10px var(--pad);background:var(--club);color:var(--sage-lt);font-size:13px;line-height:1.4}
+
+/* the reading column */
+.wrap{flex:1;width:100%;padding:36px var(--pad) 64px}
+h2{margin:48px 0 12px;font:400 clamp(26px,5.5vw,32px)/1.15 var(--display);color:var(--club)}
+.wrap>h2:first-child{margin-top:8px}
+h3{margin:28px 0 6px;font-size:17px;font-weight:800;color:var(--club)}
+p,li{color:#2d3830}
+p{margin:0 0 16px}
+ul{margin:0 0 16px;padding-left:1.2em}
+li{margin:0 0 8px}
+li::marker{color:var(--gold-dk)}
+strong{color:var(--charcoal);font-weight:800}
+/* Privacy: what we keep, at a glance */
+.summary{margin:0 0 8px;padding:20px 22px 20px 24px;border-left:3px solid var(--gold);border-radius:2px;background:var(--paper)}
 .summary ul{margin:0}
 .summary li:last-child{margin-bottom:0}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 8px}
-.facts div{padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
-.facts b{display:block;font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--cream);font-variant-numeric:tabular-nums}
-.facts span{display:block;margin-top:4px;font-size:13.5px;line-height:1.45;color:var(--cream-2)}
-.updated{margin-top:44px;font-size:13.5px;color:var(--muted)}
+/* About: the club's figures, as a scoreboard: green boards, ivory numbers in their tiles */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;margin:0 0 8px;background:rgba(197,164,92,.5);border:1px solid rgba(197,164,92,.5);border-radius:3px;overflow:hidden}
+.facts div{padding:16px 18px 18px;background:var(--club)}
+.facts b{display:inline-block;min-width:1.6em;padding:4px 8px 3px;border:1px solid rgba(237,229,210,.14);border-radius:2px;background:#0e1d16;
+  font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.01em;color:var(--ivory);text-align:center;font-variant-numeric:tabular-nums}
+.facts span{display:block;margin-top:10px;font-size:14.5px;line-height:1.45;color:var(--cream-2)}
+.updated{margin-top:48px;padding-top:14px;border-top:1px solid var(--rule);font-size:14px;color:var(--sage-dk)}
 
-.foot{border-top:1px solid var(--line)}
-.foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;min-height:64px;padding-top:14px;padding-bottom:14px;font-size:13.5px;color:var(--muted)}
-.foot a{color:var(--cream-2);text-decoration:none}
-.foot a:hover,.foot a[aria-current]{color:var(--cream)}
-.foot a[aria-current]{text-decoration:underline}
+/* the foot */
+.foot{background:var(--club);border-top:3px solid var(--gold)}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:4px 22px;min-height:64px;padding:14px var(--pad) calc(14px + env(safe-area-inset-bottom));font-size:14px;color:var(--sage-lt)}
+.foot a{display:inline-flex;align-items:center;min-height:40px;color:var(--cream-2);font-weight:650;text-decoration:none}
+.foot a:hover,.foot a[aria-current]{color:var(--ivory)}
+.foot a[aria-current]{text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:5px}
 .foot .c{margin-left:auto}
-@media (max-width:480px){.foot .c{margin-left:0;width:100%}.top .logo{width:100px}}
+
+@media (min-width:760px){
+  .intro{padding-top:64px;padding-bottom:56px}
+  .photo img{object-position:var(--about-pos-desktop)}
+  .wrap{padding-top:52px}
+}
+@media (max-width:480px){
+  html{font-size:16px}
+  .top .logo{height:30px}
+  .play{padding:0 14px;font-size:14px}
+  .foot .c{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:560px){
+  .facts{grid-template-columns:1fr}
+  .facts div{display:flex;align-items:center;gap:16px;padding:14px 16px}
+  .facts b{flex:none;min-width:2.9em}
+  .facts span{margin-top:0}
+}

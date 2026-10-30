@@ -1,57 +1,62 @@
-/* The Members panel on the title menu (members.js). Uses the game's own tokens and .field/.input/.btn. */
+/* The Members panel on the title menu (members.js). Uses the game's own tokens (the Modern Bowls Club, in index.html)
+   and .field/.input/.btn: solid surfaces, square-ish corners, gold rules for what matters. */
 .acct{display:flex;flex-direction:column;gap:8px;font-family:var(--sans);color:var(--cream)}
 .acct p{margin:0;font-size:14px;line-height:1.45;color:var(--cream-2)}
-.acct h3{margin:6px 0 0;font-family:var(--sans);font-size:15px;font-weight:650;color:var(--cream)}
+.acct h3{margin:10px 0 0;font-family:var(--display);font-size:21px;font-weight:400;line-height:1.2;color:var(--cream)}
 .acct a{color:var(--gold)}
 .acct .field{margin-bottom:10px}
 .acct .btn{align-self:flex-start}
 .acct-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.acct-tabs button{min-height:36px;padding:6px 12px;border:1px solid var(--line-2);border-radius:999px;background:transparent;font-family:var(--sans);font-size:13.5px;color:var(--cream-2)}
-.acct-tabs button[aria-pressed=true]{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:650}
+.acct-tabs{gap:0;border:1px solid var(--line-2);border-radius:3px;overflow:hidden;align-self:flex-start;flex-wrap:nowrap}
+.acct-tabs button{min-height:42px;padding:6px 14px;border:0;border-radius:0;background:transparent;font-family:var(--sans);font-size:14px;font-weight:650;color:var(--cream-2)}
+.acct-tabs button+button{border-left:1px solid var(--line-2)}
+.acct-tabs button:hover{color:var(--cream);background:rgba(237,229,210,.05)}
+.acct-tabs button[aria-pressed=true]{background:var(--cream);color:var(--ink);font-weight:750}
 .acct-tick{display:flex;align-items:center;gap:10px;min-height:40px;margin-bottom:6px;font-size:14px;font-weight:600}
 .acct-tick input{width:20px;height:20px;accent-color:var(--gold)}
 .acct .acct-note{font-size:13px}
 .acct-note:empty{display:none}
 .acct .acct-err{min-height:1.3em;font-size:13.5px;font-weight:600;color:var(--alert)}
 .acct-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.acct-list li{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-2);background:rgba(24,44,32,.35)}
+.acct-list li{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:3px;border:1px solid var(--line-2);background:var(--club-2)}
 /* Beta games: slim gold-edged rows, the game's name with a Beta tag */
-.acct-beta li{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border-color:rgba(201,168,98,.75);background:rgba(201,168,98,.12)}
-.acct-beta .acct-lg b::after{content:"Beta";margin-left:8px;padding:1px 7px;border:1px solid rgba(201,168,98,.75);border-radius:999px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
+.acct-beta li{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border-color:var(--gold-line);border-left:3px solid var(--gold);background:var(--club-2)}
+.acct-beta .acct-lg b::after{content:"Beta";margin-left:8px;padding:1px 7px;border:1px solid var(--gold-line);border-radius:2px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
 .acct-beta .acct-lg span{font-size:11.5px}
 .acct-beta .btn{min-height:0;padding:5px 11px;font-size:13px}
 .acct-lg b{display:block;font-size:15px}
 .acct-lg span{display:block;font-size:12.5px;color:var(--cream-2)}
-.acct .acct-done{font-size:13.5px;font-weight:600;color:#9fcb86}
+.acct .acct-done{font-size:13.5px;font-weight:700;color:#a6d08f}
 .acct-chips{display:flex;gap:6px;flex-wrap:wrap}
-.acct-chips span{padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(238,231,212,.1);color:var(--cream)}
+.acct-chips span{padding:3px 9px;border-radius:2px;font-size:12px;font-weight:600;background:rgba(238,231,212,.1);color:var(--cream)}
 .acct-chips span.hot{background:var(--gold);color:var(--ink)}
+.acct-chips span{font-weight:700}
 .acct-more{border-top:1px solid var(--line);padding-top:4px}
 .acct-more>summary{cursor:pointer;min-height:38px;display:flex;align-items:center;font-size:14px;color:var(--cream)}
 .acct-more form{display:flex;flex-direction:column;padding:6px 0 4px}
-.acct .acct-warn{color:var(--alert);border-color:rgba(216,145,108,.55)}
-.acct-confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:10px;border:1px solid rgba(216,145,108,.55);background:rgba(216,145,108,.12)}
+.acct .acct-warn{color:var(--alert);border-color:rgba(220,142,105,.55)}
+.acct-confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:3px;border:1px solid rgba(220,142,105,.55);border-left:3px solid var(--alert);background:rgba(220,142,105,.1)}
 .acct-confirm[hidden]{display:none}
 .acct .acct-confirm p{color:var(--cream)}
 .acct-confirm b{color:var(--alert)}
 .acct-confirm-btns{display:flex;gap:8px;flex-wrap:wrap}
 .acct-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:8px}
 .acct-foot a{font-size:13px}
-.acct-rating{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border:1px solid rgba(201,168,98,.45);background:rgba(24,44,32,.55)}
+.acct-rating{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:3px;border:1px solid var(--gold-line);border-top:3px solid var(--gold);background:var(--club-2)}
 .acct .acct-r-head{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:40px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .acct-r-head svg{flex:none;width:22px;height:22px;fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 .acct-r-head[aria-expanded=true] svg{transform:rotate(180deg)}
 .acct-r-more{display:flex;flex-direction:column;gap:4px}
 .acct-r-more[hidden]{display:none}
 .acct-r-num{display:flex;align-items:baseline;gap:10px}
-.acct-r-num b{font-size:28px;font-weight:700;letter-spacing:-.02em;color:var(--gold);font-variant-numeric:tabular-nums}
+.acct-r-num b{padding:3px 8px 2px;border:1px solid var(--line);border-radius:2px;background:var(--club-3);font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--gold);font-variant-numeric:tabular-nums}
 .acct-r-num span{font-size:13px;color:var(--cream-2)}
 .acct-rating .up{color:#9fcb86}
 .acct-rating .down{color:var(--alert)}
 .acct-rating .acct-tick{margin:0;min-height:36px;font-size:13.5px}
 .acct-rating .acct-dev{font-size:12.5px;color:var(--cream-2)}
 .acct-rating .acct-dev:empty{display:none}
-.acct-news{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border:1px solid rgba(201,168,98,.45);border-top:2px solid var(--gold);background:rgba(24,44,32,.55)}
+.acct-news{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:3px;border:1px solid var(--gold-line);border-top:3px solid var(--gold);background:var(--club-2)}
 .acct .acct-news h3{margin:0}
 .acct-news ul{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.45;color:var(--cream-2)}
 .acct-news b{color:var(--cream)}
@@ -59,8 +64,9 @@
 .acct-carry{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--cream)}
 .acct-r-row{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
 .acct .acct-link{align-self:auto;min-height:36px;padding:0;border:0;background:none;font-family:var(--sans);font-size:13px;color:var(--gold);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.acct-table{margin:4px 0 0;padding:0 0 0 22px;font-size:14px;font-variant-numeric:tabular-nums}
-.acct-table li{padding:4px 0;border-bottom:1px solid var(--line)}
+.acct-table{margin:4px 0 0;padding:0 0 0 24px;border-top:1px solid var(--gold-line);font-size:14.5px;font-variant-numeric:tabular-nums}
+.acct-table li::marker{color:var(--gold);font-weight:800}
+.acct-table li{padding:7px 0;border-bottom:1px solid var(--line)}
 .acct-table li{display:flex;align-items:center;gap:6px}
 .acct-table li span{flex:1;min-width:0;overflow-wrap:anywhere}
 .acct .acct-flag{align-self:auto;min-width:32px;min-height:32px;padding:0;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}

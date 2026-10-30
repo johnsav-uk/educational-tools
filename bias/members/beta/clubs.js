@@ -71,8 +71,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       const css = document.createElement('style');
       css.textContent = '#mOnline,#mSkip,#mBeta,#mLeagueNote,.venue-row,#bowlsSpeedField{display:none!important}' +
-        '.club-beta{margin:10px 0 0;padding:10px 12px;border:1px solid rgba(201,168,98,.75);border-radius:10px;background:rgba(201,168,98,.12);font-size:13.5px;line-height:1.45;max-width:272px;box-sizing:border-box}' +
-        '.club-beta b{display:block;font-size:15px;margin-bottom:2px}';
+        '.club-beta{margin:14px 0 0;padding:12px 14px;border:1px solid rgba(197,164,92,.5);border-left:3px solid #c5a45c;border-radius:2px;background:#1b3329;color:#ede5d2;font-size:13.5px;line-height:1.5;max-width:420px;box-sizing:border-box}' +
+        '.club-beta b{display:block;font-size:15px;font-weight:750;color:#c5a45c;margin-bottom:3px}';
       document.head.appendChild(css);
       // the self-tests are written for the game's own rules: run them with the club's set aside
       const t = root.BiasTests, run = t && t.run;
@@ -98,7 +98,7 @@
     .then(([html]) => {
       try { if (club.greens) html = root.BiasGreensPatch.patchGame(html); html = patchGame(html); }
       catch (e) { msg.textContent = 'This beta needs updating for today’s game. ' + e.message; return; }
-      const head = `<style>html,body{background:#16201b}</style><base href="${site}"><meta name="robots" content="noindex, nofollow">` +
+      const head = `<style>html,body{background:#14271f}</style><base href="${site}"><meta name="robots" content="noindex, nofollow">` +
         (club.greens ? `<script src="${turf}greens.js${v}"><\/script>` : '') + `<script src="${here}" data-run="${me.dataset.club}"><\/script>`;   // greens.js first, so its title note is the one replaced
       html = html.replace(/<head>/i, '<head>' + head)
         .replace(/<title>[\s\S]*?<\/title>/i, `<title>${club.title}</title>`)

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Bias · Greens (beta)</title>
-<style>html,body{margin:0;height:100%;background:#16201b;color:#e9e4d4;font:15px system-ui,sans-serif}p{padding:24px;margin:0}</style>
+<style>html,body{margin:0;height:100%;background:#14271f;color:#ede5d2;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}body{display:grid;place-items:center}p{max-width:34ch;padding:24px;margin:0;text-align:center}p::before{content:"";display:block;width:36px;height:2px;margin:0 auto 16px;background:#c5a45c}a{color:#c5a45c}</style>
 <script src="patch.js?v=4"></script>
 </head>
 <body>
@@ -17,7 +17,7 @@
    The game file is never changed. Open with ?tester once to show the contour overlay. */
 (function () {
   'use strict';
-  var V = '5';   // bump with any change to this folder, so testers never get yesterday's files from their cache
+  var V = '6';   // bump with any change to this folder, so testers never get yesterday's files from their cache
   var dir = location.pathname.replace(/\/[^/]*$/, '').split('/').pop();
   var msg = document.getElementById('msg');
   fetch('../index.html', { cache: 'no-cache' })
@@ -26,7 +26,7 @@
       try { html = window.BiasGreensPatch.patchGame(html); }
       catch (e) { msg.textContent = 'The greens beta needs updating for today’s game. ' + e.message; return; }
       // the game's own background from the first paint, so there's no white flash while it loads
-      var head = '<style>html,body{background:#16201b}</style><base href="../"><meta name="robots" content="noindex, nofollow"><script src="' + dir + '/greens.js?v=' + V + '"><\/script>';
+      var head = '<style>html,body{background:#14271f}</style><base href="../"><meta name="robots" content="noindex, nofollow"><script src="' + dir + '/greens.js?v=' + V + '"><\/script>';
       html = html.replace(/<head>/i, '<head>' + head)
         .replace(/<title>[\s\S]*?<\/title>/i, '<title>Bias · Greens (beta)</title>')
         .replace(/<link rel="canonical"[^>]*>/i, '');

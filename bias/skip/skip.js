@@ -398,7 +398,7 @@
     if (S.cardBusy && S.cardBusy.key === key) return S.cardBusy.p;
     const mine = S, p = (async () => {
       try {
-        if (document.fonts) await Promise.all(['700 80px "Big Shoulders Display"', 'italic 34px Newsreader', '600 40px Newsreader', '64px "Reenie Beanie"'].map(f => document.fonts.load(f))).catch(() => {});
+        if (document.fonts) await Promise.all(['80px "DM Serif Display"', '800 30px Manrope', 'italic 34px Newsreader', '600 40px Newsreader', '64px "Reenie Beanie"'].map(f => document.fonts.load(f))).catch(() => {});
         if (S !== mine) return null;
         const cv = document.createElement('canvas'); cv.width = cv.height = 1080;
         drawCard(cv.getContext('2d'), t);
@@ -421,8 +421,8 @@
     g.save(); g.shadowColor = 'rgba(0,0,0,.22)'; g.shadowBlur = 24; g.shadowOffsetY = 8; g.fillStyle = paper; g.fillRect(sx, sy, sw, sh); g.restore();
     g.strokeStyle = ink; g.lineWidth = 4; g.strokeRect(sx, sy, sw, sh);
     g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = ink;
-    g.font = '700 84px "Big Shoulders Display", "Arial Narrow", sans-serif';
-    g.fillText('“OVER TO YOU, SKIP!”', W / 2, 172);
+    g.font = '86px "DM Serif Display", Georgia, serif';
+    g.fillText('“Over to You, Skip!”', W / 2, 172);
     const day = new Date(S.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
     g.fillStyle = muted; g.font = 'italic 34px Newsreader, Georgia, serif';
     g.fillText(`No. ${S.issue} · ${day}`, W / 2, 222);
@@ -450,8 +450,8 @@
     g.fillText(`${cap(C.starWords(t.stars).replace(' out of 5', ''))}, ${C.goesText(t.tries)}`, W / 2, 872);
     g.save(); g.fillStyle = P.biro; g.font = '64px "Reenie Beanie", "Comic Sans MS", cursive'; g.translate(W / 2, 946); g.rotate(-2 * DEG);
     g.fillText('Can you save the end?', 0, 0); g.restore();
-    g.fillStyle = muted; g.font = '700 30px "Big Shoulders Display", "Arial Narrow", sans-serif';
-    g.fillText('JOHNSAV.CO.UK/BIAS', W / 2, 1002);
+    g.fillStyle = muted; g.font = '800 26px Manrope, system-ui, sans-serif'; if ('letterSpacing' in g) g.letterSpacing = '4px';
+    g.fillText('JOHNSAV.CO.UK/BIAS', W / 2, 1002); if ('letterSpacing' in g) g.letterSpacing = '0px';
   }
   // A new puzzle comes out at 06:00 London: a card left open says so (no countdown, on purpose).
   function tickClock() {

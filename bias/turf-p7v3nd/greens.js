@@ -221,8 +221,8 @@
   function title() {
     const css = document.createElement('style');
     css.textContent = '#mOnline,#mSkip,#mBeta,#mLeagueNote{display:none!important}' +
-      '.greens-beta{margin:10px 0 0;padding:10px 12px;border:1px solid rgba(201,168,98,.75);border-radius:10px;background:rgba(201,168,98,.12);font-size:13.5px;line-height:1.45;max-width:272px;box-sizing:border-box}' +
-      '.greens-beta b{display:block;font-size:15px;margin-bottom:2px}';
+      '.greens-beta{margin:14px 0 0;padding:12px 14px;border:1px solid rgba(197,164,92,.5);border-left:3px solid #c5a45c;border-radius:2px;background:#1b3329;color:#ede5d2;font-size:13.5px;line-height:1.5;max-width:420px;box-sizing:border-box}' +
+      '.greens-beta b{display:block;font-size:15px;font-weight:750;color:#c5a45c;margin-bottom:3px}';
     document.head.appendChild(css);
     const sub = document.querySelector('#titleScrim .sub');
     if (!sub) return;
