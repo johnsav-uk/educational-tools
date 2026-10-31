@@ -719,6 +719,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .league-note b{display:block;font-size:14px;font-weight:800;color:var(--gold)}
 .league-note .ln-sub{display:block;font-size:12.5px;color:var(--cream-2);margin-top:2px}
 .league-note svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* something waiting for a signed-in member: the count in a gold disc, above Play online */
+.waiting-note .mw-n{flex:none;display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:15px;background:var(--gold);color:var(--club);font:800 15px/1 var(--sans)}
+.title .waiting-note b{color:var(--ivory);font-size:15px}
 
 /* Today's challenge: the daily puzzle as a feature card, its photograph beside a ruled headline */
 .title #mSkip{display:grid;grid-template-columns:42% minmax(0,1fr);padding:0;overflow:hidden;background:var(--club)}
@@ -790,7 +793,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .tabbar :is(a,button):focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .tabbar svg{width:21px;height:21px;flex:none;fill:none;stroke:var(--gold);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #mMemberName{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tabbar .mm-badge{position:absolute;top:5px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--club);font-size:11px;font-weight:800;line-height:18px;text-align:center}
+.tabbar .mm-badge{position:absolute;top:3px;left:calc(50% + 5px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:var(--club);font-size:12.5px;font-weight:800;line-height:22px;text-align:center;box-shadow:0 0 0 2px var(--club)}
 .more-wrap{position:relative;display:flex}
 .more-pop{position:absolute;left:50%;bottom:calc(100% + 8px);z-index:5;width:232px;margin-left:-116px;display:flex;flex-direction:column;padding:6px;border-radius:3px;
   background:var(--club);border:1px solid var(--gold-line);box-shadow:0 16px 40px rgba(3,9,6,.5)}
@@ -1056,6 +1059,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="menu" id="mainMenu">
           <div class="play-col">
             <button class="menu-item" id="mResume" hidden>Return to the game</button>
+            <button class="league-note waiting-note" id="mWaiting" type="button" hidden><span class="mw-n num" id="mWaitingN" aria-hidden="true"></span><span class="ln-text"><b id="mWaitingHead"></b><span class="ln-sub" id="mWaitingSub"></span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="league-note" id="mLeagueNote" type="button" hidden><span class="ob-dot" aria-hidden="true"></span><span class="ln-text"><b id="mLeagueNoteHead">A new league is taking sign-ups</b><span class="ln-sub">Sign up in Members before it starts</span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="menu-item primary" id="mOnline"><svg class="i po-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M3 19.5c.5-3.6 2.9-5.6 6-5.6s5.5 2 6 5.6"/><path d="M16.2 11a2.6 2.6 0 1 0-.9-5"/><path d="M17.4 14.2c2 .4 3.3 2.1 3.6 5.3"/></svg><span class="po-t">Play online</span><span class="po-d">Find another player and get bowling.</span><span class="mi-sub" id="mOnlineSub" hidden></span><span class="po-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12h14"/><path d="M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></button>
             <div class="play-pair">
@@ -7841,6 +7845,13 @@ const MemberHost = {
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
     $('mLeagueNote').hidden = !(name && open > 0);
     $('mBeta').hidden = !name;   // beta games are for signed-in members
+    // what's waiting (fixtures to play, proposals, results to confirm), on the main screen as well as on the tab bar
+    $('mWaiting').hidden = !(name && waiting > 0);
+    if (name && waiting > 0) {
+      $('mWaitingN').textContent = waiting > 9 ? '9+' : String(waiting);
+      $('mWaitingHead').textContent = `${waiting} waiting for you in Members`;
+      $('mWaitingSub').textContent = `Signed in as ${name} · fixtures, proposals and results`;
+    }
     $('mLeagueNoteHead').textContent = open > 1 ? `${open} leagues are taking sign-ups` : 'A new league is taking sign-ups';
   },
   head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
@@ -7873,6 +7884,7 @@ if (membersOn) {
   $('mMember').onclick = () => Members.open();
   $('openBadge').hidden = !!store.get('league.token', null); $('openBadge').onclick = () => Members.open('join');
   $('mLeagueNote').onclick = () => Members.open('leagues');
+  $('mWaiting').onclick = () => Members.open();
   $('memberBack').onclick = () => MemberHost.back();
   const name = store.get('member.name', null);
   if (store.get('league.token', null)) {   // signed in on this browser: show what's waiting
