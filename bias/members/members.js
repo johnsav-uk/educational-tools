@@ -364,14 +364,13 @@
 
 
   /* ---------- the Clubhouse on the title page ----------
-     For a signed-in member: who's on the green now, with Challenge (rated or casual, and what it would
-     do to your rating) and Play (a league game you still owe them) right there; challenges for you to
-     accept; accepted ones to play. One read, /api/clubhouse, every 20 seconds while the page is in view,
-     which once a minute is also the "on the green" heartbeat, unless the member hides themself. Games
-     are played on the league site, opened in a new tab already signed in (openBoard). */
-  const Club = { d: null, timer: 0, beatAt: 0, pick: null, rated: true, busy: false, seen: null };
-  const sign = n => n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0';
-  const stakesLine = s => s ? `win <b>${sign(s.win)}</b> · draw <b>${sign(s.draw)}</b> · lose <b>${sign(s.loss)}</b>` : 'casual: ratings stay as they are';
+     For a signed-in member, like the Clubhouse's own Play page: what's waiting (challenges to accept,
+     accepted games to start or resume, a league game whose opponent is on the green), then Find a game
+     with how many are on the green, and the way into the Clubhouse for everything else (players to
+     challenge, leagues, rankings, your bowls). One read, /api/clubhouse, every 20 seconds while the page
+     is in view, which once a minute is also the "on the green" heartbeat, unless the member hides
+     themself. Games are played on the league site, opened in a new tab already signed in (openBoard). */
+  const Club = { d: null, timer: 0, beatAt: 0, busy: false, seen: null };
   const nm = p => `${H.esc(p.name)} <span class="elo">${eloTag(p).trim()}</span>`;
   function clubStart() {
     if (Club.timer) return;
@@ -390,7 +389,7 @@
     if (Club.seen) {
       const c = r.incoming.find(x => !Club.seen.has('c' + x.id)), f = r.toPlay.find(x => !Club.seen.has('f' + x.id));
       if (c) H.toast(`${c.from.name} challenges you. Answer in the Clubhouse on the main menu.`);
-      else if (f) H.toast(`Your game with ${f.opp.name} is ready to play: see the Clubhouse on the main menu.`);
+      else if (f) H.toast(`Your game with ${f.opp.name} is ready: Start game is in the Clubhouse on the main menu.`);
     }
     Club.seen = new Set(keys);
     Club.d = r; clubPaint();
@@ -398,55 +397,35 @@
   function clubPaint() {
     const d = Club.d, el = H.club(), esc = H.esc;
     if (!d) return;
-    const chips = [[d.incoming.length, plural(d.incoming.length, 'challenge for you', 'challenges for you'), true],
-      [d.toPlay.length, plural(d.toPlay.length, 'challenge to play', 'challenges to play'), true],
+    const chips = [[d.incoming.length, plural(d.incoming.length, 'challenge to answer', 'challenges to answer'), true],
+      [d.toPlay.length, plural(d.toPlay.length, 'game to start', 'games to start'), true],
       [d.leagueOwed, plural(d.leagueOwed, 'league game to play', 'league games to play'), false]].filter(x => x[0]);
     el.chips.hidden = !chips.length;
     el.chips.innerHTML = chips.map(([, t, hot]) => `<span${hot ? ' class="hot"' : ''}>${esc(t)}</span>`).join('');
     const rows = [];
-    for (const c of d.incoming) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(c.from)}</b><span><span class="hot">challenges you</span> · ${c.rated ? 'Rated' : 'Casual'}${c.here ? ' · on the green' : ''}</span></span>
+    for (const f of d.toPlay) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(f.opp)}</b><span>Your ${f.rated ? 'rated' : 'casual'} game${f.inProgress ? ' · under way' : f.here ? ' · <span class="hot">on the green</span>' : ''}</span></span>
+      <span class="ci-acts"><button class="ci-btn go" type="button" data-play="${f.id}">${f.inProgress ? 'Resume game' : 'Start game'}</button></span></div>`);
+    for (const c of d.incoming) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(c.from)}</b><span><span class="hot">challenges you</span> · ${c.rated ? 'rated' : 'casual'}${c.here ? ' · on the green' : ''}</span></span>
       <span class="ci-acts"><button class="ci-btn go" type="button" data-accept="${c.id}">Accept</button><button class="ci-btn" type="button" data-decline="${c.id}">Decline</button></span></div>`);
-    for (const f of d.toPlay) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(f.opp)}</b><span>Your ${f.rated ? 'rated' : 'casual'} challenge${f.here ? ' · <span class="hot">on the green</span>' : ''}</span></span>
-      <span class="ci-acts"><button class="ci-btn go" type="button" data-play="${f.id}">${f.inProgress ? 'Resume' : 'Play'}</button></span></div>`);
-    // anyone already above (a challenge to answer, or one to play) isn't listed again
-    const above = new Set(d.incoming.map(c => c.from.id).concat(d.toPlay.map(f => f.opp.id)));
-    const others = d.green.filter(p => !above.has(p.id)), green = others.slice(0, 6);
-    const greenRows = green.map(p => {
-      const L = p.league, sent = (d.sent || []).find(c => c.to === p.id);
-      const sub = L ? `<span class="hot">${p.status === 'playing' ? 'On the green for' : 'You still owe them'} a ${esc(L.name)} game</span>` : p.status === 'playing' ? 'Playing a match' : 'About now';
-      const act = L ? `<button class="ci-btn go" type="button" data-play="${L.fixtureId}">${L.inProgress ? 'Resume' : 'Play'}</button>`
-        : p.status === 'playing' ? '<span class="ci-state">In a game</span>'
-        : sent ? `<span class="ci-state">Challenged</span><button class="ci-btn" type="button" data-withdraw="${sent.id}">Cancel</button>`
-        : `<button class="ci-btn" type="button" data-pick="${p.id}" aria-pressed="${Club.pick === p.id}">Challenge</button>`;
-      const pick = Club.pick === p.id ? `<div class="ci-pick"><div class="ci-acts"><button class="ci-btn" type="button" data-rated="1" aria-pressed="${Club.rated}">Rated</button><button class="ci-btn" type="button" data-rated="0" aria-pressed="${!Club.rated}">Casual</button></div>
-        <p>5 ends, 4 bowls each, a random green · ${stakesLine(Club.rated ? p.stakes : null)}</p>
-        <div class="ci-acts"><button class="ci-btn gold" type="button" data-send="${p.id}">Challenge ${esc(p.name)}</button><button class="ci-btn" type="button" data-unpick>Cancel</button></div></div>` : '';
-      return `<div class="ci-row"><span class="ci-who"><b>${nm(p)}</b><span>${sub}</span></span><span class="ci-acts">${act}</span></div>${pick}`;
-    });
-    const more = others.length > green.length ? `Everyone on the green (${d.green.length}), and the rest of the Clubhouse` : 'The rest of the Clubhouse: league table, challenges and ratings';
-    el.green.innerHTML = rows.join('')
-      + `<p class="ci-k"><span class="ci-dot"></span>On the green now</p>`
-      + (greenRows.length ? greenRows.join('') : `<p class="ci-empty">Nobody else is on the green just now. Find a rated game and you’re paired with the next member who looks.</p><button class="ci-btn gold" type="button" data-live>Find a rated game</button>`)
-      + `<div class="ci-foot"><button class="ci-link" type="button" data-house>${esc(more)} →</button>
-        <button class="ci-link quiet" type="button" data-shown="${d.me.shown ? 0 : 1}">${d.me.shown ? 'You show as on the green · Hide me' : 'You’re hidden · Show me on the green'}</button></div>`;
-    const on = (sel, fn) => el.green.querySelectorAll(sel).forEach(b => b.onclick = () => fn(b));
-    on('[data-pick]', b => { Club.pick = Club.pick === +b.dataset.pick ? null : +b.dataset.pick; Club.rated = true; clubPaint(); });
-    on('[data-unpick]', () => { Club.pick = null; clubPaint(); });
-    on('[data-rated]', b => { Club.rated = b.dataset.rated === '1'; clubPaint(); });
-    on('[data-send]', b => clubAct(call('/api/challenges', { to: +b.dataset.send, rated: Club.rated }), () => {
-      const p = d.green.find(x => x.id === +b.dataset.send); Club.pick = null;
-      H.toast(`Challenge sent to ${p ? p.name : 'them'}. When they accept, Play shows here.`);
-    }));
-    on('[data-decline]', b => clubAct(call(`/api/challenges/${b.dataset.decline}/respond`, { action: 'decline', note: 'busy' }), () => H.toast('Declined.')));
-    on('[data-accept]', b => {   // the tab opens on the click, while it still counts as the player's
+    // a league game I owe someone who's on the green now
+    for (const p of d.green.filter(p => p.league)) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(p)}</b><span><span class="hot">${p.league.inProgress ? 'Under way' : 'On the green'}</span> · your ${esc(p.league.name)} game</span></span>
+      <span class="ci-acts"><button class="ci-btn go" type="button" data-play="${p.league.fixtureId}">${p.league.inProgress ? 'Resume game' : 'Start game'}</button></span></div>`);
+    const on = d.green.filter(p => p.status === 'now').length;
+    el.green.innerHTML = (rows.length ? `<p class="ci-k">Waiting for you</p>${rows.join('')}` : '')
+      + `<div class="ci-find"><button class="ci-btn gold" type="button" data-live>Find a game</button>
+        <span class="ci-count"><span class="ci-dot"></span>${on ? plural(on, 'member', 'members') + ' on the green' : 'Paired with the next member who looks'}</span></div>`
+      + `<div class="ci-foot"><button class="ci-link" type="button" data-house>Players, leagues, rankings and your bowls →</button>
+        <button class="ci-link quiet" type="button" data-shown="${d.me.shown ? 0 : 1}">${d.me.shown ? 'Hide me' : 'You’re hidden · Show me'}</button></div>`;
+    const on_ = (sel, fn) => el.green.querySelectorAll(sel).forEach(b => b.onclick = () => fn(b));
+    on_('[data-decline]', b => clubAct(call(`/api/challenges/${b.dataset.decline}/respond`, { action: 'decline', note: 'busy' }), () => H.toast('Declined.')));
+    on_('[data-accept]', b => {   // the tab opens on the click, while it still counts as the player's
       const w = window.open('', '_blank');
       clubAct(call(`/api/challenges/${b.dataset.accept}/respond`, { action: 'accept' }), r => openBoard(`/play/?f=${Number(r.fixtureId)}`, w), () => { if (w) w.close(); });
     });
-    on('[data-withdraw]', b => clubAct(call(`/api/challenges/${b.dataset.withdraw}/cancel`, {}), () => H.toast('Challenge cancelled.')));
-    on('[data-play]', b => openBoard(`/play/?f=${Number(b.dataset.play)}`));
-    on('[data-live]', () => openBoard('live'));
-    on('[data-house]', () => openBoard('/'));
-    on('[data-shown]', b => clubAct(call('/api/presence', { status: b.dataset.shown === '1' ? 'now' : 'away' }), () => {}));
+    on_('[data-play]', b => openBoard(`/play/?f=${Number(b.dataset.play)}`));
+    on_('[data-live]', () => openBoard('live'));
+    on_('[data-house]', () => openBoard('/'));
+    on_('[data-shown]', b => clubAct(call('/api/presence', { status: b.dataset.shown === '1' ? 'now' : 'away' }), () => {}));
   }
   async function clubAct(p, then, failed) {
     Club.busy = true; const r = await p; Club.busy = false;

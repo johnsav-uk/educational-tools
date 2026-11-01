@@ -5,7 +5,8 @@
    What travels, and how it merges (notes/roadmap-handoffs.md, Stage 2):
    - profile: the name, bowls and colour used in matches and online, the settings and bowl tuning.
      One per account. The account's copy wins when a browser first joins it; after that the
-     browser where it last changed wins.
+     browser where it last changed wins. Its settings are merged into the browser's, never put in
+     their place: the Clubhouse's My profile saves only the arm, and the rest stays as it was.
    - stats: each browser's match record, kept per browser and added up for the account, so a
      record is never counted twice however often it's sent.
    - skip: each browser's daily-puzzle streak. The account's streak is the one played most
@@ -36,6 +37,12 @@
   // its own copy is always the one in front of us.
   function others(rows, kind, browser) { return (rows || []).filter(r => r.kind === kind && r.browser !== browser && isObj(r.json)).map(r => r.json); }
   const profileRow = rows => (rows || []).find(r => r.kind === 'profile' && isObj(r.json)) || null;
+  // the account's profile as written to this browser: its settings over this browser's own
+  function fromAccount(acct, local) {
+    const out = Object.assign({}, acct);
+    if (isObj(acct.settings) && local && isObj(local.settings)) out.settings = Object.assign({}, local.settings, acct.settings);
+    return out;
+  }
 
   // ---------- match record: added up across browsers ----------
   const tally = () => ({ played: 0, won: 0, drawn: 0, lost: 0, shotsFor: 0, shotsAgainst: 0 });
@@ -95,7 +102,7 @@
       down.push(name(acct.json) && name(acct.json) !== name(local.profile)
         ? `Your account’s name “${name(acct.json)}”, bowls, colour and settings, in place of “${name(local.profile) || 'none'}” here`
         : 'Your account’s bowls, colour and settings, in place of this browser’s');
-      Object.assign(writes, acct.json);
+      Object.assign(writes, fromAccount(acct.json, local.profile));
     } else if (acct && !local.profile) { down.push(`Your account’s name${name(acct.json) ? ` “${name(acct.json)}”` : ''}, bowls, colour and settings`); Object.assign(writes, acct.json); }
     else if (local.profile) up.push(`Your name${name(local.profile) ? ` “${name(local.profile)}”` : ''}, bowls, colour and settings`);
     if (local.stats) { const t = statsTotal(local.stats, [], browser); if (t.played) up.push(`Your match record here: ${t.played} match${t.played === 1 ? '' : 'es'}, ${t.won} won`); }
@@ -116,7 +123,7 @@
     const writes = {}, acct = profileRow(rows);
     let profile;
     if (local.profile && !same(local.profile, syncedProfile)) profile = local.profile;                // changed here: this one wins
-    else if (acct && acct.updatedAt > syncedAt && !same(acct.json, local.profile)) Object.assign(writes, acct.json);  // changed elsewhere
+    else if (acct && acct.updatedAt > syncedAt && !same(acct.json, local.profile)) Object.assign(writes, fromAccount(acct.json, local.profile));  // changed elsewhere
     const sk = applySkip(local.skip, mergedSkip(local.skip, rows, browser)); if (sk) writes[SKIP_KEY] = sk;
     const ar = applyArchive(local.archive, rows, browser); if (ar) writes[ARCHIVE_KEY] = ar;
     const send = { browser };
