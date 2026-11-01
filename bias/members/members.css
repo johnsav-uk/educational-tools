@@ -69,8 +69,5 @@
 .acct-table li{padding:7px 0;border-bottom:1px solid var(--line)}
 .acct-table li{display:flex;align-items:center;gap:6px}
 .acct-table li span{flex:1;min-width:0;overflow-wrap:anywhere}
-.acct .acct-flag{align-self:auto;min-width:32px;min-height:32px;padding:0;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}
-.acct .acct-flag:hover,.acct .acct-flag:focus-visible{color:var(--alert)}
-.acct .acct-flag:disabled{opacity:.4;cursor:default}
 .acct-table li.me{color:var(--gold);font-weight:650}
 .acct-table i{font-style:normal;margin-left:3px;color:var(--muted)}

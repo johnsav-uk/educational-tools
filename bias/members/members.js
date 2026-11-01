@@ -151,7 +151,8 @@
   // ---------- signed in ----------
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const day = t => new Date(t).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-  const waitingOf = s => (s.leagues || []).reduce((n, l) => n + l.waiting + l.confirm, 0);
+  const waitingOf = s => (s.leagues || []).reduce((n, l) => n + l.waiting + l.confirm, 0) + (s.challenges ? s.challenges.incoming + s.challenges.confirm : 0);
+  const eloTag = r => r ? ` (${r.rating}${r.provisional ? '?' : ''})` : '';
 
   function leagueItem(l) {
     const esc = H.esc;
@@ -164,12 +165,29 @@
       <button class="btn" type="button" data-board="${l.id}">Noticeboard</button></li>`;
   }
 
-  /* Your Elo rating: only you see it, unless you choose to be on the ratings table. It comes from
-     confirmed league results, so it starts at 1200 and moves after each one. */
+  /* Challenges: one match against any member, rated or casual, on the league site's Challenges page
+     (league/site/challenges.html). Here only the counts: challenges for you, accepted ones to play,
+     results to confirm. */
+  function challengeBlock(c) {
+    const esc = H.esc;
+    const chips = c ? [[c.incoming, plural(c.incoming, 'challenge for you', 'challenges for you'), true], [c.confirm, plural(c.confirm, 'result to confirm', 'results to confirm'), true], [c.ready, plural(c.ready, 'game to play', 'games to play'), false]].filter(x => x[0]) : [];
+    return `<h3>Challenges</h3>
+      <ul class="acct-list"><li><div class="acct-lg"><b>Challenge a member</b><span>One match of 5 ends, rated or casual</span></div>
+        ${chips.length ? `<div class="acct-chips">${chips.map(([, text, hot]) => `<span${hot ? ' class="hot"' : ''}>${esc(text)}</span>`).join('')}</div>` : ''}
+        <button class="btn" type="button" data-board="challenges">Challenges</button></li>
+      <li><div class="acct-lg"><b>Rated game now</b><span>Paired at once with a member near your rating. Wins move your Elo</span></div>
+        <button class="btn primary" type="button" data-board="live">Find a rated game</button></li></ul>`;
+  }
+
+  /* Your Elo rating, from confirmed league games and rated challenges: it starts at 1200 and moves
+     after each one. Other members see it in brackets after your name. */
   /* What's new: a note for members until they press Got it (store 'member.news'). Change NEWS_ID
      when it changes. The league noticeboard (league/site/board/board.js) has its own copy. */
-  const NEWS_ID = '2026-10-28c', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
+  const NEWS_ID = '2026-10-30', newsSeen = () => H.store.get('member.news', null) === NEWS_ID;
   const NEWS_HTML = `<div class="acct-news" id="acNews"><h3>What’s new</h3><ul>
+      <li><b>Rated games now.</b> In Play online, or below, press Find a rated game: you’re paired at once with a member near your rating, for 5 ends, and wins move your Elo.</li>
+      <li><b>Challenges.</b> Challenge any member to a single match, rated or casual, from Challenges below. You see what a win, draw or loss would do to your rating before you send it.</li>
+      <li><b>Ratings beside every name.</b> Every member’s Elo now shows in brackets after their name: “Sam (1234)”. A ? means provisional (under 10 rated games).</li>
       <li><b>New leagues, one for each night.</b> From Monday 2 November, leagues are arranged by the evening you can play. The Monday night league takes sign-ups on Monday from 6 to 10pm (UK time), and its fixtures are played the following Monday. Tuesday’s league works the same way, and so on through the week.</li>
       <li><b>An Aussie league.</b> For players in Australia, an Aussie league will take sign-ups at the same times of day, in Adelaide time.</li>
       <li><b>Two new clubs to try.</b> Pitfold Park, a tired park green that is heavy and uneven, and Fernley Indoor, a flat blue carpet at 17 s. Find them under Beta games below, or on the title menu.</li>
@@ -187,26 +205,19 @@
           <span class="acct-r-num"><b>${r.rating}</b><span>Rating${r.provisional ? ' · provisional' : ''}</span></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <div class="acct-r-more" id="acRMore"${open ? '' : ' hidden'}>
-        <p>${r.games ? `${plural(r.games, 'league game', 'league games')}${week}${r.best > r.rating && r.best > 1200 ? ` · best ${r.best}` : ''}.${r.provisional ? ' Settles after 10 games.' : ''}` : 'Starts at 1200 and moves with each confirmed league result.'} Only you see it unless you tick below.</p>
+        <p>${r.games ? `${plural(r.games, 'rated game', 'rated games')}${week}${r.best > r.rating && r.best > 1200 ? ` · best ${r.best}` : ''}.${r.provisional ? ' Settles after 10 games.' : ''}` : 'Starts at 1200 and moves with each confirmed league game and rated challenge.'} Other members see it in brackets after your name.</p>
         <p class="acct-dev" id="acDev">${rec.played ? `On this device: ${recLine(rec)}` : ''}</p>
-        <div class="acct-r-row"><label class="acct-tick"><input id="acPub" type="checkbox"${r.public ? ' checked' : ''}> Show me on the ratings table</label>
-          <button class="acct-link" type="button" id="acTable" aria-expanded="false" aria-controls="acTableBody">See the ratings table</button></div>
+        <div class="acct-r-row"><button class="acct-link" type="button" id="acTable" aria-expanded="false" aria-controls="acTableBody">See the ratings table</button></div>
         <div id="acTableBody"></div>
         </div>
       </div>`;
   }
-  const flag = r => `<button class="acct-flag" type="button" data-flag="${Number(r.id)}" aria-label="Report the name ${H.esc(r.name)}" title="Report this name">⚑</button>`;
   async function showTable() {
     const box = $('acTableBody'); box.innerHTML = '<p class="acct-note">Loading…</p>';
     const t = await call('/api/ratings');
     if (t.error) { box.innerHTML = `<p class="acct-err">${H.esc(t.error)}</p>`; return; }
-    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b>${r.me ? '' : flag(r)}</li>`).join('')}</ol>
-      <p class="acct-note">⚑ reports a rude or unkind name to the organiser, who can change it. They won’t be told it was you.</p><p class="acct-note" id="acFlagMsg" role="status"></p>`
-      : '<p class="acct-note">Nobody has chosen to be on the table yet.</p>';
-    box.querySelectorAll('[data-flag]').forEach(b => b.onclick = async () => {
-      const r = await call('/api/report-name', { userId: Number(b.dataset.flag) });
-      $('acFlagMsg').textContent = r.error || r.message; if (!r.error) b.disabled = true;
-    });
+    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b></li>`).join('')}</ol>`
+      : '<p class="acct-note">No rated games yet.</p>';
   }
 
   async function home() {
@@ -217,12 +228,13 @@
     if (s.error) { H.body().innerHTML = `<p>${H.esc(s.error)}</p>`; return; }
     H.store.set('member.name', s.user.username);
     H.paint(s.user.username, waitingOf(s), s.openToJoin);
-    H.head(s.user.username, 'Signed in'); if (H.top) H.top();
+    H.head(s.user.username + eloTag(s.rating), 'Signed in'); if (H.top) H.top();
     const rec = H.record(), esc = H.esc;
     H.body().innerHTML = `
       ${newsSeen() ? '' : NEWS_HTML}
       ${s.canCreate ? '<button class="btn primary" type="button" data-board="admin">Organiser page</button>' : ''}
       ${ratingBlock(s.rating, rec)}
+      ${challengeBlock(s.challenges)}
       <h3>Your leagues</h3>
       ${s.leagues.length ? `<ul class="acct-list">${s.leagues.map(leagueItem).join('')}</ul>` : ''}
       ${s.openToJoin ? `<button class="btn primary" type="button" id="acFind">Open leagues · ${s.openToJoin}</button>` : ''}
@@ -268,7 +280,6 @@
       const t = S().statsTotal(x.local.stats, x.rows, x.browser);
       if (t.played && t.browsers > 1) $('acDev').textContent = `All your browsers: ${recLine(t)}`;
     });
-    if ($('acPub')) $('acPub').onchange = async e => { const r = await call('/api/account/ratings-public', { public: e.target.checked }); if (r.error) e.target.checked = !e.target.checked; else if ($('acTableBody').innerHTML) showTable(); };
     if ($('acRTog')) $('acRTog').onclick = () => {
       const open = $('acRMore').hidden;
       $('acRMore').hidden = !open; H.store.set('member.ratingOpen', open);
@@ -339,17 +350,20 @@
     });
   }
 
-  // The noticeboard opens in a new tab, already signed in, through a one-minute ticket.
-  async function openBoard(which) {
-    const w = window.open('', '_blank');   // opened now, while it still counts as the player's click
+  // The noticeboard opens in a new tab, already signed in, through a one-minute ticket. w: a tab the
+  // caller has already opened (Play online opens it on the click, before this file has loaded).
+  async function openBoard(which, w) {
+    w = w || window.open('', '_blank');   // opened now, while it still counts as the player's click
     if (w) w.opener = null;
-    const r = await call('/api/ticket', { to: which === 'join' ? '/join.html' : which === 'admin' ? '/admin.html' : `/?league=${Number(which)}` });
+    const r = await call('/api/ticket', { to: which === 'join' ? '/join.html' : which === 'admin' ? '/admin.html' : which === 'challenges' ? '/challenges.html' : which === 'live' ? '/live.html' : `/?league=${Number(which)}` });
     if (r.error) { if (w) w.close(); if (r.loggedOut) { view = 'signin'; form(); } return; }
     if (w) w.location.href = r.url; else location.href = r.url;
   }
 
   window.BiasMembers = {
     API,
+    // Play online's Find a rated game: the members' quick match, on the league site, in the tab w
+    rated(host, w) { H = H || host; if (token()) openBoard('live', w); else if (w) w.close(); },
     // want 'join' (the title's Open To New Members): a visitor lands on Join. want 'leagues' (the notice
     // above Play online): a member lands on Open leagues, Back taking them to the Members page. want { reset: token }
     // (an emailed link): the new-password form, signed in or not.

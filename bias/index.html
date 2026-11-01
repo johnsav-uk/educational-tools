@@ -1157,6 +1157,10 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div><span class="lbl">Quick match</span><p class="on-count" id="onCount">Four ends against whoever else is looking.</p></div>
         <button type="button" class="btn primary" id="onFind">Find me a game</button>
       </div>
+      <div class="on-quick" id="onRated" hidden>
+        <div><span class="lbl">Rated game · members</span><p class="on-count">Five ends against a member near your rating. Wins move your Elo.</p></div>
+        <button type="button" class="btn" id="onRatedGo">Find a rated game</button>
+      </div>
       <div class="on-choose" id="onChoose">
         <div class="field"><span class="lbl">Play a friend</span><button type="button" class="btn" id="onCreate">Create a room</button></div>
         <div class="field"><label for="onCode">Or join with a code</label>
@@ -6917,7 +6921,9 @@ const OnlineUI = {
   render() {
     const room = this.stage === 'room', queue = this.stage === 'queue', quick = room && Net.quick && !Net.inMatch;
     const host = !quick && (Net.isHost() || (Net.seat == null && Net.create));
-    $('onIdent').hidden = room || queue; $('onQuick').hidden = room || queue; $('onChoose').hidden = room || queue; $('onLede').hidden = room || queue;
+    $('onIdent').hidden = room || queue; $('onQuick').hidden = room || queue;
+    $('onChoose').hidden = room || queue; $('onLede').hidden = room || queue;
+    $('onRated').hidden = room || queue || !store.get('league.token', null);   // signed-in members only
     $('onRoom').hidden = !room; $('onQueue').hidden = !queue; $('onRoom').classList.toggle('quick', quick);
     $('onH').textContent = queue || quick ? 'Quick match' : room ? (Net.code ? `Room ${Net.code}` : 'Room') : 'Play someone on another computer';
     QM.paint();
@@ -7258,6 +7264,12 @@ $('onGo').onclick = () => OnlineUI.go();
 $('onBack').onclick = () => OnlineUI.back();
 $('onMenu').onclick = () => OnlineUI.menu();
 $('onFind').onclick = () => OnlineUI.find();
+// A rated game is the members' quick match, played on the league site (members/members.js): the tab
+// opens on the click, so no pop-up blocker stops it, and is sent on once the sign-in ticket is ready.
+$('onRatedGo').onclick = () => {
+  const w = window.open('', '_blank');
+  Members.load().then(() => window.BiasMembers.rated(MemberHost, w), () => { if (w) w.close(); });
+};
 $('onWhile').onclick = () => OnlineUI.whileWaiting();
 $('qmYes').onclick = () => QM.yes();
 $('qmNo').onclick = () => QM.no();
