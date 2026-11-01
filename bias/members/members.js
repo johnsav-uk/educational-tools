@@ -35,7 +35,7 @@
 
   function signedIn(r) {
     H.store.set('league.token', r.token); H.store.set('member.name', r.user.username);
-    H.paint(r.user.username, 0);
+    H.paint(r.user.username, 0); if (H.club) clubStart();
     if (linked(r.user.id) || declined(r.user.id)) home(); else carry(r.user.id);
   }
 
@@ -355,15 +355,111 @@
   async function openBoard(which, w) {
     w = w || window.open('', '_blank');   // opened now, while it still counts as the player's click
     if (w) w.opener = null;
-    const r = await call('/api/ticket', { to: which === 'join' ? '/join.html' : which === 'admin' ? '/admin.html' : which === 'challenges' ? '/challenges.html' : which === 'live' ? '/live.html' : `/?league=${Number(which)}` });
+    const to = String(which).startsWith('/') ? which    // a path on the league site: the Clubhouse, or a match (/play/?f=…)
+      : which === 'join' ? '/join.html' : which === 'admin' ? '/admin.html' : which === 'challenges' ? '/challenges.html' : which === 'live' ? '/live.html' : `/?league=${Number(which)}`;
+    const r = await call('/api/ticket', { to });
     if (r.error) { if (w) w.close(); if (r.loggedOut) { view = 'signin'; form(); } return; }
     if (w) w.location.href = r.url; else location.href = r.url;
+  }
+
+
+  /* ---------- the Clubhouse on the title page ----------
+     For a signed-in member: who's on the green now, with Challenge (rated or casual, and what it would
+     do to your rating) and Play (a league game you still owe them) right there; challenges for you to
+     accept; accepted ones to play. One read, /api/clubhouse, every 20 seconds while the page is in view,
+     which once a minute is also the "on the green" heartbeat, unless the member hides themself. Games
+     are played on the league site, opened in a new tab already signed in (openBoard). */
+  const Club = { d: null, timer: 0, beatAt: 0, pick: null, rated: true, busy: false, seen: null };
+  const sign = n => n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '±0';
+  const stakesLine = s => s ? `win <b>${sign(s.win)}</b> · draw <b>${sign(s.draw)}</b> · lose <b>${sign(s.loss)}</b>` : 'casual: ratings stay as they are';
+  const nm = p => `${H.esc(p.name)} <span class="elo">${eloTag(p).trim()}</span>`;
+  function clubStart() {
+    if (Club.timer) return;
+    Club.timer = setInterval(clubPoll, 20000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) clubPoll(); });
+    clubPoll();
+  }
+  async function clubPoll() {
+    if (!token() || document.hidden || Club.busy) return;
+    const here = Date.now() - Club.beatAt > 55e3;
+    const r = await call('/api/clubhouse', { here });
+    if (r.error) { if (r.loggedOut) { clearInterval(Club.timer); Club.timer = 0; } return; }
+    if (here) Club.beatAt = Date.now();
+    // a new challenge for me, or one of mine accepted: say so, wherever in the game they are
+    const keys = r.incoming.map(c => 'c' + c.id).concat(r.toPlay.map(f => 'f' + f.id));
+    if (Club.seen) {
+      const c = r.incoming.find(x => !Club.seen.has('c' + x.id)), f = r.toPlay.find(x => !Club.seen.has('f' + x.id));
+      if (c) H.toast(`${c.from.name} challenges you. Answer in the Clubhouse on the main menu.`);
+      else if (f) H.toast(`Your game with ${f.opp.name} is ready to play: see the Clubhouse on the main menu.`);
+    }
+    Club.seen = new Set(keys);
+    Club.d = r; clubPaint();
+  }
+  function clubPaint() {
+    const d = Club.d, el = H.club(), esc = H.esc;
+    if (!d) return;
+    const chips = [[d.incoming.length, plural(d.incoming.length, 'challenge for you', 'challenges for you'), true],
+      [d.toPlay.length, plural(d.toPlay.length, 'challenge to play', 'challenges to play'), true],
+      [d.leagueOwed, plural(d.leagueOwed, 'league game to play', 'league games to play'), false]].filter(x => x[0]);
+    el.chips.hidden = !chips.length;
+    el.chips.innerHTML = chips.map(([, t, hot]) => `<span${hot ? ' class="hot"' : ''}>${esc(t)}</span>`).join('');
+    const rows = [];
+    for (const c of d.incoming) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(c.from)}</b><span><span class="hot">challenges you</span> · ${c.rated ? 'Rated' : 'Casual'}${c.here ? ' · on the green' : ''}</span></span>
+      <span class="ci-acts"><button class="ci-btn go" type="button" data-accept="${c.id}">Accept</button><button class="ci-btn" type="button" data-decline="${c.id}">Decline</button></span></div>`);
+    for (const f of d.toPlay) rows.push(`<div class="ci-row"><span class="ci-who"><b>${nm(f.opp)}</b><span>Your ${f.rated ? 'rated' : 'casual'} challenge${f.here ? ' · <span class="hot">on the green</span>' : ''}</span></span>
+      <span class="ci-acts"><button class="ci-btn go" type="button" data-play="${f.id}">${f.inProgress ? 'Resume' : 'Play'}</button></span></div>`);
+    // anyone already above (a challenge to answer, or one to play) isn't listed again
+    const above = new Set(d.incoming.map(c => c.from.id).concat(d.toPlay.map(f => f.opp.id)));
+    const others = d.green.filter(p => !above.has(p.id)), green = others.slice(0, 6);
+    const greenRows = green.map(p => {
+      const L = p.league, sent = (d.sent || []).find(c => c.to === p.id);
+      const sub = L ? `<span class="hot">${p.status === 'playing' ? 'On the green for' : 'You still owe them'} a ${esc(L.name)} game</span>` : p.status === 'playing' ? 'Playing a match' : 'About now';
+      const act = L ? `<button class="ci-btn go" type="button" data-play="${L.fixtureId}">${L.inProgress ? 'Resume' : 'Play'}</button>`
+        : p.status === 'playing' ? '<span class="ci-state">In a game</span>'
+        : sent ? `<span class="ci-state">Challenged</span><button class="ci-btn" type="button" data-withdraw="${sent.id}">Cancel</button>`
+        : `<button class="ci-btn" type="button" data-pick="${p.id}" aria-pressed="${Club.pick === p.id}">Challenge</button>`;
+      const pick = Club.pick === p.id ? `<div class="ci-pick"><div class="ci-acts"><button class="ci-btn" type="button" data-rated="1" aria-pressed="${Club.rated}">Rated</button><button class="ci-btn" type="button" data-rated="0" aria-pressed="${!Club.rated}">Casual</button></div>
+        <p>5 ends, 4 bowls each, a random green · ${stakesLine(Club.rated ? p.stakes : null)}</p>
+        <div class="ci-acts"><button class="ci-btn gold" type="button" data-send="${p.id}">Challenge ${esc(p.name)}</button><button class="ci-btn" type="button" data-unpick>Cancel</button></div></div>` : '';
+      return `<div class="ci-row"><span class="ci-who"><b>${nm(p)}</b><span>${sub}</span></span><span class="ci-acts">${act}</span></div>${pick}`;
+    });
+    const more = others.length > green.length ? `Everyone on the green (${d.green.length}), and the rest of the Clubhouse` : 'The rest of the Clubhouse: league table, challenges and ratings';
+    el.green.innerHTML = rows.join('')
+      + `<p class="ci-k"><span class="ci-dot"></span>On the green now</p>`
+      + (greenRows.length ? greenRows.join('') : `<p class="ci-empty">Nobody else is on the green just now. Find a rated game and you’re paired with the next member who looks.</p><button class="ci-btn gold" type="button" data-live>Find a rated game</button>`)
+      + `<div class="ci-foot"><button class="ci-link" type="button" data-house>${esc(more)} →</button>
+        <button class="ci-link quiet" type="button" data-shown="${d.me.shown ? 0 : 1}">${d.me.shown ? 'You show as on the green · Hide me' : 'You’re hidden · Show me on the green'}</button></div>`;
+    const on = (sel, fn) => el.green.querySelectorAll(sel).forEach(b => b.onclick = () => fn(b));
+    on('[data-pick]', b => { Club.pick = Club.pick === +b.dataset.pick ? null : +b.dataset.pick; Club.rated = true; clubPaint(); });
+    on('[data-unpick]', () => { Club.pick = null; clubPaint(); });
+    on('[data-rated]', b => { Club.rated = b.dataset.rated === '1'; clubPaint(); });
+    on('[data-send]', b => clubAct(call('/api/challenges', { to: +b.dataset.send, rated: Club.rated }), () => {
+      const p = d.green.find(x => x.id === +b.dataset.send); Club.pick = null;
+      H.toast(`Challenge sent to ${p ? p.name : 'them'}. When they accept, Play shows here.`);
+    }));
+    on('[data-decline]', b => clubAct(call(`/api/challenges/${b.dataset.decline}/respond`, { action: 'decline', note: 'busy' }), () => H.toast('Declined.')));
+    on('[data-accept]', b => {   // the tab opens on the click, while it still counts as the player's
+      const w = window.open('', '_blank');
+      clubAct(call(`/api/challenges/${b.dataset.accept}/respond`, { action: 'accept' }), r => openBoard(`/play/?f=${Number(r.fixtureId)}`, w), () => { if (w) w.close(); });
+    });
+    on('[data-withdraw]', b => clubAct(call(`/api/challenges/${b.dataset.withdraw}/cancel`, {}), () => H.toast('Challenge cancelled.')));
+    on('[data-play]', b => openBoard(`/play/?f=${Number(b.dataset.play)}`));
+    on('[data-live]', () => openBoard('live'));
+    on('[data-house]', () => openBoard('/'));
+    on('[data-shown]', b => clubAct(call('/api/presence', { status: b.dataset.shown === '1' ? 'now' : 'away' }), () => {}));
+  }
+  async function clubAct(p, then, failed) {
+    Club.busy = true; const r = await p; Club.busy = false;
+    if (r.error) { H.toast(r.error); if (failed) failed(); } else then(r);
+    Club.beatAt = 0; clubPoll();
   }
 
   window.BiasMembers = {
     API,
     // Play online's Find a rated game: the members' quick match, on the league site, in the tab w
     rated(host, w) { H = H || host; if (token()) openBoard('live', w); else if (w) w.close(); },
+    // the title's Clubhouse button: the Clubhouse page on the league site, in the tab w
+    clubhouse(host, w) { H = H || host; if (token()) openBoard('/', w); else if (w) w.close(); },
     // want 'join' (the title's Open To New Members): a visitor lands on Join. want 'leagues' (the notice
     // above Play online): a member lands on Open leagues, Back taking them to the Members page. want { reset: token }
     // (an emailed link): the new-password form, signed in or not.
@@ -384,7 +480,7 @@
     async refresh(host) {
       H = host; if (!token()) return;
       const s = await call('/api/summary');
-      if (s.user) { H.paint(s.user.username, waitingOf(s), s.openToJoin); syncNow(s.user.id); }
+      if (s.user) { H.paint(s.user.username, waitingOf(s), s.openToJoin); syncNow(s.user.id); if (H.club) clubStart(); }
     }
   };
 })();

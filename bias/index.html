@@ -739,6 +739,50 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 /* something waiting for a signed-in member: the count in a gold disc, above Play online */
 .waiting-note .mw-n{flex:none;display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:15px;background:var(--gold);color:var(--club);font:800 15px/1 var(--sans)}
 .title .waiting-note b{color:var(--ivory);font-size:15px}
+/* the Clubhouse, for signed-in members: who's on the green, with Challenge and Play right here (members/members.js
+   paints it), and the way into the Clubhouse page on the league site */
+.club-in{border:1px solid var(--gold-line);border-top:2px solid var(--gold);border-radius:4px;background:var(--club);font-family:var(--sans);color:var(--cream)}
+.club-in[hidden]{display:none}
+.ci-head{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px 10px;border:0;background:none;color:inherit;text-align:left;cursor:pointer}
+.ci-head .i{flex:none;width:28px;height:28px;fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ci-text{flex:1;min-width:0}
+.ci-t{display:block;font:400 24px/1.05 var(--display)}
+.ci-d{display:block;margin-top:3px;font:500 12.5px/1.35 var(--sans);color:var(--cream-2)}
+.ci-arrow svg{display:block;width:20px;height:20px;fill:none;stroke:var(--ivory);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s var(--ease)}
+.ci-head:hover .ci-arrow svg{transform:translateX(4px)}
+.ci-head:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.ci-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 4px 58px}
+.ci-chips[hidden]{display:none}
+.ci-chips span{font:700 11.5px/1 var(--sans);padding:5px 8px;border:1px solid var(--line);border-radius:2px;background:var(--club-3);color:var(--cream-2)}
+.ci-chips .hot{color:var(--gold-hi);border-color:var(--gold-line)}
+.ci-green{padding:4px 16px 12px}
+.ci-green:empty{display:none}
+.ci-k{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font:800 10.5px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--sage-lt)}
+.ci-k .ci-dot{width:7px;height:7px;border-radius:50%;background:#7fc48a;box-shadow:0 0 0 3px rgba(127,196,138,.18)}
+.ci-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.ci-k + .ci-row{border-top:0}
+.ci-who{flex:1;min-width:0}
+.ci-who b{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-who b .elo{font-weight:500;color:var(--sage-lt)}
+.ci-who>span{display:block;font-size:12px;color:var(--sage-lt)}
+.ci-who .hot{color:var(--gold-hi);font-weight:700}
+.ci-row .ci-acts{display:flex;align-items:center;gap:8px;flex:none}
+.ci-btn{min-height:32px;padding:5px 12px;border:1px solid var(--line-2);border-radius:3px;background:none;color:var(--cream);font:700 12.5px/1 var(--sans);cursor:pointer;white-space:nowrap}
+.ci-btn:hover{border-color:var(--ivory)}
+.ci-btn.go{background:var(--ivory);border-color:var(--ivory);color:var(--charcoal)}
+.ci-btn.go:hover{background:var(--ivory-hi)}
+.ci-btn.gold{background:var(--gold);border-color:var(--gold);color:var(--club)}
+.ci-btn[aria-pressed=true]{background:var(--ivory);border-color:var(--ivory);color:var(--charcoal)}
+.ci-state{font:700 12px/1 var(--sans);color:var(--gold-hi);white-space:nowrap}
+.ci-pick{margin:0 0 8px;padding:10px 12px;background:var(--club-3);border:1px solid var(--line);border-radius:3px}
+.ci-pick p{margin:8px 0;font-size:12.5px;color:var(--cream-2)}
+.ci-pick p b{color:var(--ivory)}
+.ci-pick .ci-acts{display:flex;flex-wrap:wrap;gap:6px}
+.ci-empty{margin:6px 0 4px;font-size:13px;color:var(--cream-2)}
+.ci-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
+.ci-link{padding:4px 0;border:0;background:none;font:700 12.5px/1.3 var(--sans);color:var(--gold);cursor:pointer;text-align:left}
+.ci-link:hover{color:var(--gold-hi)}
+.ci-link.quiet{font-weight:600;color:var(--sage-lt)}
 
 /* Today's challenge: the daily puzzle as a feature card, its photograph beside a ruled headline */
 .title #mSkip{display:grid;grid-template-columns:42% minmax(0,1fr);padding:0;overflow:hidden;background:var(--club)}
@@ -867,6 +911,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .title .play-tile{min-height:64px;padding-left:16px}
   .play-tile .pt-t{font-size:21px}
   .title #mSkip{grid-template-columns:1fr;grid-template-rows:minmax(150px,1fr) auto}
+  /* beside a member's Clubhouse, which can run long, it keeps its own height rather than stretching to match */
+  #mainMenu:has(#mClub:not([hidden])) #mSkip{align-self:start;grid-template-rows:230px auto}
   #mSkip .ch-photo img{object-position:var(--challenge-pos-desktop)}
   #mSkip .ch-text{padding:18px 22px 20px}
   #mSkip .ch-t{font-size:30px}
@@ -1021,6 +1067,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <h1 class="club-mark" title="Bias: the curve a bowl takes as it slows down"><img class="logo" src="pages/logo.webp" width="680" height="252" alt="Bias"></h1>
         <nav class="bar-links" aria-label="Quick links">
           <button type="button" data-proxy="mOnline">Play online</button>
+          <button type="button" data-proxy="mClubOpen">Clubhouse</button>
           <button type="button" data-proxy="mSkip">Today’s challenge</button>
           <button type="button" data-proxy="mMember">Members</button>
           <button type="button" data-proxy="mHow">How to play</button>
@@ -1042,6 +1089,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
           </div>
           <div>
             <p class="cn-k">The club</p>
+            <button type="button" data-proxy="mClubOpen">The Clubhouse</button>
             <button type="button" data-proxy="mMember">Members</button>
             <button type="button" data-proxy="mRecord">Your record</button>
             <a href="https://www.facebook.com/groups/1116437361143315" target="_blank" rel="noopener">The Bias Clubhouse on Facebook</a>
@@ -1079,6 +1127,11 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
             <button class="league-note waiting-note" id="mWaiting" type="button" hidden><span class="mw-n num" id="mWaitingN" aria-hidden="true"></span><span class="ln-text"><b id="mWaitingHead"></b><span class="ln-sub" id="mWaitingSub"></span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="league-note" id="mLeagueNote" type="button" hidden><span class="ob-dot" aria-hidden="true"></span><span class="ln-text"><b id="mLeagueNoteHead">A new league is taking sign-ups</b><span class="ln-sub">Sign up in Members before it starts</span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="menu-item primary" id="mOnline"><svg class="i po-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M3 19.5c.5-3.6 2.9-5.6 6-5.6s5.5 2 6 5.6"/><path d="M16.2 11a2.6 2.6 0 1 0-.9-5"/><path d="M17.4 14.2c2 .4 3.3 2.1 3.6 5.3"/></svg><span class="po-t">Play online</span><span class="po-d">Find another player and get bowling.</span><span class="mi-sub" id="mOnlineSub" hidden></span><span class="po-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12h14"/><path d="M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></button>
+            <section class="club-in" id="mClub" hidden aria-labelledby="mClubT">
+              <button class="ci-head" type="button" id="mClubOpen" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.2V20h14V9.2"/><path d="M9.5 20v-5.5h5V20"/></svg><span class="ci-text"><span class="ci-t" id="mClubT">The Clubhouse</span><span class="ci-d">League games, challenges, and who’s on the green</span></span><span class="ci-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12h14"/><path d="M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></button>
+              <div class="ci-chips" id="mClubChips" hidden></div>
+              <div class="ci-green" id="mClubGreen" aria-live="polite"></div>
+            </section>
             <div class="play-pair">
               <button class="menu-item play-tile" id="mQuick"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16.5V20"/></svg><span class="pt-t">Play computer</span><span class="mi-sub">Five opponents, Starter to International</span></button>
               <button class="menu-item play-tile" id="mPractice"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="pt-t">Practice</span><span class="mi-sub">Roll a few, or take the guided lesson</span></button>
@@ -8093,8 +8146,9 @@ const MemberHost = {
     $('mMember').setAttribute('aria-label', name ? `Members: signed in as ${name}${waiting ? `, ${waiting} waiting` : ''}` : 'Members: sign in or join');
     $('mLeagueNote').hidden = !(name && open > 0);
     $('mBeta').hidden = !name;   // beta games are for signed-in members
+    $('mClub').hidden = $('mClubOpen').hidden = !name;   // and so is the Clubhouse
     // what's waiting (fixtures to play, proposals, results to confirm), on the main screen as well as on the tab bar
-    $('mWaiting').hidden = !(name && waiting > 0);
+    $('mWaiting').hidden = !(name && waiting > 0) || !!name;   // signed in, the Clubhouse below shows it (and the Members tab its count)
     if (name && waiting > 0) {
       $('mWaitingN').textContent = waiting > 9 ? '9+' : String(waiting);
       $('mWaitingHead').textContent = `${waiting} waiting for you in Members`;
@@ -8102,6 +8156,8 @@ const MemberHost = {
     }
     $('mLeagueNoteHead').textContent = open > 1 ? `${open} leagues are taking sign-ups` : 'A new league is taking sign-ups';
   },
+  club() { return { chips: $('mClubChips'), green: $('mClubGreen') }; },
+  toast(msg) { UI.toast(msg); },
   head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
   body() { return $('memberBody'); },
   top() { $('titleScrim').scrollTop = 0; },
@@ -8128,6 +8184,8 @@ const Members = {
 if (membersOn) {
   $('mMember').hidden = false;
   $('mBeta').hidden = !store.get('league.token', null);
+  $('mClub').hidden = $('mClubOpen').hidden = !store.get('league.token', null);
+  $('mClubOpen').onclick = () => { const w = window.open('', '_blank'); Members.load().then(() => window.BiasMembers.clubhouse(MemberHost, w), () => { if (w) w.close(); }); };
   $('mMorePop').prepend($('mRecord'));   // until the record moves into the Members area
   $('mMember').onclick = () => Members.open();
   $('openBadge').hidden = !!store.get('league.token', null); $('openBadge').onclick = () => Members.open('join');
