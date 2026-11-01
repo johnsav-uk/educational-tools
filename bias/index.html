@@ -200,6 +200,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .on-quick .on-count{color:var(--sage-dk)}
 .on-quick .btn.primary{background:var(--club);color:var(--ivory);border-color:var(--club)}
 .on-quick .btn.primary:hover{background:var(--green);border-color:var(--green)}
+.on-quick .btn:not(.primary){color:var(--club);border-color:var(--club)}   /* the rated game row: an outline on the ivory, beside the quick match's solid button */
+.on-quick .btn:not(.primary):hover{background:rgba(31,61,44,.06)}
 .on-quick[hidden]{display:none}
 .on-quick .lbl{display:block;font-family:var(--display);font-size:24px;line-height:1.1;letter-spacing:0;text-transform:none;color:var(--club);font-weight:400}
 .on-count{margin:4px 0 0;font-size:13.5px;color:var(--cream-2)}
