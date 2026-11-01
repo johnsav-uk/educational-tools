@@ -180,6 +180,21 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .share-targets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
 .share-msg{margin:6px 0 14px;color:var(--cream-2)}
 .on-err:empty{display:none}
+.lineup{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.lu-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.lu-team,.lu-tname{font-weight:600}
+.lu-tname{color:var(--gold);font-size:14px}
+.lu-tname[hidden],.lu-team[hidden],#onWatch[hidden]{display:none}
+.lu-slot{display:flex;flex-direction:column;gap:3px;min-width:0}
+.lu-role{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cream-2)}
+.lu-name{min-height:36px;display:flex;align-items:center;color:var(--cream)}
+.lu-name.me{color:var(--gold)}
+.lu-name.away{color:var(--alert)}
+.lu-take{align-self:flex-start}
+.lu-watch{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.lu-watch .fine{margin:0}
+#onDiscF.readonly .seg button:disabled{opacity:1;cursor:default}
+@media (max-width:520px){.lineup{grid-template-columns:1fr}}
 /* quick match */
 .on-quick{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:6px 0 22px;padding:16px 18px;border:0;border-top:3px solid var(--gold);border-radius:2px;background:var(--ivory);color:var(--charcoal)}
 .on-quick .on-count{color:var(--sage-dk)}
@@ -1067,7 +1082,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
               <button class="menu-item play-tile" id="mPractice"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="pt-t">Practice</span><span class="mi-sub">Roll a few, or take the guided lesson</span></button>
             </div>
             <div class="minor-links">
-              <button class="menu-item text-link" id="mSetup"><span class="pt-t">Custom match</span><span class="mi-sub">Singles, pairs or triples, on your own terms</span></button>
+              <button class="menu-item text-link" id="mSetup"><span class="pt-t">Custom match</span><span class="mi-sub">Singles, pairs, triples or rinks, on your own terms</span></button>
             <button class="menu-item text-link" id="mBeta" hidden><span class="pt-t">Beta games<span class="mi-tag">Members</span></span><span class="mi-sub">Darts, round the clock and two new clubs</span></button>
             </div>
           </div>
@@ -1128,9 +1143,9 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   <div class="scrim" id="onlineScrim">
     <form class="sheet" id="onlineForm" autocomplete="off" onsubmit="return false" style="max-width:580px;position:relative">
       <button type="button" class="chip on-menu" id="onMenu">‹ Main menu</button>
-      <div class="kicker">Play online · singles</div>
+      <div class="kicker">Play online</div>
       <h2 id="onH">Play someone on another computer</h2>
-      <p id="onLede">Play whoever's about, or send a friend a room code. Each of you bowls on your own computer and watches the other's bowls run.</p>
+      <p id="onLede">Play whoever's about, or send friends a room code: singles, pairs, triples or rinks, up to eight players, and anyone else can watch. Each of you bowls on your own computer and watches the others' bowls run.</p>
       <div id="onIdent">
         <div class="grid2">
           <div class="field"><label for="onName">Your name</label><input class="input" id="onName" maxlength="16" placeholder="Eleanor"></div>
@@ -1158,6 +1173,15 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="room-link"><input class="input" id="onLink" readonly aria-label="Link to this room"><button type="button" class="btn" id="onCopy">Copy link</button><button type="button" class="btn" id="onShare">Share</button></div>
         <p class="on-status warn" id="onStatus"><span class="dot"></span><span id="onStatusT">Connecting…</span></p>
         <p class="fine" id="onLevels" style="margin:8px 0 0"></p>
+        <div id="onLineup" hidden>
+          <div class="field" id="onDiscF" style="margin-top:14px"><span class="lbl">Game</span>
+            <div class="seg" role="radiogroup" aria-label="Game" id="onDisc"><button type="button" data-d="singles">Singles</button><button type="button" data-d="pairs">Pairs</button><button type="button" data-d="triples">Triples</button><button type="button" data-d="rinks">Rinks</button></div></div>
+          <div class="lineup" id="onSides">
+            <div class="lu-side"><input class="input lu-team" id="onTeam0" maxlength="16" aria-label="First team's name"><div class="lu-tname" id="onTeamT0"></div><div id="onSlots0"></div></div>
+            <div class="lu-side"><input class="input lu-team" id="onTeam1" maxlength="16" aria-label="Second team's name"><div class="lu-tname" id="onTeamT1"></div><div id="onSlots1"></div></div>
+          </div>
+          <div class="lu-watch"><p class="fine" id="onWatchers"></p><button type="button" class="btn ghost" id="onWatch" hidden>Just watch</button></div>
+        </div>
         <div id="onHostSet" hidden>
           <h3>Conditions</h3>
           <div class="grid2">
@@ -1193,7 +1217,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <p id="setupLede"></p>
       <div class="field" style="margin-top:14px"><span class="lbl">Game</span>
         <div class="seg" role="radiogroup" aria-label="Game" id="discSeg">
-          <button type="button" data-d="singles" aria-pressed="true">Singles</button><button type="button" data-d="pairs" aria-pressed="false">Pairs</button><button type="button" data-d="triples" aria-pressed="false">Triples</button>
+          <button type="button" data-d="singles" aria-pressed="true">Singles</button><button type="button" data-d="pairs" aria-pressed="false">Pairs</button><button type="button" data-d="triples" aria-pressed="false">Triples</button><button type="button" data-d="rinks" aria-pressed="false">Rinks</button>
         </div></div>
       <div class="grid2">
         <div class="field"><span class="lbl">Opponent</span>
@@ -1324,13 +1348,13 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
       <h2 id="rulesH">Rules used in this game</h2>
       <ol>
         <li><b>The end.</b> Singles: each player has four bowls. The player leading the end places the mat (its back edge 2–6 m from the rear ditch), delivers the jack, then bowls first. Players alternate.</li>
-        <li><b>Pairs and triples.</b> Pairs have two a side with four bowls each; triples three a side with three bowls each. The leads play all their bowls first, alternately, then the seconds (triples), then the skips. The leading team's lead places the mat and delivers the jack, and in each pair of deliveries the leading team bowls first. Every bowl counts for its team. In this game each team uses one set of bowls and one colour.</li>
+        <li><b>Pairs, triples and rinks.</b> Pairs have two a side with four bowls each; triples three a side with three bowls each; rinks (fours) four a side with two bowls each. The leads play all their bowls first, alternately, then the seconds (triples and rinks), the thirds (rinks), then the skips. The leading team's lead places the mat and delivers the jack, and in each pair of deliveries the leading team bowls first. Every bowl counts for its team. In this game each team uses one set of bowls and one colour.</li>
         <li><b>The jack.</b> A delivered jack must come to rest at least 23 m from the front of the mat, on the green and within the rink. If it stops within 2 m of the front ditch it is moved back to the 2 m mark. A valid jack is then centred on the rink's centre line.</li>
         <li><b>Improper jack.</b> If the jack is not delivered properly, the opponent may move the mat and then re-delivers the jack, but the original player still bowls first. If the second attempt also fails, the jack is placed on the centre line 2 m from the front ditch, with the mat left where it is.</li>
         <li><b>Touchers.</b> A bowl that touches the jack during its original course (including after hitting another bowl) is a toucher and is chalked. Touchers that reach the front ditch stay live and are measured where they lie.</li>
         <li><b>Dead bowls.</b> A bowl is dead and removed if it enters the ditch without being a toucher, comes to rest wholly outside the rink boundary, leaves the green, or (when delivered) finishes less than 14 m from the front of the mat.</li>
         <li><b>The jack in play.</b> A jack knocked into the front ditch within the rink stays live. If it is driven out of the rink, over the side boundary, or rebounds to within 20 m of the mat, it is re-spotted on the T (the centre line, 2 m from the front ditch; just in front of a bowl lying there, touching it) and the end carries on. There are no dead ends.</li>
-        <li><b>Firing.</b> Until a bowler has played two woods in the end, the weight meter turns back at draw weight: enough to run a yard past the front ditch on that green, never enough to fire. After that it runs on into the red firing band, speeding up as it goes, and bounces off full weight.</li>
+        <li><b>Firing.</b> Until a bowler has played two woods in the end (one in rinks, where each has only two), the weight meter turns back at draw weight: enough to run a yard past the front ditch on that green, never enough to fire. After that it runs on into the red firing band, speeding up as it goes, and bounces off full weight.</li>
         <li><b>Scoring.</b> When all eight bowls are played, the player with the nearest live bowl scores one shot for each of their bowls nearer the jack than the opponent's nearest. Distances are measured edge to edge in world space. If the two nearest opposing bowls are within 0.5 mm, the end is drawn and no shots are scored.</li>
         <li><b>Green speed.</b> A match is played at one green speed, from 11 s (heavy) to 16 s (very fast). It can be chosen, drawn at random for each match, or drawn at random and kept secret until the match ends.</li>
         <li><b>Next end.</b> The winner of an end leads the next; after a drawn end the same player leads again. Each end is played in the opposite direction, from a fresh mat.</li>
@@ -1913,7 +1937,8 @@ const colourHex = id => (COLOURS.find(c => c.id === id) || COLOURS[0]).hex;
 const TEX = { X0: -34, X1: 34, Y0: -12, Y1: 48, S: 0.05 };
 
 /* Venues: the club round the green. Looks only: the green, its speed and the physics are the same at every
-   club, so online opponents may each see their own. Ashcombe is drawn here; the others are in venues.js,
+   club. Online, the host's computer picks the club and sends it with the setup, so everyone in the match
+   is at the same one. Ashcombe is drawn here; the others are in venues.js,
    loaded a moment after the page. Signed-in members can choose their club in Settings; everyone else, and
    members who leave it on "A different club each game", gets one at random each game. The daily puzzle,
    the darts page and the title stay at Ashcombe. ?venue=<id> plays every game at that club, for checking. */
@@ -1952,8 +1977,11 @@ const Venue = {
     for (const k in PAL_BASE) { const c = (v.pal && v.pal[k]) || PAL_BASE[k]; PAL[k].splice(0, c.length, ...c); }
     Weather._c = Weather._in = null; Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
   },
-  forGame() {
-    const v = this.pick(); this.set(v); this.lastGame = v.id;
+  // id: the club the host chose for an online match (it may be in venues.js, still on its way)
+  forGame(id) {
+    const ask = this.asked = {};   // a club that arrives late is only taken if no other game has started since
+    if (id && !VENUES[id]) { this.set(VENUES.ashcombe); this.load().then(() => { if (VENUES[id] && this.asked === ask) this.forGame(id); }).catch(() => {}); return; }
+    const v = id ? VENUES[id] : this.pick(); this.set(v); this.lastGame = v.id;
     if (this.list().length > 1) UI.toast(`Today at ${v.name}, ${v.place}`);
   },
   home() { this.set(VENUES.ashcombe); }
@@ -4735,7 +4763,8 @@ const reduced = () => Settings.motion === 'less';
 const DISCIPLINES = {
   singles: { id: 'singles', name: 'Singles', positions: 1, bowls: 4, roles: [''] },
   pairs: { id: 'pairs', name: 'Pairs', positions: 2, bowls: 4, roles: ['Lead', 'Skip'] },
-  triples: { id: 'triples', name: 'Triples', positions: 3, bowls: 3, roles: ['Lead', 'Second', 'Skip'] }
+  triples: { id: 'triples', name: 'Triples', positions: 3, bowls: 3, roles: ['Lead', 'Second', 'Skip'] },
+  rinks: { id: 'rinks', name: 'Rinks', positions: 4, bowls: 2, roles: ['Lead', 'Second', 'Third', 'Skip'] }
 };
 // A random green for the day, in half-second steps (presentation randomness, never used by the physics).
 const randomGreen = () => 11 + 0.5 * Math.floor(Math.random() * 11);
@@ -4869,7 +4898,7 @@ const NET_TOL = 0.02;
    browser. A match counts once, when it reaches the over screen, if it has a kind (startMatch): against
    the computer (by standard), online, or in a league. Practice, the daily puzzle, a variant, two people
    on one screen and abandoned matches don't count. Online, each screen counts the match for its own
-   seat; a forfeit is a win for the side that stayed and a loss for the side that left.
+   side (a watcher counts nothing); a forfeit is a win for the side that stayed and a loss for the side that left.
    seen keeps the ids of the last matches counted, so a reload on the over screen counts nothing twice.
    v is the format, and browser a random id for this browser, so that carrying the record over to an
    account later adds it in once only. The st and now arguments are for the self-tests. */
@@ -4885,8 +4914,9 @@ const Record = {
   result(g) {
     const m = g.match;
     if (g.mode !== 'match' || !m || !m.over || g.phase !== 'over' || !m.kind) return null;
-    const me = g.link ? g.link.seat : g.ai ? 1 - g.ai.side : 0, a = g.players[me].score, b = g.players[1 - me].score;
-    const res = m.forfeit ? (m.forfeit.seat === me ? 'lost' : 'won') : a > b ? 'won' : a < b ? 'lost' : 'drawn';
+    const me = g.link ? g.link.side : g.ai ? 1 - g.ai.side : 0; if (me == null) return null;
+    const a = g.players[me].score, b = g.players[1 - me].score;
+    const res = m.forfeit ? (m.forfeit.side === me ? 'lost' : 'won') : a > b ? 'won' : a < b ? 'lost' : 'drawn';
     return { id: m.id, kind: m.kind, level: m.kind === 'computer' ? g.ai.level.id : null, res, shotsFor: a, shotsAgainst: b };
   },
   count(g, st = store, now = Date.now()) {
@@ -4946,8 +4976,11 @@ class Game {
   flush() { let n = 0; while (this.timers.length && n++ < 1000) this.timers.shift().fn(); }
   clearTimers() { this.timers.length = 0; this.place = null; this.anim = null; this.aiJob = null; this.aiExec = null; this.aiTurn = false; }
   isAI(side) { return !!this.ai && (this.mode === 'match' || this.mode === 'variant') && side === this.ai.side; }
-  // Online, the other seat's turns are played from its messages; local inputs are locked as for the computer.
-  get remoteTurn() { return !!this.link && this.mode === 'match' && !!this.turn && this.turn.player !== this.link.seat; }
+  // Online, other people's turns are played from their messages; local inputs are locked as for the computer.
+  // link.mine(side, member) says whether this screen bowls that position now (a stand-in may bowl for someone).
+  get remoteTurn() { return !!this.link && this.mode === 'match' && !!this.turn && !this.netMine(this.turn.player, this.turn.member || 0); }
+  netMine(side, mi) { return this.link.mine ? this.link.mine(side, mi) : side === this.link.seat; }
+  netSeatFor(side, mi) { return this.link.seatFor ? this.link.seatFor(side, mi) : side; }
   get locked() { return !!this.aiTurn || this.remoteTurn; }
   get matFront() { return this.matRear + W.MAT_LEN; }
   get cur() { return this.players[this.turn ? this.turn.player : 0]; }                     // the side (player or team) on turn
@@ -4983,10 +5016,11 @@ class Game {
     this.resetEndState(); this.beginJack(0); this.snapCam = true;
   }
   startMatch(cfg) {
-    Venue.forGame();
+    Venue.forGame(cfg.venue);
     this.clearTimers(); this.mode = 'match'; this.dir = 0; this.endNo = 1; this.paused = false;
     this.link = cfg.link || null; this.netReset();
-    /* discipline: singles (one player, 4 bowls), pairs (lead + skip, 4 each), triples (lead, second, skip, 3 each).
+    /* discipline: singles (one player, 4 bowls), pairs (lead + skip, 4 each), triples (lead, second, skip, 3 each),
+       rinks (lead, second, third, skip, 2 each).
        Each side is a player or a team; members bowl in position order. */
     const disc = cfg.discipline || DISCIPLINES.singles;
     this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, score: 0, played: 0,
@@ -5100,7 +5134,8 @@ class Game {
   canMoveMat() { return this.phase === 'aim' && !this.locked && this.turn && this.turn.kind === 'jack' && (this.mode === 'practice' || this.match.jackAttempt <= 1); } // leader, then the opponent on a re-delivery
   moveMat(d) { if (!this.canMoveMat()) return; this.matRear = clamp(Math.round((this.matRear + d) * 4) / 4, W.MAT_MIN, W.MAT_MAX); this.ui.refresh(); }
   /* The meter's rule for this delivery (see Meter), or null for a variant, which keeps the plain swing.
-     Firing opens once the bowler on the mat has played two woods this end; in practice and in the daily
+     Firing opens once the bowler on the mat has played two woods this end (one in rinks, so the second is never
+     at a bare jack); in practice and in the daily
      puzzle (the last bowl of an end) it is always open. A jack is never fired. */
   meterRule() {
     if (this.mode === 'variant' || !this.turn) return null;
@@ -5111,7 +5146,7 @@ class Game {
   canFire() {
     const t = this.turn; if (!t || t.kind !== 'bowl') return false;
     if (this.mode !== 'match') return true;
-    return this.players[t.player].members[t.member || 0].played >= 2;
+    return this.players[t.player].members[t.member || 0].played >= Math.min(2, this.match.discipline.bowls - 1);
   }
   meterAt(t) { const rule = this.meterRule(); if (rule) return Meter.at(t, rule); const u = (t / SWING_T) % 2; return u <= 1 ? u : 2 - u; }
   startCharge() { if (this.phase !== 'aim' || this.locked || this.look) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
@@ -5133,7 +5168,7 @@ class Game {
   deliver(weight) {
     const rule = this.meterRule(); if (rule && !rule.fire) weight = Math.min(weight, rule.cap);   // no firing before two woods, whatever the input
     const p = this.deliveryParams(weight); p.matRear = this.matRear;
-    if (this.link && this.mode === 'match') { const n = ++this.deliveryNo; this.link.send({ t: 'deliver', n, p }, true); }
+    if (this.link && this.mode === 'match') { const n = ++this.deliveryNo; this.netBy.set(n, this.link.seat); this.link.send({ t: 'deliver', n, p }, true); }
     this.startDelivery(p);
   }
   startDelivery(p) {
@@ -5165,12 +5200,15 @@ class Game {
     if (!this.link || this.mode !== 'match') { this.after(0.45, () => this.resolveDelivery()); return; }
     const n = this.deliveryNo;
     if (this.netSettles.has(n)) { this.applySettle(this.netSettles.get(n)); this.after(0.3, () => this.resolveDelivery()); return; }
-    if (!this.remoteTurn) {
-      const bodies = this.snapshot(); this.netSettles.set(n, bodies);
-      this.link.send({ t: 'settle', n, bodies }, true);
-      this.after(0.45, () => this.resolveDelivery()); return;
-    }
+    if (this.netBy.get(n) === this.link.seat) { this.sendSettle(n); this.after(0.45, () => this.resolveDelivery()); return; }   // our bowl: we say where it all lies
     this.awaitSettle = n; this.ui.refresh();
+  }
+  sendSettle(n) { const bodies = this.snapshot(); this.netSettles.set(n, bodies); this.link.send({ t: 'settle', n, bodies }, true); }
+  // The bowler dropped out before saying where their bowl came to rest: whoever stands in for them says so instead.
+  settleForAbsent() {
+    if (this.awaitSettle == null || this.phase !== 'settle') return;
+    const n = this.awaitSettle; this.awaitSettle = null;
+    this.sendSettle(n); this.after(0.3, () => this.resolveDelivery());
   }
   handleEvents() {
     for (const e of this.world.events) {
@@ -5509,6 +5547,7 @@ class Game {
     const p = this.openPrompt; if (!p || p.id !== id) return;
     this.openPrompt = null;
     if (!local && this.ui.dismissPrompt) this.ui.dismissPrompt();
+    if (local && this.link && this.link.watching) { this.openPrompt = p; return; }   // a watcher waits for the players to go on
     if (local && this.link) this.link.send({ t: 'continue', id }, true);
     p.cb();
   }
@@ -5522,14 +5561,14 @@ class Game {
      Messages that arrive early wait in netQ until this computer reaches the same turn. */
   netReset() {
     this.promptNo = 0; this.openPrompt = null; this.deliveryNo = 0; this.netQ = []; this.netSettles = new Map();
-    this.netContinues = new Set(); this.awaitSettle = null; this.netGap = 0; this.netDisputed = false; this.netDisputes = 0;
+    this.netContinues = new Set(); this.awaitSettle = null; this.netGap = 0; this.netDisputed = false; this.netDisputes = 0; this.netBy = new Map();   // netBy: delivery n → the seat that bowled it
   }
   netIn(m) {
     if (m.t === 'deliver') this.netQ.push(m);
-    else if (m.t === 'settle') this.netSettles.set(m.n, m.bodies);
+    else if (m.t === 'settle') { if (!this.netSettles.has(m.n)) this.netSettles.set(m.n, m.bodies); }
     else if (m.t === 'continue') { this.netContinues.add(m.id); if (this.openPrompt && this.openPrompt.id === m.id) this.answerPrompt(m.id, false); }
     else if (m.t === 'aim') this.netAim(m);
-    else if (m.t === 'resign') { this.forfeit(m.seat === 0 || m.seat === 1 ? m.seat : m.from, m.why); return; }
+    else if (m.t === 'resign') { this.forfeit(m.side === 1 ? 1 : 0, m.why); return; }
     this.netPump();
   }
   netPump() {
@@ -5538,7 +5577,7 @@ class Game {
       if (m.n <= this.deliveryNo) { this.netQ.shift(); continue; }
       if (!(this.mode === 'match' && (this.phase === 'aim' || this.phase === 'charge') && t && m.n === this.deliveryNo + 1
         && t.kind === p.kind && t.player === p.player && (t.member || 0) === p.member)) break;
-      this.netQ.shift();
+      this.netQ.shift(); this.netBy.set(m.n, m.from);
       const q = this.netParams(p); this.aim = q.aim;
       if (q.kind === 'bowl') { this.hand = q.hand; this.member.hand = q.hand; this.member.aim = q.aim; }
       this.deliveryNo = m.n; this.startDelivery(q);
@@ -5567,7 +5606,7 @@ class Game {
   }
   // The other player lining up: shown live, never used for the delivery itself.
   netAim(m) {
-    if (!this.remoteTurn || m.from !== this.turn.player || !(this.phase === 'aim' || this.phase === 'charge') || m.n !== this.deliveryNo + 1) return;
+    if (!this.remoteTurn || m.from !== this.netSeatFor(this.turn.player, this.turn.member || 0) || !(this.phase === 'aim' || this.phase === 'charge') || m.n !== this.deliveryNo + 1) return;
     const bowl = this.turn.kind === 'bowl', hand = bowl && (m.hand === 'fore' || m.hand === 'back') ? m.hand : this.hand;
     const ph = m.w != null ? 'charge' : 'aim', big = hand !== this.hand || ph !== this.phase || !bowl;
     this.aim = clamp(+m.aim || 0, -0.45, 0.45); this.hand = hand;
@@ -5608,7 +5647,7 @@ class Game {
     const inst = this.instant; this.instant = true;
     try {
       this.startMatch(cfg);
-      for (const e of entries) { if (e.t === 'settle') this.netSettles.set(e.n, e.bodies); else if (e.t === 'continue') this.netContinues.add(e.id); }
+      for (const e of entries) { if (e.t === 'settle') { if (!this.netSettles.has(e.n)) this.netSettles.set(e.n, e.bodies); } else if (e.t === 'continue') this.netContinues.add(e.id); }
       for (const e of entries) if (e.t === 'deliver') this.netQ.push(e);
       for (let i = 0; i < 10000; i++) {
         const before = `${this.netQ.length}.${this.deliveryNo}.${this.promptNo}.${this.timers.length}`;
@@ -5618,13 +5657,13 @@ class Game {
       const r = entries.find(e => e.t === 'resign'); if (r) this.netIn(r);
     } finally { this.instant = inst; }
   }
-  /* Online, a player who conceded (see Concede), left the match, or dropped out and was not back within
-     AWAY_S seconds (see Away), forfeits it: the match ends there, won by the other side whatever the score. */
-  forfeit(seat, why) {
+  /* Online, a side that conceded (see Concede), whose players have all left the match, or dropped out and
+     were not back within AWAY_S seconds (see Away), forfeits it: the match ends there, won by the other side whatever the score. */
+  forfeit(side, why) {
     if (this.mode !== 'match' || !this.match || this.phase === 'over') return;
     this.clearTimers(); this.look = false; this.charge = null;
     if (this.openPrompt) { this.openPrompt = null; if (this.ui.dismissPrompt) this.ui.dismissPrompt(); }
-    this.match.over = true; this.match.forfeit = { seat, why: why === 'left' || why === 'conceded' ? why : 'away' };
+    this.match.over = true; this.match.forfeit = { side, why: why === 'left' || why === 'conceded' ? why : 'away' };
     this.phase = 'over'; this.ui.refresh(); this.ui.matchOver();
   }
 
@@ -5928,18 +5967,18 @@ const Ring = {
    sure". The match goes to the other side at once, as a forfeit: the relay logs it as 'resign', so the
    other screen ends too, and a reload shows it. The flag turns red once the match can't be won. */
 const Concede = {
-  live() { const g = game; return !!g.link && g.mode === 'match' && !!g.match && !g.match.over && g.phase !== 'over' && Net.inMatch; },
+  live() { const g = game; return !!g.link && g.link.side != null && g.mode === 'match' && !!g.match && !g.match.over && g.phase !== 'over' && Net.inMatch; },
   ask() {
     if (!this.live()) return;
-    const g = game, me = g.link.seat, P = g.players, them = P[1 - me].name, a = P[me].score, b = P[1 - me].score;
+    const g = game, me = g.link.side, P = g.players, them = P[1 - me].name, a = P[me].score, b = P[1 - me].score;
     $('concedeP').textContent = (g.cannotWin(me) ? `${them} leads ${b}–${a}, and there aren't enough ends left for you to catch up.` : `The score is ${a}–${b}${a > b ? ' to you' : a < b ? ` to ${them}` : ''}.`)
       + ` If you concede, the match goes to ${them} and counts as a loss in Your record.`;
     UI.open('concedeScrim');
   },
   go() {
     UI.close('concedeScrim'); if (!this.live()) return;
-    const seat = game.link.seat;
-    game.forfeit(seat, 'conceded'); Net.send({ t: 'resign', seat, why: 'conceded' }, true);
+    const side = game.link.side;
+    game.forfeit(side, 'conceded'); Net.send({ t: 'resign', side, why: 'conceded' }, true);
   }
 };
 const UI = {
@@ -5994,7 +6033,7 @@ const UI = {
   pulseHead() { this.pulseT = 1; },
 
   paintConcede() {
-    const b = $('btnConcede'), live = Concede.live(), out = live && game.cannotWin(game.link.seat);
+    const b = $('btnConcede'), live = Concede.live(), out = live && game.cannotWin(game.link.side);
     b.hidden = !live; b.classList.toggle('hopeless', out);
     b.title = out ? 'You can no longer win: concede the match' : 'Concede the match';
   },
@@ -6082,7 +6121,7 @@ const UI = {
       let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}${k === cur ? ' cur' : ''}" style="--c:${hex}"></span>`;
       return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
     // online, each side's challenge level is shown to both players
-    const lvl = i => { if (!g.link) return ''; const x = onlineLevel(i) === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${x ? 'Expert' : 'Standard'}</span>`; };
+    const lvl = i => { if (!g.link) return ''; const l = onlineLevel(i), x = l === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${l === 'mixed' ? 'Mixed' : x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
     // End 1 of 4 (or to 21 shots): the label above, the number with its format beside it
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
@@ -6170,12 +6209,12 @@ const UI = {
   },
   matchOver() {
     Record.count(game);
-    const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.seat : P[0].score > P[1].score ? 0 : 1;
+    const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.side : P[0].score > P[1].score ? 0 : 1, mine = g.link ? g.link.side : null, T = g.isTeams();
     if ($('concedeScrim').classList.contains('show')) UI.close('concedeScrim');
     $('overH').textContent = ff ? `${P[w].name} wins by ${ff.why === 'conceded' ? 'concession' : 'forfeit'}` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
-    const gone = ff && (g.link && ff.seat === g.link.seat ? 'You' : P[ff.seat].name);
-    const ffLine = ff ? `${gone} ${ff.why === 'conceded' ? 'conceded' : ff.why === 'left' ? 'left the match' : `lost the connection and ${gone === 'You' ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === (g.link && g.link.seat) ? 'you' : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
+    const gone = ff && (ff.side === mine ? (T ? 'Your side' : 'You') : P[ff.side].name), were = ff && (ff.side === mine || T);
+    const ffLine = ff ? `${gone} ${ff.why === 'conceded' ? 'conceded' : ff.why === 'left' ? 'left the match' : `lost the connection and ${were ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === mine ? (T ? 'your side' : 'you') : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
     $('overP').textContent = ffLine + `${m.discipline.name}, ${m.ends.length} end${m.ends.length === 1 ? '' : 's'} on a ${m.T.toFixed(1)} s green (${GreenSpeed.label(m.T).toLowerCase()})${m.secret ? ', kept secret until now' : ''}${m.respots ? `, with the jack re-spotted ${m.respots === 1 ? 'once' : m.respots === 2 ? 'twice' : m.respots + ' times'}` : ''}.` + teamsLine;
     const head = `<tr><th>${g.isTeams() ? 'Team' : 'Player'}</th>${m.ends.map((e, i) => `<th>${e.extra ? 'X' : i + 1}</th>`).join('')}<th>Total</th></tr>`;
     const row = i => `<tr><td><span class="pip" style="--c:${colourHex(P[i].colour)}"></span>${esc(P[i].name)}</td>${m.ends.map(e => `<td>${e.winner === i ? e.shots : (e.winner == null ? '–' : '')}</td>`).join('')}<td><b>${P[i].score}</b></td></tr>`;
@@ -6321,12 +6360,13 @@ const setup = {
   disc: store.get('m.disc', 'singles'), opp: store.get('m.opp', 'human'), level: store.get('m.level', 'starter'),
   names: [store.get('m.name0', 'Eleanor'), store.get('m.name1', 'Thomas')],          // singles players
   teams: [store.get('m.team0', 'Ashcombe'), store.get('m.team1', 'Visitors')],        // team names
-  members: [store.get('m.members0', { Lead: 'Margaret', Second: 'Peter', Skip: 'Eleanor' }), store.get('m.members1', { Lead: 'Ruth', Second: 'Geoffrey', Skip: 'Thomas' })]
+  members: [{ Lead: 'Margaret', Second: 'Peter', Third: 'Joan', Skip: 'Eleanor', ...store.get('m.members0', {}) }, { Lead: 'Ruth', Second: 'Geoffrey', Third: 'Harold', Skip: 'Thomas', ...store.get('m.members1', {}) }]
 };
 const DISC_TEXT = {
   singles: ['Singles, four bowls each', 'Players alternate deliveries. The winner of each end leads the next, and play changes direction every end.'],
   pairs: ['Pairs, four bowls each', 'Two a side. The leads play all their bowls, alternately, then the skips. The team that wins an end leads the next, and play changes direction every end.'],
-  triples: ['Triples, three bowls each', 'Three a side: the leads play first, then the seconds, then the skips, alternately. The team that wins an end leads the next, and play changes direction every end.']
+  triples: ['Triples, three bowls each', 'Three a side: the leads play first, then the seconds, then the skips, alternately. The team that wins an end leads the next, and play changes direction every end.'],
+  rinks: ['Rinks, two bowls each', 'Four a side: the leads play first, then the seconds, the thirds and the skips, alternately. The team that wins an end leads the next, and play changes direction every end.']
 };
 function openSetup(opts = {}) {
   if (opts.ai != null) setup.opp = opts.ai ? 'ai' : 'human';
@@ -6372,7 +6412,7 @@ function renderDiscipline() {
   for (const i of [0, 1]) {
     $('p' + i + 'nameL').textContent = teams ? (i ? 'Team two' : 'Team one') : (i ? 'Player two' : 'Player one');
     $('p' + i + 'name').value = teams ? setup.teams[i] : setup.names[i];
-    const box = $('p' + i + 'members'); box.style.setProperty('--n', d.positions);
+    const box = $('p' + i + 'members'); box.style.setProperty('--n', d.positions === 4 ? 2 : d.positions);
     box.innerHTML = teams ? d.roles.map((r, k) => `<div class="field"><label for="p${i}m${k}">${r}</label><input class="input" id="p${i}m${k}" maxlength="14" value="${esc(setup.members[i][r] || r)}"></div>`).join('') : '';
   }
   updateLeadLabels();
@@ -6407,7 +6447,7 @@ $('setupGo').onclick = () => {
   const players = [0, 1].map(i => ({
     name: ((i === 1 && setup.opp === 'ai' ? setup.aiName : teams ? setup.teams[i] : setup.names[i]) || (i ? 'Side two' : 'Side one')).slice(0, 16),
     profileId: $('p' + i + 'prof').value, colour: setup.col[i],
-    members: teams ? d.roles.map((r, k) => ({ name: (i === 1 && setup.opp === 'ai' ? ['Arthur', 'Brenda', 'Colin'][k] : setup.members[i][r] || r).slice(0, 14) })) : null
+    members: teams ? d.roles.map((r, k) => ({ name: (i === 1 && setup.opp === 'ai' ? ['Arthur', 'Brenda', 'Colin', 'Dorothy'][k] : setup.members[i][r] || r).slice(0, 14) })) : null
   }));
   const vsAI = setup.opp === 'ai';
   store.set('m.disc', setup.disc); store.set('m.opp', setup.opp); store.set('m.aiName', setup.aiName); store.set('m.level', setup.level); store.set('m.name0', setup.names[0]); store.set('m.name1', setup.names[1]);
@@ -6539,9 +6579,9 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-6';   // bump whenever the physics or the messages change: both players must simulate identically
+const BUILD = 'bias-online-6';   // bump whenever the physics changes: both players must simulate identically
 /* The game's messages travel scrambled, so they can't be read or edited by hand in the browser's network
-   tools. Only what the relay needs stays plain: t and cid (it adds from, seq and matchNo). The rest is JSON,
+   tools. Only what the relay needs stays plain: t, cid and a delivery's n (it adds from, seq and matchNo). The rest is JSON,
    mixed with a stream keyed by the build, the room and the message type, then base64, with a keyed check
    on the end: change one character and the other computer drops the message. A deterrent, not security:
    the key is in this page, and applySettle still checks every result. */
@@ -6554,7 +6594,7 @@ const Wire = {
     if (!this.GAME.has(m.t)) return m;
     const { t, cid, ...rest } = m, key = this.key(room, t), plain = new TextEncoder().encode(JSON.stringify(rest)), sum = this.check(plain, key);
     let bin = ''; for (const b of this.mix(plain, key)) bin += String.fromCharCode(b);
-    const out = { t, d: btoa(bin) + '.' + sum }; if (cid != null) out.cid = cid;
+    const out = { t, d: btoa(bin) + '.' + sum }; if (cid != null) out.cid = cid; if (rest.n != null) out.n = rest.n;   // the relay plays each n once
     return out;
   },
   // the message as sent, with the relay's own fields on top; null if it was not packed here, or was changed
@@ -6565,10 +6605,13 @@ const Wire = {
       const [b64, sum] = m.d.split('.'), key = this.key(room, m.t), plain = this.mix(Uint8Array.from(atob(b64), c => c.charCodeAt(0)), key);
       if (this.check(plain, key) !== sum) return null;
       const { d, ...head } = m, body = JSON.parse(new TextDecoder().decode(plain));
-      return body && typeof body === 'object' ? { ...body, ...head } : null;
+      if (!body || typeof body !== 'object' || (head.n != null && head.n !== body.n)) return null;   // the plain n must be the one sent
+      return { ...body, ...head };
     } catch (e) { return null; }
   }
 };
+const NET_V = 3;                  // bump whenever the online messages change (2: teams, stand-ins and watchers; 3: rinks, four places a side)
+const NET_BUILD = `${BUILD}/${NET_V}`;   // what the relay and lobby compare: the same physics and the same messages
 const RELAY = (() => {
   const q = new URLSearchParams(location.search).get('relay'); if (q) return q.replace(/\/$/, '');
   return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://bias-relay.bias-relay.workers.dev';
@@ -6578,20 +6621,40 @@ const newRoomCode = () => Array.from(crypto.getRandomValues(new Uint8Array(4)), 
 // The interface used while a match is rebuilt from the log: nothing is shown, nothing waits.
 const myLevel = () => Settings.expert ? 'expert' : 'standard';
 const levelName = l => l === 'expert' ? 'Expert' : 'Standard';
-// A side's challenge level online: ours from Settings, the opponent's as the relay last heard it.
+// A side's challenge level online: ours from Settings, everyone else's as the relay last heard it;
+// a team whose players differ is 'mixed'.
 function onlineLevel(side) {
   if (!game.link) return myLevel();
-  if (side === game.link.seat) return myLevel();
-  const p = Net.peer(); return p && p.who && p.who.level === 'expert' ? 'expert' : 'standard';
+  const ls = Net.sideSeats(side).map(s => s === Net.seat ? myLevel() : (((Net.byseat(s) || {}).who || {}).level === 'expert' ? 'expert' : 'standard'));
+  if (!ls.length) return 'standard';
+  return ls.every(l => l === ls[0]) ? ls[0] : 'mixed';
 }
 const QuietUI = { toast() {}, banner() {}, clearBanner() {}, announce() {}, pulseHead() {}, refresh() {}, refreshAim() {}, refreshWeight() {}, notice() {}, summary() {}, matchOver() {}, dismissPrompt() {} };
+
+/* A room holds up to twelve people. Each may take a spot (side × 4 + position, as the relay numbers
+   them: 0–3 one side, 4–7 the other); anyone without one watches. The host (lowest seat) chooses the
+   game, the team names and the conditions; the setup message fixes who bowls each position. If a
+   player drops out, a teammate stands in for them (a logged 'stand' message, so every screen agrees who
+   is bowling), and hands back when they return. */
+const SIDE_SPOTS = 4, spotOf = (side, pos) => side * SIDE_SPOTS + pos, spotPos = sp => sp % SIDE_SPOTS;
 
 const Net = {
   ws: null, code: null, seat: null, token: null, state: 'off',   // off | connecting | open | retry
   who: null, create: false, peers: [], lastSeq: 0, matchNo: 0, inMatch: false,
-  outbox: [], cid: 0, retries: 0, retryTimer: 0, pingClock: 0, aimClock: 0, aimSent: '',
+  info: null,                // the host's choices before a match: { disc, teams }
+  disc: null, lineup: [], ctl: [], ctlSeq: [], names: [],   // in a match: spot → seat chosen at setup, seat bowling it now, the 'stand' that put them there, name
+  outbox: [], cid: 0, retries: 0, retryTimer: 0, pingClock: 0, aimClock: 0, aimSent: '', awayClock: 0,
   get on() { return this.state !== 'off'; },
-  peer() { return this.peers.find(p => p.seat !== this.seat) || null; },
+  byseat(seat) { return seat == null ? null : this.peers.find(p => p.seat === seat) || null; },
+  hostSeat() { return this.peers.length ? Math.min(...this.peers.map(p => p.seat)) : this.create ? 0 : null; },
+  isHost() { return this.seat != null && this.seat === this.hostSeat(); },
+  whoOf(p) { return p.seat === this.seat && this.who ? this.who : p.who || { name: 'Player' }; },
+  roomDisc() { return DISCIPLINES[this.info && this.info.disc] || DISCIPLINES.singles; },
+  // in the room, before a match: who has which place
+  atSpot(sp) { return this.peers.find(p => p.spot === sp) || null; },
+  freeSpot() { const P = this.roomDisc().positions; for (let pos = 0; pos < P; pos++) for (const side of [0, 1]) if (!this.atSpot(spotOf(side, pos))) return spotOf(side, pos); return null; },
+  // in a match: the seats chosen to play for a side
+  sideSeats(side) { return this.disc ? Array.from({ length: this.disc.positions }, (_, pos) => this.lineup[spotOf(side, pos)]).filter(s => s != null) : []; },
   saveSession() { try { sessionStorage.setItem('bias.net', JSON.stringify({ code: this.code, token: this.token, who: this.who })); } catch (e) { /* unavailable */ } },
   loadSession() { try { return JSON.parse(sessionStorage.getItem('bias.net') || 'null'); } catch (e) { return null; } },
   clearSession() { try { sessionStorage.removeItem('bias.net'); } catch (e) { /* unavailable */ } },
@@ -6600,14 +6663,15 @@ const Net = {
     this.close(); who = { ...who, level: myLevel() };
     const s = this.loadSession();
     Object.assign(this, { code, create: !!create, who, state: 'connecting', token: s && s.code === code ? s.token : null,
-      seat: null, peers: [], lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0, quick: !!quick, quickSent: false });
+      seat: null, peers: [], info: null, disc: null, lineup: [], ctl: [], ctlSeq: [], names: [], autoPlaced: false,
+      lastSeq: 0, matchNo: 0, inMatch: false, outbox: [], cid: 0, retries: 0, quick: !!quick, quickSent: false });
     this.connect(); Lobby.sync();
   },
   connect() {
     clearTimeout(this.retryTimer);
     let ws; try { ws = new WebSocket(`${RELAY}/room/${this.code}`); } catch (e) { this.retry(); return; }
     this.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ t: 'hello', build: BUILD, who: this.who, create: this.create && !this.token, token: this.token, lastSeq: this.inMatch ? this.lastSeq : 0 }));
+    ws.onopen = () => ws.send(JSON.stringify({ t: 'hello', build: NET_BUILD, who: this.who, create: this.create && !this.token, token: this.token, lastSeq: this.inMatch ? this.lastSeq : 0 }));
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } this.receive(m); };
     ws.onclose = () => { if (this.ws !== ws) return; this.ws = null; if (this.state !== 'off') this.retry(); };
   },
@@ -6615,6 +6679,12 @@ const Net = {
     if (this.state === 'off') return;
     this.state = 'retry'; OnlineUI.status();
     this.retryTimer = setTimeout(() => this.connect(), Math.min(15000, 700 * 2 ** this.retries++));
+  },
+  // Someone else played this delivery first (a stand-in and a returning player at once): start again from the log.
+  resync() {
+    this.inMatch = false; this.lastSeq = 0;
+    if (this.ws) { const ws = this.ws; this.ws = null; try { ws.close(); } catch (e) { /* already closed */ } }
+    this.connect();
   },
   close() {
     this.state = 'off'; clearTimeout(this.retryTimer);
@@ -6627,24 +6697,27 @@ const Net = {
   },
   raw(m) { if (this.ws && this.ws.readyState === 1 && this.state === 'open') { this.ws.send(JSON.stringify(Wire.pack(m, this.code))); return true; } return false; },
   send(m, logged) { if (logged) { m.cid = ++this.cid; this.outbox.push(m); } this.raw(m); },
+  place(spot, seat) { this.raw(seat == null || seat === this.seat ? { t: 'place', spot } : { t: 'place', seat, spot }); },
   receive(m) {
     m = Wire.unpack(m, this.code); if (!m) return;
     if (m.t === 'error') { OnlineUI.error(m); return; }
     if (m.t === 'welcome') { this.welcome(m); return; }
     if (m.t === 'peer') {
-      const old = this.peers.find(p => p.seat === m.seat);
-      if (!old && !m.online) return;   // already gone
+      const old = this.byseat(m.seat);
+      if (!old && !m.online && !m.left && m.spot == null) return;   // already gone
       this.peers = this.peers.filter(p => p.seat !== m.seat);
-      if (!m.left) this.peers.push({ seat: m.seat, who: m.who || (old && old.who) || { name: 'Your opponent' }, online: !!m.online });
+      if (!m.left) this.peers.push({ seat: m.seat, who: m.who || (old && old.who) || { name: 'A player' }, online: !!m.online, spot: m.spot == null ? null : m.spot });
       OnlineUI.peer(m, old); return;
     }
+    if (m.t === 'room') { this.info = m.info; OnlineUI.status(); return; }
+    if (m.t === 'stale') { this.resync(); return; }
     if (m.seq != null) { this.logged(m); return; }
     if (m.t === 'aim' && this.inMatch && game.link) game.netIn(m);
   },
   welcome(m) {
-    const fresh = !this.inMatch || m.matchNo !== this.matchNo;
+    const fresh = !this.inMatch || m.matchNo !== this.matchNo, isNew = !this.token || this.token !== m.token;
     this.state = 'open'; this.retries = 0; this.create = false;
-    this.seat = m.seat; this.token = m.token; this.peers = m.peers; this.saveSession();
+    this.seat = m.seat; this.token = m.token; this.peers = m.peers; this.info = m.info || this.info; this.saveSession();
     // whatever of ours the relay already holds need not go again
     this.cid = Math.max(this.cid, m.lastCid || 0);
     this.outbox = this.outbox.filter(x => x.cid > (m.lastCid || 0));
@@ -6656,6 +6729,14 @@ const Net = {
       this.lastSeq = log.length ? log[log.length - 1].seq : this.lastSeq;
       if (i < 0 && !$('onlineScrim').classList.contains('show')) OnlineUI.open();
     } else for (const e of log) this.logged(e);
+    if (!this.quick) {
+      if (this.isHost() && !this.info) OnlineUI.sendInfo();
+      // someone new to a room with no match yet takes the first free place; they can move, or just watch
+      const me = this.byseat(this.seat);
+      if (isNew && !this.autoPlaced && me && me.spot == null && !log.some(e => e.t === 'setup')) {
+        this.autoPlaced = true; const sp = this.freeSpot(); if (sp != null) this.place(sp);
+      }
+    }
     OnlineUI.status();
   },
   logged(e) {
@@ -6663,13 +6744,28 @@ const Net = {
     this.lastSeq = Math.max(this.lastSeq, e.seq);
     if (e.from === this.seat) this.outbox = this.outbox.filter(x => x.cid !== e.cid);
     if (e.t === 'setup') { startOnlineMatch(e, []); return; }
+    if (e.t === 'stand') { if (this.inMatch && e.matchNo === this.matchNo) this.stand(e, false); return; }
     if (!this.inMatch || e.matchNo !== this.matchNo || e.from === this.seat || !game.link) return;
     game.netIn(e);
   },
-  // Keep the connection warm, and let the other player watch this one line up.
+  /* A position changes hands: a stand-in takes it, or its own player takes it back. Each 'stand' names
+     the seat it takes over from (was); one that arrives after the position has already changed hands is
+     ignored. Every screen applies them in log order, so all agree, and two teammates can't both take it. */
+  stand(e, quiet) {
+    const sp = Number(e.spot); if (!this.disc || !(sp >= 0 && sp < 2 * SIDE_SPOTS) || this.lineup[sp] == null) return;
+    const was = this.ctl[sp]; if (e.was != null && Number(e.was) !== was) return;
+    this.ctl[sp] = Number(e.by); this.ctlSeq[sp] = e.seq;
+    if (quiet || was === this.ctl[sp]) return;
+    const own = this.names[sp], by = this.ctl[sp], byName = by === this.seat ? 'You' : this.names[this.lineup.indexOf(by)] || (this.byseat(by) || { who: { name: 'A teammate' } }).who.name;
+    if (by === this.lineup[sp]) UI.toast(by === this.seat ? 'You are bowling your own bowls again.' : `${own} is back and bowling again.`, 'good');
+    else UI.toast(`${byName} ${by === this.seat ? 'are' : 'is'} bowling for ${own} until ${own === 'You' ? 'you are' : 'they are'} back.`);
+    UI.refresh(); OnlineUI.status();
+  },
+  // Keep the connection warm, let everyone else watch this one line up, and keep an eye on who has dropped out.
   tick(dt) {
     if (this.state !== 'open') return;
     if ((this.pingClock += dt) > 25) { this.pingClock = 0; this.raw({ t: 'ping' }); }
+    if ((this.awayClock += dt) > 0.5) { this.awayClock = 0; Away.check(); }
     const g = game;
     if (!g.link || g.mode !== 'match' || !g.turn || g.remoteTurn || (g.phase !== 'aim' && g.phase !== 'charge')) return;
     if ((this.aimClock += dt) < 0.1) return; this.aimClock = 0;
@@ -6684,13 +6780,25 @@ function startOnlineMatch(s, rest) {
   if (Coach.on) Coach.stop();
   for (const id of ['onlineScrim', 'titleScrim', 'setupScrim', 'sumScrim', 'overScrim']) if ($(id).classList.contains('show')) UI.close(id);
   UI.noticeCb = null; $('notice').classList.remove('show');
-  const players = s.players.map(p => ({ name: String(p.name || 'Player').slice(0, 16), profileId: String(p.profileId), colour: String(p.colour) }));
-  const cfg = { players, T: clamp(+s.T || 13, 11, 16), format: s.format, discipline: DISCIPLINES.singles, leader: s.leader ? 1 : 0, secret: !!s.secret, ai: null,
-    link: { seat: Net.seat, send: (m, logged) => Net.send(m, logged) }, matchId: `on.${Net.code}.${s.matchNo}.${s.seq}` };
+  const disc = DISCIPLINES[s.disc] || DISCIPLINES.singles, P = disc.positions, nm = v => String(v || 'Player').slice(0, 16);
+  const sides = (s.players || []).slice(0, 2);
+  const players = sides.map(p => ({ name: nm(p.name), profileId: String(p.profileId), colour: String(p.colour),
+    members: (p.members || []).slice(0, P).map(m => ({ name: nm(m.name) })) }));
+  Net.disc = disc; Net.lineup = []; Net.names = [];
+  sides.forEach((p, side) => (p.members || []).slice(0, P).forEach((m, pos) => { Net.lineup[spotOf(side, pos)] = Number(m.seat); Net.names[spotOf(side, pos)] = nm(m.name); }));
+  Net.ctl = Net.lineup.slice(); Net.ctlSeq = [];
+  for (const e of rest) if (e.t === 'stand') Net.stand(e, true);
+  Away.reset();
+  const mine = Net.lineup.indexOf(Net.seat), side = mine < 0 ? null : Math.floor(mine / SIDE_SPOTS);
+  const cfg = { players, venue: typeof s.venue === 'string' ? s.venue : null, T: clamp(+s.T || 13, 11, 16), format: s.format, discipline: disc, leader: s.leader ? 1 : 0, secret: !!s.secret, ai: null,
+    link: { seat: Net.seat, side, watching: side == null, send: (m, logged) => Net.send(m, logged),
+      mine: (sd, mi) => Net.ctl[spotOf(sd, mi)] === Net.seat, seatFor: (sd, mi) => Net.ctl[spotOf(sd, mi)] }, matchId: `on.${Net.code}.${s.matchNo}.${s.seq}` };
   if (!rest.length) {
     game.startMatch(cfg);
     const msgs = [];
-    if (s.toss) msgs.push(cfg.leader === Net.seat ? 'You win the toss and take the jack.' : `${players[cfg.leader].name} wins the toss and takes the jack.`);
+    if (side == null) msgs.push(`You're watching ${players[0].name} v ${players[1].name}.`);
+    else if (P > 1) msgs.push(`You're playing ${disc.roles[spotPos(mine)].toLowerCase()} for ${players[side].name}.`);
+    if (s.toss) msgs.push(cfg.leader === side ? (P > 1 ? 'Your side wins the toss and takes the jack.' : 'You win the toss and take the jack.') : `${players[cfg.leader].name} ${P > 1 ? 'win' : 'wins'} the toss and ${P > 1 ? 'take' : 'takes'} the jack.`);
     if (s.green === 'random') msgs.push(`Today's green is running at ${cfg.T.toFixed(1)} s, ${GreenSpeed.label(cfg.T).toLowerCase()}.`);
     if (s.secret) msgs.push('The green speed is a secret today: read it from your first bowls.');
     if (msgs.length) setTimeout(() => UI.toast(msgs.join(' ')), 400);
@@ -6700,7 +6808,7 @@ function startOnlineMatch(s, rest) {
     try { game.replayOnline(cfg, rest); } finally { game.ui = ui; Sound.muted = muted; }
     game.trace = []; game.traceAlpha = 0; game.snapCam = true;
     if (game.phase === 'over') UI.matchOver(); else game.showPrompt();
-    setTimeout(() => UI.toast('Back in the game.'), 300);
+    setTimeout(() => UI.toast(side == null ? 'Watching the match.' : 'Back in the game.'), 300);
   }
   UI.refresh(); OnlineUI.status();
 }
@@ -6709,7 +6817,7 @@ const OnlineUI = {
   stage: 'choose',   // choose (name, bowls, colour; quick match, create or join) | queue (looking for a quick match) | room
   col: store.get('on.col', 'claret'),
   who() { return { name: ($('onName').value.trim() || 'Player').slice(0, 16), profileId: $('onProf').value, colour: this.col, level: myLevel() }; },
-  // the player changed Standard/Expert: tell the other side straight away
+  // the player changed Standard/Expert: tell everyone else straight away
   levelChanged() {
     if (Net.on && Net.who) { Net.who = { ...Net.who, level: myLevel() }; Net.saveSession(); Net.raw({ t: 'who', who: Net.who }); }
     if (game.mode === 'match') UI.renderScoreboard();
@@ -6744,9 +6852,71 @@ const OnlineUI = {
     u.search = ''; u.hash = ''; u.searchParams.set('room', Net.code); if (relay) u.searchParams.set('relay', relay);
     return u.toString();
   },
+  // ---- the host's choices: the game and the team names, shared with the room as they change ----
+  teamName(i) { const t = Net.info && Net.info.teams && Net.info.teams[i]; return String(t || (i ? 'Visitors' : 'Ashcombe')).slice(0, 16); },
+  sendInfo() {
+    const disc = Net.info ? Net.roomDisc().id : store.get('on.disc', 'singles');
+    const teams = Net.info ? [0, 1].map(i => this.teamName(i)) : [store.get('on.team0', 'Ashcombe'), store.get('on.team1', 'Visitors')];
+    Net.info = { disc, teams }; Net.raw({ t: 'room', info: Net.info });
+  },
+  setDisc(d) {
+    if (!Net.isHost() || !DISCIPLINES[d]) return;
+    if (!Net.info) this.sendInfo();
+    Net.info = { ...Net.info, disc: d }; store.set('on.disc', d); this.sendInfo();
+    // places beyond the new game's positions are given up
+    for (const p of Net.peers) if (p.spot != null && spotPos(p.spot) >= DISCIPLINES[d].positions) Net.place(null, p.seat);
+    this.render();
+  },
+  setTeam(i, v) {
+    if (!Net.isHost()) return;
+    if (!Net.info) this.sendInfo();
+    const teams = [0, 1].map(k => this.teamName(k)); teams[i] = v.trim().slice(0, 16) || (i ? 'Visitors' : 'Ashcombe');
+    Net.info = { ...Net.info, teams }; store.set('on.team' + i, teams[i]);
+    clearTimeout(this.teamTimer); this.teamTimer = setTimeout(() => this.sendInfo(), 350);
+  },
+  // the host fills a place from the room (or empties it)
+  pick(sp, v) {
+    const occ = Net.atSpot(sp);
+    if (v === '') { if (occ) Net.place(null, occ.seat); return; }
+    const seat = +v; if (occ && occ.seat === seat) return;
+    if (occ) Net.place(null, occ.seat);
+    Net.place(sp, seat);
+  },
+  // the places in the room, side by side, and who's watching
+  renderLineup(host) {
+    const d = Net.roomDisc(), P = d.positions, teams = P > 1;
+    [...$('onDisc').children].forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.d === d.id)); b.disabled = !host; });
+    $('onDiscF').classList.toggle('readonly', !host);
+    const label = p => `${esc(Net.whoOf(p).name)}${p.seat === Net.seat ? ' (you)' : ''}${p.online ? '' : ' · away'}`;
+    for (const side of [0, 1]) {
+      const inp = $('onTeam' + side);
+      inp.hidden = !(teams && host); $('onTeamT' + side).hidden = !teams || host;
+      if (document.activeElement !== inp) inp.value = this.teamName(side);
+      $('onTeamT' + side).textContent = this.teamName(side);
+      let h = '';
+      for (let pos = 0; pos < P; pos++) {
+        const sp = spotOf(side, pos), p = Net.atSpot(sp), role = d.roles[pos] || (side ? 'Player two' : 'Player one');
+        let body;
+        if (host) body = `<select class="select lu-pick" data-spot="${sp}" aria-label="${esc(role)}${teams ? ', ' + esc(this.teamName(side)) : ''}"><option value="">Empty</option>${Net.peers.map(q => `<option value="${q.seat}"${p && p.seat === q.seat ? ' selected' : ''}>${label(q)}</option>`).join('')}</select>`;
+        else if (p) body = `<span class="lu-name${p.seat === Net.seat ? ' me' : ''}${p.online ? '' : ' away'}">${label(p)}</span>`;
+        else body = `<button type="button" class="btn lu-take" data-spot="${sp}">Take this place</button>`;
+        h += `<div class="lu-slot"><span class="lu-role">${esc(role)}</span>${body}</div>`;
+      }
+      setHtml($('onSlots' + side), h);
+    }
+    const watching = Net.peers.filter(p => p.spot == null || spotPos(p.spot) >= P);
+    $('onWatchers').textContent = watching.length ? `Watching: ${watching.map(p => Net.whoOf(p).name + (p.seat === Net.seat ? ' (you)' : '')).join(', ')}.` : 'Anyone else who joins with the code can watch, or take a place that is free.';
+    const me = Net.byseat(Net.seat); $('onWatch').hidden = !(me && me.spot != null && spotPos(me.spot) < P);
+  },
+  // every place filled, by someone who is here
+  lineupState() {
+    const P = Net.roomDisc().positions, need = 2 * P; let filled = 0, away = null;
+    for (const side of [0, 1]) for (let pos = 0; pos < P; pos++) { const p = Net.atSpot(spotOf(side, pos)); if (p) { filled++; if (!p.online && !away) away = p; } }
+    return { need, filled, away, ready: filled === need && !away };
+  },
   render() {
     const room = this.stage === 'room', queue = this.stage === 'queue', quick = room && Net.quick && !Net.inMatch;
-    const host = !quick && (Net.seat === 0 || (Net.seat == null && Net.create)), peer = Net.peer(), here = !!(peer && peer.online);
+    const host = !quick && (Net.isHost() || (Net.seat == null && Net.create));
     $('onIdent').hidden = room || queue; $('onQuick').hidden = room || queue; $('onChoose').hidden = room || queue; $('onLede').hidden = room || queue;
     $('onRoom').hidden = !room; $('onQueue').hidden = !queue; $('onRoom').classList.toggle('quick', quick);
     $('onH').textContent = queue || quick ? 'Quick match' : room ? (Net.code ? `Room ${Net.code}` : 'Room') : 'Play someone on another computer';
@@ -6756,17 +6926,22 @@ const OnlineUI = {
       return;
     }
     $('onCodeBig').textContent = Net.code || '—'; $('onLink').value = Net.code ? this.link() : '';
-    let st;
+    const other = Net.peers.find(p => p.seat !== Net.seat) || null, hostP = Net.byseat(Net.hostSeat()), hostName = hostP ? Net.whoOf(hostP).name : 'The host';
+    const L = this.lineupState();
+    let st, good = false;
     if (Net.state === 'connecting') st = 'Connecting…';
     else if (Net.state === 'retry') st = 'Connection lost. Trying again…';
     else if (Net.state === 'off') st = 'Not connected.';
-    else if (quick) st = here ? `Found ${peer.who.name}. Walking out to the green…` : peer ? `${peer.who.name} has dropped out. Waiting for them to come back…` : 'Found an opponent. Waiting for them to arrive…';
-    else if (!peer) st = host ? 'Waiting for your opponent. Send them the code or the link.' : 'Waiting for the other player…';
-    else if (!here) st = `${peer.who.name} has dropped out. Waiting for them to come back…`;
-    else st = host ? `${peer.who.name} has joined. Choose the conditions, then walk out.` : `You're in ${peer.who.name}'s room. ${peer.who.name} is choosing the conditions…`;
-    $('onStatusT').textContent = st; $('onStatus').classList.toggle('warn', !(here && Net.state === 'open'));
-    $('onLevels').textContent = `Challenge: you ${levelName(myLevel())}` + (peer && peer.who ? ` · ${peer.who.name} ${levelName(peer.who.level)}` : '') + '. Change yours in Settings.';
-    $('onHostSet').hidden = !(room && host); $('onGo').hidden = !(room && host); $('onGo').disabled = !(here && Net.state === 'open');
+    else if (quick) { st = other && other.online ? `Found ${other.who.name}. Walking out to the green…` : other ? `${other.who.name} has dropped out. Waiting for them to come back…` : 'Found an opponent. Waiting for them to arrive…'; good = !!(other && other.online); }
+    else if (L.away) st = `${Net.whoOf(L.away).name} has dropped out. Waiting for them to come back…`;
+    else if (!L.ready) st = L.need === 2 && Net.peers.length < 2 ? (host ? 'Waiting for your opponent. Send them the code or the link.' : 'Waiting for the other player…')
+      : `${L.filled} of ${L.need} places taken. ${host ? 'Send the code or the link to fill the rest.' : `${hostName} starts the match when they are all filled.`}`;
+    else { st = host ? "Everyone's here. Choose the conditions, then walk out." : `Everyone's here. ${hostName} is choosing the conditions…`; good = true; }
+    $('onStatusT').textContent = st; $('onStatus').classList.toggle('warn', !(good && Net.state === 'open'));
+    const players = quick ? Net.peers : Net.peers.filter(p => p.spot != null && spotPos(p.spot) < Net.roomDisc().positions);
+    $('onLevels').textContent = `Challenge: you ${levelName(myLevel())}` + players.filter(p => p.seat !== Net.seat).map(p => ` · ${p.who.name} ${levelName(p.who.level)}`).join('') + '. Change yours in Settings.';
+    $('onLineup').hidden = !room || quick; if (room && !quick) this.renderLineup(host);
+    $('onHostSet').hidden = !(room && host); $('onGo').hidden = !(room && host); $('onGo').disabled = !(L.ready && Net.state === 'open');
     $('onBack').textContent = room ? 'Leave the room' : 'Back';
     $('onMenu').textContent = room ? '‹ Leave and go to menu' : '‹ Main menu';
   },
@@ -6775,20 +6950,26 @@ const OnlineUI = {
     store.set('on.fmt', $('onFmt').value); store.set('on.green', $('onGreen').value); if ($('onGreen').value === 'set') store.set('on.T', +$('onSpeed').value);
     $('onGo').disabled = true;
   },
-  // Seat 0 sends the conditions; both players start from them.
+  // The host sends the game, the sides and the conditions; everyone starts from them.
   setup(fmt, green, speed, leadV) {
-    const peer = Net.peer(); if (!peer || !peer.online || Net.seat !== 0 || Net.state !== 'open') return false;
+    if (Net.state !== 'open' || !Net.isHost()) return false;
+    const disc = Net.quick ? DISCIPLINES.singles : Net.roomDisc(), P = disc.positions;
+    const quickSeats = [Net.byseat(Net.seat), Net.peers.find(p => p.seat !== Net.seat)];
+    const at = (side, pos) => Net.quick ? quickSeats[side] : Net.atSpot(spotOf(side, pos));
+    const sides = [0, 1].map(side => Array.from({ length: P }, (_, pos) => at(side, pos)));
+    if (sides.flat().some(p => !p || !p.online)) return false;
     const [ft, fn] = fmt.split(':'), T = green === 'set' ? speed : randomGreen();
     const toss = leadV === 'toss', leader = toss ? (Math.random() < 0.5 ? 0 : 1) : +leadV;
-    const me = Net.who, them = peer.who, c0 = me.colour || 'claret';
-    const c1 = them.colour && them.colour !== c0 ? them.colour : (c0 === 'navy' ? 'claret' : 'navy');
-    Net.send({ t: 'setup', players: [{ name: me.name, profileId: me.profileId, colour: c0 }, { name: them.name, profileId: them.profileId, colour: c1 }],
-      T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
+    const skip = side => Net.whoOf(sides[side][P - 1]);   // a team bowls in its skip's choice of bowls and colour
+    const c0 = skip(0).colour || 'claret', c1 = skip(1).colour && skip(1).colour !== c0 ? skip(1).colour : (c0 === 'navy' ? 'claret' : 'navy');
+    const players = sides.map((ms, side) => ({ name: P > 1 ? this.teamName(side) : Net.whoOf(ms[0]).name, profileId: skip(side).profileId, colour: side ? c1 : c0,
+      members: ms.map(p => ({ name: Net.whoOf(p).name, seat: p.seat })) }));
+    Net.send({ t: 'setup', disc: disc.id, players, venue: Venue.pick().id, T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
     return true;
   },
   // A quick match starts by itself on standard conditions once both players are in the room.
   quickStart() {
-    if (!Net.quick || Net.quickSent || Net.inMatch || Net.seat !== 0) return;
+    if (!Net.quick || Net.quickSent || Net.inMatch || !Net.isHost()) return;
     if (this.setup('ends:4', 'random', 13, 'toss')) Net.quickSent = true;
   },
   // Either button: out of the room (if in one) and back to the main menu in one step.
@@ -6818,24 +6999,23 @@ const OnlineUI = {
     const chip = $('netChip'), show = !!game.link && game.mode === 'match';
     chip.hidden = !show;
     if (show) {
-      const peer = Net.peer(); let t, warn = true;
+      let t, warn = true;
+      const gone = Net.lineup.filter(s => s != null && s !== Net.seat).map(s => Net.byseat(s) || { seat: s, gone: true }).find(p => p.gone || !p.online);
       if (Net.state === 'off') t = 'Disconnected';
       else if (Net.state !== 'open') t = 'Reconnecting…';
-      else if (!peer) t = 'Opponent left';
-      else if (!peer.online) t = `${peer.who.name} is away`;
-      else { t = `Online · ${Net.code}`; warn = false; }
+      else if (gone) t = gone.gone ? `${Net.names[Net.lineup.indexOf(gone.seat)] || 'A player'} left` : `${gone.who.name} is away`;
+      else { t = `${game.link.watching ? 'Watching' : 'Online'} · ${Net.code}`; warn = false; }
       $('netTxt').textContent = t; chip.title = t; chip.classList.toggle('warn', warn);
     }
     Lobby.sync(); this.quickStart(); Away.check();
     if ($('onlineScrim').classList.contains('show')) this.render();
   },
   peer(m, old) {
-    const name = (m.who && m.who.name) || (old && old.who && old.who.name) || 'Your opponent';
+    const name = (m.who && m.who.name) || (old && old.who && old.who.name) || 'A player';
     const lv = m.who && m.who.level, was = old && old.who && old.who.level;
-    if (lv && was && lv !== was && game.link && game.mode === 'match') { UI.toast(`${name} is now playing at ${levelName(lv)}.`); UI.renderScoreboard(); }
-    if (game.link && game.mode === 'match') {
-      if (m.online && old && !old.online && game.phase !== 'over') UI.toast(`${name} is back.`, 'good');   // dropping out or leaving: see Away
-    }
+    const playing = game.link && game.mode === 'match' && Net.lineup.includes(m.seat);
+    if (lv && was && lv !== was && playing) { UI.toast(`${name} is now playing at ${levelName(lv)}.`); UI.renderScoreboard(); }
+    if (playing && m.online && old && !old.online && game.phase !== 'over') UI.toast(`${name} is back.`, 'good');   // dropping out or leaving: see Away
     this.status();
   },
   error(m) {
@@ -6847,36 +7027,58 @@ const OnlineUI = {
     this.status();
   }
 };
-/* An opponent who drops out of an online match gets AWAY_S seconds to come back: this screen shows a
-   warning with the time left, and when it runs out they forfeit the match. One who leaves on purpose
-   (their seat is gone) forfeits at once. The forfeit goes into the relay's log as 'resign', so their
-   screen shows it too if they come back. The clock runs only while this screen is connected, and on
-   the wall clock, so it keeps time in a background tab. */
-const AWAY_S = 60;
+/* Dropping out of an online match. A teammate who is here stands in for a player who has been gone
+   STAND_S seconds (at once if they left): the first of the side in position order sends a 'stand',
+   and the player takes their bowls back between turns when they return. A side with nobody left
+   gets AWAY_S seconds for someone to come back: this screen shows a warning with the time left, and
+   when it runs out that side forfeits. A side whose players have all left on purpose forfeits at once.
+   The forfeit goes into the relay's log as 'resign', so every screen shows it, after a reload too.
+   Only players keep this watch, not watchers. The clock runs only while this screen is connected,
+   and on the wall clock, so it keeps time in a background tab. */
+const AWAY_S = 60, STAND_S = 8;
 const Away = {
-  until: 0, timer: 0,
+  until: 0, timer: 0, off: {}, claimed: {},
+  reset() { this.stop(); this.off = {}; this.claimed = {}; },
   check() {
-    const g = game, peer = Net.peer();
-    const live = !!g.link && g.mode === 'match' && g.phase !== 'over' && Net.inMatch && Net.state === 'open';
-    if (live && !peer) { this.forfeit('left'); return; }
-    if (!(live && !peer.online)) { this.stop(); return; }
+    const g = game, live = !!g.link && g.mode === 'match' && g.phase !== 'over' && Net.inMatch && Net.state === 'open' && !!Net.disc;
+    if (!live || g.link.side == null) { this.stop(); return; }
+    const me = g.link.side, them = 1 - me;
+    this.standIn(me);
+    const here = Net.sideSeats(them).map(s => Net.byseat(s)).filter(Boolean);
+    if (!here.length) { this.forfeit(them, 'left'); return; }
+    if (here.some(p => p.online)) { this.stop(); return; }
     if (!this.until) { this.until = Date.now() + AWAY_S * 1000; this.timer = setInterval(() => this.tick(), 250); }
-    this.paint(peer);
+    this.paint(them);
   },
-  tick() { this.check(); if (this.until && Date.now() >= this.until) this.forfeit('away'); },
+  standIn(me) {
+    const g = game, P = Net.disc.positions, now = Date.now(), t = g.turn, turnSpot = t ? spotOf(t.player, t.member || 0) : -1;
+    const online = s => { const p = Net.byseat(s); return !!(p && p.online); };
+    let first = null; for (let pos = 0; pos < P && first == null; pos++) { const s = Net.lineup[spotOf(me, pos)]; if (online(s)) first = s; }
+    for (let pos = 0; pos < P; pos++) {
+      const sp = spotOf(me, pos), own = Net.lineup[sp], ctl = Net.ctl[sp];
+      if (own === Net.seat) { if (ctl !== Net.seat && sp !== turnSpot) this.claim(sp); continue; }   // back: our own bowls again, between turns
+      if (online(ctl)) { delete this.off[sp]; continue; }
+      if (!this.off[sp]) this.off[sp] = now;
+      if (first === Net.seat && (!Net.byseat(ctl) || now - this.off[sp] >= STAND_S * 1000)) this.claim(sp);
+    }
+    // a bowl still running when its bowler dropped out: whoever has their place says where it stopped
+    if (g.awaitSettle != null && !g.remoteTurn && !online(g.netBy.get(g.awaitSettle))) g.settleForAbsent();
+  },
+  // once for each change of hands: if it is refused or overtaken, the next change lets us try again
+  claim(sp) { const k = Net.ctlSeq[sp] || 0; if (this.claimed[sp] === k) return; this.claimed[sp] = k; Net.send({ t: 'stand', spot: sp, by: Net.seat, was: Net.ctl[sp] }, true); },
+  tick() { this.check(); if (this.until && Date.now() >= this.until && game.link) this.forfeit(1 - game.link.side, 'away'); },
   stop() { clearInterval(this.timer); this.timer = 0; this.until = 0; $('awayBox').hidden = true; },
-  paint(peer) {
-    const left = Math.max(0, this.until - Date.now()), name = peer.who.name;
-    $('awayT').textContent = `${name} has lost the connection`;
+  paint(side) {
+    const left = Math.max(0, this.until - Date.now()), teams = Net.disc.positions > 1, name = game.players[side].name;
+    $('awayT').textContent = teams ? `Everyone from ${name} has lost the connection` : `${name} has lost the connection`;
     const sec = Math.ceil(left / 1000); $('awayN').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-    $('awayD').textContent = `If ${name} is not back in time, they forfeit and the match is yours.`;
+    $('awayD').textContent = teams ? `If none of them is back in time, ${name} forfeit and the match goes to your side.` : `If ${name} is not back in time, they forfeit and the match is yours.`;
     $('awayBar').style.transform = `scaleX(${left / (AWAY_S * 1000)})`;
     $('awayBox').hidden = false;
   },
-  forfeit(why) {
+  forfeit(side, why) {
     this.stop();
-    const seat = 1 - Net.seat;
-    game.forfeit(seat, why); Net.send({ t: 'resign', seat, why }, true);
+    game.forfeit(side, why); Net.send({ t: 'resign', side, why }, true);
   }
 };
 
@@ -6902,7 +7104,7 @@ const Lobby = {
     this.ws = ws; this.state = 'connecting';
     ws.onopen = () => {
       this.state = 'open'; this.retries = 0;
-      ws.send(JSON.stringify({ t: 'hello', build: BUILD, s: this.s }));
+      ws.send(JSON.stringify({ t: 'hello', build: NET_BUILD, s: this.s }));
       if (this.queued) ws.send(JSON.stringify({ t: 'queue', who: this.who }));
       clearInterval(this.pingTimer); this.pingTimer = setInterval(() => this.send({ t: 'ping' }), 30000);
       if (this.queued) OnlineUI.msg('');
@@ -7046,7 +7248,7 @@ const SHARE = {
 $('shareCopy').onclick = async () => { const ok = await SHARE.copy($('shareLink').value); $('shareCopy').textContent = ok ? 'Copied' : 'Press Ctrl+C to copy'; if (!ok) $('shareLink').select(); setTimeout(() => $('shareCopy').textContent = 'Copy link', 2400); };
 $('shareDone').onclick = () => UI.close('shareScrim');
 $('shareLink').onclick = () => $('shareLink').select();
-$('onShare').onclick = () => { if (Net.code) SHARE.go('Invite your opponent', `Fancy a game of bowls? Join me on Bias: room ${Net.code}.`, OnlineUI.link()); };
+$('onShare').onclick = () => { if (Net.code) SHARE.go('Invite players', `Fancy a game of bowls? Join me on Bias: room ${Net.code}.`, OnlineUI.link()); };
 $('mShare').onclick = () => SHARE.go('Tell a friend', 'Bias: lawn bowls in your browser. Play the computer, or a friend online.', gameLink());
 $('onCreate').onclick = () => OnlineUI.create();
 $('onJoin').onclick = () => OnlineUI.join();
@@ -7061,6 +7263,11 @@ $('qmYes').onclick = () => QM.yes();
 $('qmNo').onclick = () => QM.no();
 $('qmChip').onclick = () => { if (game.phase === 'charge') game.cancelCharge(); OnlineUI.open(); };
 $('onCopy').onclick = () => OnlineUI.copy();
+$('onDisc').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) OnlineUI.setDisc(b.dataset.d); });
+for (const i of [0, 1]) $('onTeam' + i).addEventListener('input', e => OnlineUI.setTeam(i, e.target.value));
+$('onSides').addEventListener('change', e => { const s = e.target.closest('.lu-pick'); if (s) OnlineUI.pick(+s.dataset.spot, s.value); });
+$('onSides').addEventListener('click', e => { const b = e.target.closest('.lu-take'); if (b) Net.place(+b.dataset.spot); });
+$('onWatch').onclick = () => Net.place(null);
 $('onGreen').addEventListener('change', () => OnlineUI.paintGreen());
 $('onSpeed').addEventListener('input', () => updateSpeedOut($('onSpeed'), $('onSpeedOut')));
 $('onFmt').innerHTML = $('fmt').innerHTML; $('onGreen').innerHTML = $('greenMode').innerHTML;
@@ -7561,8 +7768,8 @@ window.BiasTests = {
       }
       ok('Jack driven out of the rink → re-spotted on the T, the end goes on', spotted === true, spotted === null ? 'no drive knocked the jack out' : 'checked');
       Settings.arm = arm; }
-    // 13b. pairs and triples: order of play, bowls per player, team scoring
-    for (const key of ['pairs', 'triples']) {
+    // 13b. pairs, triples and rinks: order of play, bowls per player, team scoring
+    for (const key of ['pairs', 'triples', 'rinks']) {
       const D = DISCIPLINES[key], arm = Settings.arm; Settings.arm = 'R'; StubUI.log = [];
       const team = (n, c) => ({ name: n, profileId: 'dp-pro', colour: c, members: D.roles.map((r, i) => ({ name: n + i })) });
       const G = new Game(StubUI, { instant: true });
@@ -7572,7 +7779,7 @@ window.BiasTests = {
       const who = [], expect = [], n = D.positions * D.bowls * 2;
       for (let pos = 0; pos < D.positions; pos++) for (let i = 0; i < D.bowls; i++) expect.push('1' + pos, '0' + pos);
       for (let i = 0; i < n && G.turn.kind === 'bowl' && G.phase === 'aim'; i++) { who.push(G.turn.player + '' + G.turn.member); G.testDeliver(G.turn.player ? -0.1 : 0.1, 0.6, G.turn.player ? 'back' : 'fore'); }
-      ok(`${D.name}: leads, ${D.positions > 2 ? 'seconds, ' : ''}then skips, alternately, ${D.bowls} bowls each`, who.join(',') === expect.join(',') && G.players.every(p => p.members.every(m => m.played === D.bowls)), who.join(' '));
+      ok(`${D.name}: leads, ${D.positions > 2 ? 'seconds, ' : ''}${D.positions > 3 ? 'thirds, ' : ''}then skips, alternately, ${D.bowls} bowls each`, who.join(',') === expect.join(',') && G.players.every(p => p.members.every(m => m.played === D.bowls)), who.join(' '));
       const sc = StubUI.last && StubUI.last.sc;
       ok(`${D.name}: the end is scored for the team after ${n} bowls`, StubUI.log.includes('summary') && G.match.ends.length === 1 && G.players[0].score + G.players[1].score === (sc && sc.winner != null ? sc.shots : 0), `${G.players[0].score}–${G.players[1].score}`);
       Settings.arm = arm;
@@ -7626,7 +7833,7 @@ window.BiasTests = {
       const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
       const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });
       const log = [], q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
-      const link = seat => ({ seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
+      const link = seat => ({ seat, side: seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
       G.forEach((g, i) => g.startMatch(cfg(link(i))));
       const pump = () => { while (q.length) { const e = q.shift(); G[1 - e.from].netIn(e); G[0].flush(); G[1].flush(); } };
       const rnd = mulberry32(2026); let guard = 0;
@@ -7684,20 +7891,47 @@ window.BiasTests = {
       const flip = w.d.charAt(5) === 'A' ? 'B' : 'A', bad = { ...w, d: w.d.slice(0, 5) + flip + w.d.slice(6) };
       const canon = o => JSON.stringify(Object.entries(o).sort(([a], [b]) => a < b ? -1 : 1));
       const named = Wire.unpack(Wire.pack({ t: 'setup', players: [{ name: 'Zoë Ñ 🎳' }] }, 'ABCD'), 'ABCD');
-      ok('Online: messages travel scrambled, with only t and cid plain', w.t === 'settle' && w.cid === 12 && Object.keys(w).length === 3 && !/ditch|toucher|bodies/.test(wire), wire.slice(0, 60));
+      ok('Online: messages travel scrambled, with only t, cid and n plain', w.t === 'settle' && w.cid === 12 && w.n === 7 && Object.keys(w).length === 4 && !/ditch|toucher|bodies/.test(wire), wire.slice(0, 60));
       ok('Online: a scrambled message comes back as sent, with the relay\'s fields on top', canon(got) === canon({ ...m, seq: 40, from: 1, matchNo: 2 }) && named.players[0].name === 'Zoë Ñ 🎳');
       ok('Online: a changed message, one for another room, or one sent plain is dropped',
-        Wire.unpack(bad, 'ABCD') === null && Wire.unpack(w, 'WXYZ') === null && Wire.unpack(m, 'ABCD') === null && Wire.unpack({ t: 'peer', seat: 1 }, 'ABCD').seat === 1); }
+        Wire.unpack(bad, 'ABCD') === null && Wire.unpack({ ...w, n: 8 }, 'ABCD') === null && Wire.unpack(w, 'WXYZ') === null && Wire.unpack(m, 'ABCD') === null && Wire.unpack({ t: 'peer', seat: 1 }, 'ABCD').seat === 1); }
     // 15b. online: a player who drops out and does not come back forfeits; the forfeit is in the log, so a reload shows it too
     { const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
       const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });
       const log = [], G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })];
-      const link = seat => ({ seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
+      const link = seat => ({ seat, side: seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
       G.forEach((g, i) => g.startMatch(cfg(link(i))));
-      G[0].forfeit(1, 'away'); log.push({ t: 'resign', seat: 1, why: 'away', from: 0, seq: log.length + 1 });
+      G[0].forfeit(1, 'away'); log.push({ t: 'resign', side: 1, why: 'away', from: 0, seq: log.length + 1 });
       G[1].netIn(log[log.length - 1]);
-      const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, send() {} }), log);
-      ok('Online: a forfeit ends the match on both screens, and after a reload', G.every(g => g.phase === 'over' && g.match.forfeit && g.match.forfeit.seat === 1) && R.phase === 'over' && R.match.forfeit.why === 'away'); }
+      const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, side: 1, send() {} }), log);
+      ok('Online: a forfeit ends the match on both screens, and after a reload', G.every(g => g.phase === 'over' && g.match.forfeit && g.match.forfeit.side === 1) && R.phase === 'over' && R.match.forfeit.why === 'away'); }
+    // 15d. online triples and rinks: six or eight players and a watcher, each on their own computer; partway
+    //      through, the lead stands in for the second (as if they had dropped out), then hands back
+    for (const D of [DISCIPLINES.triples, DISCIPLINES.rinks]) { const P = D.positions, N = 2 * P;
+      const answers = () => ({ ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } });
+      const team = (n, c) => ({ name: n, profileId: 'dp-pro', colour: c, members: D.roles.map((r, i) => ({ name: n + (i + 1) })) });
+      const ctl = Array.from({ length: N }, (_, i) => i), log = [], q = [], G = Array.from({ length: N + 1 }, () => new Game(answers(), { instant: true }));
+      const link = seat => ({ seat, side: seat < N ? Math.floor(seat / P) : null, watching: seat === N,
+        send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); },
+        mine: (sd, mi) => ctl[sd * P + mi] === seat, seatFor: (sd, mi) => ctl[sd * P + mi] });
+      G.forEach((g, i) => g.startMatch({ players: [team('A', 'claret'), team('B', 'navy')], T: 13, format: { type: 'ends', n: 2 }, discipline: D, leader: 0, link: link(i) }));
+      const pump = () => { while (q.length) { const e = q.shift(); G.forEach((g, i) => { if (i !== e.from) g.netIn(e); }); G.forEach(g => g.flush()); } };
+      const rnd = mulberry32(7); let guard = 0, n = 0, stoodIn = 0;
+      while (G[0].phase !== 'over' && guard++ < 600) {
+        pump(); if (n === 4) ctl[1] = 0; if (n === 14) ctl[1] = 1;
+        const live = G.filter(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (live.length !== 1) break;
+        const g = live[0]; if (g.link.seat === 0 && g.turn.member === 1) stoodIn++;
+        g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
+        g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump(); n++;
+      }
+      const sig = g => JSON.stringify({ s: g.players.map(p => p.score), e: g.match.ends.map(e => [e.winner, e.shots]), b: g.snapshot() });
+      ok(`Online ${D.name.toLowerCase()}: ${N} players and a watcher finish the same match`, G.every(g => g.phase === 'over' && sig(g) === sig(G[0])) && G[0].match.ends.length >= 2,
+        `${G[0].players.map(p => p.score).join('–')}, ${G[0].deliveryNo} deliveries, ${log.length} messages`);
+      ok(`Online ${D.name.toLowerCase()}: a teammate can stand in for a player`, stoodIn > 0 && log.some(e => e.t === 'deliver' && e.from === 1), `lead bowled ${stoodIn} of the second's bowls`); }
+    // 15c0. online: every screen plays the match at the club the host's setup names
+    { const G = new Game(StubUI, { instant: true }), was = Venue.current, ids = Venue.list().map(v => v.id), want = ids.find(id => id !== was.id) || ids[0];
+      G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'dp-pro', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0, venue: want });
+      ok('Online: the match is at the club the host chose', Venue.current.id === want, `${want} of ${ids.length}`); Venue.set(was); }
     // 15c. Go up and look: once an end for each bowler, never on the jack or on the other side's turn
     { const G = new Game(StubUI, { instant: true }); G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0 });
       const onJack = G.canLook(); G.testDeliver(0, 0.6);
@@ -7720,7 +7954,7 @@ window.BiasTests = {
       ok('Record: shots for and against, and the first and last dates', s.computer.club.shotsFor === 6 && s.computer.club.shotsAgainst === 6 && s.first === Record.day(day) && s.last === Record.day(day + 2 * 864e5), `${s.first} to ${s.last}`);
       ok('Record: a match counts once, even if the over screen shows again (a reload)', !Record.count(won, st, day) && st.get('stats').computer.club.played === 2);
       // a league match level after the last end is a draw (the league allows it); counted from this screen's seat
-      const draw = finish({ league: true, matchId: 'lg.test', link: { seat: 1, send() {} } }, 2, 2);
+      const draw = finish({ league: true, matchId: 'lg.test', link: { seat: 1, side: 1, send() {} } }, 2, 2);
       Record.count(draw, st, day); s = st.get('stats');
       ok('Record: a level league match counts as drawn', s.league.played === 1 && s.league.drawn === 1 && s.online.played === 0);
       // abandoned: a match left part-way through, then practice; and two people sharing one screen
@@ -7730,25 +7964,25 @@ window.BiasTests = {
         ok('Record: abandoned matches, practice and two on one screen do not count', !mid && !prac && !local && JSON.stringify(st.get('stats')) === JSON.stringify(s)); }
       // online: both screens count the same match, each for its own seat; a reload rebuilds it to the over screen with the same id
       { const log = [], q = [], st0 = mem(), st1 = mem(), cfg = link => ({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, link, matchId: 'on.TEST.1.1' });
-        const link = seat => ({ seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
+        const link = seat => ({ seat, side: seat, send: m => { const e = { ...m, from: seat, seq: log.length + 1 }; log.push(e); q.push(e); } });
         const G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })]; G.forEach((g, i) => g.startMatch(cfg(link(i))));
         G[0].players[0].score = 4; G[0].players[1].score = 1; G[1].players[0].score = 4; G[1].players[1].score = 1;
-        G[1].forfeit(1, 'left'); log.push({ t: 'resign', seat: 1, why: 'left', from: 1, seq: log.length + 1 }); G[0].netIn(log[log.length - 1]);
+        G[1].forfeit(1, 'left'); log.push({ t: 'resign', side: 1, why: 'left', from: 1, seq: log.length + 1 }); G[0].netIn(log[log.length - 1]);
         Record.count(G[0], st0, day); Record.count(G[1], st1, day);
-        const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, send() {} }), log);
+        const R = new Game(StubUI, { instant: true }); R.replayOnline(cfg({ seat: 1, side: 1, send() {} }), log);
         const again = Record.count(R, st1, day), a = st0.get('stats').online, b = st1.get('stats').online;
         ok('Record: online, each screen counts its own side; leaving forfeits', a.won === 1 && a.shotsFor === 4 && b.lost === 1 && b.shotsFor === 1 && R.phase === 'over' && !again, `${JSON.stringify(a)} / ${JSON.stringify(b)}`); }
       // online: the concede flag goes red only when the match can't be won, and conceding ends it on both screens as a loss for the side that gave up
       { const log = [], cfg = link => ({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, link, matchId: 'on.TEST.2.1' });
-        const link = seat => ({ seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
+        const link = seat => ({ seat, side: seat, send: m => log.push({ ...m, from: seat, seq: log.length + 1 }) });
         const G = [new Game(StubUI, { instant: true }), new Game(StubUI, { instant: true })]; G.forEach((g, i) => g.startMatch(cfg(link(i))));
         const set = (a, b, ended) => G.forEach(g => { g.players[0].score = a; g.players[1].score = b; g.match.ends.length = 0; for (let i = 0; i < ended; i++) g.match.ends.push({}); });
         set(0, 4, 1); const close = G[0].cannotWin(0); set(0, 5, 1); const out = G[0].cannotWin(0) && !G[0].cannotWin(1); set(0, 0, 2); const level = G[0].cannotWin(0);
         set(1, 6, 1); const st0 = mem(), st1 = mem();
-        G[0].forfeit(0, 'conceded'); G[0].link.send({ t: 'resign', seat: 0, why: 'conceded' }); G[1].netIn(log[log.length - 1]);
+        G[0].forfeit(0, 'conceded'); G[0].link.send({ t: 'resign', side: 0, why: 'conceded' }); G[1].netIn(log[log.length - 1]);
         Record.count(G[0], st0, day); Record.count(G[1], st1, day);
         ok('Online: concede goes red only when the match is lost, and ends it on both screens',
-          !close && out && !level && G.every(g => g.phase === 'over' && g.match.forfeit.seat === 0 && g.match.forfeit.why === 'conceded') && st0.get('stats').online.lost === 1 && st1.get('stats').online.won === 1); }
+          !close && out && !level && G.every(g => g.phase === 'over' && g.match.forfeit.side === 0 && g.match.forfeit.why === 'conceded') && st0.get('stats').online.lost === 1 && st1.get('stats').online.won === 1); }
       // a fresh record keeps the matches it has seen; a record from a later format is left alone
       { Record.reset(st); const r = st.get('stats');
         ok('Record: reset empties it, and a reload on the over screen still counts nothing', r.computer.club === undefined && r.first === null && !Record.count(won, st, day) && st.get('stats').first === null);

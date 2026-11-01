@@ -143,6 +143,14 @@ tbody tr:hover { background: #F3F1E6; }
         </section>
       </div>
 
+      <section class="sheet" aria-labelledby="gamesH">
+        <p class="kicker">Bias, played online</p>
+        <h2 id="gamesH">Online games</h2>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Quick matches</span><span><i style="background:var(--s2)"></i>Private rooms</span></div>
+        <div class="chart" id="chart3"></div>
+        <p class="note" id="gamesNote"></p>
+      </section>
+
       <section class="sheet" aria-labelledby="dayH">
         <h2 id="dayH">Day by day</h2>
         <div class="scroll"><table id="days"></table></div>
@@ -168,6 +176,13 @@ tbody tr:hover { background: #F3F1E6; }
     if (q) return q.replace(/\/$/, '');
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'http://localhost:8788';
     return 'https://bias-stats.bias-relay.workers.dev';
+  })();
+  // The relay, for the online games count: the game's own address unless ?relay=<url> says otherwise.
+  const RELAY = (() => {
+    const q = new URLSearchParams(location.search).get('relay');
+    if (q) return q.replace(/^ws/, 'http').replace(/\/$/, '');
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'http://localhost:8787';
+    return 'https://bias-relay.bias-relay.workers.dev';
   })();
   const KEY = 'skip.admin';
   const ss = { get() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }, set(v) { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch (e) { /* tab only */ } } };
@@ -201,6 +216,35 @@ tbody tr:hover { background: #F3F1E6; }
     $('login').hidden = true; $('dash').hidden = false;
     await catLoaded;
     render(rows);
+    loadGames();
+  }
+  // The relay keeps its own count; if it can't be read, only this section says so.
+  let games = null;
+  async function loadGames() {
+    try {
+      const r = await fetch(RELAY + '/admin/games', { headers: { Authorization: 'Bearer ' + key }, cache: 'no-store' });
+      if (r.status === 401) throw new Error('The relay did not accept this key: set its ADMIN_KEY secret to the same key as the stats Worker’s.');
+      if (r.status === 503) throw new Error((await r.json()).error);
+      if (!r.ok) throw new Error(`The relay answered ${r.status}. Try again in a minute.`);
+      games = await r.json();
+    } catch (e) {
+      games = null;
+      $('chart3').innerHTML = '';
+      $('gamesNote').textContent = e instanceof TypeError ? `Could not reach the relay at ${RELAY}. Is the version that counts games deployed?` : e.message;
+      return;
+    }
+    renderGames();
+  }
+  function renderGames() {
+    const by = Object.fromEntries(games.days.map(d => [d.day, d])), today = new Date().toISOString().slice(0, 10), days = [];
+    for (let i = 13; i >= 0; i--) { const day = new Date(Date.parse(today) - i * 864e5).toISOString().slice(0, 10); days.push({ day, n: 0, quick: 0, private: 0, refused: 0, ...by[day] }); }
+    stacked($('chart3'), days);
+    const t = days[days.length - 1], all = games.days.reduce((a, d) => a + d.n, 0), refused = days.reduce((a, d) => a + d.refused, 0);
+    $('gamesNote').textContent = `New games started, by UTC day (not puzzle days). Today so far: ${t.n} of the ${games.cap} allowed a day. ` +
+      `${all} since counting began on ${shortDay(games.days.length ? games.days[0].day : today)}. ` +
+      (refused ? `${refused} turned away at the daily limit in these 14 days.` : 'None turned away at the daily limit in these 14 days.') +
+      ' A private room counts once, however many matches are played in it; rejoining a game never counts.' +
+      (days.some(d => d.n > d.quick + d.private) ? ' Grey: games counted before quick matches and private rooms were told apart.' : '');
   }
   function showLogin(msg) { $('dash').hidden = true; $('login').hidden = false; $('loginErr').textContent = msg || ''; $('key').focus(); }
 
@@ -291,6 +335,27 @@ tbody tr:hover { background: #F3F1E6; }
     });
     attachTip(el, `<svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="Players who viewed and first attempts per day, last 14 days">${s}</svg>`, hits);
   }
+  // Online games: quick matches with private rooms stacked on top, one bar a day.
+  function stacked(el, days) {
+    const max = niceMax(Math.max(1, ...days.map(d => d.n))), f = frame(el, days, max, v => String(Math.round(v)));
+    const bw = Math.max(4, Math.min(28, f.step * 0.55)), hits = [];
+    let s = f.g;
+    days.forEach((d, i) => {
+      const x = f.X(i) - bw / 2;
+      const other = Math.max(0, d.n - d.quick - d.private);   // counted before the kinds were kept
+      let below = 0;
+      for (const [v, c] of [[d.quick, 'var(--s1)'], [d.private, 'var(--s2)'], [other, 'var(--rule)']]) {
+        if (!v) continue;
+        const y = f.Y(below + v), hgt = f.Y(below) - y - (below ? 1 : 0);   // a hairline of paper between the parts
+        s += `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(0, hgt)}" fill="${c}"/>`;
+        below += v;
+      }
+      const txt = `${d.n} ${d.n === 1 ? 'game' : 'games'}: ${d.quick} quick, ${d.private} private${other > 0 ? `, ${other} unsorted` : ''}${d.refused ? `, ${d.refused} turned away` : ''}`;
+      hits.push({ x: f.X(i), y: f.Y(d.n), html: `<strong>${esc(shortDay(d.day))}</strong><br>${esc(txt)}` });
+      s += `<rect data-i="${i}" tabindex="0" x="${f.X(i) - f.step / 2}" y="0" width="${f.step}" height="${f.y0}" fill="transparent" aria-label="${esc(shortDay(d.day))}: ${esc(txt)}"/>`;
+    });
+    attachTip(el, `<svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="New online games per day, last 14 days">${s}</svg>`, hits);
+  }
   // Three rates on one 0–100% scale; gaps where a day has no data.
   function lines(el, daily) {
     const series = [['attemptRate', 'var(--s1)', 'Attempt rate'], ['nextDayReturn', 'var(--s2)', 'Next-day return'], ['sharesPerAttempt', 'var(--s3)', 'Shares per attempt']];
@@ -309,7 +374,7 @@ tbody tr:hover { background: #F3F1E6; }
     });
     attachTip(el, `<svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="Attempt rate, next-day return and shares per attempt per day, last 14 days">${s}</svg>`, hits);
   }
-  let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (last && !$('dash').hidden) render(last); }, 150); });
+  let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (last && !$('dash').hidden) { render(last); if (games) renderGames(); } }, 150); });
 
   if (key) load(); else showLogin();
 })();
