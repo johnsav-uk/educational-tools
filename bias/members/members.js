@@ -327,7 +327,8 @@
   }
 
   /* Open leagues: a page of its own inside the panel. Each league taking sign-ups that you haven't
-     joined has its own Sign up; signing up says so in its place. Places are drawn when the window
+     joined has its own Sign up; signing up says so in its place. A weeknight league's button opens the
+     league site's sign-up sheet instead, where its rules are shown and must be ticked first. Places are drawn when the window
      closes (the league Worker's drawLeague), so there is no reserve list to join.
      Back, at the top or the foot, returns to the Members page (BiasMembers.back). Withdrawing is
      on the league pages. */
@@ -348,9 +349,14 @@
       const when = 'Open for sign-ups';   // no count: how many have signed up isn't shown to players
       return `<li><div class="acct-lg"><b>${esc(l.name)}</b><span>${esc(when)}</span>
         <span>${esc([st.ends && plural(st.ends, 'end', 'ends'), st.bowls && `${st.bowls} bowls each`].filter(Boolean).join(' · '))}</span></div>
-        <div data-slot="${l.id}"><button class="btn primary" type="button" data-join="${l.id}">Sign up</button></div>
+        <div data-slot="${l.id}">${l.series
+          ? `<button class="btn primary" type="button" data-rules="${l.id}">Read the rules and sign up</button>`
+          : `<button class="btn primary" type="button" data-join="${l.id}">Sign up</button>`}</div>
         <p class="acct-err" role="alert"></p></li>`;
     }).join('')}</ul>`;
+    // A weeknight league takes sign-ups only from a player who has read and ticked its rules, which the
+    // league site's sign-up sheet shows; the Worker refuses a sign-up from here without them.
+    box.querySelectorAll('[data-rules]').forEach(b => b.onclick = () => openBoard('join'));
     box.querySelectorAll('[data-join]').forEach(b => b.onclick = async () => {
       const li = b.closest('li'); b.disabled = true; li.querySelector('.acct-err').textContent = '';
       const x = await call(`/api/leagues/${Number(b.dataset.join)}/join`, {});
