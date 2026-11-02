@@ -27,7 +27,7 @@ function load() {
     ${core}
     ${colours}
     ${game}
-    return { W, GreenSpeed, Weight, Profiles, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide,
+    return { DM, W, GreenSpeed, Weight, Profiles, PROFILE_DEFAULTS, PhysicsWorld, Body, Rules, releasePoint, biasSide,
       AI, AI_LEVELS, aiLevel, Game, DISCIPLINES, meterFor, SWING_T, QuietUI, Settings,
       setSeed: s => { aiRand = mulberry32(s >>> 0); }, BUILD: ${JSON.stringify(build)} };`;
   return new Function(body)();

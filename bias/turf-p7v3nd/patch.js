@@ -29,8 +29,8 @@ const Terrain = {
   }
 };
 `],
-    ['the integrator', `    const p = this.gp, v = Math.hypot(b.vx, b.vy);\n`,
-      `    const p = this.gp;\n    if (Terrain.surface) Terrain.kick(b, dt);\n    const v = Math.hypot(b.vx, b.vy);\n`, 'replace'],
+    ['the integrator', `    const p = this.gp, v = DM.hypot(b.vx, b.vy);\n`,
+      `    const p = this.gp;\n    if (Terrain.surface) Terrain.kick(b, dt);\n    const v = DM.hypot(b.vx, b.vy);\n`, 'replace'],
     ['the ground texture', `    if (Variant && Variant.paintGround) Variant.paintGround(g, X, Y, S);   // markings on the green (absolute frame)\n`,
       `    if (Terrain.surface) Terrain.surface.paint(g, X, Y, Greens.contours);\n`],
     ['the title showcase', `this.clearTimers(); this.mode = 'title'; this.phase = 'idle'; this.dir = 0; this.world.clear(); this.matRear = W.MAT_MIN; this.link = null;`,
