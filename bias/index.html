@@ -5700,15 +5700,24 @@ class Game {
       prof: bowl ? { G: clamp(+pr.G || 0, 0.015, 0.08), late: clamp(+pr.late || 0, -2, 1) } : null, x: rel.x, y: rel.y, matRear: this.matRear
     };
   }
-  // The other player lining up: shown live, never used for the delivery itself.
+  // The other player lining up: shown live, never used for the delivery itself. Updates come five
+  // times a second, so the line, weight and mat glide to each one (netGlide) rather than jump.
   netAim(m) {
     if (!this.remoteTurn || m.from !== this.netSeatFor(this.turn.player, this.turn.member || 0) || !(this.phase === 'aim' || this.phase === 'charge') || m.n !== this.deliveryNo + 1) return;
     const bowl = this.turn.kind === 'bowl', hand = bowl && (m.hand === 'fore' || m.hand === 'back') ? m.hand : this.hand;
-    const ph = m.w != null ? 'charge' : 'aim', big = hand !== this.hand || ph !== this.phase || !bowl;
-    this.aim = clamp(+m.aim || 0, -0.45, 0.45); this.hand = hand;
-    if (!bowl) this.matRear = clamp(+m.mat || W.MAT_MIN, W.MAT_MIN, W.MAT_MAX);
-    this.phase = ph; this.charge = null; this.weight = m.w != null ? clamp(+m.w || 0, 0, 1) : 0;
-    if (big) this.ui.refresh(); else this.ui.refreshAim();
+    const ph = m.w != null ? 'charge' : 'aim', snap = hand !== this.hand || ph !== this.phase || !this.netTo || this.netTo.n !== m.n;
+    this.netTo = { n: m.n, aim: clamp(+m.aim || 0, -0.45, 0.45), w: m.w != null ? clamp(+m.w || 0, 0, 1) : 0,
+      mat: bowl ? this.matRear : clamp(+m.mat || W.MAT_MIN, W.MAT_MIN, W.MAT_MAX) };
+    this.hand = hand; this.phase = ph; this.charge = null;
+    if (snap) { this.aim = this.netTo.aim; this.weight = this.netTo.w; this.matRear = this.netTo.mat; }
+    if (snap || !bowl) this.ui.refresh(); else this.ui.refreshAim();
+  }
+  netGlide(dt) {
+    const to = this.netTo, k = 1 - Math.exp(-dt / 0.07);   // most of the way there before the next update
+    const near = (a, b, eps) => Math.abs(a - b) < eps ? b : lerp(a, b, k);
+    const aim = near(this.aim, to.aim, 1e-5);
+    this.weight = near(this.weight, to.w, 1e-4); this.matRear = near(this.matRear, to.mat, 1e-3);
+    if (aim !== this.aim) { this.aim = aim; this.ui.refreshAim(); }
   }
   snapshot() {
     return this.world.bodies.filter(b => !b.dead).map(b => ({ k: bodyKey(b), x: b.x, y: b.y, state: b.state, ditch: b.ditch, toucher: b.toucher }));
@@ -5770,6 +5779,7 @@ class Game {
     if (this.timers.length) { const due = this.timers.filter(t => t.t <= this.clock); if (due.length) { this.timers = this.timers.filter(t => t.t > this.clock); due.forEach(t => t.fn()); } }
     if (this.ai) this.aiUpdate(dt);
     if (this.link) this.netPump();
+    if (this.netTo && this.netTo.n === this.deliveryNo + 1 && this.remoteTurn && (this.phase === 'aim' || this.phase === 'charge')) this.netGlide(dt);
     if (this.phase === 'charge' && this.charge && !this.aiExec) { this.charge.t += dt; this.weight = this.meterAt(this.charge.t); }
     if (this.pulse != null) { this.pulse += dt / 1.1; if (this.pulse >= 1) this.pulse = this.phase === 'charge' && !reduced() ? 0 : null; }
     if (this.anim) {
@@ -6864,7 +6874,7 @@ const Net = {
     if ((this.awayClock += dt) > 0.5) { this.awayClock = 0; Away.check(); }
     const g = game;
     if (!g.link || g.mode !== 'match' || !g.turn || g.remoteTurn || (g.phase !== 'aim' && g.phase !== 'charge')) return;
-    if ((this.aimClock += dt) < 0.1) return; this.aimClock = 0;
+    if ((this.aimClock += dt) < 0.2) return; this.aimClock = 0;   // five a second: the others glide between them (netGlide)
     const m = { t: 'aim', n: g.deliveryNo + 1, aim: +g.aim.toFixed(4), hand: g.hand, mat: g.matRear, w: g.phase === 'charge' ? +g.weight.toFixed(3) : null };
     const key = JSON.stringify(m); if (key === this.aimSent) return;
     this.aimSent = key; this.raw(m);
@@ -7999,6 +8009,23 @@ window.BiasTests = {
       ok('Online: a scrambled message comes back as sent, with the relay\'s fields on top', canon(got) === canon({ ...m, seq: 40, from: 1, matchNo: 2 }) && named.players[0].name === 'Zoë Ñ 🎳');
       ok('Online: a changed message, one for another room, or one sent plain is dropped',
         Wire.unpack(bad, 'ABCD') === null && Wire.unpack({ ...w, n: 8 }, 'ABCD') === null && Wire.unpack(w, 'WXYZ') === null && Wire.unpack(m, 'ABCD') === null && Wire.unpack({ t: 'peer', seat: 1 }, 'ABCD').seat === 1); }
+    // 15a3. online: the other player's line and weight glide to each aim update instead of jumping
+    { const answers = () => ({ ...QuietUI, notice(t, d, l, cb) { cb(); }, summary(d, cb) { cb(); } });
+      const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
+      const q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
+      G.forEach((g, i) => g.startMatch({ players: two(), T: 13.5, format: { type: 'ends', n: 2 }, leader: 0, link: { seat: i, side: i, send: m => q.push({ ...m, from: i }) } }));
+      const pump = () => { while (q.length) { const e = q.shift(); G[1 - e.from].netIn(e); G[0].flush(); G[1].flush(); } };
+      const mine = () => G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim');
+      pump(); let me = mine(), guard = 0;
+      while (me && me.turn.kind !== 'bowl' && guard++ < 10) { me.deliver(0.6); me.flush(); pump(); me = mine(); }
+      const them = G.find(x => x !== me), aim = (a, w) => ({ t: 'aim', n: me.deliveryNo + 1, aim: a, hand: me.hand, mat: me.matRear, w, from: me.link.seat });
+      const frames = k => { for (let i = 0; i < k; i++) them.update(1 / 60); };
+      them.netIn(aim(0, null)); them.netIn(aim(0.2, null));
+      const held = them.aim; frames(3); const part = them.aim; frames(9); const there = them.aim;
+      them.netIn(aim(0.2, 0.3)); const snapW = them.weight; them.netIn(aim(0.2, 0.6)); frames(12);
+      ok('Online: the other player\'s aim glides between updates, and snaps when the charge starts',
+        held === 0 && part > 0.02 && part < 0.15 && there > 0.18 && them.phase === 'charge' && snapW === 0.3 && them.weight > 0.55 && them.weight <= 0.6,
+        `aim 0 → ${part.toFixed(3)} → ${there.toFixed(3)}, weight 0.3 → ${them.weight.toFixed(3)}`); }
     // 15b. online: a player who drops out and does not come back forfeits; the forfeit is in the log, so a reload shows it too
     { const two = () => [{ name: 'Host', profileId: 'dp-pro', colour: 'claret' }, { name: 'Guest', profileId: 'tb-ace', colour: 'navy' }];
       const cfg = link => ({ players: two(), T: 13.5, format: { type: 'ends', n: 3 }, leader: 0, link });
