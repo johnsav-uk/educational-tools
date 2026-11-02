@@ -1992,10 +1992,32 @@ const COLOURS = [
   { id: 'tan', name: 'Heritage brown', hex: '#6d4527' },
   { id: 'teal', name: 'Teal', hex: '#1d5a63' },
   { id: 'plum', name: 'Plum', hex: '#55305a' },
+  // the creator's own: Liverpool red, white rings and "YNWA" engraved round the faces. Offered only to the
+  // creator's account (store 'member.creator', from the league Worker), and the league's match room refuses it
+  // from anyone else; the game's own online rooms can't check who's who, so there it is only kept off the pickers.
+  { id: 'lfc', name: 'Liverpool red', hex: '#c8102e', creator: true, engrave: 'YNWA' },
   { id: 'pz-red', name: 'Red', hex: '#a3302b', puzzle: true },        // the daily puzzle's two sides only
   { id: 'pz-yellow', name: 'Yellow', hex: '#c9982a', puzzle: true }
 ];
 const colourHex = id => (COLOURS.find(c => c.id === id) || COLOURS[0]).hex;
+// the lettering engraved on a colourway's faces, if it has any (only the creator's: see COLOURS)
+const engraving = hex => { const c = COLOURS.find(k => k.hex.toLowerCase() === String(hex).toLowerCase()); return c && c.engrave || null; };
+// The colours a player may pick: never the puzzle's, and the creator's only for the creator.
+const pickableColours = () => COLOURS.filter(c => !c.puzzle && (!c.creator || store.get('member.creator', false) === true));
+/* Letters round a circle of radius r at (cx, cy), reading clockwise along its top, twice (the second on the
+   opposite side, so one is always the right way up on a rolling bowl). Used by the canvas painter and the
+   WebGL face decal, so the two agree. */
+function engraveRing(g, cx, cy, r, text, size, ink, shadow) {
+  g.save(); g.font = `800 ${size}px Manrope, system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const step = size * 0.92 / r, n = text.length;
+  for (const start of [-Math.PI / 2, Math.PI / 2]) for (let i = 0; i < n; i++) {
+    const a = start + (i - (n - 1) / 2) * step;
+    g.save(); g.translate(cx + Math.cos(a) * r, cy + Math.sin(a) * r); g.rotate(a + Math.PI / 2);
+    if (shadow) { g.fillStyle = shadow; g.fillText(text[i], size * .04, size * .05); }
+    g.fillStyle = ink; g.fillText(text[i], 0, 0); g.restore();
+  }
+  g.restore();
+}
 
 const TEX = { X0: -34, X1: 34, Y0: -12, Y1: 48, S: 0.05 };
 
@@ -2781,11 +2803,17 @@ function drawBowl(g, x, y, R, hex, o) {
     // soft edge where the face rolls into the shoulder
     g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = Math.max(.6, R * .03); g.stroke();
     if (R > 3.5) {
-      const biasFace = (sgn > 0) === (o.bias > 0), rings = biasFace ? [.34, .48] : [.62, .82];
+      const biasFace = (sgn > 0) === (o.bias > 0), rings = biasFace ? [.34, .48] : [.62, .82], word = engraving(hex);
       g.lineWidth = Math.max(.6, R * .03);
       for (const rr of rings) {
         g.strokeStyle = 'rgba(0,0,0,.38)'; g.beginPath(); g.ellipse(nearX + .4, y + .5, fRx * rr, faceR * rr, 0, 0, TAU); g.stroke();
-        g.strokeStyle = 'rgba(255,248,230,.30)'; g.beginPath(); g.ellipse(nearX, y, fRx * rr, faceR * rr, 0, 0, TAU); g.stroke();
+        g.strokeStyle = word ? 'rgba(255,253,248,.85)' : 'rgba(255,248,230,.30)'; g.beginPath(); g.ellipse(nearX, y, fRx * rr, faceR * rr, 0, 0, TAU); g.stroke();
+      }
+      // engraved lettering, between the rings (or outside them on the bias face), on the face as it's turned
+      if (word && R > 10 && fRx > R * .12) {
+        g.save(); g.translate(nearX, y); g.scale(fRx / faceR, 1);
+        engraveRing(g, 0, 0, faceR * (biasFace ? .66 : .72), word, faceR * (biasFace ? .2 : .15), 'rgba(255,253,248,.92)', 'rgba(0,0,0,.35)');
+        g.restore();
       }
       const ma = o.roll || 0;
       g.strokeStyle = 'rgba(255,248,230,.32)'; g.lineWidth = Math.max(.6, R * .04);
@@ -3490,7 +3518,8 @@ const GLFLAGS = (() => { const q = new URLSearchParams(location.search); return 
 // The flecks set into each colourway's resin (sRGB): main fleck and a lighter one. Unknown colours derive theirs.
 const BOWL_FLECKS = {
   claret: ['#c8352a', '#f06a48'], navy: ['#3a78c4', '#7fb0e2'], black: ['#7c8389', '#c9c6bc'],
-  tan: ['#c08438', '#e2b464'], teal: ['#36a49c', '#3a7cc8'], plum: ['#9c52a8', '#d08cc6']
+  tan: ['#c08438', '#e2b464'], teal: ['#36a49c', '#3a7cc8'], plum: ['#9c52a8', '#d08cc6'],
+  lfc: ['#a50d24', '#e0566a']   // two reds, so the white lettering stands out
 };
 function bowlPalette(hex) {
   const c = COLOURS.find(k => k.hex.toLowerCase() === String(hex).toLowerCase());
@@ -3883,22 +3912,24 @@ class GLScene {
   /* Both faces in one texture: left half the bias face, right half the plain face, each spanning the bowl's
      diameter. The engraved rings are the canvas renderer's (small rings mark the bias side), with the club's
      emblem from the title screen (three rings and a solid core, in brass) at the centre. */
-  buildFaceDecal() {
+  buildFaceDecal(word) {
     const S = 1024, c = makeCanvas(S * 2, S), g = c.getContext('2d'), px = r => r * S / 2, fr = 0.597;   // fr: the face radius the canvas renderer uses
-    const face = (cx, rings, em) => {
+    const ink = word ? 'rgba(255,253,248,.95)' : '#c9a862';   // an engraved colourway is all in white
+    const face = (cx, rings, em, wr, ws) => {
       const cy = S / 2;
       for (const rr of rings) {
         g.lineWidth = px(.011);
         g.strokeStyle = 'rgba(0,0,0,.38)'; g.beginPath(); g.arc(cx + px(.004), cy + px(.005), px(rr * fr), 0, TAU); g.stroke();
-        g.strokeStyle = 'rgba(246,240,224,.82)'; g.beginPath(); g.arc(cx, cy, px(rr * fr), 0, TAU); g.stroke();
+        g.strokeStyle = word ? 'rgba(255,253,248,.95)' : 'rgba(246,240,224,.82)'; g.beginPath(); g.arc(cx, cy, px(rr * fr), 0, TAU); g.stroke();
       }
       const k = px(em) / 14.5;
-      g.strokeStyle = '#c9a862'; g.lineWidth = 1.1 * k;
+      g.strokeStyle = ink; g.lineWidth = 1.1 * k;
       for (const r of [14.5, 10.5, 7.5]) { g.beginPath(); g.arc(cx, cy, r * k, 0, TAU); g.stroke(); }
-      g.fillStyle = '#c9a862'; g.beginPath(); g.arc(cx, cy, 3.6 * k, 0, TAU); g.fill();
+      g.fillStyle = ink; g.beginPath(); g.arc(cx, cy, 3.6 * k, 0, TAU); g.fill();
+      if (word) engraveRing(g, cx, cy, px(wr * fr), word, px(ws * fr), 'rgba(255,253,248,.95)', 'rgba(0,0,0,.35)');
     };
-    face(S / 2, [.34, .48], .165);
-    face(S * 1.5, [.62, .82], .30);
+    face(S / 2, [.34, .48], .165, .66, .2);
+    face(S * 1.5, [.62, .82], .30, .72, .15);
     const t = this.canvasTex(c); t.generateMipmaps = true; return t;
   }
   buildBowlKit() {
@@ -3962,8 +3993,10 @@ class GLScene {
   }
   setPaint(m, hex, toucher) {
     if (m.userData.hex !== hex) {
-      const p = bowlPalette(hex), u = m.material.userData.u;
+      const p = bowlPalette(hex), u = m.material.userData.u, word = engraving(hex);
       u.uBase.value.copy(this.lin(p.base, .82)); u.uFleck.value.copy(this.lin(p.fleck)); u.uFleck2.value.copy(this.lin(p.fleck2));
+      this.wordDecals = this.wordDecals || {};
+      u.uDecal.value = word ? (this.wordDecals[word] = this.wordDecals[word] || this.buildFaceDecal(word)) : this.faceDecal;
       m.userData.hex = hex;
     }
     m.material.userData.u.uToucher.value = toucher ? 1 : 0;
@@ -4456,7 +4489,7 @@ class HeadView {
       g.fillStyle = gr; bowlOutline(g, hw, r); g.fill();
       if (r >= 6) {
         // grip rings: shallow grooves either side of the running surface
-        g.strokeStyle = rgba(shadeRgb(base, -.5), .55); g.lineWidth = Math.max(.6, r * .06);
+        g.strokeStyle = engraving(b.colour) ? 'rgba(255,253,248,.8)' : rgba(shadeRgb(base, -.5), .55); g.lineWidth = Math.max(.6, r * .06);
         for (const sx of [-1, 1]) for (const k of [.52, .64]) { g.beginPath(); g.moveTo(sx * hw * k, -r * .62); g.lineTo(sx * hw * k, r * .62); g.stroke(); }
         // sheen along the crown
         g.strokeStyle = 'rgba(255,252,240,.22)'; g.lineWidth = Math.max(.8, r * .1); g.beginPath(); g.moveTo(-hw * .12, -r * .7); g.quadraticCurveTo(-hw * .22, 0, -hw * .12, r * .1); g.stroke();
@@ -6414,7 +6447,7 @@ function fillProfileSelect(sel, value) {
   sel.value = value;
 }
 function fillSwatches(el, value, onPick, disabledId) {
-  el.innerHTML = COLOURS.filter(c => !c.puzzle).map(c => `<button type="button" class="swatch" role="radio" aria-checked="${c.id === value}" aria-label="${c.name}" title="${c.name}" style="--c:${c.hex}" data-id="${c.id}" ${c.id === disabledId ? 'disabled' : ''}></button>`).join('');
+  el.innerHTML = pickableColours().map(c => `<button type="button" class="swatch" role="radio" aria-checked="${c.id === value}" aria-label="${c.name}" title="${c.name}" style="--c:${c.hex}" data-id="${c.id}" ${c.id === disabledId ? 'disabled' : ''}></button>`).join('');
   el.onclick = e => { const b = e.target.closest('.swatch'); if (b && !b.disabled) onPick(b.dataset.id); };
 }
 const setup = {
