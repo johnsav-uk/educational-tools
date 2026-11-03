@@ -326,6 +326,11 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .toast{border-left:2px solid var(--gold)}
 .toast.warn{border-color:rgba(220,142,105,.55);border-left-color:var(--alert)}
 .toast.warn::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--alert);margin-right:9px;vertical-align:1px}
+.toast.visit{display:flex;flex-direction:column;gap:2px;padding:11px 18px 12px}
+.toast.visit .tv-k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.toast.visit b{font-size:15px;font-weight:700}
+.toast.visit .tv-p{font-size:12.5px;opacity:.8}
+.toast.visit .tv-a{font-size:12.5px;margin-top:3px;opacity:.92}
 .toast.good::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:9px;vertical-align:1px}
 .banner{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:4;opacity:0;transition:opacity .5s, transform .6s}
 .banner.show{opacity:1}
@@ -853,6 +858,16 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .record thead th{padding-top:12px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sage-dk);border-bottom-color:var(--sage)}
 .record tfoot td,.record tfoot th{font-weight:800;border-bottom:0;border-top:2px solid var(--club)}
 .record p{margin:12px 0 0;font-size:14px;line-height:1.5;color:var(--sage-dk)}
+.record-clubs{margin-top:16px;padding-top:12px;border-top:2px solid var(--club)}
+.record-clubs .rc-h{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sage-dk)}
+.record-clubs .rc-h b{color:var(--charcoal);letter-spacing:.04em}
+.record-clubs ul{margin:8px 0 0;padding:0;list-style:none}
+.record-clubs li{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid rgba(32,41,35,.14);font:600 14px/1.3 var(--sans);color:rgba(32,41,35,.42)}
+.record-clubs li::before{content:"";flex:none;align-self:center;width:7px;height:7px;border-radius:50%;border:1.5px solid rgba(32,41,35,.25);box-sizing:border-box}
+.record-clubs li span{margin-left:auto;font-weight:500;font-size:12.5px;text-align:right}
+.record-clubs li.been{color:var(--charcoal)}
+.record-clubs li.been::before{border:0;background:var(--gold)}
+.record-clubs li.been span{color:var(--sage-dk)}
 .record-reset{align-self:flex-start;margin-top:8px}
 .record-kofi{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:14px;padding:14px 16px;border:1px solid var(--gold-line);border-left:3px solid var(--gold);border-radius:2px;background:var(--club-2)}
 .record-kofi p{margin:0;font-size:14px;line-height:1.5;color:var(--cream)}
@@ -2063,13 +2078,26 @@ const Weather = {
   plain: null,
   // what the scene shows now: null is the plain look, as drawn before there was weather
   now() {
-    if (Venue.current.indoor) return this._in || (this._in = { ...this.plain, glow: 0, cloud: 0, warm: 0, rain: 0, mist: 0, fogNear: 80, fogFar: 900, key: 'indoor' });   // a hall has no weather
+    const V = Venue.current;
+    if (V.indoor) return this._in || (this._in = { ...this.plain, glow: 0, cloud: 0, warm: 0, rain: 0, mist: 0, fogNear: 80, fogFar: 900, key: 'indoor' });   // a hall has no weather
+    const wx = this.day();
+    return V.dusk ? this.dusk(wx || this.plain, V.dusk) : wx;
+  },
+  day() {   // the day's weather from the green speed, or null for the plain look
     if (!WX.mood) return null;
     const T = WX.preview != null ? WX.preview : game.mode === 'title' ? null : game.world.T;
     if (T == null) return null;
     const q = Math.round(T * 20) / 20;   // in steps of 0.05 s, so the cached scene only redraws for a real change
     if (!this._c || this._c.q !== q) { this._c = this.at(q); this._c.q = q; }
     return this._c;
+  },
+  /* A club played after dark (Venue.dusk: { sky, gain, cloud, sun, glow }): the day's weather still rains and
+     greys the clouds, but under the venue's evening sky, with no sun to warm it and the light dimmed by gain. */
+  dusk(wx, D) {
+    if (this._d && this._d.of === wx) return this._d;
+    const o = { ...wx, ...D.sky, of: wx, key: 'dusk|' + wx.key, glow: D.glow, warm: 0, sun: wx.sun * D.sun, cloud: wx.cloud * D.cloud, cloudGrey: Math.max(wx.cloudGrey, .7) };
+    o.gain = wx.gain.map((c, i) => c * D.gain[i] / 255);
+    return (this._d = o);
   }
 };
 Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
@@ -2121,6 +2149,7 @@ const FLAG_ENGLAND = { ratio: 5 / 3, draw(g, w, h) { g.fillStyle = '#ffffff'; g.
 const BIRDS_ASHCOMBE = [['blackbird', .38], ['robin', .30], ['sparrow', .18], ['woodpigeon', .14]];
 const VENUES = {
   ashcombe: { id: 'ashcombe', name: 'Ashcombe Bowls Club', place: 'Somerset, England', ends: ['the pavilion', 'the oaks'],
+    about: 'The village club: a timber pavilion, roses in the hedge, the church spire over the oaks.',
     trees: { oak: 3, lime: 2, poplar: 1, beech: 1 }, roses: true, flag: FLAG_ENGLAND }
 };
 const Venue = {
@@ -2156,15 +2185,22 @@ const Venue = {
   },
   palette(v) {   // PAL from Ashcombe's, with the venue's own colours over it, keeping each array (the weather looks share them)
     for (const k in PAL_BASE) { const c = (v.pal && v.pal[k]) || PAL_BASE[k]; PAL[k].splice(0, c.length, ...c); }
-    Weather._c = Weather._in = null; Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
+    Weather._c = Weather._in = Weather._d = null; Weather.plain = Weather.at(WEATHER_LOOKS[2].T);
   },
-  // id: the club the host chose for an online match (it may be in venues.js, still on its way)
-  forGame(id) {
+  /* id: the club the host chose for an online match (it may be in venues.js, still on its way). ui: the game's
+     own UI, which says where the game is (the self-tests' games pass theirs, so they say nothing and visit nowhere).
+     The first game at a club, its card says so and what the club is like; the clubs played at go in Your record. */
+  forGame(id, ui = UI) {
     const ask = this.asked = {};   // a club that arrives late is only taken if no other game has started since
-    if (id && !VENUES[id]) { this.set(VENUES.ashcombe); this.load().then(() => { if (VENUES[id] && this.asked === ask) this.forGame(id); }).catch(() => {}); return; }
+    if (id && !VENUES[id]) { this.set(VENUES.ashcombe); this.load().then(() => { if (VENUES[id] && this.asked === ask) this.forGame(id, ui); }).catch(() => {}); return; }
     const v = id ? VENUES[id] : this.pick(); this.set(v); this.lastGame = v.id;
-    if (this.list().length > 1) UI.toast(`Today at ${v.name}, ${v.place}`);
+    if (ui !== UI) return;
+    const first = this.visit(v.id);
+    if (this.list().length > 1) { if (first && v.about) UI.visit(v); else UI.toast(`Today at ${v.name}, ${v.place}`); }
   },
+  // the clubs played at in this browser: { id: the day of the first game there }
+  visited(st = store) { const v = st.get('clubs.visited', null); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; },
+  visit(id, st = store, now = Date.now()) { const v = this.visited(st); if (v[id]) return false; v[id] = Record.day(now); st.set('clubs.visited', v); return true; },
   home() { this.set(VENUES.ashcombe); }
 };
 
@@ -2305,7 +2341,7 @@ const Art = {
     g.restore();
     // shadows cast by the surrounding trees and hedges (sun from the south-west)
     yield;
-    if (!inside) { this.paintShadows(g, X, Y, S); yield; }
+    if (!inside && !V.dusk) { this.paintShadows(g, X, Y, S); yield; }   // after dark there is no sun to cast them
     // per-texel grain
     const id = g.getImageData(0, 0, w, h), d = id.data, band = 4 * w * 64;   // 64 rows at a time
     for (let i0 = 0; i0 < d.length; i0 += band) {
@@ -2407,6 +2443,12 @@ const Art = {
     return c;
   },
   withHaze(c) { // silhouette copy used to fade distant sprites into the air
+    const dim = Venue.current.dim;   // after dark: everything drawn in daylight is dimmed, except what a club drew lit (c.lit: lamps, its own night pavilion)
+    if (dim && !c.lit) {
+      const was = makeCanvas(c.width, c.height); was.getContext('2d').drawImage(c, 0, 0);
+      const d = c.getContext('2d'); d.save(); d.globalCompositeOperation = 'multiply'; d.fillStyle = rgba(dim); d.fillRect(0, 0, c.width, c.height);
+      d.globalCompositeOperation = 'destination-in'; d.drawImage(was, 0, 0); d.restore();   // multiply fills the clear parts too: cut back to the sprite's own shape
+    }
     const s = makeCanvas(c.width, c.height), g = s.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = rgba(PAL.haze); g.fillRect(0, 0, s.width, s.height);
     return { img: c, haze: s, w: c.width, h: c.height };
   },
@@ -4767,8 +4809,9 @@ const Sound = {
     }, delay * 1000);
   },
   /* The club's bed of sound, from Venue.ambience: cicadas (a buzz in waves), the sea (slow swells of
-     low noise), wind (a soft, wandering rush), traffic (a town's distant road) or a hall (the low hum of
-     its air handling). Faded across when the venue changes. */
+     low noise), shingle (waves drawing back over stones), wind (a soft, wandering rush), traffic (a town's
+     distant road), floodlights (their hum, over a distant road) or a hall (the low hum of its air handling).
+     Faded across when the venue changes. */
   ambience() {
     if (!this.ctx) return;
     const c = this.ctx;
@@ -4796,6 +4839,16 @@ const Sound = {
       } else if (k === 'traffic') {   // the ring road beyond the terraces: a low rush, rising and falling as cars pass
         const lp = filt('lowpass', 380, .7); lfo(.023, 120, lp.frequency);
         level.gain.value = .03; lfo(.13, .012, level.gain);
+        chain(noise(), lp, level, out);
+      } else if (k === 'shingle') {   // waves on a shingle beach: a slow swell, then the hiss of stones drawn back
+        level.gain.value = .03; lfo(.07, .024, level.gain);
+        chain(noise(), filt('lowpass', 420, .5), level, out);
+        const hiss = c.createGain(); hiss.gain.value = .006; lfo(.07, .0055, hiss.gain);
+        chain(noise(), filt('bandpass', 3400, .7), hiss, out);
+      } else if (k === 'floodlights') {   // the lamps' ballasts: a thin electric hum, and the town's distant road under it
+        for (const [f, a] of [[100, .004], [200, .0018], [300, .0007]]) { const o = c.createOscillator(), og = c.createGain(); o.frequency.value = f; og.gain.value = a; o.connect(og); og.connect(out); o.start(); nodes.push(o); }
+        const lp = filt('lowpass', 300, .7); lfo(.019, 90, lp.frequency);
+        level.gain.value = .018; lfo(.11, .007, level.gain);
         chain(noise(), lp, level, out);
       } else if (k === 'hall') {   // a big room's air: a low, steady hum and a breath of fans
         const hum = c.createOscillator(), hg = c.createGain(); hum.frequency.value = 100; hg.gain.value = .006; hum.connect(hg); hg.connect(out); hum.start(); nodes.push(hum);
@@ -4929,6 +4982,88 @@ const Sound = {
   hoopoe(pan, v) {      // the hoopoe's soft, hollow oop-oop-oop
     let t = this.ctx.currentTime + .05; const f = 520 + Math.random() * 60, n = 3 + (Math.random() < .5 ? 0 : 1);
     for (let r = 0; r < 2; r++) { for (let i = 0; i < n; i++) { this.note(t, f, f * .96, .11, .05 * v, pan * .6); t += .17; } t += .6; }
+    return t - this.ctx.currentTime;
+  },
+  // a harsh, buzzy call: a sawtooth through a band-pass, gliding from f0 to f1 (gulls, ibises, ducks, dogs)
+  rasp(t, f0, f1, dur, band, vol, pan, q = 1.6) {
+    const c = this.ctx, o = c.createOscillator(), bp = c.createBiquadFilter(), gn = c.createGain(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    bp.type = 'bandpass'; bp.frequency.value = band; bp.Q.value = q;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(.04, dur * .3)); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(bp); bp.connect(gn); if (p) { p.pan.value = pan; gn.connect(p); p.connect(this.birdBus); } else gn.connect(this.birdBus);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  kittiwake(pan, v) {   // kitti-WAAKE, kitti-WAAKE off the cliffs, nasal and rising
+    let t = this.ctx.currentTime + .05;
+    for (let r = 0; r < 2 + Math.floor(Math.random() * 2); r++) {
+      this.note(t, 1500, 1350, .07, .016 * v, pan, .04); this.note(t + .1, 1500, 1350, .07, .016 * v, pan, .04);
+      this.note(t + .22, 1250, 1900, .42, .024 * v, pan, .05); t += .85;
+    }
+    return t - this.ctx.currentTime;
+  },
+  tui(pan, v) {         // the tūī: bell notes, a liquid gurgle, clicks and a wheeze, in no fixed order
+    let t = this.ctx.currentTime + .05; const n = 5 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < n; i++) {
+      const k = Math.random();
+      if (k < .4) { const f = 900 + Math.random() * 1800, d = .12 + Math.random() * .18; this.note(t, f, f * (.92 + Math.random() * .16), d, .03 * v, pan, .004); t += d + .05; }
+      else if (k < .65) { for (let j = 0; j < 4; j++) { const f = 1800 + Math.random() * 1500; this.note(t, f, f * 1.3, .04, .018 * v, pan, .03); t += .045; } t += .05; }
+      else if (k < .85) { this.burst(t, 3200 + Math.random() * 1500, 4, .02, .03 * v, pan); this.burst(t + .06, 3000, 4, .02, .025 * v, pan); t += .16; }
+      else { this.burst(t, 5200, 1.5, .25, .012 * v, pan); t += .32; }   // the wheeze
+    }
+    return t - this.ctx.currentTime;
+  },
+  bellbird(pan, v) {    // the korimako: three or four pure, falling bell notes, ringing on
+    let t = this.ctx.currentTime + .05; const f = 1500 + Math.random() * 500, n = 3 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < n; i++) { const fi = f * [1, .84, 1.12, .75][i]; this.note(t, fi, fi * .99, .38, .03 * v, pan, .002); this.note(t, fi * 2.01, fi * 2, .18, .006 * v, pan); t += .3 + Math.random() * .12; }
+    return t + .2 - this.ctx.currentTime;
+  },
+  fantail(pan, v) {     // the pīwakawaka: a busy run of squeaky cheeps
+    let t = this.ctx.currentTime + .05; const n = 6 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < n; i++) { const f = 5200 + Math.random() * 1600; this.note(t, f, f * (Math.random() < .5 ? .8 : 1.15), .04, .014 * v, pan, .02); t += .07 + Math.random() * .07; }
+    return t - this.ctx.currentTime;
+  },
+  paradiseDuck(pan, v) {    // paradise shelducks flying over: his deep zonk, her shrill zeek, answering
+    let t = this.ctx.currentTime + .05; const n = 3 + Math.floor(Math.random() * 3), dir = Math.random() < .5 ? -1 : 1;
+    for (let i = 0; i < n; i++) {
+      const p = dir * (-.6 + 1.2 * i / Math.max(1, n - 1));
+      if (i % 2) this.rasp(t, 900, 820, .22, 1800, .018 * v, p, 2.5); else this.rasp(t, 210, 180, .2, 700, .03 * v, p, 2);
+      t += .3 + Math.random() * .12;
+    }
+    return t - this.ctx.currentTime;
+  },
+  hadeda(pan, v) {      // the hadeda ibis: loud, raucous HAA-haa-ha-de-dah, often from a bird flying over
+    let t = this.ctx.currentTime + .05; const n = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) {
+      const d = i ? .28 : .5, f = (i ? 640 : 700) * (1 + Math.random() * .06);
+      this.rasp(t, f, f * .72, d, 1200, (i ? .03 : .045) * v, pan + (Math.random() - .5) * .3, 1.2); t += d + .12;
+    }
+    return t - this.ctx.currentTime;
+  },
+  redEyedDove(pan, v) {     // the red-eyed dove's "I am, a red-eyed dove": coo-coo, cu-cu-coo-coo
+    let t = this.ctx.currentTime + .05; const f = 520 + Math.random() * 40;
+    for (const [k, d, gap] of [[1, .2, .08], [1.06, .32, .28], [1, .12, .04], [1, .12, .04], [1.08, .26, .06], [.94, .32, 0]]) { this.note(t, f * k, f * k * .94, d, .045 * v, pan * .6, .006); t += d + gap; }
+    return t - this.ctx.currentTime;
+  },
+  robinChat(pan, v) {   // the Cape robin-chat: a rich, rolling phrase, cheri-wurra-cheri
+    let t = this.ctx.currentTime + .05; const base = 1800 + Math.random() * 500, n = 5 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) { const f = base * (1 + (i % 3) * .22 + Math.random() * .1), d = .09 + Math.random() * .08; this.note(t, f, f * (i % 2 ? .78 : 1.2), d, .026 * v, pan, .025); t += d + .03; }
+    return t - this.ctx.currentTime;
+  },
+  sunbird(pan, v) {     // a sunbird in the flowers: a fast, high, scratchy twitter
+    let t = this.ctx.currentTime + .05; const n = 10 + Math.floor(Math.random() * 10);
+    for (let i = 0; i < n; i++) { const f = 5600 + Math.random() * 2000; this.note(t, f, f * (.85 + Math.random() * .3), .03, .011 * v, pan, .05); t += .045 + Math.random() * .03; }
+    return t - this.ctx.currentTime;
+  },
+  wren(pan, v) {        // a wren: astonishingly loud for its size, a fast run of notes with a trill in it
+    let t = this.ctx.currentTime + .05;
+    for (let i = 0; i < 8; i++) { const f = 4200 + Math.random() * 2400; this.note(t, f, f * .9, .045, .02 * v, pan); t += .06; }
+    for (let i = 0; i < 14; i++) { this.note(t, i % 2 ? 5600 : 5000, 5300, .025, .018 * v, pan); t += .03; }
+    for (let i = 0; i < 5; i++) { const f = 3800 + Math.random() * 2600; this.note(t, f, f * 1.1, .06, .018 * v, pan); t += .075; }
+    return t - this.ctx.currentTime;
+  },
+  dog(pan, v) {         // a dog barking somewhere in the houses beyond, two or three times
+    let t = this.ctx.currentTime + .05; const n = 2 + Math.floor(Math.random() * 2), f = 360 + Math.random() * 120;
+    for (let i = 0; i < n; i++) { this.rasp(t, f * 1.25, f, .13, 850, .022 * v, pan * .5, 1.2); t += .32 + Math.random() * .2; }
     return t - this.ctx.currentTime;
   },
   setMuted(m) { this.muted = m; if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.8, this.ctx.currentTime, 0.05); },
@@ -5205,19 +5340,28 @@ const Record = {
     return true;
   },
   // a fresh record (and a fresh browser id), still knowing which matches were counted
-  reset(st = store) { const old = this.load(st), s = this.blank(); if (old) s.seen = old.seen; st.set('stats', s); },
+  reset(st = store) { const old = this.load(st), s = this.blank(); if (old) s.seen = old.seen; st.set('stats', s); st.set('clubs.visited', {}); },   // the clubs visited go too
   rows(s) {
     return [...AI_LEVELS.map(L => [botOf(L.id).who, s.computer[L.id]]), ['Online', s.online], ['League', s.league]].filter(([, t]) => t && t.played);
   },
+  // the clubs played at, of all of them (venues.js is fetched first if it isn't here yet, then this is painted again)
+  clubs() {
+    if (Venue.list().length < 2) { Venue.load().then(() => { if (!$('recordMenu').hidden) this.paint(); }).catch(() => {}); return ''; }
+    const seen = Venue.visited(), all = Venue.list(), been = all.filter(v => seen[v.id]);
+    if (!been.length) return '';
+    return `<div class="record-clubs"><div class="rc-h">Clubs visited <b>${been.length} of ${all.length}</b></div><ul>`
+      + all.map(v => `<li class="${seen[v.id] ? 'been' : ''}">${esc(v.name)}<span>${esc(v.place)}</span></li>`).join('') + '</ul></div>';
+  },
   paint() {
     const s = this.load(), rows = s ? this.rows(s) : [];
-    if (!rows.length) { $('recordBody').innerHTML = '<p>No matches yet. Finish a match against the computer, or online, and it’s counted here.</p>'; $('recordReset').hidden = $('recordKofi').hidden = true; return; }
+    if (!rows.length) { $('recordBody').innerHTML = '<p>No matches yet. Finish a match against the computer, or online, and it’s counted here.</p>' + this.clubs(); $('recordReset').hidden = $('recordKofi').hidden = true; return; }
     const sum = this.tally(); for (const [, t] of rows) for (const k in sum) sum[k] += t[k] || 0;
     const tr = (label, t, tag) => `<tr><${tag} scope="row">${esc(label)}</${tag}><td>${t.played}</td><td>${t.won}</td><td>${t.drawn}</td><td>${t.lost}</td><td>${t.shotsFor}–${t.shotsAgainst}</td></tr>`;
     const date = d => { const [y, m, dd] = d.split('-').map(Number); return new Date(y, m - 1, dd).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
     $('recordBody').innerHTML = `<table><thead><tr><th></th><th scope="col" title="Played">P</th><th scope="col" title="Won">W</th><th scope="col" title="Drawn">D</th><th scope="col" title="Lost">L</th><th scope="col">Shots</th></tr></thead>`
       + `<tbody>${rows.map(([l, t]) => tr(l, t, 'th')).join('')}</tbody>` + (rows.length > 1 ? `<tfoot>${tr('All matches', sum, 'th')}</tfoot>` : '') + '</table>'
-      + `<p>${s.first === s.last ? `All on ${date(s.first)}.` : `Since ${date(s.first)}; last match ${date(s.last)}.`} Kept in this browser only: practice, the daily puzzle and abandoned matches don’t count.</p>`;
+      + `<p>${s.first === s.last ? `All on ${date(s.first)}.` : `Since ${date(s.first)}; last match ${date(s.last)}.`} Kept in this browser only: practice, the daily puzzle and abandoned matches don’t count.</p>`
+      + this.clubs();
     $('recordReset').hidden = $('recordKofi').hidden = false;
   }
 };
@@ -5280,7 +5424,7 @@ class Game {
     spots.forEach(([x, y, o, h], i) => { const b = this.world.add(new Body('bowl', o)); b.place(x, y); b.heading = h; b.colour = o ? colourHex('navy') : colourHex('claret'); b.side = i % 2 ? 1 : -1; b.toucher = i === 0; });
   }
   startPractice() {
-    Venue.forGame();
+    Venue.forGame(null, this.ui);
     this.clearTimers(); this.mode = 'practice'; this.dir = 0; this.match = null; this.endNo = 1; this.paused = false; this.ai = null; this.link = null;
     const pr = this.practice;
     this.players = [{ name: 'Practice', profileId: pr.profileId, colour: pr.colour, score: 0, played: 0, members: [{ name: 'Practice', role: '', played: 0, hand: 'fore', aim: 0.10 }] }];
@@ -5288,7 +5432,7 @@ class Game {
     this.resetEndState(); this.beginJack(0); this.snapCam = true;
   }
   startMatch(cfg) {
-    Venue.forGame(cfg.venue);
+    Venue.forGame(cfg.venue, this.ui);
     this.clearTimers(); this.mode = 'match'; this.dir = 0; this.endNo = 1; this.paused = false;
     this.link = cfg.link || null; this.netReset();
     /* discipline: singles (one player, 4 bowls), pairs (lead + skip, 4 each), triples (lead, second, skip, 3 each),
@@ -6280,6 +6424,13 @@ const UI = {
     const t = $('toast'); t.textContent = text; t.className = 'toast panel show ' + kind;
     clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.classList.remove('show'), ms);
     this.announce(text);
+  },
+  // the first game at a club: a card with its name, where it is and a line about it, held a little longer than a toast
+  visit(v) {
+    const t = $('toast'); t.innerHTML = `<span class="tv-k">First visit</span><b>${esc(v.name)}</b><span class="tv-p">${esc(v.place)}</span><span class="tv-a">${esc(v.about)}</span>`;
+    t.className = 'toast panel show visit';
+    clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+    this.announce(`First visit: ${v.name}, ${v.place}. ${v.about}`);
   },
   banner(k, title, sub) {
     $('bnK').textContent = k; $('bnT').textContent = title; $('bnS').textContent = sub || '';
@@ -8323,6 +8474,10 @@ window.BiasTests = {
     { const G = new Game(StubUI, { instant: true }), was = Venue.current, ids = Venue.list().map(v => v.id), want = ids.find(id => id !== was.id) || ids[0];
       G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'dp-pro', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0, venue: want });
       ok('Online: the match is at the club the host chose', Venue.current.id === want, `${want} of ${ids.length}`); Venue.set(was); }
+    // 15c1. a club played after dark: its evening sky over the day's weather, the rain kept, the light dimmed, no sun's warmth
+    { const D = { sky: { skyTop: [1, 2, 3] }, gain: [127.5, 255, 255], glow: .2, cloud: .5, sun: .5 }, wet = Weather.at(11.5), d = Weather.dusk(wet, D);
+      ok('Dusk: the evening sky over the weather, its rain kept and its light dimmed', d.skyTop.join() === '1,2,3' && d.rain === wet.rain && Math.abs(d.gain[0] - wet.gain[0] / 2) < .01 && d.gain[1] === wet.gain[1] && d.warm === 0 && d.sun === wet.sun / 2);
+      Weather._d = null; }
     // 15c. Go up and look: once an end for each bowler, never on the jack or on the other side's turn
     { const G = new Game(StubUI, { instant: true }); G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0 });
       const onJack = G.canLook(); G.testDeliver(0, 0.6);
@@ -8379,6 +8534,10 @@ window.BiasTests = {
         ok('Record: reset empties it, and a reload on the over screen still counts nothing', r.computer.club === undefined && r.first === null && !Record.count(won, st, day) && st.get('stats').first === null);
         const later = mem(); later.set('stats', { v: Record.V + 1, keep: 'me' });
         ok('Record: a record in a later format is left untouched', !Record.count(won, later, day) && later.get('stats').keep === 'me'); }
+      // the clubs visited: the first game at a club counts, once, on its day; resetting the record forgets them
+      { const cs = mem(), first = Venue.visit('wattle', cs, day), again = Venue.visit('wattle', cs, day + 864e5); Venue.visit('brisas', cs, day);
+        const v = Venue.visited(cs); Record.reset(cs);
+        ok('Clubs visited: a first game counts once; a reset forgets them', first && !again && Object.keys(v).length === 2 && v.wattle === Record.day(day) && !Object.keys(Venue.visited(cs)).length, JSON.stringify(v)); }
     }
     const passed = out.filter(r => r.pass).length;
     console.table(out); console.log(`Bias self-tests: ${passed}/${out.length} passed`);
