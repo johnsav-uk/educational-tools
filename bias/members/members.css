@@ -71,3 +71,5 @@
 .acct-table li span{flex:1;min-width:0;overflow-wrap:anywhere}
 .acct-table li.me{color:var(--gold);font-weight:650}
 .acct-table i{font-style:normal;margin-left:3px;color:var(--muted)}
+/* the Golden Wood beside a name: beat Walter, the game's top bot */
+.gw{width:1em;height:1em;vertical-align:-.12em;margin-left:.2em}

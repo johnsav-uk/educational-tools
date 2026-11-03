@@ -11,12 +11,14 @@
      record is never counted twice however often it's sent.
    - skip: each browser's daily-puzzle streak. The account's streak is the one played most
      recently (the longer one on a tie), its best the best anywhere. Star counts stay per browser.
-   - archive: the best stars for each archive puzzle, from any browser. */
+   - archive: the best stars for each archive puzzle, from any browser.
+   - bots.won: the bots beaten in any browser (a won match against them in its record), so the
+     title page's next bot and Walter's lock are the account's, not just this browser's. */
 (function (root) {
   'use strict';
   // the game's store keys (store.get(k) reads localStorage 'bias.' + k as JSON)
   const PROFILE_KEYS = ['m.name0', 'on.name', 'm.prof0', 'on.prof', 'm.col0', 'on.col', 'settings', 'profiles'];
-  const SKIP_KEY = 'skip', ARCHIVE_KEY = 'skip.archive', STATS_KEY = 'stats';
+  const SKIP_KEY = 'skip', ARCHIVE_KEY = 'skip.archive', STATS_KEY = 'stats', BOTS_KEY = 'bots.won';
   const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -24,8 +26,9 @@
   function snapshot(store) {
     const profile = {};
     for (const k of PROFILE_KEYS) { const v = store.get(k, null); if (v != null && v !== '') profile[k] = v; }
-    const stats = store.get(STATS_KEY, null), skip = store.get(SKIP_KEY, null), archive = store.get(ARCHIVE_KEY, null);
+    const stats = store.get(STATS_KEY, null), skip = store.get(SKIP_KEY, null), archive = store.get(ARCHIVE_KEY, null), bots = store.get(BOTS_KEY, null);
     return {
+      botsWon: Array.isArray(bots) && bots.length ? bots : null,
       profile: Object.keys(profile).length ? profile : null,
       stats: isObj(stats) && isObj(stats.online) ? stats : null,
       skip: isObj(skip) && skip.v === 1 ? skip : null,
@@ -93,6 +96,14 @@
     return same(out, base) ? null : out;
   }
 
+  // ---------- bots: beaten anywhere ----------
+  // The bots beaten in other browsers, added to this browser's list; null if that adds nothing.
+  function botsWon(local, rows, browser) {
+    const have = new Set(local.botsWon || []), out = new Set(have);
+    for (const s of others(rows, 'stats', browser)) if (isObj(s.computer)) for (const id in s.computer) if (isObj(s.computer[id]) && Number(s.computer[id].won) > 0) out.add(id);
+    return out.size > have.size ? [...out].sort() : null;
+  }
+
   /* What joining this browser to the account would do: what goes up, what comes down (each with
      the store writes it makes), for the player to see before agreeing. */
   function plan(local, rows, browser) {
@@ -112,6 +123,8 @@
     if (sk) { down.push(`Your streak from your other browsers: ${sk.streak} day${sk.streak === 1 ? '' : 's'}, best ${sk.best}`); writes[SKIP_KEY] = sk; }
     const ar = applyArchive(local.archive, rows, browser);
     if (ar) { const n = Object.keys(ar).filter(k => !local.archive || !same(ar[k], local.archive[k])).length; down.push(`Better stars on ${n} archive puzzle${n === 1 ? '' : 's'} from your other browsers`); writes[ARCHIVE_KEY] = ar; }
+    const bw = botsWon(local, rows, browser);
+    if (bw) { down.push(`Bots you’ve beaten in your other browsers`); writes[BOTS_KEY] = bw; }
     const t = statsTotal(local.stats, rows, browser);
     if (t.browsers > 1) down.push(`Your Members record will add up all your browsers: ${t.played} matches so far`);
     return { up, down, writes };
@@ -126,6 +139,7 @@
     else if (acct && acct.updatedAt > syncedAt && !same(acct.json, local.profile)) Object.assign(writes, fromAccount(acct.json, local.profile));  // changed elsewhere
     const sk = applySkip(local.skip, mergedSkip(local.skip, rows, browser)); if (sk) writes[SKIP_KEY] = sk;
     const ar = applyArchive(local.archive, rows, browser); if (ar) writes[ARCHIVE_KEY] = ar;
+    const bw = botsWon(local, rows, browser); if (bw) writes[BOTS_KEY] = bw;
     const send = { browser };
     if (profile) send.profile = profile;
     const after = k => (k in writes ? writes[k] : local[k === SKIP_KEY ? 'skip' : 'archive']);
@@ -135,6 +149,6 @@
     return { writes, send };
   }
 
-  const api = { PROFILE_KEYS, snapshot, statsTotal, mergedSkip, applySkip, applyArchive, plan, step };
+  const api = { PROFILE_KEYS, snapshot, statsTotal, mergedSkip, applySkip, applyArchive, botsWon, plan, step };
   if (typeof module === 'object' && module.exports) module.exports = api; else root.BiasSync = api;
 })(typeof window === 'object' ? window : globalThis);

@@ -161,6 +161,8 @@
   const day = t => new Date(t).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   const waitingOf = s => (s.leagues || []).reduce((n, l) => n + l.waiting + l.confirm, 0) + (s.challenges ? s.challenges.incoming + s.challenges.confirm : 0);
   const eloTag = r => r ? ` (${r.rating}${r.provisional ? '?' : ''})` : '';
+  // the Golden Wood (beat Walter, the top bot) beside a member's name
+  const gwTag = r => r && r.gw ? ' <img class="gw" src="img/golden-wood.png" width="16" height="16" alt="Golden Wood" title="Golden Wood: beat Walter Pennick, the Legend of Fernley">' : '';
 
   function leagueItem(l) {
     const esc = H.esc;
@@ -224,7 +226,7 @@
     const box = $('acTableBody'); box.innerHTML = '<p class="acct-note">Loading…</p>';
     const t = await call('/api/ratings');
     if (t.error) { box.innerHTML = `<p class="acct-err">${H.esc(t.error)}</p>`; return; }
-    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b></li>`).join('')}</ol>`
+    box.innerHTML = t.rows.length ? `<ol class="acct-table">${t.rows.map(r => `<li${r.me ? ' class="me"' : ''}><span>${H.esc(r.name)}${gwTag(r)}</span><b>${r.rating}${r.provisional ? '<i title="Provisional: under 10 games">?</i>' : ''}</b></li>`).join('')}</ol>`
       : '<p class="acct-note">No rated games yet.</p>';
   }
 
@@ -237,7 +239,7 @@
     creator(s.creator);
     H.store.set('member.name', s.user.username);
     H.paint(s.user.username, waitingOf(s), s.openToJoin);
-    H.head(s.user.username + eloTag(s.rating), 'Signed in'); if (H.top) H.top();
+    H.head(s.user.username + eloTag(s.rating), 'Signed in', !!(s.rating && s.rating.gw)); if (H.top) H.top();
     const rec = H.record(), esc = H.esc;
     H.body().innerHTML = `
       ${newsSeen() ? '' : NEWS_HTML}
@@ -386,7 +388,7 @@
      is in view, which once a minute is also the "on the green" heartbeat, unless the member hides
      themself. Games are played on the league site, opened in a new tab already signed in (openBoard). */
   const Club = { d: null, timer: 0, beatAt: 0, busy: false, seen: null };
-  const nm = p => `${H.esc(p.name)} <span class="elo">${eloTag(p).trim()}</span>`;
+  const nm = p => `${H.esc(p.name)}${gwTag(p.elo || p)} <span class="elo">${eloTag(p).trim()}</span>`;
   function clubStart() {
     if (Club.timer) return;
     Club.timer = setInterval(clubPoll, 20000);

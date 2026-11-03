@@ -720,6 +720,31 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 .play-tile .i{width:20px;height:20px;color:var(--ivory)}
 .play-tile .pt-t{font:400 15.5px/1.1 var(--display);letter-spacing:0;white-space:nowrap}
 .title .play-tile .mi-sub{display:none}
+.bot-elo{color:var(--gold-hi);font-weight:700}
+.gw{width:1em;height:1em;vertical-align:-.12em;margin-left:.2em}
+/* the bots: the next one to beat on the title tile, the picker, and their word after a match */
+.title #mQuick .bot-face{width:40px;height:40px;flex:none;border-radius:50%;box-shadow:0 0 0 1.5px var(--gold)}
+#mQuick .bt-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+#mQuick .bt-sub{font:500 12px/1.3 var(--sans);color:var(--cream-2)}
+.title .level-list .menu-item.bot-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;column-gap:14px;align-items:center;padding-left:8px}
+.title .level-list .menu-item.bot-row.primary{padding-left:12px}
+.bot-row .bot-face{width:52px;height:52px;border-radius:50%;grid-row:span 2;box-shadow:0 0 0 2px var(--gold)}
+.bot-row .bot-name{font:400 22px/1.1 var(--display)}
+.bot-row .bot-elo{font:700 14px/1 var(--sans)}
+.title .level-list .bot-row .mi-sub.mi-sub{grid-column:2;margin-top:3px}
+.bot-row .bot-state{grid-column:3;grid-row:1 / span 2;font:700 12px/1 var(--sans);color:var(--gold-hi);white-space:nowrap}
+.bot-row.primary .bot-elo,.bot-row.primary .bot-state{color:var(--gold-dk)}
+.bot-row.locked .bot-face{filter:grayscale(1) brightness(.6)}
+.bot-row.locked .bot-name,.bot-row.locked .mi-sub{opacity:.55}
+#overBot .bot-face{width:56px;height:56px;flex:none;border-radius:50%;box-shadow:0 0 0 2px var(--gold)}
+.ob-say{display:flex;gap:12px;align-items:center;margin:14px 0 4px}
+.ob-say p{margin:0;font-style:italic}
+.ob-say b{display:block;font:400 17px/1.2 var(--display);font-style:normal}
+.ob-first,.ob-gold{border:1px solid var(--gold);border-radius:6px;padding:10px 14px;margin:14px 0 0}
+.ob-first b,.ob-gold b{display:block;font:400 21px/1.2 var(--display)}
+.ob-first span,.ob-gold span{font-size:14px}
+.ob-gold{display:flex;gap:14px;align-items:center}
+.ob-gold canvas{width:96px;height:96px;flex:none}
 /* Custom match and Beta games: gold words with an arrow, there without competing */
 .minor-links{display:flex;flex-wrap:wrap;align-items:center;gap:0 24px;margin:-2px 0 -4px}
 .title .text-link{display:inline-flex;align-items:center;gap:8px;width:auto;min-height:40px;padding:0 2px;border:0;border-radius:2px;background:none;
@@ -1089,7 +1114,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
             <p class="cn-k">Play</p>
             <button type="button" data-proxy="mResume">Return to the game</button>
             <button type="button" data-proxy="mOnline">Play online</button>
-            <button type="button" data-proxy="mQuick">Play the computer</button>
+            <button type="button" data-proxy="mQuick">Play a bot</button>
             <button type="button" data-proxy="mPractice">Practice</button>
             <button type="button" data-proxy="mSetup">Custom match</button>
             <button type="button" data-proxy="mSkip">Today’s challenge</button>
@@ -1123,7 +1148,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <div class="hero-text">
           <p class="hero-k">Welcome to Bias</p>
           <h2 class="hero-h" id="heroH">Fancy a game?</h2>
-          <p class="sub">Step onto the green. Play online, against the computer or in a quick practice session.</p>
+          <p class="sub">Step onto the green. Play online, take on a bot or have a quick practice session.</p>
           <button class="open-badge" id="openBadge" type="button" hidden><span class="ob-dot" aria-hidden="true"></span>Open to new members<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         </div>
       </section>
@@ -1141,7 +1166,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
               <div class="ci-green" id="mClubGreen" aria-live="polite"></div>
             </section>
             <div class="play-pair">
-              <button class="menu-item play-tile" id="mQuick"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16.5V20"/></svg><span class="pt-t">Play computer</span><span class="mi-sub">Five opponents, Starter to International</span></button>
+              <button class="menu-item play-tile" id="mQuick"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16.5V20"/></svg><span class="pt-t">Play a bot</span><span class="mi-sub">Six opponents, from Priya to Walter</span></button>
               <button class="menu-item play-tile" id="mPractice"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span class="pt-t">Practice</span><span class="mi-sub">Roll a few, or take the guided lesson</span></button>
             </div>
             <div class="minor-links">
@@ -1154,7 +1179,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         </div>
         <div class="menu" id="levelMenu" hidden>
           <button class="level-back" id="levelBack">‹ Back</button>
-          <div class="level-head">Choose your opponent<span>Four ends of singles</span></div>
+          <div class="level-head">Choose your opponent<span>Five ends of singles. Walter plays first to 11.</span></div>
           <div id="levelList" class="level-list"></div>
         </div>
         <div class="menu" id="recordMenu" hidden>
@@ -1461,9 +1486,10 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <div class="scrim" id="overScrim">
     <div class="sheet card" role="dialog" aria-labelledby="overH" style="max-width:600px">
-      <div class="kicker"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg>Ashcombe Bowls Club · Match complete</div>
+      <div class="kicker"><svg class="emblem" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5"/><circle cx="16" cy="16" r="10.5"/><circle cx="16" cy="16" r="7.5"/><circle class="e-core" cx="16" cy="16" r="3.6"/></svg><span id="overClub">Ashcombe Bowls Club</span> · Match complete</div>
       <h2 id="overH">—</h2>
       <p id="overP"></p>
+      <div id="overBot" hidden></div>
       <div style="overflow:auto"><table id="overTable"></table></div>
       <h3>The match in figures</h3>
       <table class="stats" id="overStats"></table>
@@ -4990,9 +5016,44 @@ const AI_LEVELS = [
   { id: 'club', short: 'Steady: draws to the jack', name: 'Club', aimSD: .60, wSD: .027, greenSD: .4, biasSD: .10, learn: .45, tactics: 1, samples: 1, think: [1.3, 2.2], blurb: 'A steady club bowler who draws to the jack and picks the open hand.' },
   { id: 'league', short: 'Reads the head and guards it', name: 'League', aimSD: .42, wSD: .020, greenSD: .35, biasSD: .07, learn: .55, tactics: 2, samples: 2, think: [1.1, 1.9], blurb: 'Reads the head: trails the jack, rests on shot bowls, guards when holding.' },
   { id: 'county', short: 'Accurate, and drives when down', name: 'County', aimSD: .26, wSD: .012, greenSD: .2, biasSD: .035, learn: .70, tactics: 3, samples: 3, think: [1.0, 1.7], blurb: 'Accurate, quick to read the green, and willing to drive when it is down.' },
-  { id: 'international', short: 'Near-flawless, every bowl', name: 'International', aimSD: .15, wSD: .007, greenSD: .1, biasSD: .015, learn: .85, tactics: 4, samples: 4, think: [0.9, 1.5], blurb: 'Near-flawless line and weight, and the percentage shot every time.' }
+  { id: 'international', short: 'Near-flawless, every bowl', name: 'International', aimSD: .15, wSD: .007, greenSD: .1, biasSD: .015, learn: .85, tactics: 4, samples: 4, think: [0.9, 1.5], blurb: 'Near-flawless line and weight, and the percentage shot every time.' },
+  // above International, and only once she's beaten (BOTS.legend.after): unhurried, and steadier still on the last bowls
+  { id: 'legend', short: 'The master of the draw', name: 'Legend', aimSD: .11, wSD: .005, greenSD: .07, biasSD: .01, learn: .9, tactics: 4, samples: 5, think: [1.4, 2.4], blurb: 'Unhurried and unflappable: the master of the draw.' }
 ];
 const aiLevel = id => AI_LEVELS.find(l => l.id === id) || AI_LEVELS[1];
+/* The bots: each standard as a character, as on chess.com, with a face (botFace), a home club where
+   their matches are played (unless the player has chosen a club in Settings), and a rating. The
+   ratings are the bots' own, set from matches between them (notes/characters/), and never move a
+   member's. Beating one is in Your record (Record, computer[id].won); beating Walter earns the Golden
+   Wood beside your name for members. Looks and words only: how each plays is its AI_LEVELS line. */
+const BOTS = {
+  starter: { who: 'Priya Shah', club: 'Pitfold Park BC, Lancashire', venue: 'pitfold', elo: 700, tag: 'She’s just starting out',
+    bio: 'Joined Pitfold Park in the spring after her dad bet her she couldn’t beat him. She still can’t, but it’s getting closer.',
+    says: { lost: 'Well bowled! One day…', won: 'Ooh, I won! How did that happen?' },
+    face: { sky: ['#9fb7c8', '#d9d2bd'], hedge: '#4f6b3c', skin: '#b07a55', skinSh: '#8d5b3d', hair: '#1d1714', hairStyle: 'pony', top: '#f3efe6', topSh: '#c9c2b2', collar: '#f3efe6', badge: '#7a2e35', lip: '#9a4f45' } },
+  club: { who: 'Ken Lowther', club: 'Ashcombe BC, England', venue: 'ashcombe', elo: 1000, tag: 'He’ll draw to the jack all day',
+    bio: 'Forty years at Ashcombe and he’s never missed a roll-up. Retired postman, keeper of the club’s tea urn.',
+    says: { lost: 'Lovely weight. That’ll do you.', won: 'That’ll do me. Good end, that last one.' },
+    face: { sky: ['#a9c1cf', '#e2dcc8'], hedge: '#3f5e36', skin: '#e2b49a', skinSh: '#c38c71', hair: '#d9d6d0', hairStyle: 'bald', top: '#1f3a5f', topSh: '#152a45', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', glasses: true, tie: '#7a2e35' } },
+  league: { who: 'Morag Strachan', club: 'Glenmorran BC, Perthshire', venue: 'glenmorran', elo: 1300, tag: 'She reads the head and guards it',
+    bio: 'Skips Glenmorran’s second four on Saturdays. She reads a head before you’ve picked up your next bowl.',
+    says: { lost: 'Nice bowling. I’ll have you next time.', won: 'Close one. Guard your shots and you’ll have me.' },
+    face: { sky: ['#8ea3b4', '#cfd0c4'], hedge: '#34503a', skin: '#ecc3a8', skinSh: '#cf9e82', hair: '#a8452a', hairStyle: 'bob', top: '#4a5d4a', topSh: '#36463a', collar: '#f3efe6', badge: '#c5a45c', lip: '#a65a50', tartan: true } },
+  county: { who: 'Javier Ortega', club: 'Las Brisas BC, Costa del Sol', venue: 'brisas', elo: 1600, tag: 'He fires when he’s down',
+    bio: 'A tennis coach for thirty years, he took up bowls at fifty and played for his county within five.',
+    says: { lost: '¡Buen tiro! You earned that.', won: 'Good match. Now we play again?' },
+    face: { sky: ['#7fb2d6', '#e9dfc2'], hedge: '#5d7a3a', skin: '#c48f69', skinSh: '#a06d4c', hair: '#3a3532', hairStyle: 'short', grey: true, top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#b33a2e', lip: '#94574a', beard: true, hat: 'straw' } },
+  international: { who: 'Bree Callister', club: 'Wattle Point BC, New South Wales', venue: 'wattle', elo: 1900, tag: 'Near-flawless, every bowl',
+    bio: 'Twice national singles champion. She practises at dawn before the heat, and she hasn’t lost at home in two years.',
+    says: { lost: 'Well played. Not many beat me here.', won: 'Good bowls. Your shot, next time.' },
+    face: { sky: ['#78a9d1', '#efe3c0'], hedge: '#6b7b3e', skin: '#5b3a2a', skinSh: '#432a1e', hair: '#16100d', hairStyle: 'curls', top: '#0f5132', topSh: '#0a3a24', collar: '#f3c94a', badge: '#f3c94a', lip: '#5e3027', hat: 'visor' } },
+  legend: { who: 'Walter Pennick', club: 'Fernley Indoor, Leicestershire', venue: 'fernley', elo: 2100, tag: 'The legend of Fernley', after: 'international',
+    bio: 'Club president at Fernley since before the carpet went down. Nobody remembers him losing a final, and nobody remembers him without his pipe.',
+    says: { lost: 'Mm. Good bowl. Very good bowl.', won: 'Take your time. Shall we go again?' },
+    face: { sky: ['#b8b2a2', '#e6dcc4'], hedge: '#4a5b3a', skin: '#e7bea2', skinSh: '#c6957a', hair: '#e8e4dc', hairStyle: 'short', top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', tash: true, hat: 'flat', pipe: true } }
+};
+const botOf = id => BOTS[id] || BOTS.club;
+const botFirst = id => botOf(id).who.split(' ')[0];
 let aiRand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
 const aiGauss = () => { let u = 0; while (u === 0) u = aiRand(); const v = aiRand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
 const DEG = Math.PI / 180;
@@ -5146,7 +5207,7 @@ const Record = {
   // a fresh record (and a fresh browser id), still knowing which matches were counted
   reset(st = store) { const old = this.load(st), s = this.blank(); if (old) s.seen = old.seen; st.set('stats', s); },
   rows(s) {
-    return [...AI_LEVELS.map(L => [`${L.name} computer`, s.computer[L.id]]), ['Online', s.online], ['League', s.league]].filter(([, t]) => t && t.played);
+    return [...AI_LEVELS.map(L => [botOf(L.id).who, s.computer[L.id]]), ['Online', s.online], ['League', s.league]].filter(([, t]) => t && t.played);
   },
   paint() {
     const s = this.load(), rows = s ? this.rows(s) : [];
@@ -6348,7 +6409,7 @@ const UI = {
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
     const green = m.secret && !m.over ? 'green speed hidden' : `<span class="num">${g.world.T.toFixed(1)} s</span> green`;
     setHtml(sb, `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra end' : 'End'}</div><div class="sb-big num">${g.endNo}${g.isExtraEnd() ? '' : `<span class="sb-of">${fmt}</span>`}</div></div>${pc(0)}${pc(1)}
-      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + g.ai.level.name : g.link ? ' · online' : ''}</div><div class="sb-meta">${pr.model} bowls · ${green}</div></div>`);
+      <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + esc(botOf(g.ai.level.id).who) : g.link ? ' · online' : ''}</div><div class="sb-meta">${pr.model} bowls · ${green}</div></div>`);
   },
   // head panel: drawn every frame from the same bodies the scene uses
   drawHead(dt) {
@@ -6429,10 +6490,14 @@ const UI = {
     hv.draw({ bodies, jack: jack ? { x: jack.x, y: jack.y, r: jack.r, state: jack.state, ditch: jack.ditch } : null, highlight: hl, numbers: nums, labels: true });
   },
   matchOver() {
+    const lv = game.ai && game.match && game.match.kind === 'computer' ? game.ai.level.id : null, firstWin = lv && !Bots.won(lv);
     Record.count(game);
+    this.botOver(lv, firstWin && Bots.won(lv));
     const g = game, P = g.players, m = g.match, ff = m.forfeit, w = ff ? 1 - ff.side : P[0].score > P[1].score ? 0 : 1, mine = g.link ? g.link.side : null, T = g.isTeams();
     if ($('concedeScrim').classList.contains('show')) UI.close('concedeScrim');
-    $('overH').textContent = ff ? `${P[w].name} wins by ${ff.why === 'conceded' ? 'concession' : 'forfeit'}` : `${P[w].name} wins ${P[w].score}–${P[1 - w].score}`;
+    $('overClub').textContent = Venue.current.name;
+    const wins = P[w].name === 'You' ? 'win' : 'wins';
+    $('overH').textContent = ff ? `${P[w].name} ${wins} by ${ff.why === 'conceded' ? 'concession' : 'forfeit'}` : `${P[w].name} ${wins} ${P[w].score}–${P[1 - w].score}`;
     const teamsLine = g.isTeams() ? ' ' + P.map(p => `${p.name}: ${p.members.map(x => `${x.name} (${x.role.toLowerCase()})`).join(', ')}.`).join(' ') : '';
     const gone = ff && (ff.side === mine ? (T ? 'Your side' : 'You') : P[ff.side].name), were = ff && (ff.side === mine || T);
     const ffLine = ff ? `${gone} ${ff.why === 'conceded' ? 'conceded' : ff.why === 'left' ? 'left the match' : `lost the connection and ${were ? 'were' : 'was'} not back within ${AWAY_S} seconds`}, so the match goes to ${w === mine ? (T ? 'your side' : 'you') : P[w].name}. It stood at ${P[0].score}–${P[1].score}. ` : '';
@@ -6452,8 +6517,23 @@ const UI = {
       + stat('Bowls finishing within 50 cm', [0, 1].map(i => E.reduce((a, e) => a + e.close[i], 0)), n) + '</tbody>';
     Sound.chime(true);
     this.open('overScrim');
+  },
+  // the bot's word after the match; their first defeat, and Walter's (the Golden Wood), get their own card
+  botOver(lv, firstWin) {
+    const el = $('overBot'); el.hidden = !lv; el.innerHTML = ''; if (!lv) return;
+    const B = botOf(lv), P = game.players, me = 1 - game.ai.side, won = game.match.forfeit ? game.match.forfeit.side !== me : P[me].score > P[1 - me].score;
+    const said = `<div class="ob-say">${botFace(lv)}<p><b>${esc(B.who)}</b>“${esc(won ? B.says.lost : B.says.won)}”</p></div>`;
+    if (firstWin && lv === 'legend') el.innerHTML = `<div class="ob-gold"><canvas class="gw-big" width="192" height="192" aria-hidden="true"></canvas><div><b>You beat Walter.</b><span>The Golden Wood is yours.${store.get('league.token', null) ? ' It’s beside your name now.' : ' Join Members and it shows beside your name.'}</span></div></div>` + said;
+    else if (firstWin) { const N = Bots.next(); el.innerHTML = `<div class="ob-first"><b>First win against ${esc(botFirst(lv))}!</b><span>${N.id !== lv && !Bots.won(N.id) ? `Next up: ${esc(botOf(N.id).who)} (${botOf(N.id).elo}).` : ''}</span></div>` + said; }
+    else el.innerHTML = said;
+    const cv = el.querySelector('canvas'); if (cv) goldenWood(cv);
   }
 };
+/* The Golden Wood: the game's own wood (drawBowl), in gold, three-quarters on. */
+function goldenWood(cv) {
+  const g = cv.getContext('2d'), n = cv.width; g.clearRect(0, 0, n, n);
+  drawBowl(g, n / 2, n / 2, n * .4, '#d9aa3e', { head: 1.05, L: { r: -0.5, u: 0.7, f: 0.6 }, bias: 1, roll: 0.6 });
+}
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const game = new Game(UI);
@@ -6687,9 +6767,10 @@ $('setupGo').onclick = () => {
   maybeTutorial();
 };
 
-/* Play: no form to fill in. Singles against the computer over 4 ends, using whatever name, bowls,
-   colours, standard and green speed setting were last chosen in Set up a match (by default: a random
-   green, kept secret until the end). */
+/* Play: no form to fill in. Singles against a bot over 5 ends (Walter: first to 11 shots), using whatever name, bowls, colours
+   and green speed setting were last chosen in Set up a match (by default: a random green, kept secret
+   until the end). The bot plays under their own name, at their home club unless the player has chosen
+   a club in Settings. */
 function quickPlay(level) {
   if (Net.on) Net.leave();
   store.set('m.level', level);
@@ -6697,13 +6778,15 @@ function quickPlay(level) {
   const lead = Math.random() < 0.5 ? 0 : 1;
   const players = [
     { name: (store.get('m.name0', null) || 'You').slice(0, 16), profileId: store.get('m.prof0', 'dp-pro'), colour: store.get('m.col0', 'claret') },
-    { name: (store.get('m.aiName', 'Computer') || 'Computer').slice(0, 16), profileId: store.get('m.prof1', 'hs-classic'), colour: store.get('m.col1', 'navy') }];
+    { name: botFirst(level), profileId: store.get('m.prof1', 'hs-classic'), colour: store.get('m.col1', 'navy') }];
   if (players[1].colour === players[0].colour) players[1].colour = players[0].colour === 'navy' ? 'claret' : 'navy';
   const gm = store.get('m.green', 'secret'), T = gm === 'set' ? clamp(+store.get('m.T', 13) || 13, 11, 16) : randomGreen();
-  game.startMatch({ players, T, format: { type: 'ends', n: 4 }, discipline: DISCIPLINES.singles, leader: lead, secret: gm === 'secret', ai: level });
-  const you = players[lead].name === 'You';
+  const B = botOf(level), venue = Venue.choice() === 'random' && !VENUES[Venue.param] ? B.venue : null;   // Venue.forGame loads the club if it isn't here yet
+  const format = level === 'legend' ? { type: 'shots', n: 11 } : { type: 'ends', n: 5 };   // Walter is played to 11 shots, the rest over 5 ends
+  game.startMatch({ players, T, venue, format, discipline: DISCIPLINES.singles, leader: lead, secret: gm === 'secret', ai: level });
+  const you = lead === 0;
   const green = gm === 'secret' ? ' The green speed is a secret today: read it from your first bowls.' : gm === 'random' ? ` Today's green is running at ${T.toFixed(1)} s, ${GreenSpeed.label(T).toLowerCase()}.` : '';
-  setTimeout(() => UI.toast(`${players[lead].name} ${you ? 'win' : 'wins'} the toss and ${you ? 'take' : 'takes'} the jack. Four ends against the ${aiLevel(level).name} computer.${green}`), 400);
+  setTimeout(() => UI.toast(`${players[lead].name} ${you ? 'win' : 'wins'} the toss and ${you ? 'take' : 'takes'} the jack. ${format.type === 'shots' ? 'First to 11' : 'Five ends'} against ${B.who} (${B.elo}).${green}`), 400);
   maybeTutorial();
 }
 
@@ -7510,22 +7593,80 @@ function showTitle() {
   $('mResume').classList.toggle('primary', inGame); $('mOnline').classList.toggle('primary', !inGame);
   $('mResume').hidden = !inGame;
   if (typeof Skip !== 'undefined') Skip.paint();
+  Bots.paintTile();
   $('titleScrim').classList.toggle('photo', !inGame);
   $('titleFoot').hidden = !inGame;
   $('titleFoot').textContent = !inGame ? '' : game.link ? `An online match is in progress (room ${Net.code}). Starting something new will leave it.` : game.mode === 'match' ? 'A match is in progress. Starting something new will abandon it.' : game.mode === 'puzzle' ? "Today's puzzle is in progress." : 'Practice is in progress.';
   UI.open('titleScrim');
 }
 $('mSetup').onclick = () => openSetup({});
-/* Play asks how good the computer should be first. A first visit is pointed at Starter;
-   after that, the standard played last (here or in Set up a match) is the one picked out. */
 function showMainMenu() { $('titleScrim').classList.remove('picking'); $('levelMenu').hidden = true; $('recordMenu').hidden = true; $('memberMenu').hidden = true; $('betaMenu').hidden = true; $('mainMenu').hidden = false; }
-function showLevels() {
-  const last = store.get('m.level', null), pick = AI_LEVELS.some(l => l.id === last) ? last : 'starter';
-  $('levelList').innerHTML = AI_LEVELS.map(l => `<button class="menu-item second${l.id === pick ? ' primary' : ''}" data-level="${l.id}">${l.name}${l.id === 'starter' ? '<span class="mi-tag">New to bowls</span>' : ''}<span class="mi-sub">${esc(l.short)}</span></button>`).join('');
-  $('mainMenu').hidden = true; $('levelMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
-  $('levelList').querySelector('.primary').focus();
+/* The bots (BOTS): a face drawn from a few settings, painted to sit with the clubs. Each drawing
+   gets its own ids, so a bot shown twice on a page keeps its gradients. */
+let botFaceN = 0;
+function botFace(id) {
+  const p = botOf(id).face, k = 'bf' + (++botFaceN), u = s => `url(#${k}${s})`;
+  const hair = {
+    bald: `<path d="M57 78Q54 92 60 104L64 96Q62 86 66 80ZM143 78Q146 92 140 104L136 96Q138 86 134 80Z" fill="${p.hair}"/>`,
+    pony: `<path d="M52 92Q48 46 100 40Q152 46 148 92Q140 66 118 60Q96 70 70 66Q58 74 52 92Z" fill="${p.hair}"/><path d="M146 80Q170 100 160 140Q156 116 144 102Z" fill="${p.hair}"/>`,
+    bob: `<path d="M50 120Q40 50 100 40Q160 50 150 120Q148 132 140 136Q144 96 132 74Q108 82 80 70Q60 86 60 136Q52 132 50 120Z" fill="${p.hair}"/>`,
+    short: `<path d="M56 88Q54 46 100 42Q146 46 144 88Q138 64 112 62Q90 66 70 64Q60 72 56 88Z" fill="${p.hair}"/>${p.grey ? '<path d="M58 84Q60 74 66 70M142 84Q140 74 134 70" stroke="#bdb6ad" stroke-width="4" fill="none"/>' : ''}`,
+    curls: `<g fill="${p.hair}">${[[58, 80, 16], [70, 58, 18], [92, 46, 19], [116, 46, 19], [136, 58, 18], [146, 80, 16], [52, 104, 13], [150, 104, 13], [60, 124, 11], [142, 124, 11]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>`
+  }[p.hairStyle];
+  const hat = p.hat === 'straw' ? '<ellipse cx="100" cy="62" rx="66" ry="14" fill="#d8bf7c"/><path d="M64 62Q66 28 100 26Q134 28 136 62Z" fill="#e3cd8e"/><path d="M65 54Q100 60 135 54L136 62Q100 68 64 62Z" fill="#3b4a6b"/>'
+    : p.hat === 'visor' ? '<path d="M56 66Q100 50 144 66L146 74Q100 60 54 74Z" fill="#f6f0e2"/><path d="M58 70Q100 58 142 70Q150 82 166 84Q110 80 58 76Z" fill="#0f5132"/>'
+    : p.hat === 'flat' ? '<path d="M58 72Q58 40 100 38Q142 40 144 70Q126 60 100 62Q76 62 58 72Z" fill="#7b6a52"/><path d="M58 72Q100 56 148 68Q164 74 160 80Q116 70 60 80Z" fill="#6a5a44"/><path d="M66 52Q100 44 136 52" stroke="#5a4b38" stroke-width="2" fill="none"/>' : '';
+  const back = p.hairStyle === 'bob' || p.hairStyle === 'curls' ? `<path d="M58 100Q56 150 66 160L134 160Q144 150 142 100Z" fill="${p.hair}"/>` : '';
+  return `<svg class="bot-face" viewBox="0 0 200 200" aria-hidden="true"><defs>
+    <linearGradient id="${k}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
+    <radialGradient id="${k}f" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="${p.skin}"/><stop offset="1" stop-color="${p.skinSh}"/></radialGradient>
+    <linearGradient id="${k}t" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${p.top}"/><stop offset="1" stop-color="${p.topSh}"/></linearGradient>
+    <clipPath id="${k}c"><circle cx="100" cy="100" r="100"/></clipPath></defs>
+  <g clip-path="${u('c')}"><rect width="200" height="200" fill="${u('s')}"/>
+    <path d="M0 118Q30 104 60 112Q100 100 140 110Q170 102 200 112V200H0Z" fill="${p.hedge}"/><path d="M0 140H200V200H0Z" fill="#5f8a4a" opacity=".55"/>${back}
+    <path d="M30 200Q32 160 62 150Q80 144 100 150Q120 144 138 150Q168 160 170 200Z" fill="${u('t')}"/>
+    ${p.tartan ? '<g opacity=".35" stroke="#7a2e35" stroke-width="3"><path d="M40 170H160M40 186H160M70 150V200M100 150V200M130 150V200"/></g>' : ''}
+    <path d="M86 132Q86 150 100 156Q114 150 114 132Z" fill="${p.skinSh}"/><path d="M80 148L100 168L120 148L112 146L100 158L88 146Z" fill="${p.collar}"/>
+    ${p.tie ? `<path d="M96 160L104 160L106 190L100 196L94 190Z" fill="${p.tie}"/>` : ''}<circle cx="140" cy="172" r="6" fill="${p.badge}"/>
+    <ellipse cx="60" cy="104" rx="8" ry="11" fill="${p.skinSh}"/><ellipse cx="140" cy="104" rx="8" ry="11" fill="${p.skinSh}"/>
+    <ellipse cx="100" cy="98" rx="40" ry="48" fill="${u('f')}"/>
+    ${p.beard ? `<path d="M64 108Q68 146 100 148Q132 146 136 108Q128 128 100 130Q72 128 64 108Z" fill="${p.hair}" opacity=".85"/><path d="M84 118Q100 112 116 118Q100 122 84 118Z" fill="${p.hair}"/>` : ''}
+    ${hair}<path d="M78 86Q86 82 94 86M106 86Q114 82 122 86" stroke="${p.hairStyle === 'bald' ? '#8a8378' : p.hair}" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <ellipse cx="86" cy="97" rx="4" ry="4.6" fill="#1d1714"/><ellipse cx="114" cy="97" rx="4" ry="4.6" fill="#1d1714"/><circle cx="87.4" cy="95.6" r="1.3" fill="#fff" opacity=".8"/><circle cx="115.4" cy="95.6" r="1.3" fill="#fff" opacity=".8"/>
+    ${p.glasses ? '<g fill="none" stroke="#3a2f28" stroke-width="2.4"><circle cx="86" cy="97" r="10"/><circle cx="114" cy="97" r="10"/><path d="M96 97H104M76 95L62 92M124 95L138 92"/></g>' : ''}
+    <path d="M100 100Q96 112 101 115" stroke="${p.skinSh}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="78" cy="113" rx="7" ry="4" fill="#d9776a" opacity=".22"/><ellipse cx="122" cy="113" rx="7" ry="4" fill="#d9776a" opacity=".22"/>
+    <path d="${p.beard ? 'M90 125Q100 130 110 125' : 'M88 124Q100 132 112 124'}" stroke="${p.lip}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    ${p.tash ? `<path d="M84 121Q92 115 100 119Q108 115 116 121Q108 126 100 122Q92 126 84 121Z" fill="${p.hair}"/>` : ''}${hat}
+    ${p.pipe ? '<path d="M108 127Q122 132 128 136" stroke="#3b2a1e" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M124 130L138 130Q140 146 131 148Q124 146 124 130Z" fill="#5b3a24"/><ellipse cx="131" cy="130" rx="7" ry="2.4" fill="#2a1a10"/><path d="M133 124Q128 112 136 104Q144 96 138 84" stroke="#f6f0e2" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/>' : ''}
+  </g></svg>`;
 }
-$('levelList').onclick = e => { const b = e.target.closest('[data-level]'); if (b) quickPlay(b.dataset.level); };
+/* Who you've beaten: wins in this browser's record, or in your other browsers' (members/sync.js keeps
+   'bots.won' for those). Walter waits until Bree is beaten; the title tile offers the first bot not yet beaten. */
+const Bots = {
+  won(id) { const s = Record.load(); return !!(s && s.computer[id] && s.computer[id].won) || (store.get('bots.won', []) || []).includes(id); },
+  open(id) { const after = botOf(id).after; return !after || this.won(after); },
+  next() { return AI_LEVELS.find(L => this.open(L.id) && !this.won(L.id)) || AI_LEVELS[AI_LEVELS.length - 1]; },
+  paintTile() {
+    const L = this.next(), B = botOf(L.id);
+    $('mQuick').innerHTML = `${botFace(L.id)}<span class="bt-text"><span class="pt-t">Play ${esc(botFirst(L.id))}</span><span class="bt-sub"><b class="bot-elo">${B.elo}</b> · ${esc(B.tag)}</span></span>`;
+    $('mQuick').setAttribute('aria-label', `Play ${B.who}, rated ${B.elo}: ${B.tag}. Or choose another bot.`);
+  }
+};
+/* Play asks which bot first, with the next one to beat picked out. */
+function showLevels() {
+  const pick = Bots.next().id;
+  $('levelList').innerHTML = AI_LEVELS.map(l => {
+    const B = botOf(l.id), open = Bots.open(l.id), won = Bots.won(l.id);
+    return `<button class="menu-item second bot-row${l.id === pick ? ' primary' : ''}${open ? '' : ' locked'}" data-level="${l.id}"${open ? '' : ' aria-disabled="true"'}>${botFace(l.id)}`
+      + `<span class="bot-name">${esc(B.who)} <b class="bot-elo">${B.elo}</b></span>`
+      + `<span class="mi-sub">${open ? esc(B.tag) : `Beat ${esc(botFirst(B.after))} to unlock`}</span>`
+      + `<span class="bot-state">${won ? '✓ Beaten' : open ? '' : 'Locked'}</span></button>`;
+  }).join('');
+  $('mainMenu').hidden = true; $('levelMenu').hidden = false; $('titleScrim').classList.add('picking'); $('titleScrim').scrollTop = 0;
+  ($('levelList').querySelector('.primary') || $('levelList').querySelector('[data-level]')).focus();
+}
+$('levelList').onclick = e => { const b = e.target.closest('[data-level]'); if (!b) return; if (!Bots.open(b.dataset.level)) { const B = botOf(b.dataset.level); UI.toast(`Beat ${botOf(B.after).who} to play ${B.who}.`); return; } quickPlay(b.dataset.level); };
 $('levelBack').onclick = () => { showMainMenu(); $('mQuick').focus(); };
 $('mQuick').onclick = showLevels;
 function showRecord() {
@@ -8246,7 +8387,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, Record, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { CAM, Record, Venue, Bots, BOTS, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
@@ -8341,7 +8482,7 @@ const MemberHost = {
   },
   club() { return { chips: $('mClubChips'), green: $('mClubGreen') }; },
   toast(msg) { UI.toast(msg); },
-  head(title, sub) { $('memberHead').innerHTML = `${esc(title)}<span>${esc(sub)}</span>`; },
+  head(title, sub, gw) { $('memberHead').innerHTML = `${esc(title)}${gw ? ' <img class="gw" src="img/golden-wood.png" width="16" height="16" alt="Golden Wood" title="Golden Wood: beat Walter Pennick, the Legend of Fernley">' : ''}<span>${esc(sub)}</span>`; },
   body() { return $('memberBody'); },
   top() { $('titleScrim').scrollTop = 0; },
   // from a page inside Members (such as Open leagues) Back goes to the Members page, else to the menu
