@@ -21,6 +21,7 @@
     { "n": 17, "date": "2026-10-31", "id": "skip-0017", "title": "Yellow lying two, behind the guard", "theme": "draw the shot", "green": 12, "conditions": "overcast" },
     { "n": 18, "date": "2026-11-01", "id": "skip-0018", "title": "Red lying one, fast green", "theme": "yard on", "green": 14.5, "conditions": "" },
     { "n": 19, "date": "2026-11-02", "id": "skip-0019", "title": "Red lying one, long jack", "theme": "draw the shot", "green": 12, "conditions": "overcast" },
-    { "n": 20, "date": "2026-11-03", "id": "skip-0020", "title": "Red lying four, long jack", "theme": "drive", "green": 13, "conditions": "" }
+    { "n": 20, "date": "2026-11-03", "id": "skip-0020", "title": "Red lying four, long jack", "theme": "drive", "green": 13, "conditions": "" },
+    { "n": 21, "date": "2026-11-04", "id": "skip-0021", "title": "Red lying two, fast green", "theme": "drive", "green": 14.5, "conditions": "" }
   ]
 }
