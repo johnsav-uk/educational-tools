@@ -5158,11 +5158,11 @@ const AI_LEVELS = [
 const aiLevel = id => AI_LEVELS.find(l => l.id === id) || AI_LEVELS[1];
 /* The bots: each standard as a character, as on chess.com, with a face (botFace), a home club where
    their matches are played (unless the player has chosen a club in Settings), and a rating. The
-   ratings are the bots' own, set from matches between them (notes/characters/), and never move a
-   member's. Beating one is in Your record (Record, computer[id].won); beating Walter earns the Golden
+   ratings are the bots' own, from matches between them (notes/characters/calibrate.cjs, 24 a pairing,
+   Ken pinned at 1000, rounded to 50), and never move a member's. Beating one is in Your record (Record, computer[id].won); beating Walter earns the Golden
    Wood beside your name for members. Looks and words only: how each plays is its AI_LEVELS line. */
 const BOTS = {
-  starter: { who: 'Priya Shah', club: 'Pitfold Park BC, Lancashire', venue: 'pitfold', elo: 700, tag: 'She’s just starting out',
+  starter: { who: 'Priya Shah', club: 'Pitfold Park BC, Lancashire', venue: 'pitfold', elo: 650, tag: 'She’s just starting out',
     bio: 'Joined Pitfold Park in the spring after her dad bet her she couldn’t beat him. She still can’t, but it’s getting closer.',
     says: { lost: 'Well bowled! One day…', won: 'Ooh, I won! How did that happen?' },
     face: { sky: ['#9fb7c8', '#d9d2bd'], hedge: '#4f6b3c', skin: '#b07a55', skinSh: '#8d5b3d', hair: '#1d1714', hairStyle: 'pony', top: '#f3efe6', topSh: '#c9c2b2', collar: '#f3efe6', badge: '#7a2e35', lip: '#9a4f45' } },
@@ -5170,19 +5170,19 @@ const BOTS = {
     bio: 'Forty years at Ashcombe and he’s never missed a roll-up. Retired postman, keeper of the club’s tea urn.',
     says: { lost: 'Lovely weight. That’ll do you.', won: 'That’ll do me. Good end, that last one.' },
     face: { sky: ['#a9c1cf', '#e2dcc8'], hedge: '#3f5e36', skin: '#e2b49a', skinSh: '#c38c71', hair: '#d9d6d0', hairStyle: 'bald', top: '#1f3a5f', topSh: '#152a45', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', glasses: true, tie: '#7a2e35' } },
-  league: { who: 'Morag Strachan', club: 'Glenmorran BC, Perthshire', venue: 'glenmorran', elo: 1300, tag: 'She reads the head and guards it',
+  league: { who: 'Morag Strachan', club: 'Glenmorran BC, Perthshire', venue: 'glenmorran', elo: 1250, tag: 'She reads the head and guards it',
     bio: 'Skips Glenmorran’s second four on Saturdays. She reads a head before you’ve picked up your next bowl.',
     says: { lost: 'Nice bowling. I’ll have you next time.', won: 'Close one. Guard your shots and you’ll have me.' },
     face: { sky: ['#8ea3b4', '#cfd0c4'], hedge: '#34503a', skin: '#ecc3a8', skinSh: '#cf9e82', hair: '#a8452a', hairStyle: 'bob', top: '#4a5d4a', topSh: '#36463a', collar: '#f3efe6', badge: '#c5a45c', lip: '#a65a50', tartan: true } },
-  county: { who: 'Javier Ortega', club: 'Las Brisas BC, Costa del Sol', venue: 'brisas', elo: 1600, tag: 'He fires when he’s down',
+  county: { who: 'Javier Ortega', club: 'Las Brisas BC, Costa del Sol', venue: 'brisas', elo: 1450, tag: 'He fires when he’s down',
     bio: 'A tennis coach for thirty years, he took up bowls at fifty and played for his county within five.',
     says: { lost: '¡Buen tiro! You earned that.', won: 'Good match. Now we play again?' },
     face: { sky: ['#7fb2d6', '#e9dfc2'], hedge: '#5d7a3a', skin: '#c48f69', skinSh: '#a06d4c', hair: '#3a3532', hairStyle: 'short', grey: true, top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#b33a2e', lip: '#94574a', beard: true, hat: 'straw' } },
-  international: { who: 'Bree Callister', club: 'Wattle Point BC, New South Wales', venue: 'wattle', elo: 1900, tag: 'Near-flawless, every bowl',
+  international: { who: 'Bree Callister', club: 'Wattle Point BC, New South Wales', venue: 'wattle', elo: 1750, tag: 'Near-flawless, every bowl',
     bio: 'Twice national singles champion. She practises at dawn before the heat, and she hasn’t lost at home in two years.',
     says: { lost: 'Well played. Not many beat me here.', won: 'Good bowls. Your shot, next time.' },
     face: { sky: ['#78a9d1', '#efe3c0'], hedge: '#6b7b3e', skin: '#5b3a2a', skinSh: '#432a1e', hair: '#16100d', hairStyle: 'curls', top: '#0f5132', topSh: '#0a3a24', collar: '#f3c94a', badge: '#f3c94a', lip: '#5e3027', hat: 'visor' } },
-  legend: { who: 'Walter Pennick', club: 'Fernley Indoor, Leicestershire', venue: 'fernley', elo: 2100, tag: 'The legend of Fernley', after: 'international',
+  legend: { who: 'Walter Pennick', club: 'Fernley Indoor, Leicestershire', venue: 'fernley', elo: 1950, tag: 'The legend of Fernley', after: 'international',
     bio: 'Club president at Fernley since before the carpet went down. Nobody remembers him losing a final, and nobody remembers him without his pipe.',
     says: { lost: 'Mm. Good bowl. Very good bowl.', won: 'Take your time. Shall we go again?' },
     face: { sky: ['#b8b2a2', '#e6dcc4'], hedge: '#4a5b3a', skin: '#e7bea2', skinSh: '#c6957a', hair: '#e8e4dc', hairStyle: 'short', top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', tash: true, hat: 'flat', pipe: true } }
