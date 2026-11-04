@@ -443,6 +443,26 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .concede.hopeless{opacity:1;background:#b8402f;border-color:#b8402f;color:#fff}
 .concede.hopeless:hover{background:#c94c3a;border-color:#c94c3a}
 .concede[hidden]{display:none}
+/* online quick chat: a Say button beside concede, its phrase menu, and cartoon speech bubbles under the speaker's name */
+.saybtn[hidden],.saymenu[hidden]{display:none}
+.saybtn[aria-expanded="true"]{color:var(--ivory);border-color:var(--gold-line)}
+.saymenu{display:flex;flex-direction:column;gap:2px;width:max-content;max-width:min(260px,calc(100vw - 2 * var(--gut)));margin-top:8px;padding:6px;border-radius:var(--r)}
+.saymenu button{all:unset;cursor:pointer;padding:8px 12px;border-radius:calc(var(--r) - 2px);color:var(--ivory);font-size:14px;font-weight:600}
+.saymenu button:hover,.saymenu button:focus-visible{background:rgba(255,255,255,.1)}
+.saymenu .say-mute{margin-top:4px;border-top:1px solid var(--line);border-radius:0;padding-top:10px;color:var(--cream-2);font-size:12.5px;font-weight:500}
+.saylayer{position:absolute;inset:0;pointer-events:none;z-index:8}
+.saybub{position:absolute;top:0;left:0;max-width:min(240px,calc(100vw - 2 * var(--gut)));padding:10px 16px 11px;
+  background:#fffdf6;color:#14271f;border:3px solid #14271f;border-radius:22px;box-shadow:4px 5px 0 #14271f;
+  font:800 19px/1.2 'Manrope',system-ui,sans-serif;letter-spacing:-.01em;text-align:center;
+  transform-origin:var(--tx,50%) 0;animation:saypop .45s cubic-bezier(.3,1.6,.5,1) both}
+.saybub::before{content:"";position:absolute;top:-12px;left:var(--tx,50%);width:18px;height:18px;margin-left:-11px;background:inherit;
+  border-left:3px solid #14271f;border-top:3px solid #14271f;border-top-left-radius:3px;transform:rotate(45deg)}
+.saybub .sb-by{display:block;margin-bottom:2px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#294b37}
+.saybub.mine{background:#f3e7c4}
+.saybub.out{animation:sayout .35s ease-in both}
+@keyframes saypop{from{opacity:0;transform:scale(.3) rotate(-6deg)}to{opacity:1;transform:scale(1) rotate(-1.5deg)}}
+@keyframes sayout{from{opacity:1;transform:scale(1) rotate(-1.5deg)}to{opacity:0;transform:scale(.85) translateY(-6px) rotate(-1.5deg)}}
+.saybub.still,.saybub.still.out{animation:none;transform:rotate(-1.5deg)}
 .btn.danger{background:#b8402f;color:#fff;border-color:#b8402f}
 .lookbtn span{overflow:hidden;text-overflow:ellipsis}
 .lookbtn:hover{border-color:var(--line-2)}
@@ -1011,8 +1031,10 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="icon-btn sm concede" id="btnConcede" hidden aria-label="Concede the match" title="Concede the match">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V3.5"/><path d="M6 4.5h11.5l-2.8 4.25 2.8 4.25H6"/></svg>
         </button>
+        <button class="lookbtn saybtn" id="btnSay" hidden aria-haspopup="true" aria-expanded="false" aria-controls="sayMenu" title="Say something to the other players"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H10l-4.5 4v-4H4z"/></svg><span>Say</span></button>
         <button class="lookbtn" id="btnLook" hidden aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="btnLookT">Go up and look</span></button>
       </div>
+      <div class="saymenu panel" id="sayMenu" role="menu" aria-label="Say" hidden></div>
       <div class="away panel" id="awayBox" role="alert" hidden><div class="kicker">Opponent disconnected</div><div class="aw-t" id="awayT"></div><div class="aw-n num" id="awayN"></div><div class="aw-d" id="awayD"></div><div class="aw-bar"><i id="awayBar"></i></div></div>
     </div>
     <div class="top-actions">
@@ -1048,6 +1070,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 
   <div class="banner" id="banner" aria-hidden="true"><div class="kicker" id="bnK"></div><div class="bn" id="bnT"></div><div class="bs" id="bnS"></div></div>
   <div class="toast panel" id="toast" role="status" aria-live="polite"></div>
+  <div class="saylayer" id="sayLayer" aria-live="polite"></div>
   <div class="notice panel" id="notice" role="dialog" aria-live="polite">
     <div><div class="nt" id="noticeT"></div><div class="nd" id="noticeD"></div></div>
     <button class="btn primary" id="noticeBtn">Continue</button>
@@ -6392,6 +6415,74 @@ const Ring = {
 /* Online, either player may concede, from the flag beside the sound button, always after an "are you
    sure". The match goes to the other side at once, as a forfeit: the relay logs it as 'resign', so the
    other screen ends too, and a reload shows it. The flag turns red once the match can't be won. */
+/* Quick chat in online matches: a few fixed phrases, sent as ids (the relay passes on nothing else, so
+   nobody can type anything unkind), shown as a speech bubble under the speaker's side on the scoreboard.
+   The same phrases as league matches (MATCH_SAY in league/site/shared/league-rules.js). */
+const Chat = {
+  SAY: { hello: 'Hello! Good luck.', good_bowl: 'Good bowl!', shot: 'Shot!', unlucky: 'Unlucky.', wait: 'One moment, please.',
+    back: 'Sorry, I’m back.', well_played: 'Well played.', thanks: 'Thanks for the game.' },
+  sent: 0, bubbles: new Map(),
+  live() { return !!game.link && game.mode === 'match' && Net.inMatch && Net.state === 'open'; },
+  paint() {
+    const live = this.live(); $('btnSay').hidden = !live;
+    if (!live) { this.close(); for (const seat of [...this.bubbles.keys()]) this.drop(seat, true); }
+  },
+  open() {
+    const m = $('sayMenu'), mute = !!Settings.chatOff;
+    setHtml(m, Object.entries(this.SAY).map(([k, v]) => `<button role="menuitem" data-say="${k}">${esc(v)}</button>`).join('')
+      + `<button role="menuitemcheckbox" class="say-mute" data-mute aria-checked="${mute}">${mute ? 'Show the other players’ messages' : 'Hide the other players’ messages'}</button>`);
+    m.hidden = false; $('btnSay').setAttribute('aria-expanded', 'true');
+    const first = m.querySelector('button'); if (first) first.focus({ preventScroll: true });
+  },
+  close() { if ($('sayMenu').hidden) return false; $('sayMenu').hidden = true; $('btnSay').setAttribute('aria-expanded', 'false'); return true; },
+  toggle() { if (!this.close()) this.open(); },
+  pick(b) {
+    this.close();
+    if (b.hasAttribute('data-mute')) {
+      Settings.chatOff = !Settings.chatOff; saveSettings();
+      if (Settings.chatOff) for (const seat of [...this.bubbles.keys()]) if (seat !== Net.seat) this.drop(seat, true);
+      UI.toast(Settings.chatOff ? 'The other players’ messages are hidden.' : 'The other players’ messages will show again.');
+      return;
+    }
+    const id = b.dataset.say, now = performance.now();
+    if (!this.SAY[id] || !this.live()) return;
+    if (now - this.sent < 1500) return;
+    this.sent = now; Net.raw({ t: 'say', id }); this.show(Net.seat, id);
+  },
+  // someone said something: a bubble under their side's name for four seconds (a new one from them replaces it)
+  show(seat, id) {
+    const text = this.SAY[id]; if (!text || !this.live()) return;
+    const mine = seat === Net.seat; if (!mine && Settings.chatOff) return;
+    const spot = Net.lineup.indexOf(seat), side = spot < 0 ? null : Math.floor(spot / SIDE_SPOTS);
+    const name = mine ? 'You' : spot >= 0 && Net.names[spot] ? Net.names[spot] : (Net.byseat(seat) || { who: { name: 'A player' } }).who.name;
+    const team = !!Net.disc && Net.disc.positions > 1, by = side == null ? `${name} (watching)` : team ? name : '';
+    this.drop(seat, true);
+    const b = document.createElement('div'); b.className = 'saybub' + (mine ? ' mine' : '') + (Settings.motion === 'reduced' ? ' still' : '');
+    setHtml(b, `${by ? `<span class="sb-by">${esc(by)}</span>` : ''}${esc(text)}`);
+    $('sayLayer').appendChild(b); this.place(b, side);
+    const timer = setTimeout(() => this.drop(seat), 4000);
+    this.bubbles.set(seat, { el: b, timer });
+  },
+  drop(seat, now) {
+    const x = this.bubbles.get(seat); if (!x) return; this.bubbles.delete(seat); clearTimeout(x.timer);
+    if (now || Settings.motion === 'reduced') { x.el.remove(); return; }
+    x.el.classList.add('out'); setTimeout(() => x.el.remove(), 380);
+  },
+  // under the speaker's side on the scoreboard, the tail pointing at it, kept on screen
+  place(b, side) {
+    const cells = document.querySelectorAll('#scoreboard .sb-player'), app = $('app').getBoundingClientRect();
+    const box = (side != null && cells[side] ? cells[side] : $('scoreboard')).getBoundingClientRect();
+    const gut = 12, w = b.offsetWidth, cx = box.left + box.width / 2 - app.left;
+    const x = clamp(cx - w / 2, gut, Math.max(gut, app.width - gut - w));
+    b.style.left = x + 'px'; b.style.top = (box.bottom - app.top + 16) + 'px';
+    b.style.setProperty('--tx', clamp(cx - x, 22, w - 22) + 'px');
+  }
+};
+$('btnSay').onclick = e => { e.stopPropagation(); Chat.toggle(); };
+$('sayMenu').onclick = e => { const b = e.target.closest('button'); if (b) Chat.pick(b); };
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#sayMenu,#btnSay')) Chat.close(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && Chat.close()) { e.preventDefault(); e.stopImmediatePropagation(); $('btnSay').focus(); } }, true);
+
 const Concede = {
   live() { const g = game; return !!g.link && g.link.side != null && g.mode === 'match' && !!g.match && !g.match.over && g.phase !== 'over' && Net.inMatch; },
   ask() {
@@ -6480,7 +6571,7 @@ const UI = {
     $('app').classList.toggle('nohead', !Settings.headView); $('btnHeadView').setAttribute('aria-pressed', String(!!Settings.headView));
     $('practiceBar').hidden = g.mode !== 'practice' || Coach.on;   // the lesson card takes its place
     Coach.sync();
-    this.paintConcede();
+    this.paintConcede(); Chat.paint();
     if (!inGame) return;
     this.renderScoreboard();
     const t = g.turn, pl = g.cur, ready = (g.phase === 'aim' || g.phase === 'charge') && !g.locked;
@@ -7168,6 +7259,7 @@ const Net = {
     if (m.t === 'stale') { this.resync(); return; }
     if (m.seq != null) { this.logged(m); return; }
     if (m.t === 'aim' && this.inMatch && game.link) game.netIn(m);
+    if (m.t === 'say') Chat.show(m.from, m.id);
   },
   welcome(m) {
     const fresh = !this.inMatch || m.matchNo !== this.matchNo, isNew = !this.token || this.token !== m.token;
@@ -8140,7 +8232,7 @@ function tick(dt) {
   Rain.frame(dt, greenShown);
   UI.drawHead(dt);
   Net.tick(dt);
-  statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); UI.paintConcede(); }
+  statsClock += dt; if (statsClock > 0.5) { statsClock = 0; if (game.mode !== 'title' && game.phase !== 'charge') UI.renderScoreboard(); UI.paintConcede(); Chat.paint(); }
 }
 
 // ======================= 15. Self-tests =======================
