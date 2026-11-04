@@ -1,0 +1,8 @@
+/* Who Wants to Be a Chemistry Millionaire? A-Level — on top of games/science/millionaire/millionaire.css.
+   The three branches (Physical, Inorganic, Organic) all carry the chemistry teal, since the science
+   page's subject colours would otherwise paint Physical in the physics violet. The stage keeps the
+   science game's dark navy and amber in both themes. */
+.su-subj[data-s] { --c: var(--sst-chem); }
+.su-beta + .su-beta { margin-left: 4px; }
+/* the intro mark: a benzene ring turning slowly, in place of the atom */
+.mx-ring { animation-duration: 24s; }
