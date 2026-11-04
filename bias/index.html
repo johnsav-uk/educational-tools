@@ -437,6 +437,11 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .lookbtn{min-width:0;height:32px;display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--r);
   background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--cream-2);font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .lookbtn[hidden]{display:none}
+/* the jack length, from the front of the mat: always in view once the jack is set, kept quiet beside the sound button */
+.jacklen{height:32px;display:flex;align-items:center;gap:7px;padding:0 11px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);
+  box-shadow:var(--shadow);color:var(--cream);font-size:13px;font-weight:600;white-space:nowrap;pointer-events:none;flex:none}
+.jacklen .kicker{font-size:9.5px;letter-spacing:.14em}
+.jacklen[hidden]{display:none}
 /* online: concede, beside the sound button. Faint (but live) while the match can still be won, solid red once it can't */
 .concede{opacity:.35;transition:opacity .3s,background-color .3s,border-color .3s}
 .concede:hover,.concede:focus-visible{opacity:1}
@@ -540,6 +545,12 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .dot{width:7px;height:7px}
   .sb-big{font-size:18px}
   .sb-opt{display:none}
+  /* room for the jack length beside Go up and look: a jack dot for its label, and the look button's short wording */
+  .jacklen{padding:0 9px;gap:6px}
+  .jacklen .kicker{display:none}
+  .jacklen::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cream);flex:none}
+  #btnLookT[data-s]{font-size:0}
+  #btnLookT[data-s]::after{content:attr(data-s);font-size:12.5px}
   /* the head view: a small plan in the sky, top right, clear of the far end of the rink */
   :is(.hud-row,.away){max-width:calc(100vw - 2*var(--gut) - 158px)}
   .headpanel{top:calc(var(--gut) + 68px);width:148px;border-radius:6px;background:rgba(19,27,23,.9)}
@@ -1028,6 +1039,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
         <button class="icon-btn sm" id="btnSound" aria-label="Mute sound" aria-pressed="false" title="Sound (S)">
           <svg viewBox="0 0 24 24" id="icoSound"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
         </button>
+        <div class="jacklen" id="jackLen" role="status" aria-live="off" title="Jack length, from the front of the mat" hidden><span class="kicker">Jack</span><span class="num" id="jackLenV"></span></div>
         <button class="icon-btn sm concede" id="btnConcede" hidden aria-label="Concede the match" title="Concede the match">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V3.5"/><path d="M6 4.5h11.5l-2.8 4.25 2.8 4.25H6"/></svg>
         </button>
@@ -6590,7 +6602,7 @@ const UI = {
       if (!canLook) g.look = false;
       const spent = canLook && !g.look && g.looked.has(g.lookKey());
       $('btnLook').hidden = !canLook; $('btnLook').disabled = spent; $('controls').classList.toggle('looking', canLook && g.look);
-      $('btnLookT').textContent = g.look ? 'Back to the mat' : spent ? 'Looked this end' : 'Go up and look'; $('btnLook').setAttribute('aria-pressed', String(!!g.look));
+      $('btnLookT').textContent = g.look ? 'Back to the mat' : spent ? 'Looked this end' : 'Go up and look'; $('btnLookT').dataset.s = g.look ? 'Back' : spent ? 'Looked' : 'Look'; $('btnLook').setAttribute('aria-pressed', String(!!g.look));
       $('btnFore').setAttribute('aria-pressed', String(g.hand === 'fore')); $('btnBack').setAttribute('aria-pressed', String(g.hand === 'back'));
       $('matVal').textContent = g.matRear.toFixed(2).replace(/0$/, '') + ' m';
       $('matBack').disabled = !g.canMoveMat() || g.matRear <= W.MAT_MIN; $('matFwd').disabled = !g.canMoveMat() || g.matRear >= W.MAT_MAX;
@@ -6653,8 +6665,19 @@ const UI = {
     setHtml(sb, `<div class="sb-cell sb-endcell"><div class="kicker">${g.isExtraEnd() ? 'Extra end' : 'End'}</div><div class="sb-big num">${g.endNo}${g.isExtraEnd() ? '' : `<span class="sb-of">${fmt}</span>`}</div></div>${pc(0)}${pc(1)}
       <div class="sb-cell sb-opt"><div class="kicker">${m.discipline.name}${g.ai ? ' · v ' + esc(botOf(g.ai.level.id).who) : g.link ? ' · online' : ''}</div><div class="sb-meta">${pr.model} bowls · ${green}</div></div>`);
   },
+  // the jack length beside the sound button: from the front of the mat, kept up to date if the jack is moved.
+  // Hidden while the jack itself is being delivered (its length isn't settled until it stops and is centred).
+  paintJackLen() {
+    const g = game, jack = g.mode === 'title' || g.mode === 'variant' ? null : g.world.jack;
+    const t = g.turn, delivering = t && t.kind === 'jack' && !g.jackSpot;
+    let txt = '';
+    if (jack && !jack.dead && !delivering) txt = jack.state === 'ditch' ? 'in the ditch' : Math.max(0, jack.y - g.matFront).toFixed(1) + ' m';
+    if (txt === this.jackLenTxt) return; this.jackLenTxt = txt;
+    $('jackLen').hidden = !txt; $('jackLenV').textContent = txt;
+  },
   // head panel: drawn every frame from the same bodies the scene uses
   drawHead(dt) {
+    this.paintJackLen();
     const g = game; if (g.mode === 'title') return;
     const cv = headView.cv; if (!cv.clientWidth || !cv.clientHeight) return;
     if (Math.abs(cv.clientWidth - headView.w) > 0.5 || Math.abs(cv.clientHeight - headView.h) > 0.5) headView.resize();
