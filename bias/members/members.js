@@ -23,8 +23,9 @@
   const CREATOR_COLOURS = ['lfc'];   // the game's COLOURS with creator: true (and league/site/shared/bowls.js)
   /* The creator's own bowl colour (the game's COLOURS, creator: true) is offered only while the creator is
      signed in here; anyone else, or nobody, has it put back to claret wherever this browser chose it. */
-  function creator(on) {
+  function creator(on, flag) {
     H.store.set('member.creator', !!on);
+    H.store.set('member.flag', flag || null);   // the flag beside their name in a match (My profile in the Clubhouse)
     if (on) return;
     for (const k of ['on.col', 'm.col0', 'm.col1', 'pr.colour']) if (CREATOR_COLOURS.includes(H.store.get(k, null))) H.store.set(k, 'claret');
   }
@@ -236,7 +237,7 @@
     if (page !== 'home') return;
     if (s.loggedOut || !s.user) { view = 'signin'; form(); if (s.loggedOut) $('acErr').textContent = 'You’ve been signed out. Please sign in again.'; return; }
     if (s.error) { H.body().innerHTML = `<p>${H.esc(s.error)}</p>`; return; }
-    creator(s.creator);
+    creator(s.creator, s.flag);
     H.store.set('member.name', s.user.username);
     H.paint(s.user.username, waitingOf(s), s.openToJoin);
     H.head(s.user.username + eloTag(s.rating), 'Signed in', !!(s.rating && s.rating.gw)); if (H.top) H.top();
@@ -476,7 +477,7 @@
     async refresh(host) {
       H = host; if (!token()) return;
       const s = await call('/api/summary');
-      if (s.user) { creator(s.creator); H.paint(s.user.username, waitingOf(s), s.openToJoin); syncNow(s.user.id); if (H.club) clubStart(); }
+      if (s.user) { creator(s.creator, s.flag); H.paint(s.user.username, waitingOf(s), s.openToJoin); syncNow(s.user.id); if (H.club) clubStart(); }
     }
   };
 })();

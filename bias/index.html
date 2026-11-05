@@ -114,6 +114,9 @@ button{cursor:pointer}
 .sb-player{flex-direction:row;align-items:center;gap:14px;min-width:168px}
 .sb-player .who{display:flex;flex-direction:column;gap:5px;min-width:0}
 .sb-name{font-family:var(--serif);font-size:16.5px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+/* a member's flag beside their name (FLAGS) */
+.nflag{display:inline-block;width:20px;height:15px;vertical-align:-2px;margin-right:6px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.sb-name:has(.nflag){max-width:176px}
 .sb-score{font-family:var(--serif);font-size:28px;line-height:1;margin-left:auto;min-width:1.45em;padding:5px 6px 4px;text-align:center;background:var(--club-3);border:1px solid var(--line);border-radius:2px}
 .sb-player::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
 /* whose turn: a gold diamond before the name as well as the rule, so it never rests on colour alone */
@@ -539,6 +542,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .sb-cell{padding:7px 10px}
   .sb-player{min-width:0;gap:10px}
   .sb-name{font-size:14px;max-width:84px}
+  .sb-name .nflag{width:16px;height:12px;margin-right:4px}
+  .sb-name:has(.nflag){max-width:104px}
   .sb-score{font-size:22px;padding:4px 4px 3px;min-width:1.35em}
   .sb-player .sb-name::before{width:5px;height:5px;margin-right:5px}
   .dots{gap:3px}
@@ -601,6 +606,7 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
 @media (max-width: 520px){
   .sb-cell.sb-endcell .kicker{display:none}
   .sb-name{max-width:72px}
+  .sb-name:has(.nflag){max-width:92px}
   .sb-cell{padding:6px 8px}
   .sb-player{gap:7px}
   .sb-endcell .sb-of{display:none}   /* with its label: the room goes to the names */
@@ -2157,6 +2163,22 @@ const colourHex = id => (COLOURS.find(c => c.id === id) || COLOURS[0]).hex;
 const engraving = hex => { const c = COLOURS.find(k => k.hex.toLowerCase() === String(hex).toLowerCase()); return c && c.engrave || null; };
 // The colours a player may pick: never the puzzle's, and the creator's only for the creator.
 const pickableColours = () => COLOURS.filter(c => !c.puzzle && (!c.creator || store.get('member.creator', false) === true));
+/* The flag a member shows beside their name in a match: chosen under My profile in the Clubhouse (store
+   'member.flag', from the league Worker), and shown only while they are signed in. Online it travels with
+   the player's name; in a league or challenge match it comes from the account. The pictures are flag-icons
+   (MIT, flags/LICENSE.txt). The same list is league/site/shared/flags.js: change both together. */
+const FLAGS = [
+  ['ar', 'Argentina'], ['au', 'Australia'], ['bw', 'Botswana'], ['br', 'Brazil'], ['ca', 'Canada'],
+  ['ck', 'Cook Islands'], ['cy', 'Cyprus'], ['gb-eng', 'England'], ['fj', 'Fiji'], ['gg', 'Guernsey'],
+  ['hk', 'Hong Kong, China'], ['in', 'India'], ['ie', 'Ireland'], ['im', 'Isle of Man'], ['il', 'Israel'],
+  ['jp', 'Japan'], ['je', 'Jersey'], ['ke', 'Kenya'], ['my', 'Malaysia'], ['mt', 'Malta'], ['na', 'Namibia'],
+  ['nz', 'New Zealand'], ['nf', 'Norfolk Island'], ['gb-nir', 'Northern Ireland'], ['pg', 'Papua New Guinea'],
+  ['ph', 'Philippines'], ['ws', 'Samoa'], ['gb-sct', 'Scotland'], ['sg', 'Singapore'], ['za', 'South Africa'],
+  ['es', 'Spain'], ['th', 'Thailand'], ['us', 'United States'], ['gb-wls', 'Wales'], ['zw', 'Zimbabwe']
+];
+const cleanFlag = v => FLAGS.some(f => f[0] === v) ? v : null;
+const myFlag = () => membersOn && store.get('league.token', null) ? cleanFlag(store.get('member.flag', null)) : null;
+const flagTag = id => { const f = FLAGS.find(x => x[0] === id); return f ? `<img class="nflag" src="flags/${f[0]}.svg" width="20" height="15" alt="${f[1]}" title="${f[1]}">` : ''; };
 /* Letters round a circle of radius r at (cx, cy), reading clockwise along its top, twice (the second on the
    opposite side, so one is always the right way up on a rolling bowl). Used by the canvas painter and the
    WebGL face decal, so the two agree. */
@@ -5505,7 +5527,7 @@ class Game {
        rinks (lead, second, third, skip, 2 each).
        Each side is a player or a team; members bowl in position order. */
     const disc = cfg.discipline || DISCIPLINES.singles;
-    this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, score: 0, played: 0,
+    this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, flag: cleanFlag(p.flag), score: 0, played: 0,
       members: (p.members && p.members.length ? p.members : [{ name: p.name }]).slice(0, disc.positions).map((m, i) => ({ name: m.name, role: disc.roles[i] || '', played: 0, hand: 'fore', aim: 0.10 })) }));
     this.world.setGreenSpeed(cfg.T);
     // the computer's reading of the green starts out wrong by an amount that depends on its standard
@@ -6691,7 +6713,7 @@ const UI = {
     // the bowl being played (it counts as played once it settles)
     const pc = i => { const p = g.players[i], hex = colourHex(p.colour), cur = i === act && ['aim', 'charge', 'release', 'rolling', 'settle'].includes(g.phase) && g.turn.kind === 'bowl' ? p.played : -1;
       let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}${k === cur ? ' cur' : ''}" style="--c:${hex}"></span>`;
-      return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
+      return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${flagTag(p.flag)}${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
     // online, each side's challenge level is shown to both players
     const lvl = i => { if (!g.link) return ''; const l = onlineLevel(i), x = l === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${l === 'mixed' ? 'Mixed' : x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
@@ -7048,7 +7070,7 @@ $('setupGo').onclick = () => {
   if (lead === 'toss') { lead = Math.random() < 0.5 ? 0 : 1; toss = true; } else lead = +lead;
   const players = [0, 1].map(i => ({
     name: ((i === 1 && setup.opp === 'ai' ? setup.aiName : teams ? setup.teams[i] : setup.names[i]) || (i ? 'Side two' : 'Side one')).slice(0, 16),
-    profileId: $('p' + i + 'prof').value, colour: setup.col[i],
+    profileId: $('p' + i + 'prof').value, colour: setup.col[i], flag: i === 0 && setup.opp === 'ai' && !teams ? myFlag() : null,
     members: teams ? d.roles.map((r, k) => ({ name: (i === 1 && setup.opp === 'ai' ? ['Arthur', 'Brenda', 'Colin', 'Dorothy'][k] : setup.members[i][r] || r).slice(0, 14) })) : null
   }));
   const vsAI = setup.opp === 'ai';
@@ -7078,7 +7100,7 @@ function quickPlay(level) {
   UI.close('titleScrim');
   const lead = Math.random() < 0.5 ? 0 : 1;
   const players = [
-    { name: (store.get('m.name0', null) || 'You').slice(0, 16), profileId: store.get('m.prof0', 'dp-pro'), colour: store.get('m.col0', 'claret') },
+    { name: (store.get('m.name0', null) || 'You').slice(0, 16), profileId: store.get('m.prof0', 'dp-pro'), colour: store.get('m.col0', 'claret'), flag: myFlag() },
     { name: botFirst(level), profileId: store.get('m.prof1', 'hs-classic'), colour: store.get('m.col1', 'navy') }];
   if (players[1].colour === players[0].colour) players[1].colour = players[0].colour === 'navy' ? 'claret' : 'navy';
   const gm = store.get('m.green', 'secret'), T = gm === 'set' ? clamp(+store.get('m.T', 13) || 13, 11, 16) : randomGreen();
@@ -7265,7 +7287,7 @@ const Net = {
   clearSession() { try { sessionStorage.removeItem('bias.net'); } catch (e) { /* unavailable */ } },
   // quick: a room the lobby opened for a quick match, so seat 0 starts it on standard conditions
   open(code, create, who, quick) {
-    this.close(); who = { ...who, level: myLevel() };
+    this.close(); who = { ...who, level: myLevel(), flag: myFlag() };   // a member's flag goes with their name
     const s = this.loadSession();
     Object.assign(this, { code, create: !!create, who, state: 'connecting', token: s && s.code === code ? s.token : null,
       seat: null, peers: [], info: null, disc: null, lineup: [], ctl: [], ctlSeq: [], names: [], autoPlaced: false,
@@ -7388,7 +7410,7 @@ function startOnlineMatch(s, rest) {
   UI.noticeCb = null; $('notice').classList.remove('show');
   const disc = DISCIPLINES[s.disc] || DISCIPLINES.singles, P = disc.positions, nm = v => String(v || 'Player').slice(0, 16);
   const sides = (s.players || []).slice(0, 2);
-  const players = sides.map(p => ({ name: nm(p.name), profileId: String(p.profileId), colour: String(p.colour),
+  const players = sides.map(p => ({ name: nm(p.name), profileId: String(p.profileId), colour: String(p.colour), flag: cleanFlag(p.flag),
     members: (p.members || []).slice(0, P).map(m => ({ name: nm(m.name) })) }));
   Net.disc = disc; Net.lineup = []; Net.names = [];
   sides.forEach((p, side) => (p.members || []).slice(0, P).forEach((m, pos) => { Net.lineup[spotOf(side, pos)] = Number(m.seat); Net.names[spotOf(side, pos)] = nm(m.name); }));
@@ -7570,7 +7592,7 @@ const OnlineUI = {
     const toss = leadV === 'toss', leader = toss ? (Math.random() < 0.5 ? 0 : 1) : +leadV;
     const skip = side => Net.whoOf(sides[side][P - 1]);   // a team bowls in its skip's choice of bowls and colour
     const c0 = skip(0).colour || 'claret', c1 = skip(1).colour && skip(1).colour !== c0 ? skip(1).colour : (c0 === 'navy' ? 'claret' : 'navy');
-    const players = sides.map((ms, side) => ({ name: P > 1 ? this.teamName(side) : Net.whoOf(ms[0]).name, profileId: skip(side).profileId, colour: side ? c1 : c0,
+    const players = sides.map((ms, side) => ({ name: P > 1 ? this.teamName(side) : Net.whoOf(ms[0]).name, profileId: skip(side).profileId, colour: side ? c1 : c0, flag: P > 1 ? null : cleanFlag(Net.whoOf(ms[0]).flag),
       members: ms.map(p => ({ name: Net.whoOf(p).name, seat: p.seat })) }));
     Net.send({ t: 'setup', disc: disc.id, players, venue: Venue.pick().id, T, format: { type: ft, n: +fn }, leader, toss, green, secret: green === 'secret' }, true);
     return true;

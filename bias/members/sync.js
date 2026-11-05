@@ -17,7 +17,7 @@
 (function (root) {
   'use strict';
   // the game's store keys (store.get(k) reads localStorage 'bias.' + k as JSON)
-  const PROFILE_KEYS = ['m.name0', 'on.name', 'm.prof0', 'on.prof', 'm.col0', 'on.col', 'settings', 'profiles'];
+  const PROFILE_KEYS = ['m.name0', 'on.name', 'm.prof0', 'on.prof', 'm.col0', 'on.col', 'settings', 'profiles', 'flag'];   // flag: set only under My profile (the Worker keeps it)
   const SKIP_KEY = 'skip', ARCHIVE_KEY = 'skip.archive', STATS_KEY = 'stats', BOTS_KEY = 'bots.won';
   const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
