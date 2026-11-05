@@ -1736,11 +1736,13 @@ const GreenSpeed = {
 };
 const REF_GREEN = GreenSpeed.params(13);
 /* Weight meter → release speed. The draw band (0–80%) is linear in the
-   distance a straight bowl would run on a reference 13 s green (10 m → 38 m),
-   so the meter feels even. The top 20% is the drive band. On a faster green
+   distance a straight bowl would run on a reference 13 s green (10 m → 42 m),
+   so the meter feels even. 42 m there is about 32 m on the heaviest green (11 s), so even there a
+   long jack and the bowls behind it are drawn, not played in the much steeper drive band (at 38 m
+   the draw band ran out at 29 m on an 11 s green). The top 20% is the drive band. On a faster green
    the same weight runs further — the meter measures effort, not length. */
 const Weight = {
-  D0: 10, D1: 38, DRIVE_AT: 0.8, V_MAX: 7.6,
+  D0: 10, D1: 42, DRIVE_AT: 0.8, V_MAX: 7.6,
   _vDrive: null,
   toSpeed(m) {
     m = clamp(m, 0, 1);
@@ -5186,18 +5188,19 @@ const AI_LEVELS = [
   { id: 'club', short: 'Steady: draws to the jack', name: 'Club', aimSD: .60, wSD: .027, greenSD: .4, biasSD: .10, learn: .45, tactics: 1, samples: 1, think: [1.3, 2.2], blurb: 'A steady club bowler who draws to the jack and picks the open hand.' },
   { id: 'league', short: 'Reads the head and guards it', name: 'League', aimSD: .42, wSD: .020, greenSD: .35, biasSD: .07, learn: .55, tactics: 2, samples: 2, think: [1.1, 1.9], blurb: 'Reads the head: trails the jack, rests on shot bowls, guards when holding.' },
   { id: 'county', short: 'Accurate, and drives when down', name: 'County', aimSD: .26, wSD: .012, greenSD: .2, biasSD: .035, learn: .70, tactics: 3, samples: 3, think: [1.0, 1.7], blurb: 'Accurate, quick to read the green, and willing to drive when it is down.' },
-  { id: 'international', short: 'Near-flawless, every bowl', name: 'International', aimSD: .15, wSD: .007, greenSD: .1, biasSD: .015, learn: .85, tactics: 4, samples: 4, think: [0.9, 1.5], blurb: 'Near-flawless line and weight, and the percentage shot every time.' },
+  { id: 'international', short: 'Near-flawless, every bowl', name: 'International', aimSD: .15, wSD: .0055, greenSD: .1, biasSD: .015, learn: .85, tactics: 4, samples: 4, think: [0.9, 1.5], blurb: 'Near-flawless line and weight, and the percentage shot every time.' },
   // above International, and only once she's beaten (BOTS.legend.after): unhurried, and steadier still on the last bowls
-  { id: 'legend', short: 'The master of the draw', name: 'Legend', aimSD: .11, wSD: .005, greenSD: .07, biasSD: .01, learn: .9, tactics: 4, samples: 5, think: [1.4, 2.4], blurb: 'Unhurried and unflappable: the master of the draw.' }
+  // (Bree's and Walter's wSD were .007 and .005 until the draw band ran to 42 m: these keep them at 1752 and 1923 in calibrate.cjs)
+  { id: 'legend', short: 'The master of the draw', name: 'Legend', aimSD: .11, wSD: .0038, greenSD: .07, biasSD: .01, learn: .9, tactics: 4, samples: 5, think: [1.4, 2.4], blurb: 'Unhurried and unflappable: the master of the draw.' }
 ];
 const aiLevel = id => AI_LEVELS.find(l => l.id === id) || AI_LEVELS[1];
 /* The bots: each standard as a character, as on chess.com, with a face (botFace), a home club where
    their matches are played (unless the player has chosen a club in Settings), and a rating. The
    ratings are the bots' own, from matches between them (notes/characters/calibrate.cjs, 24 a pairing,
-   Ken pinned at 1000, rounded to 50), and never move a member's. Beating one is in Your record (Record, computer[id].won); beating Walter earns the Golden
+   Ken pinned at 1000, rounded to 50; on the 42 m meter 599, 1157, 1415, 1752 and 1923), and never move a member's. Beating one is in Your record (Record, computer[id].won); beating Walter earns the Golden
    Wood beside your name for members. Looks and words only: how each plays is its AI_LEVELS line. */
 const BOTS = {
-  starter: { who: 'Priya Shah', club: 'Pitfold Park BC, Lancashire', venue: 'pitfold', elo: 650, tag: 'She’s just starting out',
+  starter: { who: 'Priya Shah', club: 'Pitfold Park BC, Lancashire', venue: 'pitfold', elo: 600, tag: 'She’s just starting out',
     bio: 'Joined Pitfold Park in the spring after her dad bet her she couldn’t beat him. She still can’t, but it’s getting closer.',
     says: { lost: 'Well bowled! One day…', won: 'Ooh, I won! How did that happen?' },
     face: { sky: ['#9fb7c8', '#d9d2bd'], hedge: '#4f6b3c', skin: '#b07a55', skinSh: '#8d5b3d', hair: '#1d1714', hairStyle: 'pony', top: '#f3efe6', topSh: '#c9c2b2', collar: '#f3efe6', badge: '#7a2e35', lip: '#9a4f45' } },
@@ -5205,11 +5208,11 @@ const BOTS = {
     bio: 'Forty years at Ashcombe and he’s never missed a roll-up. Retired postman, keeper of the club’s tea urn.',
     says: { lost: 'Lovely weight. That’ll do you.', won: 'That’ll do me. Good end, that last one.' },
     face: { sky: ['#a9c1cf', '#e2dcc8'], hedge: '#3f5e36', skin: '#e2b49a', skinSh: '#c38c71', hair: '#d9d6d0', hairStyle: 'bald', top: '#1f3a5f', topSh: '#152a45', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', glasses: true, tie: '#7a2e35' } },
-  league: { who: 'Morag Strachan', club: 'Glenmorran BC, Perthshire', venue: 'glenmorran', elo: 1250, tag: 'She reads the head and guards it',
+  league: { who: 'Morag Strachan', club: 'Glenmorran BC, Perthshire', venue: 'glenmorran', elo: 1150, tag: 'She reads the head and guards it',
     bio: 'Skips Glenmorran’s second four on Saturdays. She reads a head before you’ve picked up your next bowl.',
     says: { lost: 'Nice bowling. I’ll have you next time.', won: 'Close one. Guard your shots and you’ll have me.' },
     face: { sky: ['#8ea3b4', '#cfd0c4'], hedge: '#34503a', skin: '#ecc3a8', skinSh: '#cf9e82', hair: '#a8452a', hairStyle: 'bob', top: '#4a5d4a', topSh: '#36463a', collar: '#f3efe6', badge: '#c5a45c', lip: '#a65a50', tartan: true } },
-  county: { who: 'Javier Ortega', club: 'Las Brisas BC, Costa del Sol', venue: 'brisas', elo: 1450, tag: 'He fires when he’s down',
+  county: { who: 'Javier Ortega', club: 'Las Brisas BC, Costa del Sol', venue: 'brisas', elo: 1400, tag: 'He fires when he’s down',
     bio: 'A tennis coach for thirty years, he took up bowls at fifty and played for his county within five.',
     says: { lost: '¡Buen tiro! You earned that.', won: 'Good match. Now we play again?' },
     face: { sky: ['#7fb2d6', '#e9dfc2'], hedge: '#5d7a3a', skin: '#c48f69', skinSh: '#a06d4c', hair: '#3a3532', hairStyle: 'short', grey: true, top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#b33a2e', lip: '#94574a', beard: true, hat: 'straw' } },
@@ -5217,7 +5220,7 @@ const BOTS = {
     bio: 'Twice national singles champion. She practises at dawn before the heat, and she hasn’t lost at home in two years.',
     says: { lost: 'Well played. Not many beat me here.', won: 'Good bowls. Your shot, next time.' },
     face: { sky: ['#78a9d1', '#efe3c0'], hedge: '#6b7b3e', skin: '#5b3a2a', skinSh: '#432a1e', hair: '#16100d', hairStyle: 'curls', top: '#0f5132', topSh: '#0a3a24', collar: '#f3c94a', badge: '#f3c94a', lip: '#5e3027', hat: 'visor' } },
-  legend: { who: 'Walter Pennick', club: 'Fernley Indoor, Leicestershire', venue: 'fernley', elo: 1950, tag: 'The legend of Fernley', after: 'international',
+  legend: { who: 'Walter Pennick', club: 'Fernley Indoor, Leicestershire', venue: 'fernley', elo: 1900, tag: 'The legend of Fernley', after: 'international',
     bio: 'Club president at Fernley since before the carpet went down. Nobody remembers him losing a final, and nobody remembers him without his pipe.',
     says: { lost: 'Mm. Good bowl. Very good bowl.', won: 'Take your time. Shall we go again?' },
     face: { sky: ['#b8b2a2', '#e6dcc4'], hedge: '#4a5b3a', skin: '#e7bea2', skinSh: '#c6957a', hair: '#e8e4dc', hairStyle: 'short', top: '#f3efe6', topSh: '#cfc8b6', collar: '#f3efe6', badge: '#c5a45c', lip: '#a8695c', tash: true, hat: 'flat', pipe: true } }
@@ -5227,7 +5230,12 @@ const botFirst = id => botOf(id).who.split(' ')[0];
 let aiRand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
 const aiGauss = () => { let u = 0; while (u === 0) u = aiRand(); const v = aiRand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
 const DEG = Math.PI / 180;
-const SWING_T = 1.9;   // seconds for the swing meter to run from nothing to full weight (at its draw speed)
+/* Seconds for the swing meter to run from nothing to full weight (at its draw speed). With the draw band
+   to 42 m this keeps a millisecond of hold worth the same length (about 1.8 cm on a 13 s green) as the
+   1.9 s swing did when the band ran to 38 m. A variant (darts) keeps its own plain swing. */
+const SWING_T = 2.17, VARIANT_SWING_T = 1.9;
+// The bots' wSD was set when the draw band ran 10–38 m: this keeps their weight scatter the same in metres.
+const AI_W_SCALE = (38 - 10) / (Weight.D1 - Weight.D0);
 /* The swing meter's motion, as a function of how long the button has been held. rule: { cap, fire }.
    cap is the most weight a draw may take: enough to run a yard past the front ditch on this green.
    Until a bowler has played two woods (Game.meterRule) the meter turns back at the cap, so nobody can
@@ -5599,12 +5607,17 @@ class Game {
     if (this.mode !== 'match') return true;
     return this.players[t.player].members[t.member || 0].played >= Math.min(2, this.match.discipline.bowls - 1);
   }
-  meterAt(t) { const rule = this.meterRule(); if (rule) return Meter.at(t, rule); const u = (t / SWING_T) % 2; return u <= 1 ? u : 2 - u; }
-  startCharge() { if (this.phase !== 'aim' || this.locked || this.look) return false; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.ui.refresh(); return true; }
+  meterAt(t) { const rule = this.meterRule(); if (rule) return Meter.at(t, rule); const u = (t / VARIANT_SWING_T) % 2; return u <= 1 ? u : 2 - u; }
+  /* at: the press's event time (performance.now() clock). The meter is drawn frame by frame, but the weight
+     bowled is the meter at the moment of release, timed from the two input events, so it does not depend on
+     the frame rate (one frame at 60 fps is about 30 cm of length on a 13 s green). */
+  startCharge(at) { if (this.phase !== 'aim' || this.locked || this.look) return false; this.phase = 'charge'; this.charge = { t: 0, at: at > 0 ? at : null }; this.weight = 0; this.ui.refresh(); return true; }
   cancelCharge(msg) { if (this.phase !== 'charge' || this.locked) return; this.phase = 'aim'; this.charge = null; this.weight = 0; if (msg) this.ui.toast(msg); this.ui.refresh(); }
-  releaseCharge() {
+  releaseCharge(at) {
     if (this.phase !== 'charge' || this.locked || !this.charge) return;
-    if (this.charge.t < 0.12) { this.cancelCharge('Hold to build weight, then release.'); return; }
+    const c = this.charge, t = c.at != null && at > 0 && at >= c.at ? (at - c.at) / 1000 : c.t;
+    if (t < 0.12) { this.cancelCharge('Hold to build weight, then release.'); return; }
+    this.weight = this.meterAt(t);
     this.deliver(this.weight);
   }
   deliveryParams(weight) {
@@ -5703,7 +5716,7 @@ class Game {
   aiApplyScatter(plan) {
     const L = this.ai.level;
     // the weight scatter grows where the meter runs faster (Meter.rate): the computer times its release no better there than anyone
-    const rule = this.meterRule(), top = rule && !rule.fire ? rule.cap : 1, k = rule ? Meter.rate(plan.weight, rule) : 1;
+    const rule = this.meterRule(), top = rule && !rule.fire ? rule.cap : 1, k = rule ? Meter.rate(plan.weight, rule) * AI_W_SCALE : 1;
     return { hand: plan.hand, aim: clamp(plan.aim + aiGauss() * L.aimSD * DEG, -0.45, 0.45), weight: clamp(plan.weight + aiGauss() * L.wSD * k, 0, top) };
   }
   aiPlaySync() { // tests: the same plan and scatter, without animation
@@ -5724,7 +5737,7 @@ class Game {
       this.aim = lerp(x.from, x.to, easeInOut(x.t / x.dur)); this.ui.refreshAim();
       if (x.t >= x.dur) { this.aim = x.to; x.stage = 'charge'; x.t = 0; this.phase = 'charge'; this.charge = { t: 0 }; this.weight = 0; this.pulse = reduced() ? null : 0; this.ui.refresh(); }
     } else if (x.stage === 'charge') {
-      const rule = this.meterRule(); this.weight = Math.min(x.weight, rule ? Meter.up(x.t, rule) : x.t / SWING_T);
+      const rule = this.meterRule(); this.weight = Math.min(x.weight, rule ? Meter.up(x.t, rule) : x.t / VARIANT_SWING_T);
       if (this.weight >= x.weight) { this.aiExec = null; this.aiTurn = false; this.deliver(x.weight); }
     }
   }
@@ -5766,7 +5779,7 @@ class Game {
       const rel = releasePoint(this.matRear, c.hand, arm), noisy = L.samples > 1 ? 1 : 0, vals = [];
       for (let k = 0; k < L.samples; k++) {
         const w = AI.clone(this.world, T), b = w.add(new Body('bowl', me));
-        const aim = c.aim + noisy * aiGauss() * L.aimSD * DEG, wgt = clamp(c.weight + noisy * aiGauss() * L.wSD * Meter.rate(c.weight, rule), 0, top);
+        const aim = c.aim + noisy * aiGauss() * L.aimSD * DEG, wgt = clamp(c.weight + noisy * aiGauss() * L.wSD * AI_W_SCALE * Meter.rate(c.weight, rule), 0, top);
         w.launch(b, rel.x, rel.y, aim, Weight.toSpeed(wgt), biasSide(c.hand, arm), prof); w.runUntilRest();
         vals.push(AI.value(w, b, this.matFront, me, holding, sit.posW)); yield;
       }
@@ -7148,7 +7161,7 @@ $('btnSound').onclick = toggleSound;
    players and passes their messages across. Everything that changes the match is numbered and
    logged by the relay, so a player who reloads, or drops out for a while, rebuilds the match by
    replaying the log (Game.replayOnline). The relay sees only names, bowls, colours and moves. */
-const BUILD = 'bias-online-7';   // bump whenever the physics changes: both players must simulate identically
+const BUILD = 'bias-online-8';   // bump whenever the physics changes: both players must simulate identically
 /* The game's messages travel scrambled, so they can't be read or edited by hand in the browser's network
    tools. Only what the relay needs stays plain: t, cid and a delivery's n (it adds from, seq and matchNo). The rest is JSON,
    mixed with a stream keyed by the build, the room and the message type, then base64, with a keyed check
@@ -8124,13 +8137,13 @@ const dbtn = $('deliverBtn');
 dbtn.addEventListener('pointerdown', e => {
   if (e.button !== 0) return; e.preventDefault(); Sound.init(); lockPortrait();
   if (game.phase === 'rolling' || game.phase === 'settle') { game.hurry = true; dbtn.setPointerCapture(e.pointerId); dbtn.classList.add('charging'); return; }
-  if (game.startCharge()) { dbtn.setPointerCapture(e.pointerId); dbtn.classList.add('charging'); }
+  if (game.startCharge(e.timeStamp)) { dbtn.setPointerCapture(e.pointerId); dbtn.classList.add('charging'); }
 });
 dbtn.addEventListener('pointerup', e => {
   dbtn.classList.remove('charging'); game.hurry = false; if (game.phase !== 'charge') return;
   const r = dbtn.getBoundingClientRect(), m = 48;
   const inside = e.clientX >= r.left - m && e.clientX <= r.right + m && e.clientY >= r.top - m * 1.5 && e.clientY <= r.bottom + m;
-  if (inside) game.releaseCharge(); else game.cancelCharge('Delivery cancelled.');
+  if (inside) game.releaseCharge(e.timeStamp); else game.cancelCharge('Delivery cancelled.');
 });
 dbtn.addEventListener('pointercancel', () => { dbtn.classList.remove('charging'); game.hurry = false; game.cancelCharge(); });
 dbtn.addEventListener('click', e => e.preventDefault());
@@ -8187,7 +8200,7 @@ window.addEventListener('keydown', e => {
   if (UI.noticeCb && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); if (!e.repeat) UI.noticeGo(); return; }
   if (game.mode === 'title') return;
   const k = e.key.toLowerCase();
-  if (e.key === ' ') { e.preventDefault(); if (game.phase === 'rolling' || game.phase === 'settle') game.hurry = true; else if (!e.repeat && game.phase === 'aim') { game.startCharge(); dbtn.classList.add('charging'); } return; }
+  if (e.key === ' ') { e.preventDefault(); if (game.phase === 'rolling' || game.phase === 'settle') game.hurry = true; else if (!e.repeat && game.phase === 'aim') { game.startCharge(e.timeStamp); dbtn.classList.add('charging'); } return; }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); game.nudgeAim((e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.1)); return; }
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { if (game.canMoveMat()) { e.preventDefault(); game.moveMat(e.key === 'ArrowUp' ? 0.25 : -0.25); } return; }
   if (k === 'f') game.setHand('fore');
@@ -8199,7 +8212,7 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => {
   if (e.key === ' ') game.hurry = false;
-  if (e.key === ' ' && game.phase === 'charge') { e.preventDefault(); dbtn.classList.remove('charging'); game.releaseCharge(); }
+  if (e.key === ' ' && game.phase === 'charge') { e.preventDefault(); dbtn.classList.remove('charging'); game.releaseCharge(e.timeStamp); }
 });
 window.addEventListener('blur', () => { game.hurry = false; if (game.phase === 'charge') { dbtn.classList.remove('charging'); game.cancelCharge(); } });
 
@@ -8265,6 +8278,7 @@ window.BiasTests = {
   run() {
     Art.need();
     const out = [], ok = (name, pass, info = '') => out.push({ test: name, pass: !!pass, info });
+    const ow = w => w * AI_W_SCALE;   // a weight written for the old 10–38 m draw band: the same length now
     const prof = id => ({ ...Profiles.byId(id) });
     // 1. green-speed calibration (exact integrator → independent of timestep)
     for (const T of [11, 13, 16]) {
@@ -8367,9 +8381,9 @@ window.BiasTests = {
     // 13. full match flow through the real state machine (no animation)
     { StubUI.log = []; const G = new Game(StubUI, { instant: true }), arm = Settings.arm; Settings.arm = 'R';
       G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0 });
-      G.testDeliver(0, 0.62);                      // jack
+      G.testDeliver(0, ow(0.62));                      // jack
       const jy = G.world.jack.y;
-      for (let i = 0; i < 8; i++) G.testDeliver(G.turn.player === 0 ? 0.105 : -0.105, 0.6, G.turn.player === 0 ? 'fore' : 'back');
+      for (let i = 0; i < 8; i++) G.testDeliver(G.turn.player === 0 ? 0.105 : -0.105, ow(0.6), G.turn.player === 0 ? 'fore' : 'back');
       ok('Jack delivered, accepted and centred', G.world.jack && G.world.jack.x === 0 && jy > G.matFront + 23 - 1e-9, `${(jy - G.matFront).toFixed(2)} m`);
       ok('Players alternate, four bowls each', G.seq.join('') === '01010101' && G.players.every(p => p.played === 4), G.seq.join(''));
       ok('End completes and is scored', StubUI.log.includes('summary') && G.match.ends.length === 1, StubUI.log.join(', '));
@@ -8378,30 +8392,30 @@ window.BiasTests = {
       const lead = G.match.leader; StubUI.cb();
       ok('Next end: winner leads, direction reverses, head cleared', G.endNo === 2 && G.dir === 1 && G.turn.kind === 'jack' && G.turn.player === lead && G.world.bodies.length === 0);
       // improper jack twice → placed on the 2 m mark, original leader still first
-      G.testDeliver(0, 0.30);
+      G.testDeliver(0, ow(0.30));
       const before = G.matRear; G.moveMat(0.5);
       ok('After an improper jack the opponent may move the mat', G.turn.kind === 'jack' && G.turn.player !== lead && G.canMoveMat() && G.matRear === before + 0.5, `mat ${before} → ${G.matRear} m`);
-      G.testDeliver(0, 0.30);
+      G.testDeliver(0, ow(0.30));
       ok('Two improper jacks → jack on the 2 m mark, leader bowls first', G.world.jack && Math.abs(G.world.jack.y - (W.GREEN_LEN - 2)) < 1e-9 && G.turn.kind === 'bowl' && G.turn.player === lead, StubUI.log.slice(-3).join(', '));
-      for (let i = 0; i < 8; i++) G.testDeliver(G.turn.player === 0 ? 0.1 : -0.1, 0.66, G.turn.player === 0 ? 'fore' : 'back');
+      for (let i = 0; i < 8; i++) G.testDeliver(G.turn.player === 0 ? 0.1 : -0.1, ow(0.66), G.turn.player === 0 ? 'fore' : 'back');
       StubUI.cb && StubUI.cb();
       ok('Match finishes or plays an extra end when level', G.phase === 'over' ? StubUI.log.includes('over') : G.isExtraEnd(), `phase ${G.phase}, ${G.players[0].score}–${G.players[1].score}`);
       // firing is locked for the first two woods: a full-weight input is held to the draw limit
       { const G3 = new Game(StubUI, { instant: true });
         G3.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 16, format: { type: 'ends', n: 4 }, leader: 0 });
-        G3.testDeliver(0, 0.3); const r0 = G3.meterRule();
+        G3.testDeliver(0, ow(0.3)); const r0 = G3.meterRule();
         ok('First wood: firing locked, the draw limit runs a yard past the ditch', !r0.fire && r0.cap < 0.6 && !G3.canFire(), `cap ${r0.cap.toFixed(3)} on a 16 s green`);
         G3.testDeliver(0.1, 1.0, 'fore');
         ok('A full-weight first wood is delivered at draw weight', Math.abs(G3.lastWeights[G3.weightKey('bowl', 0, 0)] - r0.cap) < 1e-9);
-        for (let i = 0; i < 3; i++) G3.testDeliver(G3.turn.player === 0 ? 0.1 : -0.1, 0.2, G3.turn.player === 0 ? 'fore' : 'back');
+        for (let i = 0; i < 3; i++) G3.testDeliver(G3.turn.player === 0 ? 0.1 : -0.1, ow(0.2), G3.turn.player === 0 ? 'fore' : 'back');
         ok('Third wood: firing open', G3.turn.kind === 'bowl' && G3.turn.player === 0 && G3.canFire() && G3.meterRule().fire, `${G3.seq.join('')}`); }
       // a jack driven out of the rink is re-spotted on the T and the end goes on (no dead end)
       let spotted = null;
       for (let off = 0.40; off > 0.0; off -= 0.01) { // a drive still bends a little, so search for an oblique hit
         const G2 = new Game(StubUI, { instant: true });
         G2.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 4 }, leader: 1 });
-        G2.testDeliver(0, 0.55);
-        for (let i = 0; i < 4; i++) G2.testDeliver(G2.turn.player === 0 ? 0.25 : -0.25, 0.3, G2.turn.player === 0 ? 'fore' : 'back');   // short and wide, out of the way
+        G2.testDeliver(0, ow(0.55));
+        for (let i = 0; i < 4; i++) G2.testDeliver(G2.turn.player === 0 ? 0.25 : -0.25, ow(0.3), G2.turn.player === 0 ? 'fore' : 'back');   // short and wide, out of the way
         const j = G2.world.jack, rel = releasePoint(G2.matRear, 'fore', 'R');
         G2.testDeliver(Math.atan2(j.x + off - rel.x, j.y - rel.y), 1.0, 'fore');
         if (G2.match.respots > 0) { const J = G2.world.jack; spotted = G2.endNo === 1 && J.x === 0 && Math.abs(J.y - (W.GREEN_LEN - W.JACK_DITCH_MIN)) < 0.2 && G2.turn.kind === 'bowl' && G2.turn.player === 0 && G2.seq.length === 5; break; }
@@ -8415,10 +8429,10 @@ window.BiasTests = {
       const G = new Game(StubUI, { instant: true });
       G.startMatch({ players: [team('A', 'claret'), team('B', 'navy')], T: 13, format: { type: 'ends', n: 3 }, discipline: D, leader: 1 });
       ok(`${D.name}: the leading team's lead delivers the jack`, G.turn.kind === 'jack' && G.turn.player === 1 && G.turn.member === 0);
-      G.testDeliver(0, 0.62);
+      G.testDeliver(0, ow(0.62));
       const who = [], expect = [], n = D.positions * D.bowls * 2;
       for (let pos = 0; pos < D.positions; pos++) for (let i = 0; i < D.bowls; i++) expect.push('1' + pos, '0' + pos);
-      for (let i = 0; i < n && G.turn.kind === 'bowl' && G.phase === 'aim'; i++) { who.push(G.turn.player + '' + G.turn.member); G.testDeliver(G.turn.player ? -0.1 : 0.1, 0.6, G.turn.player ? 'back' : 'fore'); }
+      for (let i = 0; i < n && G.turn.kind === 'bowl' && G.phase === 'aim'; i++) { who.push(G.turn.player + '' + G.turn.member); G.testDeliver(G.turn.player ? -0.1 : 0.1, ow(0.6), G.turn.player ? 'back' : 'fore'); }
       ok(`${D.name}: leads, ${D.positions > 2 ? 'seconds, ' : ''}${D.positions > 3 ? 'thirds, ' : ''}then skips, alternately, ${D.bowls} bowls each`, who.join(',') === expect.join(',') && G.players.every(p => p.members.every(m => m.played === D.bowls)), who.join(' '));
       const sc = StubUI.last && StubUI.last.sc;
       ok(`${D.name}: the end is scored for the team after ${n} bowls`, StubUI.log.includes('summary') && G.match.ends.length === 1 && G.players[0].score + G.players[1].score === (sc && sc.winner != null ? sc.shots : 0), `${G.players[0].score}–${G.players[1].score}`);
@@ -8444,13 +8458,13 @@ window.BiasTests = {
       aiRand = mulberry32(77); StubUI.log = [];
       const G = new Game(StubUI, { instant: true });
       G.startMatch({ players: two(), T: 14, format: { type: 'ends', n: 1 }, leader: 0, ai: 'county' });
-      G.testDeliver(0, 0.6); let guard = 0;
-      while (G.phase === 'aim' && G.turn.player === 0 && guard++ < 10) G.testDeliver(0.1, 0.6, 'fore');
+      G.testDeliver(0, ow(0.6)); let guard = 0;
+      while (G.phase === 'aim' && G.turn.player === 0 && guard++ < 10) G.testDeliver(0.1, ow(0.6), 'fore');
       ok('Computer: plays only its own turns and completes the end', G.seq.join('') === '01010101' && StubUI.log.includes('summary'), G.seq.join(''));
       { const e = G.match.ends[0], sc = StubUI.last.sc, n0 = sc.ranked.find(x => x.b.owner === 0);
         ok('Each end records the nearest bowl of each side for the match figures', e.near.length === 2 && e.near[0] === (n0 ? n0.d : null) && e.close.every(n => n >= 0 && n <= 4), e.near.map(d => d == null ? '–' : fmtDist(d)).join(' / ')); }
       { const H = new Game(StubUI, { instant: true });
-        H.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 6 }, leader: 0, ai: 'county' }); H.testDeliver(0, 0.62);
+        H.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 6 }, leader: 0, ai: 'county' }); H.testDeliver(0, ow(0.62));
         const early = H.aiSituation(1); H.orderIdx = H.order.length - 1; const last = H.aiSituation(H.order[H.orderIdx][0]);
         H.endNo = 5; H.players[1].score = 0; H.players[0].score = 4; const behind = H.aiSituation(1), ahead = H.aiSituation(0);
         ok('Computer: weighs position only while the opponent has bowls left, and takes risks only when behind late on',
@@ -8458,13 +8472,13 @@ window.BiasTests = {
           `posW ${early.posW}/${last.posW}, risk ${behind.risk.toFixed(2)}/${ahead.risk.toFixed(2)}`); }
       aiRand = saved; Settings.arm = arm; }
     // 14. practice can be reset and reused
-    { const G = new Game(StubUI, { instant: true }); G.startPractice(); G.testDeliver(0, 0.6); G.testDeliver(0.1, 0.6); G.testDeliver(0.1, 0.62);
+    { const G = new Game(StubUI, { instant: true }); G.startPractice(); G.testDeliver(0, ow(0.6)); G.testDeliver(0.1, ow(0.6)); G.testDeliver(0.1, ow(0.62));
       const n = G.world.bowls().length; G.resetHead();
       ok('Practice: reset head keeps the jack, clears the bowls', n >= 1 && G.world.bowls().length === 0 && !!G.world.jack && G.turn.kind === 'bowl');
       G.practiceNewEnd(true); ok('Practice: new end clears everything and flips direction', G.world.bodies.length === 0 && G.turn.kind === 'jack' && G.dir === 1); }
     // 14b. practice reports to the guided lesson: jack set, then each bowl with where it finished
     { const ev = [], UIc = { ...StubUI, coach(e, d) { ev.push([e, d]); } }, G = new Game(UIc, { instant: true }); G.startPractice();
-      G.testDeliver(0, 0.55); G.testDeliver(0.06, 0.55);
+      G.testDeliver(0, ow(0.55)); G.testDeliver(0.06, ow(0.55));
       const b = ev.find(e => e[0] === 'bowl'), lie = b && b[1].lie;
       ok('Lesson: practice reports the jack and the bowl', ev.some(e => e[0] === 'jackSet') && !!b && (!!lie || !!b[1].dead || b[1].toucher), ev.map(e => e[0]).join(','));
       ok("Lesson: the bowl's lie splits into along and across", !lie || (Math.abs(Math.hypot(lie.dx, lie.dy) - lie.dist) < 1e-6 && b[1].range > 20)); }
@@ -8480,7 +8494,7 @@ window.BiasTests = {
       while (G[0].phase !== 'over' && guard++ < 400) {
         pump(); const g = G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (!g) break;
         g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
-        g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump();
+        g.deliver(ow(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22)); g.flush(); pump();
       }
       const sig = g => JSON.stringify({ s: g.players.map(p => p.score), e: g.match.ends.map(e => [e.winner, e.shots]), b: g.snapshot() });
       ok('Online: both computers finish the same match, end by end', G[0].phase === 'over' && G[1].phase === 'over' && sig(G[0]) === sig(G[1]),
@@ -8504,7 +8518,7 @@ window.BiasTests = {
         while (G[1].phase !== 'over' && guard++ < 300) {
           pump(); const g = G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (!g) break;
           g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
-          g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump();
+          g.deliver(ow(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22)); g.flush(); pump();
         }
         return G;
       };
@@ -8518,7 +8532,7 @@ window.BiasTests = {
       ok('Online: a head the other computer moves stays where it lies here', moved[1].netDisputes > 0 && sig(moved[1]) === sig(honest[1]));
       { const q = [], G = [new Game(answers(), { instant: true }), new Game(answers(), { instant: true })];
         G.forEach((g, i) => g.startMatch(cfg({ seat: i, send: m => q.push({ ...m, from: i }) })));
-        G[0].deliver(0.6); G[0].flush(); while (q.length) { G[1].netIn(q.shift()); G[1].flush(); }
+        G[0].deliver(ow(0.6)); G[0].flush(); while (q.length) { G[1].netIn(q.shift()); G[1].flush(); }
         const rule = G[1].meterRule(), raw = { ...G[0].deliveryParams(1), speed: 99, prof: { G: 0.5, late: 3 }, x: 0.5, y: 9, matRear: 1 };
         const p = G[1].netParams(raw), rel = releasePoint(G[1].matRear, raw.hand, Settings.arm);
         ok("Online: a delivery is rebuilt from the bowler's choices: no firing before two woods, the speed from the weight",
@@ -8543,7 +8557,7 @@ window.BiasTests = {
       const pump = () => { while (q.length) { const e = q.shift(); G[1 - e.from].netIn(e); G[0].flush(); G[1].flush(); } };
       const mine = () => G.find(x => x.turn && !x.remoteTurn && x.phase === 'aim');
       pump(); let me = mine(), guard = 0;
-      while (me && me.turn.kind !== 'bowl' && guard++ < 10) { me.deliver(0.6); me.flush(); pump(); me = mine(); }
+      while (me && me.turn.kind !== 'bowl' && guard++ < 10) { me.deliver(ow(0.6)); me.flush(); pump(); me = mine(); }
       const them = G.find(x => x !== me), aim = (a, w) => ({ t: 'aim', n: me.deliveryNo + 1, aim: a, hand: me.hand, mat: me.matRear, w, from: me.link.seat });
       const frames = k => { for (let i = 0; i < k; i++) them.update(1 / 60); };
       them.netIn(aim(0, null)); them.netIn(aim(0.2, null));
@@ -8579,7 +8593,7 @@ window.BiasTests = {
         const live = G.filter(x => x.turn && !x.remoteTurn && x.phase === 'aim'); if (live.length !== 1) break;
         const g = live[0]; if (g.link.seat === 0 && g.turn.member === 1) stoodIn++;
         g.aim = (rnd() - 0.5) * 0.12; if (g.turn.kind === 'bowl') g.hand = rnd() < 0.5 ? 'fore' : 'back';
-        g.deliver(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22); g.flush(); pump(); n++;
+        g.deliver(ow(g.turn.kind === 'jack' ? 0.55 + rnd() * 0.1 : 0.42 + rnd() * 0.22)); g.flush(); pump(); n++;
       }
       const sig = g => JSON.stringify({ s: g.players.map(p => p.score), e: g.match.ends.map(e => [e.winner, e.shots]), b: g.snapshot() });
       ok(`Online ${D.name.toLowerCase()}: ${N} players and a watcher finish the same match`, G.every(g => g.phase === 'over' && sig(g) === sig(G[0])) && G[0].match.ends.length >= 2,
@@ -8595,7 +8609,7 @@ window.BiasTests = {
       Weather._d = null; }
     // 15c. Go up and look: once an end for each bowler, never on the jack or on the other side's turn
     { const G = new Game(StubUI, { instant: true }); G.startMatch({ players: [{ name: 'A', profileId: 'dp-pro', colour: 'claret' }, { name: 'B', profileId: 'tb-ace', colour: 'navy' }], T: 13, format: { type: 'ends', n: 2 }, leader: 0 });
-      const onJack = G.canLook(); G.testDeliver(0, 0.6);
+      const onJack = G.canLook(); G.testDeliver(0, ow(0.6));
       const first = G.canLook(); G.toggleLook(); const up = G.look; G.toggleLook(); G.toggleLook();
       ok('Look: not on the jack; once an end, then spent', !onJack && first && up && !G.look && G.looked.size === 1);
       G.resetEndState(); ok('Look: a new end gives everyone their look back', G.looked.size === 0); }
@@ -8619,7 +8633,7 @@ window.BiasTests = {
       Record.count(draw, st, day); s = st.get('stats');
       ok('Record: a level league match counts as drawn', s.league.played === 1 && s.league.drawn === 1 && s.online.played === 0);
       // abandoned: a match left part-way through, then practice; and two people sharing one screen
-      { const G = new Game(answers, { instant: true }); G.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, ai: 'club' }); G.testDeliver(0, 0.62);
+      { const G = new Game(answers, { instant: true }); G.startMatch({ players: two(), T: 13, format: { type: 'ends', n: 2 }, leader: 0, ai: 'club' }); G.testDeliver(0, ow(0.62));
         const mid = Record.count(G, st, day); G.startPractice(); const prac = Record.count(G, st, day);
         const local = Record.count(finish({}, 3, 1), st, day);
         ok('Record: abandoned matches, practice and two on one screen do not count', !mid && !prac && !local && JSON.stringify(st.get('stats')) === JSON.stringify(s)); }

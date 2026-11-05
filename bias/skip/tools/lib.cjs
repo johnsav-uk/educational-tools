@@ -132,7 +132,7 @@ function benchmark(pz, { quick = false, seed } = {}) {
   seed = seed != null ? seed : fnv(pz.id);
   const b = Sim.benchmark(pz, { runs: RUNS, mix: MIX, seed });
   const values = b.values.map(r5);
-  const advRes = Sim.playInGame(pz, adv), advStars = Core.starsFor(advRes.value, values);
+  const advRes = Sim.playInGame(pz, pz.advised), advStars = Core.starsFor(advRes.value, values);   // the advice as saved (rounded), as the game will play it
   const g = grid(pz, values, quick), draws = plainDraws(pz, values);
   const top = Core.topCut(values), median = values[Math.floor(values.length / 2)];
   const flags = [];
@@ -148,7 +148,7 @@ function benchmark(pz, { quick = false, seed } = {}) {
 function checkAdvice(pz) {
   const { Sim } = load(), adv = Sim.solveAdvice(pz);
   Object.assign(pz.advised, { aim: r5(adv.aim), weight: r5(adv.weight) });
-  const r = Sim.playInGame(pz, adv), stars = Core.starsFor(r.value, pz.bench.values);
+  const r = Sim.playInGame(pz, pz.advised), stars = Core.starsFor(r.value, pz.bench.values);
   pz.check.advice = { outcome: r.outcome, stars };
   pz.bench.head = Core.headHash(pz);
   return { adv, advRes: r, advStars: stars };
