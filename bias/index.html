@@ -4935,10 +4935,21 @@ const Sound = {
     s.connect(bp); bp.connect(gn); if (p) { p.pan.value = pan; gn.connect(p); p.connect(this.birdBus); } else gn.connect(this.birdBus);
     s.start(t, Math.random()); s.stop(t + dur + .02);
   },
-  knock(pan, v) {       // bowls meeting on another rink across the hall: a hollow clack, sometimes a second
-    let t = this.ctx.currentTime + .05; const n = Math.random() < .35 ? 2 : 1;
-    for (let i = 0; i < n; i++) { this.burst(t, 900 + Math.random() * 300, 6, .09, .05 * v, pan); this.note(t, 620 + Math.random() * 80, 560, .07, .012 * v, pan); t += .25 + Math.random() * .4; }
-    return t - this.ctx.currentTime;
+  /* bowls meeting on another rink across the hall, sometimes a second pair after: the game's own click
+     (Sound.click), far off: quieter, its top lost to the distance, panned, and coming back once or twice
+     off the hall's walls and roof, duller each time */
+  knock(pan, v) {
+    const c = this.ctx; let t = c.currentTime + .05; const n = Math.random() < .35 ? 2 : 1;
+    const bus = c.createGain(), lp = c.createBiquadFilter(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    bus.gain.value = 0.02 * v; lp.type = 'lowpass'; lp.frequency.value = 1700; lp.Q.value = 0.5;
+    bus.connect(lp); if (p) { p.pan.value = pan; lp.connect(p); p.connect(this.birdBus); } else lp.connect(this.birdBus);
+    [[.045, .3, 1100], [.11, .14, 800]].forEach(([d, g, f]) => {   // the hall's returns
+      const dl = c.createDelay(.2), dg = c.createGain(), dlp = c.createBiquadFilter();
+      dl.delayTime.value = d * (0.85 + 0.3 * Math.random()); dg.gain.value = g; dlp.type = 'lowpass'; dlp.frequency.value = f;
+      lp.connect(dl); dl.connect(dlp); dlp.connect(dg); if (p) dg.connect(p); else dg.connect(this.birdBus);
+    });
+    for (let i = 0; i < n; i++) { this.click(t, 0.4 + 0.5 * Math.random(), false, bus); t += .25 + Math.random() * .4; }
+    return t - c.currentTime;
   },
   clap(pan, v) {        // a ripple of polite applause for a good bowl on another rink
     const t0 = this.ctx.currentTime + .05, hands = 3 + Math.floor(Math.random() * 4), len = 1 + Math.random() * 1.2;
@@ -5109,26 +5120,38 @@ const Sound = {
     this.rollGain.gain.setTargetAtTime(Math.pow(v, 1.2) * 0.07, t, 0.12);
     this.rollLfo.frequency.setTargetAtTime(Math.max(0.5, v * 5 / 0.4), t, 0.2);
   },
-  /* Bowl on bowl (or jack): built like the ditch thud (a short, falling low tone) but lighter, with a
-     woody, xylophone-like note on top: a mallet tap, a fundamental and its overtone at three times the
-     pitch (as a xylophone bar is tuned), the overtone dying away fastest. The jack, smaller, is a little
-     higher and shorter. Harder hits are louder and slightly brighter. */
+  /* Bowl on bowl (or jack), taken from a recording of a drive into the head: not a ringing note but one
+     very short click, gone in 3-4 ms. In the recording it was a rattle of three clicks 12 ms apart (more
+     bowls meeting); here the three sound as one, at once: a woody part (pitches near 450 and 800 Hz, most
+     of it 500-800 Hz), a bright part about 3 dB down (1.6-2.5 kHz) and a broad one about 9 dB down. Each
+     is its measured partials, dying fast, over a short burst of noise for the contact. Every hit moves the
+     pitches a little, so no two sound alike. A softer hit is quieter and duller, its bright parts fainter;
+     the jack, smaller, is higher and shorter. [Hz, dB] per part. */
+  RATTLE: [
+    { db: 0,  tau: 2.2, f: 700,  modes: [[451, 0], [630, -5], [796, 0], [1000, -9], [1600, -16]] },
+    { db: -3, tau: 1.6, f: 1900, modes: [[603, -12], [843, -8], [1195, -6], [1863, 0], [2103, -2], [2320, -3], [2607, -6]] },
+    { db: -9, tau: 1.6, f: 1900, modes: [[638, -3], [861, -4], [1048, -3], [1394, -4], [2033, 0], [2332, -4]] }],
+  click(t, s, jack, out) {   // one click at time t into the node out (s: strength 0.05-1); clack and the far knocks share it
+    const c = this.ctx, k = (jack ? 1.35 : 1) * (0.95 + 0.1 * Math.random()), lenK = (jack ? 0.7 : 1) * (0.85 + 0.3 * s), follow = Math.sqrt(s);
+    this.RATTLE.forEach((cl, i) => {
+      const lvl = i === 0 ? 1 : follow * Math.pow(10, cl.db / 20); if (lvl < .02) return;
+      for (const [f, db] of cl.modes) {
+        let a = lvl * Math.pow(10, (db + Math.random() * 3 - 1.5) / 20); if (f > 1500) a *= 0.45 + 0.55 * s;
+        const o = c.createOscillator(), g = c.createGain(), tau = cl.tau / 1000 * lenK * (0.8 + 0.4 * Math.random());
+        o.frequency.value = f * k * (0.97 + 0.06 * Math.random());
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + .0003); g.gain.setTargetAtTime(0, t + .0003, tau);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + tau * 8);
+      }
+      const n = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain();   // the contact's own crack
+      n.buffer = this.white; bp.type = 'bandpass'; bp.frequency.value = cl.f * k; bp.Q.value = 0.6;
+      ng.gain.setValueAtTime(lvl, t); ng.gain.setTargetAtTime(0, t, .0009);
+      n.connect(bp); bp.connect(ng); ng.connect(out); n.start(t, Math.random()); n.stop(t + .01);
+    });
+  },
   clack(strength, jack) {
-    if (!this.ctx || this.muted) return; const c = this.ctx, t = c.currentTime, s = clamp(strength, 0.05, 1), k = jack ? 1.4 : 1;
-    const tone = (f0, f1, a, d, glide) => {
-      const o = c.createOscillator(), og = c.createGain(); o.type = 'sine';
-      o.frequency.setValueAtTime(f0, t); if (glide) o.frequency.exponentialRampToValueAtTime(f1, t + glide); else o.frequency.value = f0;
-      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(a, t + .002); og.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(og); og.connect(this.master); o.start(t); o.stop(t + d + .02);
-    };
-    tone(240 * k, 135 * k, .22 * s, jack ? .09 : .13, .08);                  // body: the thud's shape, lighter
-    const f = 680 * k * (0.98 + 0.04 * s);
-    tone(f, f, .16 * s, (jack ? .13 : .2) * (0.8 + 0.3 * s));                   // the wooden note
-    tone(f * 3, f * 3, .05 * s, .045);                                           // its overtone, gone almost at once
-    const n = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain();   // the mallet's tap
-    n.buffer = this.noise; bp.type = 'bandpass'; bp.frequency.value = (jack ? 2700 : 2100) * (0.9 + 0.2 * s); bp.Q.value = 1.3;
-    ng.gain.setValueAtTime(0.4 * s, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + .012);
-    n.connect(bp); bp.connect(ng); ng.connect(this.master); n.start(t, Math.random()); n.stop(t + .02);
+    if (!this.ctx || this.muted) return; const s = clamp(strength, 0.05, 1);
+    const bus = this.ctx.createGain(); bus.gain.value = 0.18 * Math.pow(s, 0.8); bus.connect(this.master);
+    this.click(this.ctx.currentTime, s, jack, bus);
   },
   thud(strength) {
     if (!this.ctx || this.muted) return; const t = this.ctx.currentTime;
