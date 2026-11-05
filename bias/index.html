@@ -6495,7 +6495,7 @@ const Chat = {
   live() { return !!game.link && game.mode === 'match' && Net.inMatch && Net.state === 'open'; },
   paint() {
     const live = this.live(); $('btnSay').hidden = !live;
-    if (!live) { this.close(); for (const seat of [...this.bubbles.keys()]) this.drop(seat, true); }
+    if (!live) { this.close(); for (const seat of [...this.bubbles.keys()]) if (typeof seat === 'number') this.drop(seat, true); }   // a league match's own ('lg…') stay
   },
   open() {
     const m = $('sayMenu'), mute = !!Settings.chatOff;
@@ -6508,33 +6508,41 @@ const Chat = {
   toggle() { if (!this.close()) this.open(); },
   pick(b) {
     this.close();
-    if (b.hasAttribute('data-mute')) {
-      Settings.chatOff = !Settings.chatOff; saveSettings();
-      if (Settings.chatOff) for (const seat of [...this.bubbles.keys()]) if (seat !== Net.seat) this.drop(seat, true);
-      UI.toast(Settings.chatOff ? 'The other players’ messages are hidden.' : 'The other players’ messages will show again.');
-      return;
-    }
+    if (b.hasAttribute('data-mute')) { this.mute(Net.seat); return; }
     const id = b.dataset.say, now = performance.now();
     if (!this.SAY[id] || !this.live()) return;
     if (now - this.sent < 1500) return;
     this.sent = now; Net.raw({ t: 'say', id }); this.show(Net.seat, id);
   },
+  // hide or show the other players' messages (Settings.chatOff); mine is the key of this player's own bubbles
+  mute(mine) {
+    Settings.chatOff = !Settings.chatOff; saveSettings();
+    if (Settings.chatOff) for (const k of [...this.bubbles.keys()]) if (k !== mine) this.drop(k, true);
+    UI.toast(Settings.chatOff ? 'The other players’ messages are hidden.' : 'The other players’ messages will show again.');
+  },
   // someone said something: a bubble under their side's name for four seconds (a new one from them replaces it)
   show(seat, id) {
     const text = this.SAY[id]; if (!text || !this.live()) return;
-    const mine = seat === Net.seat; if (!mine && Settings.chatOff) return;
+    const mine = seat === Net.seat;
     const spot = Net.lineup.indexOf(seat), side = spot < 0 ? null : Math.floor(spot / SIDE_SPOTS);
     const name = mine ? 'You' : spot >= 0 && Net.names[spot] ? Net.names[spot] : (Net.byseat(seat) || { who: { name: 'A player' } }).who.name;
     const team = !!Net.disc && Net.disc.positions > 1, by = side == null ? `${name} (watching)` : team ? name : '';
-    this.drop(seat, true);
+    this.bubble(seat, side, text, by, mine);
+  },
+  /* The bubble itself, for any match: key (one bubble each), the side on the scoreboard (null: under it
+     all), the words, who said it if the side doesn't (or ''), and whether it's this player's own. A league
+     match (league/site/play/league-match.js) calls this through BiasDebug.Chat with its own keys ('lg0', 'lg1'). */
+  bubble(key, side, text, by, mine) {
+    if (!text || (!mine && Settings.chatOff)) return;
+    this.drop(key, true);
     const b = document.createElement('div'); b.className = 'saybub' + (mine ? ' mine' : '') + (Settings.motion === 'reduced' ? ' still' : '');
     setHtml(b, `${by ? `<span class="sb-by">${esc(by)}</span>` : ''}${esc(text)}`);
     $('sayLayer').appendChild(b); this.place(b, side);
-    const timer = setTimeout(() => this.drop(seat), 4000);
-    this.bubbles.set(seat, { el: b, timer });
+    const timer = setTimeout(() => this.drop(key), 4000);
+    this.bubbles.set(key, { el: b, timer });
   },
-  drop(seat, now) {
-    const x = this.bubbles.get(seat); if (!x) return; this.bubbles.delete(seat); clearTimeout(x.timer);
+  drop(key, now) {
+    const x = this.bubbles.get(key); if (!x) return; this.bubbles.delete(key); clearTimeout(x.timer);
     if (now || Settings.motion === 'reduced') { x.el.remove(); return; }
     x.el.classList.add('out'); setTimeout(() => x.el.remove(), 380);
   },
@@ -8720,7 +8728,7 @@ window.BiasTests = {
 };
 
 // Internals for console experiments (the tests above use the same objects).
-window.BiasDebug = { CAM, Record, Venue, Bots, BOTS, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
+window.BiasDebug = { Chat, CAM, Record, Venue, Bots, BOTS, Weather, WX, Rain, Sound, Art, onResize, Net, OnlineUI, Lobby, QM, QuietUI, scene, headView, DISCIPLINES, AI, AI_LEVELS, drawBowl, handBehind, handFront, PhysicsWorld, Body, Game, Rules, Profiles, GreenSpeed, Weight, StubUI, releasePoint, biasSide, simulatePath, measureProfile, W,
   // drive the main loop by hand (for testing in a hidden tab, where animation frames do not run)
   pump(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) tick(dt); },
   camera(c) { debugCam = c; },
