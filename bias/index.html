@@ -126,6 +126,7 @@ button{cursor:pointer}
 .sb-player:not(.active) .sb-name{color:var(--cream-2)}
 .sb-lvl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-left:7px;line-height:1}
 .sb-lvl.x{color:var(--gold)}
+.sb-lvl.elo{letter-spacing:.06em;white-space:nowrap;font-variant-numeric:tabular-nums}
 .sb-player .dots{align-items:center}
 .dots{display:flex;gap:4px}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:inset -1.5px -1.5px 2px rgba(0,0,0,.5),inset 1px 1px 1px rgba(255,255,255,.28)}
@@ -607,6 +608,8 @@ table.stats{width:100%;border-collapse:collapse;font-size:13px}
   .sb-cell.sb-endcell .kicker{display:none}
   .sb-name{max-width:72px}
   .sb-name:has(.nflag){max-width:92px}
+  .sb-lvl.elo{margin-left:5px}
+  .sb-lvl.elo .w{display:none}   /* just the figure: the word is in its title */
   .sb-cell{padding:6px 8px}
   .sb-player{gap:7px}
   .sb-endcell .sb-of{display:none}   /* with its label: the room goes to the names */
@@ -2178,6 +2181,9 @@ const FLAGS = [
 ];
 const cleanFlag = v => FLAGS.some(f => f[0] === v) ? v : null;
 const myFlag = () => membersOn && store.get('league.token', null) ? cleanFlag(store.get('member.flag', null)) : null;
+/* A player's Elo in a league or challenge match (league-match.js), as the league Worker gave it with the
+   fixture: { rating, provisional }. Never from a player's own browser, so it is shown only there. */
+const cleanElo = e => e && Number.isFinite(+e.rating) ? { rating: Math.round(+e.rating), provisional: !!e.provisional } : null;
 const flagTag = id => { const f = FLAGS.find(x => x[0] === id); return f ? `<img class="nflag" src="flags/${f[0]}.svg" width="20" height="15" alt="${f[1]}" title="${f[1]}">` : ''; };
 /* Letters round a circle of radius r at (cx, cy), reading clockwise along its top, twice (the second on the
    opposite side, so one is always the right way up on a rolling bowl). Used by the canvas painter and the
@@ -5527,7 +5533,7 @@ class Game {
        rinks (lead, second, third, skip, 2 each).
        Each side is a player or a team; members bowl in position order. */
     const disc = cfg.discipline || DISCIPLINES.singles;
-    this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, flag: cleanFlag(p.flag), score: 0, played: 0,
+    this.players = cfg.players.map(p => ({ name: p.name, profileId: p.profileId, colour: p.colour, flag: cleanFlag(p.flag), elo: cleanElo(p.elo), score: 0, played: 0,
       members: (p.members && p.members.length ? p.members : [{ name: p.name }]).slice(0, disc.positions).map((m, i) => ({ name: m.name, role: disc.roles[i] || '', played: 0, hand: 'fore', aim: 0.10 })) }));
     this.world.setGreenSpeed(cfg.T);
     // the computer's reading of the green starts out wrong by an amount that depends on its standard
@@ -6723,7 +6729,9 @@ const UI = {
       let dots = ''; for (let k = 0; k < total; k++) dots += `<span class="dot${k < p.played ? ' spent' : ''}${k === cur ? ' cur' : ''}" style="--c:${hex}"></span>`;
       return `<div class="sb-cell sb-player${i === act && !['summary', 'over'].includes(g.phase) ? ' active' : ''}"><div class="who"><div class="sb-name">${flagTag(p.flag)}${esc(p.name)}</div><div class="dots" aria-label="${total - p.played} bowls remaining">${dots}${lvl(i)}</div></div><div class="sb-score num">${p.score}</div></div>`; };
     // online, each side's challenge level is shown to both players
-    const lvl = i => { if (!g.link) return ''; const l = onlineLevel(i), x = l === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${l === 'mixed' ? 'Mixed' : x ? 'Expert' : 'Standard'}</span>`; };
+    // the Elo, where the match has one (league and challenge matches), in place of the level, which is always Standard there
+    const lvl = i => { const e = g.players[i].elo; if (e) return `<span class="sb-lvl elo" title="${e.provisional ? 'Elo rating, provisional: under 10 rated games' : 'Elo rating'}" aria-label="Elo ${e.rating}${e.provisional ? ', provisional' : ''}"><span class="w">Elo </span>${e.rating}${e.provisional ? '?' : ''}</span>`;
+      if (!g.link) return ''; const l = onlineLevel(i), x = l === 'expert'; return `<span class="sb-lvl${x ? ' x' : ''}" title="Challenge level">${l === 'mixed' ? 'Mixed' : x ? 'Expert' : 'Standard'}</span>`; };
     const pr = Profiles.byId(g.cur.profileId);
     // End 1 of 4 (or to 21 shots): the label above, the number with its format beside it
     const fmt = m.format.type === 'ends' ? `of ${m.format.n}` : `to ${m.format.n}`;
