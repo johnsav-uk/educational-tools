@@ -25,6 +25,7 @@
     { "n": 21, "date": "2026-11-04", "id": "skip-0021", "title": "Red lying two, fast green", "theme": "drive", "green": 14.5, "conditions": "" },
     { "n": 22, "date": "2026-11-05", "id": "skip-0022", "title": "Yellow lying three", "theme": "drive", "green": 12, "conditions": "overcast" },
     { "n": 23, "date": "2026-11-06", "id": "skip-0023", "title": "Yellow lying three, heavy green", "theme": "draw the shot", "green": 11.5, "conditions": "rain" },
-    { "n": 24, "date": "2026-11-07", "id": "skip-0024", "title": "Yellow lying two, heavy green", "theme": "draw the shot", "green": 10.5, "conditions": "rain" }
+    { "n": 24, "date": "2026-11-07", "id": "skip-0024", "title": "Yellow lying two, heavy green", "theme": "draw the shot", "green": 10.5, "conditions": "rain" },
+    { "n": 25, "date": "2026-11-08", "id": "skip-0025", "title": "Yellow lying one, short jack", "theme": "draw the shot", "green": 13, "conditions": "" }
   ]
 }
