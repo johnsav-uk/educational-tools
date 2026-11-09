@@ -186,7 +186,12 @@
   .sst-bar .sst-theme-nav { padding: 0 9px; }
   .sst-bar .sst-theme-nav span { display: none; }
 }
-@media print { .sst-bar { display: none; } }
+@media print {
+  .sst-bar { display: none; }
+  /* Printouts are black on white in either theme. A dark color-scheme on the
+     root paints the page canvas, which shows as dark A4 margins. */
+  :root, .theme-dark, .theme-light { color-scheme: light !important; }
+}
 
 /* Presenter mode: tools that go full screen hide the bar with it. */
 :fullscreen .sst-bar { display: none; }
