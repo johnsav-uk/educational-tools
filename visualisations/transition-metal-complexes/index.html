@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transition Metal Complexes (beta)</title>
+<meta name="description" content="Add reagents to metal-aqua ions and watch the colours change, turn complexes in 3D to find cis–trans and optical isomers, and see why d electrons make complexes coloured. AQA A-level Chemistry 3.2.5 transition metals and 3.2.6 reactions of ions in aqueous solution.">
+<link rel="stylesheet" href="tm.css?v=1">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<header class="top" id="top">
+  <div class="grow">
+    <h1>Transition Metal Complexes <span class="chip beta">beta</span></h1>
+    <p class="lede">Ligand substitution and the colours it makes, the shapes of complex ions and their isomers in 3D, and why d electrons make complexes coloured. AQA A-level Chemistry 3.2.5 and 3.2.6.</p>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnPresent" type="button" title="Presenter mode: the model on the board (P)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Presenter mode
+    </button>
+    <button class="btn" id="btnAnnotate" type="button" title="Draw over the page (D)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4zM14 6l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      Annotate
+    </button>
+    <button class="btn" id="btnPrint" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Questions &amp; worksheets
+    </button>
+  </div>
+</header>
+
+<nav class="modes" id="modes" role="tablist" aria-label="Mode"></nav>
+
+<main class="app" id="app">
+  <aside class="build sst-teacher" id="controls" aria-label="Controls"></aside>
+
+  <section class="centre" aria-labelledby="actTitle">
+    <div class="act-head" id="actHead"></div>
+    <div class="stage" id="stage">
+      <canvas id="cv" tabindex="0" role="img" aria-label="Interactive model. Use the controls to change it; arrow keys turn a 3D model."></canvas>
+    </div>
+  </section>
+
+  <aside class="info" id="info" aria-label="Explanation"></aside>
+</main>
+
+<div id="srLive" class="sr-only" aria-live="polite"></div>
+<div id="boardNotes" class="sr-only" aria-hidden="true"></div>
+
+<!-- ═════════ Worksheet 1: complexes, shapes and isomerism ═════════ -->
+<section class="print-only doc" id="ws1">
+  <div class="print-head"><div><h1>Complex ions: ligands, shapes and isomerism</h1><div class="sub">Student worksheet · AQA A-level Chemistry 3.2.5.1, 3.2.5.2, 3.2.5.3</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>32</b> marks.</p>
+
+  <div class="q"><h3><span class="n">1</span> Transition metals and ligands</h3>
+    <p><b>1.1</b> State what is meant by the term <i>ligand</i>.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.2</b> State what is meant by the term <i>co-ordination number</i>.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.3</b> Ethane-1,2-diamine, H<sub>2</sub>NCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub>, is a bidentate ligand. Explain what is meant by <i>bidentate</i>.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>1.4</b> Give the electron configuration of a Cu<sup>2+</sup> ion. Use it to explain why copper is a transition metal.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q"><h3><span class="n">2</span> Ligand substitution. A solution contains [Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> ions.</h3>
+    <p><b>2.1</b> Concentrated hydrochloric acid is added. Give the formula of the copper complex formed, its colour and its shape.</p>
+    <p>Formula: …………………………… &nbsp; Colour: …………………………… &nbsp; Shape: ……………………………</p><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>2.2</b> Explain why the co-ordination number changes in this reaction.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>2.3</b> Excess aqueous ammonia is added to a fresh sample of [Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>(aq). Write an equation for the overall formation of the deep blue complex.</p><div class="ws-lines"><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>2.4</b> Explain why the co-ordination number does not change in the reaction in 2.3.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">3</span> The chelate effect</h3>
+    <p class="eqn">[Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> + 3H<sub>2</sub>NCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub> → [Cu(H<sub>2</sub>NCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub>)<sub>3</sub>]<sup>2+</sup> + 6H<sub>2</sub>O</p>
+    <p><b>3.1</b> The enthalpy change for this reaction is close to zero. Explain why the reaction is still feasible.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>3.2</b> EDTA<sup>4−</sup> reacts with [Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> to form a complex with a co-ordination number of 6. Write an equation for the reaction and state the change in the number of particles.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>3.3</b> Haem is an iron(II) complex with a multidentate ligand. Explain why carbon monoxide is toxic.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">4</span> Shapes and isomerism</h3>
+    <p><b>4.1</b> Draw the structure of the [Ag(NH<sub>3</sub>)<sub>2</sub>]<sup>+</sup> ion found in Tollens’ reagent. State the bond angle.</p><div class="draw-box"></div><p>Bond angle: ……………</p><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.2</b> Cisplatin is one isomer of [Pt(NH<sub>3</sub>)<sub>2</sub>Cl<sub>2</sub>]. Draw cisplatin and name the type of isomerism it shows.</p><div class="draw-box"></div><div class="ws-lines"><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.3</b> State the Cl–Pt–Cl bond angle in cisplatin.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>4.4</b> [Ni(H<sub>2</sub>NCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub>)<sub>3</sub>]<sup>2+</sup> exists as two optical isomers. Draw 3D structures of the two isomers. You may write “en” for each ethane-1,2-diamine ligand, joined to the nickel at two positions.</p><div class="draw-box tall"></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>4.5</b> Explain why [Co(NH<sub>3</sub>)<sub>4</sub>Cl<sub>2</sub>]<sup>+</sup> shows cis–trans isomerism but not optical isomerism.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>4.6</b> The complex ion [Co(H<sub>2</sub>NCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub>)<sub>2</sub>Cl<sub>2</sub>]<sup>+</sup> has three stereoisomers. Explain how three stereoisomers arise.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+</section>
+
+<section class="print-only doc" id="ms1">
+  <div class="print-head"><div><h1>Complex ions: ligands, shapes and isomerism: mark scheme</h1><div class="sub">Teacher copy · AQA A-level Chemistry 3.2.5.1, 3.2.5.2, 3.2.5.3</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [1]</h4><ul><li>a molecule or ion that forms a co-ordinate bond with a transition metal (atom or ion) by donating a pair of electrons</li></ul><p class="dna">Do not accept “donates electrons” without “pair” / “lone pair”.</p></div>
+  <div class="ms-q"><h4>1.2 [1]</h4><ul><li>the number of co-ordinate bonds to the central metal atom or ion</li></ul><p class="dna">Do not accept “the number of ligands” (a bidentate ligand forms two bonds).</p></div>
+  <div class="ms-q"><h4>1.3 [1]</h4><ul><li>each ligand forms two co-ordinate bonds / donates two lone pairs (one from each N atom)</li></ul></div>
+  <div class="ms-q"><h4>1.4 [2]</h4><ul><li>1s<sup>2</sup> 2s<sup>2</sup> 2p<sup>6</sup> 3s<sup>2</sup> 3p<sup>6</sup> 3d<sup>9</sup> / [Ar] 3d<sup>9</sup> (1)</li><li>(it forms an ion with) an incomplete d sub-level (1)</li></ul><p class="dna">Do not accept 4s<sup>1</sup> 3d<sup>8</sup> or any configuration with 4s electrons.</p></div>
+  <div class="ms-q"><h4>2.1 [3]</h4><ul><li>[CuCl<sub>4</sub>]<sup>2−</sup> (1)</li><li>yellow / yellow-green (1)</li><li>tetrahedral (1)</li></ul><p class="dna">The charge must be correct for the formula mark. Allow “green” only if “yellow” is also given.</p></div>
+  <div class="ms-q"><h4>2.2 [1]</h4><ul><li>Cl<sup>−</sup> ligands are larger than H<sub>2</sub>O, so only four fit round the Cu<sup>2+</sup></li></ul></div>
+  <div class="ms-q"><h4>2.3 [2]</h4><ul><li>[Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> + 4NH<sub>3</sub> → [Cu(NH<sub>3</sub>)<sub>4</sub>(H<sub>2</sub>O)<sub>2</sub>]<sup>2+</sup> + 4H<sub>2</sub>O</li><li>correct formula of the complex (1); balanced (1)</li></ul></div>
+  <div class="ms-q"><h4>2.4 [1]</h4><ul><li>NH<sub>3</sub> and H<sub>2</sub>O are similar in size (and both uncharged)</li></ul></div>
+  <div class="ms-q"><h4>3.1 [3]</h4><ul><li>similar bonds (six co-ordinate bonds) are broken and made, so ΔH is about zero (1)</li><li>the number of particles increases from 4 to 7, so entropy increases / ΔS is positive (1)</li><li>so ΔG (= ΔH − TΔS) is negative (1)</li></ul><p class="dna">Do not accept “more bonds are formed”.</p></div>
+  <div class="ms-q"><h4>3.2 [2]</h4><ul><li>[Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> + EDTA<sup>4−</sup> → [Cu(EDTA)]<sup>2−</sup> + 6H<sub>2</sub>O (1)</li><li>2 particles become 7 (1)</li></ul></div>
+  <div class="ms-q"><h4>3.3 [2]</h4><ul><li>CO forms a (stronger) co-ordinate bond with the Fe<sup>2+</sup> / iron(II) in haemoglobin, replacing the oxygen (1)</li><li>so oxygen cannot be carried in the blood (1)</li></ul></div>
+  <div class="ms-q"><h4>4.1 [2]</h4><ul><li>[H<sub>3</sub>N→Ag←NH<sub>3</sub>]<sup>+</sup> drawn linear, with the co-ordinate bonds from N (1)</li><li>180° (1)</li></ul></div>
+  <div class="ms-q"><h4>4.2 [2]</h4><ul><li>square planar with the two Cl next to each other / at 90° (1)</li><li>cis–trans isomerism / E–Z / geometric isomerism (1)</li></ul></div>
+  <div class="ms-q"><h4>4.3 [1]</h4><ul><li>90°</li></ul></div>
+  <div class="ms-q"><h4>4.4 [3]</h4><ul><li>3D octahedral structure with three en, each bonded at two adjacent positions (1)</li><li>second structure drawn as the mirror image of the first (1)</li><li>2+ charge shown on both (1)</li></ul><p class="dna">Each en must span adjacent (cis) positions: an en drawn across opposite positions scores 0 for the first mark.</p></div>
+  <div class="ms-q"><h4>4.5 [2]</h4><ul><li>the two Cl<sup>−</sup> can be next to each other (90°, cis) or opposite each other (180°, trans) (1)</li><li>each isomer has a plane of symmetry / its mirror image is superimposable / it has only monodentate ligands (1)</li></ul></div>
+  <div class="ms-q"><h4>4.6 [3]</h4><ul><li>a trans isomer, with the two Cl opposite each other (1)</li><li>a cis isomer, with the two Cl next to each other (1)</li><li>the cis isomer has a non-superimposable mirror image, so it exists as two optical isomers / the trans isomer has a plane of symmetry so it does not (1)</li></ul></div>
+</section>
+
+<!-- ═════════ Worksheet 2: colour, colorimetry and metal-aqua ions ═════════ -->
+<section class="print-only doc" id="ws2">
+  <div class="print-head"><div><h1>Coloured ions, colorimetry and metal-aqua ions</h1><div class="sub">Student worksheet · AQA A-level Chemistry 3.2.5.4, 3.2.6</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="fill-in"><span>Name:</span><span>Class:</span><span>Date:</span></div>
+  <p>Answer all questions in the spaces provided. Total: <b>31</b> marks. Planck constant h = 6.63 × 10<sup>−34</sup> J s; speed of light c = 3.00 × 10<sup>8</sup> m s<sup>−1</sup>; Avogadro constant L = 6.022 × 10<sup>23</sup> mol<sup>−1</sup>.</p>
+
+  <div class="q"><h3><span class="n">1</span> Colour</h3>
+    <p><b>1.1</b> Explain why a solution containing [Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> ions is blue.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>1.2</b> [Cu(NH<sub>3</sub>)<sub>4</sub>(H<sub>2</sub>O)<sub>2</sub>]<sup>2+</sup> absorbs light most strongly at a wavelength of 600 nm. Calculate the energy difference, in J, between the ground state and the excited state of the d electrons.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">ΔE = …………………… J [2 marks]</p></div>
+  <div class="q"><p><b>1.3</b> Calculate the frequency of this light.</p><div class="ws-lines"><i></i></div><p class="mk">Frequency = …………………… Hz [1 mark]</p></div>
+  <div class="q"><p><b>1.4</b> Convert your answer to 1.2 into kJ mol<sup>−1</sup>.</p><div class="ws-lines"><i></i></div><p class="mk">…………………… kJ mol<sup>−1</sup> [1 mark]</p></div>
+  <div class="q"><p><b>1.5</b> Explain why [Cu(NH<sub>3</sub>)<sub>4</sub>(H<sub>2</sub>O)<sub>2</sub>]<sup>2+</sup> is a different colour from [Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>1.6</b> Explain why [Zn(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> is colourless.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+
+  <div class="q page"><h3><span class="n">2</span> A student uses a colorimeter to find the concentration of copper(II) ions in a solution. The table shows the results for standard solutions.</h3>
+    <table class="ws-table"><thead><tr><th>[Cu<sup>2+</sup>] / mol dm<sup>−3</sup></th><td>0.10</td><td>0.20</td><td>0.30</td><td>0.40</td><td>0.50</td></tr></thead>
+      <tbody><tr><th>Absorbance</th><td>0.14</td><td>0.29</td><td>0.43</td><td>0.57</td><td>0.71</td></tr></tbody></table>
+    <p>The solution of unknown concentration has an absorbance of 0.50.</p>
+    <p><b>2.1</b> Suggest the colour of filter the student should use. Explain your answer.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>2.2</b> Plot the results on the grid, draw a line of best fit and use it to find the concentration of the unknown solution.</p>
+    <figure class="fig"><svg viewBox="0 0 440 300" role="img" aria-label="Blank grid: concentration from 0 to 0.60 mol dm−3 across, absorbance from 0 to 0.80 up">
+      <g stroke="#bbb" stroke-width="0.6">
+        <path d="M60 20V260M90 20V260M120 20V260M150 20V260M180 20V260M210 20V260M240 20V260M270 20V260M300 20V260M330 20V260M360 20V260M390 20V260M420 20V260"/>
+        <path d="M60 20H420M60 50H420M60 80H420M60 110H420M60 140H420M60 170H420M60 200H420M60 230H420M60 260H420"/>
+      </g>
+      <path d="M60 20V260H420" fill="none" stroke="#000" stroke-width="1.6"/>
+      <g font-family="sans-serif" font-size="11" text-anchor="middle"><text x="60" y="275">0</text><text x="120" y="275">0.10</text><text x="180" y="275">0.20</text><text x="240" y="275">0.30</text><text x="300" y="275">0.40</text><text x="360" y="275">0.50</text><text x="420" y="275">0.60</text><text x="240" y="294">concentration of Cu²⁺ / mol dm⁻³</text></g>
+      <g font-family="sans-serif" font-size="11" text-anchor="end"><text x="54" y="264">0</text><text x="54" y="204">0.20</text><text x="54" y="144">0.40</text><text x="54" y="84">0.60</text><text x="54" y="24">0.80</text></g>
+      <text x="16" y="140" font-family="sans-serif" font-size="11" text-anchor="middle" transform="rotate(-90 16 140)">absorbance</text>
+    </svg></figure>
+    <p class="mk">Concentration = …………………… mol dm<sup>−3</sup> [3 marks]</p></div>
+  <div class="q"><p><b>2.3</b> State the relationship between absorbance and concentration shown by the graph.</p><div class="ws-lines"><i></i></div><p class="mk">[1 mark]</p></div>
+  <div class="q"><p><b>2.4</b> Suggest why adding excess aqueous ammonia to every solution before measuring would allow lower concentrations of copper(II) ions to be measured accurately.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[1 mark]</p></div>
+
+  <div class="q"><h3><span class="n">3</span> Reactions of metal-aqua ions</h3>
+    <p><b>3.1</b> Complete the table with what you would see.</p>
+    <table class="ws-table wide"><thead><tr><th>Reaction</th><th>Observation</th></tr></thead><tbody>
+      <tr><td>[Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>(aq) + NaOH(aq)</td><td class="blank"></td></tr>
+      <tr><td>[Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>(aq) + NH<sub>3</sub>(aq), added until in excess</td><td class="blank"></td></tr>
+      <tr><td>[Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup>(aq) + Na<sub>2</sub>CO<sub>3</sub>(aq)</td><td class="blank"></td></tr>
+      <tr><td>[Al(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup>(aq) + NaOH(aq), added until in excess</td><td class="blank"></td></tr>
+      <tr><td>[Cu(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>(aq) + Na<sub>2</sub>CO<sub>3</sub>(aq)</td><td class="blank"></td></tr>
+      <tr><td>[Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup>(aq) + NH<sub>3</sub>(aq)</td><td class="blank"></td></tr>
+    </tbody></table><p class="mk">[6 marks]</p></div>
+  <div class="q"><p><b>3.2</b> Write an equation for the reaction of [Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup> with carbonate ions.</p><div class="ws-lines"><i></i></div><p class="mk">[2 marks]</p></div>
+  <div class="q"><p><b>3.3</b> Explain why a solution of [Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup> is more acidic than a solution of [Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup> of the same concentration.</p><div class="ws-lines"><i></i><i></i><i></i></div><p class="mk">[3 marks]</p></div>
+  <div class="q"><p><b>3.4</b> Aluminium hydroxide, [Al(H<sub>2</sub>O)<sub>3</sub>(OH)<sub>3</sub>], is amphoteric. Write two equations to show this.</p><div class="ws-lines"><i></i><i></i></div><p class="mk">[2 marks]</p></div>
+</section>
+
+<section class="print-only doc" id="ms2">
+  <div class="print-head"><div><h1>Coloured ions, colorimetry and metal-aqua ions: mark scheme</h1><div class="sub">Teacher copy · AQA A-level Chemistry 3.2.5.4, 3.2.6</div></div><div class="sub">Savage Science Tools</div></div>
+  <div class="ms-q"><h4>1.1 [3]</h4><ul><li>d electrons absorb (visible) light and move from the ground state to an excited state (1)</li><li>light of a particular frequency / wavelength is absorbed, whose energy matches ΔE (red / orange light) (1)</li><li>the remaining frequencies are transmitted / reflected, and they look blue (1)</li></ul><p class="dna">Do not accept “electrons fall back and give out (blue) light”: that is emission, which loses the first mark.</p></div>
+  <div class="ms-q"><h4>1.2 [2]</h4><ul><li>ΔE = hc/λ = (6.63 × 10<sup>−34</sup> × 3.00 × 10<sup>8</sup>) ÷ (600 × 10<sup>−9</sup>) (1)</li><li>= <b>3.32 × 10<sup>−19</sup> J</b> (1)</li></ul><p class="dna">Wavelength not converted to metres scores 0. Allow 3.3 × 10<sup>−19</sup>.</p></div>
+  <div class="ms-q"><h4>1.3 [1]</h4><ul><li>ν = c/λ = 3.00 × 10<sup>8</sup> ÷ 600 × 10<sup>−9</sup> = <b>5.00 × 10<sup>14</sup> Hz</b></li></ul><p class="dna">Allow ν = ΔE/h. Allow s<sup>−1</sup>.</p></div>
+  <div class="ms-q"><h4>1.4 [1]</h4><ul><li>3.32 × 10<sup>−19</sup> × 6.022 × 10<sup>23</sup> ÷ 1000 = <b>200 kJ mol<sup>−1</sup></b></li></ul><p class="dna">Allow 199–200. Allow consequential marking from 1.2.</p></div>
+  <div class="ms-q"><h4>1.5 [2]</h4><ul><li>a different ligand (NH<sub>3</sub>) changes ΔE / the energy gap between the d orbitals (1)</li><li>so a different frequency / wavelength of light is absorbed (1)</li></ul></div>
+  <div class="ms-q"><h4>1.6 [2]</h4><ul><li>Zn<sup>2+</sup> has a full d sub-level / 3d<sup>10</sup> (1)</li><li>no d electron can move to a higher energy level, so no visible light is absorbed (1)</li></ul></div>
+  <div class="ms-q"><h4>2.1 [2]</h4><ul><li>red (allow orange) (1)</li><li>it is the complementary colour of blue / it is the colour the solution absorbs most (1)</li></ul></div>
+  <div class="ms-q"><h4>2.2 [3]</h4><ul><li>all five points plotted correctly, to within half a small square (1)</li><li>straight line of best fit through the origin (1)</li><li><b>0.35</b> mol dm<sup>−3</sup> (allow 0.34–0.36) (1)</li></ul></div>
+  <div class="ms-q"><h4>2.3 [1]</h4><ul><li>absorbance is (directly) proportional to concentration</li></ul></div>
+  <div class="ms-q"><h4>2.4 [1]</h4><ul><li>the ammonia complex is a deeper / more intense colour, so it gives a larger absorbance for the same concentration</li></ul></div>
+  <div class="ms-q"><h4>3.1 [6]</h4><ul><li>green precipitate (1)</li><li>blue precipitate, then (dissolves in excess to give) a deep blue solution (1)</li><li>brown precipitate <i>and</i> effervescence / bubbles (1)</li><li>white precipitate, which dissolves (in excess) to give a colourless solution (1)</li><li>blue-green precipitate (1)</li><li>brown precipitate (1)</li></ul><p class="dna">Allow “gas given off” for effervescence; do not accept “CO<sub>2</sub> given off” alone, as that is not an observation. For [Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>2+</sup>, allow “green precipitate that darkens / turns brown on standing”.</p></div>
+  <div class="ms-q"><h4>3.2 [2]</h4><ul><li>2[Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup> + 3CO<sub>3</sub><sup>2−</sup> → 2[Fe(H<sub>2</sub>O)<sub>3</sub>(OH)<sub>3</sub>] + 3CO<sub>2</sub> + 3H<sub>2</sub>O</li><li>correct species (1); balanced (1)</li></ul><p class="dna">Do not accept Fe<sub>2</sub>(CO<sub>3</sub>)<sub>3</sub> as a product.</p></div>
+  <div class="ms-q"><h4>3.3 [3]</h4><ul><li>Fe<sup>3+</sup> is smaller and more highly charged / has a higher charge density (1)</li><li>it polarises / weakens the O–H bonds in the water ligands more (1)</li><li>so H<sup>+</sup> ions are released more readily / the equilibrium [Fe(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup> ⇌ [Fe(H<sub>2</sub>O)<sub>5</sub>(OH)]<sup>2+</sup> + H<sup>+</sup> lies further to the right (1)</li></ul></div>
+  <div class="ms-q"><h4>3.4 [2]</h4><ul><li>[Al(H<sub>2</sub>O)<sub>3</sub>(OH)<sub>3</sub>] + 3H<sup>+</sup> → [Al(H<sub>2</sub>O)<sub>6</sub>]<sup>3+</sup> (1)</li><li>[Al(H<sub>2</sub>O)<sub>3</sub>(OH)<sub>3</sub>] + OH<sup>−</sup> → [Al(H<sub>2</sub>O)<sub>2</sub>(OH)<sub>4</sub>]<sup>−</sup> + H<sub>2</sub>O (1)</li></ul><p class="dna">Allow [Al(OH)<sub>4</sub>]<sup>−</sup> with 3H<sub>2</sub>O. Allow H<sub>3</sub>O<sup>+</sup> for H<sup>+</sup> with the water balanced.</p></div>
+</section>
+
+<!-- ═════════ Print dialog ═════════ -->
+<dialog id="printDlg" aria-labelledby="printDlgTitle">
+  <form method="dialog">
+    <h2 id="printDlgTitle">Questions &amp; worksheets</h2>
+    <p>Exam-style questions for AQA A-level Chemistry, formatted for A4. In the print window, choose <b>Save as PDF</b> to download, or pick a printer.</p>
+    <fieldset>
+      <legend>Complex ions: ligands, shapes and isomerism (3.2.5.1–3.2.5.3)</legend>
+      <label><input type="checkbox" id="pWs1" checked> <span><b>Student worksheet</b>, 32 marks</span></label>
+      <label><input type="checkbox" id="pMs1"> <span><b>Teacher mark scheme</b>, on a new page</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Coloured ions, colorimetry and metal-aqua ions (3.2.5.4, 3.2.6)</legend>
+      <label><input type="checkbox" id="pWs2" checked> <span><b>Student worksheet</b>, 31 marks</span></label>
+      <label><input type="checkbox" id="pMs2"> <span><b>Teacher mark scheme</b>, on a new page</span></label>
+    </fieldset>
+    <div class="row">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" value="print" type="submit">Print / Save as PDF</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="js/chem.js?v=1"></script>
+<script src="js/mol3d.js?v=1"></script>
+<script src="js/draw.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
