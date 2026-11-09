@@ -209,7 +209,6 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 /* ── Print: A4, black on white in either theme ─────────────────── */
 @page{ size:A4; margin:14mm 14mm 16mm; }
 @media print{
-  :root, .theme-dark, .theme-light{ color-scheme:light !important; }
   html,body{ background:#fff !important; color:#000; height:auto !important; overflow:visible !important; display:block !important; }
   .doc .eqn{ display:inline-block; background:#f4f4f4 !important; color:#000 !important; border:1px solid #bbb; border-radius:4px; padding:2pt 8pt; font-size:10.5pt !important; font-weight:600; }
   body{ font-size:10.5pt; line-height:1.4; }

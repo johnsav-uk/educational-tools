@@ -264,7 +264,6 @@ dialog .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .theme-light #cellSvg [fill="rgba(242,201,76,0.85)"]{ fill:rgba(185,138,0,0.85); } .theme-light #cellSvg [stroke="rgba(242,201,76,0.85)"]{ stroke:rgba(185,138,0,0.85); }
 
 @media print{
-  :root, .theme-dark, .theme-light{ color-scheme:light !important; }   /* white page margins, not the dark canvas */
   html,body{ background:#fff !important; color:#000; height:auto !important; overflow:visible !important; display:block !important; }
   body{ font-size:10.5pt; line-height:1.4; }
   *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
