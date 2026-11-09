@@ -187,9 +187,9 @@
     st.dirty = true; renderControls(); renderInfo(); renderNotes();
   }
   function spawnPhoton(t) {
-    var C = st.col, lam = C.mode === 'probe' ? C.probe : 400 + Math.random() * 340;
-    C.photons.push({ t0: t, lam: lam, dur: 2600, abs: D.absorbs(C.c, lam) });
-    if (C.photons.length > 14) C.photons.shift();
+    var C = st.col, lam = C.mode === 'probe' ? C.probe : 400 + Math.random() * 345;
+    C.photons.push({ t0: t, lam: lam, dur: 2200, abs: D.absorbs(C.c, lam) });
+    if (C.photons.length > 24) C.photons.shift();
   }
 
   /* ============================ Mode 4: colorimetry ============================ */
@@ -594,7 +594,7 @@
     if (st.mode === 'colour') {
       var C = st.col, target = gapFor(C.c);
       C.gapPx += (target - C.gapPx) * Math.min(1, dt / 160);
-      if (t > C.nextPhoton) { spawnPhoton(t); C.nextPhoton = t + (C.mode === 'probe' ? 1300 : 520); }
+      if (t > C.nextPhoton) { spawnPhoton(t); C.nextPhoton = t + (C.mode === 'probe' ? 1100 : 260); }
     }
     if (!st.dirty && !animating(t)) return;
     st.dirty = false;

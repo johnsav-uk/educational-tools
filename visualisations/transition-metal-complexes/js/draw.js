@@ -306,39 +306,123 @@
   function absorbs(c, lam) { return c.lam != null && Math.abs(lam - c.lam) <= c.w; }
   function band(c, l) { return c.lam == null ? 0 : Math.exp(-Math.LN2 * Math.pow((l - c.lam) / c.w, 2)); }
 
+  // How much of each wavelength gets through: the band's peak absorbs almost all of it.
+  function transmit(c, l) { return Math.pow(10, -1.6 * band(c, l)); }
+
   function drawColour(ctx, w, h, st, t) {
     var P = pal(), S = sizes(w), C = st.col, c = C.c, pad = Math.max(12, w * 0.02), wide = w / h > 1.2;
-    var E = wide ? { x: 0, y: 0, w: w * 0.54, h: h } : { x: 0, y: 0, w: w, h: h * 0.55 };
-    var Rt = wide ? { x: w * 0.54, y: 0, w: w * 0.46, h: h * 0.5 } : { x: 0, y: h * 0.55, w: w * 0.45, h: h * 0.45 };
-    var Rb = wide ? { x: w * 0.54, y: h * 0.5, w: w * 0.46, h: h * 0.5 } : { x: w * 0.45, y: h * 0.55, w: w * 0.55, h: h * 0.45 };
+    var E = wide ? { x: 0, y: 0, w: w * 0.33, h: h } : { x: 0, y: 0, w: w, h: h * 0.42 };
+    var Lp = wide ? { x: w * 0.33, y: 0, w: w * 0.67, h: h * 0.62 } : { x: 0, y: h * 0.42, w: w, h: h * 0.36 };
+    var G = wide ? { x: w * 0.33, y: h * 0.62, w: w * 0.67, h: h * 0.38 } : { x: 0, y: h * 0.78, w: w, h: h * 0.22 };
     ctx.strokeStyle = P.line; ctx.lineWidth = 1;
     ctx.beginPath();
-    if (wide) { ctx.moveTo(E.w, pad); ctx.lineTo(E.w, h - pad); ctx.moveTo(Rt.x + pad, Rb.y); ctx.lineTo(w - pad, Rb.y); }
-    else { ctx.moveTo(pad, E.h); ctx.lineTo(w - pad, E.h); ctx.moveTo(Rb.x, Rb.y + pad); ctx.lineTo(Rb.x, h - pad); }
+    if (wide) { ctx.moveTo(E.w, pad); ctx.lineTo(E.w, h - pad); ctx.moveTo(Lp.x + pad, G.y); ctx.lineTo(w - pad, G.y); }
+    else { ctx.moveTo(pad, Lp.y); ctx.lineTo(w - pad, Lp.y); ctx.moveTo(pad, G.y); ctx.lineTo(w - pad, G.y); }
     ctx.stroke();
 
-    /* --- Energy diagram --- */
+    /* --- The light path: spectrum in, test tube, spectrum out --- */
+    var y0 = Lp.y + pad;
+    rich(ctx, 'White light through the solution', Lp.x + pad, y0, { px: S.label, color: P.muted, weight: 700, maxW: Lp.w - pad * 2 });
+    var barTop = y0 + S.label * 2.2, barBot = Lp.y + Lp.h - pad - S.label * 2.8, bh = barBot - barTop;
+    var barW = Math.max(16, Math.min(Lp.w * 0.06, 44));
+    ctx.font = '600 ' + S.label + 'px ' + FONT;
+    var tickW = ctx.measureText('750 nm').width;
+    var inX = Lp.x + pad + tickW + 8, outX = Lp.x + Lp.w - pad - barW;
+    var tubeW = Math.max(40, Math.min(Lp.w * 0.13, bh * 0.34)), tx = (inX + barW + outX) / 2 - tubeW / 2, r = tubeW / 2;
+    function Y(l) { return barTop + (l - 400) / 350 * bh; }
+    // Incoming and outgoing spectra.
+    for (var l = 400; l < 750; l += 2) {
+      ctx.fillStyle = wlRGB(l);
+      ctx.fillRect(inX, Y(l), barW, bh / 175 + 1);
+      ctx.fillRect(outX, Y(l), barW, bh / 175 + 1);
+      if (c.lam) { ctx.fillStyle = '#050e1a'; ctx.globalAlpha = 1 - transmit(c, l); ctx.fillRect(outX, Y(l), barW, bh / 175 + 1); ctx.globalAlpha = 1; }
+    }
+    ctx.strokeStyle = P.line2; ctx.lineWidth = 1.5; ctx.strokeRect(inX, barTop, barW, bh); ctx.strokeRect(outX, barTop, barW, bh);
+    ctx.fillStyle = P.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText('400 nm', inX - 6, barTop + S.label * 0.5); ctx.fillText('750 nm', inX - 6, barBot - S.label * 0.5);
+    rich(ctx, 'light in', inX + barW / 2, barBot + 6, { px: S.label, color: P.muted, weight: 700, align: 'center' });
+    ctx.font = '700 ' + S.label + 'px ' + FONT;
+    var outLblX = Math.min(outX + barW / 2, Lp.x + Lp.w - 4 - ctx.measureText('light out').width / 2);
+    rich(ctx, 'light out', outLblX, barBot + 6, { px: S.label, color: P.muted, weight: 700, align: 'center' });
+    // Where the light went.
+    if (c.lam) {
+      var aLo = Math.max(400, c.lam - c.w), aHi = Math.min(750, c.lam + c.w);
+      if (aHi > aLo) {
+        var bx = outX - 8;
+        ctx.strokeStyle = P.violet; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(bx, Y(aLo)); ctx.lineTo(bx - 6, Y(aLo)); ctx.lineTo(bx - 6, Y(aHi)); ctx.lineTo(bx, Y(aHi)); ctx.stroke();
+        ctx.font = '700 ' + S.label + 'px ' + FONT; ctx.fillStyle = P.violet; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText('absorbed', bx - 12, (Y(aLo) + Y(aHi)) / 2);
+      }
+    }
+    // Probe wavelength markers.
+    if (C.mode === 'probe') {
+      ctx.fillStyle = P.text;
+      [inX - 2, outX + barW + 2].forEach(function (x, i) {
+        var yy = Y(C.probe), d = i ? 1 : -1;
+        ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + d * 9, yy - 6); ctx.lineTo(x + d * 9, yy + 6); ctx.fill();
+      });
+    }
+    // Photons crossing: absorbed ones stop in the tube and lift an electron.
+    var cx = tx + tubeW / 2, xA = inX + barW + 4, xB = outX - 4;
+    C.photons.forEach(function (ph) {
+      var k = (t - ph.t0) / ph.dur;
+      if (k < 0 || k > 1) return;
+      var x = xA + (xB - xA) * k, yy = Y(Math.min(749, ph.lam));
+      if (ph.abs && x >= cx) {
+        if (!ph.done) {
+          ph.done = true; ph.flash = t;
+          if (!C.excite && c.lam) C.excite = { t0: t, pending: true };
+        }
+        var fa = (t - ph.flash) / 450;
+        if (fa < 1) { ctx.strokeStyle = wlRGB(ph.lam); ctx.globalAlpha = 1 - fa; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, yy, 5 + fa * tubeW * 0.35, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
+        return;
+      }
+      var len = Math.min(Lp.w * 0.1, 70), amp = Math.max(3, S.label * 0.25), wl = Math.max(8, ph.lam / 30);
+      ctx.strokeStyle = wlRGB(ph.lam); ctx.lineWidth = Math.max(2.5, S.label * 0.14);
+      ctx.beginPath();
+      for (var q = 0; q <= len; q += 2) {
+        var xx = Math.max(xA, x - len + q), py = yy + Math.sin((q / wl) * Math.PI * 2 - t / 90) * amp;
+        if (q) ctx.lineTo(xx, py); else ctx.moveTo(xx, py);
+      }
+      ctx.stroke();
+    });
+    // The test tube, drawn over the photons so they pass behind the glass.
+    var tTop = barTop - S.label * 0.6, tBot = barBot;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(tx, tTop + bh * 0.06); ctx.lineTo(tx, tBot - r); ctx.arc(tx + r, tBot - r, r, Math.PI, 0, true); ctx.lineTo(tx + tubeW, tTop + bh * 0.06); ctx.closePath();
+    ctx.fillStyle = c.colour ? hexA(c.colour, 0.9) : P.water; ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = P.glass; ctx.lineWidth = Math.max(2, tubeW * 0.05);
+    ctx.beginPath(); ctx.moveTo(tx - tubeW * 0.08, tTop); ctx.lineTo(tx, tTop + 4); ctx.lineTo(tx, tBot - r); ctx.arc(tx + r, tBot - r, r, Math.PI, 0, true); ctx.lineTo(tx + tubeW, tTop + 4); ctx.lineTo(tx + tubeW * 1.08, tTop); ctx.stroke();
+    rich(ctx, 'seen as ' + c.seen, cx, barBot + 6, { px: S.label, color: P.text, weight: 800, align: 'center', maxW: Math.max(tubeW * 2.4, 120) });
+
+    /* --- Energy diagram (smaller) --- */
     var y = pad;
     y += rich(ctx, '{' + c.f + '}', pad, y, { px: S.text, color: P.text, weight: 800, maxW: E.w - pad * 2 });
     y += rich(ctx, 'd' + c.d + ' · ' + (c.geo === 'tet' ? 'tetrahedral' : 'octahedral'), pad, y + 2, { px: S.label, color: P.muted, weight: 600 });
-    // A lane along the bottom carries the light through the solution.
-    var laneY = E.y + E.h - pad - S.label * 1.9, top0 = y + S.label;
+    var top0 = y + S.label, bot0 = E.y + E.h - pad;
     var fl = fill(c.d, c.geo), axisX = pad + S.label * 0.6;
-    var box = Math.max(26, Math.min(E.w * 0.085, (laneY - top0) * 0.14, 96));
-    var gx0 = axisX + S.label * 2.2, slot = box * 1.25;
-    var gap = C.gapPx * (laneY - top0 - box * 2 - S.label * 1.5), midY = top0 + (laneY - top0) * 0.5, loY = midY + gap / 2, hiY = midY - gap / 2 - box;
-    // Energy axis.
+    var box = Math.max(20, Math.min(E.w * 0.1, (bot0 - top0) * 0.12, 56));
+    var gx0 = axisX + S.label * 1.9, slot = box * 1.2;
+    var gap = C.gapPx * (bot0 - top0 - box * 2 - S.label), midY = top0 + (bot0 - top0) * 0.5, loY = midY + gap / 2, hiY = midY - gap / 2 - box;
     ctx.strokeStyle = P.muted; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(axisX, laneY - S.label * 0.8); ctx.lineTo(axisX, top0 + 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(axisX, bot0); ctx.lineTo(axisX, top0 + 6); ctx.stroke();
     ctx.fillStyle = P.muted; ctx.beginPath(); ctx.moveTo(axisX, top0 - 2); ctx.lineTo(axisX - 6, top0 + 8); ctx.lineTo(axisX + 6, top0 + 8); ctx.fill();
     ctx.save(); ctx.translate(axisX - S.label * 0.3, top0 + 14); ctx.rotate(-Math.PI / 2);
     ctx.font = '700 ' + S.label + 'px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = P.muted; ctx.fillText('Energy', 0, 0); ctx.restore();
 
     var ex = C.excite, exK = 0;
     if (ex) {
+      if (ex.pending) {
+        var from = 0, to = 0;
+        for (var i = fl.nlo - 1; i >= 0; i--) if (fl.lo[i] > 0) { from = i; break; }
+        for (var j = 0; j < fl.nhi; j++) if (fl.hi[j] < 2) { to = j; break; }
+        ex.from = from; ex.to = to; ex.pending = false;
+      }
       var age = t - ex.t0;
-      exK = age < 500 ? ease(age / 500) : age < 2200 ? 1 : age < 2900 ? 1 - ease((age - 2200) / 700) : 0;
-      if (age >= 2900) C.excite = ex = null;
+      exK = age < 500 ? ease(age / 500) : age < 2000 ? 1 : age < 2700 ? 1 - ease((age - 2000) / 700) : 0;
+      if (age >= 2700) C.excite = ex = null;
     }
     function arrow(x, yy, up) {
       var a = yy + box * 0.18, b = yy + box * 0.82, hd = box * 0.16;
@@ -364,130 +448,54 @@
       return xs;
     }
     var xsLo = drawSet(fl.nlo, fl.lo, loY, 'lo'), xsHi = drawSet(fl.nhi, fl.hi, hiY, 'hi');
-    // The electron on its way up (or back down).
     if (ex) {
       var pairedFrom = fl.lo[ex.from] === 2, fx = xsLo[ex.from] + box * (pairedFrom ? 0.67 : 0.33);
       var hiCnt = fl.hi[ex.to], tx2 = xsHi[ex.to] + box * (hiCnt >= 1 ? 0.67 : 0.33);
       ctx.strokeStyle = P.violet; ctx.fillStyle = P.violet; ctx.lineWidth = Math.max(2, box * 0.07);
       arrow(fx + (tx2 - fx) * exK, loY + (hiY - loY) * exK, !(pairedFrom || hiCnt >= 1));
     }
-    var lx = gx0 + Math.max(fl.nlo, fl.nhi) * slot + box * 0.15, lblW = E.w - lx - pad;
+    var lx = gx0 + Math.max(fl.nlo, fl.nhi) * slot + box * 0.1, lblW = E.w - lx - pad;
     var upNow = ex && exK > 0.5;
     rich(ctx, 'excited state', lx, hiY + box * 0.5 - S.label * 0.95, { px: S.label, color: upNow ? P.violet : P.muted, weight: 700, maxW: lblW });
     rich(ctx, 'ground state', lx, loY + box * 0.5 - S.label * 0.95, { px: S.label, color: upNow ? P.muted : P.accent, weight: 700, maxW: lblW });
     if (c.lam) {
-      // ΔE: an arrow between the two sets, with its value beside it.
-      var bx2 = gx0 - S.label * 0.9, top = hiY + box * 0.5, bot = loY + box * 0.5;
+      var bx2 = gx0 - S.label * 0.8, top = hiY + box * 0.5, bot = loY + box * 0.5;
       ctx.strokeStyle = P.violet; ctx.fillStyle = P.violet; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(bx2, top + 6); ctx.lineTo(bx2, bot - 6); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(bx2, top); ctx.lineTo(bx2 - 6, top + 10); ctx.lineTo(bx2 + 6, top + 10); ctx.fill();
       ctx.beginPath(); ctx.moveTo(bx2, bot); ctx.lineTo(bx2 - 6, bot - 10); ctx.lineTo(bx2 + 6, bot - 10); ctx.fill();
-      var dE = TMx.K.h * TMx.K.c / (c.lam * 1e-9);
-      var my = (hiY + box + loY) / 2 - S.label * 1.3;
-      var hE = rich(ctx, 'ΔE = ' + sci(dE) + ' J', lx, my, { px: S.label, color: P.violet, weight: 800, maxW: lblW });
-      rich(ctx, 'absorbs λ = ' + c.lam + ' nm', lx, my + hE, { px: S.label, color: P.muted, weight: 600, maxW: lblW });
+      var dE = TMx.K.h * TMx.K.c / (c.lam * 1e-9), my = (hiY + box + loY) / 2 - S.label * 1.3, ex0 = wide ? gx0 : lx;
+      var hE = rich(ctx, 'ΔE = ' + sci(dE) + ' J', ex0, my, { px: S.label, color: P.violet, weight: 800, maxW: E.w - ex0 - pad });
+      rich(ctx, 'absorbs λ = ' + c.lam + ' nm', ex0, my + hE, { px: S.label, color: P.muted, weight: 600, maxW: E.w - ex0 - pad });
     } else {
       rich(ctx, c.d === 0 ? 'No d electrons to promote' : 'd sub-level full: nowhere to promote an electron to', gx0, (hiY + box + loY) / 2 - S.label * 0.8, { px: S.label, color: P.bad, weight: 700, maxW: E.w - gx0 - pad });
     }
 
-    // Photons in the lane: absorbed ones vanish under the boxes and lift an electron.
-    var hitX = gx0 + box * 0.5, x0 = E.x + pad, x1 = E.x + E.w - pad;
-    ctx.strokeStyle = P.line2; ctx.lineWidth = 1; ctx.setLineDash([4, 6]);
-    ctx.beginPath(); ctx.moveTo(x0, laneY); ctx.lineTo(x1, laneY); ctx.stroke(); ctx.setLineDash([]);
-    rich(ctx, C.mode === 'probe' ? 'light of ' + C.probe + ' nm in' : 'white light in', x0, laneY + S.label * 0.15, { px: S.label, color: P.muted, weight: 600 });
-    rich(ctx, 'transmitted', x1, laneY + S.label * 0.15, { px: S.label, color: P.muted, weight: 600, align: 'right' });
-    C.photons.forEach(function (ph) {
-      var k = (t - ph.t0) / ph.dur;
-      if (k < 0 || k > 1.2) return;
-      var x = x0 + (x1 - x0) * k;
-      if (ph.abs && x >= hitX && !ph.done) {
-        ph.done = true;
-        if (!C.excite && c.lam) {
-          var from = 0, to = 0;
-          for (var i = fl.nlo - 1; i >= 0; i--) if (fl.lo[i] > 0) { from = i; break; }
-          for (var j = 0; j < fl.nhi; j++) if (fl.hi[j] < 2) { to = j; break; }
-          C.excite = { t0: t, from: from, to: to };
-        }
-        ph.flash = t;
-      }
-      if (ph.done) {
-        var fa = (t - ph.flash) / 400;
-        if (fa < 1) { ctx.strokeStyle = wlRGB(ph.lam); ctx.globalAlpha = 1 - fa; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(hitX, laneY, 6 + fa * box * 0.6, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
-        return;
-      }
-      var len = Math.min(E.w * 0.12, 90), amp = Math.max(4, S.label * 0.32), wl = Math.max(9, ph.lam / 26);
-      ctx.strokeStyle = ph.lam > 750 ? P.muted : wlRGB(ph.lam); ctx.lineWidth = Math.max(2.5, S.label * 0.16);
-      ctx.beginPath();
-      for (var q = 0; q <= len; q += 2) {
-        var xx = Math.max(x0, x - len + q), yy = laneY - S.label * 0.9 + Math.sin((q / wl) * Math.PI * 2 - t / 90) * amp;
-        if (q) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy);
-      }
-      ctx.stroke();
-    });
-
-    /* --- Colour wheel --- */
-    ctx.font = '800 ' + S.label + 'px ' + FONT;
-    var lblW = ctx.measureText('orange').width + S.label * 0.8;
-    var wr = Math.max(30, Math.min(Rt.w / 2 - lblW - pad, (Rt.h - pad * 2 - S.label * 5.6) / 2)), wcx = Rt.x + Rt.w / 2, wcy = Rt.y + pad + S.label * 2.7 + wr;
-    rich(ctx, 'Colour wheel', Rt.x + pad, Rt.y + pad, { px: S.label, color: P.muted, weight: 700 });
-    var lo = c.lam ? Math.max(380, c.lam - c.w) : 0, hi2 = c.lam ? Math.min(750, c.lam + c.w) : 0;
-    var absorbed = TMx.WHEEL.map(function (sg) { return c.lam && lo < sg.to && hi2 > sg.from && (Math.min(sg.to, hi2) - Math.max(sg.from, lo)) > 12; });
-    TMx.WHEEL.forEach(function (sg, i) {
-      var a0 = -Math.PI / 2 + i * Math.PI / 3 - Math.PI / 6, a1 = a0 + Math.PI / 3;
-      var seen = absorbed[(i + 3) % 6] && !absorbed[i];
-      ctx.fillStyle = sg.hex; ctx.globalAlpha = absorbed[i] ? 0.28 : 1;
-      ctx.beginPath(); ctx.moveTo(wcx, wcy); ctx.arc(wcx, wcy, wr, a0, a1); ctx.closePath(); ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = P.stage; ctx.lineWidth = 3; ctx.stroke();
-      var am = (a0 + a1) / 2;
-      ctx.font = (seen || absorbed[i] ? '800 ' : '600 ') + S.label + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = seen ? P.text : P.muted; ctx.globalAlpha = absorbed[i] ? 0.7 : 1;
-      var side = Math.cos(am);
-      ctx.textAlign = Math.abs(side) < 0.2 ? 'center' : side > 0 ? 'left' : 'right';
-      ctx.fillText(sg.name, wcx + side * (wr + S.label * 0.45), wcy + Math.sin(am) * (wr + S.label * (Math.abs(side) < 0.2 ? 0.85 : 0.2)));
-      ctx.globalAlpha = 1;
-      if (absorbed[i]) {
-        ctx.strokeStyle = P.text; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr, a0 + 0.04, a1 - 0.04); ctx.stroke(); ctx.setLineDash([]);
-      }
-    });
-    ctx.fillStyle = c.colour || P.stage; ctx.strokeStyle = P.line2; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.42, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    var sub2 = c.colour ? 'faded: absorbed · bold: seen' : 'nothing absorbed in the visible: colourless';
-    rich(ctx, sub2, wcx, wcy + wr + S.label * 1.4, { px: S.label, color: P.muted, weight: 600, align: 'center', maxW: Rt.w - pad * 2, maxLines: 2 });
-
     /* --- Absorption spectrum --- */
-    var gy0 = Rb.y + pad;
-    rich(ctx, 'Absorption spectrum', Rb.x + pad, gy0, { px: S.label, color: P.muted, weight: 700 });
-    var gx = Rb.x + pad + S.label * 1.2, gw = Rb.w - pad * 2 - S.label * 1.2, gTop = gy0 + S.label * 3.4, gBot = Rb.y + Rb.h - pad - S.label * 3.5, gh = gBot - gTop;
-    var L0 = 400, L1 = 750;
-    function X(l) { return gx + (l - L0) / (L1 - L0) * gw; }
-    // Rainbow strip along the axis.
-    for (var l = L0; l < L1; l += 2) { ctx.fillStyle = wlRGB(l); ctx.fillRect(X(l), gBot + 3, Math.ceil(gw / 175) + 1, Math.max(8, S.label * 0.55)); }
+    var gy0 = G.y + pad;
+    var hT = rich(ctx, 'Absorption spectrum: absorbance against wavelength', G.x + pad, gy0, { px: S.label, color: P.muted, weight: 700, maxW: G.w - pad * 2 });
+    var gx = G.x + pad + S.label * 1.2, gw = G.w - pad * 2 - S.label * 1.2, gTop = gy0 + hT + S.label * 0.6, gBot = G.y + G.h - pad - S.label * 2.4, gh = gBot - gTop;
+    function X(v) { return gx + (v - 400) / 350 * gw; }
+    var strip = Math.max(6, S.label * 0.45);
+    for (var l2 = 400; l2 < 750; l2 += 2) { ctx.fillStyle = wlRGB(l2); ctx.fillRect(X(l2), gBot + 2, gw / 175 + 1, strip); }
     ctx.strokeStyle = P.muted; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(gx, gTop); ctx.lineTo(gx, gBot); ctx.lineTo(gx + gw, gBot); ctx.stroke();
-    ctx.save(); ctx.translate(gx - S.label * 0.35, gBot); ctx.rotate(-Math.PI / 2);
-    ctx.font = '600 ' + S.label + 'px ' + FONT; ctx.fillStyle = P.muted; ctx.textAlign = 'left'; ctx.fillText('absorbance', 0, 0); ctx.restore();
     ctx.font = '600 ' + S.label + 'px ' + FONT; ctx.fillStyle = P.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    [400, 500, 600, 700].forEach(function (v) { ctx.fillText(v, X(v), gBot + 6 + Math.max(8, S.label * 0.55)); });
-    ctx.textBaseline = 'top'; ctx.fillText('wavelength, λ / nm', gx + gw / 2, gBot + 8 + Math.max(8, S.label * 0.55) + S.label * 1.15);
+    [400, 500, 600, 700].forEach(function (v) { ctx.fillText(v + (v === 700 ? ' nm' : ''), X(v), gBot + strip + 5); });
     if (c.lam) {
       ctx.beginPath();
-      for (var q = L0; q <= L1; q += 3) { var yy = gBot - band(c, q) * gh * 0.92; if (q === L0) ctx.moveTo(X(q), yy); else ctx.lineTo(X(q), yy); }
+      for (var q2 = 400; q2 <= 750; q2 += 3) { var yy2 = gBot - band(c, q2) * gh * 0.92; if (q2 === 400) ctx.moveTo(X(q2), yy2); else ctx.lineTo(X(q2), yy2); }
       ctx.strokeStyle = P.text; ctx.lineWidth = Math.max(2.5, S.label * 0.15); ctx.stroke();
-      ctx.lineTo(X(L1), gBot); ctx.lineTo(X(L0), gBot); ctx.closePath(); ctx.fillStyle = hexA(c.colour, 0.25); ctx.fill();
-      var lmx = Math.min(L1, c.lam), note = c.lam > 750 ? 'peak ' + c.lam + ' nm (beyond red)' : 'peak ' + c.lam + ' nm';
+      ctx.lineTo(X(750), gBot); ctx.lineTo(X(400), gBot); ctx.closePath(); ctx.fillStyle = hexA(c.colour, 0.3); ctx.fill();
+      var lmx = Math.min(750, c.lam);
       ctx.setLineDash([5, 4]); ctx.strokeStyle = P.violet; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(X(lmx), gBot); ctx.lineTo(X(lmx), gTop); ctx.stroke(); ctx.setLineDash([]);
-      rich(ctx, note, gx + gw, gy0 + S.label * 1.35, { px: S.label, color: P.violet, weight: 700, align: 'right', maxW: gw });
+      rich(ctx, c.lam > 750 ? 'peak ' + c.lam + ' nm (beyond red)' : 'peak ' + c.lam + ' nm', c.lam > 600 ? X(lmx) - 8 : X(lmx) + 8, gTop, { px: S.label, color: P.violet, weight: 700, align: c.lam > 600 ? 'right' : 'left' });
     } else {
       ctx.strokeStyle = P.text; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(gx, gBot - 3); ctx.lineTo(gx + gw, gBot - 3); ctx.stroke();
       rich(ctx, 'flat: no visible light absorbed', gx + gw / 2, gTop + gh * 0.3, { px: S.label, color: P.muted, weight: 700, align: 'center' });
     }
-    if (C.mode === 'probe') {
-      ctx.strokeStyle = wlRGB(C.probe); ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(X(C.probe), gTop + gh * 0.05); ctx.lineTo(X(C.probe), gBot); ctx.stroke();
-    }
+    if (C.mode === 'probe') { ctx.strokeStyle = wlRGB(C.probe); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(C.probe), gTop); ctx.lineTo(X(C.probe), gBot); ctx.stroke(); }
   }
   function sci(v, dp) {
     var e = Math.floor(Math.log10(Math.abs(v))), m = v / Math.pow(10, e);

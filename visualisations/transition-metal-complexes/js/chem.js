@@ -280,18 +280,8 @@
       text: 'Sc³⁺ has no d electrons (3d⁰) and Zn²⁺ has a full d sub-level (3d¹⁰). With nothing to promote, or nowhere to promote it to, no visible light is absorbed.' }
   ];
 
-  /* Six-sector colour wheel: complementary colours sit opposite. */
-  var WHEEL = [
-    { name: 'red', from: 630, to: 750, hex: '#e8423a' },
-    { name: 'orange', from: 590, to: 630, hex: '#f08a2c' },
-    { name: 'yellow', from: 560, to: 590, hex: '#f3d23a' },
-    { name: 'green', from: 490, to: 560, hex: '#43b45a' },
-    { name: 'blue', from: 430, to: 490, hex: '#2f6fe0' },
-    { name: 'violet', from: 380, to: 430, hex: '#8a4fd0' }
-  ];
-
   /* Constants, as on the AQA data sheet. */
   var K = { h: 6.63e-34, c: 3.00e8, NA: 6.022e23 };
 
-  window.TM = { fmt: fmt, tx: tx, runs: runs, SP: SP, IONS: IONS, REAGENTS: REAGENTS, R: R, COLOUR: COLOUR, COMPARE: COMPARE, WHEEL: WHEEL, K: K };
+  window.TM = { fmt: fmt, tx: tx, runs: runs, SP: SP, IONS: IONS, REAGENTS: REAGENTS, R: R, COLOUR: COLOUR, COMPARE: COMPARE, K: K };
 })();
