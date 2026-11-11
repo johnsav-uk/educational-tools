@@ -16,6 +16,14 @@
 
   NMR.SPEC_REF = '3.3.15';
 
+  /* AQA 3.3.15 (checked against the specification text): "The emphasis is on the use of analytical data to solve
+     problems rather than on spectroscopic theory." Examined: 13C and 1H positions; 13C simpler than 1H; the delta scale;
+     shift depends on environment; integration; deuterated solvents or CCl4; TMS as a standard (and why); using Data
+     Booklet shifts; n+1 limited to doublet, triplet and quartet in aliphatic compounds.
+     NOT in the spec (shown as "Context" or "Extension" in the tool): nuclear spin and energy states (Sections A, B),
+     D2O exchange, sextet/septet patterns, coupling constants, ppm = Hz / MHz. */
+  NMR.BEYOND_SPEC = { A: 'Context', B: 'Context', d2o: 'Extension', multiplets: 'Extension' };
+
   /* ───────── AQA data-sheet shift ranges ───────── */
   NMR.SHIFT_H = [
     { g: 'R–CH₃',                    lo: 0.7,  hi: 1.2,  ex: 'CH₃ on a carbon chain' },
