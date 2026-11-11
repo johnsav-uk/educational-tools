@@ -45,7 +45,7 @@
     v.o.onSelect = function (id) { if (id) out.innerHTML = NMR.assignHTML(mol, 'H', id); };
 
     NMR.notes(ctx, { title: 'What is NMR for?', tag: 'spec',
-      body: ['Nuclear magnetic resonance (NMR) spectroscopy tells you where the <b>hydrogen</b> (¹H) and <b>carbon-13</b> (¹³C) atoms are in a molecule. Chemists use it to work out structures.',
+      body: ['NMR spectroscopy shows where the <b>¹H</b> and <b>¹³C</b> atoms are in a molecule. Chemists use it to work out structures.',
         'AQA puts it plainly. The emphasis is on using analytical data to solve problems, rather than on spectroscopic theory.', 'So this tool spends most of its time on reading spectra, in Sections D to G.',
         'Tap each card under the spectrum, then tap a peak. Every spectrum here is simulated with real line shapes. Zoom with the + and − buttons and drag sideways to pan.'],
       list: ['<b>A–B</b> are context: how the machine works. Not examined, but it makes the rest make sense.', '<b>C–F</b> are the examined skills.', '<b>G</b> is exam practice at four levels.'] });
@@ -53,6 +53,7 @@
 
   /* ───────── spin lab ───────── */
   function lab(ctx) {
+    ctx.pair = true;
     var st = { stage: +(ctx.labStage || 1), B: 0, f: 50, rf: false, sweep: null, sweeping: false, absorb: 0 };
     var p = U.panel('Spin lab', { stage: true });
     var host = U.el('div', { cls: 'cv-host' }), cv = U.el('canvas', { role: 'img', 'aria-label': 'Nuclei in a magnetic field, with an energy-level diagram' });
@@ -267,15 +268,15 @@
   ];
   function parts(ctx) {
     var p = U.panel('Inside an NMR spectrometer', { stage: true });
-    var svg = '<svg class="inst-svg" viewBox="0 0 640 330" role="img" aria-label="Diagram of an NMR spectrometer">' +
-      '<g class="part" data-p="magnet"><rect class="mag" x="40" y="40" width="110" height="230" rx="10"/><rect class="mag" x="290" y="40" width="110" height="230" rx="10"/><text class="t" x="95" y="160" text-anchor="middle">N</text><text class="t" x="345" y="160" text-anchor="middle">S</text><text class="s" x="220" y="30" text-anchor="middle">magnet</text></g>' +
-      '<path class="ln" d="M160 100 H280 M160 155 H280 M160 210 H280" stroke-dasharray="4 5"/>' +
-      '<g class="part" data-p="tube"><rect class="mag" x="208" y="60" width="24" height="190" rx="12"/><rect x="211" y="170" width="18" height="76" rx="9" class="accf" opacity=".35"/><text class="s" x="220" y="290" text-anchor="middle">sample tube (spinning)</text><path class="ln acc" d="M240 70 a16 6 0 1 1 -40 0" /></g>' +
-      '<g class="part" data-p="coil"><rect class="mag" x="196" y="160" width="48" height="8" rx="3"/><rect class="mag" x="196" y="180" width="48" height="8" rx="3"/><rect class="mag" x="196" y="200" width="48" height="8" rx="3"/><text class="s" x="158" y="318" text-anchor="middle">RF coil</text><path class="ln" d="M196 185 L160 300"/></g>' +
-      '<g class="part" data-p="tx"><rect class="mag" x="440" y="50" width="170" height="60" rx="10"/><text class="t" x="525" y="78" text-anchor="middle">RF transmitter</text><text class="s" x="525" y="96" text-anchor="middle">radio waves in</text></g>' +
-      '<g class="part" data-p="rx"><rect class="mag" x="440" y="135" width="170" height="60" rx="10"/><text class="t" x="525" y="163" text-anchor="middle">Detector</text><text class="s" x="525" y="181" text-anchor="middle">signal out</text></g>' +
-      '<g class="part" data-p="pc"><rect class="mag" x="440" y="220" width="170" height="80" rx="10"/><text class="t" x="525" y="245" text-anchor="middle">Computer</text><path class="ln acc" d="M456 285 h40 l6 -24 l5 24 h22 l4 -12 l4 12 h55"/></g>' +
-      '<path class="ln acc" d="M440 80 H420 V184 H244"/><path class="ln" d="M244 196 H430 V165 H440"/><path class="ln" d="M525 195 V220"/></svg>';
+    var svg = '<svg class="inst-svg" viewBox="0 0 660 330" role="img" aria-label="Diagram of an NMR spectrometer">' +
+      '<g class="part" data-p="magnet"><rect class="mag" x="30" y="44" width="100" height="226" rx="10"/><rect class="mag" x="270" y="44" width="100" height="226" rx="10"/><text class="t" x="80" y="163" text-anchor="middle">N</text><text class="t" x="320" y="163" text-anchor="middle">S</text><text class="s" x="80" y="302" text-anchor="middle">magnet</text></g>' +
+      '<path class="ln" d="M140 100 H260 M140 155 H260 M140 225 H260" stroke-dasharray="4 5"/>' +
+      '<g class="part" data-p="tube"><rect class="mag" x="188" y="58" width="24" height="192" rx="12"/><rect x="191" y="170" width="18" height="76" rx="9" class="accf" opacity=".35"/><path class="ln acc" d="M220 68 a16 6 0 1 1 -40 0" /><text class="s" x="200" y="30" text-anchor="middle">sample tube (spinning)</text></g>' +
+      '<g class="part" data-p="coil"><rect class="mag" x="176" y="160" width="48" height="8" rx="3"/><rect class="mag" x="176" y="180" width="48" height="8" rx="3"/><rect class="mag" x="176" y="200" width="48" height="8" rx="3"/><path class="ln" d="M224 206 L236 280"/><text class="s" x="236" y="302" text-anchor="middle">RF coil</text></g>' +
+      '<g class="part" data-p="tx"><rect class="mag" x="430" y="40" width="215" height="64" rx="10"/><text class="t" x="537" y="74" text-anchor="middle">RF transmitter</text><text class="s sub" x="537" y="94" text-anchor="middle">radio waves in</text></g>' +
+      '<g class="part" data-p="rx"><rect class="mag" x="430" y="130" width="215" height="64" rx="10"/><text class="t" x="537" y="164" text-anchor="middle">Detector</text><text class="s sub" x="537" y="184" text-anchor="middle">signal out</text></g>' +
+      '<g class="part" data-p="pc"><rect class="mag" x="430" y="220" width="215" height="90" rx="10"/><text class="t" x="537" y="250" text-anchor="middle">Computer</text><path class="ln acc" d="M452 292 h55 l7 -26 l6 26 h30 l5 -13 l5 13 h66"/></g>' +
+      '<path class="ln acc" d="M430 72 H410 V184 H224"/><path class="ln" d="M224 196 H420 V162 H430"/><path class="ln" d="M537 194 V220"/></svg>';
     p.body.innerHTML = svg;
     var info = U.el('div', { cls: 'box', 'aria-live': 'polite' }); p.body.appendChild(info);
     ctx.vis.appendChild(p.el);

@@ -282,7 +282,7 @@
   };
 
   P.layout = function () {
-    var f = fs(11.5), top = 14 + (this.o.tools ? 30 : 0) + (this.o.labels || this.o.colour ? fs(12) + 4 : 0);
+    var pres = document.body.classList.contains('presenting') && window.SST_PRESENT, f = fs(11.5), top = 14 + (this.o.tools ? (pres ? SST_PRESENT.px('--sst-pr-control') * 2.2 + 8 : 30) : 0) + (this.o.labels || this.o.colour ? fs(12) + 4 : 0);
     return { f: f, L: 10, R: 12, T: top, B: Math.round(f * 3.1) + 4 };
   };
   P.x2p = function (x) { var m = this.layout(); return m.L + (this.hi - x) / (this.hi - this.lo) * (this.W - m.L - m.R); };
@@ -297,7 +297,7 @@
     var o = this.o;
 
     // ticks and faint grid
-    var tk = NMR.ticks(lo, hi, Math.max(3, pw / 70));
+    var tk = NMR.ticks(lo, hi, Math.max(3, pw / Math.max(70, m.f * 5.2)));
     c.lineWidth = 1; c.strokeStyle = pal.grid;
     c.beginPath(); tk.major.forEach(function (v) { var x = Math.round(self.x2p(v)) + .5; c.moveTo(x, m.T); c.lineTo(x, base); }); c.stroke();
 

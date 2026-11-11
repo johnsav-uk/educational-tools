@@ -23,11 +23,18 @@
 
   // Presenter mode (assets/sst/presenter.js): the section's stage panels on the board, its controls beside them,
   // and the teaching notes as slides. Quiz blocks are .sst-teacher and stay off the board.
-  if (window.SST_PRESENTER) SST_PRESENTER.setup({
-    stage: function () { return U.$$('#vis .pstage').filter(function (e) { return !e.hidden; }).slice(0, 2); },
-    rows: true, ratio: 0.72,
-    side: function () { var c = U.$('#ctlPanel'); return c && !c.hidden ? [c] : []; },
+  var PRES = {
+    stage: function () {
+      var b = NMR.board; if (!b) return [];
+      var vis = b.list.filter(function (e) { return !e.hidden && document.contains(e); });
+      PRES.rows = b.pair !== 'cols';
+      if (b.pair) return vis.slice(0, 2);
+      return vis[b.cur] ? [vis[b.cur]] : vis.slice(0, 1);
+    },
+    rows: true, ratio: 0.5,
+    side: function () { var c = U.$('#ctlPanel'); return c && U.$('#ctl').children.length ? [c] : []; },
     notes: '#notes',
     hide: '#vis .qcard'
-  });
+  };
+  if (window.SST_PRESENTER) SST_PRESENTER.setup(PRES);
 })();

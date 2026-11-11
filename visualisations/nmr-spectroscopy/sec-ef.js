@@ -162,7 +162,9 @@
     });
     q.appendChild(box); q.appendChild(fb); ctx.vis.appendChild(q);
     var nx = U.el('button', { type: 'button', cls: 'btn btn-accent' }, 'Another one ›'); nx.addEventListener('click', function () { NMR.router.go(location.hash); });
-    ctx.ctl.appendChild(nx);
+    var rv = U.el('button', { type: 'button', cls: 'btn' }, 'Reveal the answer'); rv.addEventListener('click', function () { first = false; box.children[e.nb].click(); });
+    var row = U.el('div', { cls: 'row' }); row.appendChild(rv); row.appendChild(nx); ctx.ctl.appendChild(row);
+    f.el.classList.add('hero');
     NMR.notes(ctx, { title: 'Predict, then check', tag: 'spec',
       body: ['Look at the carbon(s) bonded to the highlighted carbon. Add up the H on them: n. The pattern has n + 1 peaks.',
         'Watch for C=O, O and ring carbons next door: they carry no H, so they give n = 0.'],
@@ -187,7 +189,7 @@
     NMR.notes(ctx, { title: 'Reading a ¹³C spectrum', tag: 'spec',
       body: ['One line for each <b>carbon environment</b>. Count the lines, then use Table C to say what kind of carbon each one is.',
         'No splitting at this level, and line heights do <b>not</b> count carbons. Carbons with no H attached (C=O, the ring carbon bearing a substituent) are usually the weakest lines.',
-        'The big shift range makes ¹³C good for spotting a C=O (160–220) or a carbon bonded to O (50–90).'],
+        'The wide shift range makes ¹³C good for spotting a C=O (160–220), or a carbon bonded to O (50–90).'],
       tip: 'Use Table C ranges in your answer: “δ 209 is a ketone C=O (190–220)”.', insight: 'F' });
   }
 
@@ -226,7 +228,9 @@
     go.addEventListener('click', check); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') check(); });
     var nx = U.el('button', { type: 'button', cls: 'btn btn-accent' }, 'Next molecule ›');
     nx.addEventListener('click', function () { S.i = (S.i + 1) % SYM.length; NMR.router.go(location.hash); });
-    ctx.ctl.appendChild(nx);
+    var rv = U.el('button', { type: 'button', cls: 'btn' }, 'Reveal the answer'); rv.addEventListener('click', function () { first = false; inp.value = mol.C.length; check(); });
+    var row2 = U.el('div', { cls: 'row' }); row2.appendChild(rv); row2.appendChild(nx); ctx.ctl.appendChild(row2);
+    f.el.classList.add('hero');
     NMR.notes(ctx, { title: 'Symmetry and carbon environments', tag: 'spec',
       body: ['Two carbons are in the same environment if swapping them, by a mirror or a rotation, leaves the molecule unchanged. Pentan-3-one has a mirror through the C=O: five carbons, three lines.',
         'Benzene: all six carbons are identical, one line. Methylbenzene: the CH₃ breaks the symmetry into ipso, ortho, meta and para carbons, plus the CH₃: five lines.'],
@@ -241,7 +245,7 @@
     ['ethyl-ethanoate', 'methyl-propanoate', 'Both give 4 lines. The C–O carbon decides it: O–CH₂ at 60 in ethyl ethanoate, O–CH₃ at 52 in methyl propanoate.']
   ];
   function cIsomers(ctx) {
-    var P = CPAIRS[st.cPair];
+    var P = CPAIRS[st.cPair]; ctx.pair = 'cols';
     [P[0], P[1]].forEach(function (id) {
       var mol = NMR.mol(id), p = U.panel(mol.name + ' · ' + mol.formula + ' · ' + mol.C.length + ' lines', { stage: true });
       var f = NMR.formula(mol, 'C'), host = U.el('div', { cls: 'nv short' }), out = U.el('div', { cls: 'assign' });

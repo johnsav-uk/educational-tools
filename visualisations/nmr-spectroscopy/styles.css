@@ -120,7 +120,22 @@ input[type=range] { width: 100%; accent-color: var(--accent-text); }
 .nv-read[hidden] { display: none; }
 .sst-pres-pin .nv, .sst-pres-pin .cv-host { height: auto; flex: 1 1 auto; min-height: 0; }
 .sst-pres-pin .stage-body { flex: 1 1 auto; min-height: 0; }
-body.presenting .sst-pres-pin .nv { min-height: 55%; }
+body.presenting .sst-pres-pin .grid2 { flex: 1 1 auto; min-height: 0; }
+body.presenting .sst-pres-pin .grid2 > div { display: flex; flex-direction: column; min-height: 0; }
+body.presenting .pstage .cgrid { max-width: min(56vh, 100%); }
+body.presenting .pstage .formula.hero { font-size: var(--sst-pr-title); padding: .4em 0; }
+body.presenting .sst-pres-deck { padding-left: 76px; }
+.board-pick { justify-content: flex-start; text-align: left; white-space: normal; }
+.board-pick span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pres-only { display: none !important; }
+body.presenting .pres-only { display: block !important; }
+body.presenting .pstage.pres-only { display: flex !important; }
+body:not(.presenting) #ctlPanel.ctl-empty { display: none; }
+.board-slide { display: flex; flex-direction: column; gap: .5em; justify-content: center; flex: 1 1 auto; padding: 1em 1.5em; }
+.board-slide h3 { font-size: var(--sst-pr-title); color: var(--ink); }
+.board-slide p, .board-slide li { font-size: var(--sst-pr-text); color: var(--ink-2); margin: 0; }
+.board-slide ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: .25em; }
+.board-slide .url { font-size: var(--sst-pr-label); color: var(--accent-text); font-weight: 700; }
 body.presenting .pstage .pascal .pr:not(.near) { display: none; }
 
 /* ── Readouts ────────────────────────────────────────── */
@@ -334,7 +349,8 @@ body.presenting .pstage .panel-head .eyebrow { font-size: var(--sst-pr-label); l
 body.presenting .pstage .stage-cap, body.presenting .pstage .assign, body.presenting .pstage .box, body.presenting .pstage .kcard .w { font-size: var(--sst-pr-label); }
 body.presenting .pstage .formula { font-size: var(--sst-pr-text); }
 body.presenting .pstage .ro .k { font-size: var(--sst-pr-label); }
-body.presenting .pstage .ro .v, body.presenting .pstage .big { font-size: var(--sst-pr-figure); }
+body.presenting .pstage .big { font-size: var(--sst-pr-figure); }
+body.presenting .pstage .ro .v { font-size: var(--sst-pr-text); }
 body.presenting .pstage .kcard .v { font-size: var(--sst-pr-text); }
 body.presenting .pstage .kcard { padding: 6px 12px; }
 body.presenting .pstage .kcard .k { font-size: var(--sst-pr-label); }
@@ -350,7 +366,9 @@ body.presenting .pstage .rl-row, body.presenting .pstage .rl-axis { grid-templat
 body.presenting .pstage .rl-axis .ax { height: 1.5em; }
 body.presenting .pstage .nuc-btn { font-size: var(--sst-pr-label); }
 body.presenting .pstage .nuc-btn small { font-size: calc(var(--sst-pr-label) * .7); }
-body.presenting .pstage .inst-svg .t, body.presenting .pstage .inst-svg .s { font-size: 18px; }
+body.presenting .pstage .inst-svg .t, body.presenting .pstage .inst-svg .s { font-size: 26px; }
+body.presenting .pstage .inst-svg .sub { display: none; }
+body.presenting .pstage .inst-svg { max-height: 100%; }
 body.presenting .pstage .chip { font-size: calc(var(--sst-pr-label) * .8); }
 body.presenting .pstage .stage-body { overflow: auto; }
 body.presenting .sst-pres-pin.ctl-panel .ctl, body.presenting .sst-pres-pin#ctlPanel { font-size: var(--sst-pr-control); }
@@ -416,3 +434,10 @@ dialog .row { justify-content: flex-end; margin-top: 16px; }
   .pd .ms .pm { float: right; font-weight: 700; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+body.presenting .pstage .stage-body:has(.formula.hero) { justify-content: center; }
+/* Small boards: the caption band gets a third line, so an ordinary sentence fits without being cut. */
+@media (max-width: 1300px) { body.presenting .sst-pres-deck.sst-deck--strip > .sst-slides { height: calc(var(--sst-pr-label) * 1.35 + var(--sst-pr-text) * 3.9); } }
+
+/* On the board: the nucleus picture is capped so its verdict fits, and secondary detail is left off. */
+body.presenting .pstage .nuc-pic { max-height: 32vh; }
+body.presenting .pstage .board-off { display: none; }

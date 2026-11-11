@@ -50,6 +50,10 @@
     head.appendChild(dots); top.appendChild(head);
     var body = U.el('div', { cls: 'stage-body' }); top.appendChild(body);
     ctx.vis.appendChild(top);
+    var bs = U.panel('Exam practice · level ' + n, { stage: true, cls: 'pres-only', bodyCls: 'board-slide' }), ss = score(n);
+    bs.body.innerHTML = '<h3>Level ' + n + ': ' + LV[n - 1].t + '</h3><ul><li>' + LV[n - 1].s + '</li><li>' + ss.total + ' questions, ' + ss.max + ' marks</li><li>' + (n === 4 ? 'Write the answer first, then tick the mark scheme' : 'Every wrong option explains the slip behind it') + '</li></ul>' +
+      '<p class="url">Pupils: open NMR Spectroscopy, Section G, on your own device.</p>';
+    ctx.vis.insertBefore(bs.el, top);
     var made = NMR.quiz(body, q, { n: i + 1, onDone: function () { ctx.later(function () { refreshDots(); }, 10); } });
     made.views.forEach(function (v) { ctx._views.push(v); });
     var prev = U.$('[data-r]', body);
@@ -80,7 +84,7 @@
         ['Write your answer first, as you would in the exam. Then open the mark scheme and tick each point you made. Be strict: if a point is only implied, it does not get the mark.', 'Your written answers are saved in this browser only.']][n - 1],
       tip: n === 4 ? 'Key words examiners look for: “environment”, “adjacent carbon”, “n + 1”, “ratio”, and a data-sheet range with the group named.' : null,
       insight: n === 3 ? 'D' : n === 2 ? 'E' : null });
-    ctx.notes.insertAdjacentHTML('beforeend', '<p class="subtle">Exam tips and the “where marks are lost” notes describe general patterns in AQA-style marking. They are not quotations from examiner reports.</p>');
+    ctx.notes.insertAdjacentHTML('beforeend', '<p class="subtle">The exam tips and “where marks are lost” notes are general patterns in AQA-style marking. They are not quotations from examiner reports.</p>');
   }
 
   function review(ctx) {

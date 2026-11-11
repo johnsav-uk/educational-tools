@@ -25,7 +25,7 @@
       var spin = SPIN[n.s], active = spin !== '0';
       var why = n.p % 2 === 0 && n.n % 2 === 0 ? 'Even protons <b>and</b> even neutrons: every nucleon is paired, so the spins cancel.' :
         (n.p % 2 && n.n % 2) ? 'Odd protons and odd neutrons: one unpaired of each, giving spin 1.' : 'An odd number of nucleons (' + (n.p + n.n) + '): one is unpaired, so the nucleus has spin.';
-      verdict.innerHTML = '<h4>' + n.name + ' · ' + n.p + ' p, ' + n.n + ' n</h4><div class="big ' + (active ? 'ok-t' : 'bad-t') + '">' + (active ? 'Has spin (I = ' + spin + ')' : 'No spin: invisible to NMR') + '</div><p>' + why + '</p><p>' + n.use + '</p>';
+      verdict.innerHTML = '<h4>' + n.name + ' · ' + n.p + ' p, ' + n.n + ' n</h4><div class="big ' + (active ? 'ok-t' : 'bad-t') + '">' + (active ? 'Has spin (I = ' + spin + ')' : 'No spin: invisible to NMR') + '</div><p>' + why + '</p><p class="board-off">' + n.use + '</p>';
     }
     pick(3);
     NMR.notes(ctx, { title: 'Which nuclei can NMR see?', tag: 'ctx',
@@ -35,15 +35,15 @@
       insight: 'B' });
   }
   function nucleusSVG(n) {
-    var pp = [], i, W = 520, H = 170, s = '', R = 11;
+    var pp = [], i, W = 600, H = 170, s = '', R = 11;
     function row(count, y, cls, lab) {
-      var pairs = Math.floor(count / 2), odd = count % 2, out = '', x = 120;
+      var pairs = Math.floor(count / 2), odd = count % 2, out = '', x = 190;
       for (i = 0; i < pairs; i++) { out += '<circle cx="' + x + '" cy="' + (y - 11) + '" r="' + R + '" class="' + cls + '"/><circle cx="' + x + '" cy="' + (y + 11) + '" r="' + R + '" class="' + cls + '"/>'; x += 25; }
       if (odd) out += '<circle cx="' + (x + 6) + '" cy="' + y + '" r="' + (R + 6) + '" fill="none" stroke="var(--warn)" stroke-width="2.5" stroke-dasharray="4 3"/><circle cx="' + (x + 6) + '" cy="' + y + '" r="' + R + '" class="' + cls + '"/><text class="s" x="' + (x + 6) + '" y="' + (y + 36) + '" text-anchor="middle" style="fill:var(--warn)">unpaired</text>';
       return '<text class="t" x="10" y="' + (y + 5) + '">' + lab + ' ' + count + '</text>' + out;
     }
     s += row(n.p, 45, 'pr', 'protons'); s += row(n.n, 120, 'ne', 'neutrons');
-    return '<svg class="inst-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + n.p + ' protons and ' + n.n + ' neutrons in pairs"><style>.pr{fill:var(--e4)}.ne{fill:var(--muted)}</style>' + s + '</svg>';
+    return '<svg class="inst-svg nuc-pic" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + n.p + ' protons and ' + n.n + ' neutrons in pairs"><style>.pr{fill:var(--e4)}.ne{fill:var(--muted)}</style>' + s + '</svg>';
   }
 
   /* ───────── B: ¹H against ¹³C ───────── */
@@ -68,7 +68,7 @@
       '<tr><td>Peak size</td><td>area ∝ number of H</td><td>does <b>not</b> count carbons</td></tr></table>';
     ctx.vis.appendChild(t.el);
 
-    var cp = U.panel('100 carbon atoms: how many are carbon-13?', {}), grid = U.el('div', { cls: 'cgrid', 'aria-label': 'Grid of 100 carbon atoms' }), cnt = U.el('p', { cls: 'stage-cap' });
+    var cp = U.panel('100 carbon atoms: how many are carbon-13?', { stage: true }), grid = U.el('div', { cls: 'cgrid', 'aria-label': 'Grid of 100 carbon atoms' }), cnt = U.el('p', { cls: 'stage-cap' });
     var row = U.el('div', { cls: 'row' }); row.appendChild(grid);
     var side = U.el('div', { style: 'flex:1 1 200px' }); side.appendChild(cnt);
     var again = U.el('button', { type: 'button', cls: 'btn' }, 'Another 100'); side.appendChild(again); row.appendChild(side);

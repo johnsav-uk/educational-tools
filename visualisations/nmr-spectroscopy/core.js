@@ -406,7 +406,27 @@
     U.$('#ctlTitle').textContent = r.sub.ctlTitle || 'Controls';
     U.$('#notesTitle').textContent = r.sub.notesTitle || 'Teaching notes';
     r.sec.render(r.sub.id, ctx);
-    U.$('#ctlPanel').hidden = !ctl.children.length;
+    // Presenter mode shows one stage panel at a time, like a slide; a section can ask for a pair (two isomers).
+    var stages = U.$$('.pstage', vis);
+    NMR.board = { list: stages, cur: 0, pair: ctx.pair || false };
+    if (stages.length > 1 && !ctx.pair) {
+      var bw = U.el('div', { cls: 'molpick' });
+      stages.forEach(function (st, i) {
+        var t = (U.$('.panel-head .eyebrow', st) || st).innerHTML;
+        var b = U.el('button', { type: 'button', cls: 'btn board-pick' + (i ? '' : ' btn-accent') }, '<span>' + t + '</span>');
+        b.addEventListener('click', function () {
+          NMR.board.cur = i;
+          U.$$('button', bw).forEach(function (x) { x.classList.toggle('btn-accent', x === b); });
+          if (window.SST_PRESENTER) SST_PRESENTER.layout();
+          setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
+        });
+        bw.appendChild(b);
+      });
+      var f = U.field('On the board', bw); f.classList.add('pres-only');
+      ctl.insertBefore(f, ctl.firstChild);
+    }
+    var ctlP = U.$('#ctlPanel'); ctlP.hidden = false;
+    ctlP.classList.toggle('ctl-empty', !U.$$(':scope > :not(.pres-only)', ctl).length);
     NMR.progress.seen(route);
     R.cur = route;
     paintSteps();

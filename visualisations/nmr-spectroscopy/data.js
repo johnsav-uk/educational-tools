@@ -242,7 +242,7 @@
   /* Examiner-style notes by topic. These summarise the kinds of slips AQA examiners keep reporting; they are
      not quotations from any report. */
   NMR.INSIGHTS = {
-    A: ['“Radio waves” are absorbed when their energy matches the gap between the two spin states. Answers that say the nuclei “emit” or “are ionised” lose the mark.',
+    A: ['Radio waves are absorbed only when their energy matches the gap between the spin states. Answers that say the nuclei “emit” or “are ionised” lose the mark.',
         'Keep the process and the picture apart: the nuclei flip; the <i>spectrum</i> is the instrument\'s record of that.'],
     B: ['Think about <b>protons and neutrons</b>, not just protons. ¹²C has 6 of each, all paired, so no spin. ¹³C has an odd number of nucleons (13), so it has spin.',
         'Do not write that carbon-12 is “not magnetic because it has no neutrons”. It has six.'],

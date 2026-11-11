@@ -210,8 +210,9 @@
     qp.appendChild(box); qp.appendChild(fb);
     var nx = U.el('button', { type: 'button', cls: 'btn btn-accent' }, 'Next mystery ›');
     nx.addEventListener('click', function () { var j; do { j = Math.floor(Math.random() * MYST.length); } while (j === M.i); M.i = j; NMR.router.go(location.hash); });
-    ctx.ctl.appendChild(nx);
-    ctx.ctl.appendChild(U.el('p', { cls: 'hint' }, 'Each wrong answer tells you which feature of the spectrum rules it out.'));
+    var rv = U.el('button', { type: 'button', cls: 'btn' }, 'Reveal the answer'); rv.addEventListener('click', function () { first = false; box.children[opts.indexOf(mol)].click(); });
+    var row = U.el('div', { cls: 'row' }); row.appendChild(rv); row.appendChild(nx); ctx.ctl.appendChild(row);
+    ctx.ctl.appendChild(U.el('p', { cls: 'hint' }, 'Each wrong answer tells you which feature of the spectrum rules it out. On the board, ask the class, then reveal.'));
     NMR.notes(ctx, { title: 'Mystery spectra', tag: 'spec',
       body: ['Work it out before you look at the options: count signals, read shifts, turn the steps into a ratio, read the splitting.',
         'Then test each option. One clear mismatch (a signal that should be there and is not, or the wrong splitting) is enough to rule it out. That is exactly how a 6-mark answer is built.'],
@@ -227,7 +228,7 @@
     ['propan-1-ol', 'propan-2-ol', 'Extension: both need patterns beyond a quartet. Propan-2-ol has a 6 H doublet and a 1 H septet at 4.0; propan-1-ol has four signals, with the CH₂O as a triplet at 3.6.']
   ];
   function isomers(ctx) {
-    var P = PAIRS[state.pair];
+    var P = PAIRS[state.pair]; ctx.pair = 'cols';
     [P[0], P[1]].forEach(function (id) {
       var mol = NMR.mol(id), mv = molView(ctx, mol, 'H', { view: { colour: true, labels: true, integ: true } });
       mv.panel.head.querySelector('.eyebrow').innerHTML = mol.name + ' · ' + mol.formula + (mol.ext ? ' ' + U.CHIP.ext : '');
