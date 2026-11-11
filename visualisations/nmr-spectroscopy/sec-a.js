@@ -137,13 +137,13 @@
       c.fillStyle = pal.grid; c.globalAlpha = 0.35 + 0.65 * B;
       c.fillRect(A.x, A.y, A.w, 14); c.fillRect(A.x, A.y + A.h - 14, A.w, 14); c.globalAlpha = 1;
       c.fillStyle = pal.axis; c.font = font(700, Math.max(11, lab * 0.85)); c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText(B > 0.01 ? 'S' : '', A.x + A.w / 2, A.y + 7); c.fillText(B > 0.01 ? 'N' : '', A.x + A.w / 2, A.y + A.h - 7);
+      NMR.fillText(c, B > 0.01 ? 'S' : '', A.x + A.w / 2, A.y + 7); NMR.fillText(c, B > 0.01 ? 'N' : '', A.x + A.w / 2, A.y + A.h - 7);
       // field lines
       if (B > 0.01) {
         c.strokeStyle = pal.grid; c.lineWidth = 1; c.globalAlpha = 0.25 + 0.6 * B;
         for (var k = 0; k < 6; k++) { var fx = A.x + (k + 0.5) * A.w / 6; c.beginPath(); c.moveTo(fx, A.y + A.h - 16); c.lineTo(fx, A.y + 18); c.stroke(); c.beginPath(); c.moveTo(fx - 4, A.y + 26); c.lineTo(fx, A.y + 18); c.lineTo(fx + 4, A.y + 26); c.stroke(); }
         c.globalAlpha = 1;
-        c.fillStyle = pal.axis; c.textAlign = 'left'; c.font = font(700, Math.max(11, lab * 0.8)); c.fillText('B₀', A.x + 4, A.y + 28);
+        c.fillStyle = pal.axis; c.textAlign = 'left'; c.font = font(700, Math.max(11, lab * 0.8)); NMR.fillText(c, 'B₀', A.x + 4, A.y + 28);
       }
       // nuclei
       var cell = Math.min(A.w / 5, (A.h - 30) / 4), rad = Math.max(9, Math.min(20, cell * 0.28));
@@ -171,43 +171,43 @@
       });
       if (colourGroups) {
         c.font = font(700, lab); c.textAlign = 'left'; c.textBaseline = 'bottom';
-        c.fillStyle = pal.env[0]; c.fillText('CH₃ nuclei', A.x + 4, A.y + A.h - 18);
-        c.fillStyle = pal.env[1]; c.fillText('CH₂ nuclei', A.x + 4 + c.measureText('CH₃ nuclei  ').width, A.y + A.h - 18);
+        c.fillStyle = pal.env[0]; NMR.fillText(c, 'CH₃ nuclei', A.x + 4, A.y + A.h - 18);
+        c.fillStyle = pal.env[1]; NMR.fillText(c, 'CH₂ nuclei', A.x + 4 + c.measureText('CH3 nuclei  ').width, A.y + A.h - 18);
       }
       // counts
       if (B > 0.02) {
         var up = N.filter(function (n) { return n.up; }).length;
         c.font = font(600, lab); c.fillStyle = pal.fg; c.textAlign = 'right'; c.textBaseline = 'bottom';
-        c.fillText('with field ' + up + ' · against ' + (N.length - up), A.x + A.w - 4, A.y + A.h - 18);
+        NMR.fillText(c, 'with field ' + up + ' · against ' + (N.length - up), A.x + A.w - 4, A.y + A.h - 18);
       }
 
       // energy diagram
       c.strokeStyle = pal.axis; c.lineWidth = 1.2; c.beginPath(); c.moveTo(D.x + 30, D.y + 8); c.lineTo(D.x + 30, D.y + D.h - 30); c.lineTo(D.x + D.w - 4, D.y + D.h - 30); c.stroke();
       c.fillStyle = pal.axis; c.font = font(600, lab); c.textAlign = 'center'; c.textBaseline = 'top';
-      c.fillText('field strength →', D.x + 30 + (D.w - 34) / 2, D.y + D.h - 26);
-      c.save(); c.translate(D.x + 12, D.y + (D.h - 30) / 2); c.rotate(-Math.PI / 2); c.textBaseline = 'middle'; c.fillText('energy', 0, 0); c.restore();
+      NMR.fillText(c, 'field strength →', D.x + 30 + (D.w - 34) / 2, D.y + D.h - 26);
+      c.save(); c.translate(D.x + 12, D.y + (D.h - 30) / 2); c.rotate(-Math.PI / 2); c.textBaseline = 'middle'; NMR.fillText(c, 'energy', 0, 0); c.restore();
       var x0 = D.x + 34, x1 = D.x + D.w - 8, ym = D.y + 8 + (D.h - 38) / 2, sp2 = (D.h - 50) / 2;
       c.strokeStyle = pal.fg; c.lineWidth = 2;
       c.beginPath(); c.moveTo(x0, ym); c.lineTo(x1, ym - sp2); c.moveTo(x0, ym); c.lineTo(x1, ym + sp2); c.stroke();
       c.font = font(600, Math.max(11, lab * 0.85)); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillStyle = pal.fg;
-      c.fillText('against the field', x1, ym - sp2 - 4); c.textBaseline = 'top'; c.fillText('with the field', x1, ym + sp2 + 4);
+      NMR.fillText(c, 'against the field', x1, ym - sp2 - 4); c.textBaseline = 'top'; NMR.fillText(c, 'with the field', x1, ym + sp2 + 4);
       if (B > 0.01) {
         var bx = x0 + B * (x1 - x0), gap = B * sp2;
         c.strokeStyle = pal.integ; c.lineWidth = 2; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(bx, D.y + 8); c.lineTo(bx, D.y + D.h - 30); c.stroke(); c.setLineDash([]);
         arrow(c, bx - 10, ym + gap, bx - 10, ym - gap, pal.integ);
-        c.fillStyle = pal.integ; c.font = font(800, lab); c.textAlign = 'right'; c.textBaseline = 'middle'; c.fillText('ΔE', bx - 16, ym);
+        c.fillStyle = pal.integ; c.font = font(800, lab); c.textAlign = 'right'; c.textBaseline = 'middle'; NMR.fillText(c, 'ΔE', bx - 16, ym);
         if (st.stage === 3) {
           var hf = (st.f / 60) * sp2, match = !!resG, hc = match ? pal.env[2] : pal.env[3];
           if (hf < sp2 * 1.6) arrow(c, bx + 12, ym + gap, bx + 12, ym + gap - 2 * hf * 0.5 * 1, hc);
-          c.fillStyle = hc; c.textAlign = 'left'; c.fillText('hf', bx + 18, ym + gap - hf * 0.5);
+          c.fillStyle = hc; c.textAlign = 'left'; NMR.fillText(c, 'hf', bx + 18, ym + gap - hf * 0.5);
           c.font = font(700, lab); c.textAlign = 'left'; c.textBaseline = 'top';
-          c.fillText(match ? 'hf = ΔE: resonance (' + (resG === 'a' ? 'CH₃' : 'CH₂') + ')' : st.f < 60 * B ? 'hf too small' : 'hf too big', D.x + 36, D.y + 8);
+          NMR.fillText(c, match ? 'hf = ΔE: resonance (' + (resG === 'a' ? 'CH₃' : 'CH₂') + ')' : st.f < 60 * B ? 'hf too small' : 'hf too big', D.x + 36, D.y + 8);
         }
       }
       if (st.stage >= 3) {
         c.font = font(600, lab); c.fillStyle = pal.axis; c.textAlign = 'left'; c.textBaseline = 'bottom';
         var mw = Math.min(150, D.w * 0.5), mx = D.x + 36, my = D.y + 16 + lab * 2.4;
-        c.fillText('energy absorbed', mx, my);
+        NMR.fillText(c, 'energy absorbed', mx, my);
         c.fillStyle = pal.grid; c.fillRect(mx, my + 4, mw, 8);
         c.fillStyle = pal.env[2]; c.fillRect(mx, my + 4, mw * st.absorb, 8);
       }
@@ -230,27 +230,27 @@
         var dense = h[2] === 'a', R = (dense ? 30 : 20) * s * (1 + 0.04 * Math.sin(t * 2 + hx));
         var g = c.createRadialGradient(hx, hy, 2, hx, hy, R); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
         c.globalAlpha = dense ? 0.55 : 0.22; c.fillStyle = g; c.beginPath(); c.arc(hx, hy, R, 0, 6.29); c.fill(); c.globalAlpha = 1;
-        c.fillStyle = col; c.font = font(800, lab * 1.1); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('H', hx, hy);
+        c.fillStyle = col; c.font = font(800, lab * 1.1); c.textAlign = 'center'; c.textBaseline = 'middle'; NMR.fillText(c, 'H', hx, hy);
       });
       [['C', P.c1], ['C', P.c2], ['O', P.o], ['H', P.ho]].forEach(function (a) {
         c.fillStyle = pal.bg; c.beginPath(); c.arc(a[1][0], a[1][1], 15 * s + 4, 0, 6.29); c.fill();
-        c.fillStyle = a[0] === 'O' ? pal.env[4] : a[1] === P.ho ? pal.env[2] : pal.fg; c.font = font(800, lab * 1.2); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(a[0], a[1][0], a[1][1]);
+        c.fillStyle = a[0] === 'O' ? pal.env[4] : a[1] === P.ho ? pal.env[2] : pal.fg; c.font = font(800, lab * 1.2); c.textAlign = 'center'; c.textBaseline = 'middle'; NMR.fillText(c, a[0], a[1][0], a[1][1]);
       });
       // electron pull towards O
       var pulse = (t % 1.4) / 1.4;
       c.fillStyle = pal.env[4]; c.globalAlpha = 1 - pulse;
       c.beginPath(); c.arc(P.c2[0] + (P.o[0] - P.c2[0]) * (0.25 + 0.5 * pulse), cy, 4, 0, 6.29); c.fill(); c.globalAlpha = 1;
       c.font = font(700, lab); c.fillStyle = pal.env[4]; c.textAlign = 'center'; c.textBaseline = 'bottom';
-      c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('O pulls electron density', P.o[0] - 24 * s, cy + 30 * s);
+      c.textAlign = 'left'; c.textBaseline = 'top'; NMR.fillText(c, 'O pulls electron density', P.o[0] - 24 * s, cy + 30 * s);
       // shift axis
       var ay = H - 46, axL = 30, axR = W - 30, X = function (d) { return axR - d / 6 * (axR - axL); };
       c.strokeStyle = pal.axis; c.lineWidth = 1.2; c.beginPath(); c.moveTo(axL, ay); c.lineTo(axR, ay); c.stroke();
       c.fillStyle = pal.axis; c.font = font(500, lab * 0.9); c.textAlign = 'center'; c.textBaseline = 'top';
-      for (var d = 0; d <= 6; d++) { c.fillText(String(d), X(d), ay + 5); }
-      c.fillText('δ / ppm', (axL + axR) / 2, ay + 8 + lab);
+      for (var d = 0; d <= 6; d++) { NMR.fillText(c, String(d), X(d), ay + 5); }
+      NMR.fillText(c, 'δ / ppm', (axL + axR) / 2, ay + 8 + lab);
       [[1.2, 'a', 'CH₃: shielded'], [3.7, 'b', 'CH₂: deshielded']].forEach(function (m) {
         var col = m[1] === 'a' ? pal.env[0] : pal.env[1]; c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.moveTo(X(m[0]), ay); c.lineTo(X(m[0]), ay - 26); c.stroke();
-        c.fillStyle = col; c.font = font(700, lab); c.textBaseline = 'bottom'; c.fillText(m[2], X(m[0]), ay - 30);
+        c.fillStyle = col; c.font = font(700, lab); c.textBaseline = 'bottom'; NMR.fillText(c, m[2], X(m[0]), ay - 30);
       });
     }
     setStage(st.stage);

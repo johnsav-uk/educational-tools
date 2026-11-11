@@ -3,6 +3,7 @@
   'use strict';
   var NMR = window.NMR, U = NMR.U;
 
+  NMR.watchScripts();
   NMR.router.go(location.hash, 'init');
   window.addEventListener('hashchange', function () { if (location.hash !== NMR.router.cur) NMR.router.go(location.hash); });
 

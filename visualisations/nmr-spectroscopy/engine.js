@@ -159,6 +159,25 @@
     return NMR.pal().env[i % 6];
   };
 
+
+  /* Canvas text with super/subscript digits drawn in the page font (it has no ⁴–⁹ or ₀–₉ glyphs). */
+  var CSUP = '⁰¹²³⁴⁵⁶⁷⁸⁹', CSUB = '₀₁₂₃₄₅₆₇₈₉';
+  NMR.fillText = function (c, text, x, y) {
+    text = String(text);
+    if (!/[⁰¹²³⁴-⁹₀-₉]/.test(text)) { c.fillText(text, x, y); return; }
+    var font = c.font, m = /(\d+(?:\.\d+)?)px/.exec(font), size = m ? +m[1] : 12, small = font.replace(m[0], (size * 0.7).toFixed(1) + 'px');
+    var runs = [], cur = null;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i], k = CSUP.indexOf(ch) >= 0 ? 'p' : CSUB.indexOf(ch) >= 0 ? 'b' : 'n', d = k === 'p' ? CSUP.indexOf(ch) : k === 'b' ? CSUB.indexOf(ch) : ch;
+      if (!cur || cur.k !== k) { cur = { k: k, t: '' }; runs.push(cur); } cur.t += d;
+    }
+    var w = 0; runs.forEach(function (r) { c.font = r.k === 'n' ? font : small; r.w = c.measureText(r.t).width; w += r.w; });
+    var al = c.textAlign, x0 = al === 'center' ? x - w / 2 : al === 'right' || al === 'end' ? x - w : x;
+    c.textAlign = 'left';
+    runs.forEach(function (r) { c.font = r.k === 'n' ? font : small; c.fillText(r.t, x0, y + (r.k === 'b' ? size * 0.22 : r.k === 'p' ? -size * 0.38 : 0)); x0 += r.w; });
+    c.font = font; c.textAlign = al;
+  };
+
   function fs(base) {
     if (document.body.classList.contains('presenting') && window.SST_PRESENT) return Math.max(base, SST_PRESENT.px('--sst-pr-label'));
     return base;
@@ -296,7 +315,7 @@
         c.font = '700 ' + fs(12) + 'px "Plus Jakarta Sans",system-ui,sans-serif';
         var tx = (e.lab || e.id).replace(/\s*\(.*\)/, ''), tw = c.measureText(tx).width, cx0 = (x1 + x2) / 2;
         if (cx0 > m.L && cx0 < W - m.R && !placed.some(function (q) { return Math.abs(q - cx0) < (tw + 8); })) {
-          placed.push(cx0); c.fillStyle = col; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(tx, Math.max(m.L + tw / 2, Math.min(W - m.R - tw / 2, cx0)), m.T - 3);
+          placed.push(cx0); c.fillStyle = col; c.textAlign = 'center'; c.textBaseline = 'bottom'; NMR.fillText(c, tx, Math.max(m.L + tw / 2, Math.min(W - m.R - tw / 2, cx0)), m.T - 3);
         }
       }
     });
@@ -339,7 +358,7 @@
           var xl = self.x2p(e.hi + 0.18), yy = I0 - (cumBefore(spec, s.id) + s.n / 2) / tot * span;
           var tx = s.mm.toFixed(1) + ' mm', tw = c.measureText(tx).width, lx = Math.max(m.L + 2, Math.min(xl, W - m.R - tw - 4)), ly = yy - 10;
           c.fillStyle = pal.bg; c.globalAlpha = 0.85; c.fillRect(lx - 3, ly - fs(11) * 0.7, tw + 6, fs(11) * 1.4); c.globalAlpha = 1;
-          c.fillStyle = pal.integ; c.fillText(tx, lx, ly);
+          c.fillStyle = pal.integ; NMR.fillText(c, tx, lx, ly);
         });
       }
     }
@@ -351,7 +370,7 @@
       if (l.kind !== 'ref' || !l.tag || l.x < lo || l.x > hi) return;
       var key = l.tag + Math.round(l.x); if (seen[l.tag]) return; seen[l.tag] = 1;
       var yy = NMR.yAt(spec, l.x), py = base - 2 - Math.min(ph, yy * yscale) - 4;
-      c.fillText(l.tag, self.x2p(l.x), Math.max(m.T + 10, py));
+      NMR.fillText(c, l.tag, self.x2p(l.x), Math.max(m.T + 10, py));
     });
 
     // multiplet labels
@@ -363,7 +382,7 @@
         var tall = 0; spec.lines.forEach(function (l) { if (l.env === e.id) tall = Math.max(tall, NMR.yAt(spec, l.x)); });
         var py = base - 2 - Math.min(ph, tall * yscale) - 5;
         c.fillStyle = o.colour ? NMR.envColour(spec.mol, e.id, 'H') : pal.fg;
-        c.fillText(e.ex ? 's (broad)' : NMR.PAT_SHORT[e.nb] || 'm', self.x2p(e.d), Math.max(m.T + 11, py));
+        NMR.fillText(c, e.ex ? 's (broad)' : NMR.PAT_SHORT[e.nb] || 'm', self.x2p(e.d), Math.max(m.T + 11, py));
       });
     }
 
@@ -371,7 +390,7 @@
     (this.marks || []).forEach(function (mk) {
       var yy = NMR.yAt(spec, mk.x), py = base - 2 - Math.min(ph, yy * yscale) - 4;
       c.font = '700 ' + fs(12) + 'px "Plus Jakarta Sans",system-ui,sans-serif'; c.fillStyle = mk.col || pal.integ; c.textAlign = 'center'; c.textBaseline = 'bottom';
-      c.fillText(mk.t, self.x2p(mk.x), Math.max(m.T + 11, py));
+      NMR.fillText(c, mk.t, self.x2p(mk.x), Math.max(m.T + 11, py));
     });
 
     // baseline axis + ticks + labels
@@ -380,9 +399,9 @@
     tk.minor.forEach(function (v) { var x = Math.round(self.x2p(v)) + .5; c.moveTo(x, base); c.lineTo(x, base + 3.5); });
     c.stroke();
     c.fillStyle = pal.axis; c.font = '500 ' + m.f + 'px "Plus Jakarta Sans",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'top';
-    tk.major.forEach(function (v) { var x = self.x2p(v); if (x > m.L + 6 && x < W - m.R - 6) c.fillText(v.toFixed(tk.dec), x, base + 9); });
+    tk.major.forEach(function (v) { var x = self.x2p(v); if (x > m.L + 6 && x < W - m.R - 6) NMR.fillText(c, v.toFixed(tk.dec), x, base + 9); });
     c.font = '600 ' + m.f + 'px "Plus Jakarta Sans",system-ui,sans-serif';
-    c.fillText('δ / ppm' + (spec.nuc === 'C' ? '' : ''), (m.L + W - m.R) / 2, base + 9 + m.f + 5);
+    NMR.fillText(c, 'δ / ppm' + (spec.nuc === 'C' ? '' : ''), (m.L + W - m.R) / 2, base + 9 + m.f + 5);
 
     // cursor / selection guide
     if (this.sel) {

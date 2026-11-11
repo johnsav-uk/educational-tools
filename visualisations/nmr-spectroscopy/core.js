@@ -320,6 +320,43 @@
     return { el: card, views: views };
   };
 
+  /* ───────── Super- and subscript digits ─────────
+     Plus Jakarta Sans has ¹ ² ³ but no other super- or subscript digits, so ¹⁴N or CH₃ would mix in a fallback
+     font. Text written with those characters is rewritten as <sup>/<sub> in the page font as it reaches the page.
+     SVG and canvas text is left alone.                                                                         */
+  var SUPS = '⁰¹²³⁴⁵⁶⁷⁸⁹', SUBS = '₀₁₂₃₄₅₆₇₈₉', SCRIPT_RE = /[⁰¹²³⁴⁵⁶⁷⁸⁹]+|[₀₁₂₃₄₅₆₇₈₉]+/g;
+  function digits(run, set) { return run.split('').map(function (c) { return set.indexOf(c); }).join(''); }
+  function fixText(n) {
+    var t = n.nodeValue; SCRIPT_RE.lastIndex = 0; if (!SCRIPT_RE.test(t)) return;
+    var p = n.parentNode; if (!p || !p.closest || p.closest('svg, script, style, textarea, option, select, title, sup, sub')) return;
+    var frag = document.createDocumentFragment(), last = 0;
+    t.replace(SCRIPT_RE, function (run, i) {
+      if (i > last) frag.appendChild(document.createTextNode(t.slice(last, i)));
+      var sup = SUPS.indexOf(run[0]) >= 0, el = document.createElement(sup ? 'sup' : 'sub');
+      el.className = 'sc'; el.textContent = digits(run, sup ? SUPS : SUBS); frag.appendChild(el);
+      last = i + run.length; return run;
+    });
+    if (last < t.length) frag.appendChild(document.createTextNode(t.slice(last)));
+    p.replaceChild(frag, n);
+  }
+  NMR.scripts = function (root) {
+    if (!root) return;
+    if (root.nodeType === 3) { fixText(root); return; }
+    if (root.nodeType !== 1 || root.closest('svg')) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), list = [];
+    for (var n = w.nextNode(); n; n = w.nextNode()) list.push(n);
+    list.forEach(fixText);
+  };
+  NMR.watchScripts = function () {
+    NMR.scripts(document.body);
+    new MutationObserver(function (recs) {
+      recs.forEach(function (r) {
+        if (r.type === 'characterData') fixText(r.target);
+        else Array.prototype.forEach.call(r.addedNodes, function (x) { NMR.scripts(x); });
+      });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  };
+
   /* ───────── Router and section registry ───────── */
   NMR.sections = [];
   NMR.section = function (s) { NMR.sections.push(s); NMR.sections.sort(function (a, b) { return a.n < b.n ? -1 : 1; }); };

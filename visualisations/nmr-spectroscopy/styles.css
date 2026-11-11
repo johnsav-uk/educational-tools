@@ -24,6 +24,8 @@ h1, h2, h3, h4 { font-weight: 700; margin: 0; text-wrap: balance; letter-spacing
 :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 4px; }
 b, strong { color: var(--ink); font-weight: 700; }
 sub, sup { line-height: 0; }
+sup.sc, sub.sc { font-size: .68em; font-weight: inherit; font-variant-numeric: lining-nums; }
+sup.sc { vertical-align: .55em; } sub.sc { vertical-align: -.22em; }
 button { font-family: var(--f); }
 [hidden] { display: none !important; }
 
