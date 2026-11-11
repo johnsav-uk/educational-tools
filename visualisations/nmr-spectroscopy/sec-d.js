@@ -54,7 +54,7 @@
     function X(d) { return (HI - d) / (HI - LO) * 100; }
     NMR.SHIFT_H.forEach(function (r, i) {
       var b = U.el('button', { type: 'button', cls: 'rl-row', 'data-i': i },
-        '<span class="rl-g">' + r.g + '</span><span class="rl-track"><span class="rl-bar" style="left:' + X(r.hi) + '%;right:' + (100 - X(r.lo)) + '%"></span></span>');
+        '<span class="rl-g"' + (r.off ? ' style="font-style:italic;color:var(--muted)"' : '') + '>' + r.g + '</span><span class="rl-track"><span class="rl-bar" style="left:' + X(r.hi) + '%;right:' + (100 - X(r.lo)) + '%"></span></span>');
       mol.H.forEach(function (e) { if (e.r === i) b.querySelector('.rl-track').insertAdjacentHTML('beforeend', '<span class="rl-mk" style="left:' + X(e.d) + '%;background:' + NMR.envVar(mol, 'H', e.id) + '" title="' + e.lab + ' δ ' + e.d + '"></span>'); });
       b.addEventListener('click', function () { pickRow(i); });
       ruler.appendChild(b);
@@ -81,7 +81,7 @@
       body: ['The chemical shift, δ, depends on the <b>environment</b> of the hydrogen. Electronegative atoms (O, Cl) and C=O pull electron density away, so nearby H are <b>deshielded</b> and appear at higher δ.',
         'In the exam you get the Data Booklet. Table B lists the ranges. Match each signal to a row, and name the group in your answer.',
         'Ranges overlap (3.1–3.9 and 3.7–4.1, for example). Use integration and splitting to decide between them.',
-        '<span class="subtle">These ranges were entered from the data sheet as the author knew it, not copied from the current PDF. Check them against your copy.</span>'],
+        'There is no row for H on a benzene ring. The tool shows one (about 6.5–8.0) for methylbenzene and benzene, marked “not on the sheet”.'],
       tip: 'Write “δ 2.1–2.6: H on a carbon next to C=O”, not just “a carbonyl”.', insight: 'D' });
   }
 

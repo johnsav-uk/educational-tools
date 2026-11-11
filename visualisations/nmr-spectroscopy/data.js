@@ -1,8 +1,8 @@
 /* NMR Spectroscopy: the chemistry data. Edit this file to change content; no code lives here.
 
-   SHIFT_H and SHIFT_C are the chemical-shift ranges as printed in the AQA A-level Chemistry data sheet
-   (Table B for 1H, Table C for 13C). They were entered from the data sheet as the author knew it, NOT
-   copied from the current PDF: check them against your copy before relying on them in class.
+   SHIFT_H and SHIFT_C are the chemical-shift ranges in the AQA A-level Chemistry (7405) Data Booklet, Table B
+   for 1H and Table C for 13C, checked against the booklet PDF in the order it prints them. The one extra row,
+   'ar' (H on a benzene ring), is not on the AQA sheet and is flagged off: true wherever it is shown.
 
    Every molecule below lists its real proton and carbon-13 environments. Shifts are typical literature
    values for a CDCl3 solution, nudged inside the AQA range where the two differ slightly.
@@ -26,31 +26,32 @@
 
   /* ───────── AQA data-sheet shift ranges ───────── */
   NMR.SHIFT_H = [
-    { g: 'R–CH₃',                    lo: 0.7,  hi: 1.2,  ex: 'CH₃ on a carbon chain' },
-    { g: 'R–CH₂–R',                  lo: 1.2,  hi: 1.4,  ex: 'CH₂ in a chain' },
-    { g: 'R₃CH',                     lo: 1.4,  hi: 1.6,  ex: 'CH with three carbon neighbours' },
-    { g: 'R–CO–CH₃, R–CO–CH₂–R',     lo: 2.1,  hi: 2.6,  ex: 'H on the carbon next to C=O' },
-    { g: 'R–O–CH₃, R–O–CH₂–R',       lo: 3.1,  hi: 3.9,  ex: 'H on the carbon bonded to an ether or alcohol O' },
-    { g: 'R–CH₂–Hal',                lo: 3.1,  hi: 4.2,  ex: 'H on the carbon bonded to Cl, Br or I' },
-    { g: 'R–COO–CH₃, R–COO–CH₂–R',   lo: 3.7,  hi: 4.1,  ex: 'H on the carbon bonded to the ester O' },
-    { g: 'R–OH',                     lo: 0.5,  hi: 5.0,  ex: 'alcohol O–H (position varies)' },
-    { g: 'R–CH=CH₂',                 lo: 4.5,  hi: 6.0,  ex: 'H on an alkene carbon' },
-    { g: 'Ar–H',                     lo: 6.0,  hi: 9.0,  ex: 'H on a benzene ring' },
-    { g: 'R–CHO',                    lo: 9.0,  hi: 10.0, ex: 'aldehyde H' },
-    { g: 'R–COOH',                   lo: 10.0, hi: 12.0, ex: 'carboxylic acid O–H' },
-    { g: 'R–NH₂',                    lo: 1.0,  hi: 4.5,  ex: 'amine N–H (position varies)' }
+    { k: 'oh',    g: 'ROH',                    lo: 0.5,  hi: 5.0,  ex: 'alcohol O–H (position varies)' },
+    { k: 'ch3',   g: 'RCH₃',                   lo: 0.7,  hi: 1.2,  ex: 'CH₃ on a carbon chain' },
+    { k: 'nh2',   g: 'RNH₂',                   lo: 1.0,  hi: 4.5,  ex: 'amine N–H (position varies)' },
+    { k: 'ch2',   g: 'R₂CH₂',                  lo: 1.2,  hi: 1.4,  ex: 'CH₂ in a chain' },
+    { k: 'ch',    g: 'R₃CH',                   lo: 1.4,  hi: 1.6,  ex: 'CH with three carbon neighbours' },
+    { k: 'coch',  g: 'R–C(=O)–C–H',            lo: 2.1,  hi: 2.6,  ex: 'H on the carbon next to C=O' },
+    { k: 'och',   g: 'R–O–C–H',                lo: 3.1,  hi: 3.9,  ex: 'H on a carbon bonded to an alcohol or ether O' },
+    { k: 'hal',   g: 'RCH₂Cl or Br',           lo: 3.1,  hi: 4.2,  ex: 'H on a carbon bonded to Cl or Br' },
+    { k: 'ester', g: 'R–C(=O)–O–C–H',          lo: 3.7,  hi: 4.1,  ex: 'H on the carbon bonded to the ester O' },
+    { k: 'alk',   g: 'R(C=C)H',                lo: 4.5,  hi: 6.0,  ex: 'H on an alkene carbon' },
+    { k: 'cho',   g: 'R–CHO',                  lo: 9.0,  hi: 10.0, ex: 'aldehyde H' },
+    { k: 'cooh',  g: 'R–COOH',                 lo: 10.0, hi: 12.0, ex: 'carboxylic acid O–H' },
+    /* Not on the AQA data sheet: kept so ring H can be placed, and always labelled as off the sheet. */
+    { k: 'ar',    g: 'Ar–H (not on the sheet)', lo: 6.5,  hi: 8.0,  ex: 'H on a benzene ring: typical values, not a row on the AQA data sheet', off: true }
   ];
   NMR.SHIFT_C = [
     { g: 'C–C',                      lo: 5,   hi: 40,  ex: 'alkyl carbon' },
-    { g: 'R–C–Cl, R–C–Br',          lo: 10,  hi: 70,  ex: 'carbon bonded to a halogen' },
+    { g: 'R–C–Cl or Br',             lo: 10,  hi: 70,  ex: 'carbon bonded to a halogen' },
     { g: 'R–C(=O)–C',                lo: 20,  hi: 50,  ex: 'carbon next to a C=O' },
     { g: 'R–C–N',                    lo: 25,  hi: 60,  ex: 'carbon bonded to nitrogen' },
-    { g: 'R–C–O',                    lo: 50,  hi: 90,  ex: 'carbon bonded to oxygen (alcohol, ether, ester)' },
-    { g: 'C=C',                      lo: 90,  hi: 150, ex: 'alkene carbon' },
+    { g: 'C–O (alcohols, ethers, esters)', lo: 50,  hi: 90,  ex: 'carbon bonded to oxygen (alcohol, ether, ester)' },
+    { g: 'C=C (alkene)',             lo: 90,  hi: 150, ex: 'alkene carbon' },
     { g: 'R–C≡N',                    lo: 110, hi: 125, ex: 'nitrile carbon' },
     { g: 'Aromatic C',               lo: 110, hi: 160, ex: 'carbon in a benzene ring' },
-    { g: 'R–COO–, R–COOH',           lo: 160, hi: 185, ex: 'ester or acid C=O' },
-    { g: 'Aldehyde / ketone C=O',    lo: 190, hi: 220, ex: 'C=O of an aldehyde or ketone' }
+    { g: 'R–C(=O)– esters or acids',  lo: 160, hi: 185, ex: 'ester or acid C=O' },
+    { g: 'R–C(=O)– aldehydes or ketones', lo: 190, hi: 220, ex: 'C=O of an aldehyde or ketone' }
   ];
 
   /* ───────── Molecules ───────── */
@@ -146,13 +147,14 @@
     H: [{ id: 'a', d: 2.13, n: 3, nb: 0, lab: 'CH₃C=O' }, { id: 'b', d: 2.41, n: 2, nb: 2, p: 'c', lab: 'CH₂C=O' }, { id: 'c', d: 1.60, n: 2, nb: 5, lab: 'middle CH₂' }, { id: 'd', d: 0.92, n: 3, nb: 2, p: 'c', lab: 'CH₃' }],
     C: [{ id: '1', d: 29.9, n: 1, lab: 'CH₃C=O' }, { id: '2', d: 209.0, n: 1, q: 1, lab: 'C=O' }, { id: '3', d: 45.7, n: 1, lab: 'CH₂C=O' }, { id: '4', d: 17.5, n: 1, lab: 'middle CH₂' }, { id: '5', d: 13.7, n: 1, lab: 'CH₃' }] });
 
-  /* Which data-sheet row (index into SHIFT_H) each proton environment belongs to. null: no single row. */
-  var HROW = { ethanol: { a: 0, b: 4, c: 7 }, propanone: { a: 3 }, butanone: { a: 0, b: 3, c: 3 }, 'pentan-3-one': { a: 0, b: 3 },
-    'ethyl-ethanoate': { a: 3, b: 6, c: 0 }, 'methyl-propanoate': { a: 0, b: 3, c: 6 }, 'propanoic-acid': { a: 0, b: 3, c: 11 },
-    'ethanoic-acid': { a: 3, b: 11 }, 'methyl-ethanoate': { a: 3, b: 6 }, ethanal: { a: 3, b: 10 }, 'diethyl-ether': { a: 0, b: 4 },
-    tbutanol: { a: 0, b: 7 }, toluene: { a: null, b: 9 }, benzene: { a: 9 }, 'propan-2-ol': { a: 0, b: 4, c: 7 },
-    'propan-1-ol': { a: 0, b: 1, c: 4, d: 7 }, 'pentan-2-one': { a: 3, b: 3, c: 1, d: 0 } };
-  NMR.MOLS.forEach(function (m) { m.H.forEach(function (e) { var r = HROW[m.id]; e.r = r && e.id in r ? r[e.id] : null; }); });
+  /* Which data-sheet row (key into SHIFT_H) each proton environment belongs to. null: no single row. */
+  var HROW = { ethanol: { a: 'ch3', b: 'och', c: 'oh' }, propanone: { a: 'coch' }, butanone: { a: 'ch3', b: 'coch', c: 'coch' }, 'pentan-3-one': { a: 'ch3', b: 'coch' },
+    'ethyl-ethanoate': { a: 'coch', b: 'ester', c: 'ch3' }, 'methyl-propanoate': { a: 'ch3', b: 'coch', c: 'ester' }, 'propanoic-acid': { a: 'ch3', b: 'coch', c: 'cooh' },
+    'ethanoic-acid': { a: 'coch', b: 'cooh' }, 'methyl-ethanoate': { a: 'coch', b: 'ester' }, ethanal: { a: 'coch', b: 'cho' }, 'diethyl-ether': { a: 'ch3', b: 'och' },
+    tbutanol: { a: 'ch3', b: 'oh' }, toluene: { a: null, b: 'ar' }, benzene: { a: 'ar' }, 'propan-2-ol': { a: 'ch3', b: 'och', c: 'oh' },
+    'propan-1-ol': { a: 'ch3', b: 'ch2', c: 'och', d: 'oh' }, 'pentan-2-one': { a: 'coch', b: 'coch', c: 'ch2', d: 'ch3' } };
+  function hIdx(k) { for (var i = 0; i < NMR.SHIFT_H.length; i++) if (NMR.SHIFT_H[i].k === k) return i; return null; }
+  NMR.MOLS.forEach(function (m) { m.H.forEach(function (e) { var r = HROW[m.id]; e.r = r && r[e.id] ? hIdx(r[e.id]) : null; }); });
   /* Carbon rows (index into SHIFT_C), worked out from the shift and what the carbon is bonded to. */
   var NEXT_CO = { butanone: ['2', '3'], 'pentan-3-one': ['2'], propanone: ['1'], 'propanoic-acid': ['2'], 'methyl-propanoate': ['2'], ethanal: ['1'],
     'ethanoic-acid': ['1'], 'ethyl-ethanoate': ['1'], 'methyl-ethanoate': ['1'], 'pentan-2-one': ['1', '3'] };

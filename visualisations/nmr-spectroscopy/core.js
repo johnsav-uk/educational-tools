@@ -104,7 +104,7 @@
   NMR.rowText = function (nuc, r) {
     var T = nuc === 'C' ? NMR.SHIFT_C : NMR.SHIFT_H, row = T[r];
     if (!row) return '';
-    return row.g + ' (' + row.lo + '–' + row.hi + '): ' + row.ex;
+    return row.off ? row.ex + ' (about ' + row.lo + '–' + row.hi + ')' : row.g + ' (' + row.lo + '–' + row.hi + '): ' + row.ex;
   };
   /* One line of assignment for an environment, for the readout under a spectrum. */
   NMR.assignHTML = function (mol, nuc, id) {
@@ -113,7 +113,7 @@
     if (nuc === 'H') {
       return '<span class="t" style="color:' + col + '">' + e.lab + '</span> · δ ' + e.d.toFixed(2) + ' · <b>' + e.n + ' H</b> · ' + NMR.splitText(e) +
         (e.nb > 3 ? ' ' + U.CHIP.ext : '') +
-        (row ? '<br><span class="subtle">Data sheet: ' + row + '</span>' : (mol.id === 'toluene' && id === 'a' ? '<br><span class="subtle">CH₃ on a benzene ring: about 2.3, between the alkyl and C=O ranges.</span>' : ''));
+        (row ? '<br><span class="subtle">' + (NMR.SHIFT_H[e.r].off ? '' : 'Data sheet: ') + row + '</span>' : (mol.id === 'toluene' && id === 'a' ? '<br><span class="subtle">CH₃ on a benzene ring: about 2.3, between the alkyl and C=O ranges.</span>' : ''));
     }
     return '<span class="t" style="color:' + col + '">' + e.lab + '</span> · δ ' + e.d.toFixed(1) + ' · ' + e.n + ' carbon' + (e.n > 1 ? 's' : '') + ' in this environment' +
       (row ? '<br><span class="subtle">Data sheet: ' + row + '</span>' : '');
@@ -434,14 +434,14 @@
       }).join('') + '</div>';
     }).join('');
     var ms = '<section id="pMs" class="ms"><div class="phead"><h1>NMR spectroscopy: mark scheme</h1><div class="sub">Teacher copy · ' + total + ' marks</div></div>' + msq +
-      '<p class="note">One mark per marking point unless shown otherwise. Shift values in the questions are typical literature values; check the ranges against your copy of the Data Booklet.</p></section>';
-    function tab(T, unit) { return '<table><tr><th>Type of ' + unit + '</th><th>δ / ppm</th></tr>' + T.map(function (r) { return '<tr><td>' + r.g + '</td><td>' + r.lo + '–' + r.hi + '</td></tr>'; }).join('') + '</table>'; }
+      '<p class="note">One mark per marking point unless shown otherwise. Shift values in the questions are typical literature values; ranges quoted are from the AQA Data Booklet, Tables B and C.</p></section>';
+    function tab(T, unit) { return '<table><tr><th>Type of ' + unit + '</th><th>δ / ppm</th></tr>' + T.filter(function (r) { return !r.off; }).map(function (r) { return '<tr><td>' + r.g + '</td><td>' + r.lo + '–' + r.hi + '</td></tr>'; }).join('') + '</table>'; }
     var card = '<section id="pCard"><div class="phead"><h1>NMR spectroscopy: revision card</h1><div class="sub">AQA A-level Chemistry 3.3.15</div></div><div class="card2"><div>' +
       '<h3>¹H shifts (as on the data sheet)</h3>' + tab(NMR.SHIFT_H, 'proton') + '</div><div><h3>¹³C shifts (as on the data sheet)</h3>' + tab(NMR.SHIFT_C, 'carbon') +
       '<h3>Reading a ¹H spectrum</h3><ol class="chk"><li>Number of signals = number of proton environments.</li><li>Shift δ: which group (data sheet Table B).</li><li>Integration: ratio of H; scale it to the formula.</li><li>Splitting: n + 1 peaks, n = H on the adjacent carbon(s). Singlet, doublet, triplet, quartet.</li><li>Fit the fragments together; check every H in the formula is used.</li></ol>' +
       '<h3>Solvents and TMS</h3><p>Use CDCl₃ or CCl₄: no ¹H, so no solvent peak. TMS, Si(CH₃)₄: one sharp peak (12 equivalent H), defined as δ = 0, inert, volatile.</p>' +
       '<h3>¹³C</h3><p>One line per carbon environment, no splitting; heights do not count carbons. Symmetry reduces the number of signals.</p></div></div>' +
-      '<p class="note">Shift ranges entered from the AQA data sheet as the author knew it: check them against your copy.</p></section>';
+      '<p class="note">Shift ranges from Tables B and C of the AQA A-level Chemistry (7405) Data Booklet.</p></section>';
     doc.innerHTML = card + ws + ms;
   };
 })();

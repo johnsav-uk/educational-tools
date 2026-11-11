@@ -258,7 +258,7 @@
           ans: [['1.06', '3', 'triplet', '2'], ['2.14', '3', 'singlet', '0'], ['2.46', '2', 'quartet', '3']],
           ms: ['1.06: triplet, 2', '2.14: singlet, 0', '2.46: quartet, 3'], no: '' },
         { t: 'Use the data sheet to identify the type of hydrogen at δ = 2.14.', m: 1, lines: 2,
-          ms: ['H on a carbon next to C=O (R–CO–CH₃), range 2.1–2.6'], no: '' },
+          ms: ['H on a carbon next to C=O (R–C(=O)–C–H), range 2.1–2.6'], no: '' },
         { t: 'Deduce the structure of the compound and give its name.', m: 2, lines: 3,
           ms: ['CH₃COCH₂CH₃', 'Butanone'], no: '' },
         { t: 'State the number of peaks in the ¹³C NMR spectrum of this compound.', m: 1, lines: 1, ms: ['4'], no: '' }
