@@ -79,6 +79,13 @@ window.SST_TOOLS = [
     image: "spectroscopy-detective.png",
     keywords: "spectroscopy organic analysis infrared ir mass spectrometry nmr proton carbon 13 fingerprint structure determination 3.3.6" },
 
+  { title: "NMR Spectroscopy (beta)", url: "visualisations/nmr-spectroscopy/",
+    topic: "organic",
+    blurb: "Read realistic proton and carbon-13 NMR spectra, split signals with n + 1 and Pascal's triangle, and solve structures from the data.",
+    kind: "Interactive", levels: ["A-Level"], tags: ["AQA Chemistry", "Chemistry", "Interactive"],
+    image: "nmr-spectroscopy.png",
+    keywords: "nmr nuclear magnetic resonance spectroscopy proton nmr 1h nmr h-nmr hnmr carbon-13 carbon 13 c13 13c c-13 cnmr tms tetramethylsilane chemical shift delta ppm splitting spin-spin coupling n+1 n + 1 rule pascal pascal's triangle singlet doublet triplet quartet multiplet integration trace peak area ratio environments equivalent hydrogens symmetry deuterated solvent cdcl3 ccl4 d2o deuterium data booklet data sheet structure determination isomers spectra spectrum 3.3.15 aqa a-level analytical techniques" },
+
   { title: "Chemical Bonding: Ionic, Covalent & Metallic", url: "visualisations/chemical-bonding/",
     topic: "atoms",
     blurb: "Watch electrons transfer and pair up, spin an ionic lattice, then push, heat and wire up a metal.",

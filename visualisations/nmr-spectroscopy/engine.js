@@ -149,7 +149,7 @@
   NMR.PAL = {
     dark:  { bg: '#091321', fg: '#edf2f8', axis: '#8693a5', grid: '#182535', integ: '#47b5fa', sel: 'rgba(71,181,250,.18)', cur: '#8693a5', ref: '#8693a5',
              env: ['#47b5fa', '#b199f4', '#63d18f', '#f3b94c', '#ff8a7a', '#4fd1c5'] },
-    light: { bg: '#ffffff', fg: '#142030', axis: '#596473', grid: '#e3e8ee', integ: '#0068b2', sel: 'rgba(0,104,178,.14)', cur: '#596473', ref: '#596473',
+    light: { bg: '#f8fafd', fg: '#142030', axis: '#596473', grid: '#e3e8ee', integ: '#0068b2', sel: 'rgba(0,104,178,.14)', cur: '#596473', ref: '#596473',
              env: ['#0068b2', '#6c4ab3', '#1f7a52', '#a8650a', '#c0432f', '#14808a'] }
   };
   NMR.pal = function () { return NMR.PAL[(window.SST_THEME && SST_THEME.get()) === 'light' ? 'light' : 'dark']; };
@@ -182,7 +182,8 @@
     this.readout = document.createElement('div'); this.readout.className = 'nv-read'; this.readout.hidden = true; host.appendChild(this.readout);
     this.bind();
     if (window.ResizeObserver) { this.ro = new ResizeObserver(function () { self.resize(); }); this.ro.observe(host); }
-    window.addEventListener('resize', function () { self.resize(); });
+    this._onR = function () { self.resize(); };
+    window.addEventListener('resize', this._onR);
     views.push(this);
     setTimeout(function () { self.resize(); }, 0);
   }
@@ -224,18 +225,24 @@
     if (this.hi - this.lo < (this.spec.nuc === 'H' ? 2.2 : 40)) { var c = (this.hi + this.lo) / 2, h = (this.spec.nuc === 'H' ? 1.1 : 20); this.lo = c - h; this.hi = c + h; }
     if (!quiet) this.draw();
   };
-  P.setRange = function (lo, hi) { this.lo = lo; this.hi = hi; this.draw(); };
+  P.setRange = function (lo, hi) { this.lo = lo; this.hi = hi; this.userMoved = true; this.draw(); };
+  P.setBand = function (b) { this.band = b; this.draw(); };
   P.zoom = function (f, cx) {
     var min = this.spec.nuc === 'H' ? 0.12 : 6, max = this.spec.range[1] - this.spec.range[0];
     if (cx === undefined) cx = (this.lo + this.hi) / 2;
     var span = Math.max(min, Math.min(max, (this.hi - this.lo) * f)), r = (cx - this.lo) / (this.hi - this.lo);
     this.lo = cx - r * span; this.hi = this.lo + span;
-    this.clamp(); this.draw();
+    this.userMoved = true; this.clamp(); this.draw();
   };
   P.clamp = function () {
     var a = this.spec.range[0] - 1, b = this.spec.range[1] + 1, span = this.hi - this.lo;
     if (this.lo < a) { this.lo = a; this.hi = a + span; }
     if (this.hi > b) { this.hi = b; this.lo = b - span; }
+  };
+  P.destroy = function () {
+    var i = views.indexOf(this); if (i >= 0) views.splice(i, 1);
+    if (this.ro) this.ro.disconnect();
+    window.removeEventListener('resize', this._onR);
   };
   P.select = function (id, quiet) { this.sel = id; if (!quiet) this.draw(); };
   P.highlight = function (ids) { this.hl = ids || []; this.draw(); };
@@ -256,7 +263,7 @@
   };
 
   P.layout = function () {
-    var f = fs(11.5), top = 14 + (this.o.labels || this.o.colour ? fs(12) + 4 : 0);
+    var f = fs(11.5), top = 14 + (this.o.tools ? 30 : 0) + (this.o.labels || this.o.colour ? fs(12) + 4 : 0);
     return { f: f, L: 10, R: 12, T: top, B: Math.round(f * 3.1) + 4 };
   };
   P.x2p = function (x) { var m = this.layout(); return m.L + (this.hi - x) / (this.hi - this.lo) * (this.W - m.L - m.R); };
@@ -275,13 +282,23 @@
     c.lineWidth = 1; c.strokeStyle = pal.grid;
     c.beginPath(); tk.major.forEach(function (v) { var x = Math.round(self.x2p(v)) + .5; c.moveTo(x, m.T); c.lineTo(x, base); }); c.stroke();
 
+    // a shaded shift range (a data-sheet row)
+    if (this.band) { var bx1 = this.x2p(this.band[1]), bx2 = this.x2p(this.band[0]); c.fillStyle = pal.sel; c.fillRect(bx1, m.T, bx2 - bx1, ph); }
+
     // environment bands (colour mode / highlight / selection)
+    var placed = [];
     spec.envs.forEach(function (e, i) {
       var on = self.sel === e.id || self.hl.indexOf(e.id) >= 0, show = o.colour || on; if (!show) return;
       var pad = Math.max(spec.nuc === 'H' ? 0.07 : 3, 6 * (hi - lo) / pw);
       var x1 = self.x2p(e.hi + pad), x2 = self.x2p(e.lo - pad), col = NMR.envColour(spec.mol, e.id, spec.nuc);
       c.fillStyle = col; c.globalAlpha = on ? 0.2 : 0.09; c.fillRect(x1, m.T, x2 - x1, ph); c.globalAlpha = 1;
-      if (o.colour) { c.fillStyle = col; c.font = '700 ' + fs(12) + 'px "Plus Jakarta Sans",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(e.id.length === 1 ? e.id : e.id, (x1 + x2) / 2, m.T - 3); }
+      if (o.colour) {
+        c.font = '700 ' + fs(12) + 'px "Plus Jakarta Sans",system-ui,sans-serif';
+        var tx = (e.lab || e.id).replace(/\s*\(.*\)/, ''), tw = c.measureText(tx).width, cx0 = (x1 + x2) / 2;
+        if (cx0 > m.L && cx0 < W - m.R && !placed.some(function (q) { return Math.abs(q - cx0) < (tw + 8); })) {
+          placed.push(cx0); c.fillStyle = col; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(tx, Math.max(m.L + tw / 2, Math.min(W - m.R - tw / 2, cx0)), m.T - 3);
+        }
+      }
     });
 
     // the trace: autoscaled to what is visible
@@ -320,7 +337,9 @@
         spec.steps.forEach(function (s) {
           var e = spec.envs.filter(function (q) { return q.id === s.id; })[0]; if (!e) return;
           var xl = self.x2p(e.hi + 0.18), yy = I0 - (cumBefore(spec, s.id) + s.n / 2) / tot * span;
-          c.fillText(s.mm.toFixed(1) + ' mm', Math.min(xl, W - 52), yy - 8);
+          var tx = s.mm.toFixed(1) + ' mm', tw = c.measureText(tx).width, lx = Math.max(m.L + 2, Math.min(xl, W - m.R - tw - 4)), ly = yy - 10;
+          c.fillStyle = pal.bg; c.globalAlpha = 0.85; c.fillRect(lx - 3, ly - fs(11) * 0.7, tw + 6, fs(11) * 1.4); c.globalAlpha = 1;
+          c.fillStyle = pal.integ; c.fillText(tx, lx, ly);
         });
       }
     }
@@ -340,6 +359,7 @@
       c.font = '700 ' + fs(12) + 'px "Plus Jakarta Sans",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'bottom';
       spec.envs.forEach(function (e) {
         if (e.d < lo || e.d > hi) return;
+        if ((self.marks || []).some(function (mk) { return mk.x >= e.lo - 0.01 && mk.x <= e.hi + 0.01; })) return;
         var tall = 0; spec.lines.forEach(function (l) { if (l.env === e.id) tall = Math.max(tall, NMR.yAt(spec, l.x)); });
         var py = base - 2 - Math.min(ph, tall * yscale) - 5;
         c.fillStyle = o.colour ? NMR.envColour(spec.mol, e.id, 'H') : pal.fg;
@@ -451,7 +471,18 @@
         di += (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + (I0 - iv / tot * span + (hi - xs[i]) * 0.0006 * ph).toFixed(1);
       }
       s += '<path d="' + di + '" fill="none" stroke="#000" stroke-width="1.1" stroke-dasharray="none"/>';
+      if (o.steps) spec.steps.forEach(function (st) {
+        var e = spec.envs.filter(function (q) { return q.id === st.id; })[0]; if (!e) return;
+        var yy = I0 - (cumBefore(spec, st.id) + st.n / 2) / tot * span - 8;
+        s += '<text x="' + Math.min(X(e.hi + 0.12) - 2, W - R - 50).toFixed(1) + '" y="' + yy.toFixed(1) + '" font-size="11" font-weight="700" text-anchor="end" fill="#000">' + st.mm.toFixed(1) + ' mm</text>';
+      });
     }
+    var seenRef = {};
+    spec.lines.forEach(function (l) {
+      if (l.kind !== 'ref' || !l.tag || seenRef[l.tag] || l.x < lo || l.x > hi) return; seenRef[l.tag] = 1;
+      var yy = base - 2 - Math.min(ph, NMR.yAt(spec, l.x) * sc) - 4;
+      s += '<text x="' + X(l.x).toFixed(1) + '" y="' + Math.max(T + 10, yy).toFixed(1) + '" font-size="10.5" text-anchor="middle" fill="#000">' + l.tag + '</text>';
+    });
     var tk = NMR.ticks(lo, hi, Math.max(4, pw / 70));
     s += '<path d="M' + L + ' ' + (base + .5) + 'H' + (W - R) + tk.major.map(function (v) { return 'M' + X(v).toFixed(1) + ' ' + base + 'v7'; }).join('') + tk.minor.map(function (v) { return 'M' + X(v).toFixed(1) + ' ' + base + 'v3.5'; }).join('') + '" stroke="#000" stroke-width="1" fill="none"/>';
     tk.major.forEach(function (v) { s += '<text x="' + X(v).toFixed(1) + '" y="' + (base + 20) + '" font-size="11" text-anchor="middle" fill="#000">' + v.toFixed(tk.dec) + '</text>'; });

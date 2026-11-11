@@ -38,10 +38,10 @@
     { id: 'q4', lvl: 1, sec: 'B', type: 'mcq', marks: 1,
       stem: 'Why can carbon-12 not be detected by NMR?',
       opts: [['It has no neutrons.', 'It has six neutrons. The reason is that its protons and neutrons are all paired up.'],
-             ['It has an even number of nucleons, so there is no net nuclear spin.', 'Correct.'],
+             ['Its 6 protons and 6 neutrons are all paired, so there is no net nuclear spin.', 'Correct. Even numbers of both protons and neutrons pair up completely.'],
              ['It is radioactive.', '¹²C is stable. Radioactivity has nothing to do with NMR activity.'],
              ['It is too abundant.', 'It is 98.9% of carbon. Abundance affects how strong a signal is, not whether the nucleus can give one.']],
-      ans: 1, tip: 'Talk about nucleons (protons + neutrons), not “even number of protons”.' },
+      ans: 1, tip: 'Talk about protons <i>and</i> neutrons being paired, not just “an even number of protons”.' },
 
     { id: 'q5', lvl: 1, sec: 'C', type: 'mcq', marks: 1,
       stem: 'Why is CDCl₃ used as a solvent for ¹H NMR rather than CHCl₃?',
@@ -228,14 +228,16 @@
   /* ───────── Structured printed questions ─────────
      parts: { t, m (marks), lines (answer lines), ms: [marking points], no: "do not accept" } */
   NMR.PRINTQ = [
-    { n: 1, mol: null, stem: 'This question is about how nuclear magnetic resonance (NMR) spectroscopy works.',
+    { n: 1, mol: null, stem: 'This question is about running an NMR spectrum.',
       parts: [
-        { t: 'Nuclei with an odd number of nucleons can be detected by NMR. Explain why carbon-12 gives no signal but carbon-13 does.', m: 2, lines: 3,
-          ms: ['¹²C has an even number of nucleons (6 protons + 6 neutrons), so no net nuclear spin', '¹³C has an odd number of nucleons (13), so it has nuclear spin'], no: 'Do not accept “¹²C has no neutrons”.' },
-        { t: 'Describe what happens to nuclei with spin when they are placed in a strong magnetic field and then exposed to radio waves.', m: 3, lines: 4,
-          ms: ['In the field the nuclei line up with or against the field, giving two energy states (a small gap)', 'They absorb radio-frequency energy when its frequency matches the gap between the states (hf = ΔE)', 'The nuclei flip to the higher energy state (resonance)'], no: '' },
-        { t: 'Explain why a sample is dissolved in CDCl₃, not CHCl₃, for ¹H NMR, and why TMS is added.', m: 3, lines: 4,
-          ms: ['CDCl₃ contains no ¹H, so gives no peaks that would obscure the sample\'s peaks', 'TMS gives a single peak (all 12 H equivalent) at δ = 0', 'TMS is the reference/standard from which all other shifts are measured (or: it is inert, volatile, non-toxic)'], no: 'Do not accept “deuterium is not magnetic”.' }
+        { t: 'A sample for ¹H NMR is dissolved in CDCl₃ rather than CHCl₃. Explain why.', m: 2, lines: 3,
+          ms: ['CDCl₃ contains no ¹H atoms (the H is replaced by deuterium)', 'So the solvent gives no peak that would swamp or overlap the peaks of the sample (the solvent is in large excess)'], no: 'Do not accept “deuterium is not magnetic” or “has no spin”.' },
+        { t: 'Name a solvent that contains no deuterium but is also suitable for ¹H NMR.', m: 1, lines: 1,
+          ms: ['CCl₄ (tetrachloromethane)'], no: '' },
+        { t: 'Tetramethylsilane (TMS) is added to the sample. Give two reasons why TMS is used as the standard.', m: 2, lines: 3,
+          ms: ['It gives a single (sharp) peak because all 12 H (or all 4 C) are equivalent', 'Its peak is at δ = 0, upfield of / away from almost all other peaks', '(Any one alternative) It is inert / non-toxic / volatile so easily removed'], no: 'Do not accept “it is a standard” or “it is a reference” with no property.' },
+        { t: 'Suggest why a ¹³C NMR spectrum is usually simpler than a ¹H NMR spectrum of the same compound.', m: 2, lines: 3,
+          ms: ['¹³C peaks are single lines: there is no splitting (and no integration to interpret)', 'The shift range is much wider (0–220 ppm), so peaks rarely overlap'], no: '' }
       ] },
     { n: 2, mol: 'ethyl-ethanoate', nuc: 'H', integ: true, steps: true,
       stem: 'The ¹H NMR spectrum of ethyl ethanoate, CH₃COOCH₂CH₃, is shown in the figure. The heights of the steps on the integration trace are marked in mm.',

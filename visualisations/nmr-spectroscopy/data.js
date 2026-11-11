@@ -37,14 +37,17 @@
     { g: 'R–CH=CH₂',                 lo: 4.5,  hi: 6.0,  ex: 'H on an alkene carbon' },
     { g: 'Ar–H',                     lo: 6.0,  hi: 9.0,  ex: 'H on a benzene ring' },
     { g: 'R–CHO',                    lo: 9.0,  hi: 10.0, ex: 'aldehyde H' },
-    { g: 'R–COOH',                   lo: 10.0, hi: 12.0, ex: 'carboxylic acid O–H' }
+    { g: 'R–COOH',                   lo: 10.0, hi: 12.0, ex: 'carboxylic acid O–H' },
+    { g: 'R–NH₂',                    lo: 1.0,  hi: 4.5,  ex: 'amine N–H (position varies)' }
   ];
   NMR.SHIFT_C = [
     { g: 'C–C',                      lo: 5,   hi: 40,  ex: 'alkyl carbon' },
     { g: 'R–C–Cl, R–C–Br',          lo: 10,  hi: 70,  ex: 'carbon bonded to a halogen' },
+    { g: 'R–C(=O)–C',                lo: 20,  hi: 50,  ex: 'carbon next to a C=O' },
     { g: 'R–C–N',                    lo: 25,  hi: 60,  ex: 'carbon bonded to nitrogen' },
     { g: 'R–C–O',                    lo: 50,  hi: 90,  ex: 'carbon bonded to oxygen (alcohol, ether, ester)' },
     { g: 'C=C',                      lo: 90,  hi: 150, ex: 'alkene carbon' },
+    { g: 'R–C≡N',                    lo: 110, hi: 125, ex: 'nitrile carbon' },
     { g: 'Aromatic C',               lo: 110, hi: 160, ex: 'carbon in a benzene ring' },
     { g: 'R–COO–, R–COOH',           lo: 160, hi: 185, ex: 'ester or acid C=O' },
     { g: 'Aldehyde / ketone C=O',    lo: 190, hi: 220, ex: 'C=O of an aldehyde or ketone' }
@@ -112,7 +115,7 @@
 
     { id: 'tbutanol', name: '2-methylpropan-2-ol', formula: 'C<sub>4</sub>H<sub>10</sub>O', mf: 'C4H10O',
       groups: [g('(' + CH3 + ')<sub>3</sub>', 'a', '1'), g('C', null, '2'), g('OH', 'b')],
-      H: [{ id: 'a', d: 1.28, n: 9, nb: 0, lab: 'three CH₃' }, { id: 'b', d: 1.9, n: 1, nb: 0, ex: true, lab: 'OH' }],
+      H: [{ id: 'a', d: 1.22, n: 9, nb: 0, lab: 'three CH₃' }, { id: 'b', d: 1.9, n: 1, nb: 0, ex: true, lab: 'OH' }],
       C: [{ id: '1', d: 31.2, n: 3, lab: 'CH₃' }, { id: '2', d: 69.0, n: 1, q: 1, lab: 'C–OH' }] },
 
     { id: 'toluene', name: 'Methylbenzene', formula: 'C<sub>7</sub>H<sub>8</sub>', mf: 'C7H8', ring: 'toluene',
@@ -135,6 +138,27 @@
       H: [{ id: 'a', d: 0.94, n: 3, nb: 2, p: 'b', lab: 'CH₃' }, { id: 'b', d: 1.59, n: 2, nb: 5, lab: 'middle CH₂' }, { id: 'c', d: 3.60, n: 2, nb: 2, p: 'b', lab: 'CH₂OH' }, { id: 'd', d: 2.3, n: 1, nb: 0, ex: true, lab: 'OH' }],
       C: [{ id: '1', d: 10.3, n: 1, lab: 'CH₃' }, { id: '2', d: 25.9, n: 1, lab: 'middle CH₂' }, { id: '3', d: 64.2, n: 1, lab: 'CH₂OH' }] }
   ];
+
+  /* Pentan-2-one: here for the 13C isomer comparison with pentan-3-one. Its CH2 in the middle is a sextet, so it is
+     flagged beyond the spec for 1H work. */
+  NMR.MOLS.push({ id: 'pentan-2-one', name: 'Pentan-2-one', formula: 'C<sub>5</sub>H<sub>10</sub>O', mf: 'C5H10O', ext: true,
+    groups: [g(CH3, 'a', '1'), g('C(=O)', null, '2'), g(CH2, 'b', '3'), g(CH2, 'c', '4'), g(CH3, 'd', '5')],
+    H: [{ id: 'a', d: 2.13, n: 3, nb: 0, lab: 'CH₃C=O' }, { id: 'b', d: 2.41, n: 2, nb: 2, p: 'c', lab: 'CH₂C=O' }, { id: 'c', d: 1.60, n: 2, nb: 5, lab: 'middle CH₂' }, { id: 'd', d: 0.92, n: 3, nb: 2, p: 'c', lab: 'CH₃' }],
+    C: [{ id: '1', d: 29.9, n: 1, lab: 'CH₃C=O' }, { id: '2', d: 209.0, n: 1, q: 1, lab: 'C=O' }, { id: '3', d: 45.7, n: 1, lab: 'CH₂C=O' }, { id: '4', d: 17.5, n: 1, lab: 'middle CH₂' }, { id: '5', d: 13.7, n: 1, lab: 'CH₃' }] });
+
+  /* Which data-sheet row (index into SHIFT_H) each proton environment belongs to. null: no single row. */
+  var HROW = { ethanol: { a: 0, b: 4, c: 7 }, propanone: { a: 3 }, butanone: { a: 0, b: 3, c: 3 }, 'pentan-3-one': { a: 0, b: 3 },
+    'ethyl-ethanoate': { a: 3, b: 6, c: 0 }, 'methyl-propanoate': { a: 0, b: 3, c: 6 }, 'propanoic-acid': { a: 0, b: 3, c: 11 },
+    'ethanoic-acid': { a: 3, b: 11 }, 'methyl-ethanoate': { a: 3, b: 6 }, ethanal: { a: 3, b: 10 }, 'diethyl-ether': { a: 0, b: 4 },
+    tbutanol: { a: 0, b: 7 }, toluene: { a: null, b: 9 }, benzene: { a: 9 }, 'propan-2-ol': { a: 0, b: 4, c: 7 },
+    'propan-1-ol': { a: 0, b: 1, c: 4, d: 7 }, 'pentan-2-one': { a: 3, b: 3, c: 1, d: 0 } };
+  NMR.MOLS.forEach(function (m) { m.H.forEach(function (e) { var r = HROW[m.id]; e.r = r && e.id in r ? r[e.id] : null; }); });
+  /* Carbon rows (index into SHIFT_C), worked out from the shift and what the carbon is bonded to. */
+  var NEXT_CO = { butanone: ['2', '3'], 'pentan-3-one': ['2'], propanone: ['1'], 'propanoic-acid': ['2'], 'methyl-propanoate': ['2'], ethanal: ['1'],
+    'ethanoic-acid': ['1'], 'ethyl-ethanoate': ['1'], 'methyl-ethanoate': ['1'], 'pentan-2-one': ['1', '3'] };
+  NMR.MOLS.forEach(function (m) { m.C.forEach(function (e) {
+    e.r = e.d >= 190 ? 9 : e.d >= 160 ? 8 : m.ring && e.d > 100 ? 7 : e.d > 50 && e.d < 100 ? 4 : (NEXT_CO[m.id] || []).indexOf(e.id) >= 0 ? 2 : 0;
+  }); });
 
   NMR.mol = function (id) { for (var i = 0; i < NMR.MOLS.length; i++) if (NMR.MOLS[i].id === id) return NMR.MOLS[i]; return null; };
   NMR.molsStd = function () { return NMR.MOLS.filter(function (m) { return !m.ext; }); };
@@ -218,7 +242,7 @@
   NMR.INSIGHTS = {
     A: ['“Radio waves” are absorbed when their energy matches the gap between the two spin states. Answers that say the nuclei “emit” or “are ionised” lose the mark.',
         'Keep the process and the picture apart: the nuclei flip; the <i>spectrum</i> is the instrument\'s record of that.'],
-    B: ['The rule is about the <b>number of nucleons</b> (protons + neutrons), not just protons. ¹²C has 12, an even number, and no spin; ¹³C has 13.',
+    B: ['Think about <b>protons and neutrons</b>, not just protons. ¹²C has 6 of each, all paired, so no spin. ¹³C has an odd number of nucleons (13), so it has spin.',
         'Do not write that carbon-12 is “not magnetic because it has no neutrons”. It has six.'],
     C: ['TMS: give a <b>property</b>, not just “it is a standard”. Good answers: single sharp peak (12 equivalent H); δ = 0 by definition, away from other peaks; inert; non-toxic; volatile so easily removed.',
         'Solvent: say the solvent has <b>no ¹H</b>, so it gives no peaks that would swamp or overlap the sample\'s. Do not say deuterium “is not magnetic” (it has spin, but absorbs at a very different frequency).'],
