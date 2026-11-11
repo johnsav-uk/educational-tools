@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NMR Spectroscopy (beta)</title>
+<meta name="description" content="AQA A-level Chemistry 3.3.15: how an NMR spectrometer works, which nuclei are active, solvents and TMS, proton and carbon-13 spectra, splitting and Pascal's triangle, with realistic simulated spectra, exam-style questions and printable worksheets.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../assets/sst/sst.js"></script>
+
+<div class="app">
+  <header class="bar">
+    <div class="wordmark">
+      <h1>NMR Spectroscopy (beta)</h1>
+      <span class="spec-ref">AQA A-level · 3.3.15</span>
+    </div>
+    <span class="subtle grow">From the magnet to the exam answer: how NMR works, then reading ¹H and ¹³C spectra.</span>
+    <button class="btn" id="printBtn" type="button">Print worksheet</button>
+    <button class="btn" id="theme-btn" data-sst-theme-toggle type="button"><i class="sst-theme-icon"></i><span class="sst-theme-label">Light</span></button>
+  </header>
+
+  <div class="console">
+    <aside class="col col-l">
+      <section class="panel" id="routePanel">
+        <div class="panel-head"><span class="eyebrow">Your route</span><span class="subtle" id="routeCount"></span></div>
+        <nav class="steps" id="steps" aria-label="Sections"></nav>
+      </section>
+      <section class="panel" id="ctlPanel">
+        <div class="panel-head"><span class="eyebrow" id="ctlTitle">Controls</span></div>
+        <div id="ctl" class="ctl"></div>
+      </section>
+    </aside>
+
+    <main class="col col-c" id="vis" aria-live="polite"></main>
+
+    <aside class="col col-r">
+      <section class="panel" id="notesPanel">
+        <div class="panel-head"><span class="eyebrow" id="notesTitle">Teaching notes</span></div>
+        <div id="notes" class="notes"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<!-- Print dialog and printable worksheet / mark scheme -->
+<dialog id="printDlg" aria-labelledby="printTitle">
+  <h2 id="printTitle">Print on A4</h2>
+  <label><input type="checkbox" id="pOptWs" checked><span><b>Student worksheet</b><br>Five exam-style questions with the spectra to read from, marks shown per part, and space to write.</span></label>
+  <label><input type="checkbox" id="pOptCard"><span><b>Revision card</b><br>One page: the data-sheet shift ranges and the interpretation checklist.</span></label>
+  <label><input type="checkbox" id="pOptMs"><span><b>Teacher mark scheme</b><br>Marking points, working and “do not accept” notes. Starts on a new page.</span></label>
+  <div class="row">
+    <button class="btn" type="button" id="pCancel">Cancel</button>
+    <button class="btn btn-accent" type="button" id="pGo">Print</button>
+  </div>
+</dialog>
+<div class="print-only pd" id="printDoc"></div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="questions.js"></script>
+<script src="core.js"></script>
+<script src="sec-a.js"></script>
+<script src="sec-bc.js"></script>
+<script src="sec-d.js"></script>
+<script src="sec-ef.js"></script>
+<script src="practice.js"></script>
+<script src="../../assets/sst/present.js"></script>
+<script src="../../assets/sst/presenter.js"></script>
+<script src="boot.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "597d8741dde04f27b28c5b19376b6013"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
