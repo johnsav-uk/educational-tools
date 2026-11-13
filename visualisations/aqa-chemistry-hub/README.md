@@ -75,7 +75,7 @@ There is no node/npm on this machine, so the repo is served as static files with
 Python:
 
 ```bash
-python -m http.server 8765 --directory H:/Claude/educational-tools
+python -m http.server 8765 --directory M:/Claude/educational-tools
 ```
 
 Then open <http://localhost:8765/visualisations/aqa-chemistry-hub/>.
