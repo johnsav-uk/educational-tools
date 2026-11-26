@@ -266,5 +266,12 @@ window.SST_TOOLS = [
     blurb: "Bid, dare and bank the winnings in a list-naming game show for the whole class.",
     kind: "Revision Game", levels: ["KS3", "GCSE"], tags: ["Biology", "Chemistry", "Physics", "Revision Game"],
     image: "who-dares-wins.png",
-    keywords: "who dares wins bidding list naming game show bank risk" }
+    keywords: "who dares wins bidding list naming game show bank risk" },
+
+  { title: "Eel Marsh House (beta)", url: "games/english/woman-in-black/",
+    topic: "games",
+    blurb: "Revise the gothic features and key terms of The Woman in Black across five rooms, at three levels of challenge.",
+    kind: "Revision Game", levels: ["KS3"], tags: ["English", "Revision Game", "Interactive"],
+    image: "woman-in-black.png",
+    keywords: "the woman in black susan hill gothic genre conventions features key terms terminology literature prose novel ks3 english year 7 year 8 year 9 arthur kipps eel marsh house crythin gifford nine lives causeway jennet humfrye nathaniel mrs drablow pathetic fallacy foreshadowing isolation supernatural tension suspense juxtaposition personification sibilance simile frame narrative retrospective narrator semantic field sensory imagery ghost story creative writing descriptive writing differentiated scaffolded send sen dyslexia read aloud ks2 transition" }
 ];

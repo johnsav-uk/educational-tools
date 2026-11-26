@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eel Marsh House (beta)</title>
+<meta name="description" content="Revise the gothic features and key terms of The Woman in Black, room by room through Eel Marsh House, at three levels of challenge.">
+<style>
+/* Layout: a dark scene band (the marsh and the house) over a lit working area:
+   pick a level, pick a room, then the room's activity beside the word bank.
+   The scene keeps its dark stage in both themes, like the site's space and atom scenes. */
+:root{
+  --wib-ink:#070b12;                     /* the marsh at night: the stage in both themes */
+  --wib-candle:oklch(0.83 0.13 78);
+  --wib-wine:var(--sst-eng, oklch(0.72 0.12 350));   /* English: mulberry, hue 350 */
+  --wib-wine-btn:oklch(0.5 0.15 350);
+  --wib-wine-soft:oklch(0.28 0.06 350);
+  --t1:var(--sst-green); --t2:var(--wib-candle); --t3:var(--wib-wine);
+}
+.theme-light{
+  --wib-wine:var(--sst-eng, oklch(0.47 0.15 350));
+  --wib-wine-soft:oklch(0.94 0.03 350);
+  --wib-candle:oklch(0.55 0.12 70);
+}
+body{background:var(--sst-bg);color:var(--sst-text-body);font-family:var(--sst-font);margin:0}
+*{box-sizing:border-box}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{color:var(--sst-text);text-wrap:balance;margin:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--wib-wine)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- scene ---------- */
+.scene{position:relative;background:var(--wib-ink);color:#e9edf2;overflow:hidden;border-bottom:1px solid var(--sst-line)}
+.scene svg.house{position:absolute;inset:auto 0 0 0;width:100%;height:100%;display:block}
+.scene canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.scene .wrap{position:relative;padding-top:44px;padding-bottom:150px;display:grid;gap:14px}
+.scene h1{color:#f3f5f8;font-size:clamp(34px,6vw,64px);font-weight:800;letter-spacing:-.03em;line-height:.98;max-width:13ch}
+.scene h1 em{font-style:normal;color:oklch(0.83 0.13 78)}
+.scene p{max-width:52ch;margin:0;color:#c4ccd6;font-size:17px;line-height:1.55}
+.scene .eyebrow{color:#d9a7be}
+.tide{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:#aab4c0;border:1px solid #243041;border-radius:999px;padding:6px 12px;width:max-content;max-width:100%}
+.tide b{color:#f3f5f8;font-variant-numeric:tabular-nums}
+#ghost{transition:opacity 1.2s ease}
+
+/* ---------- help bar ---------- */
+.help{position:sticky;top:0;z-index:5;background:var(--sst-panel);border-bottom:1px solid var(--sst-line)}
+.help .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:10px;padding-bottom:10px}
+.help .lbl{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sst-text-muted);margin-right:4px}
+.tog{font:inherit;font-size:14px;font-weight:600;color:var(--sst-text);background:var(--sst-card);border:1px solid var(--sst-line-strong);border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.tog[aria-pressed="true"]{background:var(--wib-wine-soft);border-color:var(--wib-wine)}
+.tog svg{width:16px;height:16px;flex:none}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--wib-candle);outline-offset:2px}
+button:disabled{cursor:default}
+
+main{padding-top:32px;padding-bottom:64px;display:grid;gap:40px}
+section{display:grid;gap:16px}
+.sec-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+.sec-head h2{font-size:26px;letter-spacing:-.02em}
+.sec-head p{margin:4px 0 0;max-width:62ch;line-height:1.5}
+
+/* ---------- levels ---------- */
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tier{font:inherit;text-align:left;background:var(--sst-card);border:1px solid var(--sst-line);border-radius:12px;padding:16px;cursor:pointer;color:var(--sst-text-body);display:grid;grid-template-columns:44px 1fr;gap:4px 14px;align-items:start}
+.tier[aria-checked="true"]{border-color:var(--tc);box-shadow:inset 0 0 0 1px var(--tc);background:var(--sst-raised)}
+.tier .flame{grid-row:span 3;width:44px;height:56px}
+.tier b{font-size:19px;color:var(--sst-text)}
+.tier small{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tc)}
+.tier span{font-size:14px;line-height:1.45}
+
+/* ---------- rooms ---------- */
+.rooms{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.room{font:inherit;text-align:left;background:var(--sst-card);border:1px solid var(--sst-line);border-radius:10px;padding:12px;color:var(--sst-text-body);cursor:pointer;display:grid;grid-template-rows:58px auto auto 1fr;gap:6px;min-width:0}
+.room svg{width:100%;height:58px;color:var(--sst-text-muted)}
+.room b{color:var(--sst-text);font-size:15px}
+.room span{font-size:13px;line-height:1.35}
+.room .st{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sst-text-muted);display:flex;gap:6px;align-items:center}
+.room .st i{width:8px;height:8px;border-radius:50%;background:var(--sst-line-strong);display:inline-block}
+.room.done .st{color:var(--sst-text)}
+.room.done .st i{background:var(--wib-candle)}
+.room[aria-current="true"]{border-color:var(--wib-wine);box-shadow:inset 0 0 0 1px var(--wib-wine);background:var(--sst-raised)}
+.room[aria-current="true"] svg{color:var(--wib-candle)}
+
+/* ---------- activity ---------- */
+.act{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.card{background:var(--sst-card);border:1px solid var(--sst-line);border-radius:14px;padding:20px;display:grid;gap:16px;min-width:0}
+.progress{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--sst-text-muted);flex-wrap:wrap}
+.progress span{margin-right:6px}
+.progress svg{width:20px;height:28px}
+.extract{position:relative;border-radius:10px;overflow:hidden;background:var(--sst-stage);border:1px solid var(--sst-line)}
+.extract blockquote{margin:0;padding:22px 22px 14px;font-size:clamp(18px,2.1vw,22px);line-height:1.55;color:var(--sst-text)}
+.extract blockquote mark{background:none;color:inherit;border-bottom:3px solid var(--wib-candle);padding-bottom:1px}
+.extract .plain{display:block;margin-top:10px;font-size:.78em;color:var(--sst-text-muted)}
+.extract cite{display:block;padding:0 22px 18px;font-size:13px;font-style:normal;color:var(--sst-text-muted)}
+.extract canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.fogtip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--wib-ink);color:#e9edf2;border:1px solid #2b384a;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;pointer-events:none;white-space:nowrap}
+.q{font-size:18px;font-weight:700;color:var(--sst-text);margin:0;line-height:1.4}
+.sub{margin:-8px 0 0;font-size:14px;color:var(--sst-text-muted);line-height:1.45}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opts.one{grid-template-columns:1fr}
+.opt{font:inherit;font-size:16px;font-weight:600;text-align:left;background:var(--sst-bg);color:var(--sst-text);border:1px solid var(--sst-line-strong);border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:52px;min-width:0}
+.opt .k{flex:none;width:26px;height:26px;border-radius:6px;border:1px solid var(--sst-line-strong);display:grid;place-items:center;font-size:13px;color:var(--sst-text-muted)}
+.opt small{display:block;font-weight:500;font-size:13px;color:var(--sst-text-muted);margin-top:2px}
+.opt.right{background:var(--sst-good-bg);border-color:var(--sst-green)}
+.opt.wrong{background:var(--sst-bad-bg);border-color:var(--sst-red)}
+.opt.sel{border-color:var(--wib-candle);box-shadow:inset 0 0 0 1px var(--wib-candle)}
+.typed{display:flex;gap:8px;flex-wrap:wrap}
+.typed input{flex:1 1 220px;min-width:0;font:inherit;font-size:16px;padding:12px 14px;border-radius:10px;border:1px solid var(--sst-line-strong);background:var(--sst-input);color:var(--sst-text)}
+.btn{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:10px;padding:12px 18px;background:var(--wib-wine-btn);color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid var(--sst-line-strong);color:var(--sst-text)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:10px;padding:14px 16px;line-height:1.5;font-size:15px;color:var(--sst-text)}
+.feedback.good{background:var(--sst-good-bg)}
+.feedback.bad{background:var(--sst-bad-bg)}
+.feedback.warn{background:var(--sst-warn-bg)}
+.stems{display:grid;gap:6px;font-size:14px}
+.stems span{background:var(--sst-bg);border:1px dashed var(--sst-line-strong);border-radius:8px;padding:8px 10px}
+textarea{font:inherit;font-size:15px;line-height:1.5;width:100%;min-height:96px;padding:12px;border-radius:10px;border:1px solid var(--sst-line-strong);background:var(--sst-input);color:var(--sst-text);resize:vertical}
+
+/* nursery: sorting */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
+.chip{font:inherit;font-size:15px;font-weight:600;text-align:left;background:var(--sst-bg);color:var(--sst-text);border:1px solid var(--sst-line-strong);border-radius:10px;padding:10px 12px;cursor:pointer;max-width:100%;line-height:1.35}
+.chip small{display:block;font-weight:500;font-size:13px;color:var(--sst-text-muted)}
+.chip[aria-pressed="true"]{border-color:var(--wib-candle);box-shadow:inset 0 0 0 1px var(--wib-candle);background:var(--sst-raised)}
+.chip.placed{cursor:default;background:var(--sst-good-bg);border-color:transparent;font-size:14px}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bin{font:inherit;text-align:left;background:var(--sst-stage);border:1px dashed var(--sst-line-strong);border-radius:12px;padding:12px;cursor:pointer;display:grid;gap:8px;align-content:start;min-height:150px;color:var(--sst-text-body);min-width:0}
+.bin h4{margin:0;display:flex;gap:8px;align-items:center;color:var(--sst-text);font-size:16px}
+.bin h4 svg{width:22px;height:22px;color:var(--wib-candle)}
+.bin p{margin:0;font-size:13px;color:var(--sst-text-muted)}
+.bin.ready{border-style:solid;border-color:var(--wib-candle)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* graveyard: matching */
+.match{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:12px}
+.match .col{display:grid;gap:8px;align-content:start}
+.stone{font:inherit;font-size:16px;font-weight:700;text-align:center;background:var(--sst-raised);color:var(--sst-text);border:1px solid var(--sst-line-strong);border-radius:40px 40px 8px 8px;padding:14px 10px 12px;cursor:pointer}
+.stone[aria-pressed="true"]{border-color:var(--wib-candle);box-shadow:inset 0 0 0 2px var(--wib-candle)}
+.stone.paired,.scroll.paired{background:var(--sst-good-bg);border-color:transparent;color:var(--sst-text-muted)}
+.scroll{font:inherit;font-size:15px;text-align:left;background:var(--sst-bg);color:var(--sst-text);border:1px solid var(--sst-line-strong);border-radius:8px;padding:12px;cursor:pointer;line-height:1.4}
+.scroll.wrong,.stone.wrong{background:var(--sst-bad-bg)}
+.scroll b{color:var(--sst-text)}
+
+/* papers: ordering */
+.order{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:n}
+.order li{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;background:var(--sst-bg);border:1px solid var(--sst-line-strong);border-radius:10px;padding:10px 10px 10px 12px;font-size:15px;line-height:1.4;color:var(--sst-text)}
+.order li::before{counter-increment:n;content:counter(n);font-weight:800;color:var(--sst-text-muted);font-variant-numeric:tabular-nums;text-align:center}
+.order li.ok{background:var(--sst-good-bg);border-color:var(--sst-green)}
+.order li.no{background:var(--sst-warn-bg)}
+.mv{display:flex;gap:4px}
+.mv button{font:inherit;width:36px;height:36px;border-radius:8px;border:1px solid var(--sst-line-strong);background:var(--sst-card);color:var(--sst-text);cursor:pointer;display:grid;place-items:center}
+.mv button svg{width:16px;height:16px}
+.mv button:disabled{opacity:.35}
+
+/* builder */
+.slots{display:grid;gap:14px}
+.slot{display:grid;gap:8px}
+.slot h4{margin:0;font-size:15px;color:var(--sst-text);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.slot h4 small{font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--sst-text-muted)}
+.frame{font-size:17px;line-height:2.1;color:var(--sst-text)}
+.frame .pick{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle}
+.frame .pick button{font:inherit;font-size:15px;padding:4px 10px;border-radius:999px;border:1px solid var(--sst-line-strong);background:var(--sst-bg);color:var(--sst-text);cursor:pointer;line-height:1.4}
+.frame .pick button[aria-pressed="true"]{background:var(--wib-wine-soft);border-color:var(--wib-wine);font-weight:700}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid var(--sst-line-strong);color:var(--sst-text-muted);margin:4px 4px 0 0}
+.page{background:var(--sst-stage);border:1px solid var(--sst-line);border-radius:10px;padding:18px 20px;font-size:18px;line-height:1.7;color:var(--sst-text);min-height:80px}
+.page .empty{color:var(--sst-text-muted);font-size:15px}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks span{font-size:13px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid var(--sst-line-strong);color:var(--sst-text-muted)}
+.checks span.on{background:var(--sst-good-bg);border-color:var(--sst-green);color:var(--sst-text)}
+
+/* side */
+.side{display:grid;gap:12px;min-width:0}
+.side details{display:grid;gap:8px}
+.side summary{cursor:pointer;font-weight:700;color:var(--sst-text);font-size:15px;padding:4px 0}
+.bank{display:grid;gap:8px;margin-top:8px}
+.term{background:var(--sst-card);border:1px solid var(--sst-line);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;display:grid;grid-template-columns:1fr 30px;gap:2px 10px}
+.term b{color:var(--sst-text);font-size:15px;grid-column:1;grid-row:1}
+.term svg{grid-column:2;grid-row:1 / span 2;width:28px;height:28px;color:var(--wib-candle)}
+.term span{grid-column:1;grid-row:2;min-width:0}
+.note{font-size:13px;color:var(--sst-text-muted);line-height:1.5;border-left:3px solid var(--wib-wine);padding-left:10px;margin:0}
+
+/* finale & teacher notes */
+.finale{background:var(--wib-ink);color:#e9edf2;border-radius:14px;padding:24px;display:grid;gap:10px;border:1px solid #243041}
+.finale h2{color:#f3f5f8}
+.finale p{margin:0;color:#c4ccd6;line-height:1.55;max-width:62ch}
+.teach{border-top:1px solid var(--sst-line);padding-top:20px}
+.teach summary{cursor:pointer;font-weight:700;color:var(--sst-text);font-size:17px}
+.teach .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.teach .grid div{background:var(--sst-card);border:1px solid var(--sst-line);border-radius:10px;padding:14px;font-size:14px;line-height:1.5}
+.teach .grid b{color:var(--sst-text);display:block;margin-bottom:4px}
+.teach p{line-height:1.55;max-width:75ch}
+
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--wib-ink);color:#e9edf2;border:1px solid #2b384a;border-radius:12px;padding:12px 16px;font-weight:600;z-index:20;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 32px)}
+.toast svg{width:18px;height:26px;flex:none}
+
+/* reading help states */
+body.big{font-size:118%}
+body.big .extract blockquote{font-size:clamp(22px,2.6vw,27px)}
+body.big .opt,body.big .term,body.big .chip,body.big .scroll,body.big .order li,body.big .frame,body.big .q{font-size:19px}
+body.easy .extract blockquote,body.easy .term,body.easy .q,body.easy .feedback,body.easy .chip,body.easy .scroll,body.easy .order li,body.easy .page{letter-spacing:.04em;word-spacing:.14em;line-height:1.85}
+body.easy .extract,body.easy .page{background:#fbf6e9}
+body.easy .extract blockquote,body.easy .extract cite,body.easy .extract .plain,body.easy .page{color:#1d1a14}
+body.calm .shake{animation:none}
+
+@media (max-width:860px){
+  .act{grid-template-columns:1fr}
+  .rooms{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rooms .room:last-child{grid-column:span 2}
+  .tiers,.teach .grid{grid-template-columns:1fr}
+  .bins{grid-template-columns:1fr}
+  .bin{min-height:0}
+}
+@media (max-width:560px){
+  .help{position:static}
+  .opts,.match{grid-template-columns:1fr}
+  .scene .wrap{padding-top:28px;padding-bottom:120px}
+}
+@media (prefers-reduced-motion:reduce){ .scene canvas{display:none} .shake{animation:none} #ghost{transition:none} }
+</style>
+<link rel="stylesheet" href="../../../assets/sst/sst.css">
+</head>
+<body>
+<script src="../../../assets/sst/sst.js"></script>
+
+<!-- =============== SCENE =============== -->
+<header class="scene" aria-label="Eel Marsh House across the causeway">
+  <svg class="house" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <circle cx="1010" cy="92" r="34" fill="#d9dee6" opacity=".85"/>
+    <circle cx="1022" cy="84" r="34" fill="#070b12"/>
+    <path d="M0 330 L1200 322 L1200 420 L0 420Z" fill="#0d1520"/>
+    <path d="M760 330 C800 316 980 312 1060 330Z" fill="#111b28"/>
+    <g fill="#0a0f17">
+      <rect x="820" y="230" width="190" height="96"/>
+      <path d="M808 232 L915 168 L1022 232Z"/>
+      <rect x="846" y="178" width="14" height="40"/><rect x="972" y="186" width="14" height="36"/>
+      <rect x="1010" y="262" width="44" height="64"/><path d="M1004 264 L1032 238 L1060 264Z"/>
+    </g>
+    <g fill="#2a3442"><rect x="842" y="252" width="16" height="22"/><rect x="876" y="252" width="16" height="22"/><rect x="944" y="252" width="16" height="22"/><rect x="978" y="252" width="16" height="22"/><rect x="1024" y="280" width="12" height="18"/></g>
+    <rect id="nurseryWin" x="910" y="196" width="12" height="18" fill="#2a3442"/>
+    <g fill="#0a0f17"><path d="M690 330 L690 286 L712 264 L734 286 L734 330Z"/><rect x="742" y="312" width="7" height="18"/><rect x="756" y="306" width="8" height="24"/><path d="M770 330 v-14 a5 5 0 0 1 10 0 v14z"/></g>
+    <!-- the woman, among the graves: shown for a moment when a room is finished -->
+    <g id="ghost" opacity="0" fill="#c9d1db"><circle cx="792" cy="296" r="4.5"/><path d="M787 301 Q792 299 797 301 L801 330 L783 330Z"/></g>
+    <path d="M0 392 C240 376 520 352 790 330 L812 332 C560 360 270 392 40 420 L0 420Z" fill="#1a2533"/>
+    <path d="M0 404 C200 396 400 410 600 402 C800 394 1000 408 1200 398 L1200 420 L0 420Z" fill="#0b1a26" opacity=".95"/>
+  </svg>
+  <canvas id="sceneFog" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="eyebrow">KS3 English · The Woman in Black · Susan Hill</span>
+    <h1>Cross the causeway to <em>Eel Marsh House</em></h1>
+    <p>Arthur Kipps went in alone. You can take a light. Explore five rooms, revise the gothic features of the novel and the words you need to write about them.</p>
+    <span class="tide" aria-live="polite">Rooms lit: <b id="litTxt">0 of 5</b> · <span id="tideHint">the tide is out, the causeway is open</span></span>
+  </div>
+</header>
+
+<!-- =============== READING HELP =============== -->
+<div class="help" role="toolbar" aria-label="Reading help">
+  <div class="wrap">
+    <span class="lbl">Reading help</span>
+    <button class="tog" id="tRead" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>Read aloud</button>
+    <button class="tog" id="tBig" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 18 9 6l5 12M5.6 14h6.8M15 18l3-7 3 7"/></svg>Bigger text</button>
+    <button class="tog" id="tEasy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Easier reading</button>
+    <button class="tog" id="tCalm" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 12h6"/></svg>No fog or jumps</button>
+  </div>
+</div>
+
+<main class="wrap" id="main">
+
+  <section aria-labelledby="hTier">
+    <div class="sec-head">
+      <div><span class="eyebrow">Step 1</span><h2 id="hTier">Choose your light</h2>
+      <p>Every room works at three levels. Change your light at any time. A brighter light means harder questions and less help.</p></div>
+    </div>
+    <div class="tiers" role="radiogroup" aria-label="Level">
+      <button class="tier" role="radio" aria-checked="true" data-tier="1" style="--tc:var(--t1)">
+        <svg class="flame" viewBox="0 0 44 56" aria-hidden="true"><path d="M22 6c4 8 9 12 9 19a9 9 0 0 1-18 0c0-6 5-10 9-19z" fill="var(--t1)"/><rect x="16" y="36" width="12" height="18" rx="2" fill="var(--sst-line-strong)"/></svg>
+        <small>Candle · getting started</small><b>Pick the word</b>
+        <span>Short, simple sentences, two choices at a time, and a word bank with pictures.</span>
+      </button>
+      <button class="tier" role="radio" aria-checked="false" data-tier="2" style="--tc:var(--t2)">
+        <svg class="flame" viewBox="0 0 44 56" aria-hidden="true"><path d="M22 2c5 9 12 14 12 23a12 12 0 0 1-24 0c0-8 7-13 12-23z" fill="var(--t2)"/><rect x="12" y="36" width="20" height="18" rx="2" fill="var(--sst-line-strong)"/></svg>
+        <small>Lamp · on track</small><b>Name it, then explain it</b>
+        <span>More choices, then say what effect the writer creates.</span>
+      </button>
+      <button class="tier" role="radio" aria-checked="false" data-tier="3" style="--tc:var(--t3)">
+        <svg class="flame" viewBox="0 0 44 56" aria-hidden="true"><path d="M22 0c6 10 15 15 15 26a15 15 0 0 1-30 0c0-10 9-15 15-26z" fill="var(--t3)"/><rect x="8" y="38" width="28" height="16" rx="2" fill="var(--sst-line-strong)"/></svg>
+        <small>Lantern · going beyond</small><b>Analyse it yourself</b>
+        <span>No choices to lean on. Name the method, then write about how and why, and compare with a model.</span>
+      </button>
+    </div>
+  </section>
+
+  <section aria-labelledby="hRooms">
+    <div class="sec-head">
+      <div><span class="eyebrow">Step 2</span><h2 id="hRooms">Five rooms, five jobs</h2>
+      <p>Each room revises one thing. Finish a room to light its candle. Light all five to make it back across the causeway.</p></div>
+    </div>
+    <div class="rooms" id="rooms"></div>
+  </section>
+
+  <section aria-labelledby="hAct" id="roomSec">
+    <div class="sec-head">
+      <div><span class="eyebrow" id="actEyebrow"></span><h2 id="hAct"></h2></div>
+      <div class="progress" id="prog"></div>
+    </div>
+    <div class="act">
+      <div class="card" id="card"></div>
+      <aside class="side" aria-label="Word bank">
+        <details id="bankBox" open>
+          <summary>Word bank</summary>
+          <div class="bank" id="bank"></div>
+        </details>
+        <p class="note">Passages are retold in our own words, with the chapter they come from, so they match any edition. Find the real lines in your copy and quote them in your own answers.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="finale" id="finale" hidden aria-live="polite">
+    <span class="eyebrow" style="color:#d9a7be">All five candles lit</span>
+    <h2>You made it back across the causeway</h2>
+    <p>The tide is turning behind you. You have revised the gothic setting, characters and plot of the novel, the key words to describe them, and written your own gothic opening. Try every room again with a brighter light.</p>
+    <div class="row"><button class="btn" id="again">Start again with a brighter light</button></div>
+  </section>
+
+  <details class="teach">
+    <summary>For teachers</summary>
+    <p>One resource, three levels. Each room asks about the same part of the novel at every level, so a mixed class can work on one room together and share answers. Pupils can change level at any time; nothing is locked.</p>
+    <div class="grid">
+      <div><b>Candle: KS2, working towards</b>Short, simple retellings shown above the fuller version. Two choices at a time. The word bank has pictures and everyday definitions. Read aloud speaks any text that is tapped.</div>
+      <div><b>Lamp: KS3, on track</b>Full retellings, four choices, then a second question on the writer's effect. Sentence builder gives whole sentences labelled with their techniques.</div>
+      <div><b>Lantern: KS3, working beyond</b>Typed answers and paragraphs with what / how / why sentence starters, compared against a model. Matching uses examples from the novel instead of definitions. The word bank is folded away.</div>
+    </div>
+    <p>Rooms: the Causeway (spot the technique), the Nursery (sort the gothic features), the Graveyard (key words), Mrs Drablow's papers (plot order and foreshadowing) and Write by candlelight (a gothic opening). Progress is kept only on the pupil's own device. "No fog or jumps" removes the fog to rub away and the figure that appears in the graveyard when a room is finished.</p>
+  </details>
+</main>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= DATA ================= */
+const I = {
+  cloud:'<path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 18z"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  island:'<path d="M3 18c3-1 6 1 9 0s6-1 9 0"/><path d="M8 15V9l4-3 4 3v6"/>',
+  ghost:'<path d="M6 20V10a6 6 0 0 1 12 0v10l-2-2-2 2-2-2-2 2-2-2z"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/>',
+  pulse:'<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+  split:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16"/>',
+  house:'<path d="M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/>',
+  person:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  like:'<path d="M5 9h14M5 15h14"/>',
+  face:'<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M9 15c2 1.5 4 1.5 6 0"/>',
+  snake:'<path d="M4 8c4-4 6 4 10 0s6 4 6 4M4 16c4-4 6 4 10 0s6 4 6 4"/>',
+  frame:'<rect x="3" y="4" width="18" height="16" rx="1"/><rect x="7" y="8" width="10" height="8"/>',
+  dots:'<circle cx="7" cy="8" r="2"/><circle cx="16" cy="7" r="2"/><circle cx="12" cy="14" r="2"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="16" r="2"/>',
+  ear:'<path d="M8 18c0 2 4 3 5 0 1-2 5-4 5-9a6 6 0 0 0-12 0"/><path d="M10 9a2 2 0 0 1 4 0c0 2-2 2-2 4"/>',
+  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'
+};
+const svg = (k, extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${I[k]}</svg>`;
+
+// lv: lowest level that sees the term in the word bank
+const BANK = [
+  {t:'Setting', i:'house', lv:1, d:'Where and when a story happens.', d3:'The time and place of a story; in gothic writing it often traps or threatens the characters.'},
+  {t:'Narrator', i:'person', lv:1, d:'The person who tells the story.', d3:'The voice telling the story. Kipps narrates in the first person, looking back.'},
+  {t:'Tension', i:'pulse', lv:1, d:'The feeling that something bad might happen.', d3:'Suspense built by delaying or hiding what the reader wants to know.'},
+  {t:'Simile', i:'like', lv:1, d:'Comparing two things using “like” or “as”.', d3:'A comparison using “like” or “as” to create a vivid picture.'},
+  {t:'Pathetic fallacy', i:'cloud', lv:1, d:'The weather matches the mood.', d3:'Weather or setting that mirrors a character’s feelings or the tone of a scene.'},
+  {t:'Isolation', i:'island', lv:1, d:'Being alone and cut off.', d3:'Separating a character from help, so the threat feels inescapable.'},
+  {t:'The supernatural', i:'ghost', lv:1, d:'Ghosts and things that cannot be explained.', d3:'Events beyond natural explanation that unsettle the narrator and the reader.'},
+  {t:'Foreshadowing', i:'eye', lv:1, d:'A clue that something bad is coming.', d3:'A hint placed early that prepares the reader for later events and builds dread.'},
+  {t:'Juxtaposition', i:'split', lv:2, d:'Putting two very different things side by side.', d3:'Placing contrasting ideas together so that each makes the other stronger.'},
+  {t:'Personification', i:'face', lv:2, d:'Making a thing act like a person.', d3:'Giving human actions or feelings to something non-human, such as the mist.'},
+  {t:'Sibilance', i:'snake', lv:2, d:'Lots of “s” sounds close together.', d3:'Repeated “s” sounds that create a hissing, whispering or sinister effect.'},
+  {t:'Frame narrative', i:'frame', lv:3, d:'A story inside a story.', d3:'A story told inside another: the Eel Marsh story sits inside the Christmas Eve opening.'},
+  {t:'Retrospective narrator', i:'clock', lv:3, d:'Someone telling a story years later.', d3:'A narrator looking back on past events, who already knows how they end.'},
+  {t:'Semantic field', i:'dots', lv:3, d:'A group of words on one topic.', d3:'A set of words linked by meaning, such as death and decay, that builds a mood.'},
+  {t:'Sensory imagery', i:'ear', lv:3, d:'Describing with the five senses.', d3:'Description through sound, touch, smell and sight that puts the reader in the scene.'}
+];
+
+const ROOMS = [
+  {id:'causeway', name:'The Causeway', blurb:'Rub away the fog and name the technique.', title:'What is the writer doing here?',
+   icon:'<path d="M4 50 C40 44 80 30 116 22"/><path d="M14 54 C50 46 86 34 116 30"/><path d="M4 38c10-3 18 3 28 0s18-4 28-1" opacity=".6"/>'},
+  {id:'nursery', name:'The Nursery', blurb:'Sort the gothic features into setting, characters and plot.', title:'Sort the gothic features',
+   icon:'<path d="M40 52V24l20-14 20 14v28"/><rect x="52" y="34" width="16" height="18"/><path d="M30 52h60"/>'},
+  {id:'graveyard', name:'The Graveyard', blurb:'Match each key word to its meaning.', title:'Match the key words',
+   icon:'<path d="M28 52V30a8 8 0 0 1 16 0v22M58 52V26a9 9 0 0 1 18 0v26M88 52V34a6 6 0 0 1 12 0v18M20 52h86"/>'},
+  {id:'papers', name:'Mrs Drablow’s papers', blurb:'Put the plot in order and spot the foreshadowing.', title:'Put the story in order',
+   icon:'<rect x="34" y="10" width="52" height="40" rx="2"/><path d="M42 20h36M42 28h36M42 36h24"/>'},
+  {id:'write', name:'Write by candlelight', blurb:'Build your own gothic opening, sentence by sentence.', title:'Write a gothic opening',
+   icon:'<path d="M60 6c6 10 12 14 12 22a12 12 0 0 1-24 0c0-8 6-12 12-22z"/><path d="M52 44h16v8H52z"/>'}
+];
+
+/* --- The Causeway: spot the technique --- */
+const CAUSE = [
+  { text:'Kipps is stranded alone on the marsh. A thick, wet <mark>sea mist</mark> rolls in from the estuary and blots out the causeway, the house and the sky.',
+    plain:'Kipps is alone on the marsh. Fog comes in. He cannot see the way back.',
+    cite:'Retold · “The Sound of a Pony and Trap”', answer:'Pathetic fallacy', alt:'Simile', re:/pathetic|fall[ae]cy/,
+    hint:'Is the underlined part about the <b>weather</b>, or a comparison using “like” or “as”?',
+    effect:['It makes the reader feel trapped and afraid, like Kipps.','It shows that Kipps enjoys being in the countryside.','It tells the reader what time of year it is.'],
+    model:'Hill uses <b>pathetic fallacy</b> when the sea mist rolls in: the fog mirrors Kipps’s growing confusion and fear. Because the mist hides the causeway, his only way back, the reader shares his isolation and helplessness. The setting itself seems to turn against him, which is typical of the gothic.' },
+  { text:'On Christmas Eve the family tell ghost stories by the fire. The older Kipps is asked for one, <mark>refuses, and walks out into the night</mark>, badly shaken.',
+    plain:'Years later, Kipps will not tell a ghost story. He is upset and walks out.',
+    cite:'Retold · “Christmas Eve”', answer:'Foreshadowing', alt:'Setting', re:/fore\s*-?\s*shadow/,
+    hint:'Does this tell us <b>where</b> the story happens, or give a <b>clue</b> about something bad in his past?',
+    effect:['It hints that something terrible happened to him, so we want to read on.','It shows that Kipps is rude to his family.','It shows that ghost stories are boring.'],
+    model:'The older Kipps’s refusal to tell a ghost story is <b>foreshadowing</b>. Walking out on a family Christmas is such a strong reaction that it hints his past holds something too terrible to joke about. This creates mystery and dread before the main story begins, so the reader is already uneasy when young Kipps sets off for Crythin Gifford.' },
+  { text:'Eel Marsh House stands on its own island in the marsh. <mark>When the tide comes in it covers the causeway</mark>, and then no one can reach the house, or leave it.',
+    plain:'The house is on an island. When the sea comes in, nobody can get in or out.',
+    cite:'Retold · “Across the Causeway”', answer:'Isolation', alt:'Narrator', re:/isolat/,
+    hint:'Is this about the person telling the story, or about being <b>cut off</b>?',
+    effect:['It suggests Kipps will have no help if something goes wrong.','It shows the house is a good place for a holiday.','It explains why the house is so big.'],
+    model:'Hill creates <b>isolation</b> by placing Eel Marsh House on an island cut off by the tide. The causeway can only be crossed at low tide, so Kipps cannot simply leave when he is frightened. Isolation is a classic gothic feature: with no one to help, the threat feels inescapable and the reader’s fear for Kipps grows.' },
+  { text:'In the overgrown graveyard beside the ruined chapel, Kipps sees <mark>a pale, wasted woman dressed in black</mark>. When he looks again, she has gone.',
+    plain:'Kipps sees a thin, pale woman in black by the graves. Then she vanishes.',
+    cite:'Retold · “Across the Causeway”', answer:'The supernatural', alt:'Isolation', re:/supernatural|ghost|paranormal/,
+    hint:'Can the woman’s vanishing be <b>explained</b>? Think about ghosts.',
+    effect:['It unsettles the reader because her appearance cannot be explained.','It shows the woman is going to a party.','It proves that Kipps needs glasses.'],
+    model:'The woman in black brings <b>the supernatural</b> into the novel. She appears in a graveyard, a typical gothic setting, and her pale, wasted look links her to death. Because she vanishes without explanation, both Kipps and the reader begin to doubt what is real, which makes her more frightening than a threat that can be seen.' },
+  { text:'At night, from behind a locked door in the house, comes a faint, steady <mark>bump… bump… bump</mark>. Kipps cannot see what is making it.',
+    plain:'At night there is a noise behind a locked door. Bump, bump, bump. Kipps cannot see what it is.',
+    cite:'Retold · “In the Nursery”', answer:'Tension', alt:'Simile', re:/tension|suspense/,
+    hint:'There is no “like” or “as” here. What does a noise you <b>cannot see</b> make you feel?',
+    effect:['Hiding the cause of the sound makes the reader imagine the worst.','It shows the house needs repairing.','It makes the scene funny.'],
+    model:'Hill builds <b>tension</b> by letting Kipps hear the steady bumping without seeing its cause. The regular, repeated sound feels deliberate, as if something is waiting, and the locked door stops him, and us, from finding out. Withholding the answer makes the reader imagine the worst, which is how gothic writers create suspense.' },
+  { text:'The novel opens on a warm family Christmas: a blazing fire, cheerful company, children excited for the next day. Kipps’s memories of Eel Marsh House <mark>are set against this cosy scene</mark>.',
+    plain:'The story starts with a happy Christmas. Then Kipps remembers something frightening.',
+    cite:'Retold · “Christmas Eve”', answer:'Juxtaposition', alt:'Isolation', re:/juxtapos|contrast/,
+    hint:'Kipps is with his family, so he is not cut off. Look at the <b>two very different</b> things side by side.',
+    effect:['The contrast makes the horror of his memories seem even darker.','It shows that Kipps loves Christmas presents.','It tells us the house is warm.'],
+    model:'Hill uses <b>juxtaposition</b> by setting the warmth and safety of a family Christmas against Kipps’s memories of Eel Marsh House. The contrast makes the horror seem darker, and shows how deeply the past still haunts him even in the happiest setting. Gothic writers often place the ordinary beside the terrifying to unsettle the reader.' }
+];
+const CAUSE_TERMS = CAUSE.map(c=>c.answer);
+
+/* --- The Nursery: sort --- */
+const BINS = [
+  {id:'S', name:'Setting', icon:'house', d:'Places and weather'},
+  {id:'C', name:'Characters', icon:'person', d:'Who is in the story'},
+  {id:'P', name:'Plot and mood', icon:'eye', d:'What happens and how it feels'}
+];
+const SORT = {
+  1:[ {b:'S',t:'A spooky old house far from anyone'}, {b:'S',t:'A graveyard'},
+      {b:'C',t:'A ghost'}, {b:'C',t:'A frightened hero'},
+      {b:'P',t:'A secret from the past'}, {b:'P',t:'Strange noises in the night'} ],
+  2:[ {b:'S',t:'An isolated house',e:'Eel Marsh House, cut off by the tide'},
+      {b:'S',t:'A graveyard and ruined chapel',e:'where Kipps first sees the woman'},
+      {b:'S',t:'Wild, threatening weather',e:'the sea mist on the marsh'},
+      {b:'C',t:'A vengeful ghost',e:'the woman in black'},
+      {b:'C',t:'A sensible hero pushed to breaking point',e:'young Arthur Kipps'},
+      {b:'C',t:'Locals who know but will not tell',e:'the landlord and Mr Jerome'},
+      {b:'P',t:'A buried family secret',e:'what happened to Nathaniel'},
+      {b:'P',t:'Sounds with no explanation',e:'the pony and trap, the bumping'},
+      {b:'P',t:'The death of innocents',e:'children die after each sighting'} ],
+  3:[ {b:'S',t:'Eel Marsh House, cut off twice a day by the tide'},
+      {b:'S',t:'The ruined chapel and its overgrown graves'},
+      {b:'S',t:'Sea mist rolling in over the marsh'},
+      {b:'C',t:'Jennet Humfrye, who cannot forgive'},
+      {b:'C',t:'Arthur Kipps, a confident young solicitor at the start'},
+      {b:'C',t:'Mr Jerome, who turns pale and will not answer'},
+      {b:'P',t:'Old letters that reveal who Nathaniel really was'},
+      {b:'P',t:'A child’s cry heard in the fog, but no child seen'},
+      {b:'P',t:'Every sighting of the woman is followed by a child’s death'} ]
+};
+
+/* --- The Graveyard: match --- */
+const MATCH = {
+  1:[ ['Setting','Where and when a story happens.'], ['Narrator','The person who tells the story.'],
+      ['Simile','Comparing two things using “like” or “as”.'], ['Tension','The feeling that something bad might happen.'] ],
+  2:[ ['Pathetic fallacy','Weather that reflects a mood or feeling.'], ['Foreshadowing','An early hint of what will happen later.'],
+      ['Personification','Giving human actions or feelings to something that is not human.'],
+      ['Sibilance','Repeating “s” sounds to create a hissing, whispering effect.'],
+      ['Isolation','Cutting a character off from help or other people.'], ['Juxtaposition','Placing two contrasting ideas side by side.'] ],
+  3:[ ['Frame narrative','The Eel Marsh story is told inside the Christmas Eve scene at the start.'],
+      ['Retrospective narrator','Kipps writes his story many years later, already knowing how it ends.'],
+      ['Foreshadowing','The thick London fog early on prepares us for the sea mist on the marsh.'],
+      ['Pathetic fallacy','A bright, open day on the marsh gives way to dense mist as Kipps’s confidence turns to fear.'],
+      ['Semantic field','Words of death and decay, such as pale, wasted, grave and ruined, gather around the woman.'],
+      ['Juxtaposition','A cosy family Christmas is set beside memories of terror.'],
+      ['Sensory imagery','Kipps hears the pony and trap and a child’s cry in the fog, but sees nothing.'],
+      ['Personification','The mist is described as if it can creep up on Kipps and swallow him.'] ]
+};
+
+/* --- Mrs Drablow's papers: order --- */
+const EVENTS = [
+  {t:'Christmas Eve, many years later: the older Kipps refuses to tell a ghost story.', s:'Older Kipps will not tell a ghost story.'},
+  {t:'Young Kipps leaves foggy London to sort out the affairs of the late Mrs Drablow.', s:'Kipps leaves London to go north for work.'},
+  {t:'At Mrs Drablow’s funeral, Kipps notices a pale woman dressed in black.', s:'At a funeral, Kipps sees a woman in black.'},
+  {t:'Keckwick drives Kipps across the Nine Lives Causeway to Eel Marsh House.', s:'Kipps crosses the causeway to the house.'},
+  {t:'Lost in the sea mist, Kipps hears a pony and trap sink into the marsh and a child scream.', s:'In the fog, Kipps hears a crash and a child scream.'},
+  {t:'At night, Kipps hears a steady bumping from behind a locked door in the house.', s:'At night, Kipps hears bumping behind a locked door.'},
+  {t:'Kipps finally learns the woman’s story: whenever she is seen, a child dies.', s:'Kipps learns the woman’s secret.'},
+  {t:'Back home, the woman appears in a park, and Kipps’s wife and baby son die after a pony-and-trap accident.', s:'The woman appears again. Kipps’s wife and son die.'}
+];
+const ORDER_SET = {1:[1,2,3,4,7], 2:[0,1,2,3,4,5,6,7], 3:[0,1,2,3,4,5,6,7]};
+const FORE = [
+  {q:'Which early moment foreshadows the sea mist on the marsh?', o:['The thick fog in London as Kipps sets off','Kipps eating breakfast at the inn','Kipps reading a letter from his employer'],
+   why:'Hill opens Kipps’s journey in a “London Particular”, a thick fog, so the reader is ready for the deadlier mist on the marsh.'},
+  {q:'Why does Hill open with the older Kipps refusing to tell a ghost story?', o:['To warn the reader that the story will end in tragedy','To show that Kipps dislikes his stepchildren','To explain how solicitors work'],
+   why:'His refusal tells us the story cost him dearly, so we read on dreading what happened.'}
+];
+
+/* --- Write by candlelight --- */
+const SLOTS = [
+  {name:'The setting', need:'Isolation or personification',
+   frame:['The',['old','empty','crumbling'],'house stood alone beside the',['grey','cold','silent'],'marsh.'],
+   opts:[['The house crouched at the end of the causeway, its windows black and blind.',['Personification','Isolation']],
+         ['The house stood at the end of the causeway, alone and forgotten by the world.',['Isolation']],
+         ['Beyond the causeway, the house rose out of the marsh like a gravestone.',['Simile','Isolation']]]},
+  {name:'The weather', need:'Pathetic fallacy',
+   frame:['Thick',['fog','mist','rain'],['crept','rolled','drifted'],'in from the sea.'],
+   opts:[['A sullen sky pressed down, as though it too were holding its breath.',['Pathetic fallacy','Personification']],
+         ['Mist slid silently over the salt marsh, swallowing the path behind me.',['Pathetic fallacy','Sibilance']],
+         ['Rain fell in cold grey sheets, and the wind moaned across the water.',['Pathetic fallacy','Personification']]]},
+  {name:'A sound', need:'Tension through sound',
+   frame:['Somewhere above me, a door',['creaked','banged','tapped'],['softly','slowly','again'],'.'],
+   opts:[['Somewhere above me came a slow, steady bump… bump… bump.',['Tension','Sensory imagery']],
+         ['A child’s cry rose out of the fog, then stopped.',['Tension','Sensory imagery']],
+         ['The floorboards whispered under my feet.',['Personification','Sensory imagery']]]},
+  {name:'Something seen', need:'The supernatural',
+   frame:['At the window I saw a',['pale','thin','white'],'face',['watching','staring','waiting'],'.'],
+   opts:[['At the window stood a woman, pale as bone, dressed entirely in black.',['The supernatural','Simile']],
+         ['The nursery door, locked yesterday, now stood open.',['The supernatural','Tension']],
+         ['Among the graves, something moved that should not have moved.',['The supernatural','Tension']]]},
+  {name:'The last line', need:'A short sentence, or foreshadowing',
+   frame:[['Then the candle went out.','I was not alone.','Silence.']],
+   opts:[['I was not alone.',['Short sentence']],
+         ['Then the candle went out.',['Short sentence']],
+         ['And I knew, then, that I would never leave.',['Foreshadowing']]]}
+];
+const WRITE_GOALS = ['Pathetic fallacy','Personification','Isolation','Tension','The supernatural','Simile','Sibilance','Short sentence','Foreshadowing','Sensory imagery'];
+
+/* ================= STATE ================= */
+let tier = 1, room = 'causeway', calm = false, readOn = false;
+let done = {};
+try { done = JSON.parse(localStorage.getItem('wib-done')||'{}') || {}; } catch(e) { done = {}; }
+let rs = {}; // per-room state, reset on room or level change
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const flame = lit => `<svg viewBox="0 0 22 30" aria-hidden="true">${lit?'<path d="M11 2c2 4 4 6 4 9a4 4 0 0 1-8 0c0-3 2-5 4-9z" fill="var(--wib-candle)"/>':''}<rect x="7" y="14" width="8" height="15" rx="1" fill="${lit?'var(--sst-text-muted)':'var(--sst-line-strong)'}"/></svg>`;
+
+function save(){ try { localStorage.setItem('wib-done', JSON.stringify(done)); } catch(e) {} }
+function setProgress(n, total){ $('prog').innerHTML = `<span>Candles lit</span>` + Array.from({length:total},(_,k)=>flame(k<n)).join('') + `<span class="sr">${n} of ${total}</span>`; }
+
+/* ================= ROOMS ================= */
+function drawRooms(){
+  const n = ROOMS.filter(r=>done[r.id]).length;
+  $('rooms').innerHTML = ROOMS.map(r=>{
+    const d = done[r.id], lvl = d ? ['','Candle','Lamp','Lantern'][d] : '';
+    return `<button class="room${d?' done':''}" data-room="${r.id}" aria-current="${r.id===room}">
+      <svg viewBox="0 0 120 58" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${r.icon}</svg>
+      <span class="st"><i></i>${d?'Lit at '+lvl:'Not lit yet'}</span><b>${r.name}</b><span>${r.blurb}</span></button>`;
+  }).join('');
+  $('rooms').querySelectorAll('.room').forEach(b=>b.onclick=()=>{ room=b.dataset.room; openRoom(); $('roomSec').scrollIntoView({behavior: calm?'auto':'smooth', block:'start'}); });
+  $('litTxt').textContent = n + ' of 5';
+  $('tideHint').textContent = ['the tide is out, the causeway is open','one candle burns in the house','the house is waking up','the tide is turning','one room left before the tide comes in','every window is lit'][n];
+  $('finale').hidden = n < 5;
+}
+function finishRoom(){
+  const first = !done[room] || done[room] < tier;
+  done[room] = Math.max(done[room]||0, tier); save(); drawRooms();
+  if (first) toast(`${ROOMS.find(r=>r.id===room).name} is lit.`);
+  if (!calm && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const g = $('ghost'); g.setAttribute('opacity','.85'); setTimeout(()=>g.setAttribute('opacity','0'), 1800);
+  }
+}
+let toastT;
+function toast(msg){ const t=$('toast'); t.innerHTML = flame(true)+esc(msg); t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, 3200); speak(msg); }
+
+function openRoom(){
+  const r = ROOMS.find(x=>x.id===room);
+  $('actEyebrow').textContent = r.name; $('hAct').textContent = r.title;
+  rs = {};
+  drawRooms(); drawBank();
+  ({causeway:causeway, nursery:nursery, graveyard:graveyard, papers:papers, write:write})[room]();
+}
+
+/* ================= WORD BANK ================= */
+function drawBank(){
+  $('bank').innerHTML = BANK.filter(b=>b.lv<=tier).map(b=>
+    `<div class="term">${tier<3?svg(b.i):''}<b>${b.t}</b><span>${tier===1?b.d:b.d3}</span></div>`).join('');
+  $('bankBox').open = tier < 3;
+  $('bankBox').querySelector('summary').textContent = tier===3 ? 'Word bank (open it only if you are stuck)' : 'Word bank';
+}
+
+/* ================= THE CAUSEWAY ================= */
+function causeway(){
+  rs.i = rs.i||0; rs.lit = rs.lit||0;
+  setProgress(rs.lit, CAUSE.length);
+  const q = CAUSE[rs.i];
+  $('card').innerHTML = `
+    <div class="extract" id="extract">
+      <blockquote>${tier===1 ? `${q.plain}<span class="plain">${q.text}</span>` : q.text}</blockquote>
+      <cite>${q.cite} · passage ${rs.i+1} of ${CAUSE.length}</cite>
+      <canvas id="fog" aria-hidden="true"></canvas><span class="fogtip" id="fogtip">Rub away the fog to read</span>
+    </div><div id="task" style="display:grid;gap:14px"></div>`;
+  const t = $('task');
+  if (tier < 3){
+    const choices = tier===1 ? shuffle([q.answer, q.alt]) : shuffle([q.answer, ...shuffle(CAUSE_TERMS.filter(x=>x!==q.answer)).slice(0,3)]);
+    const simple = Object.fromEntries(BANK.map(b=>[b.t,b.d]));
+    t.innerHTML = `<p class="q">${tier===1?'Which word fits the underlined part?':'Which technique is the underlined phrase?'}</p>
+      <div class="opts">${choices.map((c,k)=>`<button class="opt" data-c="${esc(c)}"><span class="k">${'ABCD'[k]}</span><span>${c}${tier===1?`<small>${simple[c]}</small>`:''}</span></button>`).join('')}</div><div id="fb"></div>`;
+    t.querySelectorAll('.opt').forEach(b=>b.onclick=()=>causePick(b,q));
+  } else {
+    t.innerHTML = `<p class="q">Name the technique in the underlined phrase.</p>
+      <div class="typed"><input id="ans" aria-label="The technique" placeholder="Type the technique" autocomplete="off" spellcheck="false"><button class="btn" id="chk">Check</button></div>
+      <div id="fb" style="display:grid;gap:12px"></div>`;
+    $('chk').onclick = ()=>causeTyped(q);
+    $('ans').onkeydown = e=>{ if(e.key==='Enter') causeTyped(q); };
+  }
+  requestAnimationFrame(resetFog);
+}
+function causePick(b,q){
+  const fb = $('fb'), ok = b.dataset.c===q.answer;
+  if (!ok){ b.classList.add('wrong'); b.disabled=true; fb.innerHTML = `<div class="feedback bad">Not quite. ${q.hint} Try again.</div>`; speakEl(fb); return; }
+  b.classList.add('right'); $('task').querySelectorAll('.opts .opt').forEach(o=>o.disabled=true);
+  if (tier===1){
+    fb.innerHTML = `<div class="feedback good"><b>Yes: ${q.answer.toLowerCase()}.</b> ${BANK.find(x=>x.t===q.answer).d}</div>${nextBtn()}`;
+    speakEl(fb.firstChild); litCause(); return;
+  }
+  const eff = shuffle(q.effect.map((e,k)=>({e,k})));
+  fb.innerHTML = `<div style="display:grid;gap:10px"><div class="feedback good"><b>Right.</b> Now, what effect does it create for the reader?</div>
+    <div class="opts one">${eff.map((x,k)=>`<button class="opt" data-k="${x.k}"><span class="k">${'ABC'[k]}</span><span>${x.e}</span></button>`).join('')}</div><div id="fb2"></div></div>`;
+  fb.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+    if (o.dataset.k!=='0'){ o.classList.add('wrong'); o.disabled=true; $('fb2').innerHTML='<div class="feedback bad">Think about how Kipps feels, and how the reader feels with him.</div>'; return; }
+    o.classList.add('right'); fb.querySelectorAll('.opt').forEach(x=>x.disabled=true);
+    $('fb2').innerHTML = `<div class="feedback good"><b>Yes.</b> ${q.model}</div>${nextBtn()}`; litCause();
+  });
+}
+function causeTyped(q){
+  const v = $('ans').value.trim().toLowerCase(), fb = $('fb');
+  if (!v) return;
+  if (!q.re.test(v)){ fb.innerHTML = `<div class="feedback bad">Not that one. ${q.hint}</div>`; speakEl(fb); return; }
+  $('ans').disabled = true; $('chk').disabled = true;
+  fb.innerHTML = `<div class="feedback good"><b>Correct: ${q.answer.toLowerCase()}.</b> Now write how and why Hill uses it.</div>
+    <div class="stems"><span><b>What:</b> Hill uses … when …</span><span><b>How:</b> This suggests / makes the reader feel …</span><span><b>Why:</b> This is typical of the gothic because …</span></div>
+    <textarea id="para" aria-label="Your paragraph" placeholder="Write your paragraph here"></textarea>
+    <div class="row"><button class="btn" id="cmp">Compare with a model</button></div><div id="model"></div>`;
+  $('cmp').onclick = ()=>{
+    $('model').innerHTML = `<div class="feedback good"><b>Model paragraph</b><br>${q.model}<br><br><b>Check yours.</b> Did you name the method, quote a short phrase, explain the effect on the reader, and link it to the gothic?</div>${nextBtn()}`;
+    litCause(); $('cmp').disabled = true;
+  };
+}
+function litCause(){
+  rs.lit = Math.min(CAUSE.length, rs.lit+1); setProgress(rs.lit, CAUSE.length);
+  const n = $('next'); if (n) n.onclick = ()=>{ if (rs.i < CAUSE.length-1){ rs.i++; causeway(); } else causeDone(); };
+}
+function nextBtn(){ return `<div class="row" style="margin-top:10px"><button class="btn" id="next">${rs.i < CAUSE.length-1 ? 'Next passage' : 'Finish the causeway'}</button></div>`; }
+function causeDone(){
+  finishRoom();
+  $('card').innerHTML = `<div class="feedback good"><b>All six candles are lit on the causeway.</b> You found pathetic fallacy, foreshadowing, isolation, the supernatural, tension and juxtaposition.</div>
+    <div class="row"><button class="btn" id="goN">Go to the Nursery</button><button class="btn ghost" id="redo">Do the causeway again</button></div>`;
+  $('goN').onclick = ()=>{ room='nursery'; openRoom(); };
+  $('redo').onclick = ()=>openRoom();
+}
+
+/* fog over the passage */
+function resetFog(){
+  const fog = $('fog'), tip = $('fogtip'); if (!fog) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm || reduce || tier===1){ fog.hidden = true; tip.hidden = true; return; }
+  const fx = fog.getContext('2d'), r = fog.getBoundingClientRect(), dpr = devicePixelRatio||1;
+  fog.width = r.width*dpr; fog.height = r.height*dpr; fx.setTransform(dpr,0,0,dpr,0,0);
+  fx.fillStyle = '#9aa6b4'; fx.fillRect(0,0,r.width,r.height);
+  for (let k=0;k<160;k++){ fx.fillStyle = `rgba(${200+Math.random()*40|0},${206+Math.random()*30|0},${214+Math.random()*30|0},${.15+Math.random()*.2})`;
+    fx.beginPath(); fx.ellipse(Math.random()*r.width, Math.random()*r.height, 30+Math.random()*90, 12+Math.random()*30, 0, 0, 7); fx.fill(); }
+  let rubs = 0;
+  const rub = e => {
+    const b = fog.getBoundingClientRect();
+    fx.globalCompositeOperation='destination-out'; fx.beginPath(); fx.arc(e.clientX-b.left, e.clientY-b.top, 36, 0, 7); fx.fill();
+    tip.hidden = true; if (++rubs > 70) fog.hidden = true;
+  };
+  fog.onpointermove = e=>{ if (e.pointerType==='mouse' || e.buttons) rub(e); };
+  fog.onpointerdown = rub;
+  // keyboard and switch users: any key on the page clears it
+  fog.dataset.live = '1';
+}
+document.addEventListener('keydown', e=>{ const f=$('fog'); if (f && !f.hidden && e.key==='Tab'){ f.hidden=true; $('fogtip').hidden=true; } });
+
+/* ================= THE NURSERY ================= */
+function nursery(){
+  const items = SORT[tier];
+  rs.items = rs.items || shuffle(items.map((x,k)=>({...x,k})));
+  rs.placed = rs.placed || {};
+  const n = Object.keys(rs.placed).length;
+  setProgress(Math.floor(n/items.length*5), 5);
+  const sel = rs.sel;
+  $('card').innerHTML = `
+    <p class="q">${tier===1?'Tap a card, then tap the box it belongs in.':tier===2?'Tap a gothic feature, then tap where it belongs.':'Sort these moments from the novel. Which gothic feature does each one show?'}</p>
+    ${tier===3?'<p class="sub">No labels to help you. Think about what each moment adds to the horror.</p>':''}
+    <div class="pool" id="pool">${rs.items.filter(x=>!(x.k in rs.placed)).map(x=>`<button class="chip" data-k="${x.k}" aria-pressed="${sel===x.k}">${esc(x.t)}${x.e?`<small>${esc(x.e)}</small>`:''}</button>`).join('') || '<span class="sub" style="margin:0">All sorted.</span>'}</div>
+    <div class="bins">${BINS.map(b=>`<button class="bin${sel!=null?' ready':''}" data-b="${b.id}" aria-label="${b.name}${sel!=null?': place the chosen card here':''}">
+       <h4>${svg(b.icon)}${b.name}</h4><p>${b.d}</p>
+       ${rs.items.filter(x=>rs.placed[x.k]===b.id).map(x=>`<span class="chip placed">${esc(x.t)}</span>`).join('')}</button>`).join('')}</div>
+    <div id="fb"></div>`;
+  $('card').querySelectorAll('.pool .chip').forEach(c=>c.onclick=()=>{ rs.sel = rs.sel===+c.dataset.k ? null : +c.dataset.k; nursery(); speak(c.innerText); const again=$('card').querySelector(`.chip[data-k="${c.dataset.k}"]`); if(again) again.focus(); });
+  $('card').querySelectorAll('.bin').forEach(b=>b.onclick=()=>{
+    if (rs.sel==null){ $('fb').innerHTML = '<div class="feedback warn">Choose a card first, then choose a box.</div>'; return; }
+    const it = items[rs.sel];
+    if (it.b === b.dataset.b){ rs.placed[rs.sel] = it.b; rs.sel = null; nursery(); if (Object.keys(rs.placed).length===items.length) nurseryDone(); else { const f=$('card').querySelector('.pool .chip'); if (f) f.focus(); } }
+    else {
+      b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+      const why = {S:'a place or the weather', C:'a person or a ghost', P:'something that happens, or a feeling'}[it.b];
+      $('fb').innerHTML = `<div class="feedback bad">Not there. This one is ${why}. Try another box.</div>`; speakEl($('fb'));
+    }
+  });
+}
+function nurseryDone(){
+  setProgress(5,5);
+  const extra = tier===3 ? `<p class="q">Which do you think frightens the reader most: the setting, the characters, or the plot? Explain with one example.</p>
+     <div class="stems"><span>I think Hill relies most on … because …</span><span>For example, when …, the reader …</span></div>
+     <textarea id="judge" aria-label="Your answer" placeholder="Write two or three sentences"></textarea>` :
+     tier===2 ? `<p class="q">Gothic novels mix all three: a frightening <b>setting</b>, unsettling <b>characters</b> and a <b>plot</b> full of secrets and death.</p>` :
+     `<p class="q">Well done. A gothic story needs a scary <b>place</b>, scary <b>people</b> and scary <b>events</b>.</p>`;
+  $('fb').innerHTML = `<div style="display:grid;gap:12px"><div class="feedback good"><b>Everything is sorted.</b> The nursery is lit.</div>${extra}
+    <div class="row"><button class="btn" id="goG">Go to the Graveyard</button></div></div>`;
+  $('goG').onclick = ()=>{ room='graveyard'; openRoom(); };
+  finishRoom();
+}
+
+/* ================= THE GRAVEYARD ================= */
+function graveyard(){
+  const pairs = MATCH[tier];
+  rs.left = rs.left || shuffle(pairs.map((p,k)=>k)); rs.right = rs.right || shuffle(pairs.map((p,k)=>k));
+  rs.paired = rs.paired || {};
+  const n = Object.keys(rs.paired).length;
+  setProgress(n, pairs.length);
+  $('card').innerHTML = `
+    <p class="q">${tier===3?'Match each term to an example from the novel.':'Tap a headstone, then tap its meaning.'}</p>
+    <div class="match">
+      <div class="col" role="group" aria-label="Key words">${rs.left.map(k=>`<button class="stone${rs.paired[k]?' paired':''}" data-k="${k}" aria-pressed="${rs.sel===k}" ${rs.paired[k]?'disabled':''}>${pairs[k][0]}</button>`).join('')}</div>
+      <div class="col" role="group" aria-label="${tier===3?'Examples':'Meanings'}">${rs.right.map(k=>`<button class="scroll${rs.paired[k]?' paired':''}" data-k="${k}" ${rs.paired[k]?'disabled':''}>${rs.paired[k]?`<b>${pairs[k][0]}:</b> `:''}${pairs[k][1]}</button>`).join('')}</div>
+    </div><div id="fb"></div>`;
+  $('card').querySelectorAll('.stone').forEach(s=>s.onclick=()=>{ rs.sel = rs.sel===+s.dataset.k?null:+s.dataset.k; graveyard(); speak(s.innerText); const a=$('card').querySelector(`.stone[data-k="${s.dataset.k}"]`); if(a) a.focus(); });
+  $('card').querySelectorAll('.scroll').forEach(s=>s.onclick=()=>{
+    if (rs.sel==null){ $('fb').innerHTML='<div class="feedback warn">Choose a headstone first.</div>'; speak(s.innerText); return; }
+    if (+s.dataset.k===rs.sel){ rs.paired[rs.sel]=1; rs.sel=null; graveyard();
+      if (Object.keys(rs.paired).length===pairs.length){ graveDone(); } else { const f=$('card').querySelector('.stone:not([disabled])'); if(f) f.focus(); } }
+    else {
+      s.classList.add('wrong'); setTimeout(()=>s.classList.remove('wrong'),700);
+      const b = BANK.find(x=>x.t===pairs[rs.sel][0]);
+      $('fb').innerHTML = `<div class="feedback bad">Not a match. Clue: <b>${pairs[rs.sel][0]}</b> means ${(tier===1?b.d:b.d3).replace(/^./,c=>c.toLowerCase())}</div>`; speakEl($('fb'));
+    }
+  });
+}
+function graveDone(){
+  $('fb').innerHTML = `<div style="display:grid;gap:12px"><div class="feedback good"><b>Every grave has its name.</b> The graveyard is lit.${tier<3?' Try it at a brighter light to match terms to moments in the novel.':''}</div>
+    <div class="row"><button class="btn" id="goP">Read Mrs Drablow’s papers</button></div></div>`;
+  $('goP').onclick = ()=>{ room='papers'; openRoom(); };
+  finishRoom();
+}
+
+/* ================= MRS DRABLOW'S PAPERS ================= */
+const UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg>';
+const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>';
+function papers(){
+  const set = ORDER_SET[tier];
+  if (!rs.order){ do { rs.order = shuffle(set); } while (rs.order.every((x,k)=>x===set[k])); }
+  rs.checked = rs.checked || false;
+  const okCount = rs.order.filter((x,k)=>x===set[k]).length;
+  setProgress(rs.solved ? 5 : 0, 5);
+  $('card').innerHTML = `
+    <p class="q">${tier===1?'Put these events in the order they happen.':'Put these events in the order they appear in the novel.'}</p>
+    ${tier>1?'<p class="sub">Careful: the novel does not begin where the story begins.</p>':''}
+    <ol class="order" id="ord">${rs.order.map((x,k)=>`<li class="${rs.checked?(x===set[k]?'ok':'no'):''}"><span>${tier===1?EVENTS[x].s:EVENTS[x].t}</span>
+      <span class="mv"><button data-k="${k}" data-d="-1" aria-label="Move up" ${k===0||rs.solved?'disabled':''}>${UP}</button><button data-k="${k}" data-d="1" aria-label="Move down" ${k===rs.order.length-1||rs.solved?'disabled':''}>${DOWN}</button></span></li>`).join('')}</ol>
+    ${rs.solved?'':'<div class="row"><button class="btn" id="chkO">Check my order</button></div>'}
+    <div id="fb" style="display:grid;gap:12px">${rs.checked && !rs.solved ? `<div class="feedback warn">${okCount} of ${set.length} are in the right place (shown in green). Move the others and check again.</div>`:''}</div>`;
+  $('ord').querySelectorAll('.mv button').forEach(b=>b.onclick=()=>{
+    const k=+b.dataset.k, d=+b.dataset.d, o=rs.order; [o[k],o[k+d]]=[o[k+d],o[k]]; rs.checked=false; papers();
+    const again = $('ord').querySelector(`.mv button[data-k="${k+d}"][data-d="${d}"]`) || $('ord').querySelector(`.mv button[data-k="${k+d}"]`); if (again && !again.disabled) again.focus();
+  });
+  if (!rs.solved) $('chkO').onclick = ()=>{
+    rs.checked = true;
+    if (rs.order.every((x,k)=>x===set[k])){ rs.solved = true; papers(); papersFore(); } else { papers(); speakEl($('fb')); }
+  };
+}
+function papersFore(){
+  const fb = $('fb');
+  if (tier===1){
+    fb.innerHTML = `<div class="feedback good"><b>That is the right order.</b> The fog in London at the start is a clue: Kipps will meet a far worse fog on the marsh.</div>
+      <div class="row"><button class="btn" id="goW">Write by candlelight</button></div>`;
+    $('goW').onclick = ()=>{ room='write'; openRoom(); }; finishRoom(); return;
+  }
+  const qs = tier===2 ? [FORE[0]] : FORE;
+  let qi = 0;
+  const ask = () => {
+    const f = qs[qi], o = shuffle(f.o.map((t,k)=>({t,k})));
+    fb.innerHTML = `<div class="feedback good"><b>That is the right order.</b> Now look for the foreshadowing.</div>
+      <p class="q">${f.q}</p><div class="opts one">${o.map((x,k)=>`<button class="opt" data-k="${x.k}"><span class="k">${'ABC'[k]}</span><span>${x.t}</span></button>`).join('')}</div><div id="fb2"></div>`;
+    fb.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      if (b.dataset.k!=='0'){ b.classList.add('wrong'); b.disabled=true; $('fb2').innerHTML='<div class="feedback bad">Look for a moment that <b>prepares</b> the reader for something later.</div>'; return; }
+      b.classList.add('right'); fb.querySelectorAll('.opt').forEach(x=>x.disabled=true);
+      const last = qi === qs.length-1;
+      $('fb2').innerHTML = `<div class="feedback good" style="margin-bottom:12px"><b>Yes.</b> ${f.why}</div>` + (last ? (tier===3 ?
+        `<p class="q">In one or two sentences, explain how an early event prepares the reader for the ending.</p><div class="stems"><span>Early in the novel, Hill … which prepares the reader for …</span></div><textarea aria-label="Your answer" placeholder="Write here"></textarea>` : '') +
+        `<div class="row" style="margin-top:10px"><button class="btn" id="goW">Write by candlelight</button></div>` :
+        `<div class="row"><button class="btn" id="nextF">Next question</button></div>`);
+      if (last){ $('goW').onclick = ()=>{ room='write'; openRoom(); }; finishRoom(); }
+      else $('nextF').onclick = ()=>{ qi++; ask(); };
+    });
+  };
+  ask();
+}
+
+/* ================= WRITE BY CANDLELIGHT ================= */
+function write(){
+  rs.pick = rs.pick || {};      // tier 1: slot -> [choice index per gap]; tier 2: slot -> option index
+  rs.own = rs.own || {};        // tier 3: slot -> text
+  const filled = SLOTS.filter((s,k)=> tier===3 ? (rs.own[k]||'').trim().split(/\s+/).length>=4 : tier===2 ? rs.pick[k]!=null : rs.pick[k] && s.frame.filter(Array.isArray).every((g,gi)=>rs.pick[k][gi]!=null)).length;
+  setProgress(filled, SLOTS.length);
+  let html = `<p class="q">${tier===1?'Choose a word in each sentence to build a spooky opening.':tier===2?'Choose one sentence for each part. Try to use at least four different techniques.':'Write your own sentence for each part, using the technique named. Stuck? Ask for an example.'}</p><div class="slots">`;
+  SLOTS.forEach((s,k)=>{
+    html += `<div class="slot"><h4>${k+1}. ${s.name} ${tier>1?`<small>${s.need}</small>`:''}</h4>`;
+    if (tier===1){
+      let gi = 0;
+      html += `<div class="frame">` + s.frame.map(part=>{
+        if (!Array.isArray(part)) return esc(part)+' ';
+        const g = gi++; const cur = rs.pick[k] && rs.pick[k][g];
+        return `<span class="pick" role="group" aria-label="Choose a word">${part.map((w,wi)=>`<button data-s="${k}" data-g="${g}" data-w="${wi}" aria-pressed="${cur===wi}">${esc(w)}</button>`).join('')}</span> `;
+      }).join('') + `</div>`;
+    } else if (tier===2){
+      html += `<div class="opts one">${s.opts.map((o,oi)=>`<button class="opt${rs.pick[k]===oi?' sel':''}" data-s="${k}" data-o="${oi}" aria-pressed="${rs.pick[k]===oi}"><span>${esc(o[0])}<small>${o[1].map(t=>`<span class="tag">${t}</span>`).join('')}</small></span></button>`).join('')}</div>`;
+    } else {
+      html += `<textarea data-s="${k}" aria-label="${s.name}: ${s.need}" placeholder="${s.need}" style="min-height:64px">${esc(rs.own[k]||'')}</textarea>
+        <div class="row"><button class="btn ghost" data-ex="${k}" style="padding:8px 12px;font-size:14px">Show an example</button><span class="sub" style="margin:0" id="ex${k}"></span></div>`;
+    }
+    html += `</div>`;
+  });
+  html += `</div><h3 style="font-size:16px">Your opening</h3><div class="page" id="pageOut"></div>
+    ${tier>1?'<div class="checks" id="checks"></div>':''}
+    <div class="row"><button class="btn" id="copy">Copy my writing</button><button class="btn ghost" id="clr">Start again</button></div><div id="fb"></div>`;
+  $('card').innerHTML = html;
+
+  if (tier===1) $('card').querySelectorAll('.pick button').forEach(b=>b.onclick=()=>{
+    const k=+b.dataset.s; rs.pick[k] = rs.pick[k]||[]; rs.pick[k][+b.dataset.g] = +b.dataset.w; write(); speak(b.innerText);
+    const a=$('card').querySelector(`.pick button[data-s="${k}"][data-g="${b.dataset.g}"][data-w="${b.dataset.w}"]`); if(a) a.focus();
+  });
+  if (tier===2) $('card').querySelectorAll('.slot .opt').forEach(b=>b.onclick=()=>{
+    rs.pick[+b.dataset.s] = +b.dataset.o; write();
+    const a=$('card').querySelector(`.slot .opt[data-s="${b.dataset.s}"][data-o="${b.dataset.o}"]`); if(a) a.focus();
+  });
+  if (tier===3){
+    $('card').querySelectorAll('textarea[data-s]').forEach(t=>t.oninput=()=>{ rs.own[+t.dataset.s]=t.value; drawPage(); });
+    $('card').querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{ const k=+b.dataset.ex; $('ex'+k).textContent = '“'+SLOTS[k].opts[Math.random()*3|0][0]+'”'; });
+  }
+  $('clr').onclick = ()=>{ rs.pick={}; rs.own={}; rs.wdone=false; write(); };
+  $('copy').onclick = ()=>{
+    const txt = $('pageOut').innerText;
+    const ok = ()=>{ $('fb').innerHTML='<div class="feedback good">Copied. Paste it into your work.</div>'; };
+    try { navigator.clipboard.writeText(txt).then(ok, selectPage); } catch(e){ selectPage(); }
+  };
+  if (tier===3){ // self-check, kept while typing
+    $('checks').innerHTML = ['Pathetic fallacy or personification','Tension through sound','The supernatural','A short final sentence','Varied sentence openings'].map(g=>`<span>☐ ${g}</span>`).join('');
+    $('checks').querySelectorAll('span').forEach(s=>{ s.tabIndex=0; s.setAttribute('role','checkbox'); s.setAttribute('aria-checked','false');
+      const flip=()=>{ const on=s.classList.toggle('on'); s.setAttribute('aria-checked',on); s.textContent=(on?'✓ ':'☐ ')+s.textContent.slice(2); };
+      s.onclick=flip; s.onkeydown=e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } }; });
+  }
+  drawPage();
+}
+function selectPage(){ const r=document.createRange(); r.selectNodeContents($('pageOut')); const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+  $('fb').innerHTML='<div class="feedback warn">Your writing is selected. Press Ctrl+C (or ⌘+C) to copy it.</div>'; }
+function drawPage(){
+  const parts = [], used = new Set();
+  SLOTS.forEach((s,k)=>{
+    if (tier===1){
+      if (!rs.pick[k]) return; let gi=0, ok=true;
+      const sent = s.frame.map(p=>{ if(!Array.isArray(p)) return p; const w = rs.pick[k][gi++]; if (w==null) ok=false; return p[w]; });
+      if (ok) parts.push(sent.join(' ').replace(/ \./g,'.').replace(/\s+/g,' '));
+    } else if (tier===2){
+      if (rs.pick[k]==null) return; const o = s.opts[rs.pick[k]]; parts.push(o[0]); o[1].forEach(t=>used.add(t));
+    } else if ((rs.own[k]||'').trim()) parts.push(rs.own[k].trim());
+  });
+  $('pageOut').innerHTML = parts.length ? esc(parts.join(' ')) : '<span class="empty">Your sentences will appear here as you build them.</span>';
+  const all = parts.length === SLOTS.length && (tier!==3 || SLOTS.every((s,k)=>(rs.own[k]||'').trim().split(/\s+/).length>=4));
+  if (tier===2){
+    $('checks').innerHTML = WRITE_GOALS.filter(g=>SLOTS.some(s=>s.opts.some(o=>o[1].includes(g)))).map(g=>`<span class="${used.has(g)?'on':''}">${used.has(g)?'✓ ':''}${g}</span>`).join('');
+  }
+  setProgress(parts.length, SLOTS.length);
+  if (all && !rs.wdone){
+    rs.wdone = true;
+    $('fb').innerHTML = `<div class="feedback good"><b>Your gothic opening is complete.</b> ${tier===2?`You used ${used.size} techniques. `:''}Read it aloud: does it build from calm to fear?</div>`;
+    finishRoom();
+  }
+}
+
+/* ================= READ ALOUD ================= */
+function speak(s){ if (!readOn || !('speechSynthesis' in window) || !s) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(s.replace(/\s+/g,' ')); u.lang='en-GB'; u.rate=.92; speechSynthesis.speak(u); }
+function speakEl(el){ if (el) speak(el.innerText); }
+document.addEventListener('click', e=>{
+  if (!readOn) return;
+  const el = e.target.closest('blockquote,.q,.sub,.opt,.term,.feedback,.tier,.room,.page,.chip,.stone,.scroll,.order li,.sec-head p');
+  if (el && !el.matches('.chip,.stone,.opt')) speakEl(el);
+  else if (el && el.matches('.opt')) speakEl(el);
+});
+
+/* ================= CONTROLS ================= */
+function tog(id, fn){ const b=$(id); b.onclick=()=>{ const on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed',on); fn(on); }; }
+tog('tRead', on=>{ readOn=on; if (on) speak('Read aloud is on. Tap any text to hear it.'); else if ('speechSynthesis' in window) speechSynthesis.cancel(); });
+tog('tBig', on=>document.body.classList.toggle('big',on));
+tog('tEasy', on=>document.body.classList.toggle('easy',on));
+tog('tCalm', on=>{ calm=on; document.body.classList.toggle('calm',on); resetFog(); });
+
+function setTier(t){
+  tier = t;
+  document.querySelectorAll('.tier').forEach(x=>x.setAttribute('aria-checked', +x.dataset.tier===t));
+  openRoom();
+}
+document.querySelectorAll('.tier').forEach(b=>{
+  b.onclick=()=>setTier(+b.dataset.tier);
+  b.onkeydown=e=>{ const d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key]; if(!d) return; e.preventDefault(); const t=((tier-1+d+3)%3)+1; setTier(t); document.querySelector(`.tier[data-tier="${t}"]`).focus(); };
+});
+$('again').onclick = ()=>{ room='causeway'; setTier(Math.min(3,tier+1)); $('roomSec').scrollIntoView({block:'start'}); };
+
+/* ================= SCENE ================= */
+const sc = $('sceneFog'), sx = sc.getContext('2d');
+const puffs = Array.from({length:26},()=>({x:Math.random(),y:.6+Math.random()*.4,r:.08+Math.random()*.14,v:.00004+Math.random()*.00008,a:.015+Math.random()*.03}));
+function frame(t){
+  const lit = ROOMS.filter(r=>done[r.id]).length;
+  if (!calm){
+    const w=sc.clientWidth, h=sc.clientHeight, d=devicePixelRatio||1;
+    if (sc.width!==Math.round(w*d)){ sc.width=Math.round(w*d); sc.height=Math.round(h*d); }
+    sx.setTransform(d,0,0,d,0,0); sx.clearRect(0,0,w,h);
+    puffs.forEach(p=>{ p.x=(p.x+p.v*16)%1.3; sx.fillStyle=`rgba(201,209,219,${p.a})`; sx.beginPath(); sx.ellipse((p.x-.15)*w, p.y*h, p.r*w, p.r*w*.28, 0, 0, 7); sx.fill(); });
+  } else sx.clearRect(0,0,sc.width,sc.height);
+  // windows light up with the rooms; the nursery flickers until all five are lit
+  const wins = document.querySelectorAll('.scene svg g[fill="#2a3442"] rect');
+  wins.forEach((r,k)=>r.setAttribute('fill', k < lit ? 'oklch(0.83 0.13 78)' : '#2a3442'));
+  const flick = lit>=5 || (!calm && (Math.sin(t/1400)+Math.sin(t/530))>1.55);
+  $('nurseryWin').setAttribute('fill', flick ? 'oklch(0.83 0.13 78)' : '#2a3442');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+addEventListener('resize', ()=>{ const f=$('fog'); if (f && !f.hidden) resetFog(); });
+openRoom();
+})();
+</script>
+</body>
+</html>
