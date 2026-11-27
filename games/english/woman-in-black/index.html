@@ -49,6 +49,7 @@ h1,h2,h3{color:var(--sst-text);text-wrap:balance;margin:0}
 .tog{font:inherit;font-size:14px;font-weight:600;color:var(--sst-text);background:var(--sst-card);border:1px solid var(--sst-line-strong);border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
 .tog[aria-pressed="true"]{background:var(--wib-wine-soft);border-color:var(--wib-wine)}
 .tog svg{width:16px;height:16px;flex:none}
+.voice select{font:inherit;font-size:14px;font-weight:600;color:var(--sst-text);background:var(--sst-card);border:1px solid var(--wib-wine);border-radius:8px;padding:7px 10px;max-width:220px}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--wib-candle);outline-offset:2px}
 button:disabled{cursor:default}
 
@@ -257,6 +258,7 @@ body.calm .shake{animation:none}
   <div class="wrap">
     <span class="lbl">Reading help</span>
     <button class="tog" id="tRead" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>Read aloud</button>
+    <label class="voice" id="voiceBox" hidden><span class="sr">Voice</span><select id="voiceSel" aria-label="Reading voice"></select></label>
     <button class="tog" id="tBig" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 18 9 6l5 12M5.6 14h6.8M15 18l3-7 3 7"/></svg>Bigger text</button>
     <button class="tog" id="tEasy" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Easier reading</button>
     <button class="tog" id="tCalm" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 12h6"/></svg>No fog or jumps</button>
@@ -886,7 +888,51 @@ function drawPage(){
 }
 
 /* ================= READ ALOUD ================= */
-function speak(s){ if (!readOn || !('speechSynthesis' in window) || !s) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(s.replace(/\s+/g,' ')); u.lang='en-GB'; u.rate=.92; speechSynthesis.speak(u); }
+/* Pick the most natural English voice the device has. Neural voices ("Natural",
+   "Online", Google's, Apple's Enhanced/Premium) sound far less robotic than the
+   old desktop ones. Chrome's Google voices stop after about 15 seconds, so
+   longer text is spoken a sentence or two at a time. */
+const TTS = 'speechSynthesis' in window ? speechSynthesis : null;
+let voices = [], voice = null;
+function voiceScore(v){
+  const n = v.name.toLowerCase(), l = (v.lang||'').toLowerCase().replace('_','-');
+  if (!l.startsWith('en')) return -1;
+  let sc = 0;
+  if (l === 'en-gb') sc += 40; else if (l === 'en-ie' || l === 'en-au' || l === 'en-nz') sc += 25; else if (l === 'en-us') sc += 15;
+  if (/natural|neural|online/.test(n)) sc += 50;          // Edge and Windows 11 neural voices
+  if (/premium|enhanced/.test(n)) sc += 45;               // Apple's downloaded voices
+  if (/google/.test(n)) sc += 40;                          // Chrome, Chromebooks, Android
+  if (/sonia|libby|ryan|maisie|thomas|serena|daniel|kate|arthur|martha/.test(n)) sc += 10;
+  if (/compact|espeak|zira|david|hazel|george|susan/.test(n)) sc -= 20;   // older robotic voices
+  return sc;
+}
+function loadVoices(){
+  if (!TTS) return;
+  voices = TTS.getVoices().filter(v=>voiceScore(v) >= 0).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  let saved = null; try { saved = localStorage.getItem('wib-voice'); } catch(e) {}
+  voice = voices.find(v=>v.name===saved) || voices[0] || null;
+  const sel = $('voiceSel');
+  sel.innerHTML = voices.map(v=>`<option value="${esc(v.name)}"${v===voice?' selected':''}>${esc(v.name.replace(/^(Microsoft|Google)\s+/,'').replace(/\s*-\s*English.*$/,'').replace(/\s*Online\s*\(Natural\)/,' (natural)'))}</option>`).join('');
+  $('voiceBox').hidden = !readOn || voices.length < 2;
+}
+if (TTS){ loadVoices(); TTS.addEventListener ? TTS.addEventListener('voiceschanged', loadVoices) : (TTS.onvoiceschanged = loadVoices); }
+function speakable(s){
+  return s.replace(/[✓☐]/g,'').replace(/…/g,'... ').replace(/Humfrye/g,'Humfrey').replace(/\bKS3\b/g,'K S 3')
+          .replace(/“|”/g,'"').replace(/\s+/g,' ').trim();
+}
+function speak(s){
+  if (!readOn || !TTS || !s) return;
+  TTS.cancel();
+  const text = speakable(s);
+  const chunks = (text.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [text]).reduce((acc,c)=>{
+    if (acc.length && (acc[acc.length-1] + c).length < 160) acc[acc.length-1] += c; else acc.push(c); return acc; }, []);
+  chunks.forEach(c=>{
+    const u = new SpeechSynthesisUtterance(c.trim());
+    if (voice){ u.voice = voice; u.lang = voice.lang; } else u.lang = 'en-GB';
+    u.rate = /google/i.test(voice && voice.name || '') ? 0.95 : 1; u.pitch = 1;
+    TTS.speak(u);
+  });
+}
 function speakEl(el){ if (el) speak(el.innerText); }
 document.addEventListener('click', e=>{
   if (!readOn) return;
@@ -897,7 +943,8 @@ document.addEventListener('click', e=>{
 
 /* ================= CONTROLS ================= */
 function tog(id, fn){ const b=$(id); b.onclick=()=>{ const on=b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed',on); fn(on); }; }
-tog('tRead', on=>{ readOn=on; if (on) speak('Read aloud is on. Tap any text to hear it.'); else if ('speechSynthesis' in window) speechSynthesis.cancel(); });
+tog('tRead', on=>{ readOn=on; loadVoices(); if (on) speak('Read aloud is on. Tap any text to hear it.'); else if (TTS) TTS.cancel(); });
+$('voiceSel').onchange = e=>{ voice = voices.find(v=>v.name===e.target.value) || voice; try { localStorage.setItem('wib-voice', voice.name); } catch(err) {} speak('This is how I sound.'); };
 tog('tBig', on=>document.body.classList.toggle('big',on));
 tog('tEasy', on=>document.body.classList.toggle('easy',on));
 tog('tCalm', on=>{ calm=on; document.body.classList.toggle('calm',on); resetFog(); });
